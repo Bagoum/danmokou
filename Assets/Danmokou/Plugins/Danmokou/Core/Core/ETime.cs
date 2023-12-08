@@ -66,8 +66,9 @@ public interface IRegularUpdater {
     /// <summary>
     /// This function is called at the *end* of the engine frame that an object was registered
     /// or re-registered for regular updates.
-    /// In the standard case, this means that it is called on the same frame as Awake, but after all Awake calls.
-    /// Works with pooled objects (will be called after ResetV). Similar to Unity's Start.
+    /// <br/>In the standard case, this means that it is called on the same frame as Awake, but after all Awake calls.
+    ///  RegularUpdate will be called starting on the next engine frame.
+    /// <br/>Works with pooled objects (will be called after ResetV). Similar to Unity's Start.
     /// </summary>
     void FirstFrame() { }
 
@@ -177,6 +178,7 @@ public class ETime : MonoBehaviour {
         UnityTimeRate.AddDisturbance(Slowdown);
         UnityTimeRate.AddDisturbance(EngineStateManager.EvState.Map(s => s.Timescale()));
         UnityTimeRate.Subscribe(s => Time.timeScale = s);
+        Physics2D.simulationMode = SimulationMode2D.Script;
 
         //WARNING ON TIMESCALE: You must also modify FDT. See https://docs.unity3d.com/ScriptReference/Time-timeScale.html
         //This said, I don't think FixedUpdate is used anymore in this code.
@@ -216,7 +218,7 @@ public class ETime : MonoBehaviour {
         QualitySettings.vSyncCount = ct;
 #endif
         lastFrameTime = Time.realtimeSinceStartup;
-        SetForcedFPS(Screen.currentResolution.refreshRate);
+        SetForcedFPS((int)Math.Round(Screen.currentResolution.refreshRateRatio.value));
     }
 
     private static void ParallelUpdateStep() {
@@ -268,6 +270,9 @@ public class ETime : MonoBehaviour {
                 LastUpdateForScreen = UntilNextFrame + EngineStepTime <= FRAME_BOUNDARY;
                 if (EngineStateManager.PendingUpdate) continue;
                 StartOfFrameInvokes(EngineStateManager.State);
+                //This is important for cases where objects are added at the end of the previous frame
+                // and then scanned (for player collision) during the movement step
+                Physics2D.SyncTransforms();
                 Profiler.BeginSample("Regular Update: (1) Parallel Step");
                 //Parallelize updates if there are many. Note that this allocates several kb
                 if (updaters.Count > PARALLELCUTOFF) {
@@ -291,6 +296,9 @@ public class ETime : MonoBehaviour {
                     if (updaters.GetIfExistsAt(ii, out var u) && u.UpdateDuring >= EngineStateManager.State)
                         u.RegularUpdate();
                 }
+                Profiler.EndSample();
+                Profiler.BeginSample("Regular Update: (2.5) Unity Physics Simulation");
+                Physics2D.Simulate(FRAME_TIME);
                 Profiler.EndSample();
                 Profiler.BeginSample("Regular Update: (3) Collision Step");
                 for (int ii = 0; ii < updaters.Count; ++ii) {

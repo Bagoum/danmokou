@@ -37,7 +37,7 @@ public class CameraTransition : RegularUpdater, ICameraTransition {
 
     protected override void BindListeners() {
         base.BindListeners();
-        RegisterService<ICameraTransition>(this, new ServiceLocator.ServiceOptions { Unique = true });
+        RegisterService<ICameraTransition>(this, new() { Unique = true });
     }
     
     public override void RegularUpdate() { }

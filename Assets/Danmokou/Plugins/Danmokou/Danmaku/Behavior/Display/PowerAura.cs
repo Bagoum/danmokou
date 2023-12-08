@@ -24,9 +24,9 @@ public class PowerAura : SpriteDisplayController {
         beh.rBPI.t = opts.initialTime;
     }
 
-    public override void UpdateRender() {
+    public override void UpdateRender(bool isFirstFrame) {
         sprite.color = ColorHelpers.V4C(options.color(beh.rBPI));
-        base.UpdateRender();
+        base.UpdateRender(isFirstFrame);
         if (options.cT.Cancelled) {
             InvokeCull();
         } else if (beh.rBPI.t > options.totalTime) {

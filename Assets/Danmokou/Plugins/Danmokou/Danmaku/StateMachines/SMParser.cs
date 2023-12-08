@@ -652,7 +652,7 @@ public static class SMParser {
             .Locate();
         
     private static Either<LocatedParseUnit, LocatedParserError> RunSMParser(string s, out InputStream<char> stream) {
-        var result = FullParser(stream = new InputStream<char>("State Machine", s.ToCharArray(), default!));
+        var result = FullParser(stream = new InputStream<char>(s, "State Machine"));
         return result.Status == ResultStatus.OK ? 
             result.Result.Value : 
             (result.Error ?? new(0, new ParserError.Failure("Parsing failed, but it's unclear why.")));

@@ -10,6 +10,7 @@ using Danmokou.Behavior.Display;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.Danmaku.Descriptors;
+using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
@@ -26,7 +27,11 @@ using UnityEngine.Profiling;
 // ReSharper disable AssignmentInConditionalExpression
 
 namespace Danmokou.Behavior {
-public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBulletCollisionReceiver {
+public class Enemy : RegularUpdater, IBehaviorEntityDependent, 
+    ICircularPlayerSimpleBulletCollisionReceiver, 
+    ICircularPlayerPatherCollisionReceiver,
+    ICircularPlayerLaserCollisionReceiver,
+    ICircularPlayerBulletCollisionReceiver {
     private const float cardCircleTrailMultiplier = 5f;
     private const float cardCircleTrailCatchup = 0.03f;
     private const float spellCircleTrailMultiplier = 30f;
@@ -58,6 +63,8 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBu
     //public bool Vulnerable { get; private set; }= true;
 
     public Vulnerability Vulnerable { get; private set; }
+    //Updated every frame based on Vulnerability
+    public bool ReceivesBulletCollisions { get; private set; } = false;
     //private static int enemyIndexCtr = 0;
     //private int enemyIndex;
 
@@ -66,7 +73,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBu
     /// Hurtbox radius.
     /// </summary>
     public RFloat collisionRadius = null!;
-    public float MaxCollisionRadius => collisionRadius;
+    public float CollisionRadius => collisionRadius;
     /// <summary>
     /// The entirety of this circle must be within the viewfinder for a capture to succeed.
     /// </summary>
@@ -139,7 +146,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBu
     private static readonly List<FrozenCollisionInfo> frozenEnemies = new();
     public static IReadOnlyList<FrozenCollisionInfo> FrozenEnemies => frozenEnemies;
 
-    public void Initialize(BehaviorEntity _beh) {
+    public void LinkAndReset(BehaviorEntity _beh) {
         Beh = _beh;
         Beh.LinkDependentUpdater(this);
         var sortOrder = NextRenderCounter();
@@ -202,7 +209,21 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBu
     public void Alive() {
         EnableUpdates();
     }
-    
+
+    protected override void BindListeners() {
+        base.BindListeners();
+        RegisterService<IPlayerSimpleBulletCollisionReceiver>(this);
+        RegisterService<IPlayerPatherCollisionReceiver>(this);
+        RegisterService<IPlayerLaserCollisionReceiver>(this);
+        RegisterService<IPlayerBulletCollisionReceiver>(this);
+    }
+
+    public void Initialized(RealizedBehOptions? options) {
+        if (options.Try(out var o)) {
+            if (o.hp.Try(out var hp)) SetHP(hp, hp);
+        }
+    }
+
     public void ConfigureBoss(BossConfig b) {
         if (b.colors.cardColorR.a > 0 || b.colors.cardColorG.a > 0 || b.colors.cardColorB.a > 0) {
             RequestCardCircle(b.colors.cardColorR, b.colors.cardColorG, b.colors.cardColorB, b.CardRotator);
@@ -283,6 +304,8 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBu
         Color.clear : HPColor;
 
     public override void RegularUpdate() {
+        ReceivesBulletCollisions =
+            LocationHelpers.OnPlayableScreenBy(1 + collisionRadius, Beh.GlobalPosition()) && Vulnerable.HitsLand();
         _displayBarRatio = M.Lerp(_displayBarRatio, BarRatio, HPLerpRate * ETime.FRAME_TIME);
         if (hasDistorter) {
             distortPB.SetFloat(PropConsts.time, Beh.rBPI.t);
@@ -362,15 +385,6 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBu
     }
 
     #region ReceiveCollisionsFromPlayerBullets
-
-    /// <summary>
-    /// Receive a hit from a player bullet.
-    /// </summary>
-    /// <param name="pb">Player bullet configuration.</param>
-    /// <param name="bpi">Bullet information.</param>
-    /// <returns>True iff the hit occured (may return false if the bullet is configured to do no damage or is on cooldown)</returns>
-    public bool TakeHit(in PlayerBullet pb, in ParametricInfo bpi) =>
-        TakeHit(in pb, bpi.loc, in bpi.id);
     
     public bool TakeHit(in PlayerBullet pb, in Vector2 location, in uint bpiId) {
         if ((pb.data.bossDmg > 0 || pb.data.stageDmg > 0)
@@ -382,35 +396,15 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent, ICircularSimpleBu
             return false;
     }
     
-    public void ProcessSimple(BulletManager.SimpleBulletCollection sbc) {
-        throw new Exception("Player bullet x enemy collisions must be bucketed!");
-    }
-
-    public void ProcessSimpleBuckets(BulletManager.SimpleBulletCollection sbc, ReadOnlySpan2D<List<int>> indexBuckets) {
-        var deleted = sbc.Deleted;
-        var data = sbc.Data;
-        var sbCollider = sbc.Collider;
-        var loc = Location;
-        float rad = collisionRadius;
-        for (int y = 0; y < indexBuckets.Height; ++y)
-        for (int x = 0; x < indexBuckets.Width; ++x) {
-            var bucket = indexBuckets[y, x];
-            for (int ib = 0; ib < bucket.Count; ++ib) {
-                var index = bucket[ib];
-                if (deleted[index]) continue;
-                ref var sbn = ref data[index];
-                if (sbCollider.CheckCollision(in sbn.bpi.loc.x, in sbn.bpi.loc.y, in sbn.direction, in sbn.scale, in loc.x, in loc.y, in rad)
-                    && sbn.bpi.ctx.playerBullet.Try(out var de)
-                    && TakeHit(de, in sbn.bpi)) {
-                    sbc.RunCollisionControls(index);
-                    if (de.data.destructible) {
-                        sbc.MakeCulledCopy(index);
-                        sbc.DeleteSB(index);
-                    }
-                }
-            }
-        }
-    }
+    bool ICircularPlayerSimpleBulletCollisionReceiver.TakeHit(in PlayerBullet pb, in ParametricInfo bpi) =>
+        TakeHit(in pb, bpi.loc, in bpi.id);
+    void ICircularPlayerPatherCollisionReceiver.TakeHit(CurvedTileRenderPather pather, Vector2 collLoc,
+        PlayerBullet plb) => TakeHit(plb, collLoc, pather.BPI.id);
+    void ICircularPlayerLaserCollisionReceiver.TakeHit(CurvedTileRenderLaser laser, Vector2 collLoc,
+        PlayerBullet plb) => TakeHit(plb, collLoc, laser.BPI.id);
+    void ICircularPlayerBulletCollisionReceiver.TakeHit(Bullet bullet, Vector2 collLoc,
+        PlayerBullet plb) => TakeHit(plb, collLoc, bullet.BPI.id);
+    
 
     private const float SHOTGUN_DIST_MAX = 1f;
     private const float SHOTGUN_DIST_MIN = 2f;

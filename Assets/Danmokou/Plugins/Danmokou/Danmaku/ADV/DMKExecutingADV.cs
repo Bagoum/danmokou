@@ -47,6 +47,9 @@ public abstract class DMKExecutingADV<I, D> : BaseExecutingADV<I, D>, IRegularUp
     public DMKExecutingADV(ADVInstance inst) : base(inst) {
         VN = inst.VN as DMKVNState ?? throw new Exception($"Expected DMKVNState, found {inst.VN.GetType()}");
         //probably don't need to add these to tokens as they'll be destroyed with VN destruction.
+        //Note that the ADV interactables layer is rendered to screen *by default*--
+        //we use UITKRerenderer here because we want to have the rendering fade out and fade in during VN screen
+        // fades, as if the interactables are "part of the world" and not "part of the UI". 
         rerenderer = VN.Add(new UITKRerenderer(UIBuilderRenderer.ADV_INTERACTABLES_GROUP), sortingID: 10000);
         tokens.Add(ETime.RegisterRegularUpdater(this));
         

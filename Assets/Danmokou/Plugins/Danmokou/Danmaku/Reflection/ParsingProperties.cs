@@ -10,7 +10,10 @@ namespace Danmokou.SM {
 public class ParsingProperty {
     public static ParsingProperty Strict(ReflCtx.Strictness strict) => new StrictProp(strict);
     public static ParsingProperty WarnPrefix() => new WarnPrefixFlag();
-    public static ParsingProperty TrueArgumentOrder() => new TrueArgumentOrderFlag();
+    /// <summary>
+    /// If using BDSL2, make this the first property.
+    /// </summary>
+    public static ParsingProperty BDSL2() => new NoOp();
 
     #region impl
 
@@ -24,7 +27,8 @@ public class ParsingProperty {
     }
 
     public class WarnPrefixFlag : ParsingProperty { }
-    public class TrueArgumentOrderFlag : ParsingProperty { }
+    
+    public class NoOp : ParsingProperty { }
 
     #endregion
 }
@@ -32,7 +36,6 @@ public class ParsingProperty {
 public class ParsingProperties {
     public readonly ReflCtx.Strictness strict = ReflCtx.Strictness.COMMAS;
     public readonly bool warnPrefix = false;
-    public readonly bool trueArgumentOrder = false;
 
     public ParsingProperties(IEnumerable<ParsingProperty> props) {
         foreach (var p in props) {
@@ -40,8 +43,7 @@ public class ParsingProperties {
                 strict = s.value;
             else if (p is WarnPrefixFlag) 
                 warnPrefix = true;
-            else if (p is TrueArgumentOrderFlag)
-                trueArgumentOrder = true;
+            else if (p is NoOp) { }
             else throw new Exception($"No handling for parsing property {p.GetType()}");
         }
     }

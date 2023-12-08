@@ -34,7 +34,7 @@ public interface IFixedXMLObjectContainer {
 } 
 
 /// <inheritdoc cref="IFixedXMLObject"/>
-public record FixedXMLObject(float l, float t, float? w = 100, float? h = 100) : IFixedXMLObject {
+public record FixedXMLObject(float l, float t, float? w, float? h) : IFixedXMLObject {
     public string Descriptor { get; init; } = "";
     ICObservable<float> IFixedXMLObject.Left => Left;
     public Evented<float> Left { get; } = new(l);

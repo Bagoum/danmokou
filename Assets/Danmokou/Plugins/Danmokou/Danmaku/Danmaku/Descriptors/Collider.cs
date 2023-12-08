@@ -44,7 +44,7 @@ public class NoneCollider : ICollider {
         false;
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public CollisionResult CheckGrazeCollision(in float x, in float y, in Vector2 dir, in float scale, in Hurtbox target) =>
-        CollisionMath.noColl;
+        CollisionMath.NoCollision;
 }
 
 public class CircleCollider : ICollider {

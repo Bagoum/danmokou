@@ -66,7 +66,7 @@ public static class TSMReflection {
     public static TTaskPattern Re(StateMachine sm) => sm.Start;
     public static TTaskPattern Wait(Synchronizer synchr) {
         var tp = SMReflection.Wait(synchr);
-        return smh => tp(smh);
+        return smh => tp.Start(smh);
     }
 
     [Alias("z")]

@@ -23,14 +23,20 @@ using PropConsts = Danmokou.Graphics.PropConsts;
 
 namespace Danmokou.UI {
 [Serializable]
-public struct RenderablePane {
-    public PanelSettings pane;
+public class RenderablePane {
+    public PanelSettings pane = null!;
     /// <summary>
     /// All panes with the same group will be rendered to the same renderTex.
-    /// <br/>Only group 0 will be rendered to screen by UIBuilderRenderer.
-    /// <br/>Consumers can obtain render textures for groups by listening to <see cref="UIBuilderRenderer.RTGroups"/>.
     /// </summary>
     public int renderGroup;
+    /// <summary>
+    /// If provided, UIBuilderRenderer will render the contents of the renderTex to the sprite renderer.
+    /// <br/>If multiple panes share the same group, only one needs to include this.
+    /// <br/>Alternatively, consumers can manually render panes by listening to <see cref="UIBuilderRenderer.RTGroups"/>.
+    /// </summary>
+    public SpriteRenderer? renderer;
+    [NonSerialized] public MaterialPropertyBlock? pb;
+    [NonSerialized] public DisturbedAnd renderingAllowed = new();
 
     public void Deconstruct(out PanelSettings p, out int g) {
         p = pane;
@@ -46,17 +52,13 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
     private readonly DMCompactingArray<UIController> controllers = new(8);
     
     public RenderablePane[] settings = null!;
-    private MaterialPropertyBlock pb = null!;
     public RenderTexture unsetRT = null!;
-
-    private Cancellable allCancel = null!;
-    private SpriteRenderer sr = null!;
-    public StyleSheet scrollHeightFix = null!;
 
     private readonly Dictionary<int, RenderTexture> groupToRT = new();
     /// <summary>
     /// Render textures for each UITK rendering group.
-    /// <br/>Note that render group 0 is automatically rendered to screen by this class.
+    /// <br/>Consumers may manually render these textures if they are not configured to render by default in
+    ///  <see cref="settings"/>, or if their rendering has been disabled via <see cref="DisableDefaultRenderingForGroup"/>.
     /// </summary>
     public Evented<Dictionary<int, RenderTexture>> RTGroups { get; } = new(null!);
 
@@ -79,8 +81,11 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
     }
 
     private void Awake() {
-        (sr = GetComponent<SpriteRenderer>()).GetPropertyBlock(pb = new MaterialPropertyBlock());
-        allCancel = new Cancellable();
+        foreach (var s in settings)
+            if (s.renderer != null) {
+                s.renderer!.GetPropertyBlock(s.pb = new MaterialPropertyBlock());
+                AddToken(s.renderingAllowed.Subscribe(b => s.renderer.enabled = b));
+            }
     }
 
     protected override void BindListeners() {
@@ -112,14 +117,30 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
         }
         foreach (var v in oldRTs.Values)
             v.Release();
-        pb.SetTexture(PropConsts.renderTex, groupToRT[0]);
-        sr.SetPropertyBlock(pb);
+        for (int ii = 0; ii < settings.Length; ++ii)
+            if (settings[ii].renderer != null) {
+                settings[ii].pb!.SetTexture(PropConsts.renderTex, groupToRT[settings[ii].renderGroup]);
+                settings[ii].renderer!.SetPropertyBlock(settings[ii].pb);
+            }
         RTGroups.OnNext(groupToRT);
     }
 
     /*public void AddToPane(VisualElement ve, int renderGroup) {
         GroupToLeaf[renderGroup].Add(ve);
     }*/
+
+    /// <summary>
+    /// Disable the default rendering (handled by <see cref="UIBuilderRenderer"/>) for UI panes.
+    /// Instead, the UI pane may be manually rendered by listening to <see cref="RTGroups"/> and assigning the texture
+    ///  to a sprite.
+    /// </summary>
+    /// <param name="renderGroup">The render group number as configured in <see cref="RenderablePane"/>.</param>
+    public IDisposable DisableDefaultRenderingForGroup(int renderGroup) {
+        for (int ii = 0; ii < settings.Length; ++ii)
+            if (settings[ii].renderGroup == renderGroup)
+                return settings[ii].renderingAllowed.AddConst(false);
+        throw new Exception($"No render group by id {renderGroup}");
+    }
 
     public static Vector2 ComputeXMLDimensions(Vector2 screenDim) =>
         new(screenDim.x / MainCamera.ScreenWidth * UIResolution.w,
@@ -132,14 +153,16 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
     
 
     protected override void OnDisable() {
-        foreach (var (s, _) in settings)
-            s.targetTexture = unsetRT;
-        pb.SetTexture(PropConsts.renderTex, unsetRT);
-        sr.SetPropertyBlock(pb);
+        foreach (var p in settings) {
+            if (p.renderer != null) {
+                p.pb!.SetTexture(PropConsts.renderTex, unsetRT);
+                p.renderer.SetPropertyBlock(p.pb);
+            }
+            p.pane.targetTexture = unsetRT;
+        }
         foreach (var v in groupToRT.Values)
             v.Release();
         groupToRT.Clear();
-        allCancel.Cancel();
         base.OnDisable();
     }
 

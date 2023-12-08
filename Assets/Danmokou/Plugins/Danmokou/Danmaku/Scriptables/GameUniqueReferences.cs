@@ -36,6 +36,7 @@ public class GameUniqueReferences : ScriptableObject {
     public SOTextAssets[] fileStateMachines = null!;
     public NamedTextAsset[] licenses = null!;
 #if UNITY_EDITOR
+    [Tooltip("List of folders containing .bdsl script files. Used for IL2CPP compilation.")]
     public string[] scriptFolders = null!;
 #endif
 

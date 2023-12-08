@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Expressions;
+using BagoumLib.Functional;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -226,21 +227,31 @@ public class PICustomData {
             else throw new ArgumentOutOfRangeException($"{ext}");
         } else {
             if (ext == ExUtils.tfloat)
-                WriteFloat(id, gcx.MaybeGetFloat(varName) ?? (useDefaultValue ?
+                WriteFloat(id, gcx.MaybeGetFloat(varName) ?? 
+                               gcx.envFrame.GetValue<float>(varName).ValueOrSNull() ??
+                               (useDefaultValue ?
                     default :
                     throw new Exception($"No float {varName} in bullet GCX")));
             else if (ext == ExUtils.tint)
-                WriteInt(id, (useDefaultValue ? default : throw new Exception($"No int {varName} in bullet GCX")));
+                WriteInt(id, 
+                    gcx.envFrame.GetValue<int>(varName).ValueOrSNull() ??
+                    (useDefaultValue ? default : throw new Exception($"No int {varName} in bullet GCX")));
             else if (ext == ExUtils.tv2)
-                WriteVector2(id, gcx.V2s.MaybeGet(varName) ?? (useDefaultValue ?
+                WriteVector2(id, gcx.V2s.MaybeGet(varName) ?? 
+                                 gcx.envFrame.GetValue<Vector2>(varName).ValueOrSNull() ??
+                                 (useDefaultValue ?
                     default :
                     throw new Exception($"No vector2 {varName} in bullet GCX")));
             else if (ext == ExUtils.tv3)
-                WriteVector3(id, gcx.V3s.MaybeGet(varName) ?? (useDefaultValue ?
+                WriteVector3(id, gcx.V3s.MaybeGet(varName) ??
+                                 gcx.envFrame.GetValue<Vector3>(varName).ValueOrSNull() ??
+                                 (useDefaultValue ?
                     default :
                     throw new Exception($"No vector3 {varName} in bullet GCX")));
             else if (ext == ExUtils.tv2rv2)
-                WriteV2RV2(id, gcx.RV2s.MaybeGet(varName) ?? (useDefaultValue ?
+                WriteV2RV2(id, gcx.RV2s.MaybeGet(varName) ??
+                               gcx.envFrame.GetValue<V2RV2>(varName).ValueOrSNull() ??
+                               (useDefaultValue ?
                     default :
                     throw new Exception($"No V2RV2 {varName} in bullet GCX")));
             else throw new ArgumentOutOfRangeException($"{ext}");

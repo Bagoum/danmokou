@@ -4,6 +4,7 @@ using BagoumLib.Cancellation;
 using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
 using Danmokou.Graphics;
 using Danmokou.Reflection;
@@ -13,7 +14,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 
 namespace Danmokou.Behavior.Display {
-public abstract class DisplayController : MonoBehaviour {
+public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependent {
     public enum RotationMethod {
         Manual,
         InVelocityDirection,
@@ -39,20 +40,21 @@ public abstract class DisplayController : MonoBehaviour {
 
     [ReflectInto(typeof(BPY))]
     public RString rotator = null!;
-    public BPY? RotatorF { get; set; }
+    private BPY? rotatorF;
     private float lastScalerValue = 1f;
     private Vector3 lastScale = Vector3.one;
 
     protected virtual void Awake() {
-        RotatorF = rotator.Get().IntoIfNotNull<BPY>();
+        rotatorF = rotator.Get().IntoIfNotNull<BPY>();
     }
 
-    public virtual void ResetV(BehaviorEntity parent) {
+    public virtual void LinkAndReset(BehaviorEntity parent) {
         tr = transform;
         beh = parent;
+        beh.LinkDependentUpdater(this);
         pb = CreatePB();
         flipX = flipY = false;
-        RotatorF = rotator.Get().IntoIfNotNull<BPY>();
+        rotatorF = rotator.Get().IntoIfNotNull<BPY>();
         SetTransform();
         Show();
     }
@@ -87,9 +89,15 @@ public abstract class DisplayController : MonoBehaviour {
     public abstract MaterialPropertyBlock CreatePB();
 
     //This function is called from a BEH in RegularUpdateRender.
-    public virtual void UpdateRender() {
+    /// <summary>
+    /// Update the rendering for this display. Called from <see cref="BehaviorEntity.UpdateRendering"/>.
+    /// </summary>
+    /// <param name="isFirstFrame">True if this is the first frame update for the object.
+    /// It is sometimes efficient to skip rendering updates when !ETime.LastUpdateForScreen,
+    /// but rendering updates should not be skipped on the first frame.</param>
+    public virtual void UpdateRender(bool isFirstFrame) {
         SetTransform();
-        if (ETime.LastUpdateForScreen) {
+        if (ETime.LastUpdateForScreen || isFirstFrame) {
             pb.SetFloat(PropConsts.time, time);
         }
     }
@@ -108,8 +116,8 @@ public abstract class DisplayController : MonoBehaviour {
         if (yScaleBopPeriod > 0) {
             scale.y *= 1 + yScaleBopAmplitude * M.Sin(BMath.TAU * time / yScaleBopPeriod);
         }
-        if (RotatorF != null) {
-            tr.localEulerAngles = new Vector3(0, 0, RotatorF(beh.rBPI));
+        if (rotatorF != null) {
+            tr.localEulerAngles = new Vector3(0, 0, rotatorF(beh.rBPI));
         }
         if (scale != lastScale)
             tr.localScale = lastScale = scale;
@@ -123,12 +131,12 @@ public abstract class DisplayController : MonoBehaviour {
         tr.eulerAngles = new Vector3(0, 0, deg);
     }
 
-    public virtual void FaceInDirection(Vector2 dir) {
-        if (rotationMethod != RotationMethod.Manual && dir.x * dir.x + dir.y * dir.y > 0f) {
+    public virtual void FaceInDirection(Vector2 delta) {
+        if (rotationMethod != RotationMethod.Manual && delta.x * delta.x + delta.y * delta.y > 0f) {
             FaceInDirectionRaw(BMath.radDeg * (rotationMethod switch {
-                RotationMethod.InVelocityDirection => (float)Math.Atan2(dir.y, dir.x),
-                RotationMethod.VelocityDirectionPlus90 => (float)Math.Atan2(dir.x, -dir.y),
-                RotationMethod.VelocityDirectionMinus90 => (float)Math.Atan2(-dir.x, dir.y),
+                RotationMethod.InVelocityDirection => (float)Math.Atan2(delta.y, delta.x),
+                RotationMethod.VelocityDirectionPlus90 => (float)Math.Atan2(delta.x, -delta.y),
+                RotationMethod.VelocityDirectionMinus90 => (float)Math.Atan2(-delta.x, delta.y),
                 _ => 0
             }));
         }

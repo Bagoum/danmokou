@@ -67,20 +67,6 @@ public enum SAAngle {
     /// </summary>
     TANGENT_BANK
 }
-/// <summary>
-/// Enum to describe an operation that may optionally block.
-/// </summary>
-public enum Blocking {
-    /// <summary>
-    /// The operation is blocking and must finish before the next operation.
-    /// </summary>
-    BLOCKING,
-    /// <summary>
-    /// The operation is nonblocking; the next operation may begin immediately.
-    /// </summary>
-    NONBLOCKING
-}
-
 
 /// <summary>
 /// Enum that describe components of a V2RV2 location.
@@ -132,9 +118,9 @@ public enum Facing {
     /// </summary>
     VELOCITY, 
     /// <summary>
-    /// Starts from original_angle + the velocity direction.
+    /// Starts from the firer's manually-set rotation function (via <see cref="Danmaku.Options.BehOption.Rotate"/>).
     /// </summary>
-    ROTVELOCITY
+    ROTATOR
 }
 
 

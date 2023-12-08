@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d7768018aff40589017a165e079b3c1, type: 3}
+  m_Name: FB Game Data
+  m_EditorClassIdentifier: 
+  gameDefinition: {fileID: 11400000, guid: 6a4ef9f5ad53ef042be5477f1be635be, type: 2}
+  mainMenu: {fileID: 11400000, guid: ea5109e5a9d148f4db1c02b23d76ec2a, type: 2}
+  defaultUIFrame: {fileID: 21300000, guid: fd60a7ae3ce4be640b9b311d9d70969e, type: 3}
+  unitScene: {fileID: 0}
+  defaultTransition: {fileID: 11400000, guid: 1c9c24ebebfcd504d9bcf96bbaa75e90, type: 2}
+  dialogue: []
+  bossMetadata: []
+  tracks:
+  - {fileID: 11400000, guid: 9d9586bf58042744aa6b8ed2c3c14827, type: 2}
+  - {fileID: 11400000, guid: ee23558615347934da7e51454294e0f9, type: 2}
+  - {fileID: 11400000, guid: 2196cac1dd0c01c4ba573d37fa5c6194, type: 2}
+  - {fileID: 11400000, guid: 57b44994773542d49b225e98987df8dc, type: 2}
+  - {fileID: 11400000, guid: eb40e118c5ff73348989f8197c60fb8e, type: 2}
+  - {fileID: 11400000, guid: 95a55accaa086aa4798d46640aa19ac8, type: 2}
+  - {fileID: 11400000, guid: b6b52c8aa3d85e84f9ce61a80ac13ab0, type: 2}
+  items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
+  prefabReferences: {fileID: 11400000, guid: 842bcc7c616103e4c9880c49f9735bb4, type: 2}
+  suzunoyaReferences: {fileID: 11400000, guid: a936563f4e58b294db033ff8ee6be6f8, type: 2}
+  advReferences: {fileID: 0}
+  uxmlDefaults: {fileID: 11400000, guid: b4213b3830762944fbcb9250a4b73463, type: 2}
+  SFX:
+  - {fileID: 11400000, guid: 2765638c24dcd6f4684c2acbc07800c4, type: 2}
+  summonables:
+  - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
+  fileStateMachines: []
+  licenses:
+  - name: Binary
+    file: {fileID: 4900000, guid: fbfd30baeb7f39c429778cc98bb86b2a, type: 3}
+  - name: Danmokou
+    file: {fileID: 4900000, guid: 72e87dc68a2c9f340b55e6a3020489a9, type: 3}
+  - name: Suzunoya
+    file: {fileID: 4900000, guid: 6084a1326dccb4f409163c7bee129244, type: 3}
+  - name: SuzunoyaUnity
+    file: {fileID: 4900000, guid: a16e43d784102664e80cec9f25cb52c6, type: 3}
+  scriptFolders: []
+  fastParsing: 0

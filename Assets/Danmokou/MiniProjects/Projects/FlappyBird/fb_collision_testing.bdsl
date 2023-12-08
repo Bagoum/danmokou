@@ -1,0 +1,35 @@
+<#> strict(comma)
+pattern({
+	#boss simp.kasen
+})
+phase(0)
+	paction(0)
+		shift-phase-to(1)
+
+<!> type non `Pathers Example`
+<!> hp 10000
+phase 0
+	paction 0
+        position 3 0
+        sync blocker <-3;:> gsr2 2 <;3:> { 
+            root zero 
+            center
+        } summon tpnrot py sine(0, 1, t) stall {
+            rotate(30 * t)
+        }
+///
+        sync spikes <> gsr {
+            root zero
+        } summon nrvelocity(px(-1)) stall {
+
+        }
+///
+        async ellipse-red/w <> gcr2 12 _ <3h> {
+        } gsr2c 49 {
+
+        } s rvelocity cx 4
+///
+        async ellipse-green/b <15> gcr2 12 _ <7h> {
+        } gsr2c 20 {} s rvelocity cx 2.4
+		sync arrowpather-red/w <> gsr2c 12 { 
+		} pather 2 2 polar(2 * t, sine(3, 20, t)) { }

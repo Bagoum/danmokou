@@ -14,7 +14,7 @@ using static Danmokou.Core.LocalizedStrings.Generic;
 
 namespace Danmokou.UI.XML {
 /// <summary>
-/// Class to manage the main menu UI for campaign-type games.
+/// Class to manage the game results screen that allows saving replays.
 /// </summary>
 [Preserve]
 public class XMLReplaySaveMenu : UIController {
@@ -30,11 +30,11 @@ public class XMLReplaySaveMenu : UIController {
                 options.Add(new FuncNode(() => !didSave ? save_replay : replay_saved, n => {
                     if (didSave) return new UIResult.StayOnNode(true);
                     var nameEntry = new TextInputNode(LString.Empty);
-                    return PopupUIGroup.LRB2(n, () => save_replay,
+                    return PopupUIGroup.CreatePopup(n, () => save_replay,
                         r => new UIColumn(r, new UINode(replay_name) {
                             Prefab = GameManagement.References.uxmlDefaults.PureTextNode, Passthrough = true
                         }, nameEntry.With(noSpacePrefixClass, centerTextClass)),
-                        null, new UINode[] {
+                        new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
                             UIButton.Save(() => {
                                 rec.Metadata.Record.AssignName(nameEntry.DataWIP);
                                 //The name edit changes the name under the record 
@@ -42,7 +42,7 @@ public class XMLReplaySaveMenu : UIController {
                                 SaveData.p.SaveNewReplay(rec);
                                 return didSave = true;
                             }, n.ReturnGroup),
-                        });
+                        }));
                 }));
             }
             var (lNodes, rNodes) = GameMetadataDisplay(inst.record);

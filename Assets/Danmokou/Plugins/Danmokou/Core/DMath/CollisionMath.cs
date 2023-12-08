@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using BagoumLib.Expressions;
 using Danmokou.Core;
@@ -42,7 +43,7 @@ public readonly struct CollisionResult {
 }
 
 public static class CollisionMath {
-    public static readonly CollisionResult noColl = new(false, false);
+    public static readonly CollisionResult NoCollision = new(false, false);
     private static readonly Type t = typeof(CollisionMath);
 /*
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -92,7 +93,7 @@ public static class CollisionMath {
     public static CollisionResult GrazeCircleOnCircle(in Hurtbox h, in float x, in float y, in float r) {
         var dx = x - h.x;
         var dy = y - h.y;
-        var lrSum = r + h.largeRadius;
+        var lrSum = r + h.grazeRadius;
         var rSum = r + h.radius;
         var d2 = dx * dx + dy * dy;
         return new(d2 < rSum * rSum,  d2 < lrSum * lrSum);
@@ -102,7 +103,7 @@ public static class CollisionMath {
     public static CollisionResult GrazeCircleOnCircle(in Hurtbox h, in float x, in float y, in float r, in float scale) {
         var dx = x - h.x;
         var dy = y - h.y;
-        var lrSum = (r * scale) + h.largeRadius;
+        var lrSum = (r * scale) + h.grazeRadius;
         var rSum = (r * scale) + h.radius;
         var d2 = dx * dx + dy * dy;
         return new(d2 < rSum * rSum,  d2 < lrSum * lrSum);
@@ -188,7 +189,7 @@ public static class CollisionMath {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CollisionResult GrazeCircleOnSegments(in Hurtbox c1, Vector2 src, Vector2[] points, int start, int skip, int end, float radius, float cos_rot, float sin_rot, out int segment) {
         segment = 0;
-        if (start >= end) return noColl;
+        if (start >= end) return NoCollision;
         bool grazed = false;
         // use src.x to store delta vector to target, derotated.
         src.x = c1.x - src.x;
@@ -197,7 +198,7 @@ public static class CollisionMath {
         src.y = cos_rot * src.y - sin_rot * src.x;
         src.x = _gbg;
 
-        float lradius2 = (radius + c1.largeRadius) * (radius + c1.largeRadius);
+        float lradius2 = (radius + c1.grazeRadius) * (radius + c1.grazeRadius);
         float radius2 = (radius + c1.radius) * (radius + c1.radius);
         Vector2 delta; Vector2 g;
         float projection_unscaled; float d2;
@@ -275,7 +276,7 @@ public static class CollisionMath {
         
         //Early exit condition: ||src -> target||^2 > 2(max_dist^2 + Lrad^2)
         //The extra 2 is because 2(x^2+y^2) is an upper bound for (x+y)^2.
-        if (dx * dx + dy * dy > 2f * (max_dist2 + h.largeRadius2)) return noColl;
+        if (dx * dx + dy * dy > 2f * (max_dist2 + h.grazeRadius2)) return NoCollision;
         
         //Derotate and subtract by node1:local to get the G vector (node1:world -> target)
         float _dx = direction.x * dx + direction.y * dy - node1.x;
@@ -283,7 +284,7 @@ public static class CollisionMath {
         dx = _dx;
 
         float radius2 = (radius + h.radius) * (radius + h.radius);
-        float lradius2 = (radius + h.largeRadius) * (radius + h.largeRadius);
+        float lradius2 = (radius + h.grazeRadius) * (radius + h.grazeRadius);
 
         //Dot product of A:(node1:world -> target) and B:(node1 -> node2)
         float dot = dx * delta.x + dy * delta.y;
@@ -409,7 +410,7 @@ public static class CollisionMath {
         var dy = (h.y - y) / scale;
         //Early exit condition: ||src -> target||^2 > 2*(diag^2 + Lrad^2)
         //The extra 2 is because 2(x^2+y^2) is an upper bound for (x+y)^2.
-        if (dx * dx + dy * dy > 2f * (diag2 + h.largeRadius2)) return noColl;
+        if (dx * dx + dy * dy > 2f * (diag2 + h.grazeRadius2)) return NoCollision;
         //First DErotate the delta vector and get its absolutes. Note we use -sin_rot
         //Store delta vector in Rect for efficiency
         float _dx = direction.x * dx + direction.y * dy;
@@ -422,18 +423,18 @@ public static class CollisionMath {
         if (dy < halfDim.y) {
             //In "front" of the rectangle.
             return new CollisionResult(dx - halfDim.x < h.radius,
-                dx - halfDim.x < h.largeRadius);
+                dx - halfDim.x < h.grazeRadius);
         }
         if (dx < halfDim.x) {
             // On "top" of the rectangle
             return new CollisionResult(dy - halfDim.y < h.radius,
-                dy - halfDim.y < h.largeRadius);
+                dy - halfDim.y < h.grazeRadius);
         }
         //In front and on top.
         dx -= halfDim.x;
         dy -= halfDim.y;
         float dsqr = dx * dx + dy * dy;
-        return new CollisionResult(dsqr < h.radius2, dsqr < h.largeRadius2);
+        return new CollisionResult(dsqr < h.radius2, dsqr < h.grazeRadius2);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -466,5 +467,75 @@ public static class CollisionMath {
         dy -= rectHalfY;
         return dx * dx + dy * dy < cRad * cRad;
     }
+    
+    public const float skinWidth = 0.001f;
+    public const float distIntegrator = 0.002f;
+    public const float slidingFriction = 0.05f;
+    private static readonly List<Collider2D> doNotCollide = new(2);
+    
+    public static (Vector2 movement, Vector2 carried) CollideAndSlide(Vector2 delta, Vector2 pos, float radius, int collisionMask,
+        out bool collided, out bool squashed, int bounces = 7) {
+        var movement = Vector2.zero;
+        var carried = Vector2.zero;
+        collided = false;
+        squashed = false;
+        RaycastHit2D DoCast(Vector2 offset, Vector2 dir, float dist) => 
+            Physics2D.CircleCast(pos + movement + carried + offset, radius - skinWidth, dir, dist, collisionMask);
+        doNotCollide.Clear();
+        for (var leftover = delta; bounces > 0; --bounces) {
+            var cast = DoCast(Vector2.zero, leftover.normalized, leftover.magnitude + skinWidth);
+            if (cast.collider == null)
+                return (movement + leftover, carried);
+            collided = true;
+            if (cast.distance <= 0) {
+                //Push out and try again
+                if (Vector2.Dot(cast.normal, leftover) > 0 && DoCast(leftover, cast.normal, 0).collider == null)
+                    return (movement + leftover, carried);
+                
+                for (var pushOut = distIntegrator;; pushOut += distIntegrator) {
+                    var castPushOut = DoCast(cast.normal * pushOut, cast.normal, 0);
+                    if (castPushOut.collider == cast.collider) continue;
+                    if (castPushOut.collider != null && castPushOut.collider != cast.collider) {
+                        //If the second collider has already received an internal collision, then we fail.
+                        //Otherwise, we allow an extra bounce to try to handle the second collider.
+                        for (int ii = 0; ii < doNotCollide.Count; ++ii)
+                            if (doNotCollide[ii] == castPushOut.collider) {
+                                squashed = true;
+                                return (Vector2.zero, Vector2.zero);
+                            }
+                        ++bounces;
+                    }
+                    var snap = cast.normal * pushOut;
+                    if (Vector2.Dot(snap, leftover) > 0) {
+                        var snapProject = M.ProjectVector(snap, leftover);
+                        if (snapProject.sqrMagnitude > leftover.sqrMagnitude) {
+                            //Effect of pushout is greater than remaining leftovers, so end here
+                            // (go to next round with zero movement to ensure no second collider collision)
+                            leftover = Vector2.zero;
+                        } else {
+                            leftover -= snapProject;
+                        }
+                        movement += snapProject;
+                        carried += snap - snapProject;
+                    } else
+                        carried += snap;
+                    doNotCollide.Add(cast.collider);
+                    break;
+                }
+            } else {
+                var realDist = cast.distance - skinWidth;
+                for (; realDist > 0f; realDist -= distIntegrator) 
+                    if (DoCast(Vector2.zero, leftover.normalized, realDist).collider == null) 
+                        break;
+                var snap = leftover.normalized * Math.Max(0f, realDist);
+                leftover -= snap;
+                leftover = (leftover - M.ProjectVectorUnit(leftover, cast.normal)) * (1-slidingFriction);
+                movement += snap;
+            }
+        }
+        return (movement, carried);
+    }
+
+    
 }
 }

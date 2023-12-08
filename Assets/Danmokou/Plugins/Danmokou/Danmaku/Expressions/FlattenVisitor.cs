@@ -165,7 +165,7 @@ class FlattenVisitor : ExpressionVisitor {
                 return ExC(Ex.Lambda(Ex.Convert(o, node.Type)).Compile().DynamicInvoke());
             }
 #endif
-            if (o is UnaryExpression ue && ue.NodeType == ExpressionType.Convert) {
+            if (o is UnaryExpression { NodeType: ExpressionType.Convert } ue) {
                 if (node.Type == ue.Type || allowedDoubleCasts.Contains((node.Type, ue.Type)))
                     o = ue.Operand;
             }

@@ -118,8 +118,9 @@ public abstract class UIGroup {
     /// </summary>
     public UINode? ExitNodeOverride { get; set; }
     public int? ExitIndexOverride { get; init; }
-    public Func<Task?>? OnLeave { private get; init; }
-    public Func<Task?>? OnEnter { private get; init; }
+    public Func<UIGroup, Task?>? OnEnter { private get; init; }
+    public Func<UIGroup, Task?>? OnLeave { private get; init; }
+    /// <inheritdoc cref="ScreenExitEnd"/>
     public Action<UIGroup>? OnScreenExitEnd { private get; init; }
     
     
@@ -345,15 +346,19 @@ public abstract class UIGroup {
 
     public virtual Task? EnterGroup() {
         EnterShow();
-        return OnEnter?.Invoke();
+        return OnEnter?.Invoke(this);
     }
 
     protected virtual Task LeaveGroupTasks() {
-        return OnLeave?.Invoke() ?? Task.CompletedTask;
+        return OnLeave?.Invoke(this) ?? Task.CompletedTask;
     }
     public Task LeaveGroup() => LeaveGroupTasks().ContinueWithSync(() => LeaveHide());
     
     public virtual void ScreenExitStart() { }
+    
+    /// <summary>
+    /// Called by the containing screen after it has transitioned to a different screen.
+    /// </summary>
     public void ScreenExitEnd() {
         OnScreenExitEnd?.Invoke(this);
     }
@@ -422,6 +427,14 @@ public class UIRow : UIGroup {
     };
 }
 
+public record PopupButtonOpts {
+    public record LeftRightFlush(UINode?[]? left, UINode?[] right) : PopupButtonOpts {
+        public static LeftRightFlush Default { get; } = new(null, Array.Empty<UINode>());
+    }
+
+    public record Centered(UINode?[]? options): PopupButtonOpts;
+}
+
 public class PopupUIGroup : CompositeUIGroup {
     private UINode Source { get; }
     
@@ -430,24 +443,30 @@ public class PopupUIGroup : CompositeUIGroup {
     private readonly UIRenderConstructed render;
 
     /// <summary>
-    /// Create a popup.
+    /// Create a popup with a row of action buttons at the bottom.
     /// </summary>
     /// <param name="source">The node that spawned the popup</param>
     /// <param name="header">Popup header (optional)</param>
     /// <param name="bodyInner">Constructor for the UIGroup containing the popup messages, entry box, etc</param>
-    /// <param name="leftOpts">Constructor for left-flush options. If null, creates a single Back button.</param>
-    /// <param name="rightOpts">Constructor for right-flush options</param>
+    /// <param name="buttons">Configuration for action buttons</param>
     /// <returns></returns>
-    public static PopupUIGroup LRB2(UINode source, Func<LString>? header, Func<UIRenderSpace, UIGroup> bodyInner,
-        UINode?[]? leftOpts, UINode?[] rightOpts) {
+    public static PopupUIGroup CreatePopup(UINode source, Func<LString>? header, Func<UIRenderSpace, UIGroup> bodyInner,
+        PopupButtonOpts buttons) {
         var render = new UIRenderConstructed(source.Screen.AbsoluteTerritory, XMLUtils.Prefabs.Popup);
         var bodyGroup = bodyInner(new UIRenderExplicit(source.Screen, _ => render.HTML.Q("BodyHTML")));
-        leftOpts ??= new UINode[] { UIButton.Back(source) };
-        foreach (var n in leftOpts.FilterNone()) 
-            n.BuildTarget = ve => ve.Q("Left");
-        foreach (var n in rightOpts.FilterNone()) 
-            n.BuildTarget = ve => ve.Q("Right");
-        var opts = leftOpts.Concat(rightOpts).FilterNone().ToArray();
+        UINode?[] opts;
+        if (buttons is PopupButtonOpts.LeftRightFlush lr) {
+            var leftOpts = lr.left ?? new UINode[] { UIButton.Back(source) };
+            foreach (var n in leftOpts.FilterNone()) 
+                n.BuildTarget = ve => ve.Q("Left");
+            foreach (var n in lr.right.FilterNone()) 
+                n.BuildTarget = ve => ve.Q("Right");
+            opts = leftOpts.Concat(lr.right).ToArray();
+        } else if (buttons is PopupButtonOpts.Centered c) {
+            opts = c.options ?? new UINode[] { UIButton.Back(source) };
+            foreach (var n in opts.FilterNone())
+                n.BuildTarget = ve => ve.Q("Center");
+        } else throw new NotImplementedException();
         var exit = opts.FirstOrDefault(o => o is UIButton { Type: UIButton.ButtonType.Cancel });
         var entry = opts.FirstOrDefault(o => o is UIButton { Type: UIButton.ButtonType.Confirm }) ?? exit;
         var p = new PopupUIGroup(render, header, source, new VGroup(bodyGroup, 
@@ -533,6 +552,7 @@ public abstract class CompositeUIGroup : UIGroup {
         AddGroup(g);
         if (Visible)
             g.EnterShow(true);
+        Controller.Redraw();
     }
 
     public override IEnumerable<UINode> NodesAndDependentNodes => 

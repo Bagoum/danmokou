@@ -76,6 +76,12 @@ MonoBehaviour:
     - name: darkness
       prefab: {fileID: 8071127415623182345, guid: 8751d969a733b3a44860dc0083534ab5,
         type: 3}
+    - name: blocker
+      prefab: {fileID: 8107101900318358508, guid: 942ed5edd6f677c418f8d8705e0cc0ee,
+        type: 3}
+    - name: spikes
+      prefab: {fileID: 96228872570543763, guid: 8922def35ec655144aa56ae56b721eba,
+        type: 3}
   - groupTitle: Powerup
     prefabs:
     - name: powerup1

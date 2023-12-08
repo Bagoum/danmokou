@@ -10,9 +10,9 @@ public class GroupDisplayController : DisplayController {
     public DisplayController recvSprite = null!;
     public DisplayController[] all = null!;
 
-    public override void ResetV(BehaviorEntity parent) {
-        base.ResetV(parent);
-        for (int ii = 0; ii < all.Length; ++ii) all[ii].ResetV(parent);
+    public override void LinkAndReset(BehaviorEntity parent) {
+        base.LinkAndReset(parent);
+        for (int ii = 0; ii < all.Length; ++ii) all[ii].LinkAndReset(parent);
     }
 
     public override MaterialPropertyBlock CreatePB() {
@@ -37,13 +37,13 @@ public class GroupDisplayController : DisplayController {
 
     public override void SetProperty(int id, float val) => recvSprite.SetProperty(id, val);
 
-    public override void UpdateRender() {
-        base.UpdateRender();
-        for (int ii = 0; ii < all.Length; ++ii) all[ii].UpdateRender();
+    public override void UpdateRender(bool isFirstFrame) {
+        base.UpdateRender(isFirstFrame);
+        for (int ii = 0; ii < all.Length; ++ii) all[ii].UpdateRender(isFirstFrame);
     }
 
-    public override void FaceInDirection(Vector2 dir) {
-        for (int ii = 0; ii < all.Length; ++ii) all[ii].FaceInDirection(dir);
+    public override void FaceInDirection(Vector2 delta) {
+        for (int ii = 0; ii < all.Length; ++ii) all[ii].FaceInDirection(delta);
     }
 
     public override void SetSprite(Sprite? s) {

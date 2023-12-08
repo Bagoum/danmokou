@@ -9,7 +9,7 @@ The setup guide is [here](articles/setup.md) and the first tutorial is [here](ar
 
 (Screenshot from [Spirits in Memetic Paradise](https://www.bulletforge.org/u/bagoum/p/dong-fang-yin-yang-zang-spirits-in-memetic-paradise))
 
-If you have any comments, you can email me at `reneedebatz@gmail.com` or you can message me on Discord. My username is `Bagoum#4773`. 
+If you have any comments, you can email me at `reneedebatz@gmail.com` or you can message me on Discord. My username is `bagoum`. 
 
 The source code for the engine is licensed under MIT and can be found here: https://github.com/Bagoum/danmokou
 

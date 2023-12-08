@@ -73,8 +73,8 @@ public class AyaCamera : BehaviorEntity {
         GameManagement.Instance.CurrentBoss.rBPI.loc;
     private float BoundedViewfinderRadius => Mathf.Min(viewfinderRadius, (AimAt - player.Location).magnitude);
     private float AngleToTarget =>
-        (player.IsMoving && !player.IsFocus) 
-            ? player.DirectionDeg
+        (!player.IsFocus && player.LastDesiredDelta.sqrMagnitude > 0.000001f) 
+            ? M.AtanD(player.LastDesiredDelta)
             : M.AtanD(AimAt - player.Location);
     private float BaseViewfinderAngle => AngleToTarget - 90;
     private Vector2 TargetPosition => player.Location + BoundedViewfinderRadius * M.CosSinDeg(AngleToTarget);

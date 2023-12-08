@@ -58,7 +58,9 @@ public static partial class Reflector {
                     kt.Typ.RName() + $"<{string.Join(",", kt.Arguments.Select(SimpRName))}>";
         } else if (t is TypeDesignation.Dummy d) {
             return $"({string.Join(",", d.Arguments[..^1].Select(SimpRName))})->{SimpRName(d.Last)}";
-        } else
+        } else if (t is TypeDesignation.Variable { RestrictedTypes: { } rt })
+            return $"{string.Join(" or ", rt.Select(SimpRName).Distinct())}";
+        else
             return t.ToString();
     }
     private class SimplifiedExprPrinter : CSharpTypePrinter {
@@ -83,11 +85,13 @@ public static partial class Reflector {
     /// <param name="Name">Parameter name</param>
     /// <param name="LookupMethod">Whether this parameter has LookupMethodAttribute</param>
     /// <param name="NonExplicit">Whether this parameter has NonExplicitAttribute</param>
-    public record NamedParam(Type Type, string Name, bool LookupMethod, bool NonExplicit) {
+    /// <param name="BDSL1ImplicitSMList">Whether this parameter has <see cref="BDSL1ImplicitChildrenAttribute"/></param>
+    public record NamedParam(Type Type, string Name, bool LookupMethod, bool NonExplicit, bool BDSL1ImplicitSMList) {
         public static implicit operator NamedParam(ParameterInfo pi) => 
             new(pi.ParameterType, pi.Name, 
                 pi.GetCustomAttribute<LookupMethodAttribute>() != null,
-                pi.GetCustomAttribute<NonExplicitParameterAttribute>() != null);
+                pi.GetCustomAttribute<NonExplicitParameterAttribute>() != null,
+                pi.GetCustomAttribute<BDSL1ImplicitChildrenAttribute>() != null);
 
         public string Description => $"{Name}<{CSharpTypePrinter.Default.Print(Type)}>";
         public string AsParameter => $"{Type.SimpRName()} {Name}";
@@ -191,7 +195,7 @@ public static partial class Reflector {
         /// <summary>Simplified description of the method parameters.</summary>
         public NamedParam[] Params { get; init; }
         /// <inheritdoc/>
-        public TypeDesignation.Dummy SharedType { get; }
+        public TypeDesignation.Dummy SharedType { get; init; }
         /// <inheritdoc cref="IGenericMethodSignature.SharedGenericTypes"/>
         public TypeDesignation.Variable[] SharedGenericTypes { get; }
 
@@ -199,7 +203,7 @@ public static partial class Reflector {
             this.Mi = Mi;
             this.Params = Params;
             SharedType = TypeDesignation.FromMethod(ReturnType, 
-                Params.Select(p => p.Type).And(p => Mi.IsStatic ? p : p.Prepend(Mi.DeclaringType)) , out var map);
+                Params.Select(p => p.Type).And(p => (Mi.IsStatic || Mi.IsConstructor) ? p : p.Prepend(Mi.DeclaringType)) , out var map);
             SharedGenericTypes = 
                 Mi.IsGenericMethodDefinition ? 
                     Mi.GetGenericArguments()
@@ -241,9 +245,9 @@ public static partial class Reflector {
         /// <summary>
         /// Number of parameters that must be parsed by reflection.
         /// </summary>
-        public int ExplicitParameterCount(int startingFromArg = 0) {
+        public int ExplicitParameterCount(int start = 0, int? end = null) {
             var ct = 0;
-            for (int ii = startingFromArg; ii < Params.Length; ++ii)
+            for (int ii = start; ii < (end ?? Params.Length); ++ii)
                 if (!Params[ii].NonExplicit)
                     ++ct;
             return ct;
@@ -504,6 +508,22 @@ public static partial class Reflector {
             new AST.MethodInvoke(pos, callPos, this, arguments) { Parenthesized = parenthesized };
 
         public override string ToString() => Mi.AsSignature;
+
+        /// <summary>
+        /// If the return type of the called method is a subtype of <see cref="StateMachine"/>, then "hide" it
+        ///  by replacing it with StateMachine.
+        /// </summary>
+        public InvokedMethod HideSMReturn() {
+            if (Mi is MethodSignature { SharedType: { Last: TypeDesignation.Known k } } msig &&
+                k.Typ.IsSubclassOf(typeof(StateMachine))) {
+                var typs = msig.SharedType.Arguments.ToArray();
+                typs[^1] = new TypeDesignation.Known(typeof(StateMachine));
+                return new(msig with {
+                    SharedType = new TypeDesignation.Dummy(TypeDesignation.Dummy.METHOD_KEY, typs)
+                }, CalledAs);
+            } else
+                return this;
+        }
     }
 
     /// <summary>

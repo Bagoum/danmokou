@@ -30,7 +30,7 @@ public class UIScreen {
     private LString? HeaderText { get; }
     public List<UIGroup> Groups { get; } = new();
     public VisualElement HTML { get; private set; } = null!;
-    public UIRenderDirect DirectRender { get; private set; } = null!;
+    public UIRenderDirect DirectRender { get; private set; }
     public UIRenderAbsoluteTerritory AbsoluteTerritory { get; private set; } = null!;
     /// <summary>
     /// Whether or not the screen can be exited via the player clicking the "back" button.

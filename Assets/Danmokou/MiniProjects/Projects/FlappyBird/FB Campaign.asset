@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f64d4a00c194018afbe5db3323da211, type: 3}
+  m_Name: FB Campaign
+  m_EditorClassIdentifier: 
+  key: fb.main
+  shortTitle: FlappyBird
+  replayable: 1
+  allowDialogueSkip: 1
+  startLives: 3
+  players:
+  - {fileID: 11400000, guid: a3a6fa3a374af4d4eb6b30a6dadf2d7d, type: 2}
+  stages:
+  - {fileID: 11400000, guid: aac1573cd96b0bd45b367a63c9facec2, type: 2}
+  practiceBosses:
+  - {fileID: 11400000, guid: 17201d06832c65444b4e2faa8c5666a4, type: 2}
+  endings: []

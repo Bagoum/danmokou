@@ -453,7 +453,7 @@ public static partial class ExM {
     public static tfloat RadDiffCW(tv2 target, tv2 source) => RadToNeg(ATanR(target).Sub(ATanR(source)));
     
     #region Sines
-    
+    //Note: These function calls are replaced with lookup tables in FlattenVisitor.VisitMethodCall.
     private static readonly ExFunction _Sin = ExFunction.Wrap<float>(typeof(M), "Sin");
     private static readonly ExFunction _Cos = ExFunction.Wrap<float>(typeof(M), "Cos");
     private static readonly ExFunction _CosSin = ExFunction.Wrap<float>(typeof(M), "CosSin");

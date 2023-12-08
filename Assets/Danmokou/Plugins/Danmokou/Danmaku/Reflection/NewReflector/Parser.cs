@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using BagoumLib;
+using BagoumLib.Culture;
 using BagoumLib.Expressions;
 using BagoumLib.Functional;
 using Danmokou.Core;
@@ -64,6 +65,8 @@ public static class Parser {
 
     private static Func<ST, Token, ST, ST> InfixCaller(params Reflector.MethodSignature[] overloads) =>
         (a, t, b) => new ST.FunctionCall(a.Position.Merge(b.Position), FnIdentFor(t, overloads), a, b);
+    private static Func<ST, Token, ST, ST> InfixCallerEquivOverloads(params Reflector.MethodSignature[] overloads) =>
+        (a, t, b) => new ST.FunctionCall(a.Position.Merge(b.Position), FnIdentFor(t, overloads), a, b) { OverloadsInterchangeable = true };
     private static Func<Token, ST, ST> PrefixCaller(params Reflector.MethodSignature[] overloads) =>
         (t, x) => new ST.FunctionCall(t.Position.Merge(x.Position), FnIdentFor(t, overloads), x);
     private static Func<ST, Token, ST> PostfixCaller(params Reflector.MethodSignature[] overloads) =>
@@ -114,8 +117,11 @@ public static class Parser {
         // but that's kind of overkill, so we just include the basics:
         //  float*T, T*float, T/float, T+T, T-T, and the other fixed ones
         //todo: what about ints? are we actually supporting them?
-        infix("*", Associativity.Left, 14, Lift(typeof(ExM), nameof(ExM.Mul)),
-            Lift(typeof(ExM), nameof(ExM.MulRev))),
+        new Op.Infix(TokenOfTypeValue(TokenType.Operator, "*"), 
+            InfixCallerEquivOverloads(
+                Lift(typeof(ExM), nameof(ExM.Mul)),
+                Lift(typeof(ExM), nameof(ExM.MulRev))
+            ), Associativity.Left, 14),
         infix("/", Associativity.Left, 14, Lift(typeof(ExM), nameof(ExM.Div))),
         //infix("//", Associativity.Left, 14, Lift(typeof(ExM), nameof(ExM.FDiv))),
         infix("^", Associativity.Left, 14, Lift(typeof(ExM), nameof(ExM.Pow))),
@@ -199,6 +205,28 @@ public static class Parser {
         //num/string/v2rv2
         Num.FMap(t => new ST.Number(t.Position, DMath.Parser.Float(t.Content)) as ST),
         TokenOfType(TokenType.String).FMap(t => new ST.TypedValue<string>(t.Position, t.Content) as ST),
+        TokenOfType(TokenType.LString).Bind(t => {
+            LString v;
+            var diagnostics = Array.Empty<ReflectDiagnostic>();
+            if (LocalizedStrings.IsLocalizedStringReference(t.Content))
+                if (LocalizedStrings.TryFindReference(t.Content) is { } ls)
+                    v = ls;
+                else if (Reflector.SOFT_FAIL_ON_UNMATCHED_LSTRING) {
+                    v = $"Unresolved LocalizedString {t.Content}";
+                    diagnostics = new ReflectDiagnostic[] {
+                        new ReflectDiagnostic.Warning(t.Position,
+                            $"Couldn't resolve LocalizedString {t.Content}. It may work properly in-game.")
+                    };
+                } else
+                    return new ParseResult<ST>(
+                        new ParserError.Failure($"Couldn't resolve LocalizedString {t.Position}"),
+                        t.Position.Start.Index, t.Position.End.Index);
+            else
+                v = t.Content;
+            return new ParseResult<ST>(new ST.TypedValue<LString>(t.Position, v) {
+                Diagnostics = diagnostics
+            }, null, t.Position.Start.Index, t.Position.End.Index);
+        }),
         TokenOfType(TokenType.V2RV2).FMap(t => new ST.TypedValue<V2RV2>(t.Position, DMath.Parser.ParseV2RV2(t.Content)) as ST),
         //Parenthesized value
         Paren1(Value),
@@ -287,7 +315,7 @@ public static class Parser {
 
     public static Either<ST.Block, LocatedParserError> Parse(string source, Token[] tokens, out InputStream<Token> stream) {
         var result = fullScript(stream = new InputStream<Token>(
-            "BDSL2 parser", tokens, null!, new TokenWitnessCreator(source)));
+            tokens, "BDSL2 parser", witness: new TokenWitnessCreator(source)));
         return result.Status == ResultStatus.OK ? 
             result.Result.Value : 
             (result.Error ?? new(0, new ParserError.Failure("Parsing failed, but it's unclear why.")));
@@ -363,7 +391,7 @@ public static class Parser {
     private static ParseResult<TypeDef> TypeParser(InputStream<char> inp) => typeParser(inp);
     
     public static Either<TypeDef, LocatedParserError> ParseType(string source) {
-        var result = typeParser(new InputStream<char>("Type parser", source.ToCharArray(), null!));
+        var result = typeParser(new InputStream<char>(source, "Type parser"));
         return result.Status == ResultStatus.OK ? 
             result.Result.Value : 
             (result.Error ?? new(0, new ParserError.Failure("This is not a valid type definition.")));

@@ -35,6 +35,7 @@ public static partial class Reflector {
     public static bool SOFT_FAIL_ON_UNMATCHED_LSTRING = false;
     
     private static readonly Type tsm = typeof(StateMachine);
+    public static readonly StateMachine WaitForPhaseSM;
 
     private static IAST<StateMachine?> ReflectSM(IParseQueue q) {
         var (method, pos) = q.ScanUnit(out _);
@@ -63,9 +64,6 @@ public static partial class Reflector {
         }
     }
 
-    public static readonly StateMachine WaitForPhaseSM =
-        new ReflectableLASM(SMReflection.Wait(Synchronization.Time(_ => M.IntFloatMax)));
-
     /// <summary>
     /// Maps types to a function that parses that type from a single word.
     /// </summary>
@@ -93,18 +91,24 @@ public static partial class Reflector {
     /// <summary>
     /// A cached dictionary of constructor signatures from GetConstructorSignature.
     /// </summary>
-    private static readonly Dictionary<Type, MethodSignature> constructorSigs = new();
+    private static readonly Dictionary<Type, MethodSignature?> constructorSigs = new();
     
     /// <summary>
     /// Finds a public constructor (preferably one with at least one argument) for the given type.
     /// </summary>
     /// <exception cref="StaticException">Thrown if the type has no public constructors.</exception>
     public static MethodSignature GetConstructorSignature(Type t) {
-        if (constructorSigs.TryGetValue(t, out var args)) return args;
-        return constructorSigs[t] = GetConstructorSignature_Uncached(t);
+        return TryGetConstructorSignature(t) ?? throw new StaticException($"Type {t.RName()} has no applicable constructors.");
     }
 
-    public static MethodSignature GetConstructorSignature_Uncached(Type t) {
+    /// <summary>
+    /// Finds a public constructor (preferably one with at least one argument) for the given type.
+    /// </summary>
+    public static MethodSignature? TryGetConstructorSignature(Type t) {
+        if (constructorSigs.TryGetValue(t, out var args)) return args;
+        return constructorSigs[t] = TryGetConstructorSignature_Uncached(t);
+    }
+    private static MethodSignature? TryGetConstructorSignature_Uncached(Type t) {
         var constrs = t.GetConstructors();
         (ConstructorInfo c, ParameterInfo[] prms)? constr = null;
         foreach (var c in constrs) {
@@ -114,7 +118,7 @@ public static partial class Reflector {
             }
         }
         if (!constr.Try(out var cp))
-            throw new StaticException($"Type {t.RName()} has no applicable constructors.");
+            return null;
         return MethodSignature.Get(cp.c);
     }
 

@@ -180,6 +180,13 @@ public static class ExMLerps {
     public static tfloat Damp(tfloat ceiling, tfloat ratio, tfloat value) => TEx.Resolve(ceiling, value, (c, x) =>
         If(x.GT(c), c.Add(ratio.Mul(x.Sub(c))), x));
     
+    /// <summary>
+    /// Lerp between `f1` and `f2` using time (`t`) as a controller.
+    /// </summary>
+    /// <param name="zeroBound">Lower bound for time. When t=zeroBound, return f1.</param>
+    /// <param name="oneBound">Upper bound for time. When t=oneBound, return f2.</param>
+    /// <param name="f1">First lerp value</param>
+    /// <param name="f2">Second lerp value</param>
     public static Func<TExArgCtx, TEx<T>> LerpT<T>(ExBPY zeroBound, ExBPY oneBound, 
         Func<TExArgCtx, TEx<T>> f1, Func<TExArgCtx, TEx<T>> f2) => b => 
         Lerp(zeroBound(b), oneBound(b), AtomicBPYRepo.T()(b), f1(b), f2(b));

@@ -26,13 +26,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4623879621751819397}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 8, y: 8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &-5272343306584194140
 MonoBehaviour:
@@ -59,13 +59,13 @@ MonoBehaviour:
   colorizing:
     FlatLight: 0
     Light: 0
-    WideLight: 1
+    WideLight: 0
     FlatColor: 0
     Color: 0
-    WideColor: 1
+    WideColor: 0
     FlatDark: 0
     Dark: 0
-    WideDark: 1
+    WideDark: 0
     Full: 0
     Inverted: 0
     FullInvertedAsLightDark: 0
@@ -138,6 +138,8 @@ SpriteRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:

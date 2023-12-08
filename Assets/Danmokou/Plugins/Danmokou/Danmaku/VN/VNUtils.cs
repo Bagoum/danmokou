@@ -14,8 +14,7 @@ public static class VNUtils {
         out IDisposable token) {
         var selector = new SelectionRequest<C>(vn);
         
-        var optsScreen = new UIScreen(menu, null, UIScreen.Display.Unlined) { 
-            Builder = (s, ve) => {
+        var (optsScreen, freeform) = menu.MakeScreen(null, (s, ve) => {
                 //don't let events fall-through
                 s.HTML.pickingMode = PickingMode.Position;
                 s.Margin.SetLRMargin(720, 720);
@@ -25,20 +24,18 @@ public static class VNUtils {
                 c0.style.marginTop = 100;
                 c0.style.alignItems = Align.Center;
                 c0.style.justifyContent = Justify.SpaceAround;
-            },
-            UseControlHelper = false,
-            AllowsPlayerExit = false
-        };
-        menu.AddScreen(optsScreen);
+            });
+        optsScreen.AllowsPlayerExit = false;
         var optGroup = new UIColumn(optsScreen, null);
-        optsScreen.SetFirst(optGroup);
+        freeform.AddGroupDynamic(optGroup);
+        //optsScreen.SetFirst(optGroup);
         
         UINode[]? optNodes = null;
         void DestroyOptionNodes() {
-            if (optNodes != null) {
+            // ReSharper disable method AccessToModifiedClosure
+            if (optNodes != null)
                 foreach (var n in optNodes)
                     n.Remove();
-            }
             optNodes = null;
         }
         token = selector.RequestChanged.Subscribe(opts => {

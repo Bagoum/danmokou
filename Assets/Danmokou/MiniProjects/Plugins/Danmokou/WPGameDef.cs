@@ -69,8 +69,7 @@ public class WPGameDef : ADVGameDef {
                 Data.DelayedState = Data.State;
             }));
 
-            (targetScreen, evTargets) = menu.MakeBlockingScreen(_ => null);
-            //TODO-1
+            (targetScreen, evTargets) = menu.MakeScreen(_ => null);
             var targetInfo = new UINode("Select a target to present evidence to") {
                 Prefab = XMLUtils.Prefabs.PureTextNode,
                 Passthrough = true,

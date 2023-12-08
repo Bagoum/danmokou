@@ -83,6 +83,11 @@ public static class BDSL2ParsingTests {
     }
 
     [Test]
+    public static void MulMulRev() {
+        AssertTypecheckFail("var1 * var2 * var3 * var4", "The type of variable var4 could not be determined");
+    }
+
+    [Test]
     public static void AssignCount() {
         var source = @"var float x = 7.5
 var float y = 5
@@ -118,6 +123,43 @@ x++ + block {
         } catch (ReflectionException exc) {
             StringContains("is not writeable", exc.Message);
         }
+    }
+
+    //[Test]
+    public static void wip_controls() {
+        var source = @"
+var d = define-control persist restyle 'circle-red/w' (xyz = 1 && x > 2);
+sync 'circle-blue/w' <> gsr2c 10 {
+    scoped(b{ //ab
+        var itr = 1
+    })
+    with-control d
+} {
+    erase(b{ var xyz = pm1(itr) })
+    s tprot px(1.8)
+    erase(b{ itr += 1 })
+};
+async 'circle-green/w' <1;:> gcr {
+    wait 60
+    times 10
+    circle
+    scoped(b{
+        var xyz = 1
+    })
+    with-control d
+} gsr {
+    times 3
+    rpp <3>
+} s tprot px(2)
+";
+        var args = new IDelegateArg[] { };
+        var ast = AssertVerified(source, args);
+
+        var exResult = ast.Realize() as Func<TExArgCtx, TEx>;
+        var result = CompilerHelpers.PrepareDelegate<Func<SyncPattern>>(exResult!, args);
+        //var f = CompilerHelpers.PrepareDelegate<Func<float, float>>(result!, args);
+        //var sp = f.Compile()(1000);
+        Debug.Log(5);
     }
     
     

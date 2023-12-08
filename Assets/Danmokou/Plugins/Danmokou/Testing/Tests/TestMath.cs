@@ -32,9 +32,17 @@ public static class TestMath {
             Vector2 myVec = new Vector2(3f, 4f);
             Vector2 unitv = new Vector2(or22, or22);
 
-            Vector2 proj = M.ProjectionUnit(myVec, unitv);
+            Vector2 proj = M.ProjectVectorUnit(myVec, unitv);
             Assert.AreEqual(proj.x, 3.5f, eps);
             Assert.AreEqual(proj.y, 3.5f, eps);
+
+            proj = M.ProjectVector(myVec, new Vector2(7, 7));
+            Assert.AreEqual(proj.x, 3.5f, eps);
+            Assert.AreEqual(proj.y, 3.5f, eps);
+            
+            proj = M.ProjectVectorUnit(myVec, Vector2.right);
+            Assert.AreEqual(proj.x, 3, eps);
+            Assert.AreEqual(proj.y, 0, eps);
 
         }
 

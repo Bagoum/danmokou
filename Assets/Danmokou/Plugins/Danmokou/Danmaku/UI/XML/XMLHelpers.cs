@@ -192,28 +192,22 @@ public static class XMLHelpers {
         var controlsContainer =
             new UIRenderConstructed(s, Prefabs.UIScreenColumn, (_, ve) => ve.style.width = 100f.Percent());
         var controlsHeader = new UIRenderConstructed(controlsContainer, Prefabs.UIScreenRow);
-        var controlsSpace = new UIRenderConstructed(controlsContainer, Prefabs.UIScreenScrollColumn,
-            (_, ve) => {
-                ve.style.width = new Length(100, LengthUnit.Percent);
-                var scrollBox = ve.Q(null, "unity-scroll-view__content-viewport");
-                scrollBox.style.paddingLeft = 0;
-                scrollBox.style.paddingRight = 0;
-            }).ColumnRender(0);
+        var controlsSpace = new UIRenderConstructed(controlsContainer, 
+            new(parent => parent.AddZeroPaddingScrollColumn())).ColumnRender(0);
         UINode NodeForBinding(RebindableInputBinding b, int index, KeyRebindInputNode.Mode mode) {
             return new FuncNode(() => (b.Sources[index]?.Description ?? "(No binding)"), n => {
                 if (b.ProtectedIndices.Contains(index))
-                    return PopupUIGroup.LRB2(n, () => $"Keybinding for \"{b.Purpose}\"",
+                    return PopupUIGroup.CreatePopup(n, () => $"Keybinding for \"{b.Purpose}\"",
                         r => new UIColumn(r,
                                 new UINode("You cannot rebind this key.") { Prefab = Prefabs.PureTextNode })
-                            { Interactable = false },
-                        null, Array.Empty<UINode>());
+                            { Interactable = false }, new PopupButtonOpts.Centered(null));
                 
                 Maybe<IInspectableInputBinding>? newTempBinding = null;
-                return PopupUIGroup.LRB2(n, () => $"Keybinding for \"{b.Purpose}\"",
+                return PopupUIGroup.CreatePopup(n, () => $"Keybinding for \"{b.Purpose}\"",
                     r => new UIColumn(r, new UINode(() => {
                             var curr = $"Current binding: {b.Sources[index]?.Description ?? "(No binding)"}";
                             if (newTempBinding is { } nb)
-                                curr += $"\nNew binding: {nb.ValueOrNull?.Description ?? "(No binding)"}";
+                                curr += $"\nNew binding: {nb.ValueOrNull()?.Description ?? "(No binding)"}";
                             return curr;
                         }) { Prefab = GameManagement.References.uxmlDefaults.PureTextNode, Passthrough = true }
                             .With(fontControlsClass),
@@ -222,20 +216,19 @@ public static class XMLHelpers {
                                     Maybe<IInspectableInputBinding>.None :
                                     new(SimultaneousInputBinding.FromMany(keys)), mode)
                             .With(noSpacePrefixClass, centerTextClass)),
-                    null,
-                    new UINode[] {
+                    new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
                         new UIButton("Unassign", UIButton.ButtonType.Confirm, _ => {
                             newTempBinding = Maybe<IInspectableInputBinding>.None;
                             return new UIResult.StayOnNode();
                         }),
                         new UIButton("Confirm", UIButton.ButtonType.Confirm, _ => {
                             if (newTempBinding is { } nb) {
-                                b.ChangeBindingAt(index, nb.ValueOrNull);
+                                b.ChangeBindingAt(index, nb.ValueOrNull());
                                 InputSettings.SaveInputConfig();
                             }
                             return new UIResult.ReturnToTargetGroupCaller(n.Group);
                         })
-                    }
+                    })
                 );
             }) { OnBuilt = n => n.HTML.style.width = 30f.Percent() }.With(small1Class, fontControlsClass);
         }
@@ -259,10 +252,11 @@ public static class XMLHelpers {
             });
         var kbBindingsLead = new UIRow(controlsSpace.Construct(Prefabs.UIScreenRow), 
             new PassthroughNode("Keyboard Bindings").With(large1Class));
-        var kbBindings = MakeBindings(InputSettings.i.KBMBindings, KeyRebindInputNode.Mode.KBM);
+        var (kbm, ctrlr) = References.gameDefinition.GetRebindableControls();
+        var kbBindings = MakeBindings(kbm, KeyRebindInputNode.Mode.KBM);
         var cBindingsLead = new UIRow(controlsSpace.Construct(Prefabs.UIScreenRow), 
             new PassthroughNode("Controller Bindings").With(large1Class));
-        var cBindings = MakeBindings(InputSettings.i.ControllerBindings, KeyRebindInputNode.Mode.Controller);
+        var cBindings = MakeBindings(ctrlr, KeyRebindInputNode.Mode.Controller);
         
         var controlsGroup = new UINode("<cspace=16>CONTROLS</cspace>") {
             Prefab = GameManagement.UXMLPrefabs.HeaderNode,
@@ -390,12 +384,12 @@ public static class XMLHelpers {
                 var save = SaveData.v.Saves.TryGetValue(i, out var _s) ? _s : null;
                 if (saver == null && (loader == null || save == null))
                     return new UIResult.StayOnNode(true);
-                return PopupUIGroup.LRB2(n, () => saveload_header,
+                return PopupUIGroup.CreatePopup(n, () => saveload_header,
                     r => new UIColumn(r,
                             new UINode(saveload_what_do_ls(i + 1))
                                 { Prefab = Prefabs.PureTextNode })
                         { Interactable = false },
-                    null, new UINode?[] {
+                    new PopupButtonOpts.LeftRightFlush(null, new UINode?[] {
                         (save == null) ?
                             null :
                             UIButton.Delete(() => SaveData.v.TryDeleteSave(save),
@@ -411,7 +405,7 @@ public static class XMLHelpers {
                                     SaveData.v.SaveNewSave(saver(i));
                                     return new UIResult.ReturnToTargetGroupCaller(n);
                                 })
-                    });
+                    }));
             }) {
                 Prefab = Prefabs.SaveLoadNode,
                 InlineStyle = (_, n) => {
@@ -472,12 +466,12 @@ public static class XMLHelpers {
             LazyNodes = () => SaveData.p.ReplayData.Select(rep => {
                 return new FuncNode(rep.Metadata.Record.AsDisplay(true, true), n => {
                     var ind = n.Group.Nodes.IndexOf(n);
-                    return PopupUIGroup.LRB2(n, () => replay_window,
+                    return PopupUIGroup.CreatePopup(n, () => replay_window,
                         r => new UIColumn(r,
                                 new UINode(replay_what_do_ls(rep.Metadata.Record.CustomName))
                                     { Prefab = Prefabs.PureTextNode })
                             { Interactable = false },
-                        null, new UINode[] {
+                        new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
                             UIButton.Delete(() => {
                                 if (SaveData.p.TryDeleteReplay(rep)) {
                                     n.Remove();
@@ -490,7 +484,7 @@ public static class XMLHelpers {
                                 s.Controller.ConfirmCache();
                                 return new UIResult.StayOnNode(!InstanceRequest.ViewReplay(rep));
                             })
-                        });
+                        }));
                 }) {
                     CacheOnEnter = true
                 }.With(monospaceClass, small2Class, centerTextClass);
@@ -565,11 +559,11 @@ public static class XMLHelpers {
             .Where(g => !string.IsNullOrWhiteSpace(g.CustomNameOrPartial) && g.Score > 0)
             .OrderByDescending(g => g.Score).Select(g =>
                 //Don't need to show the request (eg. Yukari (Ex) p3) because it's shown by the option nodes above this
-                new FuncNode(() => g.AsDisplay(true, false), n => PopupUIGroup.LRB2(
+                new FuncNode(() => g.AsDisplay(true, false), n => PopupUIGroup.CreatePopup(
                         n, () => record_header, 
                         r => new UIColumn(r,new UINode(record_what_do(g.CustomNameOrPartial)) 
                             { Prefab = Prefabs.PureTextNode} ) { Interactable = false },
-                        null, new UINode[] {
+                        new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
                             new UIButton(view_details, UIButton.ButtonType.Confirm, _ =>
                                 n.ReturnGroup.Then(CreateGameResultsView(g, detailsScreen))),
                             new UIButton(record_view_replay, UIButton.ButtonType.Confirm, _ => {
@@ -578,7 +572,7 @@ public static class XMLHelpers {
                                         return  n.ReturnGroup.Then(new UIResult.GoToNode(replayScreen.Groups[0], ir));
                                 return new UIResult.StayOnNode(true);
                             }) { EnabledIf = () =>SaveData.p.ReplayData.Any(rep => rep.Metadata.Record.Uuid == g.Uuid) }
-                        }
+                        })
                     )) {
                     VisibleIf = () => Matches(g.RequestKey)
                 }.With(monospaceClass, small2Class, centerTextClass));
@@ -828,10 +822,10 @@ public static class XMLHelpers {
             new FuncNode(() => (LString)(s.name),
                 n => {
                     var ind = n.Group.Nodes.IndexOf(n);
-                    return PopupUIGroup.LRB2(n, () => setting,
+                    return PopupUIGroup.CreatePopup(n, () => setting,
                         r => new UIColumn(r, new UINode(setting_what_do_ls(s.name)) {Prefab = Prefabs.PureTextNode}) 
                             { Interactable = false },
-                        null, new UINode[] {
+                        new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
                             UIButton.Delete(() => {
                                 if (SaveData.s.RemoveDifficultySettings(s)) {
                                     n.Remove();
@@ -842,7 +836,7 @@ public static class XMLHelpers {
                                 SetNewDFC(s.settings);
                                 return true;
                             }, n.ReturnGroup),
-                        }
+                        })
                     );
                 });
         
@@ -884,17 +878,17 @@ public static class XMLHelpers {
                         .Prepend(new FuncNode(() => create_setting, 
                             n => {
                                 var settingNameEntry = new TextInputNode(LString.Empty);
-                                return PopupUIGroup.LRB2(n, () => create_setting,
+                                return PopupUIGroup.CreatePopup(n, () => create_setting,
                                     r => new UIColumn(r, new UINode(new_setting_name) {
                                         Prefab = Prefabs.PureTextNode, Passthrough = true
                                     }, settingNameEntry),
-                                    null, new UINode[] {
+                                    new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
                                         UIButton.Save(() => {
                                             SaveData.s.AddDifficultySettings(settingNameEntry.DataWIP, dfc);
                                             n.Group.AddNodeDynamic(MakeSaveLoadDFCNode(saved.Last()));
                                             return true;
                                         }, n.ReturnGroup), 
-                                    });
+                                    }));
                             }) {
                             InlineStyle = (_, n) => n.NodeHTML.style.marginBottom = 120
                         }))

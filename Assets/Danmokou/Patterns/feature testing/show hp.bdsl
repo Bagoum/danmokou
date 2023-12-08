@@ -5,7 +5,7 @@ phase 0
 	paction 0
 		shift-phase-to 1
 
-##<!> type spell `Helloワールド`
+<!> type non `Helloワールド`
 <!> hp 100000
 <!> bg black
 phase 30

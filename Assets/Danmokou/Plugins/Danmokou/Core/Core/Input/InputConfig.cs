@@ -193,12 +193,9 @@ public class InputConfig {
     public RebindableInputBinding CBacklog { get; init; } =
         //Select
         new(backlog, new AnyControllerInputBinding.Key(KeyCode.JoystickButton6), null);
-
-
-    private RebindableInputBinding[]? _kbmbindings = null;
-    private RebindableInputBinding[]? _controllerbindings = null;
+    
     [JsonIgnore]
-    public RebindableInputBinding[] KBMBindings => _kbmbindings ??= new[] {
+    public RebindableInputBinding[] KBMBindings => new[] {
         FocusHold,
         ShootHold,
         Special,
@@ -208,7 +205,7 @@ public class InputConfig {
         Pause, SkipDialogue, Backlog
     };
     [JsonIgnore]
-    public RebindableInputBinding[] ControllerBindings => _controllerbindings ??= new[] {
+    public RebindableInputBinding[] ControllerBindings => new[] {
         CFocusHold,
         CShootHold,
         CSpecial,

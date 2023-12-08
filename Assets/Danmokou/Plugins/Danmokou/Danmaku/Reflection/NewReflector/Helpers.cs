@@ -13,6 +13,33 @@ using static BagoumLib.Unification.TypeDesignation;
 
 namespace Danmokou.Reflection2 {
 public static class Helpers {
+    public static (IAST, LexicalScope) CompileToAST(ref string source, params IDelegateArg[] args) {
+        var tokens = Lexer.Lex(ref source);
+        var parse = Parser.Parse(source, tokens, out var stream);
+        if (parse.IsRight) 
+            throw new CompileException(stream.ShowAllFailures(parse.Right));
+        var gs = new LexicalScope(DMKScope.Singleton);
+        var ast = parse.Left.AnnotateTopLevel(gs, args);
+        foreach (var exc in (ast as IAST).FirstPassExceptions)
+            throw exc;
+        
+        return (ast, gs);
+    }
+
+    public static IAST Typecheck(this IAST ast, LexicalScope globalScope, out Type type) {
+        var typ = IAST.Typecheck(ast, globalScope.Root.Resolver, globalScope);
+        if (typ.IsRight)
+            throw IAST.EnrichError(typ.Right);
+        type = typ.Left;
+        foreach (var d in ast.WarnUsage())
+            d.Log();
+        return ast;
+    }
+    public static ReadyToCompileExpr<D> CompileToDelegate<D>(string source, params IDelegateArg[] args) where D : Delegate {
+        var (ast, gs) = CompileToAST(ref source, args);
+        var expr = ast.Typecheck(gs, out _).Realize() as Func<TExArgCtx, TEx>;
+        return CompilerHelpers.PrepareDelegate<D>(expr!, args);
+    }
 
     /// <summary>
     /// Make the type TExArgCtx->TEx&lt;T&gt;.

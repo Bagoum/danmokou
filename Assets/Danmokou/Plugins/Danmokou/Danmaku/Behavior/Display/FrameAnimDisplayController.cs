@@ -156,18 +156,18 @@ public class FrameAnimDisplayController : SpriteDisplayController {
 
     public Animation animate;
     
-    public override void ResetV(BehaviorEntity parent) {
-        base.ResetV(parent);
+    public override void LinkAndReset(BehaviorEntity parent) {
+        base.LinkAndReset(parent);
         animate.Initialize(SetSprite, SetFlip);
     }
-    public override void UpdateRender() {
+    public override void UpdateRender(bool isFirstFrame) {
         animate.Update(ETime.FRAME_TIME);
-        base.UpdateRender();
+        base.UpdateRender(isFirstFrame);
     }
 
-    public override void FaceInDirection(Vector2 dir) {
-        base.FaceInDirection(dir);
-        animate.FaceInDirection(dir);
+    public override void FaceInDirection(Vector2 delta) {
+        base.FaceInDirection(delta);
+        animate.FaceInDirection(delta);
     }
 
     public override void Animate(AnimationType typ, bool loop, Action? done) {

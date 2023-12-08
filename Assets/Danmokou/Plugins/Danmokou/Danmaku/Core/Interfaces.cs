@@ -11,7 +11,7 @@ public interface IStageConfig {
 }
 
 public record EndcardStageConfig(string dialogueKey, SceneConfig Scene) : IStageConfig {
-    public StateMachine StateMachine => new ReflectableLASM(SMReflection.Dialogue(dialogueKey));
+    public StateMachine StateMachine => SMReflection.Dialogue(dialogueKey);
     public string DefaultSuicideStyle => "";
 }
 

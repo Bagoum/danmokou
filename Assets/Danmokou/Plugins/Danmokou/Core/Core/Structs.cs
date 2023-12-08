@@ -45,11 +45,13 @@ public struct FrameRunner {
         return frames[0].sprite;
     }
     
-    private static int Priority(AnimationType typ) {
-        if (typ == AnimationType.Attack) return 10;
-        if (typ == AnimationType.Death) return 999;
-        return 0;
-    }
+    private static int Priority(AnimationType typ) =>
+        typ switch {
+            AnimationType.Attack => 10,
+            AnimationType.Death => 999,
+            _ => 0
+        };
+
     private static bool HasPriority(AnimationType curr, AnimationType challenge) {
         if (curr == challenge) return true; //Same animation should not restart
         if (Priority(curr) > Priority(challenge)) return true;

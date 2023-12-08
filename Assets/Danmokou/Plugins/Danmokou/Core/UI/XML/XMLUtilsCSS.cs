@@ -12,7 +12,20 @@ using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
 
-public static partial class XMLUtils {
+public static class XMLUtils {
+    static XMLUtils() {
+        //In Unity 2023, some internal handling was added where UITK internally queries input from the input system
+        // using a *default configuration* for input:
+        // https://github.com/Unity-Technologies/UnityCsReference/blob/496f7d6c5c0882f35bb776e96356712d54710033/Modules/InputForUI/Provider/InputManagerProvider.cs#L905
+        //This can cause issues if the buttons assigned in the default configuration aren't set up, since
+        // the input queries will throw exceptions internally, allocating ~5kb garbage per frame.
+        //Setting this flag, which sets 'm_UseInputForUI' to false, prevents UITK from subscribing to the input system:
+        // https://github.com/Unity-Technologies/UnityCsReference/blob/496f7d6c5c0882f35bb776e96356712d54710033/Modules/UIElements/Core/DefaultEventSystem.cs#L161
+        //If there are no subscriptions, then the interal queries don't run:
+        // https://github.com/Unity-Technologies/UnityCsReference/blob/496f7d6c5c0882f35bb776e96356712d54710033/Modules/InputForUI/Provider/EventProvider.cs#L164
+        UIToolkitInputConfiguration.SetRuntimeInputBackend(UIToolkitInputBackendOption.LegacyBackend);
+    }
+    
     public const string highVisClass = "highvis";
     public const string nodeClass = "node";
     public const string noPointerClass = "nopointer";
@@ -107,10 +120,21 @@ public static partial class XMLUtils {
         return empty;
     }
 
+    public static VisualElement ConfigureFixedXMLPositions(this VisualElement n, IFixedXMLObject source) =>
+            n.ConfigureLeftTopListeners(source.Left, source.Top)
+             .ConfigureWidthHeightListeners(source.Width, source.Height);
+
     public static VisualElement ConfigureLeftTopListeners(this VisualElement n, ICObservable<float> left,
         ICObservable<float> top) {
         left.Subscribe(w => n.style.left = w);
         top.Subscribe(h => n.style.top = h);
+        return n;
+    }
+    
+    public static VisualElement ConfigureWidthHeightListeners(this VisualElement n, ICObservable<float?> width,
+        ICObservable<float?> height) {
+        width.Subscribe(w => n.style.width = w.ToLength());
+        height.Subscribe(h => n.style.height = h.ToLength());
         return n;
     }
 
@@ -128,6 +152,16 @@ public static partial class XMLUtils {
         var s = root.AddVTA(Prefabs.UIScreenScrollColumn);
         s.Q<ScrollView>().verticalPageSize = 1000;
         s.Q<ScrollView>().mouseWheelScrollSize = 1000;
+        return s;
+    }
+    public static VisualElement AddZeroPaddingScrollColumn(this VisualElement root) {
+        var s = root.AddVTA(Prefabs.UIScreenScrollColumn);
+        s.Q<ScrollView>().verticalPageSize = 1000;
+        s.Q<ScrollView>().mouseWheelScrollSize = 1000;
+        s.style.width = new Length(100, LengthUnit.Percent);
+        var scrollBox = s.Q(null, "unity-scroll-view__content-viewport");
+        scrollBox.style.paddingLeft = 0;
+        scrollBox.style.paddingRight = 0;
         return s;
     }
 

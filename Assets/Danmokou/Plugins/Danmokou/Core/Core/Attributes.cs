@@ -88,8 +88,18 @@ public class WarnOnStrictAttribute : Attribute {
 [AttributeUsage(AttributeTargets.Parameter)]
 public class LookupMethodAttribute : Attribute {
 }
+
 [AttributeUsage(AttributeTargets.Parameter)]
 public class NonExplicitParameterAttribute : Attribute {
+}
+
+/// <summary>
+/// Attribute marking that a StateMachine[] parameter should be realized by
+///  parsing as many state machine children as possible according to SM parenting rules,
+///  without looking for array {} markers.
+/// </summary>
+[AttributeUsage(AttributeTargets.Parameter)]
+public class BDSL1ImplicitChildrenAttribute : Attribute {
 }
 
 public class FileLinkAttribute : Attribute {
@@ -167,6 +177,26 @@ public class ScopeRaiseSourceAttribute : Attribute {
     public ScopeRaiseSourceAttribute(int i) {
         this.Index = i;
     }
+}
+
+/// <summary>
+/// (BDSL2) The marked method should be typechecked/compiled separately in the local context of each of its usages,
+///  and should not be typechecked/compiled where it is initially called.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public class CompileAtCallsiteAttribute : Attribute { }
+
+/// <summary>
+/// (BDSL2) The marked method is a callsite for bullet code that executes atomic actions such as "fire a simple bullet".
+/// The provided index is an argument of type PatternerCallsite?.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public class PatternerCallsiteAttribute : Attribute {
+    public int Index { get; }
+    public PatternerCallsiteAttribute(int i) {
+        this.Index = i;
+    }
+    
 }
 
 /// <summary>

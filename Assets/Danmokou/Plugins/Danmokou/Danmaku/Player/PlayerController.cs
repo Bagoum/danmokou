@@ -29,6 +29,7 @@ using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 using Danmokou.Core.DInput;
+using Danmokou.Danmaku.Descriptors;
 using UnityEngine.Profiling;
 using UnityEngine.Serialization;
 using static Danmokou.Services.GameManagement;
@@ -39,7 +40,11 @@ namespace Danmokou.Player {
 /// A team is a code construct which contains a hitbox, several possible shots (of which one is active),
 /// and several possible players (of which one is active).
 /// </summary>
-public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCollisionReceiver {
+public partial class PlayerController : BehaviorEntity, 
+    ICircularGrazableEnemySimpleBulletCollisionReceiver, 
+    ICircularGrazableEnemyPatherCollisionReceiver,
+    ICircularGrazableEnemyLaserCollisionReceiver,
+    ICircularGrazableEnemyBulletCollisionReceiver {
     
     #region Serialized
     public ShipConfig[] defaultPlayers = null!;
@@ -50,6 +55,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
 
     public float MaxCollisionRadius => Ship.grazeboxRadius;
     public Hurtbox Hurtbox { get; private set; }
+    public CircleCollider2D unityCollider = null!;
     public SpriteRenderer hitboxSprite = null!;
     public SpriteRenderer meter = null!;
     public ParticleSystem speedLines = null!;
@@ -63,6 +69,14 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     public float baseFocusOverlayOpacity = 0.5f;
     public SpriteRenderer[] focusOverlay = null!;
     public float hitInvuln = 6;
+    
+    [Header("Traditional respawn handler")]
+    public float RespawnFreezeTime = 0.1f;
+    public float RespawnDisappearTime = 0.5f;
+    public float RespawnMoveTime = 1.5f;
+    public Vector2 RespawnStartLoc = new(0, -5f);
+    public Vector2 RespawnEndLoc = new(0, -3f);
+    
     #endregion
 
     #region PrivateState
@@ -77,12 +91,12 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     public ShipConfig Ship { get; private set; } = null!;
     private ShotConfig shot = null!;
     private Subshot subshot;
+    private PlayerMovement movementHandler = null!;
     
-    private ShipController spawnedShip = null!;
+    public ShipController SpawnedShip { get; private set; } = null!;
     private GameObject? spawnedShot;
     private AyaCamera? spawnedCamera;
     
-    public bool IsMoving => timeSinceLastStandstill > 0;
     private float freeFocusLerp01 = 0f;
     private MaterialPropertyBlock meterPB = null!;
     
@@ -98,10 +112,16 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     #region ComputedProperties
 
     /// <summary>
-    /// True iff collisions can occur against the player. This is only false when the player is in the RESPAWN
+    /// True iff bullet collisions can occur against the player. This is only false when the player is in the RESPAWN
     ///  state (ie. has an indeterminate position).
     /// </summary>
-    public bool ReceivesCollisions { get; private set; } = true;
+    public bool ReceivesBulletCollisions { get; private set; } = true;
+    
+    /// <summary>
+    /// True iff obstacle collisions can occur against the player.
+    ///  This is only false when the player is in the RESPAWN state (ie. has an indeterminate position).
+    /// </summary>
+    public bool ReceivesWallCollisions { get; private set; } = true;
     public ICancellee BoundingToken => Instance.Request?.InstTracker ?? Cancellable.Null;
     public bool AllowPlayerInput => AllControlEnabled && StateAllowsInput(State);
     private ActiveTeamConfig Team { get; set; } = null!;
@@ -123,7 +143,8 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
         }
     }
     public bool IsFocus =>
-        Restrictions.FocusAllowed && (Restrictions.FocusForced || (InputManager.IsFocus && AllowPlayerInput));
+        Restrictions.FocusAllowed && (Restrictions.FocusForced || (InputManager.IsFocus && AllowPlayerInput)) &&
+        Team.Ship.focusAllowed;
     public bool IsFiring => InputManager.IsFiring && AllowPlayerInput && FiringEnabled;
     public bool IsTryingBomb =>
         InputManager.IsBomb && AllowPlayerInput && BombsEnabled && Team.Support is Ability.Bomb;
@@ -176,10 +197,13 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     
     #endregion
 
+    private int obstacleCollisionLayer;
+
     public override int UpdatePriority => UpdatePriorities.PLAYER;
 
     protected override void Awake() {
         base.Awake();
+        obstacleCollisionLayer = LayerMask.NameToLayer("Wall");
         Team = GameManagement.Instance.GetOrSetTeam(new ActiveTeamConfig(new TeamConfig(0, defaultSubshot, defaultSupport, 
             defaultPlayers.Zip(defaultShots, (x, y) => (x, y)).ToArray())));
         Logs.Log($"Team awake", level: LogLevel.DEBUG1);
@@ -223,6 +247,10 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     protected override void BindListeners() {
         base.BindListeners();
         RegisterService<PlayerController>(this);
+        RegisterService<IEnemySimpleBulletCollisionReceiver>(this);
+        RegisterService<IEnemyPatherCollisionReceiver>(this);
+        RegisterService<IEnemyLaserCollisionReceiver>(this);
+        RegisterService<IEnemyBulletCollisionReceiver>(this);
     }
 
     public override void FirstFrame() {
@@ -260,16 +288,20 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
         if (Team.Ship != Ship) {
             bool fromNull = Ship == null;
             Ship = Team.Ship;
+            movementHandler = Ship.movementHandler == null ? 
+                new PlayerMovement.Standard() : 
+                Ship.movementHandler.Value;
             Hurtbox = new(Hurtbox.location, Ship.hurtboxRadius, Ship.grazeboxRadius);
+            unityCollider.radius = Ship.hurtboxRadius;
             Logs.Log($"Setting team player to {Ship.key}");
-            if (spawnedShip != null) {
+            if (SpawnedShip != null) {
                 //animate "destruction"
-                spawnedShip.InvokeCull();
+                SpawnedShip.InvokeCull();
             }
-            spawnedShip = Instantiate(Team.Ship.prefab, tr).GetComponent<ShipController>();
+            SpawnedShip = Instantiate(Team.Ship.prefab, tr).GetComponent<ShipController>();
             if (!fromNull) {
                 var pm = onSwitchParticle.main;
-                pm.startColor = new ParticleSystem.MinMaxGradient(spawnedShip.meterDisplayInner);
+                pm.startColor = new ParticleSystem.MinMaxGradient(SpawnedShip.meterDisplayInner);
                 onSwitchParticle.Play();
             }
         }
@@ -293,12 +325,12 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     }
 
     private void _UpdateTeamColors() {
-        meterDisplay.Push(spawnedShip.meterDisplay);
-        meterDisplayShadow.Push(spawnedShip.meterDisplayShadow);
-        meterDisplayInner.Push(spawnedShip.meterDisplayInner);
+        meterDisplay.Push(SpawnedShip.meterDisplay);
+        meterDisplayShadow.Push(SpawnedShip.meterDisplayShadow);
+        meterDisplayInner.Push(SpawnedShip.meterDisplayInner);
 
         var ps = speedLines.main;
-        ps.startColor = spawnedShip.speedLineColor;
+        ps.startColor = SpawnedShip.speedLineColor;
     }
     
     /// <summary>
@@ -320,9 +352,14 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     #endregion
     private void SetLocation(Vector2 next) {
         bpi.loc = tr.position = next;
-        Hurtbox = new(next, Hurtbox.radius, Hurtbox.largeRadius);
+        Hurtbox = new(next, Hurtbox.radius, Hurtbox.grazeRadius);
         LocationHelpers.UpdatePlayerLocation(next, next);
     }
+
+    public float CombinedSpeedMultiplier =>
+        (IsFocus ? Ship.FocusSpeed : Ship.freeSpeed) *
+        (spawnedCamera != null ? spawnedCamera.CameraSpeedMultiplier : 1) *
+        StateSpeedMultiplier(State) * (float)GameManagement.Difficulty.playerSpeedMultiplier;
     
     private void MovementUpdate(float dT) {
         bpi.t += dT;
@@ -334,47 +371,44 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
             }
         }
         hitboxSprite.enabled = IsFocus || SaveData.s.UnfocusedHitbox;
-        Vector2 velocity = DesiredMovement01;
-        if (velocity.sqrMagnitude > 0) {
-            timeSinceLastStandstill += dT;
-            if (timeSinceLastStandstill * 120f < lnrizeSpeed && SaveData.s.AllowInputLinearization) {
-                velocity *= 1 - lnrizeRatio +
-                            lnrizeRatio * Mathf.Floor(1f + timeSinceLastStandstill * 120f) / lnrizeSpeed;
+        if (StateAllowsPlayerMovement(State)) {
+            var delta = movementHandler.UpdateNextDesiredDelta(this, Ship, dT);
+            if (delta.sqrMagnitude > 0) {
+                timeSinceLastStandstill += dT;
+                if (timeSinceLastStandstill * 120f < lnrizeSpeed && SaveData.s.AllowInputLinearization) {
+                    delta *= 1 - lnrizeRatio +
+                                lnrizeRatio * Mathf.Floor(1f + timeSinceLastStandstill * 120f) / lnrizeSpeed;
+                }
+            } else {
+                delta = Vector2.zero;
+                timeSinceLastStandstill = 0f;
             }
-        } else {
-            velocity = Vector2.zero;
-            timeSinceLastStandstill = 0f;
-        }
-        velocity *= IsFocus ? Ship.FocusSpeed : Ship.freeSpeed;
-        if (spawnedCamera != null) velocity *= spawnedCamera.CameraSpeedMultiplier;
-        velocity *= StateSpeedMultiplier(State);
-        velocity *= (float) GameManagement.Difficulty.playerSpeedMultiplier;
-        //Check bounds
-        Vector2 pos = tr.position;
-        if (StateAllowsLocationUpdate(State)) {
-            if (pos.x <= LeftPlayerBound) {
-                pos.x = LeftPlayerBound;
-                velocity.x = Mathf.Max(velocity.x, 0f);
-            } else if (pos.x >= RightPlayerBound) {
-                pos.x = RightPlayerBound;
-                velocity.x = Mathf.Min(velocity.x, 0f);
+            Vector2 pos = tr.position;
+            var desiredDelta = delta;
+            var oob = CheckOOB(ref pos, ref delta);
+            bool collided = false, squashed = false;
+            Vector2 moveDelta = delta, carryDelta = Vector2.zero;
+            if (ReceivesWallCollisions) {
+                (moveDelta, carryDelta) = CollisionMath.CollideAndSlide(delta, pos, Hurtbox.radius, 1 << obstacleCollisionLayer, 
+                    out collided, out squashed);
+                delta = moveDelta + carryDelta;
             }
-            if (pos.y <= BotPlayerBound) {
-                pos.y = BotPlayerBound;
-                velocity.y = Mathf.Max(velocity.y, 0f);
-            } else if (pos.y >= TopPlayerBound) {
-                pos.y = TopPlayerBound;
-                velocity.y = Mathf.Min(velocity.y, 0f);
+            SetLocation(pos += delta); 
+            if (squashed || 
+                oob.HasFlag(LocationHelpers.Direction.Left) && pos.x < LeftPlayerBound || 
+                oob.HasFlag(LocationHelpers.Direction.Right) && pos.x > RightPlayerBound || 
+                oob.HasFlag(LocationHelpers.Direction.Down) && pos.y < BotPlayerBound || 
+                oob.HasFlag(LocationHelpers.Direction.Up) && pos.y > TopPlayerBound) {
+                LoseLives(1, true, true);
+                SetMovementDelta(Vector2.zero);
+                SpawnedShip.SetMovementDelta(Vector2.zero);
+                return;
             }
-            var prev = Hurtbox.location;
-            SetMovementDelta(velocity * dT);
-            spawnedShip.SetMovementDelta(velocity * dT);
-            SetLocation(pos + velocity * dT); 
-            if (IsMoving) {
-                var delta = Hurtbox.location - prev;
-                var dir = delta.normalized;
+            SetMovementDelta(moveDelta, desiredDelta);
+            SpawnedShip.SetMovementDelta(moveDelta, desiredDelta);
+            if (delta.x * delta.x + delta.y * delta.y > 0) {
                 PastPositions.Add(Hurtbox.location);
-                PastDirections.Add(dir);
+                PastDirections.Add(desiredDelta.normalized);
                 if (IsFocus) {
                     //Add offset to all tracking positions so they stay the same relative position
                     for (int ii = 0; ii < MarisaAPositions.Count; ++ii) {
@@ -382,18 +416,16 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
                     }
                 } else {
                     MarisaAPositions.Add(Hurtbox.location);
-                    MarisaADirections.Add(dir);
+                    MarisaADirections.Add(desiredDelta.normalized);
                 }
-            } else {
-                SetMovementDelta(Vector2.zero);
-                spawnedShip.SetMovementDelta(Vector2.zero);
             }
         } else {
+            movementHandler.UpdateMovementNotAllowed(this, Ship, dT);
             SetMovementDelta(Vector2.zero);
-            spawnedShip.SetMovementDelta(Vector2.zero);
+            SpawnedShip.SetMovementDelta(Vector2.zero);
         }
     }
-    
+
     public override void RegularUpdate() {
         base.RegularUpdate();
         if (AllControlEnabled) 
@@ -447,7 +479,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     private int pickedUpFlakes = 0;
     public override void RegularUpdateFinalize() {
         if (collisions.damage > 0)
-            Hit(1);
+            LoseLives(1);
         else
             AddGraze(collisions.graze);
         if (pickedUpFlakes > 0) {
@@ -456,65 +488,47 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
         }
         base.RegularUpdateFinalize();
     }
-
-    public void ProcessSimple(BulletManager.SimpleBulletCollection sbc) {
-        var hb = Hurtbox;
-        var deleted = sbc.Deleted;
-        var data = sbc.Data;
-        var dmg = sbc.BC.Damage.Value;
-        var allowGraze = sbc.BC.AllowGraze.Value;
-        var destroy = sbc.BC.Destructible.Value;
-        var meta = sbc.MetaType;
-        for (int ii = 0; ii < sbc.Count; ++ii) {
-            if (!deleted[ii]) {
-                ref var sbn = ref data[ii];
-                var cr = 
-                    //This is also a valid way to do collision, though it's about 5% slower
-                    //Collider.CheckGrazeCollision(in sbn.bpi.loc.x, in sbn.bpi.loc.y, in sbn.direction, in sbn.scale, in hitbox);
-                    sbc.CheckGrazeCollision(in hb, in sbn);
-                if (cr.graze && !allowGraze)
-                    cr = cr.NoGraze();
-                if ((cr.collide || cr.graze) 
-                    && ProcessCollision(in meta, in cr, in dmg, in sbn.bpi, in sbc.BC.grazeEveryFrames)) {
-                    sbc.RunCollisionControls(ii);
-                    if (destroy) {
-                        sbc.MakeCulledCopy(ii);
-                        sbc.DeleteSB(ii);
-                    }
-                }
-            }
-        }
+    
+    #region CollisionHandling
+    
+    /// <summary>
+    /// Receive a fixed amount of damage.
+    /// </summary>
+    public void TakeHit(int damage = 1) => collisions = collisions.WithDamage(damage);
+    
+    /// <inheritdoc/>
+    public bool TakeHit(BulletManager.SimpleBulletCollection.CollectionType meta, 
+        CollisionResult coll, int damage, in ParametricInfo bulletBPI, ushort grazeEveryFrames) {
+        if (coll.collide) {
+            if (meta == BulletManager.SimpleBulletCollection.CollectionType.BulletClearFlake)
+                ++pickedUpFlakes;
+            else
+                collisions = collisions.WithDamage(damage);
+            return true;
+        } else if (coll.graze && meta != BulletManager.SimpleBulletCollection.CollectionType.BulletClearFlake &&
+                   TryGrazeBullet(bulletBPI.id, grazeEveryFrames)) {
+            collisions = collisions.WithGraze(1);
+            return false;
+        } else
+            return false;
     }
 
-    public void ProcessSimpleBuckets(BulletManager.SimpleBulletCollection sbc, ReadOnlySpan2D<List<int>> indexBuckets) {
-        var hb = Hurtbox;
-        var deleted = sbc.Deleted;
-        var data = sbc.Data;
-        var dmg = sbc.BC.Damage.Value;
-        var allowGraze = sbc.BC.AllowGraze.Value;
-        var destroy = sbc.BC.Destructible.Value;
-        var meta = sbc.MetaType;
-        for (int y = 0; y < indexBuckets.Height; ++y)
-        for (int x = 0; x < indexBuckets.Width; ++x) {
-            var bucket = indexBuckets[y, x];
-            for (int ib = 0; ib < bucket.Count; ++ib) {
-                var index = bucket[ib];
-                if (deleted[index]) continue;
-                ref var sbn = ref data[index];
-                var cr = sbc.CheckGrazeCollision(in hb, in sbn);
-                if (cr.graze && !allowGraze)
-                    cr = cr.NoGraze();
-                if ((cr.collide || cr.graze) 
-                    && ProcessCollision(in meta, in cr, in dmg, in sbn.bpi, in sbc.BC.grazeEveryFrames)) {
-                    sbc.RunCollisionControls(index);
-                    if (destroy) {
-                        sbc.MakeCulledCopy(index);
-                        sbc.DeleteSB(index);
-                    }
-                }
-            }
-        }
-    }
+    void ICircularGrazableEnemyPatherCollisionReceiver.TakeHit(CurvedTileRenderPather pather, Vector2 collLoc,
+        CollisionResult collision) => 
+        TakeHit(BulletManager.SimpleBulletCollection.CollectionType.Normal, 
+            collision, pather.Pather.Damage, in pather.BPI, pather.Pather.collisionInfo.grazeEveryFrames);
+    
+    void ICircularGrazableEnemyLaserCollisionReceiver.TakeHit(CurvedTileRenderLaser laser, Vector2 collLoc,
+        CollisionResult collision) => 
+        TakeHit(BulletManager.SimpleBulletCollection.CollectionType.Normal, 
+            collision, laser.Laser.Damage, in laser.BPI, laser.Laser.collisionInfo.grazeEveryFrames);
+    
+    void ICircularGrazableEnemyBulletCollisionReceiver.TakeHit(Bullet bullet, Vector2 collLoc,
+        CollisionResult collision) => 
+        TakeHit(BulletManager.SimpleBulletCollection.CollectionType.Normal, 
+            collision, bullet.Damage, in bullet.rBPI, bullet.collisionInfo.grazeEveryFrames);
+    
+    #endregion
 
     private void UpdateInputTimes(bool focus, bool fire) {
         if (focus) {
@@ -576,34 +590,6 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     }
 
     #region HPManagement
-
-    /// <summary>
-    /// Process a collision event with an NPC bullet by checking that it is not on graze cooldown, then append it to the accumulation of events <see cref="collisions"/>.
-    /// </summary>
-    /// <param name="meta">Type of the bullet collection.</param>
-    /// <param name="coll">Collision result.</param>
-    /// <param name="damage">Damage dealt by this collision.</param>
-    /// <param name="bulletBPI">Bullet information.</param>
-    /// <param name="grazeEveryFrames">The number of frames between successive graze events on this bullet.</param>
-    /// <returns>Whether or not a hit was taken (ie. a collision occurred).</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool ProcessCollision(in BulletManager.SimpleBulletCollection.CollectionType meta, 
-        in CollisionResult coll, in int damage, in ParametricInfo bulletBPI, in ushort grazeEveryFrames) {
-        if (coll.collide) {
-            if (meta == BulletManager.SimpleBulletCollection.CollectionType.BulletClearFlake)
-                ++pickedUpFlakes;
-            else
-                collisions = collisions.WithDamage(damage);
-            return true;
-        } else if (coll.graze && meta != BulletManager.SimpleBulletCollection.CollectionType.BulletClearFlake &&
-                   TryGrazeBullet(bulletBPI.id, grazeEveryFrames)) {
-            collisions = collisions.WithGraze(1);
-            return false;
-        } else
-            return false;
-    }
-
-    public void TakeHit() => collisions = collisions.WithDamage(1);
     
     //Note that we should not use a dictionary from ID to frame number, since graze cooldowns freeze with the player
     private readonly DictionaryWithKeys<uint, int> grazeCooldowns = new();
@@ -619,11 +605,11 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
         GameManagement.Instance.AddGraze(graze);
     }
     
-    public void Hit(int dmg, bool force = false) {
-        if (dmg <= 0) return;
+    public void LoseLives(int livesLost, bool ignoreInvulnerability = false, bool forceTraditionalRespawn = false) {
+        if (livesLost <= 0) return;
         //Log.Unity($"The player has taken a hit for {dmg} hp. Force: {force} Invuln: {invulnerabilityCounter} Deathbomb: {waitingDeathbomb}");
-        if (force) {
-            _DoHit(dmg);
+        if (ignoreInvulnerability) {
+            _DoLoseLives(livesLost, forceTraditionalRespawn);
         }
         else {
             if (hitInvulnerabilityCounter > 0 || deathbomb != DeathbombState.NULL) 
@@ -631,40 +617,40 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
             var frames = (Team.Support as Ability.Bomb)?.DeathbombFrames ?? 0;
             if (frames > 0) {
                 deathbomb = DeathbombState.WAITING;
-                RunRIEnumerator(WaitDeathbomb(dmg, frames));
+                RunRIEnumerator(WaitDeathbomb(livesLost, frames, forceTraditionalRespawn));
             } else
-                _DoHit(dmg);
+                _DoLoseLives(livesLost, forceTraditionalRespawn);
         }
     }
     
-    private void _DoHit(int dmg) {
+    private void _DoLoseLives(int livesLost, bool forceTraditionalRespawn) {
         BulletManager.AutodeleteCircleOverTime(SoftcullProperties.OverTimeDefault(BPI.loc, 1.35f, 0f, 12f));
         BulletManager.RequestPowerAura("powerup1", 0, 0, GenCtx.Empty, new RealizedPowerAuraOptions(
             new PowerAuraOptions(new[] {
-                PowerAuraOption.Color(_ => ColorHelpers.CV4(spawnedShip.meterDisplay)),
+                PowerAuraOption.Color(_ => ColorHelpers.CV4(SpawnedShip.meterDisplay)),
                 PowerAuraOption.Time(_ => 1.5f),
                 PowerAuraOption.Iterations(_ => -1f),
                 PowerAuraOption.Scale(_ => 5f),
                 PowerAuraOption.Static(), 
                 PowerAuraOption.High(), 
             }), GenCtx.Empty, BPI.loc, Cancellable.Null, null!));
-        GameManagement.Instance.AddLives(-dmg);
+        GameManagement.Instance.AddLives(-livesLost);
         ServiceLocator.FindOrNull<IRaiko>()?.Shake(1.5f, null, 0.9f);
         Invuln(HitInvulnFrames);
-        if (RespawnOnHit) {
-            spawnedShip.DrawGhost(2f);
+        if (forceTraditionalRespawn || RespawnOnHit) {
+            SpawnedShip.DrawGhost(2f);
             RequestNextState(PlayerState.RESPAWN);
         }
-        else InvokeParentedTimedEffect(spawnedShip.OnHitEffect, hitInvuln);
+        else InvokeParentedTimedEffect(SpawnedShip.OnHitEffect, hitInvuln);
     }
     
     
-    private IEnumerator WaitDeathbomb(int dmg, int frames) {
-        spawnedShip.OnPreHitEffect.Proc(bpi.loc, bpi.loc, 1f);
+    private IEnumerator WaitDeathbomb(int livesLost, int frames, bool forceTraditionalRespawn) {
+        SpawnedShip.OnPreHitEffect.Proc(bpi.loc, bpi.loc, 1f);
         using var gcx = GenCtx.New(this, V2RV2.Zero);
         BulletManager.RequestPowerAura("powerup1", 0, 0, gcx, new RealizedPowerAuraOptions(
             new PowerAuraOptions(new[] {
-                PowerAuraOption.Color(_ => ColorHelpers.CV4(spawnedShip.meterDisplay.WithA(1.5f))),
+                PowerAuraOption.Color(_ => ColorHelpers.CV4(SpawnedShip.meterDisplay.WithA(1.5f))),
                 PowerAuraOption.InitialTime(_ => 0.7f * frames / 120f), 
                 PowerAuraOption.Time(_ => 1.7f * frames / 120f),
                 PowerAuraOption.Iterations(_ => 0.8f),
@@ -675,7 +661,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
         while (framesRem-- > 0 && deathbomb == DeathbombState.WAITING) 
             yield return null;
         if (deathbomb != DeathbombState.PERFORMED) 
-            _DoHit(dmg);
+            _DoLoseLives(livesLost, forceTraditionalRespawn);
         else 
             Logs.Log($"The player successfully deathbombed");
         deathbomb = DeathbombState.NULL;
@@ -704,7 +690,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
 
     private void GoldenAuraInvuln(int frames, bool showEffect) {
         if (showEffect)
-            InvokeParentedTimedEffect(spawnedShip.GoldenAuraEffect,
+            InvokeParentedTimedEffect(SpawnedShip.GoldenAuraEffect,
                 frames * ETime.FRAME_TIME).transform.SetParent(tr);
         Invuln(frames);
     }
@@ -739,7 +725,8 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     }
     //Assumption for state enumerators is that the token is not initially cancelled.
     private IEnumerator StateNormal(ICancellee<PlayerState> cT) {
-        ReceivesCollisions = true;
+        ReceivesBulletCollisions = true;
+        ReceivesWallCollisions = true;
         State = PlayerState.NORMAL;
         while (true) {
             if (MaybeCancelState(cT)) yield break;
@@ -752,21 +739,33 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     }
     private IEnumerator StateRespawn(ICancellee<PlayerState> cT) {
         State = PlayerState.RESPAWN;
-        spawnedShip.RespawnOnHitEffect.Proc(Hurtbox.location, Hurtbox.location, 0f);
+        SpawnedShip.RespawnOnHitEffect.Proc(Hurtbox.location, Hurtbox.location, 0f);
         //The hitbox position doesn't update during respawn, so don't allow collision.
-        ReceivesCollisions = false;
+        ReceivesBulletCollisions = false;
+        ReceivesWallCollisions = false;
+        PastDirections.Clear();
+        PastPositions.Clear();
+        MarisaADirections.Clear();
+        MarisaAPositions.Clear();
+        PastDirections.Add(Vector2.down);
+        MarisaADirections.Add(Vector2.down);
         for (float t = 0; t < RespawnFreezeTime; t += ETime.FRAME_TIME) yield return null;
         //Don't update the hitbox location
         tr.position = new Vector2(0f, 100f);
-        InvokeParentedTimedEffect(spawnedShip.RespawnAfterEffect, hitInvuln - RespawnFreezeTime);
+        InvokeParentedTimedEffect(SpawnedShip.RespawnAfterEffect, hitInvuln - RespawnFreezeTime);
         //Respawn doesn't respect state cancellations
         for (float t = 0; t < RespawnDisappearTime; t += ETime.FRAME_TIME) yield return null;
         for (float t = 0; t < RespawnMoveTime; t += ETime.FRAME_TIME) {
-            tr.position = Vector2.Lerp(RespawnStartLoc, RespawnEndLoc, t / RespawnMoveTime);
+            var nxtPos = Vector2.Lerp(RespawnStartLoc, RespawnEndLoc, t / RespawnMoveTime);
+            tr.position = nxtPos;
+            LocationHelpers.UpdateTruePlayerLocation(nxtPos);
+            PastPositions.Add(nxtPos);
+            MarisaAPositions.Add(nxtPos);
             yield return null;
         }
         SetLocation(RespawnEndLoc);
-        ReceivesCollisions = true;
+        ReceivesBulletCollisions = true;
+        ReceivesWallCollisions = true;
         
         if (!MaybeCancelState(cT)) RunDroppableRIEnumerator(StateNormal(cT));
     }
@@ -780,7 +779,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
         PlayerActivatedMeter.OnNext(default);
         for (int f = 0; !MaybeCancelState(cT) &&
             IsTryingWitchTime && Instance.MeterF.TryUseMeterFrame(); ++f) {
-            spawnedShip.MaybeDrawWitchTimeGhost(f);
+            SpawnedShip.MaybeDrawWitchTimeGhost(f);
             MeterIsActive.OnNext(Instance.MeterF.EnoughMeterToUse ? meterDisplay : meterDisplayInner);
             float meterDisplayRatio = M.EOutSine(Mathf.Clamp01(f / 30f));
             meterPB.SetFloat(PropConsts.fillRatio, Instance.MeterF.VisibleMeter.Value * meterDisplayRatio);
@@ -796,7 +795,11 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
     
     
     #endregion
-    
+
+    private void OnTriggerEnter2D(Collider2D other) {
+        Console.WriteLine(other.gameObject.name);
+    }
+
     #region ItemMethods
 
     public void AddPowerItems(int delta) {
@@ -862,7 +865,7 @@ public partial class PlayerController : BehaviorEntity, ICircularSimpleBulletCol
         var position = transform.position;
         Handles.DrawWireDisc(position, Vector3.forward, Hurtbox.radius);
         Handles.color = Color.blue;
-        Handles.DrawWireDisc(position, Vector3.forward, Hurtbox.largeRadius);
+        Handles.DrawWireDisc(position, Vector3.forward, Hurtbox.grazeRadius);
         Handles.color = Color.black;
         Handles.DrawLine(position + Vector3.up * .5f, position + Vector3.down * .5f);
         Handles.DrawLine(position + Vector3.right * .2f, position + Vector3.left * .2f);

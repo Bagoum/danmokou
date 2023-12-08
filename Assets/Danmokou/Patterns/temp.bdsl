@@ -13,19 +13,13 @@ phase(0)
 $%f(%x)
 !}
 
-<!> type non abcd
+<!> type non `Pathers Example`
 <!> hp 10000
 phase 0
 	saction 0
-		position 0 2
-		timer start hello
-		timer startm world 2
-		wait(2)
-		timer stop hello
-		timer stop world
-		wait(2)
-		debugf(timersec(hello))
-		debugf(timersec(world))
+		sync pather-red/w <> gsr2c 12 { 
+		} pather 2 2 polar(2 * t, sine(3, 20, t)) { }
+
 
 <!> type non abc
 <!> hp 10000
@@ -77,7 +71,7 @@ phase 0
 		}, -1 * (&x - [&y].x))
 
 
-<!> type non nest
+<!> type non manyEnemies
 <!> hp 100000
 phase 0
 	paction 0

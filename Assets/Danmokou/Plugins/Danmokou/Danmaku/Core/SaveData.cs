@@ -193,20 +193,14 @@ public static class SaveData {
 
         public static Settings Default {
             get {
-                int w = Screen.currentResolution.width;
-                (int, int) Resolution;
-                if (w > 3000)
-                    Resolution = (3840, 2160);
-                else if (w > 1700)
-                    Resolution = (1920, 1080);
-                else if (w > 1400)
-                    Resolution = (1600, 900);
-                else if (w > 1000)
-                    Resolution = (1280, 720);
-                else if (w > 700)
-                    Resolution = (848, 477);
-                else
-                    Resolution = (640, 360);
+                var Resolution = Screen.currentResolution.width switch {
+                    >3000 => (3840, 2160),
+                    >1700 => (1920, 1080),
+                    >1400 => (1600, 900),
+                    >1000 => (1280, 720),
+                    >700 => (848, 477),
+                    _ => (640, 360)
+                };
                 
                 //Lower default rez for phones
             #if UNITY_ANDROID || UNITY_IOS
@@ -400,7 +394,7 @@ public static class SaveData {
 
     private static void StartProfiling() {
         if (Debug.isDebugBuild) {
-            Debug.Log("Updating memory");
+            Debug.Log("Updating profiler memory limit to 536MB");
             Profiler.maxUsedMemory = 536_870_912;
         }
         if (s.ProfilingEnabled) {

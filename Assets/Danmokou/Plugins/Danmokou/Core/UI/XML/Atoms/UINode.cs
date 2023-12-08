@@ -10,6 +10,7 @@ using BagoumLib.Cancellation;
 using BagoumLib.Culture;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
+using BagoumLib.Functional;
 using BagoumLib.Mathematics;
 using BagoumLib.Transitions;
 using Danmokou.Core;
@@ -112,7 +113,7 @@ public class UINode {
         if (AbsoluteLocationSource != null)
             throw new Exception($"Duplicate defintion of {nameof(AbsoluteLocationSource)}");
         this.AbsoluteLocationSource = source;
-        UseDefaultAnimations = false;
+        //UseDefaultAnimations = false;
         Navigator = source.Navigate;
         var existingOnBuild = OnBuilt;
         OnBuilt = n => {
@@ -124,9 +125,7 @@ public class UINode {
                 n.HTML.style.opacity = b ? 1 : 0;
             });
 
-            n.HTML.ConfigureAbsolute(pivot).ConfigureLeftTopListeners(source.Left, source.Top);
-            source.Width.Subscribe(w => n.Style.width = w.ToLength());
-            source.Height.Subscribe(h => n.Style.height = h.ToLength());
+            n.HTML.ConfigureAbsolute(pivot).ConfigureFixedXMLPositions(source);
             
             //n.HTML.style.backgroundColor = new Color(0, 1, 0, 0.4f);
             existingOnBuild?.Invoke(this);
@@ -254,8 +253,38 @@ public class UINode {
     /// List of CSS classes to apply to the node HTML.
     /// </summary>
     public List<string> OverrideClasses { get; init; } = new();
+    
+    /// <summary>
+    /// Animation played when the node is first rendered. Defaults to null.
+    /// </summary>
+    public Func<UINode, ICancellee, Task>? OnFirstRenderAnimation { get; set; }
+    
+    /// <summary>
+    /// Animation played when focus is placed on the node. Defaults to <see cref="DefaultEnterAnimation"/>.
+    /// </summary>
+    public Maybe<Func<UINode, ICancellee, Task>?> EnterAnimation { get; set; } = 
+        Maybe<Func<UINode, ICancellee, Task>?>.None;
+    
+    /// <summary>
+    /// Animation played when focus is removed from the node. Defaults to <see cref="DefaultLeaveAnimation"/>.
+    /// </summary>
+    public Maybe<Func<UINode, ICancellee, Task>?> LeaveAnimation { get; set; } = 
+        Maybe<Func<UINode, ICancellee, Task>?>.None;
 
-    public bool UseDefaultAnimations { get; set; } = true;
+    public UINode DisableAnimations() {
+        EnterAnimation = LeaveAnimation = null;
+        return this;
+    }
+
+    public Task? PlayAnimation(Func<UINode, ICancellee, Task>? anim) {
+        if (anim != null) {
+            animToken.SoftCancel();
+            animToken = new();
+            return anim(this, animToken);
+        }
+        return null;
+    }
+    
     
     #endregion
     
@@ -391,7 +420,7 @@ public class UINode {
             }
         }
     }
-    protected virtual void Rebind() {
+    public virtual void Rebind() {
         if (Label != null)
             Label.text = Description();
     }
@@ -446,6 +475,7 @@ public class UINode {
         if (thisFrameRender && isFirstRender) {
             isFirstRender = false;
             OnFirstRender?.Invoke(this);
+            _ = PlayAnimation(OnFirstRenderAnimation);
         }
     }
 
@@ -481,13 +511,7 @@ public class UINode {
         if (CacheOnEnter) Controller.TentativeCache(this);
         //TODO: handle this via options, eg. OnEnterAnim = new[] { ScaleBop(1.03, 0.1, 0.13), LocationTo(-100, 10)... }
         if (animate) {
-            var anims = EnterAnimations().ToList();
-            if (anims.Count > 0) {
-                animToken.SoftCancel();
-                animToken = new();
-                foreach (var anim in anims)
-                    _ = anim(animToken);
-            }
+            _ = PlayAnimation(EnterAnimation.Valid ? EnterAnimation.Value : DefaultEnterAnimation());
         }
         ShowHideGroup?.EnterShow();
         tooltip?.EnterShow();
@@ -497,49 +521,43 @@ public class UINode {
 
     public virtual void Leave(bool animate) {   
         if (animate) {
-            var anims = LeaveAnimations().ToList();
-            if (anims.Count > 0) {
-                animToken.SoftCancel();
-                animToken = new();
-                foreach (var anim in anims)
-                    _ = anim(animToken);
-            }
+            _ = PlayAnimation(LeaveAnimation.Valid ? LeaveAnimation.Value : DefaultLeaveAnimation());
         }
         ShowHideGroup?.LeaveHide();
         tooltip?.LeaveHide();
         OnLeave?.Invoke(this);
     }
-    protected virtual IEnumerable<Func<ICancellee, Task>> EnterAnimations() {
-        if (UseDefaultAnimations) {
-            yield return cT => NodeHTML.transform.ScaleTo(1.02f, 0.1f, Easers.EOutSine, cT)
-                                .Then(() => NodeHTML.transform.ScaleTo(1f, 0.13f, cT: cT))
+    protected virtual Func<UINode, ICancellee, Task>? DefaultEnterAnimation() => (n, cT) => 
+        n.NodeHTML.transform.ScaleTo(1.02f, 0.1f, Easers.EOutSine, cT)
+                                .Then(() => n.NodeHTML.transform.ScaleTo(1f, 0.13f, cT: cT))
                                 .Run(Controller, new CoroutineOptions(true));
-        }
-    }
 
-    protected virtual IEnumerable<Func<ICancellee, Task>> LeaveAnimations() => 
-        Array.Empty<Func<ICancellee, Task>>();
+    protected virtual Func<UINode, ICancellee, Task>? DefaultLeaveAnimation() => null;
 
     #endregion
 }
 
 public class EmptyNode : UINode {
-    public IFixedXMLObject Source { get; }
-    private readonly string desc;
+    public IFixedXMLObject? Source { get; }
+    private readonly string desc = "empty node";
+
+    public EmptyNode() : base("empty node") {
+        DisableAnimations();
+    }
     public EmptyNode(IFixedXMLObject source, Action<EmptyNode>? onBuild = null) : base(source.Descriptor) {
         this.Source = source;
         this.desc = source.Descriptor;
-        ConfigureAbsoluteLocation(source, extraOnBuild: n => {
+        DisableAnimations().ConfigureAbsoluteLocation(source, extraOnBuild: n => {
             n.HTML.ConfigureEmpty();
             onBuild?.Invoke(this);
         });
     }
 
     public ICObservable<float> CreateCenterOffsetChildX(ICObservable<float> childX) =>
-        Source.CreateCenterOffsetChildX(childX);
+        Source!.CreateCenterOffsetChildX(childX);
 
     public ICObservable<float> CreateCenterOffsetChildY(ICObservable<float> childY) =>
-        Source.CreateCenterOffsetChildY(childY);
+        Source!.CreateCenterOffsetChildY(childY);
 }
 
 public class PassthroughNode : UINode {
@@ -558,7 +576,7 @@ public class TwoLabelUINode : UINode {
     public TwoLabelUINode(LString description1, LString description2) : this(description1, () => description2){ }
     public TwoLabelUINode(LString description1, object description2) : this(description1, description2.ToString()) { }
 
-    protected override void Rebind() {
+    public override void Rebind() {
         base.Rebind();
         NodeHTML.Q<Label>("Label2").text = desc2();
     }
@@ -617,7 +635,7 @@ public class ConfirmFuncNode : UINode {
     public ConfirmFuncNode(LString description, Func<bool> command) : this(() => description, 
         () => new UIResult.StayOnNode(!command())) { }
 
-    protected override void Rebind() {
+    public override void Rebind() {
         if (Label != null)
             Label.text = isConfirm ? LocalizedStrings.UI.are_you_sure : Description();
     }
@@ -704,7 +722,7 @@ public class OptionNodeLR<T> : BaseLROptionUINode<T>, IOptionNodeLR {
     }
 
 
-    protected override void Rebind() {
+    public override void Rebind() {
         base.Rebind();
         NodeHTML.Q<Label>("Key").text = Description();
         NodeHTML.Q<Label>("Value").text = values()[Index].key;
@@ -713,15 +731,14 @@ public class OptionNodeLR<T> : BaseLROptionUINode<T>, IOptionNodeLR {
     private void ScaleEndpoint(VisualElement ep) {
         ep.ScaleTo(1.35f, 0.06f, Easers.EOutSine)
             .Then(() => ep.ScaleTo(1f, 0.15f))
-            .Run(Controller);
+            .Run(Controller, new(true));
     }
     protected override UIResult Left() {
         var v = values();
         if (v.Length > 0) {
             index = BMath.Mod(v.Length, index - 1);
             OnChange(v[index].val);
-            if (UseDefaultAnimations)
-                ScaleEndpoint(NodeHTML.Q("Left"));
+            ScaleEndpoint(NodeHTML.Q("Left"));
         }
         return new UIResult.StayOnNode();
     }
@@ -730,8 +747,7 @@ public class OptionNodeLR<T> : BaseLROptionUINode<T>, IOptionNodeLR {
         if (v.Length > 0) {
             index = BMath.Mod(v.Length, index + 1);
             OnChange(v[index].val);
-            if (UseDefaultAnimations)
-                ScaleEndpoint(NodeHTML.Q("Right"));
+            ScaleEndpoint(NodeHTML.Q("Right"));
         }
         return new UIResult.StayOnNode();
     }
@@ -758,7 +774,7 @@ public class ComplexLROptionUINode<T> : BaseLROptionUINode<T>, IComplexOptionNod
     }
 
 
-    protected override void Rebind() {
+    public override void Rebind() {
         base.Rebind();
         NodeHTML.Q<Label>("Key").text = Description();
         NodeHTML.Q("LR2ChildContainer").Clear();
@@ -805,7 +821,7 @@ public class KeyRebindInputNode : UINode {
         With(fontControlsClass);
     }
     
-    protected override void Rebind() {
+    public override void Rebind() {
         string t = Description();
         NodeHTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
         NodeHTML.Q("FadedBack").style.display = !isEntryEnabled ? DisplayStyle.Flex : DisplayStyle.None;
@@ -878,7 +894,7 @@ public class TextInputNode : UINode {
 
     public TextInputNode(LString title) : base(title) { }
 
-    protected override void Rebind() {
+    public override void Rebind() {
         string t = Description();
         NodeHTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
         NodeHTML.Q("FadedBack").style.display = DisplayWIP.Length == 0 ? DisplayStyle.Flex : DisplayStyle.None;
@@ -953,19 +969,19 @@ public class UIButton : UINode {
         });
         requiresConfirm = type == ButtonType.Danger;
         this.onClick = onClick;
-        UseDefaultAnimations = false;
     }
 
     public UIButton(LString descriptor, ButtonType type, Func<UIButton, UIResult> onClick) : 
         this(() => descriptor, type, onClick) { }
 
+    public static Func<UIButton, UIResult> GoBackCommand(UINode source) => _ =>
+        new UIResult.ReturnToTargetGroupCaller(source.Group);
+
     public static UIButton Cancel(UINode source) =>
-        new(() => LocalizedStrings.Generic.generic_cancel, ButtonType.Cancel, _ => 
-            new UIResult.ReturnToTargetGroupCaller(source.Group));
+        new(() => LocalizedStrings.Generic.generic_cancel, ButtonType.Cancel, GoBackCommand(source));
     
     public static UIButton Back(UINode source) =>
-        new(() => LocalizedStrings.Generic.generic_back, ButtonType.Cancel, _ => 
-            new UIResult.ReturnToTargetGroupCaller(source.Group));
+        new(() => LocalizedStrings.Generic.generic_back, ButtonType.Cancel, GoBackCommand(source));
 
     public static UIButton Delete(Func<bool> deleter, Func<UIResult> returner) =>
         new(() => LocalizedStrings.Generic.generic_delete, ButtonType.Danger, 
@@ -978,7 +994,7 @@ public class UIButton : UINode {
         new(() => LocalizedStrings.Generic.generic_load, danger ? ButtonType.Danger : ButtonType.Confirm, 
             _ => load() ? returner : new UIResult.StayOnNode(true));
     
-    protected override void Rebind() {
+    public override void Rebind() {
         Label!.text = isConfirm ? LocalizedStrings.UI.are_you_sure : Description();
     }
 
@@ -993,17 +1009,15 @@ public class UIButton : UINode {
         return base.NavigateInternal(req);
     }
 
-    protected override IEnumerable<Func<ICancellee, Task>> EnterAnimations() {
-        yield return cT => 
-            NodeHTML.transform.ScaleTo(1.16f, 0.1f, Easers.EOutSine, cT)
-                .Then(() => NodeHTML.transform.ScaleTo(1.1f, 0.1f, cT: cT))
+    protected override Func<UINode, ICancellee, Task>? DefaultEnterAnimation() => (n, cT) => 
+            n.NodeHTML.transform.ScaleTo(1.16f, 0.1f, Easers.EOutSine, cT)
+                .Then(() => n.NodeHTML.transform.ScaleTo(1.1f, 0.1f, cT: cT))
                 .Run(Controller, new CoroutineOptions(true));
-    }
-    protected override IEnumerable<Func<ICancellee, Task>> LeaveAnimations() {
-        yield return cT =>
-            NodeHTML.transform.ScaleTo(1f, 0.1f, Easers.EOutSine, cT)
+    
+    protected override Func<UINode, ICancellee, Task>? DefaultLeaveAnimation() => (n, cT) =>
+            n.NodeHTML.transform.ScaleTo(1f, 0.1f, Easers.EOutSine, cT)
                 .Run(Controller, new CoroutineOptions(true));
-    }
+    
     public override void Leave(bool animate) {
         isConfirm = false;
         base.Leave(animate);

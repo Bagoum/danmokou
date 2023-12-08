@@ -1,10 +1,18 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using Danmokou.Core;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 
 namespace Danmokou.DMath {
 public static class LocationHelpers {
+    [Flags]
+    public enum Direction {
+        Left = 1 << 0,
+        Right = 1 << 1,
+        Up = 1 << 2,
+        Down = 1 << 3,
+    }
     public static Vector2 PlayableScreenCenter { get; private set; } = Vector2.zero;
     public static FieldBounds PlayableBounds { get; private set; } = new() {
         left = -3.6f,
@@ -12,6 +20,14 @@ public static class LocationHelpers {
         top = 4.1f,
         bot = -4.5f
     };
+    
+    public static FieldBounds PlayerMovementBounds { get; private set; } = new() {
+        left = -3.5f,
+        right = 3.5f,
+        top = 4.0f,
+        bot = -4.08f
+    };
+    
     public static Vector2 VisiblePlayerLocation { get; private set; }
     public static Vector2 TruePlayerLocation { get; private set; }
 
@@ -21,16 +37,24 @@ public static class LocationHelpers {
         Right = nLoc.x + PlayableBounds.right;
         Top = nLoc.y + PlayableBounds.top;
         Bot = nLoc.y + PlayableBounds.bot;
+        LeftPlayerBound = nLoc.x + PlayerMovementBounds.left;
+        RightPlayerBound = nLoc.x + PlayerMovementBounds.right;
+        TopPlayerBound = nLoc.y + PlayerMovementBounds.top;
+        BotPlayerBound = nLoc.y + PlayerMovementBounds.bot;
     }
 
-    public static void UpdateBounds(FieldBounds bounds) {
+    public static void UpdateBounds(FieldBounds bounds, FieldBounds playerMovementBounds) {
         PlayableBounds = bounds;
+        PlayerMovementBounds = playerMovementBounds;
         UpdatePlayableScreenCenter(PlayableScreenCenter);
     }
 
     public static void UpdatePlayerLocation(Vector2 trueLoc, Vector2 enemyVisibleLoc) {
         TruePlayerLocation = trueLoc;
         VisiblePlayerLocation = enemyVisibleLoc;
+    }
+    public static void UpdateTruePlayerLocation(Vector2 trueLoc) {
+        TruePlayerLocation = trueLoc;
     }
 
     static LocationHelpers() {
@@ -46,10 +70,10 @@ public static class LocationHelpers {
     public static float TopPlus1 => Top + 1;
     public static float Width => Right - Left;
     public static float Height => Top - Bot;
-    public static float LeftPlayerBound => Left + 0.1f;
-    public static float RightPlayerBound => Right - 0.1f;
-    public static float BotPlayerBound => Bot + 0.42f;
-    public static float TopPlayerBound => Top - 0.1f;
+    public static float LeftPlayerBound { get; private set; }
+    public static float RightPlayerBound { get; private set; }
+    public static float BotPlayerBound { get; private set; }
+    public static float TopPlayerBound { get; private set; }
     public static readonly Ex left = Ex.Property(null, typeof(LocationHelpers), "Left");
     public static readonly Ex right = Ex.Property(null, typeof(LocationHelpers), "Right");
     public static readonly Ex bot = Ex.Property(null, typeof(LocationHelpers), "Bot");
@@ -93,14 +117,17 @@ public static class LocationHelpers {
     public static bool OnPlayableScreen(Vector2 loc) {
         return (loc.x >= Left && loc.x <= Right && loc.y >= Bot && loc.y <= Top);
     }
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool OnPlayableScreenBy(float f, Vector2 loc) {
         return (loc.x >= Left - f && loc.x <= Right + f && loc.y >= Bot - f && loc.y <= Top + f);
     }
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool OffPlayableScreenBy(float f, Vector2 loc) {
         return (loc.x < Left - f || loc.x > Right + f || loc.y < Bot - f || loc.y > Top + f);
     }
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool OffPlayableScreenBy(in float f, in Vector3 loc) {
         return (loc.x < Left - f || loc.x > Right + f || loc.y < Bot - f || loc.y > Top + f);

@@ -37,8 +37,18 @@ public static class ExMHelpers {
             LookupTable[ii] = new Vector2((float) Math.Cos(ii * piIncr), (float) Math.Sin(ii * piIncr));
         }
     }
-    //This is exactly what Mathf does, avoiding the function call is faster.
+    
+    /// <summary>
+    /// For a function f of type double->double, call it with any numeric argument
+    /// and cast the result back to type float.
+    /// <br/>This is what most Unity Mathf functions do internally.
+    /// </summary>
     public static Ex OfDFD(ExFunction f, Ex arg) => f.Of(arg.Cast<double>()).Cast<float>();
+    
+    /// <summary>
+    /// For a function f of type (double,double...)->double, call it with any numeric arguments
+    /// and cast the result back to type float.
+    /// </summary>
     public static Ex OfDFD(ExFunction f, params Ex[] args) => f.Of(args.Select(x => x.Cast<double>()).ToArray()).Cast<float>();
 
     private static Ex dGetRadIndex(TEx<double> angleRad) => Ex.And(angleRad.Mul(ExC(radRatio)).Cast<int>(), ExC(LookupMask));

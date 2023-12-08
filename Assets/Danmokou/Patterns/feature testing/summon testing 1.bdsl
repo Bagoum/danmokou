@@ -1,17 +1,17 @@
 pattern { }
 phase 40 
     paction 0
-        shift-phase-to 1 
+        shift-phase-to 2 
         
 ##
 phase 40 #{
     paction 0
         position 0 0
-        async enemy01 <2;:45> gcr2 240 4 <;:80> { } summon
+        async tlfairy <2;:45> gcr2 240 4 <;:80> { } summon
             tpnrot cy 0.2
             paction 0
 				async gem-orange/b <0.5;:> gcr2 70 3 <> { delay 40 } gsr2 10 <36> . s tprot cx 1
-                async enemy01 <1;:> gcr2 60 8 <;:45> { } summon
+                async tfairy <0.2;:> gcr2 60 8 <;:45> { } summon
                     tprot cxy 1 0.4
                     paction 0
                 ## purple streams in direciton of movement, red slightly lower (red is equiv. to <1;0>, where movement is <1;0.4>)
@@ -22,6 +22,23 @@ phase 40 #{
 				break
 			{ hp 500 }
         move 2 tpnrot cx -0.5
+#}
+
+##
+phase 40 #{
+    paction 0
+        position -3 0
+        async tlfairy <2;:-45> gcr2 240 4 <;:30> { } summon
+            tprot pxy(1, sine(3, 0.5, t))
+            paction 0
+				async gem-orange/b <0.5;:> gcr2 70 _ <> { 
+                    face rot
+                 } s tprot cx 1
+				break
+			{ 
+                hp 500
+                rotate(90 * t) 
+            }
 #}
 
 ##Testing firing index inheritance: each bullet should be more rotated than the last. 

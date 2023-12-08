@@ -12,10 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e371a047fd0478dab0e1a132d71003c, type: 3}
   m_Name: TestPlayer
   m_EditorClassIdentifier: 
+  movementHandler: {fileID: 11400000, guid: 28e9b96c1b5063446aedea0295203dd9, type: 2}
   freeSpeed: 5
+  focusAllowed: 1
   focusSlowdown: 0.44
   hurtboxRadius: 0.034
   grazeboxRadius: 0.42
+  itemCollectRadius: 0.2
+  itemAttractRadius: 1
   key: basic-mokou
   shortTitle:
     useReference: 1

@@ -40,13 +40,18 @@ public interface IAST : ITypeTree, IDebugPrint {
     public LexicalScope EnclosingScope { get; }
 
     /// <summary>
+    /// Return a deep copy of this tree.
+    /// </summary>
+    public IAST CopyTree();
+
+    /// <summary>
     /// Get all nodes in this tree, enumerated in preorder.
     /// </summary>
     IEnumerable<IAST> EnumeratePreorder() => 
         Params.SelectMany(p => p.EnumeratePreorder()).Prepend(this);
 
     /// <summary>
-    /// Get all nodes in this tree, enumerated one level at a time.
+    /// Get all nodes in this tree, enumerated breadth-first.
     /// </summary>
     IEnumerable<IAST> EnumerateByLevel() {
         var q = new Queue<IAST>();
@@ -57,6 +62,12 @@ public interface IAST : ITypeTree, IDebugPrint {
                 q.Enqueue(arg);
         }
     }
+
+    /// <summary>
+    /// Set warnings and other non-fatal messages on this level of the AST.
+    /// </summary>
+    public void SetDiagnostics(ReflectDiagnostic[] diagnostics);
+    public IEnumerable<ReflectDiagnostic> WarnUsage();
 
     /// <summary>
     /// (Stage 1) Returns all errors in the parse tree that prevent it from being typechecked.
@@ -95,9 +106,12 @@ public interface IAST : ITypeTree, IDebugPrint {
         var varErr = globalScope.FinalizeVariableTypes(tDes.Left.Item2);
         if (varErr.IsRight)
             return varErr.Right;
-        if (!root.IsFullyResolved)
-            //This shouldn't occur, FinalizeVariableTypes should throw an error first
-            return new TypeUnifyErr.UnboundRestr(root.UnresolvedVariables().First());
+        if (!root.IsFullyResolved) {
+            //This error is fairly rare, I think it only occurs when the top-level return type cannot be determined,
+            // eg in 5 * 4 * 3 * x1, where x1 may have any type and the total expression may have any type.
+            var (binding, tree) = root.UnresolvedVariables().First();
+            return new TypeUnifyErr.UnboundRestr(binding, tree);
+        }
         return tDes.Left.Item1.Resolve(tDes.Left.Item2);
     }
 
@@ -111,9 +125,12 @@ public interface IAST : ITypeTree, IDebugPrint {
                       $"because the first resolved to {ane.LResolved} and the second to {ane.RResolved}," +
                       $"which have different arities " +
                       $"({ane.LResolved.Arguments.Length} and {ane.RResolved.Arguments.Length} respectively).");
-        } else if (e is TypeUnifyErr.UnboundRestr) {
-            //this should occur as unboundpromise/untypedvariable instead
-            sb.Append($"There are unbound variables. (This error should not occur. Please report it.)");
+        } else if (e is TypeUnifyErr.UnboundRestr unbound) {
+            pos = (unbound.Tree as IAST)!.Position;
+            if (unbound.Tree is AST.Reference r) {
+                sb.Append($"The type of variable {r.Declaration.Name} could not be determined.");
+            } else
+                sb.Append("The result type of this expression could not be determined.");
         } else if (e is TypeUnifyErr.RecursionBinding rbr) {
             sb.Append($"Type {rbr.LReq} and {rbr.RReq} could not be unified because of a circular binding:" +
                       $"the first resolved to {rbr.LResolved}, which occurs in {rbr.RResolved}.");
@@ -209,6 +226,18 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
 
     /// <inheritdoc cref="IAST.Params"/>
     public IAST[] Params { get; init; } = Params;
+    
+    public ReflectDiagnostic[] Diagnostics { get; private set; } = System.Array.Empty<ReflectDiagnostic>();
+
+    /// <inheritdoc cref="IAST.CopyTree"/>
+    public abstract IAST CopyTree();
+
+    private IAST[] CopyParams() {
+        var copied = new IAST[Params.Length];
+        for (int ii = 0; ii < Params.Length; ++ii)
+            copied[ii] = Params[ii].CopyTree();
+        return copied;
+    }
 
     /// <inheritdoc cref="IAST.ReplaceScope"/>
     public virtual Either<Unifier, TypeUnifyErr> ReplaceScope(LexicalScope prev, LexicalScope inserted, Unifier u) {
@@ -266,21 +295,41 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
     private static Type GetUnwrappedType(TypeDesignation texType) =>
         texType.UnwrapTExFunc().Resolve(Unifier.Empty).LeftOrThrow;
 
+    public void SetDiagnostics(ReflectDiagnostic[] diagnostics) {
+        this.Diagnostics = diagnostics;
+    }
+    public virtual IEnumerable<ReflectDiagnostic> WarnUsage() =>
+        Diagnostics.Concat(Params.SelectMany(p => p.WarnUsage()));
 
     // ----- Subclasses -----
     
 
-    //todo: enum typing via ident?
     /// <summary>
-    /// A reference to a declaration of a variable, function, etc, that is used as a value (eg. in `x`++ or `f`(2)).
+    /// A reference to a declaration of a variable, function, enum value, etc, that is used as a value (eg. in `x`++ or `f`(2)).
     /// </summary>
-    //Always a tex func type-- references are bound to expressions or EnvFrame
-    public record Reference(PositionRange Position, LexicalScope EnclosingScope, IUsedVariable Declaration) : AST(Position,
-        EnclosingScope), IAST, IAtomicTypeTree {
+    //Always a tex func type (references are bound to expressions or EnvFrame) or a constant (in case of enum reference)
+    public record Reference : AST, IAST, IAtomicTypeTree {
+        public IUsedVariable Declaration { get; init; }
+        private readonly List<(Type type, object value)>? asEnumTypes;
+        /// <inheritdoc cref="AST.Reference"/>
+        public Reference(PositionRange Position, LexicalScope EnclosingScope, string Name, IUsedVariable Declaration) : base(Position,
+            EnclosingScope) {
+            this.Declaration = Declaration;
+            PossibleTypes = new TypeDesignation[] { Declaration.TypeDesignation.MakeTExFunc() };
+            if (Reflector.enumResolversByKey.TryGetValue(Name, out var vals)) {
+                asEnumTypes = vals;
+                PossibleTypes = PossibleTypes
+                    .Concat(asEnumTypes.Select(a => new Known(a.type)))
+                    .ToArray();
+            }
+        }
+        
+        public override IAST CopyTree() => this with { };
+        
         /// <inheritdoc cref="IAtomicTypeTree.SelectedOverload"/>
         public TypeDesignation? SelectedOverload { get; set; }
         /// <inheritdoc cref="IAtomicTypeTree.PossibleTypes"/>
-        public TypeDesignation[] PossibleTypes { get; } = { Declaration.TypeDesignation.MakeTExFunc() };
+        public TypeDesignation[] PossibleTypes { get; }
 
         public override Either<Unifier, TypeUnifyErr> ReplaceScope(LexicalScope prev, LexicalScope inserted, Unifier u) {
             var uerr = base.ReplaceScope(prev, inserted, u);
@@ -292,6 +341,21 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             return uerr.Left;
         }
 
+        public Either<Unifier, TypeUnifyErr> WillSelectOverload(TypeDesignation overload, IImplicitTypeConverterInstance? cast, Unifier u) {
+            if (asEnumTypes != null && Declaration is VarDeclPromise promise &&
+                    overload is Known { Arguments: { Length: 0 }, Typ: {} t}) {
+                for (int ii = 0; ii < asEnumTypes.Count; ++ii) {
+                    //This is an enum type, so it doesn't need to be treated as a variable
+                    if (asEnumTypes[ii].type == t) {
+                        promise.IsNotRequiredBy(this);
+                        return u;
+                    }
+                }
+                promise.IsRequiredBy(this);
+            }
+            return u;
+        }
+
         public IEnumerable<ReflectionException> Verify() {
             if (!Declaration.IsBound)
                 yield return new ReflectionException(Position, 
@@ -299,6 +363,13 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
 
         public override object _RealizeWithoutCast() {
+            if (asEnumTypes != null && SelectedOverload is Known { Arguments: { Length: 0 }, Typ: { } t }) {
+                for (int ii = 0; ii < asEnumTypes.Count; ++ii) {
+                    if (asEnumTypes[ii].type == t) {
+                        return asEnumTypes[ii].value;
+                    }
+                }
+            }
             return GetUnwrappedType(SelectedOverload!).MakeTypedLambda(tac => {
                 var v = Declaration.Bound;
                 //if the value is unchanging and we are within a GCXU,
@@ -360,10 +431,16 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
     public record MethodCall(PositionRange Position, PositionRange MethodPosition,
         LexicalScope EnclosingScope, Reflector.InvokedMethod[] Methods, params IAST[] Params) : 
         AST(Position, EnclosingScope, Params), IMethodAST<Reflector.InvokedMethod> {
+        //We have to hide subtypes of StateMachine since the unifier can't generally handle subtypes
+        public Reflector.InvokedMethod[] Methods { get; } = Methods.Select(m => m.HideSMReturn()).ToArray();
         public IReadOnlyList<Reflector.InvokedMethod> Overloads => Methods;
         public IReadOnlyList<ITypeTree> Arguments => Params;
         public List<Reflector.InvokedMethod>? RealizableOverloads { get; set; }
         public (Reflector.InvokedMethod method, Dummy simplified)? SelectedOverload { get; set; }
+        /// <inheritdoc/>
+        public bool OverloadsAreInterchangeable { get; init; } = false;
+
+        public override IAST CopyTree() => this with { Params = CopyParams() };
 
         public Either<Unifier, TypeUnifyErr> WillSelectOverload(Reflector.InvokedMethod method, IImplicitTypeConverterInstance? cast, Unifier u) {
             if (cast?.Converter is IScopedTypeConverter c && (c.ScopeArgs != null || c.Kind != ScopedConversionKind.Trivial)) {
@@ -462,20 +539,28 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
 
     //Always a tex func type
     public record Block : AST, IMethodAST<Dummy> {
-        public IReadOnlyList<Dummy> Overloads { get; }
+        public IReadOnlyList<Dummy> Overloads { get; private init; }
         public IReadOnlyList<ITypeTree> Arguments => Params;
-        public bool PreferFirstOverload => true;
         public List<Dummy>? RealizableOverloads { get; set; }
         public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
         public (VarDecl variable, ImplicitArgDecl fnArg)[]? TopLevelArgs { get; private set; }
         public Block(PositionRange Position, LexicalScope EnclosingScope, LexicalScope localScope, params IAST[] Params) : base(Position,
             EnclosingScope, Params) {
             this.LocalScope = localScope;
-            var typs = Params.Select(p => new Variable() as TypeDesignation).ToArray();
+            Overloads = MakeOverloads(Params);
+        }
+
+        private static IReadOnlyList<Dummy> MakeOverloads(IAST[] prms) {
+            var typs = prms.Select(p => new Variable() as TypeDesignation).ToArray();
             typs[^1] = typs[^1].MakeTExFunc();
-            Overloads = new[] {
+            return new[] {
                 Dummy.Method(typs[^1], typs), //(T1,T2...,TExArgCtx->TEx<R>)->(TExArgCtx->TEx<R>)
             };
+        }
+
+        public override IAST CopyTree() {
+            var nparams = CopyParams();
+            return this with { Params = nparams, Overloads = MakeOverloads(nparams) };
         }
 
         public Block WithTopLevelArgs(params (VarDecl, ImplicitArgDecl)[] args) {
@@ -540,16 +625,26 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
 
     //Type dependent on elements
     public record Array : AST, IMethodAST<Dummy> {
-        private readonly Variable elementType = new();
-        public IReadOnlyList<Dummy> Overloads { get; }
+        private Variable ElementType { get; init; } = new();
+        public IReadOnlyList<Dummy> Overloads { get; private init; }
         public IReadOnlyList<ITypeTree> Arguments => Params;
         
         public List<Dummy>? RealizableOverloads { get; set; }
         public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
         public Array(PositionRange Position, LexicalScope EnclosingScope, params IAST[] Params) : base(Position,
             EnclosingScope, Params) {
-            Overloads = new[]{ Dummy.Method(new Known(Known.ArrayGenericType, elementType), 
-                Params.Select(_ => elementType as TypeDesignation).ToArray()) };
+            Overloads = MakeOverloads(Params, ElementType);
+        }
+
+        private static IReadOnlyList<Dummy> MakeOverloads(IAST[] prms, Variable elementType) {
+            return new[]{ Dummy.Method(new Known(Known.ArrayGenericType, elementType), 
+                prms.Select(_ => elementType as TypeDesignation).ToArray()) };
+        }
+        
+        public override IAST CopyTree() {
+            var neleType = new Variable();
+            var nparams = CopyParams();
+            return this with { ElementType = neleType, Params = nparams, Overloads = MakeOverloads(nparams, neleType) };
         }
 
         public string Explain() {
@@ -588,18 +683,25 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             new Known(typeof(int)),
         };
         public float Value { get; }
-        private Variable Var { get; }
-        public TypeDesignation[] PossibleTypes { get; }
+        private Variable Var { get; init; }
+        public TypeDesignation[] PossibleTypes { get; private init; }
         public TypeDesignation? SelectedOverload { get; set; }
         public Number(PositionRange Position, LexicalScope EnclosingScope, float Value) : base(Position,
             EnclosingScope) {
             this.Value = Value;
-            Var = new Variable() {
-                RestrictedTypes = Math.Abs(Value - Math.Round(Value)) < 0.00001f ?
-                    FloatTypes.Concat(IntTypes).ToArray() :
-                    FloatTypes
-            };
+            Var = MakeVariableType(Value);
             PossibleTypes = new TypeDesignation[] { Var };
+        }
+
+        private static Variable MakeVariableType(float value) => new Variable() {
+            RestrictedTypes = Math.Abs(value - Math.Round(value)) < 0.00001f ?
+                FloatTypes.Concat(IntTypes).ToArray() :
+                FloatTypes
+        };
+        
+        public override IAST CopyTree() {
+            var nVar = MakeVariableType(Value);
+            return this with { Var = nVar, PossibleTypes = new TypeDesignation[] { Var } };
         }
 
         public override object _RealizeWithoutCast() {
@@ -630,6 +732,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         };
         public TypeDesignation? SelectedOverload { get; set; }
 
+        public override IAST CopyTree() => this with { };
         public override object? _RealizeWithoutCast() {
             var typ = SelectedOverload!.Resolve(Unifier.Empty);
             if (typ == typeof(T))
@@ -666,6 +769,9 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             base(exc.Position, scope) {
             Exc = exc;
         }
+
+        //NB -- deep copy not required here
+        public override IAST CopyTree() => this with { };
         
         public override object? _RealizeWithoutCast() => throw new StaticException("Cannot realize a Failure");
 

@@ -12,8 +12,8 @@ To get the newest version from git, run:
 
 The following features are planned for future releases. 
 
-- [10.1.0] Safeguards around control rebinding
-- [10.1.0] UI improvements: custom cursors
+- [Backlog] Safeguards around control rebinding
+- [Backlog] UI improvements: custom cursors
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
@@ -22,6 +22,34 @@ The following features are planned for future releases.
 The goal for this version is to have a fully functional implementation of the new scripting language, tentatively titled BDSL2.
 
 
+
+# v10.2.0 (2023/12/21)
+
+
+
+I've upgraded the project's Unity version to 2023.2.3f1. Unity 2023 has a critical change where the TextMeshPro package has now been merged into Unity internals, so it is not clear that the project will still run on Unity 2022. As such, please upgrade to Unity 2023 along with updating DMK.
+
+#### Features
+
+- Enemies can now use nonpiercing lasers. As with players shots, simply add the `nonpiercing()` option to the laser options.
+
+#### Breaking Changes
+
+- Instead of being derived automatically, the bounds on player movement are now determined via the `m_playerMovementBounds` fields on GameDef.
+
+- Player configurations now require a "movement handler" configuration.  For standard bullet hell ships, you can use the "PlayerStandardMovement" configuration, which has been set on all the existing players. For now, this will default to "PlayerStandardMovement" if not provided, but it may be required in future versions.
+
+  ![move_cfg](..\images\move_cfg.jpg)
+
+#### Changes
+
+- Rearchitectured bullet collision handling so it now uses service location instead of hardcoded targets. Now, any object that implements `IEnemySimpleBulletCollisionReceiver` and calls `RegisterService<IEnemySimpleBulletCollisionReceiver>(this)` will receive collision checks from enemy-fired simple bullets. Likewise for `IPlayerSimpleBulletCollisionReceiver`, `IEnemyPatherCollisionReceiver`, `IPlayerPatherCollisionReceiver`, `IEnemyLaserCollisionReceiver`, `IPlayerLaserCollisionReceiver`, `IEnemyBulletCollisionReceiver`, and `IPlayerBulletCollisionReceiver`. This makes it possible to introduce collisions with other objects such as terrain.
+- UI popups can now choose between having a row of centered action buttons or a row of left-flush and right-flush action buttons, based on the `PopupButtonOpts` argument passed to `PopupUIGroup.CreatePopup` (renamed from `PopupUIGroup.LRB2`).
+
+#### Fixes
+
+- Fixed an issue where the scrolling on the control bindings option screen was too slow (it was correct on all other menus after Unity-side fixes in 2022.2.13).
+- Fixed an issue where trailing options wouldn't have a correct position immediately after a traditional respawn.
 
 # v10.1.0 (2023/04/02)
 

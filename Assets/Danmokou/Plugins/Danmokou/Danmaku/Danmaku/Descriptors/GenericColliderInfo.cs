@@ -73,11 +73,11 @@ public class GenericColliderInfo : MonoBehaviour {
             cr = new CollisionResult(false,
                 CollisionMath.CircleOnAABB(
                     new AABB(trp, new Vector2(rectHalfX, rectHalfY))
-                    , hitbox.x, hitbox.y, hitbox.largeRadius));
+                    , hitbox.x, hitbox.y, hitbox.grazeRadius));
         } else if (debug == DebugColliderType.WeakAABB) {
             cr = new CollisionResult(false,
                 CollisionMath.WeakCircleOnAABB(-rectHalfX, -rectHalfY, rectHalfX, rectHalfY,
-                    hitbox.x - trp.x, hitbox.y - trp.y, hitbox.largeRadius));
+                    hitbox.x - trp.x, hitbox.y - trp.y, hitbox.grazeRadius));
         } else if (colliderType == ColliderType.Circle) {
             cr = CollisionMath.GrazeCircleOnCircle(hitbox, trp.x, trp.y, radius);
         } else if (colliderType == ColliderType.Line) {

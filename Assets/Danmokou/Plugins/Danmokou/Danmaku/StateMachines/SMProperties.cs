@@ -499,16 +499,16 @@ public class PhaseProperties {
             else if (prop is SpellCutinProp scp) 
                 spellCutinIndex = scp.index;
             else if (prop is RootProp rp) {
-                StateMachine rm = new ReflectableLASM(SaveData.Settings.TeleportAtPhaseStart ?
+                StateMachine rm = SaveData.Settings.TeleportAtPhaseStart ?
                     SMReflection.Position(_ => rp.x, _ => rp.y) :
-                    SMReflection.MoveTarget(AtomicBPYRepo.Const(rp.t), ExMEasers.EIOSine, Parametrics.CXY(rp.x, rp.y)));
+                    SMReflection.MoveTarget(AtomicBPYRepo.Const(rp.t), ExMEasers.EIOSine, Parametrics.CXY(rp.x, rp.y));
                 rootMoves.Add(rp.who == null ? rm : RetargetUSM.Retarget(rm, rp.who));
             } else if (prop is ChallengeProp clp) 
                 challenges.Add(clp.c);
             else if (prop is PhaseProperty.EmptyProp) { }
             else throw new Exception($"Phase is not allowed to have properties of type {prop.GetType()}");
             
-            if (rootMoves.Count > 0) rootMove = new ParallelSM(rootMoves);
+            if (rootMoves.Count > 0) rootMove = new ParallelSM(rootMoves.ToArray());
         }
     }
 }

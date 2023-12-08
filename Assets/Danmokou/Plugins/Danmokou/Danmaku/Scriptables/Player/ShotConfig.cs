@@ -33,6 +33,9 @@ public class ShotConfig : ScriptableObject {
     /// </summary>
     public string type = "";
     [Header("Unitary Shot Configuration")] public GameObject prefab = null!;
+    /// <summary>
+    /// Whether the shot transform should be relative to the player, or have an absolute position.
+    /// </summary>
     public bool playerChild = true;
     public StaticReplay? demoReplay;
     public TextAsset? demoSetupSM;

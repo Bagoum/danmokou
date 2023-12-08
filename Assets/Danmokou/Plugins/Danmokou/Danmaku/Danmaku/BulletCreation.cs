@@ -45,7 +45,7 @@ public struct DelegatedCreator {
     private float ResolveFacing() {
         if (facing == Facing.DEROT) return 0f;
         if (facing == Facing.VELOCITY) return parent.DirectionDeg;
-        if (facing == Facing.ROTVELOCITY) return parent.DirectionDeg + parent.original_angle;
+        if (facing == Facing.ROTATOR) return parent.RotatorRotation ?? parent.original_angle;
         return parent.original_angle;
     }
 

@@ -5,14 +5,15 @@ using System.Threading.Tasks;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
+using BagoumLib.Functional;
 using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
 using BagoumLib.Transitions;
 using Danmokou.Core;
 using Danmokou.DMath;
-using SuzunoyaUnity;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Helpers = SuzunoyaUnity.Helpers;
 
 namespace Danmokou.UI.XML {
 public abstract class UIRenderSpace {
@@ -124,27 +125,23 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
     public override VisualElement HTML => _html!;
     private readonly Color bgc;
     private readonly DisturbedOr isTransitioning = new();
-    public float Alpha { get; set; } = 0.3f;
+    public float Alpha { get; set; } = 0.5f;
     public override bool ShouldBeVisible => Sources.Count > 0;
 
     public Task FadeIn() {
         var token = isTransitioning.AddConst(true);
-        return TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, Alpha, 0.1f, 
+        return TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, Alpha, 0.14f, 
                 a => HTML.style.backgroundColor = Helpers.WithA(bgc, a))
             .Run(Controller)
-            .ContinueWithSync(() => {
-                token.Dispose();
-            });
+            .ContinueWithSync(token.Dispose);
     }
 
     public Task FadeOutIfNoOtherDependencies(UIGroup g) {
         if (Sources.Count == 1 && Sources[0] == g && HTML.style.display == DisplayStyle.Flex) {
             var token = isTransitioning.AddConst(true);
-            TransitionHelpers.TweenTo(Alpha, 0, 0.1f, a => HTML.style.backgroundColor = Helpers.WithA(bgc, a))
+            TransitionHelpers.TweenTo(Alpha, 0, 0.12f, a => HTML.style.backgroundColor = Helpers.WithA(bgc, a))
                 .Run(Controller)
-                .ContinueWithSync(() => {
-                    token.Dispose();
-                });
+                .ContinueWithSync(token.Dispose);
         }
         return Task.CompletedTask;
     }
@@ -155,8 +152,8 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
         bgc = _html.style.backgroundColor.value;
         _html.style.display = DisplayStyle.None;
         _html.RegisterCallback<PointerUpEvent>(evt => {
-            Logs.Log($"Clicked on absolute territory");
-            if (screen.Controller.Current == null || isTransitioning) return;
+            if (evt.button != 0 || screen.Controller.Current == null || isTransitioning) return;
+            Logs.Log("Clicked on absolute territory");
             screen.Controller.QueueEvent(new UIPointerCommand.NormalCommand(UICommand.Back, null));
             evt.StopPropagation();
         });
@@ -193,12 +190,15 @@ public class UIRenderColumn : UIRenderSpace {
 /// </summary>
 public class UIRenderConstructed : UIRenderSpace {
     private readonly UIRenderSpace parent;
-    private readonly VisualTreeAsset prefab;
+    private readonly Either<VisualTreeAsset, Func<VisualElement, VisualElement>> prefab;
     private readonly Action<UIRenderConstructed, VisualElement>? builder;
     public override VisualElement HTML {
         get {
             if (_html == null) {
-                parent.HTML.Add(_html = prefab.CloneTreeNoContainer());
+                if (prefab.TryL(out var vta))
+                    parent.HTML.Add(_html = vta.CloneTreeNoContainer());
+                else
+                    _html = prefab.Right(parent.HTML);
                 builder?.Invoke(this, _html);
                 UpdateVisibility();
             }
@@ -207,7 +207,14 @@ public class UIRenderConstructed : UIRenderSpace {
     }
     public override bool ShouldBeVisible => Sources.Any(g => g.Visible);
 
-    public UIRenderConstructed(UIRenderSpace parent, VisualTreeAsset prefab, Action<UIRenderConstructed, VisualElement>? builder = null) : base(parent.Screen, parent) {
+    /// <summary>
+    /// Constructor for <see cref="UIRenderConstructed"/>.
+    /// </summary>
+    /// <param name="parent">Parent render space.</param>
+    /// <param name="prefab">Either a VisualTreeAsset prefab defining the HTML tree that should be created for this render space,
+    ///  or a function that creates an HTML tree provided the parent HTML tree.</param>
+    /// <param name="builder">Extra builder options for HTML instantiation.</param>
+    public UIRenderConstructed(UIRenderSpace parent, Either<VisualTreeAsset, Func<VisualElement, VisualElement>> prefab, Action<UIRenderConstructed, VisualElement>? builder = null) : base(parent.Screen, parent) {
         this.parent = parent;
         this.prefab = prefab;
         this.builder = builder;

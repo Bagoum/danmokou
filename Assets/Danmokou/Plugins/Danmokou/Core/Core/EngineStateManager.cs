@@ -26,6 +26,7 @@ public static class EngineStateHelpers {
     public static float Timescale(this EngineState gs) => gs switch {
         EngineState.MENU_PAUSE => 0f,
         EngineState.EFFECT_PAUSE => 0f,
+        EngineState.LOADING_PAUSE => 0f,
         _ => 1f,
     };
 }

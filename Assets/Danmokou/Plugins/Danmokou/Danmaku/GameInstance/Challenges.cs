@@ -101,7 +101,7 @@ public readonly struct SceneChallengeReqest : IChallengeRequest {
         ServiceLocator.Find<IUIManager>().MessageChallengeEnd(false, out float t);
         if (ctx.exec != null) ctx.exec.ShiftPhase();
         RUWaitingUtils.WaitThenCB(ctx.cm, Cancellable.Null, t, false,
-            () => ServiceLocator.Find<PlayerController>().Hit(999, true));
+            () => ServiceLocator.Find<PlayerController>().LoseLives(999, true));
     }
 
     public LString Description => cr.Description;
@@ -227,14 +227,14 @@ public abstract class Challenge {
 
         private static readonly ReflWrap<TP4> StayInColor = new("witha lerpt 0 1 0 0.3 green");
 
-        private static ReflWrap<TaskPattern> StayInRange(BehaviorEntity beh, float f) =>
+        private static ReflWrap<ReflectableLASM> StayInRange(BehaviorEntity beh, float f) =>
             ReflWrap.FromFunc($"Challenge.StayInRange.{f}", () => SMReflection.Sync("_", GCXFRepo.RV2Zero,
                 AtomicPatterns.RelCirc("_", _ => Expression.Constant(beh), _ => V2RV2.Rot(f, f), StayInColor)));
         
         
 
         public override void SetupPhase(SMHandoff smh) {
-            StayInRange(smh.Exec, units).Value(smh);
+            StayInRange(smh.Exec, units).Value.Start(smh);
         }
 
         public override bool FrameCheck(ChallengeManager.TrackingContext ctx) {
@@ -255,12 +255,12 @@ public abstract class Challenge {
 
         private static readonly ReflWrap<TP4> StayOutColor = new("witha lerpt 0 1 0 0.3 red");
 
-        private static ReflWrap<TaskPattern> StayOutRange(BehaviorEntity beh, float f) =>
+        private static ReflWrap<ReflectableLASM> StayOutRange(BehaviorEntity beh, float f) =>
             ReflWrap.FromFunc($"Challenge.StayOutRange.{f}", () => SMReflection.Sync("_", GCXFRepo.RV2Zero,
                 AtomicPatterns.RelCirc("_", _ => Expression.Constant(beh), _ => V2RV2.Rot(f, f), StayOutColor)));
 
         public override void SetupPhase(SMHandoff smh) {
-            StayOutRange(smh.Exec, units).Value(smh);
+            StayOutRange(smh.Exec, units).Value.Start(smh);
         }
 
         public override bool FrameCheck(ChallengeManager.TrackingContext ctx) {

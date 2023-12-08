@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib;
 using Danmokou.DMath;
 using UnityEngine;
 
@@ -27,12 +28,22 @@ public class UIFreeformGroup : CompositeUIGroup, IFixedXMLObjectContainer {
     }
 
     protected override UIResult? NavigateAmongComposite(UINode current, UICommand dir) {
-        var fromLoc = current == unselector ? 
-            M.RectFromCenter(UIBuilderRenderer.UICenter, new(2, 2)) : 
-            current.WorldLocation;
-        if (FindClosest(fromLoc, dir, NodesAndDependentNodes, _angleLimits2, n => n != current && n != unselector) 
-         is {} result) 
-            return FinalizeTransition(current, result);
+        var targets = NodesAndDependentNodes.Where(n => n.AllowInteraction && n != unselector).ToList();
+        if (targets.Count > 1) {
+            if (current == unselector) {
+                //Return the node farthest in the pressed direction
+                return dir switch {
+                    UICommand.Down => targets.MaxBy(n => n.WorldLocation.y),
+                    UICommand.Up => targets.MaxBy(n => -n.WorldLocation.y),
+                    UICommand.Left => targets.MaxBy(n => -n.WorldLocation.x),
+                    UICommand.Right => targets.MaxBy(n => n.WorldLocation.x),
+                    _ => throw new Exception()
+                };
+            }
+            if (FindClosest(current.WorldLocation, dir, targets, _angleLimits2, n => n != current) 
+             is {} result) 
+                return FinalizeTransition(current, result);
+        }
         if (TryDelegateNavigationToEnclosure(current, dir, out var res))
             return res;
         //no wraparound permitted for now
@@ -47,18 +58,18 @@ public class UIFreeformGroup : CompositeUIGroup, IFixedXMLObjectContainer {
         _ => throw new Exception()
     };
 
-    public static UINode? FindClosest(Rect from, UICommand dir, IEnumerable<UINode> nodes, 
+    public static UINode? FindClosest(Rect from, UICommand dir, IEnumerable<UINode> targets, 
         float[] angleLimits, Func<UINode, bool>? allowed = null) {
         if (dir is not (UICommand.Down or UICommand.Up or UICommand.Left or UICommand.Right))
             return null;
         var dirAsVec = DirAsVec(dir);
         var dirAsAng = M.Atan2D(dirAsVec.y, dirAsVec.x);
-        var ordering = nodes.Select(n => {
+        var ordering = targets.Select(n => {
             var delta = M.ShortestDistancePushOutOverlap(from, n.HTML.worldBound);
             //y axis is inverted in XML
             var angleDelta = Mathf.Abs(M.DeltaD(M.Atan2D(-delta.y, delta.x), dirAsAng));
             return (n, angleDelta, (delta / 20).magnitude + angleDelta);
-        }).OrderBy(x => x.Item3).ToArray();
+        }).OrderBy(x => x.Item3).ToList();
         foreach (var limit in angleLimits) {
             foreach (var (candidate, angle, _) in ordering) {
                 if (!candidate.AllowInteraction || allowed?.Invoke(candidate) is false)

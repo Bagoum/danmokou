@@ -162,7 +162,7 @@ TextureImporter:
       213: -6651517086586016722
     second: ohr4
   externalObjects: {}
-  serializedVersion: 11
+  serializedVersion: 13
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -179,10 +179,12 @@ TextureImporter:
     externalNormalMap: 0
     heightScale: 0.25
     normalMapFilter: 0
-  isReadable: 0
+    flipGreenChannel: 0
+  isReadable: 1
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
   vTOnly: 0
+  ignoreMipmapLimit: 0
   grayScaleToAlpha: 0
   generateCubemap: 6
   cubemapConvolution: 0
@@ -221,6 +223,8 @@ TextureImporter:
   textureFormatSet: 0
   ignorePngGamma: 0
   applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 1
   platformSettings:
   - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
@@ -232,6 +236,7 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
+    ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
@@ -244,6 +249,7 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
+    ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
@@ -256,6 +262,7 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
+    ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
@@ -1385,62 +1392,61 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      yukari_1: -1605733724966370840
-      yukari_11: 4966214715986234848
-      yukari_8: 818861747257065417
-      yukari_21: 8392072638532727177
-      yukari_17: 4690849462139288610
-      yukari_15: 7165614654797141392
-      ohp3: -8729089316335779894
-      yukari_18: -1705435212745340282
       oho1: -2675161875900984047
-      yukari_14: -6609194668131470989
-      yukari_37: -6345135705703890605
-      yukari_43: -1482102286408631359
-      yukari_40: 539965284088401465
-      yukari_4: -6475086966736304238
-      yukari_7: 3995748174559475427
-      yukari_33: 3538245511717133642
-      yukari_32: -6444211997945782074
-      yukari_27: -4558121657206772584
-      yukari_19: 1642314802290833181
       oho2: 737007831497848616
+      oho3: -849307395895609828
+      oho4: -7954482687672251284
       ohp1: -4281433220610310427
       ohp2: 7142137018320130930
-      yukari_35: 187931677361956771
-      yukari_31: -5565817217495491415
-      yukari_0: -8925091146876875158
-      ohr4: -6651517086586016722
-      yukari_3: -7203736071956295639
-      yukari_20: -4202262739981499320
-      yukari_12: 5870003534154754573
-      oho3: -849307395895609828
-      yukari_23: 3978426108794593430
-      ohr2: -2267619428952613458
+      ohp3: -8729089316335779894
       ohp4: 4241293518516975008
-      yukari_16: 6266328886908813087
       ohr1: -7901581771170960016
+      ohr2: -2267619428952613458
+      ohr3: -3579734602441801207
+      ohr4: -6651517086586016722
+      yukari_0: -8925091146876875158
+      yukari_1: -1605733724966370840
+      yukari_10: 4876520005265986186
+      yukari_11: 4966214715986234848
+      yukari_12: 5870003534154754573
+      yukari_13: -3346805967649502215
+      yukari_14: -6609194668131470989
+      yukari_15: 7165614654797141392
+      yukari_16: 6266328886908813087
+      yukari_17: 4690849462139288610
+      yukari_18: -1705435212745340282
+      yukari_19: 1642314802290833181
+      yukari_2: -2118832571572566087
+      yukari_20: -4202262739981499320
+      yukari_21: 8392072638532727177
+      yukari_22: 6157278021932708119
+      yukari_23: 3978426108794593430
+      yukari_25: 7906732070977376806
+      yukari_27: -4558121657206772584
+      yukari_29: -2920627137387324738
+      yukari_3: -7203736071956295639
+      yukari_30: 1132239975660442751
+      yukari_31: -5565817217495491415
+      yukari_32: -6444211997945782074
+      yukari_33: 3538245511717133642
+      yukari_34: -8388121019028826413
+      yukari_35: 187931677361956771
+      yukari_36: 5172776408514503253
+      yukari_37: -6345135705703890605
+      yukari_38: -2758104866689944633
+      yukari_39: 1408319431420616384
+      yukari_4: -6475086966736304238
+      yukari_40: 539965284088401465
       yukari_41: -8193149264099738114
       yukari_42: -6480158598322160439
-      yukari_2: -2118832571572566087
-      yukari_30: 1132239975660442751
-      yukari_25: 7906732070977376806
-      yukari_34: -8388121019028826413
+      yukari_43: -1482102286408631359
       yukari_5: -1605262566054181330
-      yukari_9: 1041345289707844988
-      yukari_36: 5172776408514503253
-      yukari_29: -2920627137387324738
-      yukari_10: 4876520005265986186
-      yukari_38: -2758104866689944633
       yukari_6: 7143509163768009636
-      yukari_22: 6157278021932708119
-      yukari_13: -3346805967649502215
-      oho4: -7954482687672251284
-      ohr3: -3579734602441801207
-      yukari_39: 1408319431420616384
-  spritePackingTag: 
+      yukari_7: 3995748174559475427
+      yukari_8: 818861747257065417
+      yukari_9: 1041345289707844988
+  mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  pSDShowRemoveMatteOption: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 

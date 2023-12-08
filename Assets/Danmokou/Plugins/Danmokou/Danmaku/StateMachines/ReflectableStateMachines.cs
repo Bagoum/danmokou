@@ -35,6 +35,8 @@ public class ReflectableLASM : LineActionSM {
         this.func = func;
     }
     public override Task Start(SMHandoff smh) => func(smh);
+
+    public static implicit operator ReflectableLASM(TaskPattern func) => new(func);
 }
 
 /// <summary>

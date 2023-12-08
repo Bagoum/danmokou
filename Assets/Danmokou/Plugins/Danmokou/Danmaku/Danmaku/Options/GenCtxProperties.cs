@@ -638,7 +638,7 @@ public abstract class GenCtxProperties {
     
     /// <summary>
     /// In BDSL2, this points to the lexical scope of the children array.
-    /// <br/>Commands like <see cref="GenCtxProperty.BindItr"/> bind to 
+    /// <br/>Commands like <see cref="GenCtxProperty.BindItr"/> bind to variables in this scope.
     /// </summary>
     public LexicalScope? IterationScope { get; set; }
     

@@ -4,6 +4,7 @@ using System.Linq;
 using Ex = System.Linq.Expressions.Expression;
 using System.Reflection;
 using System.Text;
+using BagoumLib;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -87,6 +88,8 @@ public static partial class Reflector {
         CreatePostAggregates("PA_Pow", "^");
         CreatePostAggregates("PA_And", "&");
         CreatePostAggregates("PA_Or", "|");
+        
+        WaitForPhaseSM = SMReflection.Wait(Synchronization.Time(_ => M.IntFloatMax));
     }
 
     private readonly struct PostAggregate {
@@ -106,9 +109,14 @@ public static partial class Reflector {
     private static readonly Dictionary<Type, Dictionary<string, PostAggregate>> postAggregators =
         new();
 
+    public static readonly Dictionary<string, List<(Type, object)>> enumResolversByKey = new();
+
     private static void InitializeEnumResolvers() {
         void CEnum<E>((char first, E value)[] values) {
             Type e = typeof(E);
+            foreach (var (first, value) in values) {
+                enumResolversByKey.AddToList(first.ToString(), (e, value!));
+            }
             SimpleFunctionResolver[e] = s => {
                 char c = char.ToLower(s[0]);
                 for (int ii = 0; ii < values.Length; ++ii) {
@@ -125,6 +133,9 @@ public static partial class Reflector {
         }
         void SEnum<E>((string first, E value)[] values) {
             Type e = typeof(E);
+            foreach (var (first, value) in values) {
+                enumResolversByKey.AddToList(first, (e, value!));
+            }
             SimpleFunctionResolver[e] = s => {
                 for (int ii = 0; ii < values.Length; ++ii) {
                     if (s.StartsWith(values[ii].first)) return values[ii].value!;
@@ -150,14 +161,10 @@ public static partial class Reflector {
             ('i', Parametrization.INVMOD),
         });
         CEnum(new[] {
-            ('b', Blocking.BLOCKING),
-            ('n', Blocking.NONBLOCKING)
-        });
-        CEnum(new[] {
             ('o', Facing.ORIGINAL),
             ('d', Facing.DEROT),
             ('v', Facing.VELOCITY),
-            ('r', Facing.ROTVELOCITY)
+            ('r', ROTVELOCITY: Facing.ROTATOR)
         });
         SEnum(new[] {
             ("non", PhaseType.Nonspell),

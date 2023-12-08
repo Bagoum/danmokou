@@ -18,22 +18,21 @@ using Danmokou.Reflection;
 using UnityEngine.Profiling;
 
 namespace Danmokou.Danmaku {
-
-
 public partial class BulletManager {
     public const string EMPTY = "empty";
 
     public static void CopyPool(string newPool, string from) {
         var src = simpleBulletPools[from];
-        var p = src.MetaType == SimpleBulletCollection.CollectionType.Empty ? 
-            new EmptySBC(src.CopyBC(newPool)) : 
-            src.CopyPool(activeCNpc, newPool);
+        var p = src.MetaType == SimpleBulletCollection.CollectionType.Empty ?
+            new EmptySBC(src.CopyBC(newPool)) :
+            src.CopyPool(activeNpc, newPool);
         p.SetOriginal(src);
         AddSimpleStyle(p);
         p.Activate();
     }
 
     private static readonly Dictionary<string, string> playerPoolCopyCache = new();
+
     public static string GetOrMakePlayerCopy(string pool) {
         CheckOrCopyPool(pool, out _);
         //lmao i hate garbage
@@ -41,10 +40,10 @@ public partial class BulletManager {
             playerPool = playerPoolCopyCache[pool] = $"{PLAYERPREFIX}{pool}";
         }
         if (!simpleBulletPools.TryGetValue(playerPool, out var p)) {
-            if (!simpleBulletPools.TryGetValue(pool, out var src)) 
+            if (!simpleBulletPools.TryGetValue(pool, out var src))
                 throw new Exception($"{pool} does not exist, cannot make a player variant of it");
-            p = src.MetaType == SimpleBulletCollection.CollectionType.Empty ? 
-                new EmptySBC(src.CopyBC(playerPool)) : 
+            p = src.MetaType == SimpleBulletCollection.CollectionType.Empty ?
+                new EmptySBC(src.CopyBC(playerPool)) :
                 src.CopySimplePool(activePlayer, playerPool);
             p.SetOriginal(src);
             p.SetPlayer();
@@ -55,12 +54,13 @@ public partial class BulletManager {
     }
 
     private const string PLAYERPREFIX = "p-";
+
     public static string GetOrMakeComplexPlayerCopy(string pool) {
         if (!playerPoolCopyCache.TryGetValue(pool, out var playerPool)) {
             playerPool = playerPoolCopyCache[pool] = $"{PLAYERPREFIX}{pool}";
         }
         if (!behPools.TryGetValue(playerPool, out var p)) {
-            if (!behPools.TryGetValue(pool, out var po)) 
+            if (!behPools.TryGetValue(pool, out var po))
                 throw new Exception($"{pool} does not exist, cannot make a player variant of it");
             p = po.MakePlayerCopy(playerPool);
             AddComplexStyle(p);
@@ -75,6 +75,7 @@ public partial class BulletManager {
         }
         return true;
     }
+
     private static bool CheckOrCopyPool(string pool, out SimpleBulletCollection sbc) {
         if (simpleBulletPools.TryGetValue(pool, out sbc)) {
             if (!sbc.Active) sbc.Activate();
@@ -101,38 +102,40 @@ public partial class BulletManager {
         } else return false;
     }
 
-    public static void AssertControls(string pool, IReadOnlyList<BulletControl> controls) => GetMaybeCopyPool(pool).AssertControls(controls);
+    public static void AssertControls(string pool, IReadOnlyList<BulletControl> controls) =>
+        GetMaybeCopyPool(pool).AssertControls(controls);
 
     public static SimpleBulletCollection GetMaybeCopyPool(string pool) {
         if (CheckOrCopyPool(pool, out var sbc)) return sbc;
         throw new Exception($"Could not find simple bullet style by name \"{pool}\".");
     }
+
     public static SimpleBulletCollection? NullableGetMaybeCopyPool(string? pool) {
-        if (pool == null || string.IsNullOrWhiteSpace(pool) || pool == "_") 
+        if (pool == null || string.IsNullOrWhiteSpace(pool) || pool == "_")
             return null;
         if (CheckOrCopyPool(pool, out var sbc)) return sbc;
         throw new Exception($"Could not find simple bullet style by name \"{pool}\".");
     }
-    private static readonly ExFunction getMaybeCopyPool = 
+
+    private static readonly ExFunction getMaybeCopyPool =
         ExFunction.Wrap<string>(typeof(BulletManager), nameof(BulletManager.GetMaybeCopyPool));
-    private static readonly ExFunction nullableGetMaybeCopyPool = 
+    private static readonly ExFunction nullableGetMaybeCopyPool =
         ExFunction.Wrap<string?>(typeof(BulletManager), nameof(BulletManager.NullableGetMaybeCopyPool));
 
     public override int UpdatePriority => UpdatePriorities.BM;
+
+    public static bool NPCBulletsRequireBucketing { get; private set; } = false;
+
     public override void RegularUpdate() {
         ResetSentry();
         SimpleBulletCollection sbc;
         //Temp-last set for control updates
-        for (int ii = 0; ii< activeEmpty.Count; ++ii) {
+        for (int ii = 0; ii < activeEmpty.Count; ++ii) {
             sbc = activeEmpty[ii];
             sbc.temp_last = sbc.Count;
         }
-        for (int ii = 0; ii< activeNpc.Count; ++ii) {
+        for (int ii = 0; ii < activeNpc.Count; ++ii) {
             sbc = activeNpc[ii];
-            sbc.temp_last = sbc.Count;
-        }
-        for (int ii = 0; ii<activeCNpc.Count; ++ii) {
-            sbc = activeCNpc[ii];
             sbc.temp_last = sbc.Count;
         }
         for (int ii = 0; ii < activePlayer.Count; ++ii) {
@@ -143,49 +146,42 @@ public partial class BulletManager {
             sbc = activeCulled[ii];
             sbc.temp_last = sbc.Count;
         }
+        NPCBulletsRequireBucketing = ServiceLocator.FindAll<IEnemySimpleBulletCollisionReceiver>().NumberAlive() > 1;
         //Velocity and control updates
         for (int ii = 0; ii < activeEmpty.Count; ++ii)
             activeEmpty[ii].UpdateVelocityAndControls();
         Profiler.BeginSample("NPC-fired simple bullet velocity updates");
-        //TODO combine activeNpc and activeCNPC
         for (int ii = 0; ii < activeNpc.Count; ++ii)
-            activeNpc[ii].UpdateVelocityAndControls();
+            activeNpc[ii].UpdateVelocityAndControls(NPCBulletsRequireBucketing);
         Profiler.EndSample();
-        for (int ii = 0; ii < activeCNpc.Count; ++ii) 
-            activeCNpc[ii].UpdateVelocityAndControls();
         Profiler.BeginSample("Player simple bullet velocity updates");
         for (int ii = 0; ii < activePlayer.Count; ++ii)
             activePlayer[ii].UpdateVelocityAndControls();
         Profiler.EndSample();
         for (int ii = 0; ii < activeCulled.Count; ++ii)
             activeCulled[ii].UpdateVelocityAndControls();
-        
     }
 
     public override void RegularUpdateCollision() {
-        if (ServiceLocator.MaybeFind<PlayerController>().Try(out var player)) {
-            Profiler.BeginSample("NPC simple bullet collisions");
-            for (int ii = 0; ii < activeNpc.Count; ++ii) {
-                var sbc = activeNpc[ii];
-                if (sbc.Count > 0)
-                    sbc.CheckCollisions(player);
-            }
-            for (int ii = 0; ii < activeCNpc.Count; ++ii) {
-                var sbc = activeCNpc[ii];
-                if (sbc.Count > 0) 
-                    sbc.CheckCollisions(player);
-            }
-            Profiler.EndSample();
+        var collidees = ServiceLocator.FindAll<IEnemySimpleBulletCollisionReceiver>();
+        Profiler.BeginSample("NPC simple bullet collisions");
+        for (int ii = 0; ii < activeNpc.Count; ++ii) {
+            var sbc = activeNpc[ii];
+            if (sbc.Count > 0)
+                for (int ic = 0; ic < collidees.Count; ++ic)
+                    if (collidees.GetIfExistsAt(ic, out var receiver))
+                        sbc.CheckCollisions(receiver);
         }
-        
+        Profiler.EndSample();
+
         Profiler.BeginSample("Player simple bullet collisions");
-        var enemies = Enemy.FrozenEnemies;
+        var enemies = ServiceLocator.FindAll<IPlayerSimpleBulletCollisionReceiver>();
         for (int ii = 0; ii < activePlayer.Count; ++ii) {
             var sbc = activePlayer[ii];
             if (sbc.Count > 0)
                 for (int ie = 0; ie < enemies.Count; ++ie)
-                    if (enemies[ie].Active)
-                        sbc.CheckCollisions(enemies[ie].enemy);
+                    if (enemies.GetIfExistsAt(ie, out var receiver))
+                        sbc.CheckCollisions(receiver);
         }
         Profiler.EndSample();
     }
@@ -202,11 +198,11 @@ public partial class BulletManager {
 
     private void StartScene() {
         simpleBulletPools[EMPTY].Activate();
-        GameObject go = new() {name = "Bullet Spam Container"};
+        GameObject go = new() { name = "Bullet Spam Container" };
         spamContainer = go.transform;
         spamContainer.position = Vector3.zero;
     }
-    
+
     public static void OrphanAll() {
         ClearPoolControls();
         foreach (var pool in simpleBulletPools.Values) {
@@ -223,7 +219,7 @@ public partial class BulletManager {
     }
 
     public static void DestroyCopiedPools() {
-        //Some empty pools are copied
+        //Some empty pools and npc pools are copied
         var newEmpty = new List<SimpleBulletCollection>();
         for (int ii = 0; ii < activeEmpty.Count; ++ii) {
             if (activeEmpty[ii].IsCopy) {
@@ -235,10 +231,17 @@ public partial class BulletManager {
         activeEmpty.Clear();
         activeEmpty.AddRange(newEmpty);
 
-        for (int ii = 0; ii < activeCNpc.Count; ++ii) {
-            DestroySimpleStyle(activeCNpc[ii].Style);
+        var newNpc = new List<SimpleBulletCollection>();
+        for (int ii = 0; ii < activeNpc.Count; ++ii) {
+            if (activeNpc[ii].IsCopy) {
+                DestroySimpleStyle(activeNpc[ii].Style);
+            } else {
+                newNpc.Add(activeNpc[ii]);
+            }
         }
-        activeCNpc.Clear();
+        activeNpc.Clear();
+        activeNpc.AddRange(newNpc);
+
         //All player pools are copied
         for (int ii = 0; ii < activePlayer.Count; ++ii) {
             DestroySimpleStyle(activePlayer[ii].Style);
@@ -264,6 +267,7 @@ public partial class BulletManager {
     public static void ClearNonSimpleBullets() {
         Bullet.ClearAll();
     }
+
     /// <summary>
     /// Only call this for hard endings (like scene clear). Phase tokens should handle phase deletion.
     /// </summary>
@@ -273,7 +277,7 @@ public partial class BulletManager {
         BehaviorEntity.ClearPoolControls();
         CurvedTileRenderLaser.ClearPoolControls();
     }
-    
+
     private void OnDestroy() {
         ScriptableObject.Destroy(throwaway_gm);
         ScriptableObject.Destroy(throwaway_mpm);

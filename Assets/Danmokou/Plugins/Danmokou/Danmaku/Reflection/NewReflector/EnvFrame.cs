@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using BagoumLib.Expressions;
+using BagoumLib.Functional;
 using BagoumLib.Reflection;
 using JetBrains.Annotations;
 using UnityEngine.Profiling;
@@ -46,6 +47,22 @@ public class EnvFrame {
     }
     
     public static readonly ExFunction exCreate = ExFunction.WrapAny(typeof(EnvFrame), nameof(Create));
+    
+
+    public Maybe<T> GetValue<T>(string varName) {
+        var envFrame = this;
+        while (envFrame != null) {
+            var scope = envFrame.Scope;
+            if (scope.varsAndFns.TryGetValue(varName, out var decl)) {
+                if (decl.FinalizedType != typeof(T))
+                    throw new Exception(
+                        $"Types do not align for variable {varName}. Requested: {typeof(T).RName()}; found: {decl.FinalizedType?.RName()}");
+                return decl.Value<T>(envFrame);
+            }
+            envFrame = envFrame.Parent;
+        }
+        return Maybe<T>.None;
+    }
 
     public void Dispose() {
         if (this == Empty) return;

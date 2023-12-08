@@ -92,15 +92,16 @@ public static partial class Reflector {
     }
 
     /// <summary>
-    /// Fill the argument array invoke_args by parsing elements from q according to type information in prms.
+    /// Fill the argument array `asts` by parsing elements from q according to type information in prms.
     /// </summary>
     /// <param name="asts">Argument array to fill.</param>
-    /// <param name="starti">Index of invoke_args to start from.</param>
+    /// <param name="starti">Index of `asts` to start from, inclusive.</param>
+    /// <param name="endi">Index of `asts` to end at, exclusive.</param>
     /// <param name="sig">Type information of arguments.</param>
     /// <param name="q">Queue from which to parse elements.</param>
     /// <returns>Filled array of ASTs, range covered by the ASTs, and an exception that should enclose the caller if nonnull.</returns>
-    public static ASTArrayFill FillASTArray(IAST[] asts, int starti, InvokedMethod sig, IParseQueue q) {
-        int nargs = (sig.Mi as MethodSignature)!.ExplicitParameterCount(starti);
+    public static ASTArrayFill FillASTArray(IAST[] asts, int starti, int endi, InvokedMethod sig, IParseQueue q) {
+        int nargs = (sig.Mi as MethodSignature)!.ExplicitParameterCount(starti, endi);
         var prms = sig.Mi.Params;
         if (nargs == 0) {
             if (!(q is ParenParseQueue) && !q.Empty) {
@@ -127,7 +128,7 @@ public static partial class Reflector {
                 q = q.NextChild();
         }
 
-        for (int ii = starti; ii < prms.Length; ++ii) {
+        for (int ii = starti; ii < endi; ++ii) {
             if (prms[ii].NonExplicit) {
                 asts[ii] = ReflectNonExplicitParam(q, prms[ii]);
             } else {
@@ -179,7 +180,7 @@ public static partial class Reflector {
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ASTArrayFill FillASTArray(InvokedMethod sig, IParseQueue q)
-        => FillASTArray(new IAST[sig.Mi.Params.Length], 0, sig, q);
+        => FillASTArray(new IAST[sig.Mi.Params.Length], 0, sig.Mi.Params.Length, sig, q);
 
     
 
@@ -294,7 +295,7 @@ public static partial class Reflector {
             q.Ctx.QueuedProps.Clear();
             return props;
         } else
-            throw new StaticException($"No non-explicit reflection handling existsfor type {p.Type.RName()}");
+            throw new StaticException($"No non-explicit reflection handling exists for type {p.Type.RName()}");
     }
 
     private static IAST ReflectParam(IParseQueue q, NamedParam p) {

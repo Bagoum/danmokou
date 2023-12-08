@@ -49,9 +49,8 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
         };
         MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => {
-                //TODO for the other screens, you can set picking mode to capture fallthrough
-                //s.HTML.pickingMode = PickingMode.Position;
-                //ve.AddColumn();
+                //Allow clicks to fallthrough if they don't hit any nodes on this menu
+                s.HTML.pickingMode = PickingMode.Ignore;
                 s.Margin.SetLRMargin(0, 0);
             },
             UseControlHelper = false
@@ -60,15 +59,23 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
         FreeformGroup = new UIFreeformGroup(MainScreen, Unselect);
     }
 
-    public (UIScreen, UIFreeformGroup) MakeBlockingScreen(Func<UINode, UIResult?> unselectConfirm) {
+    /// <summary>
+    /// Create a UIScreen for this <see cref="XMLDynamicMenu"/>, as well as a <see cref="UIFreeformGroup"/> and an
+    ///  unselector node within. Nodes or groups may be added to the freeform group by calling
+    /// <see cref="UIFreeformGroup.AddNodeDynamic"/> or <see cref="UIFreeformGroup.AddGroupDynamic"/>.
+    /// <br/>By default, the screen does not allow fallthrough clicks
+    /// (this can be configured by setting `HTML.pickingMode` in `<paramref name="builder"/>`).
+    /// </summary>
+    public (UIScreen, UIFreeformGroup) MakeScreen(Func<UINode, UIResult?>? unselectConfirm, Action<UIScreen, VisualElement>? builder = null) {
         var unselect = new EmptyNode(new UnselectorFixedXML()) {
             OnConfirm = n => unselectConfirm?.Invoke(n) ?? UIGroup.SilentNoOp
         };
         var s = new UIScreen(this, null, UIScreen.Display.Unlined) {
-            Builder = (s, ve) => {
+            Builder = builder ?? ((s, ve) => {
+                //Block fallthrough clicks
                 s.HTML.pickingMode = PickingMode.Position;
                 s.Margin.SetLRMargin(0, 0);
-            },
+            }),
             UseControlHelper = false
         };
         var gr = new UIFreeformGroup(s, unselect);

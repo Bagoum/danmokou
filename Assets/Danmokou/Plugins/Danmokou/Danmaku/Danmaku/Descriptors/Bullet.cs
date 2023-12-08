@@ -13,6 +13,7 @@ using Danmokou.Player;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
 using UnityEditor;
+using UnityEngine.Profiling;
 
 namespace Danmokou.Danmaku.Descriptors {
 
@@ -27,8 +28,6 @@ public struct CollisionInfo {
 public class Bullet : BehaviorEntity {
     [Header("Bullet Config")] 
     private ICollider? icollider;
-    //for enemy bullets
-    public Maybe<PlayerController> Target { get; private set; }
     //for player bullets
     public PlayerBullet? Player { get; private set; } = null;
     private BPY? hueShift;
@@ -87,7 +86,6 @@ public class Bullet : BehaviorEntity {
 
     public virtual void Initialize(BEHStyleMetadata? style, RealizedBehOptions options, BehaviorEntity? parent, Movement mov, ParametricInfo pi, out int layer) {
         pi.ctx.bullet = this;
-        Target = ServiceLocator.MaybeFind<PlayerController>();
         Player = options.playerBullet;
         base.Initialize(style, mov, pi, options.smr, parent, options: options);
         gameObject.layer = layer = options.layer ?? DefaultLayer;
@@ -99,39 +97,51 @@ public class Bullet : BehaviorEntity {
         UnCollidingTime = 0;
     }
     
+    public bool ComputeCircleCollision(Vector2 location, float radius, out Vector2 collisionLocation) {
+        if (icollider!.CheckCollision(in bpi.loc.x, in bpi.loc.y, Direction, 1f,  
+                location.x, location.y, radius)) {
+            collisionLocation = bpi.loc;
+            return true;
+        } else {
+            collisionLocation = Vector2.zero;
+            return false;
+        }
+    }
+    
+    public CollisionResult ComputeGrazeCollision(Hurtbox hb, out Vector2 collisionLocation) {
+        collisionLocation = bpi.loc;
+        var coll = icollider!.CheckGrazeCollision(in bpi.loc.x, in bpi.loc.y, Direction, 1f, hb);
+        if (coll.graze && !GrazeAllowed)
+            return coll.NoGraze();
+        return coll;
+    }
 
     public override void RegularUpdateCollision() {
-        if (icollider == null) return;
         IsColliding = false;
-        if (Player.Try(out var plb)) {
-            var enemies = Enemy.FrozenEnemies;
-            for (int ii = 0; ii < enemies.Count; ++ii) {
-                if (enemies[ii].Active &&
-                    icollider.CheckCollision(in bpi.loc.x, in bpi.loc.y, Direction, 1f,  
-                        enemies[ii].location.x, enemies[ii].location.y, enemies[ii].radius)) {
-                    enemies[ii].enemy.TakeHit(in plb, in bpi);
-                    myStyle.IterateCollideControls(this);
-                    IsColliding = true;
-                    if (collisionInfo.destructible) {
-                        InvokeCull();
-                        return;
-                    }
-                }
-            }
-        } else if (Target.Try(out var player) && player.ReceivesCollisions) {
-            var coll = icollider.CheckGrazeCollision(in bpi.loc.x, in bpi.loc.y, Direction, 1f, Target.Value.Hurtbox);
-            if (coll.graze && !GrazeAllowed)
-                coll = coll.NoGraze();
-            Target.Value.ProcessCollision(BulletManager.SimpleBulletCollection.CollectionType.Normal, 
-                coll, Damage, in bpi, in collisionInfo.grazeEveryFrames);
-            if (coll.collide) {
-                myStyle.IterateCollideControls(this);
-                if (collisionInfo.destructible) {
-                    InvokeCull();
-                    return;
-                }
+        if (icollider == null) return;
+        bool ShouldDestroyAfterCollision() {
+            IsColliding = true;
+            myStyle.IterateCollideControls(this);
+            if (collisionInfo.destructible) {
+                InvokeCull();
+                return true;
+            } else {
+                return false;
             }
         }
+        Profiler.BeginSample("Generic bullet collisions");
+        if (Player.Try(out var plb)) {
+            var collidees = ServiceLocator.FindAll<IPlayerBulletCollisionReceiver>();
+            for (int ic = 0; ic < collidees.Count; ++ic)
+                if (collidees.GetIfExistsAt(ic, out var receiver) && receiver.Process(this, plb).collide && ShouldDestroyAfterCollision())
+                    return;
+        } else {
+            var collidees = ServiceLocator.FindAll<IEnemyBulletCollisionReceiver>();
+            for (int ic = 0; ic < collidees.Count; ++ic)
+                if (collidees.GetIfExistsAt(ic, out var receiver) && receiver.Process(this).collide && ShouldDestroyAfterCollision())
+                    return;
+        }
+        Profiler.EndSample();
         FinalizeCollisionTimings();
     }
     
@@ -164,8 +174,8 @@ public class Bullet : BehaviorEntity {
         }
     }
 
-    protected override void UpdateDisplayerRender() {
-        base.UpdateDisplayerRender();
+    protected override void UpdateDisplayerRender(bool isFirstFrame) {
+        base.UpdateDisplayerRender(isFirstFrame);
         displayer!.SetHueShift(hueShift?.Invoke(bpi) ?? 0f);
     }
 

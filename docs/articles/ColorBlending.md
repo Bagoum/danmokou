@@ -30,7 +30,7 @@ Except for a small rounding error due to the 0-255 reading from Photoshop, we ca
 
 It turns out that the equation for combining two pcolors is very simple. Let `X -> Y` be the operation where we put the object X on top of the object Y. If `P(X)` and `P(Y)` are the pcolors of X and Y, then we have the following equation:
 
-`P(X -> B) = [P(X).R + (1 - P(X).A) * P(Y).R, P(X).G + (1 - P(X).A) * P(Y).G, P(X).B + (1 - P(X).A) * P(Y).B, P(Y).A + (1 - P(Y).A) * P(X).A]`
+`P(X -> Y) = [P(X).R + (1 - P(X).A) * P(Y).R, P(X).G + (1 - P(X).A) * P(Y).G, P(X).B + (1 - P(X).A) * P(Y).B, P(Y).A + (1 - P(Y).A) * P(X).A]`
 
 Thus, if we have a shader where the source is P(X) and the dest is P(Y), we can combine them using the operation `One OneMinusSrcAlpha, OneMinusDstAlpha One`, and the output will have `P(X -> Y)`.
 

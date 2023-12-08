@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
+using BagoumLib.Functional;
 using Danmokou.DMath;
 using UnityEngine;
 
@@ -20,8 +23,7 @@ public class CommentatorAxisColumn<T> : UIColumn {
         base(container, render, nodes.Select(n => n.Item1)) {
         foreach (var (n, v) in nodes) {
             if (n != null) {
-                nodeToVal[n] = v;
-                n.UseDefaultAnimations = false;
+                nodeToVal[n.DisableAnimations()] = v;
             }
         }
     }

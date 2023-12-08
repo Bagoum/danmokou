@@ -61,12 +61,19 @@ public abstract class DanmakuGameDef : GameDef, IDanmakuGameDef {
         bot = -4.5f,
         center = new Vector2(-1.9f, 0),
     };
+    public FieldBounds m_playerMovementBounds = new() {
+        left = -3.5f,
+        right = 3.5f,
+        top = 4.0f,
+        bot = -4.08f,
+        center = new Vector2(-1.9f, 0),
+    };
     public abstract InstanceFeatures MakeFeatures(DifficultySettings difficulty, InstanceMode mode, long? highScore);
     public SceneConfig ReplaySaveMenu => m_replaySaveMenu;
     public abstract IEnumerable<ShipConfig> AllShips { get; }
 
     public override void ApplyConfigurations() {
-        LocationHelpers.UpdateBounds(m_bounds);
+        LocationHelpers.UpdateBounds(m_bounds, m_playerMovementBounds);
     }
 }
 

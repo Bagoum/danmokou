@@ -19,6 +19,7 @@ using Danmokou.Scriptables;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace Danmokou.Graphics {
 /// <summary>
@@ -44,6 +45,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private LaserMovement path;
     private Vector3 simpleEulerRotation = new(0, 0, 0);
     private ParametricInfo bpi = new();
+    public ref ParametricInfo BPI => ref bpi;
     private readonly float lineRadius;
     private const float defaultUpdateStagger = 0.1f;
     private float updateStagger;
@@ -56,12 +58,12 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private TP4? tinter;
     private readonly bool alignEnd = false;
     private readonly bool stretch = false;
-    private Laser laser = null!;
+    public Laser Laser { get; private set; } = null!;
     private float scaledLineRadius;
     private Laser.PointContainer endpt = new(null);
     //Player bullets only
     private PlayerBullet? playerBullet;
-    private int nonpiercingLength;
+    private int maxCollisionLength;
     private bool nonpiercing;
     public float LastActiveTime { get; private set; }
     
@@ -80,7 +82,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 
     //TileRenders are always Initialize-initialized.
     public void Initialize(Laser _laser, TiledRenderCfg cfg, Material material, bool isNew, ParametricInfo pi, ref RealizedLaserOptions options) {
-        this.laser = _laser;
+        this.Laser = _laser;
         updateStagger = options.staggerMultiplier * defaultUpdateStagger;
         beforeDrawHandler = options.beforeDraw;
         variableLength = options.varLength;
@@ -92,7 +94,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         path = options.lpath;
         bpi = pi;
         bpi.loc = locater.GlobalPosition();
-        nonpiercingLength = centers.Length;
+        maxCollisionLength = centers.Length;
         nonpiercing = options.nonpiercing;
         hueShift = options.hueShift;
         recolor = options.recolor;
@@ -173,7 +175,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     
     public void SetupEndpoint(Laser.PointContainer ep) {
         endpt = ep;
-        if (endpt.exists) endpt.beh!.TakeParent(laser);
+        if (endpt.exists) endpt.beh!.TakeParent(Laser);
     }
 
     /// <summary>
@@ -313,87 +315,95 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 
     private const float BACKSTEP = 2f;
     
+    public bool ComputeCircleCollision(Vector2 laserLoc, float cos, float sin, Vector2 location, float radius, out int segment, out Vector2 collisionLocation) {
+        if (CollisionMath.CircleOnAABB(in bounds, in location.x, in location.y, radius + scaledLineRadius)
+            && CollisionMath.CircleOnSegments(location, radius, laserLoc, centers, 0, 1, maxCollisionLength, 
+                scaledLineRadius, cos, sin, out segment)) {
+            collisionLocation = laserLoc + centers[segment];
+            return true;
+        } else {
+            segment = 0;
+            collisionLocation = Vector2.zero;
+            return false;
+        }
+    }
+    
+    public CollisionResult ComputeGrazeCollision(Vector2 laserLoc, float cos, float sin, Hurtbox hb, out int segment, out Vector2 collisionLocation) {
+        if (CollisionMath.CircleOnAABB(in bounds, in hb.x, in hb.y, hb.grazeRadius + scaledLineRadius)) {
+            // 10000 is a number that is big enough to usually ensure only one collision iteration for simple lasers.
+            // If it's not big enough, then you'll have two collision iteration, which is fine.
+            var coll = CollisionMath.GrazeCircleOnSegments(in hb, laserLoc, centers, 0,
+                path.isSimple ? 10000 : 1, maxCollisionLength, scaledLineRadius, cos, sin, out segment);
+            collisionLocation = laserLoc + centers[segment];
+            if (coll.graze && !Laser.GrazeAllowed)
+                return coll.NoGraze();
+            return coll;
+        } else {
+            segment = 0;
+            collisionLocation = Vector2.zero;
+            return CollisionMath.NoCollision;
+        }
+    }
+    
     public void DoRegularUpdateCollision(bool collisionActive) {
-        laser.IsColliding = false;
+        Laser.IsColliding = false;
         if (!collisionActive)
             goto finalize;
+        var loc = locater.GlobalPosition();
         float rot = BMath.degRad * (parented ? tr.eulerAngles.z : simpleEulerRotation.z);
-        if (playerBullet.Try(out var plb)) {
-            var fe = Enemy.FrozenEnemies;
-            var loc = locater.GlobalPosition();
-            if (nonpiercing) {
-                void CheckUntilNonpiercingLength() {
-                    int nextCollSegment = nonpiercingLength;
-                    for (int ii = 0; ii < fe.Count; ++ii) {
-                        var e = fe[ii];
-                        if (e.Active
-                            && CollisionMath.CircleOnAABB(in bounds, in e.location.x, in e.location.y, e.radius + scaledLineRadius)
-                            && CollisionMath.CircleOnSegments(e.location, e.radius,
-                                loc, centers, 0, 1, nonpiercingLength, scaledLineRadius,
-                                (float)Math.Cos(rot), (float)Math.Sin(rot), out int segment)) {
-                            //we set this to true regardless of TakeHit as it's a graphical feature
-                            // that doesn't care about cooldown or damage
-                            laser.IsColliding = true;
-                            //Don't modify nonpiercing, so that the collision check is the same for all enemies
-                            //segment+1 since segment is inclusive, but collLength is exclusive
-                            nextCollSegment = Math.Min(nextCollSegment, segment + 1);
-                            e.enemy.TakeHit(in plb, loc + centers[segment], in bpi.id);
-                        }
-                    }
-                    nonpiercingLength = nextCollSegment;
-                }
-                CheckUntilNonpiercingLength();
-                
-                if (!laser.IsColliding && nonpiercingLength < centers.Length) {
-                    //Extend the nonpiercing laser and try again
-                    nonpiercingLength = Mathf.RoundToInt(M.Clamp(
-                        M.Lerp(nonpiercingLength, centers.Length, 0.02f), 
-                        nonpiercingLength + 1, centers.Length));
-                    CheckUntilNonpiercingLength();
-                }
-                //Pull the laser draw back
-                unsafe {
-                    for (int iw = nonpiercingLength; iw < centers.Length; ++iw) {
-                        //centers[iw] = centers[endP - 1];
-                        vertsPtr[iw] = vertsPtr[nonpiercingLength - 1];
-                        vertsPtr[iw + centers.Length] = vertsPtr[nonpiercingLength - 1 + centers.Length];
+        float cos = (float)Math.Cos(rot);
+        float sin = (float)Math.Sin(rot);
+        Profiler.BeginSample("Laser collisions");
+        void ProcessAllCollisions() {
+            int smallestCollisionLength = maxCollisionLength;
+            if (playerBullet.Try(out var plb)) {
+                var collidees = ServiceLocator.FindAll<IPlayerLaserCollisionReceiver>();
+                for (int ic = 0; ic < collidees.Count; ++ic) {
+                    if (collidees.GetIfExistsAt(ic, out var receiver) &&
+                        receiver.Process(this, plb, loc, cos, sin, out var segment).collide) {
+                        Laser.IsColliding = true;
+                        Laser.myStyle.IterateCollideControls(Laser);
+                        //Don't modify nonpiercing, so that the collision check is the same for all enemies
+                        //segment+1 since segment is inclusive, but collLength is exclusive
+                        smallestCollisionLength = Math.Min(smallestCollisionLength, segment + 1);
                     }
                 }
-                //Logs.Log($"{nonpiercingLength}/{centers.Length}");
             } else {
-                for (int ii = 0; ii < fe.Count; ++ii) {
-                    var e = fe[ii];
-                    if (e.Active 
-                        && CollisionMath.CircleOnAABB(in bounds, in e.location.x, in e.location.y, e.radius + scaledLineRadius)
-                        && CollisionMath.CircleOnSegments(e.location, e.radius, 
-                            loc, centers, 0, 1, centers.Length, scaledLineRadius, 
-                            (float)Math.Cos(rot), (float)Math.Sin(rot), out int segment)) {
-                        laser.IsColliding = true;
-                        e.enemy.TakeHit(in plb, loc + centers[segment], in bpi.id);
-                        laser.myStyle.IterateCollideControls(laser);
+                var collidees = ServiceLocator.FindAll<IEnemyLaserCollisionReceiver>();
+                for (int ic = 0; ic < collidees.Count; ++ic) {
+                    if (collidees.GetIfExistsAt(ic, out var receiver) &&
+                        receiver.Process(this, loc, cos, sin, out var segment).collide) {
+                        Laser.IsColliding = true;
+                        Laser.myStyle.IterateCollideControls(Laser);
+                        smallestCollisionLength = Math.Min(smallestCollisionLength, segment + 1);
                     }
                 }
             }
-        } else {
-            if (laser.Target.Try(out var player) && player.ReceivesCollisions) {
-                var hb = player.Hurtbox;
-                if (!CollisionMath.CircleOnAABB(in bounds, in hb.x, in hb.y, hb.largeRadius + scaledLineRadius))
-                    goto finalize;
-                // 10000 is a number that is big enough to usually ensure only one collision iteration for simple lasers.
-                // If it's not big enough, then you'll have two collision iteration, which is fine.
-                var coll = CollisionMath.GrazeCircleOnSegments(in hb, locater.GlobalPosition(), centers, 0, 
-                    path.isSimple ? 10000 : 1, centers.Length, scaledLineRadius, (float)Math.Cos(rot), (float)Math.Sin(rot), out int segment);
-                laser.IsColliding |= coll.collide;
-                if (coll.graze && !laser.GrazeAllowed)
-                    coll = coll.NoGraze();
-                player.ProcessCollision(BulletManager.SimpleBulletCollection.CollectionType.Normal, 
-                    in coll, laser.Damage, in bpi, in laser.collisionInfo.grazeEveryFrames);
-                if (coll.collide) 
-                    laser.myStyle.IterateCollideControls(laser);
+            if (nonpiercing)
+                maxCollisionLength = smallestCollisionLength;
+        }
+        ProcessAllCollisions();
+
+        if (nonpiercing && maxCollisionLength < centers.Length && !Laser.IsColliding) {
+            //Extend the nonpiercing laser and try again
+            maxCollisionLength = Mathf.RoundToInt(M.Clamp(
+                M.Lerp(maxCollisionLength, centers.Length, 0.02f), 
+                maxCollisionLength + 1, centers.Length));
+            ProcessAllCollisions();
+        }
+        if (nonpiercing) {
+            //Pull the laser draw back
+            unsafe {
+                for (int iw = maxCollisionLength; iw < centers.Length; ++iw) {
+                    //centers[iw] = centers[endP - 1];
+                    vertsPtr[iw] = vertsPtr[maxCollisionLength - 1];
+                    vertsPtr[iw + centers.Length] = vertsPtr[maxCollisionLength - 1 + centers.Length];
+                }
             }
         }
+        Profiler.EndSample();
         finalize: ;
-        laser.FinalizeCollisionTimings();
+        Laser.FinalizeCollisionTimings();
     }
     
     private bool requiresTrRotUpdate = false;
@@ -628,7 +638,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// </summary>
         public static cLaserControl SM(LPred cond, SM.StateMachine sm) => new((b, cT) => {
             if (cond(b.bpi, b.lifetime)) {
-                var mov = new Movement(b.bpi.loc, V2RV2.Angle(b.laser.original_angle));
+                var mov = new Movement(b.bpi.loc, V2RV2.Angle(b.Laser.original_angle));
                 _ = BEHPooler.INode(mov, new ParametricInfo(in mov, b.bpi.index), b.nextTrueDelta, "l-pool-triggered")
                     .RunExternalSM(SMRunner.Cull(sm, cT));
             }

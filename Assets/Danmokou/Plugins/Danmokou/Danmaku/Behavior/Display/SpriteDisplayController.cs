@@ -22,9 +22,9 @@ public class SpriteDisplayController: DisplayController {
         sprite.GetPropertyBlock(pb);
     }
 
-    public override void UpdateRender() {
-        base.UpdateRender();
-        if (ETime.LastUpdateForScreen) {
+    public override void UpdateRender(bool isFirstFrame) {
+        base.UpdateRender(isFirstFrame);
+        if (ETime.LastUpdateForScreen || isFirstFrame) {
             sprite.SetPropertyBlock(pb);
         }
     }

@@ -213,9 +213,12 @@ public partial class BulletManager : RegularUpdater {
         simpleBulletPools.Remove(key);
     }
 
+    
+    // Currently activated bullet styles. All styles are deactivated on scene change, and
+    // activated when they are used for the first time.
+
     /// <summary>
-    /// Currently activated bullet styles. All styles are deactivated on scene change, and
-    /// activated when they are used for the first time.
+    /// NPC bullets, including copied NPC pools but excluding empty bullets.
     /// </summary>
     private static readonly List<SimpleBulletCollection> activeNpc = new(250);
     private static readonly List<SimpleBulletCollection> activePlayer = new(50);
@@ -223,13 +226,12 @@ public partial class BulletManager : RegularUpdater {
     /// All empty bullet pools (EMPTY, copied NPC pools, and any player variants). These are updated first.
     /// </summary>
     private static readonly List<SimpleBulletCollection> activeEmpty = new(8);
-    private static readonly List<SimpleBulletCollection> activeCNpc = new(8); //Simple only: Create alt-name pools for varying controls
     /// <summary>
     /// All culled bullet pools
     /// </summary>
     private static readonly List<SimpleBulletCollection> activeCulled = new(250);
     private static readonly List<SimpleBulletCollection>[] collections = {
-        activeEmpty, activeNpc, activeCNpc, activePlayer, activeCulled
+        activeEmpty, activeNpc, activePlayer, activeCulled
     };
     private static BulletManager main = null!;
     private Transform spamContainer = null!;

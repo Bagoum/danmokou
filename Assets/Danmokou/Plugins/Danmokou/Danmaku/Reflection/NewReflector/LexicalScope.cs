@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reactive;
 using System.Reflection;
 using BagoumLib;
+using BagoumLib.Culture;
 using BagoumLib.Expressions;
 using BagoumLib.Functional;
 using BagoumLib.Reflection;
@@ -96,10 +97,15 @@ public class LexicalScope {
     /// <summary>
     /// Find a declared variable in this scope or any parent scope.
     /// </summary>
-    public virtual VarDecl? FindDeclaration(string name) {
+    public VarDecl? FindDeclaration(string name) => FindScopedDeclaration(name)?.Item2;
+
+    /// <summary>
+    /// Find a declared variable in this scope or any parent scope.
+    /// </summary>
+    public virtual (LexicalScope, VarDecl)? FindScopedDeclaration(string name) {
         if (varsAndFns.TryGetValue(name, out var d))
-            return d;
-        return Parent?.FindDeclaration(name);
+            return (this, d);
+        return Parent?.FindScopedDeclaration(name);
     }
 
     /// <summary>
@@ -192,14 +198,16 @@ public class DMKScope : LexicalScope {
     private static DMKScope? _singleton;
     public static DMKScope Singleton => _singleton ??= new DMKScope();
 
+    private static T[] SingleToArray<T>(T single) => new[] { single };
+
     private static Reflector.GenericMethodSignature GetCompilerMethod(string name) =>
         Reflector.MethodSignature.Get(
             typeof(Compilers).GetMethod(name, BindingFlags.Public | BindingFlags.Static) ??
             throw new StaticException($"Compiler method `{name}` not found")) 
             as Reflector.GenericMethodSignature ?? 
         throw new StaticException($"Compiler method `{name}` is not generic");
-            
-    public TypeResolver Resolver { get; } = new(new IImplicitTypeConverter[] {
+
+    public static TypeResolver BaseResolver { get; } = new(new IImplicitTypeConverter[] {
             new ConstantToExprConv(),
             new GenericMethodConv1(GetCompilerMethod("GCXF"))
                 { ScopeArgs = Compilers.GCXFArgs, Kind = ScopedConversionKind.GCXFFunction },
@@ -210,6 +218,11 @@ public class DMKScope : LexicalScope {
             new FixedImplicitTypeConv<ExVTP, VTP>(Compilers.VTP) 
                 { ScopeArgs = Compilers.VTPArgs, Kind = ScopedConversionKind.SimpleFunction },
             
+            new GenericMethodConv1((Reflector.MethodSignature.Get(
+                    typeof(DMKScope).GetMethod(nameof(SingleToArray), BindingFlags.Static | BindingFlags.NonPublic)!) as
+                Reflector.GenericMethodSignature)!),
+        
+            new FixedImplicitTypeConv<string, LString>(x => x),
             //these are from Reflector.autoConstructorTypes
             new FixedImplicitTypeConv<GenCtxProperty[],GenCtxProperties<SyncPattern>>(props => new(props)),
             new FixedImplicitTypeConv<GenCtxProperty[],GenCtxProperties<AsyncPattern>>(props => new(props)),
@@ -218,20 +231,32 @@ public class DMKScope : LexicalScope {
             new FixedImplicitTypeConv<LaserOption[],LaserOptions>(props => new(props)),
             new FixedImplicitTypeConv<BehOption[],BehOptions>(props => new(props)),
             new FixedImplicitTypeConv<PowerAuraOption[],PowerAuraOptions>(props => new(props)),
+            new FixedImplicitTypeConv<PhaseProperty[],PhaseProperties>(props => new(props)),
             new FixedImplicitTypeConv<PatternProperty[],PatternProperties>(props => new(props)),
         }
     );
+    public TypeResolver Resolver => BaseResolver;
 
     private DMKScope() : base() {
         Root = this;
     }
-    public override VarDecl? FindDeclaration(string name) {
+    public override (LexicalScope, VarDecl)? FindScopedDeclaration(string name) {
         return null;
     }
 
+    private readonly Dictionary<string, List<Reflector.IMethodSignature>> smInitMultiDecls = new();
     public override List<Reflector.IMethodSignature>? FindStaticMethodDeclaration(string name) {
-        if (Reflector.ReflectionData.AllBDSL2Methods.TryGetValue(name, out var results))
+        if (smInitMultiDecls.TryGetValue(name, out var results))
             return results;
+        if (Reflector.ReflectionData.AllBDSL2Methods.TryGetValue(name, out results)) {
+            if (StateMachine.SMInitMethodMap.TryGetValue(name, out var typ2)) {
+                return smInitMultiDecls[name] = results.Concat(typ2).ToList();
+            }
+            return results;
+        }
+        if (StateMachine.SMInitMethodMap.TryGetValue(name, out var typ)) {
+            return typ;
+        }
         return null;
     }
 
@@ -338,6 +363,12 @@ public class VarDecl : IUsedVariable {
                 throw new ReflectionException(Position, $"Variable declaration {Name} not finalized"), Name);
 
     /// <summary>
+    /// Get the expression of this variable, where `envFrame` is the frame in which
+    ///  this variable is declared.
+    /// </summary>
+    public T Value<T>(EnvFrame frame) => (frame[TypeIndex] as FrameVars<T>)!.Values[Index];
+    
+    /// <summary>
     /// Get the expression representing this variable, where `envFrame` is the frame in which
     ///  this variable was declared (and tac.EnvFrame is the frame of usage).
     /// </summary>
@@ -403,10 +434,21 @@ public record VarDeclPromise(PositionRange UsedAt, string Name) : IUsedVariable 
     private VarDecl? _binding;
     public bool IsBound => _binding != null;
     public VarDecl Bound => _binding ?? throw new Exception($"The variable {Name} is unbound.");
+    private readonly HashSet<AST.Reference> requirers = new();
+
+    public void IsRequiredBy(AST.Reference r) {
+        requirers.Add(r);
+    }
+
+    public void IsNotRequiredBy(AST.Reference r) {
+        requirers.Remove(r);
+    }
 
     public Either<Unit, TypeUnifyErr> FinalizeType(Unifier u) {
         if (!IsBound) {
             FinalizedType = TypeDesignation.Simplify(u);
+            if (requirers.Count == 0)
+                return Unit.Default;
             return new UnboundPromise(this);
         } else {
             FinalizedType = _binding!.FinalizedTypeDesignation;

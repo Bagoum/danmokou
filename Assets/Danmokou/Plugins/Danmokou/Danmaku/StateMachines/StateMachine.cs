@@ -215,6 +215,7 @@ public abstract class StateMachine {
         {"script", typeof(ScriptTSM)},
         {"debugf", typeof(DebugFloat)}
     };
+    public static readonly Dictionary<string, List<Reflector.IMethodSignature>> SMInitMethodMap;
     public static readonly Dictionary<Type, Type[]> SMChildMap = new() {
         {typeof(PatternSM), new[] { typeof(PhaseSM)}}, {
             typeof(PhaseSM), new[] {
@@ -227,6 +228,13 @@ public abstract class StateMachine {
         {typeof(EndPSM), new[] {typeof(LineActionSM), typeof(UniversalSM)}},
         {typeof(ScriptTSM), new[] {typeof(ScriptLineSM)}}
     };
+
+    static StateMachine() {
+        SMInitMethodMap = new(StringComparer.OrdinalIgnoreCase);
+        foreach (var (k, t) in SMInitMap) {
+            SMInitMethodMap[k] = new() { Reflector.GetConstructorSignature(t) };
+        }
+    }
 
     #endregion
     public static bool CheckCreatableChild(Type myType, Type childType) {
@@ -260,11 +268,11 @@ public abstract class StateMachine {
                     $"State machine {mscr.SimpleName} is a dialogue-script {nameof(TTaskPattern)}," +
                     $" which is not allowed to be a child of {myType.SimpRName()}.");
             }
-            if (Reflector.TryGetSignature<TaskPattern>(cname) is {} mrefl) {
+            if (Reflector.TryGetSignature<ReflectableLASM>(cname) is {} mrefl) {
                  if (CheckCreatableChild(myType, typeof(ReflectableLASM)))
                      return SMConstruction.AS_REFLECTABLE;
                  defltErr = new ReflectionException(unit.Position,
-                     $"State machine {mrefl.SimpleName} is a {nameof(TaskPattern)}," +
+                     $"State machine {mrefl.SimpleName} is a {nameof(ReflectableLASM)}," +
                      $" which is not allowed to be a child of {myType.SimpRName()}.");
             }
             return defltErr ??
@@ -293,8 +301,6 @@ public abstract class StateMachine {
         return children;
     }*/
 
-    public static readonly Type SMChildStatesType = typeof(List<StateMachine>);
-    private static readonly Type stateTyp = typeof(StateMachine);
     private static readonly Dictionary<Type, Type[]> constructorSigs = new();
 
     public static IAST<StateMachine> Create(string name, object?[] args) {
@@ -315,7 +321,7 @@ public abstract class StateMachine {
                 }
             }
             if (method == SMConstruction.AS_REFLECTABLE || method == SMConstruction.ANY) {
-                if ((prms = Reflector.TryGetSignature<TaskPattern>(name)) != null) {
+                if ((prms = Reflector.TryGetSignature<ReflectableLASM>(name)) != null) {
                     method = SMConstruction.AS_REFLECTABLE;
                     myType = typeof(ReflectableLASM);
                     return prms;
@@ -329,9 +335,8 @@ public abstract class StateMachine {
     
     private static IAST<StateMachine> Create(PositionRange loc, PositionRange callLoc, SMConstruction method, Reflector.InvokedMethod sig, IAST[] args, bool parenthesized = false) => method switch {
             SMConstruction.AS_REFLECTABLE =>
-            new ASTFmap<TaskPattern, StateMachine>(x => new ReflectableLASM(x),
-                new AST.MethodInvoke<TaskPattern>(loc, callLoc, sig, args) 
-                    {Type = AST.MethodInvoke.InvokeType.SM, Parenthesized = parenthesized}),
+                new AST.MethodInvoke<StateMachine>(loc, callLoc, sig, args) 
+                    {Type = AST.MethodInvoke.InvokeType.SM, Parenthesized = parenthesized},
             SMConstruction.AS_TREFLECTABLE =>
             new ASTFmap<TTaskPattern, StateMachine>(x => new ReflectableSLSM(x),
                 new AST.MethodInvoke<TTaskPattern>(loc, callLoc, sig, args) 
@@ -355,9 +360,8 @@ public abstract class StateMachine {
             ReflectionException? extraChildErr = null;
             int? nchildren = 0;
             if (prms.Length > 0) {
-                var requires_children = prms[0].Type == SMChildStatesType && !q.Ctx.Props.trueArgumentOrder;
-                int special_args_i = (requires_children) ? 1 : 0;
-                var fill = Reflector.FillASTArray(args, special_args_i, sig, q);
+                var requires_children = prms[^1].BDSL1ImplicitSMList;
+                var fill = Reflector.FillASTArray(args, 0, args.Length - (requires_children ? 1 : 0), sig, q);
                 argErr = fill.Error;
                 parenthesized = fill.Parenthesized;
                 if (q.Ctx.QueuedProps.Count > 0)
@@ -369,7 +373,7 @@ public abstract class StateMachine {
                     childCt = ct;
                 }
                 if (requires_children) {
-                    var children = new List<IAST<StateMachine>>();
+                    var children = new List<IAST>();
                     while (childCt-- != 0 && !q.Empty) {
                         var childTypeOrErr = CheckCreatableChild(myType, q.ScanNonProperty());
                         if (childTypeOrErr.TryR(out var err)) {
@@ -395,9 +399,9 @@ public abstract class StateMachine {
                             break;
                     }
                     nchildren = children.Count;
-                    args[0] = new AST.SequenceList<StateMachine>(children.Count > 0 ?
+                    args[^1] = new AST.SequenceArray(children.Count > 0 ?
                         children[0].Position.Merge(children[^1].Position) :
-                        loc, children);
+                        loc, typeof(StateMachine), children.ToArray());
                 }
             }
             //Due to inconsistent ordering of state machine arguments,
@@ -461,6 +465,13 @@ public abstract class StateMachine {
 
     public static StateMachine CreateFromDump(string dump) {
         using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
+        if (dump.StartsWith("<#> bdsl2")) {
+            Profiler.BeginSample("SM AST (BDSL2)");
+            var b2ret = Reflection2.Helpers.CompileToDelegate<Func<StateMachine>>(dump["<#> bdsl2".Length..]);
+            var b2result = b2ret.Compile()();
+            Profiler.EndSample();
+            return b2result;
+        }
         var p = IParseQueue.Lex(dump);
         Profiler.BeginSample("SM AST construction");
         var ast = Create(p);
@@ -491,14 +502,11 @@ public abstract class StateMachine {
         return ps;
     }
 
-    protected StateMachine(List<StateMachine> states) {
+    protected StateMachine(params StateMachine[] states) {
         this.states = states;
     }
-
-    protected StateMachine(params StateMachine[] states) : this(new List<StateMachine>(states)) { }
-
-    protected StateMachine() : this(new List<StateMachine>()) { }
-    protected readonly List<StateMachine> states;
+    
+    protected readonly StateMachine[] states;
 
     public abstract Task Start(SMHandoff smh);
 }
@@ -512,10 +520,10 @@ public class BreakSM : UniversalSM {
 }
 
 public abstract class SequentialSM : StateMachine {
-    public SequentialSM(List<StateMachine> states) : base(states) {}
+    public SequentialSM(StateMachine[] states) : base(states) {}
 
     public override async Task Start(SMHandoff smh) {
-        for (int ii = 0; ii < states.Count; ++ii) {
+        for (int ii = 0; ii < states.Length; ++ii) {
             await states[ii].Start(smh);
             smh.ThrowIfCancelled();
         }
@@ -523,13 +531,13 @@ public abstract class SequentialSM : StateMachine {
 }
 
 public class ParallelSM : StateMachine {
-    public ParallelSM(List<StateMachine> states) : base(states) { }
+    public ParallelSM(StateMachine[] states) : base(states) { }
 
     public override Task Start(SMHandoff smh) {
         //Minor garbage optimization
-        if (states.Count == 1) return states[0].Start(smh);
-        var tasks = new Task[states.Count];
-        for (int ii = 0; ii < states.Count; ++ii)
+        if (states.Length == 1) return states[0].Start(smh);
+        var tasks = new Task[states.Length];
+        for (int ii = 0; ii < states.Length; ++ii)
             tasks[ii] = states[ii].Start(smh);
         //WARNING: Due to how WhenAll works, any child exceptions will only be thrown at the end of execution.
         return TaskHelpers.TaskWhenAll(tasks);
@@ -538,8 +546,7 @@ public class ParallelSM : StateMachine {
 
 public abstract class UniversalSM : StateMachine {
     protected UniversalSM() { }
-    protected UniversalSM(StateMachine state) : base(new List<StateMachine>() {state}) { }
-    public UniversalSM(List<StateMachine> states) : base(states) { }
+    public UniversalSM(params StateMachine[] states) : base(states) { }
 }
 
 /// <summary>
@@ -573,7 +580,7 @@ public class RetargetUSM : UniversalSM {
 /// </summary>
 public class IfUSM : UniversalSM {
     private readonly GCXF<bool> pred;
-    public IfUSM(GCXF<bool> pred, StateMachine iftrue, StateMachine iffalse) : base(new List<StateMachine>() {iftrue, iffalse}) {
+    public IfUSM(GCXF<bool> pred, StateMachine iftrue, StateMachine iffalse) : base(iftrue, iffalse) {
         this.pred = pred;
     }
     public override Task Start(SMHandoff smh) {

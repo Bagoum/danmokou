@@ -65,16 +65,40 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public ICancellable? PhaseShifter { get; set; }
     private readonly HashSet<Cancellable> behaviorToken = new();
     public int NumRunningSMs => behaviorToken.Count;
+    
     /// <summary>
     /// Components such as <see cref="Enemy"/> which have a separate execution loop
     ///  but depend on this for enable/disable calls.
     /// </summary>
     private readonly List<IBehaviorEntityDependent> dependentComponents = new();
+    
+    public RealizedBehOptions? Options { get; private set; }
+    
+    /// <summary>
+    /// Last movement delta of the entity. Zero if no movement occurred.
+    /// </summary>
     public Vector2 LastDelta { get; private set; }
+    
+    /// <summary>
+    /// Last movement delta of the entity, not including effects from collisions. Zero if the entity did not
+    ///  try to move.
+    /// </summary>
+    public Vector2 LastDesiredDelta { get; private set; }
 
-    //Normalized lastDelta that does not update when the delta is zero.
+    /// <summary>
+    /// The direction in which the entity is currently moving. If the entity is not moving, then
+    ///  this contains the most recent direction in which it was moving.
+    /// </summary>
     public Vector2 Direction { get; private set; }
     public float DirectionDeg => M.AtanD(Direction);
+
+    /// <summary>
+    /// An optional rotation function provided by <see cref="Danmaku.Options.BehOption.Rotate"/> for
+    ///  manually controlling the rotation of the entity. This will affect the euler angles of the entity.
+    /// </summary>
+    public BPY? Rotator { get; private set; }
+    public float? RotatorRotation { get; private set; }
+    
     /// <summary>
     /// Only the original firing angle matters for rotational movement velocity
     /// </summary>
@@ -151,8 +175,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     protected override void Awake() {
         base.Awake();
         DefaultLayer = gameObject.layer;
-        bpi =
-            new ParametricInfo(DefaultFCTX(), tr.position, Findex, RNG.GetUInt(), 0);
+        bpi = new ParametricInfo(DefaultFCTX(), tr.position, Findex, RNG.GetUInt(), 0);
         enemy = GetComponent<Enemy>();
         RegisterID();
         UpdateStyle(defaultMeta);
@@ -194,6 +217,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         BehaviorEntity? parent=null, string behName="", RealizedBehOptions? options=null) {
         if (parent != null) TakeParent(parent);
         isSummoned = true;
+        Options = options;
         bpi = pi;
         tr.localPosition = firedOffset = mov.rootPos;
         mov.rootPos = bpi.loc = tr.position;
@@ -204,20 +228,22 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             SetMovementDelta(movement.UpdateZero(ref bpi));
             tr.position = bpi.loc;
         }
+        if (options?.rotator != null) {
+            var rot = (Rotator = options?.rotator!)(bpi);
+            RotatorRotation = rot;
+            tr.localEulerAngles = new Vector3(0, 0, rot);
+        }
+        
         if (IsNontrivialID(behName)) ID = behName;
         if (smr.sm != null)
             _ = RunBehaviorSM(smr);
-        if (displayer != null) {
-            displayer.RotatorF = options?.rotator;
-        }
         //This comes after so SMs run due to ~@ commands are not destroyed by BeginBehaviorSM
         RegisterID();
         UpdateStyle(style ?? defaultMeta);
         deathDrops = options?.drops;
         delete = options?.delete;
-        if (options.Try(out var o)) {
-            if (o.hp.Try(out var hp)) Enemy.SetHP(hp, hp);
-        }
+        for (int ii = 0; ii < dependentComponents.Count; ++ii)
+            dependentComponents[ii].Initialized(options);
     }
 
     protected override void ResetValues() {
@@ -225,15 +251,14 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         phaseController = SMPhaseController.Normal(0);
         dying = false;
         Direction = Vector2.right;
-        if (enemy != null) enemy.Initialize(this);
-        if (displayer != null) displayer.ResetV(this);
+        if (enemy != null) enemy.LinkAndReset(this);
+        if (displayer != null) displayer.LinkAndReset(this);
         for (int ii = 0; ii < dependentComponents.Count; ++ii)
             dependentComponents[ii].Alive();
     }
     
     public override void FirstFrame() {
-        //Finalize contains rendering code, so we call it
-        RegularUpdateFinalize();
+        UpdateRendering(true);
         
         //Note: This pathway is used for player shots and minor summoned effects (such as cutins).
         //It is not used for bosses/stages, which call directly into RunBehaviorSM.
@@ -248,7 +273,10 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
     }
 
-    public void LinkDependentUpdater(IBehaviorEntityDependent ru) => dependentComponents.Add(ru);
+    public void LinkDependentUpdater(IBehaviorEntityDependent ru) {
+        if (!dependentComponents.Contains(ru)) 
+            dependentComponents.Add(ru);
+    }
 
     private static bool IsNontrivialID(string? id) => !string.IsNullOrWhiteSpace(id) && id != "_";
 
@@ -278,18 +306,18 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// <summary>
     /// Given the last movement delta, update LastDelta as well as Direction (if the movement delta is nonzero).
     /// </summary>
-    public void SetMovementDelta(Vector2 delta) {
-        LastDelta = delta;
-        var mag = delta.x * delta.x + delta.y * delta.y;
+    public void SetMovementDelta(Vector2 actual, Vector2? desired = null) {
+        LastDelta = actual;
+        LastDesiredDelta = desired ?? actual;
+        var mag = actual.x * actual.x + actual.y * actual.y;
         if (mag > M.MAG_ERR) {
             mag = (float)Math.Sqrt(mag);
-            Direction = new Vector2(delta.x / mag, delta.y / mag);
+            Direction = new Vector2(actual.x / mag, actual.y / mag);
         }
     }
     
     /// <summary>
-    /// Sets the transform position iff `doMovement` is enabled.
-    /// This is an private function. BPI is not updated.
+    /// Sets the transform position. This is an private function. BPI is not updated.
     /// </summary>
     /// <param name="p">Target global position</param>
     private void SetTransformGlobalPosition(Vector2 p) {
@@ -298,8 +326,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
     
     /// <summary>
-    /// Sets the transform position iff `doMovement` is enabled.
-    /// This is an external function. BPI is updated.
+    /// Sets the transform position. This is an external function. BPI is updated.
     /// </summary>
     /// <param name="p">Target local position</param>
     public void ExternalSetLocalPosition(Vector2 p) {
@@ -444,6 +471,11 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             bpi.t += ETime.FRAME_TIME;
             if (parented) bpi.loc = tr.position;
         }
+        if (Rotator != null) {
+            var rot = Rotator(bpi);
+            RotatorRotation = rot;
+            tr.localEulerAngles = new Vector3(0, 0, rot);
+        }
     }
     
     private void RegularUpdateControl()  {
@@ -486,16 +518,20 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
 
     public override void RegularUpdateFinalize() {
+        UpdateRendering(false);
+    }
+
+    protected void UpdateRendering(bool isFirstFrame) {
         Profiler.BeginSample("BehaviorEntity displayer update");
         if (displayer != null) {
-            displayer.FaceInDirection(LastDelta);
-            UpdateDisplayerRender();
-            displayer.UpdateRender();
+            displayer.FaceInDirection(LastDesiredDelta);
+            UpdateDisplayerRender(isFirstFrame);
+            displayer.UpdateRender(isFirstFrame);
         }
         Profiler.EndSample();
     }
 
-    protected virtual void UpdateDisplayerRender() { }
+    protected virtual void UpdateDisplayerRender(bool isFirstFrame) { }
 
     protected bool nextUpdateAllowed = true;
 

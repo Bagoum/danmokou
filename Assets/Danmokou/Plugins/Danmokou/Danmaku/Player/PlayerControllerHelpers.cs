@@ -25,11 +25,6 @@ public partial class PlayerController {
     }
 
     #region Consts
-    private const float RespawnFreezeTime = 0.1f;
-    private const float RespawnDisappearTime = 0.5f;
-    private const float RespawnMoveTime = 1.5f;
-    private static Vector2 RespawnStartLoc => new(0, Bot - 1f);
-    private static Vector2 RespawnEndLoc => new(0, BotPlayerBound + 1f);
     private const float WitchTimeSpeedMultiplier = 1.4f;//2f;
     private const float WitchTimeSlowdown = 0.5f;//0.25f;
     private const float WitchTimeAudioMultiplier = 0.8f;
@@ -50,7 +45,7 @@ public partial class PlayerController {
             _ => true
         };
 
-    private static bool StateAllowsLocationUpdate(PlayerState s) =>
+    private static bool StateAllowsPlayerMovement(PlayerState s) =>
         s switch {
             PlayerState.RESPAWN => false,
             _ => true
@@ -64,6 +59,30 @@ public partial class PlayerController {
     }
 
     #endregion
+    
+    
+    protected static Direction CheckOOB(ref Vector2 pos, ref Vector2 velocity) {
+        Direction oob = 0;
+        if (pos.x < LeftPlayerBound) {
+            pos.x = LeftPlayerBound;
+            velocity.x = Mathf.Max(velocity.x, 0f);
+            oob |= LocationHelpers.Direction.Left;
+        } else if (pos.x > RightPlayerBound) {
+            pos.x = RightPlayerBound;
+            velocity.x = Mathf.Min(velocity.x, 0f);
+            oob |= LocationHelpers.Direction.Right;
+        }
+        if (pos.y < BotPlayerBound) {
+            pos.y = BotPlayerBound;
+            velocity.y = Mathf.Max(velocity.y, 0f);
+            oob |= LocationHelpers.Direction.Down;
+        } else if (pos.y > TopPlayerBound) {
+            pos.y = TopPlayerBound;
+            velocity.y = Mathf.Min(velocity.y, 0f);
+            oob |= LocationHelpers.Direction.Up;
+        }
+        return oob;
+    }
     
     
     #region Events

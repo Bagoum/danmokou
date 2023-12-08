@@ -1,4 +1,5 @@
 ﻿using Danmokou.Achievements;
+using Danmokou.Core.DInput;
 using Danmokou.Scriptables;
 using UnityEngine;
 
@@ -21,6 +22,9 @@ public abstract class GameDef : ScriptableObject, IGameDef {
     public virtual AchievementRepo? MakeAchievements() => null;
     
     public virtual void ApplyConfigurations() { }
+    
+    public virtual (RebindableInputBinding[] kbm, RebindableInputBinding[] controller) GetRebindableControls() =>
+        (InputSettings.i.KBMBindings, InputSettings.i.ControllerBindings);
 }
 
 public interface IGameDef {
@@ -37,5 +41,11 @@ public interface IGameDef {
     /// Apply any settings specific to this game definition to the engine at large.
     /// </summary>
     void ApplyConfigurations() { }
+
+    /// <summary>
+    /// Get the list of controls that can be rebound from the controls menu.
+    /// </summary>
+    /// <returns></returns>
+    (RebindableInputBinding[] kbm, RebindableInputBinding[] controller) GetRebindableControls();
 }
 }

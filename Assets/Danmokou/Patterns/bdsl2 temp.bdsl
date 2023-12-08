@@ -1,0 +1,30 @@
+<#> bdsl2
+pattern({
+	boss 'simp.kasen'
+}, {
+phase 0 { } {
+	paction 0 {
+		shiftphaseto 1
+		anim attack
+	}
+}
+
+
+phase 0 { 
+	type non :simp.boss.mima.keine1
+	hp 10000
+} {
+	paction 0 {
+		position 0 1
+		async 'arrow-red/w' <0;0:0;0:0> gcrepeat({
+			times(8)
+			wait(40)
+			circle
+			scoped b{
+				var varx = 1
+				varx = varx + 1
+			}
+		}, s(rvelocity(px(varx )))) // + arg1
+	}
+}
+})

@@ -190,6 +190,10 @@ public partial class BulletManager {
         private static readonly CollisionResult noColl = new(false, false);
 
         public bool Active { get; private set; } = false;
+        
+        /// <summary>
+        /// True iff this is a pool of simple bullets fired by a player character.
+        /// </summary>
         public bool IsPlayer { get; private set; } = false;
         public BulletInCode BC { get; }
         protected readonly CollidableInfo ColliderGeneric;
@@ -208,6 +212,17 @@ public partial class BulletManager {
         private readonly AnyTypeDMCompactingArray<IDeletionMarker> bucketingRequests = new(4);
         private List<int>[]? buckets;
         public ReadOnlySpan2D<List<int>> bucketsSpan => new(buckets!, bucketsY, bucketsX);
+
+        /// <summary>
+        /// Find the buckets spanned by the AABB between the minimum and maximum locations.
+        /// <br/>This DOES NOT adjust for the bullet collider radius; the caller must do so.
+        /// </summary>
+        public ReadOnlySpan2D<List<int>> BucketsSpanForPosition(Vector2 minLoc, Vector2 maxLoc) {
+            var minBucket = BucketIndexPair(minLoc);
+            var maxBucket = BucketIndexPair(maxLoc);
+            return bucketsSpan[new Range(minBucket.y, maxBucket.y + 1), new Range(minBucket.x, maxBucket.x + 1)];
+        }
+        
         //This is null when bucketing did not take place this frame
         private FrameBucketing? frameBucket;
         private int bucketsX;
@@ -253,7 +268,11 @@ public partial class BulletManager {
         public void Activate() {
             if (!Active) {
                 targetList.Add(this);
-                //Logs.Log($"Activating pool {Style}", level: LogLevel.DEBUG1);
+                if (targetList == activeNpc && NPCBulletsRequireBucketing) {
+                    CreateBuckets();
+                    frameBucket = new(1);
+                }
+                Logs.Log($"Activating pool {Style}", level: LogLevel.DEBUG1);
                 Active = true;
             }
         }
@@ -280,7 +299,7 @@ public partial class BulletManager {
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual CollisionResult CheckGrazeCollision(in Hurtbox hurtbox, in SimpleBullet sb) =>
-            CollisionMath.noColl;
+            CollisionMath.NoCollision;
 
         #region Operators
         
@@ -293,6 +312,13 @@ public partial class BulletManager {
                 for (int pi = 0; pi < numPcs && !Deleted[state.ii]; ++pi) {
                     controls[pi].action(in state, sb.bpi, controls[pi].cT);
                 }
+            }
+            //Bullets are eligible for collision on frame 0, so if bucketing has already occured this frame,
+            // then bucket this bullet appropriately
+            if (frameBucket.Try(out var fb)) {
+                buckets![BucketIndex(in sb.bpi.loc)].Add(Count - 1);
+                if (sb.scale > fb.maxScale)
+                    frameBucket = new(sb.scale);
             }
         }
         
@@ -487,9 +513,9 @@ public partial class BulletManager {
             PruneControls();
         }
 
-        public virtual void UpdateVelocityAndControls() {
+        public virtual void UpdateVelocityAndControls(bool forceBucketing=false) {
             bucketingRequests.Compact();
-            if (bucketingRequests.Count > 0 || IsPlayer)
+            if (bucketingRequests.Count > 0 || IsPlayer || forceBucketing)
                 UpdateVelocityAndControlsBucketed();
             else
                 UpdateVelocityAndControlsNonBucketed();
@@ -497,6 +523,7 @@ public partial class BulletManager {
         
         public void CompactAndSort() {
             Profiler.BeginSample("Compact");
+            //This must be done at end of frame because bucketed collisions rely on index being consistent
             if (NullElements > Math.Min(2000, Count / 10) || BC.UseZCompare)
                 Compact();
             Profiler.EndSample();
@@ -883,7 +910,7 @@ public partial class BulletManager {
             throw new Exception($"Culled SBCs are not enabled for softculling");
         }
 
-        public override void UpdateVelocityAndControls() {
+        public override void UpdateVelocityAndControls(bool forceBucketing=false) {
             for (int ii = 0; ii < temp_last; ++ii) {
                 if (!Deleted[ii]) {
                     ref SimpleBullet sbn = ref Data[ii];
@@ -944,7 +971,7 @@ public partial class BulletManager {
             base.Add(ref sb, false);
         }
 
-        public override void UpdateVelocityAndControls() {
+        public override void UpdateVelocityAndControls(bool forceBucketing=false) {
             for (int ii = 0; ii < temp_last; ++ii) {
                 if (!Deleted[ii]) {
                     ref SimpleBullet sbn = ref Data[ii];
@@ -1006,10 +1033,6 @@ public partial class BulletManager {
                 sbc = activeNpc[ii];
                 if (sbc.Count > 0) sbc.SwitchRender(c, this, epRenderLayer);
             }
-            for (int ii = 0; ii < activeCNpc.Count; ++ii) {
-                sbc = activeCNpc[ii];
-                if (sbc.Count > 0) sbc.SwitchRender(c, this, epRenderLayer);
-            }
         }
         RNG.RNG_ALLOWED = true;
     }
@@ -1052,7 +1075,7 @@ public partial class BulletManager {
             if (pool.NumControls > 0) Logs.Log($"{pool.Style} has {pool.NumControls} controls", level: LogLevel.INFO);
         }
         total += Bullet.NumBullets;
-        Logs.Log($"Custom pools: {string.Join(", ", activeCNpc.Select(x => x.Style))}");
+        Logs.Log($"Custom pools: {string.Join(", ", activeNpc.Where(x => x.IsCopy).Select(x => x.Style))}");
         Logs.Log($"Empty pools: {string.Join(", ", activeEmpty.Select(x => x.Style))}");
         Logs.Log($"Fancy bullets: {Bullet.NumBullets}", level: LogLevel.INFO);
         Logs.Log($"Total: {total}", level: LogLevel.INFO);

@@ -31,7 +31,7 @@ public class PatternSM : SequentialSM {
     public PatternProperties Props { get; }
     public PhaseSM[] Phases { get; }
 
-    public PatternSM(List<StateMachine> states, PatternProperties props) : base(states) {
+    public PatternSM(PatternProperties props, [BDSL1ImplicitChildren] StateMachine[] states) : base(states) {
         this.Props = props;
         Phases = states.Select(x => (x as PhaseSM)!).ToArray();
     }
@@ -187,20 +187,20 @@ public class PhaseSM : SequentialSM {
     /// <param name="states">Substates, run sequentially</param>
     /// <param name="timeout">Timeout in seconds before the phase automatically ends. Set to zero for no timeout</param>
     /// <param name="props">Properties describing miscellaneous features of this phase</param>
-    public PhaseSM(List<StateMachine> states, [NonExplicitParameter] PhaseProperties props, float timeout) : base(states) {
+    public PhaseSM(float timeout, [NonExplicitParameter] PhaseProperties props, [BDSL1ImplicitChildren] params StateMachine[] states) : base(states) {
         this._timeout = timeout;
         this.props = props;
-        for (int ii = 0; ii < states.Count; ++ii) {
+        for (int ii = 0; ii < states.Length; ++ii) {
             if (states[ii] is EndPSM) {
                 endPhase = states[ii] as EndPSM;
-                states.RemoveAt(ii);
+                states = states.Where((x, i) => i != ii).ToArray();
                 break;
             }
         }
-        for (int ii = 0; ii < states.Count; ++ii) {
+        for (int ii = 0; ii < states.Length; ++ii) {
             if (states[ii] is FinishPSM) {
                 finishPhase = states[ii] as FinishPSM;
-                states.RemoveAt(ii);
+                states = states.Where((x, i) => i != ii).ToArray();
                 break;
             }
         }
@@ -341,7 +341,8 @@ public class PhaseSM : SequentialSM {
                 (finishDelay, finishTask) = OnFinish(ctx, smh, pcTS, start_campaign, bgo);
                 prePrepareNextPhase?.Invoke(bgo);
             }
-            if (props.Cleanup) {
+            //Don't run autocull/etc tasks if there's a higher-level cancellation
+            if (props.Cleanup && !smh.Cancelled) {
                 if (finishDelay > 0) {
                     var acTime = Mathf.Min(EndOfCardAutocullTime, finishDelay);
                     foreach (var player in ServiceLocator.FindAll<PlayerController>())
@@ -421,23 +422,22 @@ public class PhaseSM : SequentialSM {
 }
 
 public class DialoguePhaseSM : PhaseSM {
-    public DialoguePhaseSM([NonExplicitParameter] PhaseProperties props, string file) : base(new List<StateMachine>() {
-        new PhaseSequentialActionSM(new List<StateMachine>() {
-            new ReflectableLASM(SMReflection.Dialogue(file)),
-            new ReflectableLASM(SMReflection.ShiftPhase())
-        }, 0f)
-    }, props, 0) {
-        
+    public DialoguePhaseSM(string file, [NonExplicitParameter] PhaseProperties props) : base(0, props,
+        new PhaseSequentialActionSM(0f, 
+            SMReflection.Dialogue(file),
+            SMReflection.ShiftPhase()
+        )
+    ) {
     }
 }
 
 public class PhaseJSM : PhaseSM {
-    public PhaseJSM(List<StateMachine> states, [NonExplicitParameter] PhaseProperties props, float timeout, int from)
+    public PhaseJSM(float timeout, int from, [NonExplicitParameter] PhaseProperties props, [BDSL1ImplicitChildren] StateMachine[] states)
     #if UNITY_EDITOR
-        : base(from == 0 ? states : states.Skip(from).Prepend(states[0]).ToList(), props, timeout) {
+        : base(timeout, props, from == 0 ? states : states.Skip(from).Prepend(states[0]).ToArray()) {
         if (this.states.Try(from == 0 ? 0 : 1) is PhaseParallelActionSM psm) psm.wait = 0f;
     #else
-        : base(states, props, timeout) {
+        : base(timeout, props, states) {
     #endif
     }
 }
@@ -452,7 +452,7 @@ public class PhaseParallelActionSM : ParallelSM {
     private readonly float wait;
 #endif
     
-    public PhaseParallelActionSM(List<StateMachine> states, float wait) : base(states) {
+    public PhaseParallelActionSM(float wait, [BDSL1ImplicitChildren] StateMachine[] states) : base(states) {
         this.wait = wait;
     }
 
@@ -474,7 +474,7 @@ public class PhaseSequentialActionSM : SequentialSM {
     /// </summary>
     /// <param name="states">Actions to run in parallel</param>
     /// <param name="wait">Artificial delay before this SM starts executing</param>
-    public PhaseSequentialActionSM(List<StateMachine> states, float wait) : base(states) {
+    public PhaseSequentialActionSM(float wait, [BDSL1ImplicitChildren] params StateMachine[] states) : base(states) {
         this.wait = wait;
     }
 
@@ -491,14 +491,14 @@ public class PhaseSequentialActionSM : SequentialSM {
 /// </summary>
 public class EndPSM : ParallelSM {
     //TODO consider making this inherit PhaseParallelActionSM
-    public EndPSM(List<StateMachine> states) : base(states) { }
+    public EndPSM([BDSL1ImplicitChildren] StateMachine[] states) : base(states) { }
 }
 
 /// <summary>
 /// The basic unit of control in SMs. These cannot be used directly and must instead be placed under <see cref="PhaseSequentialActionSM"/> or <see cref="PhaseParallelActionSM"/> or <see cref="GTRepeat"/>.
 /// </summary>
 public abstract class LineActionSM : StateMachine {
-    public LineActionSM(params StateMachine[] states) : base(new List<StateMachine>(states)) { }
+    public LineActionSM(params StateMachine[] states) : base(states) { }
 }
 
 /// <summary>

@@ -4,11 +4,11 @@ The screen is 16x9 units. For 4k support, high-quality images should be in 240 P
 
 The engine uses indirect mesh rendering for simple bullets. This disables some Unity convenience features like sorting layers, so we have to do some special things to get things sorted.
 
-Here are the cameras ordered by depth, their culling layers, and the primary sorting layers (ordered) they use. Note that sorting layers are not enforced, you can arbitrarily change sorting layer on SpriteRenderer.
+Here are the cameras ordered by depth, their culling layers, and the primary sorting layers (ordered) they use. Note that sorting layers are not enforced; you can arbitrarily change sorting layer on SpriteRenderer.
 
 | Camera               | Culling Mask                         | Sorting Layers                   | Notes                                                        |
 | -------------------- | ------------------------------------ | -------------------------------- | ------------------------------------------------------------ |
-| Wall Camera          | Wall                                 | Background, Walls, FX, UI        | Clear to black + backgrounds.<br />Renders to the composite texture. |
+| Wall Camera          | Wall, Obstacle                       | Background, Walls, FX, UI        | Clear to black + backgrounds.<br />Renders to the composite texture. |
 | Low Direct-Render    | LowDirectRender                      |                                  | Player simple bullets, as well as certain effects like the screen-shatter effect.<br />Renders to the composite texture. |
 | Middle Camera        | Player, LowProjectile, LowEffects    | Player, PlayerHitbox, Projectile | Renders to the composite texture.                            |
 | High Direct-Render   | HighDirectRender                     |                                  | Enemy simple bullets.<br />Renders to the composite texture. |

@@ -6,6 +6,15 @@ using SuzunoyaUnity.Mimics;
 using UnityEngine;
 
 namespace Danmokou.UI {
+
+/// <summary>
+/// Displays UITK render textures for groups configured in <see cref="UIBuilderRenderer"/>.
+/// <br/>If a render group is already being rendered to screen by UIBuilderRenderer, then disables that
+///  default rendering.
+/// <example>
+/// rerenderer = VN.Add(new UITKRerenderer(3), sortingID: 10000);
+///</example>
+/// </summary>
 public class UITKRerenderer : Rendered {
     public int UITKRenderGroup { get; }
 
@@ -14,10 +23,8 @@ public class UITKRerenderer : Rendered {
         UseSortingIDAsReference = false;
     }
 }
-/// <summary>
-/// Displays UITK render textures for groups other
-///  than the 0 render group in <see cref="UIBuilderRenderer"/>.
-/// </summary>
+
+/// <inheritdoc cref="UITKRerenderer"/>
 public class UITKRerendererMimic : RenderedMimic {
     public override Type[] CoreTypes => new[] { typeof(UITKRerenderer) };
     private SpriteRenderer sr = null!;
@@ -33,7 +40,8 @@ public class UITKRerendererMimic : RenderedMimic {
 
     private void Initialize(UITKRerenderer c) {
         base.Initialize(c);
-        ServiceLocator.Find<UIBuilderRenderer>().RTGroups.Subscribe(rtg => {
+        var uiBuilder = ServiceLocator.Find<UIBuilderRenderer>();
+        Listen(uiBuilder.RTGroups, rtg => {
             if (rtg.TryGetValue(c.UITKRenderGroup, out var rt)) {
                 sr.enabled = true;
                 pb.SetTexture(PropConsts.renderTex, rt);
@@ -43,6 +51,7 @@ public class UITKRerendererMimic : RenderedMimic {
             }
             sr.SetPropertyBlock(pb);
         });
+        AddToken(uiBuilder.DisableDefaultRenderingForGroup(c.UITKRenderGroup));
     }
 
     protected override void SetSortingLayer(int layer) => sr.sortingLayerID = layer;

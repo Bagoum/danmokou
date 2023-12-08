@@ -139,9 +139,20 @@ public static class M {
     public static Vector2 ConvertBasis(Vector2 source, Vector2 basis1) => RotateVector(source, basis1.x, -basis1.y);
     public static Vector2 DeconvertBasis(Vector2 source, Vector2 basis1) => RotateVector(source, basis1.x, basis1.y);
 
-    public static Vector2 ProjectionUnit(Vector2 of, Vector2 onto1) {
-        float dot = of.x * onto1.x + of.y * onto1.y;
-        return dot * onto1;
+    /// <summary>
+    /// Project the vector `v2` onto unit vector `ontoUnit`.
+    /// </summary>
+    public static Vector2 ProjectVectorUnit(Vector2 v2, Vector2 ontoUnit) {
+        float dot = v2.x * ontoUnit.x + v2.y * ontoUnit.y;
+        return dot * ontoUnit;
+    }
+    
+    /// <summary>
+    /// Project the vector `v2` onto vector `onto`.
+    /// </summary>
+    public static Vector2 ProjectVector(Vector2 v2, Vector2 onto) {
+        var ontoSqrMag = (onto.x * onto.x + onto.y * onto.y);
+        return (ontoSqrMag < M.MAG_ERR) ? Vector2.zero : ((v2.x * onto.x + v2.y * onto.y) / ontoSqrMag) * onto;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -423,8 +434,8 @@ public readonly struct Hurtbox {
     public readonly float y;
     public readonly float radius;
     public readonly float radius2;
-    public readonly float largeRadius;
-    public readonly float largeRadius2;
+    public readonly float grazeRadius;
+    public readonly float grazeRadius2;
     public readonly Vector2 location;
 
     public Hurtbox(Vector2 loc, float rad, float lrad) {
@@ -433,8 +444,8 @@ public readonly struct Hurtbox {
         y = loc.y;
         radius = rad;
         radius2 = rad * rad;
-        largeRadius = lrad;
-        largeRadius2 = lrad * lrad;
+        grazeRadius = lrad;
+        grazeRadius2 = lrad * lrad;
     }
 
     public Hurtbox(Vector2 loc, float rad) : this(loc, rad, rad) { }

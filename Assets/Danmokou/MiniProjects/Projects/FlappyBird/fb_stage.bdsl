@@ -1,0 +1,45 @@
+<#> warnprefix
+pattern { bgm {
+	1  s02-1
+	6	_
+} }
+phase 0
+	paction 0
+		shift-phase-to 2
+		
+
+##1
+<!> announce
+phase 0
+	saction 0
+		stage-announce
+		shift-phase
+
+##2
+<!> stage
+phasej 57 0 #{
+	paction 0
+    async _ <12;3:> gir {
+            color tfairy
+            times(3)
+            wait(100)
+            rv2incr(<;-1.5:>)
+        }  gcr {
+            times(3)
+            wait(18)
+            rv2incr(<;-1:>)
+            center
+            preloop start =v2 rv2toxy &rv2
+        } summonr null(zero)
+            movewrap~ 0 2 lerp01(0.5, loc, Lplayer) 4 &start
+                async dot-black/w <> gcr {
+                    times(_)
+                    wait(120 / dl)
+                    delay(lerpd(60, 0))
+                    while(onscreenby(-0.5, loc))
+                    sfx x-fire-small-1
+                } gsr {
+                    aimed
+                } s rvelocity(px(2.4))
+            { hp 100 }
+#}

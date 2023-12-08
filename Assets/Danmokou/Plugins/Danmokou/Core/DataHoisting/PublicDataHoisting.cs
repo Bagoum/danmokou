@@ -42,7 +42,7 @@ public static class PublicDataHoisting {
     public static string GetRandomValidKey<T>() {
         var dict = GetDictForType<T>();
         while (true) {
-            var s = RNG.RandString();
+            var s = "$_random_key_" + RNG.RandString();
             if (!dict.ContainsKey(s)) return s;
         }
     }

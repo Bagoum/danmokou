@@ -18,8 +18,9 @@ namespace Danmokou.Reflection2 {
 /// </summary>
 public static class Lexer {
     private const string uLetter = @"\p{L}";
-    private const string  num = @"[0-9]";
-    private const string  numMult = @"pi?|[hfsc]";
+    private const string num = @"[0-9]";
+    private const string numMult = @"pi?|[hfsc]";
+    private static readonly string numLiteral;
     private static readonly HashSet<string> specialOps = new[] { "\\", "->" }.ToHashSet();
     private static readonly HashSet<string> keywords = new[] { "function", "var", "true", "false", "block" }.ToHashSet();
     private static readonly HashSet<string> operators = new[] {
@@ -32,11 +33,60 @@ public static class Lexer {
         "&&", "||", "&", "|",
         "=", "+=", "-=", "*=", "/=", "%=", "|=", "&=",
         
-        ".", "$", "?", ":", "::",
+        ".", "$", "?", "::",
         //no use planned for these yet, but they are occasionally important in parsing
         "@", "#", "~"
+        //":" removed because it's unused and it interferes with LString
     }.ToHashSet();
     private static readonly Trie operatorTrie = new(operators.Concat(specialOps));
+
+    static Lexer() {
+        numLiteral = $@"((({num}+(\.{num}+)?)|(\.{num}+))({numMult})?)";
+        lexer = new(
+            T(@"[^\S\n]+", TokenType.InlineWhitespace),
+            //`b{` is short for `block {`
+            T(@"b\{", (p, s) => (new Token(TokenType.Keyword, p, "b"), 1)),
+            T($@"{uLetter}({uLetter}|{num}|[_'])*", (p, s) =>
+                new Token(keywords.Contains(s.Value) ? TokenType.Keyword : TokenType.Identifier, p, s)),
+            //Preprocess out other newlines
+            T(@"\n", TokenType.Newline),
+            T(@"[\(\)\[\]\{\},;]", (p, s) => new Token(s.Value switch {
+                "(" => TokenType.OpenParen,
+                ")" => TokenType.CloseParen,
+                "[" => TokenType.OpenBracket,
+                "]" => TokenType.CloseBracket,
+                "{" => TokenType.OpenBrace,
+                "}" => TokenType.CloseBrace,
+                "," => TokenType.Comma,
+                ";" => TokenType.Semicolon,
+                _ => throw new ArgumentOutOfRangeException($"Not a special symbol: {s.Value}")
+            }, p, s)),
+            //123, 123.456, .456
+            //Note that the preceding sign is parsed by Operator
+            //This is to make basic cases like 5-6 vs 5+ -6 easier to handle
+            T(numLiteral, TokenType.Number),
+            T($@"<({numLiteral}?;{numLiteral}?:){{0,2}}{numLiteral}?>", TokenType.V2RV2),
+            T(@"[!@#$%^&*+\-.<=>?/\\|~:]+", (p, s) => {
+                if (s.Value.StartsWith("//")) //this is a comment, not an operator
+                    return Maybe<(Token, int)>.None;
+                var op = operatorTrie.FindLongestSubstring(s.Value);
+                if (op is null) return Maybe<(Token, int)>.None;
+                return (new Token(specialOps.Contains(op) ? TokenType.SpecialOperator : TokenType.Operator, 
+                    p, op), op.Length);
+            }),
+            //Strings may be "like this" or 'like this'
+            T(@"""([^""\\]+|\\([a-zA-Z0-9\\""'&]))*""",
+                (p, s) => new Token(TokenType.String, p.CreateRange(s.Value, s.Length), s.Value[1..^1])),
+            T(@"'([^'\\]+|\\([a-zA-Z0-9\\""'&]))*'",
+                (p, s) => new Token(TokenType.String, p.CreateRange(s.Value, s.Length), s.Value[1..^1])),
+            //LStrings are :like.this
+            T(@":[a-zA-Z0-9.]+", TokenType.LString),
+
+    //A block comment "fragment" is either a sequence of *s followed by a not-/ character, or a sequence of not-*s.
+            T(@"/\*((\*+[^/])|([^*]+))*\*/", TokenType.Comment),
+            T(@"//[^\n]*", TokenType.Comment)
+        );
+    }
 
     /// <summary>
     /// A set of flags describing lexical features about the token.
@@ -139,9 +189,13 @@ public static class Lexer {
         /// </summary>
         Number,
         /// <summary>
-        /// Strings, bounded by " ".
+        /// Strings, bounded by " " or ' '.
         /// </summary>
-        String
+        String,
+        /// <summary>
+        /// Localized strings, prefixed with :.
+        /// </summary>
+        LString
     }
     public readonly struct Token {
         public string Content { get; }
@@ -170,6 +224,7 @@ public static class Lexer {
         
         public Token(TokenType type, TokenFlags flags, Position p, string content) : 
             this(type, flags, p.CreateRange(content, content.Length), content) { }
+        public Token(TokenType type, PositionRange p, string content) : this(type, TokenFlags.Default, p, content) { }
         
         public Token(TokenType type, TokenFlags flags, PositionRange p, string content) {
             Type = type;
@@ -197,44 +252,8 @@ public static class Lexer {
     
     private static RegexTokenizer<Token> T([RegexPattern] string pattern, Func<Position, Match, Maybe<(Token, int)>>t) =>
         new(pattern, t);
-    
-    private static readonly RegexLexer<Token> lexer = new(
-            T(@"[^\S\n]+", TokenType.InlineWhitespace),
-            //`b{` is short for `block {`
-            T(@"b\{", (p, s) => (new Token(TokenType.Keyword, p, "b"), 1)),
-            T($@"{uLetter}({uLetter}|{num}|[_'])*", (p, s) =>
-                new Token(keywords.Contains(s.Value) ? TokenType.Keyword : TokenType.Identifier, p, s)),
-            //Preprocess out other newlines
-            T(@"\n", TokenType.Newline),
-            T(@"[\(\)\[\]\{\},;]", (p, s) => new Token(s.Value switch {
-                "(" => TokenType.OpenParen,
-                ")" => TokenType.CloseParen,
-                "[" => TokenType.OpenBracket,
-                "]" => TokenType.CloseBracket,
-                "{" => TokenType.OpenBrace,
-                "}" => TokenType.CloseBrace,
-                "," => TokenType.Comma,
-                ";" => TokenType.Semicolon,
-                _ => throw new ArgumentOutOfRangeException($"Not a special symbol: {s.Value}")
-            }, p, s)),
-            //123, 123.456, .456
-            //Note that the preceding sign is parsed by Operator
-            //This is to make basic cases like 5-6 vs 5+ -6 easier to handle
-            T($@"(({num}+(\.{num}+)?)|(\.{num}+))({numMult})?", TokenType.Number),
-            T(@"[!@#$%^&*+\-.<=>?/\\|~:]+", (p, s) => {
-                if (s.Value.StartsWith("//")) //this is a comment, not an operator
-                    return Maybe<(Token, int)>.None;
-                var op = operatorTrie.FindLongestSubstring(s.Value);
-                if (op is null) return Maybe<(Token, int)>.None;
-                return (new Token(specialOps.Contains(op) ? TokenType.SpecialOperator : TokenType.Operator, 
-                    p, op), op.Length);
-            }),
-            T(@"""([^""\\]+|\\([a-zA-Z0-9\\""'&]))*""", TokenType.String),
-            
-            //A block comment "fragment" is either a sequence of *s followed by a not-/ character, or a sequence of not-*s.
-            T(@"/\*((\*+[^/])|([^*]+))*\*/", TokenType.Comment),
-            T(@"//[^\n]*", TokenType.Comment)
-        );
+
+    private static readonly RegexLexer<Token> lexer;
 
     /// <summary>
     /// Lex the string into a sequence of tokens, discarding whitespace/newlines
@@ -253,7 +272,7 @@ public static class Lexer {
         var tokens = lexer.Tokenize(source);
         //Combinator postprocessing: consolidate structures such as TypeIdentifier and V2RV2
         var stream = initialPostProcess = 
-            new InputStream<Token>("Lexer postprocessing", tokens.ToArray(), null!, new TokenWitnessCreator(source));
+            new InputStream<Token>(tokens.ToArray(), "Lexer postprocessing", witness: new TokenWitnessCreator(source));
         var result = postprocessor(stream);
         if (result.Status != ResultStatus.OK)
             throw new Exception(stream.ShowAllFailures(result.ErrorOrThrow));
@@ -266,7 +285,7 @@ public static class Lexer {
         var bracket = new GroupingHandler(source, "bracket", "brackets", TokenType.OpenBracket, TokenType.CloseBracket);
         var brace = new GroupingHandler(source, "brace", "braces", TokenType.OpenBrace, TokenType.CloseBrace);
         bool RequiresWhitespaceSep(TokenType t) => IsAnyIdentifier(t) || t is 
-            TokenType.V2RV2 or TokenType.Number or TokenType.String;
+            TokenType.V2RV2 or TokenType.Number or TokenType.String or TokenType.LString;
         bool IsAnyIdentifier(TokenType t) => t is
             TokenType.Identifier or TokenType.TypeIdentifier;
         bool firstNonWSTokenOnLine = false;
@@ -538,6 +557,7 @@ public static class Lexer {
         
     private static ParseResult<Token> ParseTypeIdentifier(InputStream<Token> inp) => parseTypeIdent(inp);
 
+    /*
     private static readonly Parser<Token, Token> parseV2RV2 =
         Sequential(
             TokenOfValue("<"),
@@ -548,11 +568,11 @@ public static class Lexer {
             TokenOfValue(">"),
             (op, nrxy, ang, cl) => 
                 op.JoinTokens(nrxy).JoinTokens(ang).JoinTokens(cl).WithType(TokenType.V2RV2)
-        ).Attempt();
+        ).Attempt();*/
 
     private static readonly Parser<Token, List<Token>> postprocessor = ChoiceL("token", 
             parseTypeIdent,
-            parseV2RV2,
+            //parseV2RV2,
             Any<Token>()
         ).Many();
 

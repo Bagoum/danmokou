@@ -821,7 +821,6 @@ public partial class BulletManager {
             //Logs.Log($"Autoculled {pool.Style} to {targetPool ?? "None"}");
         }
         for (int ii = 0; ii < activeNpc.Count; ++ii) CullPool(activeNpc[ii]);
-        for (int ii = 0; ii < activeCNpc.Count; ++ii) CullPool(activeCNpc[ii]);
     }
 
     /// <summary>
@@ -837,7 +836,6 @@ public partial class BulletManager {
                 , Consts.NOTPERSISTENT, null));
         }
         for (int ii = 0; ii < activeNpc.Count; ++ii) DeletePool(activeNpc[ii]);
-        for (int ii = 0; ii < activeCNpc.Count; ++ii) DeletePool(activeCNpc[ii]);
     }
     
     public static void SoftScreenClear() => Autodelete(new SoftcullProperties(null, null), _ => true);
@@ -869,7 +867,6 @@ public partial class BulletManager {
             //Logs.Log($"DoT-Autoculling {pool.Style} to {targetPool}");
         }
         for (int ii = 0; ii < activeNpc.Count; ++ii) CullPool(activeNpc[ii]);
-        for (int ii = 0; ii < activeCNpc.Count; ++ii) CullPool(activeCNpc[ii]);
     }
     
     /// <summary>
@@ -896,7 +893,6 @@ public partial class BulletManager {
                 , survive, null));
         }
         for (int ii = 0; ii < activeNpc.Count; ++ii) DeletePool(activeNpc[ii]);
-        for (int ii = 0; ii < activeCNpc.Count; ++ii) DeletePool(activeCNpc[ii]);
     }
     
     
