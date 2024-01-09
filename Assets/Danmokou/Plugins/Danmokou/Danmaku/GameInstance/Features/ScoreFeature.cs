@@ -16,6 +16,8 @@ public interface IScoreFeature : IInstanceFeature {
     double SmallValueRatio { get; }
     Lerpifier<long> VisibleScore { get; }
     
+    bool AllowPointPlusItemDrops { get; }
+    
     /// <summary>
     /// Returns score delta.
     /// </summary>
@@ -42,13 +44,14 @@ public class ScoreFeature : BaseInstanceFeature, IScoreFeature {
     public double EffectivePIV => PIV + Inst.Graze / (double)1337;
     
     public Lerpifier<long> VisibleScore { get; }
+    public bool AllowPointPlusItemDrops { get; }
     
-    public ScoreFeature(InstanceData inst, long? highScore) {
+    public ScoreFeature(InstanceData inst, ScoreFeatureCreator creator) {
         Inst = inst;
-        MaxScore = new(highScore ?? 9001);
-        
+        MaxScore = new(creator.HighScore ?? 9001);
         VisibleScore = new Lerpifier<long>((a, b, t) => (long)M.Lerp(a, b, (double)M.EOutSine(t)), 
             () => Score, 1.3f);
+        AllowPointPlusItemDrops = creator.AllowPointPlusItems;
     }
     
 
@@ -85,7 +88,7 @@ public class ScoreFeature : BaseInstanceFeature, IScoreFeature {
             f.OnItemPointPP(delta, multiplier);
     }
 
-    public void OnContinue() {
+    public void OnContinueOrCheckpoint() {
         Score.Value = 0;
         VisibleScore.HardReset();
         PIV.Value = 1;
@@ -97,7 +100,8 @@ public class ScoreFeature : BaseInstanceFeature, IScoreFeature {
 }
 
 public record ScoreFeatureCreator(long? HighScore) : IFeatureCreator<IScoreFeature> {
-    public IScoreFeature Create(InstanceData instance) => new ScoreFeature(instance, HighScore);
+    public bool AllowPointPlusItems { get; init; } = true;
+    public IScoreFeature Create(InstanceData instance) => new ScoreFeature(instance, this);
 }
 
 }

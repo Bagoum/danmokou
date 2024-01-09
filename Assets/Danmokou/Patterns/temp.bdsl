@@ -1,6 +1,6 @@
 <#> strict(comma)
 pattern({
-	boss simp.kasen
+	boss simp.aya
 })
 phase(0)
 	paction(0)
@@ -17,8 +17,13 @@ $%f(%x)
 <!> hp 10000
 phase 0
 	saction 0
-		sync pather-red/w <> gsr2c 12 { 
-		} pather 2 2 polar(2 * t, sine(3, 20, t)) { }
+		position 0 2
+		sync ellipse-red/w <> gsr2c 30 {
+			
+		} s polar
+		logsumshiftt -0.8 1.5 * 3 t * -3 t
+		logsumshiftt 0.1 1 0 
+			logsumshiftt -0.1 2 * 90 t 0
 
 
 <!> type non abc

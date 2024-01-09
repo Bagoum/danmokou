@@ -22,6 +22,8 @@ public interface IInputSource {
     bool? Bomb => null;
     bool? Meter => null;
     bool? Swap => null;
+    bool? Fly => null;
+    bool? SlowFall => null;
 
     bool? Pause => null;
     bool? VNBacklogPause => null;
@@ -55,6 +57,8 @@ public class NullInputSource : IInputSource {
     public bool? Bomb => false;
     public bool? Meter => false;
     public bool? Swap => false;
+    public bool? Fly => false;
+    public bool? SlowFall => false;
 
     public bool? Pause => false;
     public bool? VNBacklogPause => false;

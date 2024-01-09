@@ -13,7 +13,7 @@ namespace Danmokou.Behavior.Display {
 public class PowerAura : SpriteDisplayController {
     private RealizedPowerAuraOptions options;
 
-    protected override Vector3 GetScale => options.scale.Try(out var s) ? new Vector3(s, s, s) : base.GetScale;
+    protected override Vector3 BaseScale => options.scale.Try(out var s) ? new Vector3(s, s, s) : base.BaseScale;
 
     public void Initialize(in RealizedPowerAuraOptions opts) {
         options = opts;

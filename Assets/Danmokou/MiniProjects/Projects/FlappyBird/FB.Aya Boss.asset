@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9a92301f86b4dd690557658c7243e8b, type: 3}
+  m_Name: FB.Aya Boss
+  m_EditorClassIdentifier: 
+  boss: {fileID: 6274564262994426332, guid: ca2e49519f1ed504eb4dbba0b5c8b3ea, type: 3}
+  localizationBaseKey: simp.boss.aya
+  m_casualName:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  m_bossPracticeName:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  replayNameOverride:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  bottomTrackerNameOverride:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  stateMachine: {fileID: 2811297602134710623, guid: 0463ff4ed99d3ff42acbc8a5a3f45a69,
+    type: 3}
+  key: fb.aya
+  colors: {fileID: 11400000, guid: 5ebd2d3045839ff4cba23ebafb50e554, type: 2}
+  cardRotator: 
+  spellRotator: 
+  profile:
+    leftSidebar: {fileID: 0}
+    rightSidebar: {fileID: 0}
+  defaultNonBG: {fileID: 5180723301924424041, guid: dc8f9cd3dc7e0e848994fb1ab7274a16,
+    type: 3}
+  defaultSpellBG: {fileID: 5180723301924424041, guid: dc8f9cd3dc7e0e848994fb1ab7274a16,
+    type: 3}
+  defaultIntoSpellTransition: {fileID: 11400000, guid: 23d9a9fbcd555004c9905acab3bc372a,
+    type: 2}
+  defaultIntoNonTransition: {fileID: 11400000, guid: 9b0abf82e07299741a4d64ecd57ff7e6,
+    type: 2}
+  bossCutin: {fileID: 2426727079670566650, guid: af4f40b4b3e089d41904ab766af66aa9,
+    type: 3}
+  spellCutins: []
+  practiceable: 0

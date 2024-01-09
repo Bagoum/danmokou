@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f94335465055a404498dd05058aa17e4, type: 3}
+  m_Name: FB Backgrounds
+  m_EditorClassIdentifier: 
+  prefabs:
+  - groupTitle: main
+    prefabs:
+    - name: forest
+      prefab: {fileID: 5180723301924424041, guid: dc8f9cd3dc7e0e848994fb1ab7274a16,
+        type: 3}
+    - name: prairie
+      prefab: {fileID: 5180723301924424041, guid: ba95aea223243e548ae468296dd39839,
+        type: 3}

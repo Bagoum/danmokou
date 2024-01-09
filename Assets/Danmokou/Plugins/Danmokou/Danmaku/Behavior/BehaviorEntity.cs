@@ -421,9 +421,12 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public void Poof(bool? drops=null) {
         if (SceneIntermediary.LOADING) InvokeCull();
         else if (!dying) {
+            myStyle.IterateDestroyControls(this);
             DestroyInitial(true, drops ?? AmIOutOfHP);
-            if (enemy != null) enemy.DoSuicideFire();
-            GameManagement.Instance.NormalEnemyDestroyed();
+            if (enemy != null) {
+                enemy.DoSuicideFire();
+                GameManagement.Instance.NormalEnemyDestroyed();
+            }
             TryDeathEffect();
             if (displayer == null) DestroyFinal();
             else displayer.Animate(AnimationType.Death, false, DestroyFinal);
@@ -568,13 +571,16 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// Call this with any high-priority SMs-- they are not required to be pattern-type.
     /// While you can pass null here, that will still allocate some Task garbage.
     /// </summary>
-    public async Task RunBehaviorSM(SMRunner sm, int firstPhase = 0) {
-        if (sm.sm == null || sm.cT.Cancelled) return;
+    public async Task RunBehaviorSM(SMRunner sm, SMContext? context = null) {
+        if (sm.sm == null) 
+            return;
+        if (sm.cT.Cancelled)
+            throw new OperationCanceledException();
         HardCancel(false);
-        phaseController.SetDesiredNext(firstPhase);
+        phaseController.SetDesiredNext(0);
         var cT = new Cancellable();
         var joint = sm.MakeNested(cT);
-        using var smh = new SMHandoff(this, sm, joint);
+        using var smh = new SMHandoff(this, sm, joint, context);
         behaviorToken.Add(cT);
         try {
             await sm.sm.Start(smh);
@@ -584,7 +590,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             }
             throw;
         } finally {
-            if (GameManagement.Instance.Request?.InstTracker.Cancelled is not true) {
+            if (GameManagement.Instance.mode == InstanceMode.NULL ||
+                GameManagement.Instance.Request?.InstTracker.Cancelled is not true) {
                 if (IsNontrivialID(ID)) {
                     Logs.Log(
                         $"BehaviorEntity {ID} finished running its SM{(sm.cullOnFinish ? " and will destroy itself." : ".")}",

@@ -146,6 +146,7 @@ public static partial class Reflector {
         /// Show the signature of this method.
         /// </summary>
         string AsSignature { get; }
+        string AsSignatureWithParamMod(Func<NamedParam, int, string> paramMod);
         
         /// <summary>
         /// Show the signature of this method, only including types and not names.

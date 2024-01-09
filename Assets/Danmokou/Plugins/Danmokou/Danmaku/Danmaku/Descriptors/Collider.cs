@@ -79,7 +79,7 @@ public class ApproximatedCircleCollider : CircleCollider {
 public class RectCollider : ICollider {
     private readonly float halfRectX;
     private readonly float halfRectY;
-    private readonly Vector2 halfRect;
+    public readonly Vector2 halfRect;
     private readonly float maxDist2;
     public float MaxRadius => Mathf.Sqrt(maxDist2);
 

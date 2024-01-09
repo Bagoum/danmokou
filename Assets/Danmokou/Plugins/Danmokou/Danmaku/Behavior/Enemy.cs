@@ -68,7 +68,11 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     //private static int enemyIndexCtr = 0;
     //private int enemyIndex;
 
-    public bool canTaiAtariPlayer;
+    /// <summary>
+    /// The radius of this entity's hitbox when it collides with the player.
+    /// </summary>
+    public RFloat? taiAtariRadius = null!;
+    
     /// <summary>
     /// Hurtbox radius.
     /// </summary>
@@ -166,6 +170,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         HP = maxHP;
         queuedDamage = 0;
         Vulnerable = Vulnerability.VULNERABLE;
+        ReceivesBulletCollisions = false;
         target = ServiceLocator.MaybeFind<PlayerController>();
         hpPB = new MaterialPropertyBlock();
         distortPB = new MaterialPropertyBlock();
@@ -222,6 +227,12 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         if (options.Try(out var o)) {
             if (o.hp.Try(out var hp)) SetHP(hp, hp);
         }
+    }
+    
+    public void Died() {
+        if (healthbarSprite != null) healthbarSprite.enabled = false;
+        allEnemies.Remove(enemyIndex);
+        DisableUpdates();
     }
 
     public void ConfigureBoss(BossConfig b) {
@@ -305,7 +316,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
 
     public override void RegularUpdate() {
         ReceivesBulletCollisions =
-            LocationHelpers.OnPlayableScreenBy(1 + collisionRadius, Beh.GlobalPosition()) && Vulnerable.HitsLand();
+            LocationHelpers.OnPlayableScreen(Beh.GlobalPosition()) && Vulnerable.HitsLand();
         _displayBarRatio = M.Lerp(_displayBarRatio, BarRatio, HPLerpRate * ETime.FRAME_TIME);
         if (hasDistorter) {
             distortPB.SetFloat(PropConsts.time, Beh.rBPI.t);
@@ -350,9 +361,9 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     }
 
     public override void RegularUpdateCollision() {
-        if (canTaiAtariPlayer && collisionRadius > 0 && target.Try(out var player)) {
+        if (taiAtariRadius != null && taiAtariRadius > 0 && target.Try(out var player)) {
             var hb = player.Hurtbox;
-            if (CollisionMath.CircleOnCircle(Location, collisionRadius, in hb.x, in hb.y, in hb.radius))
+            if (CollisionMath.CircleOnCircle(Location, taiAtariRadius, in hb.x, in hb.y, in hb.radius))
                 player.TakeHit();
         }
     }
@@ -378,7 +389,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         orderedEnemies.Compact();
         for (int ii = 0; ii < orderedEnemies.Count; ++ii) {
             var enemy = orderedEnemies[ii];
-            if (LocationHelpers.OnPlayableScreenBy(1 + enemy.collisionRadius, enemy.Beh.GlobalPosition()) && enemy.Vulnerable.HitsLand()) {
+            if (LocationHelpers.OnPlayableScreen(enemy.Beh.GlobalPosition()) && enemy.Vulnerable.HitsLand()) {
                 frozenEnemies.Add(new FrozenCollisionInfo(enemy));
             }
         }
@@ -532,7 +543,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
 
     private bool ViewfinderHits(CRect viewfinder) => 
         Vulnerable.TakesDamage() && ayaCameraRadius != null && 
-        CollisionMath.CircleInRect(Beh.rBPI.loc, ayaCameraRadius, viewfinder);
+        CollisionMath.CircleInRect(Beh.rBPI.loc.x, Beh.rBPI.loc.y, ayaCameraRadius, viewfinder);
     public void ShowCrosshairIfViewfinderHits(CRect viewfinder) {
         if (cameraCrosshair != null) {
             cameraCrosshair.enabled = ViewfinderHits(viewfinder);
@@ -569,6 +580,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         var position = transform.position;
         Handles.color = Color.red;
         if (ayaCameraRadius != null) Handles.DrawWireDisc(position, Vector3.forward, ayaCameraRadius);
+        if (taiAtariRadius != null) Handles.DrawWireDisc(position, Vector3.forward, taiAtariRadius);
         Handles.color = Color.green;
         Handles.DrawWireDisc(position, Vector3.forward, 0.9f);
             Handles.color = Color.cyan;
@@ -577,12 +589,6 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     }
 #endif
     
-    public void Died() {
-        if (healthbarSprite != null) healthbarSprite.enabled = false;
-        allEnemies.Remove(enemyIndex);
-        DisableUpdates();
-    }
-
     [UsedImplicitly]
     public static bool FindNearest(Vector3 source, out Vector2 position) {
         Profiler.BeginSample("FindNearest");

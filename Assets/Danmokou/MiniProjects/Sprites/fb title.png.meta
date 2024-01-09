@@ -1,0 +1,689 @@
+fileFormatVersion: 2
+guid: 20f1a42585dd9e4468009e174181d2e3
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8618601658866374055
+    second: fb title_0
+  - first:
+      213: 8188814615547950000
+    second: fb title_1
+  - first:
+      213: -7299737045405847542
+    second: fb title_2
+  - first:
+      213: -8501107320486074950
+    second: fb title_3
+  - first:
+      213: 5664996789554237019
+    second: fb title_4
+  - first:
+      213: -7190594960719196915
+    second: fb title_5
+  - first:
+      213: 66162438651656669
+    second: fb title_6
+  - first:
+      213: -7408996131791979184
+    second: fb title_7
+  - first:
+      213: -4116261379959487411
+    second: fb title_8
+  - first:
+      213: -7494213077205114609
+    second: fb title_9
+  - first:
+      213: 3925056289433166250
+    second: fb title_10
+  - first:
+      213: -583753172135921125
+    second: fb title_11
+  - first:
+      213: 207385332503748011
+    second: fb title_12
+  - first:
+      213: 1373004573355206626
+    second: fb title_13
+  - first:
+      213: -6191386576638383423
+    second: fb title_14
+  - first:
+      213: -6906610020210125100
+    second: fb title_15
+  - first:
+      213: 2866250227250723553
+    second: fb title_16
+  - first:
+      213: 730195244338674726
+    second: fb title_17
+  - first:
+      213: -2613241147657953503
+    second: fb title_18
+  - first:
+      213: -1225685109081531020
+    second: fb title_19
+  - first:
+      213: 1632593884238228993
+    second: fb title_20
+  - first:
+      213: -2902624698010690528
+    second: fb title_21
+  - first:
+      213: -1635510110885774926
+    second: fb title_22
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 160
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: fb title_0
+      rect:
+        serializedVersion: 2
+        x: 405
+        y: 284
+        width: 148
+        height: 172
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95a6dae5473946880800000000000000
+      internalID: -8618601658866374055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_1
+      rect:
+        serializedVersion: 2
+        x: 638
+        y: 278
+        width: 143
+        height: 178
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b33343b18384a170800000000000000
+      internalID: 8188814615547950000
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_2
+      rect:
+        serializedVersion: 2
+        x: 1095
+        y: 280
+        width: 149
+        height: 176
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a0033d635df12ba90800000000000000
+      internalID: -7299737045405847542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_3
+      rect:
+        serializedVersion: 2
+        x: 1328
+        y: 281
+        width: 100
+        height: 175
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab564fcceeff50a80800000000000000
+      internalID: -8501107320486074950
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_4
+      rect:
+        serializedVersion: 2
+        x: 1431
+        y: 284
+        width: 50
+        height: 172
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b5ecb1fc09c1e9e40800000000000000
+      internalID: 5664996789554237019
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_5
+      rect:
+        serializedVersion: 2
+        x: 1557
+        y: 283
+        width: 35
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0d4e9a0bffd53c90800000000000000
+      internalID: -7190594960719196915
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_6
+      rect:
+        serializedVersion: 2
+        x: 1573
+        y: 284
+        width: 134
+        height: 175
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd93e4d236e0be000800000000000000
+      internalID: 66162438651656669
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_7
+      rect:
+        serializedVersion: 2
+        x: 284
+        y: 105
+        width: 98
+        height: 131
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05dbb4ec545fd2990800000000000000
+      internalID: -7408996131791979184
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_8
+      rect:
+        serializedVersion: 2
+        x: 813
+        y: 106
+        width: 113
+        height: 138
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d440bd4751a10e6c0800000000000000
+      internalID: -4116261379959487411
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_9
+      rect:
+        serializedVersion: 2
+        x: 931
+        y: 106
+        width: 23
+        height: 126
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f012a1e89e43ff790800000000000000
+      internalID: -7494213077205114609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_10
+      rect:
+        serializedVersion: 2
+        x: 1414
+        y: 106
+        width: 102
+        height: 138
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa1a31f36e9987630800000000000000
+      internalID: 3925056289433166250
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_11
+      rect:
+        serializedVersion: 2
+        x: 1525
+        y: 198
+        width: 16
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1ab452359716e7f0800000000000000
+      internalID: -583753172135921125
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_12
+      rect:
+        serializedVersion: 2
+        x: 1630
+        y: 106
+        width: 79
+        height: 125
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bad13837cd7c0e200800000000000000
+      internalID: 207385332503748011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_13
+      rect:
+        serializedVersion: 2
+        x: 388
+        y: 99
+        width: 91
+        height: 89
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e7e2dd8264ed0310800000000000000
+      internalID: 1373004573355206626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_14
+      rect:
+        serializedVersion: 2
+        x: 486
+        y: 80
+        width: 89
+        height: 110
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1cae85046b6c31aa0800000000000000
+      internalID: -6191386576638383423
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_15
+      rect:
+        serializedVersion: 2
+        x: 581
+        y: 106
+        width: 88
+        height: 89
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d6d83787cac620a0800000000000000
+      internalID: -6906610020210125100
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_16
+      rect:
+        serializedVersion: 2
+        x: 675
+        y: 106
+        width: 80
+        height: 83
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ea79a84567f6c720800000000000000
+      internalID: 2866250227250723553
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_17
+      rect:
+        serializedVersion: 2
+        x: 964
+        y: 107
+        width: 104
+        height: 85
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62c7c7bb4bc222a00800000000000000
+      internalID: 730195244338674726
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_18
+      rect:
+        serializedVersion: 2
+        x: 1074
+        y: 80
+        width: 89
+        height: 110
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12fd9619507ebbbd0800000000000000
+      internalID: -2613241147657953503
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_19
+      rect:
+        serializedVersion: 2
+        x: 1169
+        y: 80
+        width: 89
+        height: 110
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47d95b223ed7dfee0800000000000000
+      internalID: -1225685109081531020
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_20
+      rect:
+        serializedVersion: 2
+        x: 1264
+        y: 91
+        width: 93
+        height: 97
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10eae74ec7328a610800000000000000
+      internalID: 1632593884238228993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_21
+      rect:
+        serializedVersion: 2
+        x: 1523
+        y: 108
+        width: 19
+        height: 78
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02c1cc6473ec7b7d0800000000000000
+      internalID: -2902624698010690528
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: fb title_22
+      rect:
+        serializedVersion: 2
+        x: 1553
+        y: 106
+        width: 80
+        height: 83
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b9f71e28308d49e0800000000000000
+      internalID: -1635510110885774926
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      fb title_0: -8618601658866374055
+      fb title_1: 8188814615547950000
+      fb title_10: 3925056289433166250
+      fb title_11: -583753172135921125
+      fb title_12: 207385332503748011
+      fb title_13: 1373004573355206626
+      fb title_14: -6191386576638383423
+      fb title_15: -6906610020210125100
+      fb title_16: 2866250227250723553
+      fb title_17: 730195244338674726
+      fb title_18: -2613241147657953503
+      fb title_19: -1225685109081531020
+      fb title_2: -7299737045405847542
+      fb title_20: 1632593884238228993
+      fb title_21: -2902624698010690528
+      fb title_22: -1635510110885774926
+      fb title_3: -8501107320486074950
+      fb title_4: 5664996789554237019
+      fb title_5: -7190594960719196915
+      fb title_6: 66162438651656669
+      fb title_7: -7408996131791979184
+      fb title_8: -4116261379959487411
+      fb title_9: -7494213077205114609
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

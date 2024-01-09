@@ -25,13 +25,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1005972193314950219}
+  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2694840258393162364}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2788597762507634990
 SpriteRenderer:
@@ -50,6 +50,8 @@ SpriteRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -97,7 +99,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationMethod: 0
+  rotationMethod:
+    type: 0
+    InVelocityDirection:
+      offset: 0
+    LeanByVelocity:
+      xAxis: 1
+      multiplier: 8
+      rotationLimit: {x: -30, y: 30}
   yPosBopPeriod:
     useConstant: 1
     constVal: 0
@@ -144,6 +153,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3764406661813136865}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 3.66, y: -2.13, z: 2.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -151,7 +161,6 @@ Transform:
   m_Children:
   - {fileID: 2694840258393162364}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &976398667412730249
 MonoBehaviour:
@@ -262,13 +271,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4580006514681953620}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1377467219242574620}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
 --- !u!198 &4285674150869262588
 ParticleSystem:
@@ -5023,6 +5032,8 @@ ParticleSystemRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -5061,13 +5072,15 @@ ParticleSystemRenderer:
   m_RenderAlignment: 0
   m_Pivot: {x: 0, y: 0, z: 0}
   m_Flip: {x: 0, y: 0, z: 0}
-  m_UseCustomVertexStreams: 0
   m_EnableGPUInstancing: 1
   m_ApplyActiveColorSpace: 1
   m_AllowRoll: 1
   m_FreeformStretching: 0
   m_RotateWithStretchDirection: 1
+  m_UseCustomVertexStreams: 0
   m_VertexStreams: 00010304
+  m_UseCustomTrailVertexStreams: 0
+  m_TrailVertexStreams: 00010304
   m_Mesh: {fileID: 0}
   m_Mesh1: {fileID: 0}
   m_Mesh2: {fileID: 0}
@@ -5101,6 +5114,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4849687770540079544}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -5109,7 +5123,6 @@ Transform:
   - {fileID: 2232024405353754109}
   - {fileID: 1377467219242574620}
   m_Father: {fileID: 3764406661813136869}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &666071119851931530
 MonoBehaviour:
@@ -5123,7 +5136,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd3e768eb00f4f728c46451d230bb67d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationMethod: 0
+  rotationMethod:
+    type: 0
+    InVelocityDirection:
+      offset: 0
+    LeanByVelocity:
+      xAxis: 1
+      multiplier: 8
+      rotationLimit: {x: -30, y: 30}
   yPosBopPeriod:
     useConstant: 1
     constVal: 0
@@ -5172,6 +5192,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5507961021165415886}
+  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -5179,7 +5200,6 @@ Transform:
   m_Children:
   - {fileID: 8097142178494814209}
   m_Father: {fileID: 2694840258393162364}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8438424931868264545
 MonoBehaviour:
@@ -5193,7 +5213,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5658dc9a4f61403888f81ea3cc8b8e4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationMethod: 1
+  rotationMethod:
+    type: 1
+    InVelocityDirection:
+      offset: 0
+    LeanByVelocity:
+      xAxis: 1
+      multiplier: 8
+      rotationLimit: {x: -30, y: 30}
   yPosBopPeriod:
     useConstant: 1
     constVal: 0

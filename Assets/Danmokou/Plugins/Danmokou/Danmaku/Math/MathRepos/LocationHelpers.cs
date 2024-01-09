@@ -74,7 +74,7 @@ public static partial class ExM {
     /// YMin - 1
     /// </summary>
     /// <returns></returns>
-    [Alias("ymin-")]
+    [Alias("ymin_")]
     public static TEx<float> YMinMinus1() => LocationHelpers.bot.Sub(1);
     
     /// <summary>
@@ -86,7 +86,7 @@ public static partial class ExM {
     /// <summary>
     /// XMin - 1
     /// </summary>
-    [Alias("xmin-")]
+    [Alias("xmin_")]
     public static TEx<float> XMinMinus1() => LocationHelpers.left.Sub(1);
     
     /// <summary>

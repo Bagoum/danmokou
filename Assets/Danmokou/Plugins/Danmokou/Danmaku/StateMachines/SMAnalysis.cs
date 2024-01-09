@@ -66,6 +66,7 @@ public struct SMPhaseController {
 
     /// <summary>
     /// Run a single phase, then continue the script, and finish execution when the script is done normally.
+    /// By default, the zero phase (setup phase by convention) is run first, and then it goes to the target phase.
     /// </summary>
     public void SetGoTo(int gotoPhase) {
         externalOverride = gotoPhase;
@@ -315,7 +316,7 @@ public static class SMAnalysis {
         public readonly AnalyzedCampaign campaign;
 
         public AnalyzedBoss(AnalyzedCampaign campaign, int index) {
-            boss = (this.campaign = campaign).campaign.practiceBosses[bossIndex = index];
+            boss = (this.campaign = campaign).campaign.bosses[bossIndex = index];
         }
 
         public static AnalyzedBoss Reconstruct(string campaign, string boss) =>
@@ -328,11 +329,12 @@ public static class SMAnalysis {
         public readonly AnalyzedBoss[] bosses;
         public readonly AnalyzedStage[] stages;
         public readonly Dictionary<string, AnalyzedBoss> bossKeyMap = new();
-        public IEnumerable<AnalyzedStage> practiceStages => stages.Where(s => s.stage.practiceable);
+        public IEnumerable<AnalyzedBoss> PracticeBosses => bosses.Where(s => s.boss.practiceable);
+        public IEnumerable<AnalyzedStage> PracticeStages => stages.Where(s => s.stage.practiceable);
 
         public AnalyzedCampaign(CampaignConfig campaign, ICampaignDanmakuGameDef game) {
             this.Game = game;
-            bosses = (this.campaign = campaign).practiceBosses.Length.Range().Select(i => new AnalyzedBoss(this, i)).ToArray();
+            bosses = (this.campaign = campaign).bosses.Length.Range().Select(i => new AnalyzedBoss(this, i)).ToArray();
             for (int ii = 0; ii < bosses.Length; ++ii) {
                 bossKeyMap[bosses[ii].boss.key] = bosses[ii];
             }

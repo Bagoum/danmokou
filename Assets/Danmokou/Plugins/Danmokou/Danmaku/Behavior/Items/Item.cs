@@ -105,11 +105,12 @@ public abstract class Item : Pooled<Item> {
         if (State == HomingState.WAITING && time > MinTimeBeforeHome) {
             State = HomingState.HOMING;
         }
-        if (CollisionMath.CircleOnPoint(loc, target.Ship.itemCollectRadius + CollectRadiusBonus, target.Location)) {
+        bool playerIsValid = target.State != PlayerController.PlayerState.RESPAWN;
+        if (playerIsValid && CollisionMath.CircleOnPoint(loc, target.Ship.itemCollectRadius + CollectRadiusBonus, target.Location)) {
             CollectMe(target);
             return;
         } 
-        if (State == HomingState.HOMING) {
+        if (State == HomingState.HOMING && playerIsValid) {
             timeHoming += ETime.FRAME_TIME;
             loc = Vector2.Lerp(loc, target.Location, M.Lerp(homeRate * ETime.FRAME_TIME, peakedHomeRate, timeHoming/maxTimeHoming));
         } else {

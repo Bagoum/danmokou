@@ -5,8 +5,11 @@ using BagoumLib;
 using BagoumLib.Cancellation;
 using Danmokou.Core;
 using Danmokou.Danmaku;
+using Danmokou.GameInstance;
 using Danmokou.Scenes;
 using Danmokou.Scriptables;
+using Danmokou.Services;
+using Danmokou.SM;
 using JetBrains.Annotations;
 
 namespace Danmokou.Behavior {
@@ -45,12 +48,24 @@ public class LevelController : BehaviorEntity {
     /// <summary>
     /// Run a level.
     /// </summary>
-    public async Task<Unit> RunLevel(LevelRunRequest req) {
-        if (req.Method == LevelRunMethod.SINGLE) phaseController.Override(req.ToPhase);
-        else if (req.Method == LevelRunMethod.CONTINUE) phaseController.SetGoTo(req.ToPhase);
+    public async Task<InstanceStepCompletion> RunLevel(LevelRunRequest req, Checkpoint? fromCheckpoint) {
+        if (req.Method == LevelRunMethod.SINGLE) 
+            phaseController.Override(fromCheckpoint?.StagePhase ?? req.ToPhase);
+        else if (req.Method == LevelRunMethod.CONTINUE) 
+            phaseController.SetGoTo(fromCheckpoint?.StagePhase ?? req.ToPhase);
         stage = req.Stage;
-        await RunBehaviorSM(SMRunner.RunRoot(req.Stage.StateMachine, req.cT));
-        return default;
+        var checkpointCancel = new TaskCompletionSource<Checkpoint>();
+        using var _ = GameManagement.Instance.SetStageCheckpointCancel(req.Stage, checkpointCancel.SetResult);
+        var checkpointTask = checkpointCancel.Task;
+        var smTask = RunBehaviorSM(SMRunner.RunRoot(req.Stage.StateMachine, req.cT),
+            new SMContext { LoadCheckpoint = fromCheckpoint });
+        await Task.WhenAny(checkpointCancel.Task, smTask);
+        if (checkpointTask.IsCompletedSuccessfully)
+            return new InstanceStepCompletion.RestartCheckpoint(checkpointTask.Result);
+        else if (smTask.IsCanceled)
+            return new InstanceStepCompletion.Cancelled();
+        else
+            return new InstanceStepCompletion.Completed();
     }
 
     protected override void Awake() {

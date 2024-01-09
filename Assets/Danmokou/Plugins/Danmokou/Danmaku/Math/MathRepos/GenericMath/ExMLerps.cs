@@ -114,6 +114,20 @@ public static class ExMLerps {
         tfloat zeroBound2, tfloat oneBound2, tfloat controller, TEx<T> f1, TEx<T> f2, TEx<T> f3) => 
         TEx.Resolve(zeroBound, oneBound, zeroBound2, oneBound2, controller, (z1, o1, z2, o2, c) => 
             Ex.Condition(c.LT(z2), Lerp(z1, o1, c, f1, f2), Lerp(z2, o2, c, f2, f3)));
+    
+    /// <summary>
+    /// Lerp between four functions.
+    /// Between zeroBound and oneBound, lerp from the first to the second.
+    /// Between zeroBound2 and oneBound2, lerp from the second to the third.
+    /// Between zeroBound3 and oneBound3, lerp from the third to the fourth.
+    /// </summary>
+    public static TEx<T> Lerp4<T>(tfloat zeroBound, tfloat oneBound,
+        tfloat zeroBound2, tfloat oneBound2, tfloat zeroBound3, tfloat oneBound3, tfloat controller, 
+        TEx<T> f1, TEx<T> f2, TEx<T> f3, TEx<T> f4) => 
+        TEx.Resolve(zeroBound, oneBound, zeroBound2, oneBound2, zeroBound3, oneBound3, controller, (z1, o1, z2, o2, z3, o3, c) => 
+            Ex.Condition(c.LT(z3),
+                Ex.Condition(c.LT(z2), Lerp(z1, o1, c, f1, f2), Lerp(z2, o2, c, f2, f3)),
+                Lerp(z3, o3, c, f3, f4)));
 
     /// <summary>
     /// Lerp between three functions.

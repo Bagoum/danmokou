@@ -136,6 +136,7 @@ public record LaserOption {
 
     /// <summary>
     /// By default, lasers go through enemies. Setting this makes lasers stop at the first enemy.
+    /// <br/>Requires <see cref="Dynamic"/> to also be used.
     /// </summary>
     public static LaserOption Nonpiercing() => new NonpiercingFlag();
     

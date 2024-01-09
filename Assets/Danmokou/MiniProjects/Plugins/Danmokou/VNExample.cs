@@ -11,8 +11,8 @@ namespace MiniProjects.VN {
 [Reflect]
 public static class VNExample {
     public static Task ExampleDialogue(DMKVNState vn) => new BoundedContext<Unit>(vn, "test", async () => {
-        using var rgb = vn.Add(new UnityRenderGroup("black", 1, false));
-        using var _ = vn.Add(new ShrineCourtyardBG());
+        vn.DefaultRenderGroup.Alpha = 0;
+        _ = vn.DefaultRenderGroup.FadeTo(1, 0.4f).Task;
         using var md = vn.Add(new ADVDialogueBox());
         using var reimu = vn.Add(new Reimu());
         using var marisa = vn.Add(new Marisa());
@@ -23,7 +23,6 @@ public static class VNExample {
         await marisa.FadeTo(1f, 1f).And(marisa.MoveBy(V3(-1f, 0), 1f));
         await marisa.ESayC("happy", "foo bar");
         await vn.DefaultRenderGroup.FadeTo(0f, 1f);
-        await ((UnityRenderGroup)vn.DefaultRenderGroup).DoTransition(new RenderGroupTransition.Fade(rgb, 1f));
         return default;
     }).Execute();
 }

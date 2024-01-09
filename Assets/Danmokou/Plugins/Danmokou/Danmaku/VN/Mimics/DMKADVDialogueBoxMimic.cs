@@ -1,8 +1,10 @@
 ﻿using System;
+using BagoumLib;
 using BagoumLib.Events;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
 using Danmokou.Services;
+using Danmokou.UI.XML;
 using SuzunoyaUnity;
 using SuzunoyaUnity.UI;
 using UnityEngine.Events;
@@ -16,6 +18,10 @@ public class DMKADVDialogueBoxMimic : ADVDialogueBoxMimic {
         base.Initialize(db);
 
         Listen(SaveData.SettingsEv, s => background.color = background.color.WithA(s.VNDialogueOpacity));
+        
+        if (ServiceLocator.FindOrNull<IPauseMenu>() == null)
+            if (pauseButton != null)
+                pauseButton.DisableButton();
         
         if (!bound.Container.AutoplayFastforwardAllowed && ((DMKVNState)bound.Container).AllowFullSkip) {
             if (skipButton != null) {

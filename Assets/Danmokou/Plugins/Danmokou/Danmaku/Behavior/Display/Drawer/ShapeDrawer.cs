@@ -13,7 +13,7 @@ public abstract class ShapeDrawer : SpriteDisplayController {
     }
 
     //Scale specified in radius
-    protected override Vector3 GetScale => new(lastRV2.rx / 0.5f, lastRV2.ry / 0.5f, 1);
+    protected override Vector3 BaseScale => new(lastRV2.rx / 0.5f, lastRV2.ry / 0.5f, 1);
 
     protected abstract V2RV2 GetLocScaleRot();
 

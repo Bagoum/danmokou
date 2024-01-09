@@ -125,47 +125,33 @@ public static class InputManager {
             Logs.Log($"Replay frame size (should be 6): {sizeof(FrameInput)}.");
         }
     }
-
-    [Serializable]
-    [ProtoContract]
-    public struct FrameInput {
-        // 6-8 bytes (5 unpadded)
-        // short(2)x2 = 4
-        // byte(1)x1 = 1
-        [ProtoMember(1)] public short horizontal;
-        [ProtoMember(2)] public short vertical;
-        [ProtoMember(3)] public byte data1;
-        public bool fire => data1.NthBool(0);
-        public bool focus => data1.NthBool(1);
-        public bool bomb => data1.NthBool(2);
-        public bool meter => data1.NthBool(3);
-        public bool dialogueConfirm => data1.NthBool(4);
-        public bool swap => data1.NthBool(5);
-        public bool dialogueSkipAll => data1.NthBool(6);
-
-        public FrameInput(short horiz, short vert, bool fire, bool focus, bool bomb, bool meter,
-            bool dialogueConfirm, bool swap, bool dialogueSkip) {
-            horizontal = horiz;
-            vertical = vert;
-            data1 = BitCompression.FromBools(fire, focus, bomb, meter, dialogueConfirm, swap, dialogueSkip);
-        }
-    }
-
-    public static FrameInput RecordFrame => new FrameInput(HorizontalSpeed, VerticalSpeed,
-        IsFiring, IsFocus, IsBomb, IsMeter, DialogueConfirm, IsSwap, DialogueSkipAll);
-
+    
+    /* New controls must be added in the following places:
+     * Below, as `Type? IsCtrl => PlayerInput.Ctrl ?? (default)`
+     * In AggregateInputSource, as `Type? Ctrl => Aggregate(x => x.Ctrl)`
+     * In IInputSource, as `Type? Ctrl => null`
+     * In NullInputSource, as `Type? Ctrl => (default)`
+     * In IDescriptiveInputSource, as `IInputHandler ctrl { get; }` and `Type? IInputSource.Ctrl => ctrl.Logic`
+     * In IKeyedInputSource, in the Handlers.AddRange call
+     * In ControllerInputSource and KBMInputSource, as `public IInputHandler fly { get; }` with logic
+     * As RebindableInputBindings in InputConfig
+     * If the control is stored in replays, then in the InputExtractor defined in the relevant GameDef.
+     */
+    
     public static bool DialogueConfirm => PlayerInput.DialogueConfirm ?? false;
     public static bool DialogueSkipAll => PlayerInput.DialogueSkipAll ?? false;
 
-    private static short HorizontalSpeed => PlayerInput.HorizontalSpeed ?? 0;
+    public static short HorizontalSpeed => PlayerInput.HorizontalSpeed ?? 0;
     public static float HorizontalSpeed01 => HorizontalSpeed / (float) IInputSource.maxSpeed;
 
-    private static short VerticalSpeed => PlayerInput.VerticalSpeed ?? 0;
+    public static short VerticalSpeed => PlayerInput.VerticalSpeed ?? 0;
     public static float VerticalSpeed01 => VerticalSpeed / (float) IInputSource.maxSpeed;
     public static bool IsFocus => PlayerInput.Focus ?? false;
     public static bool IsBomb => PlayerInput.Bomb ?? false;
     public static bool IsMeter => PlayerInput.Meter ?? false;
     public static bool IsSwap => PlayerInput.Swap ?? false;
+    public static bool IsFly => PlayerInput.Fly ?? false;
+    public static bool IsSlowFall => PlayerInput.SlowFall ?? false;
     public static bool IsFiring => PlayerInput.Firing ?? false;
 
     public static bool Pause => PlayerInput.Pause ?? false;

@@ -65,6 +65,17 @@ public partial class PlayerController : BehaviorEntity,
     [Tooltip("120 frames per sec")] public int lnrizeSpeed = 6;
     public float lnrizeRatio = .7f;
     private float timeSinceLastStandstill;
+
+    public enum InputInControlMethod {
+        INPUT_ACTIVE,
+        NONE_SINCE_RESPAWN,
+        NONE_SINCE_LONGPAUSE
+    }
+
+    /// <summary>
+    /// True if the player has input commands after a forced standstill (such as respawn or dialogue).
+    /// </summary>
+    public InputInControlMethod InputInControl { get; set; } = InputInControlMethod.NONE_SINCE_LONGPAUSE;
     
     public float baseFocusOverlayOpacity = 0.5f;
     public SpriteRenderer[] focusOverlay = null!;
@@ -82,7 +93,7 @@ public partial class PlayerController : BehaviorEntity,
     #region PrivateState
     public DisturbedAnd FiringEnabled { get; } = new();
     public DisturbedAnd BombsEnabled { get; } = new();
-    public DisturbedAnd AllControlEnabled { get; } = new();
+    private DisturbedAnd AllControlEnabled { get; } = new();
 
     private ushort shotItr = 0;
     [UsedImplicitly]
@@ -97,7 +108,7 @@ public partial class PlayerController : BehaviorEntity,
     private GameObject? spawnedShot;
     private AyaCamera? spawnedCamera;
     
-    private float freeFocusLerp01 = 0f;
+    private float focusRingDisplayLerp = 0f;
     private MaterialPropertyBlock meterPB = null!;
     
     public PlayerState State { get; private set; }
@@ -115,13 +126,14 @@ public partial class PlayerController : BehaviorEntity,
     /// True iff bullet collisions can occur against the player. This is only false when the player is in the RESPAWN
     ///  state (ie. has an indeterminate position).
     /// </summary>
-    public bool ReceivesBulletCollisions { get; private set; } = true;
-    
+    public bool ReceivesBulletCollisions => State != PlayerState.RESPAWN;
+
     /// <summary>
     /// True iff obstacle collisions can occur against the player.
     ///  This is only false when the player is in the RESPAWN state (ie. has an indeterminate position).
     /// </summary>
-    public bool ReceivesWallCollisions { get; private set; } = true;
+    public bool ReceivesWallCollisions =>
+        State != PlayerState.RESPAWN && InputInControl != InputInControlMethod.NONE_SINCE_RESPAWN;
     public ICancellee BoundingToken => Instance.Request?.InstTracker ?? Cancellable.Null;
     public bool AllowPlayerInput => AllControlEnabled && StateAllowsInput(State);
     private ActiveTeamConfig Team { get; set; } = null!;
@@ -145,6 +157,7 @@ public partial class PlayerController : BehaviorEntity,
     public bool IsFocus =>
         Restrictions.FocusAllowed && (Restrictions.FocusForced || (InputManager.IsFocus && AllowPlayerInput)) &&
         Team.Ship.focusAllowed;
+    public bool ShowFocusRings { get; set; }
     public bool IsFiring => InputManager.IsFiring && AllowPlayerInput && FiringEnabled;
     public bool IsTryingBomb =>
         InputManager.IsBomb && AllowPlayerInput && BombsEnabled && Team.Support is Ability.Bomb;
@@ -276,6 +289,7 @@ public partial class PlayerController : BehaviorEntity,
             didUpdate = true;
         }
         if (didUpdate || force) {
+            Logs.Log("Updating team");
             _UpdateTeam();
             Instance.TeamUpdated.OnNext(default);
         }
@@ -364,6 +378,7 @@ public partial class PlayerController : BehaviorEntity,
     private void MovementUpdate(float dT) {
         bpi.t += dT;
         if (IsTryingBomb && GameManagement.Difficulty.bombsEnabled && Team.Support is Ability.Bomb b) {
+            InputInControl = InputInControlMethod.INPUT_ACTIVE;
             if (deathbomb == DeathbombState.NULL)
                 b.TryBomb(this, BombContext.NORMAL);
             else if (deathbomb == DeathbombState.WAITING && b.TryBomb(this, BombContext.DEATHBOMB)) {
@@ -372,7 +387,9 @@ public partial class PlayerController : BehaviorEntity,
         }
         hitboxSprite.enabled = IsFocus || SaveData.s.UnfocusedHitbox;
         if (StateAllowsPlayerMovement(State)) {
-            var delta = movementHandler.UpdateNextDesiredDelta(this, Ship, dT);
+            var delta = movementHandler.UpdateNextDesiredDelta(this, Ship, dT, out bool didInput);
+            if (didInput)
+                InputInControl = InputInControlMethod.INPUT_ACTIVE;
             if (delta.sqrMagnitude > 0) {
                 timeSinceLastStandstill += dT;
                 if (timeSinceLastStandstill * 120f < lnrizeSpeed && SaveData.s.AllowInputLinearization) {
@@ -427,14 +444,14 @@ public partial class PlayerController : BehaviorEntity,
     }
 
     public override void RegularUpdate() {
+        ShowFocusRings = IsFocus;
         base.RegularUpdate();
         if (AllControlEnabled) 
             Instance.UpdatePlayerFrame(State);
         if (AllowPlayerInput) {
-            if (InputManager.IsSwap) {
-                Logs.Log("Updating team");
+            if (InputManager.IsSwap) 
                 UpdateTeam((Team.SelectedIndex + 1) % Team.Ships.Length);
-            }
+            
         }
         for (int ii = 0; ii < grazeCooldowns.Keys.Count; ++ii)
             if (grazeCooldowns.Keys.GetMarkerIfExistsAt(ii, out var dm))
@@ -459,11 +476,11 @@ public partial class PlayerController : BehaviorEntity,
             scoreLabelBonus = false;
         }
 
-        freeFocusLerp01 = Mathf.Clamp01(freeFocusLerp01 + (IsFocus ? 1 : -1) * 
+        focusRingDisplayLerp = Mathf.Clamp01(focusRingDisplayLerp + (ShowFocusRings ? 1 : -1) * 
             ETime.FRAME_TIME / FreeFocusLerpTime);
 
         for (int ii = 0; ii < focusOverlay.Length; ++ii) {
-            focusOverlay[ii].SetAlpha(freeFocusLerp01 * baseFocusOverlayOpacity);
+            focusOverlay[ii].SetAlpha(focusRingDisplayLerp * baseFocusOverlayOpacity);
         }
         meterDisplay.Update(ETime.FRAME_TIME);
         meterDisplayShadow.Update(ETime.FRAME_TIME);
@@ -568,6 +585,12 @@ public partial class PlayerController : BehaviorEntity,
         scoreLabelBuffer = ITEM_LABEL_BUFFER;
         scoreLabelBonus |= bonus;
     }
+
+    public IDisposable DisableInput(bool resetInputInControl = false) {
+        if (resetInputInControl)
+            InputInControl = InputInControlMethod.NONE_SINCE_LONGPAUSE;
+        return AllControlEnabled.AddConst(false);
+    }
     
     public GameObject InvokeParentedTimedEffect(EffectStrategy effect, float time) {
         var v = tr.position;
@@ -634,7 +657,7 @@ public partial class PlayerController : BehaviorEntity,
                 PowerAuraOption.Static(), 
                 PowerAuraOption.High(), 
             }), GenCtx.Empty, BPI.loc, Cancellable.Null, null!));
-        GameManagement.Instance.AddLives(-livesLost);
+        GameManagement.Instance.BasicF.AddLives(-livesLost);
         ServiceLocator.FindOrNull<IRaiko>()?.Shake(1.5f, null, 0.9f);
         Invuln(HitInvulnFrames);
         if (forceTraditionalRespawn || RespawnOnHit) {
@@ -725,8 +748,6 @@ public partial class PlayerController : BehaviorEntity,
     }
     //Assumption for state enumerators is that the token is not initially cancelled.
     private IEnumerator StateNormal(ICancellee<PlayerState> cT) {
-        ReceivesBulletCollisions = true;
-        ReceivesWallCollisions = true;
         State = PlayerState.NORMAL;
         while (true) {
             if (MaybeCancelState(cT)) yield break;
@@ -740,9 +761,7 @@ public partial class PlayerController : BehaviorEntity,
     private IEnumerator StateRespawn(ICancellee<PlayerState> cT) {
         State = PlayerState.RESPAWN;
         SpawnedShip.RespawnOnHitEffect.Proc(Hurtbox.location, Hurtbox.location, 0f);
-        //The hitbox position doesn't update during respawn, so don't allow collision.
-        ReceivesBulletCollisions = false;
-        ReceivesWallCollisions = false;
+        InputInControl = InputInControlMethod.NONE_SINCE_RESPAWN;
         PastDirections.Clear();
         PastPositions.Clear();
         MarisaADirections.Clear();
@@ -764,8 +783,6 @@ public partial class PlayerController : BehaviorEntity,
             yield return null;
         }
         SetLocation(RespawnEndLoc);
-        ReceivesBulletCollisions = true;
-        ReceivesWallCollisions = true;
         
         if (!MaybeCancelState(cT)) RunDroppableRIEnumerator(StateNormal(cT));
     }

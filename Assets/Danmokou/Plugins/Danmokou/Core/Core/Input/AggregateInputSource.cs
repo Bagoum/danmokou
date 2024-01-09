@@ -72,6 +72,8 @@ public class AggregateInputSource : IInputHandlerInputSource, IInputSource {
     public bool? Bomb => Aggregate(x => x.Bomb);
     public bool? Meter => Aggregate(x => x.Meter);
     public bool? Swap => Aggregate(x => x.Swap);
+    public bool? Fly => Aggregate(x => x.Fly);
+    public bool? SlowFall => Aggregate(x => x.SlowFall);
     public bool? Pause => Aggregate(x => x.Pause);
     public bool? VNBacklogPause => Aggregate(x => x.VNBacklogPause);
     public bool? UIConfirm => Aggregate(x => x.UIConfirm);

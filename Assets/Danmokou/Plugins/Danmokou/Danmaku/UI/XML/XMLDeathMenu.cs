@@ -22,17 +22,28 @@ public class XMLDeathMenu : PausedGameplayMenu {
         }, MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity  };
         
         _ = new UIColumn(MainScreen, null,
-            new FuncNode(() => death_continue_ls(GameManagement.Instance.BasicF.Continues), () => {
-                if (GameManagement.Instance.BasicF.TryContinue()) {
-                    ProtectHide();
-                    return new UIResult.StayOnNode();
-                } else return new UIResult.StayOnNode(true);
-            }) {EnabledIf = (() => GameManagement.Instance.BasicF.Continues > 0)},
-            new ConfirmFuncNode(restart, GameManagement.Restart)
-                {EnabledIf = (() => GameManagement.CanRestart)},
+            #if UNITY_EDITOR
+                new FuncNode(() => death_continue_ls(GameManagement.Instance.BasicF.Continues), () => {
+                    if (GameManagement.Instance.BasicF.ForceContinue()) {
+                        ProtectHide();
+                        return new UIResult.StayOnNode();
+                    } else return new UIResult.StayOnNode(true);
+                }),
+            #endif
+            (GameManagement.Instance.BasicF.ContinuesAllowed) ?
+                new FuncNode(() => death_continue_ls(GameManagement.Instance.BasicF.Continues), () => {
+                    if (GameManagement.Instance.BasicF.TryContinue()) {
+                        ProtectHide();
+                        return new UIResult.StayOnNode();
+                    } else return new UIResult.StayOnNode(true);
+                }) {EnabledIf = () => GameManagement.Instance.BasicF.ContinuesRemaining} : null,
+            new ConfirmFuncNode(checkpoint_restart, GameManagement.Instance.RestartFromCheckpoint)
+                {EnabledIf = () => GameManagement.CanRestart && GameManagement.Instance.CanRestartCheckpoint},
+            new ConfirmFuncNode(full_restart, GameManagement.Instance.Restart)
+                {EnabledIf = () => GameManagement.CanRestart},
             new ConfirmFuncNode(to_menu, GameManagement.GoToMainMenu)) {
             ExitIndexOverride = 0,
-            EntryIndexOverride = () => GameManagement.Instance.BasicF.Continues > 0 ? 0 : 1
+            EntryIndexOverride = () => 0
         };
         
         base.FirstFrame();
@@ -41,7 +52,7 @@ public class XMLDeathMenu : PausedGameplayMenu {
     protected override void BindListeners() {
         base.BindListeners();
         
-        Listen(GameManagement.EvInstance, i => i.GameOver, ShowMe);
+        Listen(GameManagement.EvInstance, i => i.GameOver, () => ShowMeAfterFrames(5));
     }
 }
 }

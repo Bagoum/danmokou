@@ -234,7 +234,7 @@ public class AyaCamera : BehaviorEntity {
     private void TakePicture_Delete(float scale) {
         var rect = ViewfinderRect(scale);
         BulletManager.Autodelete(new SoftcullProperties(null, null) { UseFlakeItems = true }, 
-            b => CollisionMath.PointInRect(b.loc, rect));
+            b => CollisionMath.PointInRect(b.LocV2, rect));
     }
 
     public static readonly IBSubject<(AyaPhoto photo, bool success)> PhotoTaken 

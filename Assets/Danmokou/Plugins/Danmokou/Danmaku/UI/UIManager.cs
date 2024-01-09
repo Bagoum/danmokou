@@ -548,7 +548,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
 
     public void TrackBEH(BehaviorEntity beh, string title, ICancellee cT) {
         if (trackerPrefab != null)
-            Instantiate(trackerPrefab).GetComponent<BottomTracker>().Initialize(beh, title, cT);
+            Instantiate(trackerPrefab).GetComponent<EdgeTracker>().Initialize(beh, title, cT);
     }
 
     public PiecewiseAppear stageAnnouncer = null!;

@@ -24,7 +24,7 @@ public class XMLReplaySaveMenu : UIController {
             var options = new List<UINode>() {
                 new FuncNode(to_menu, GameManagement.GoToMainMenu)
             };
-            if (inst.data.Replay is ReplayRecorder rr) {
+            if (inst.data.Replay is ReplayRecorder { State: ReplayActorState.Finalized } rr) {
                 var rec = rr.Compile(inst.record);
                 var didSave = false;
                 options.Add(new FuncNode(() => !didSave ? save_replay : replay_saved, n => {

@@ -133,6 +133,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Cutin\CutinHelpers.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Pooling\ParticlePooled.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\Compilers.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\StandardDanmakuInputExtractor.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\SimpleBulletManager.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\TokikoMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\AssemblyMarker.cs" />
@@ -210,6 +211,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Display\Drawer\RectDrawer.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\AyaCamera.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\ExMPred.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\EdgeTracker.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\PlayerController.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\KaguyaMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Utilities\BulletSpriteToTex.cs" />
@@ -259,7 +261,6 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\DayCampaignConfig.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\DamageMeasurer.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\AudioTrack.cs" />
-     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\BottomTracker.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\GameInstance\Features\ConfigurationFeature.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Expressions\FlattenVisitor.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\SupportAbility\Bombs\MokouThousandSuns.cs" />
@@ -291,6 +292,7 @@
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\PausedGameplayMenu.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\RELOADER.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\BossColorScheme.cs" />
+     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\EirinMimic.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Display\ParticleDisplayController.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\AudioTrackService.cs" />
      <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Graphics\SeijaCamera.cs" />
@@ -819,6 +821,9 @@
      </Reference>
      <Reference Include="UnityEditor.Graphs">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2023.2.3f1\Editor\Data\Managed\UnityEditor.Graphs.dll</HintPath>
+     </Reference>
+     <Reference Include="UnityEditor.WebGL.Extensions">
+     <HintPath>C:\Program Files\Unity\Hub\Editor\2023.2.3f1\Editor\Data\PlaybackEngines\WebGLSupport\UnityEditor.WebGL.Extensions.dll</HintPath>
      </Reference>
      <Reference Include="UnityEditor.WindowsStandalone.Extensions">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2023.2.3f1\Editor\Data\PlaybackEngines\WindowsStandaloneSupport\UnityEditor.WindowsStandalone.Extensions.dll</HintPath>

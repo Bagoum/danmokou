@@ -31,7 +31,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8236975217580243249}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -107,7 +106,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8236975217106531521}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -90}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -183,7 +181,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8236975217106531521}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -267,7 +264,6 @@ RectTransform:
   - {fileID: 5459002129066589724}
   - {fileID: 775260515090841083}
   m_Father: {fileID: 8236975217580243249}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -344,7 +340,6 @@ RectTransform:
   - {fileID: 8236975218094372582}
   - {fileID: 8236975217751179113}
   m_Father: {fileID: 8236975217106531521}
-  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -382,7 +377,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8236975217106531521}
-  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -464,15 +458,17 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
+  m_TextWrappingMode: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 3
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -535,7 +531,6 @@ RectTransform:
   - {fileID: 343981084205075340}
   - {fileID: 8236975217106531521}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -559,7 +554,9 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
   m_AdditionalShaderChannelsFlag: 25
+  m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: -1714704369
   m_SortingOrder: 0
   m_TargetDisplay: 0
@@ -617,6 +614,7 @@ MonoBehaviour:
   - {fileID: 2806332496395361142}
   - {fileID: 6051577456208764453}
   - {fileID: 1367835850857553346}
+  pauseButton: {fileID: 5958977165054330067}
   autoplayButton: {fileID: 6051577456208764453}
   skipButton: {fileID: 1367835850857553346}
   charLoadTime: 0.1
@@ -653,7 +651,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8236975217120419872}
-  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -731,15 +728,17 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
+  m_TextWrappingMode: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -788,7 +787,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8236975217120419872}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -864,7 +862,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8236975217120419872}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -914,6 +911,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 8236975217106531521}
     m_Modifications:
     - target: {fileID: 6057619411436397, guid: a50d41445716d12419549873a61ea45d, type: 3}
@@ -1066,6 +1064,11 @@ PrefabInstance:
       propertyPath: m_text
       value: Skip
       objectReference: {fileID: 0}
+    - target: {fileID: 2220796168227054789, guid: a50d41445716d12419549873a61ea45d,
+        type: 3}
+      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      value: 1801810542
+      objectReference: {fileID: 0}
     - target: {fileID: 4784972706450026759, guid: a50d41445716d12419549873a61ea45d,
         type: 3}
       propertyPath: m_SizeDelta.x
@@ -1087,6 +1090,9 @@ PrefabInstance:
       value: DMK Skip Button
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a50d41445716d12419549873a61ea45d, type: 3}
 --- !u!224 &775260515090841083 stripped
 RectTransform:
@@ -1111,6 +1117,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 8236975217106531521}
     m_Modifications:
     - target: {fileID: 6057619411436397, guid: a50d41445716d12419549873a61ea45d, type: 3}
@@ -1263,6 +1270,11 @@ PrefabInstance:
       propertyPath: m_text
       value: Log
       objectReference: {fileID: 0}
+    - target: {fileID: 2220796168227054789, guid: a50d41445716d12419549873a61ea45d,
+        type: 3}
+      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      value: 1801810542
+      objectReference: {fileID: 0}
     - target: {fileID: 4784972706450026759, guid: a50d41445716d12419549873a61ea45d,
         type: 3}
       propertyPath: m_SizeDelta.x
@@ -1289,6 +1301,9 @@ PrefabInstance:
       value: DMK Log Menu Button
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a50d41445716d12419549873a61ea45d, type: 3}
 --- !u!114 &2806332496395361142 stripped
 MonoBehaviour:
@@ -1313,6 +1328,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 8236975217106531521}
     m_Modifications:
     - target: {fileID: 355252467682167749, guid: a50d41445716d12419549873a61ea45d,
@@ -1455,12 +1471,20 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2220796168227054789, guid: a50d41445716d12419549873a61ea45d,
+        type: 3}
+      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      value: 1801810542
+      objectReference: {fileID: 0}
     - target: {fileID: 7036355904139478015, guid: a50d41445716d12419549873a61ea45d,
         type: 3}
       propertyPath: m_Name
       value: DMK Pause Menu Button
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a50d41445716d12419549873a61ea45d, type: 3}
 --- !u!224 &5371468387122865386 stripped
 RectTransform:
@@ -1485,6 +1509,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 8236975217106531521}
     m_Modifications:
     - target: {fileID: 6057619411436397, guid: a50d41445716d12419549873a61ea45d, type: 3}
@@ -1637,6 +1662,11 @@ PrefabInstance:
       propertyPath: m_text
       value: Auto
       objectReference: {fileID: 0}
+    - target: {fileID: 2220796168227054789, guid: a50d41445716d12419549873a61ea45d,
+        type: 3}
+      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      value: 1801810542
+      objectReference: {fileID: 0}
     - target: {fileID: 4784972706450026759, guid: a50d41445716d12419549873a61ea45d,
         type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -1653,6 +1683,9 @@ PrefabInstance:
       value: DMK Autoplay Button
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a50d41445716d12419549873a61ea45d, type: 3}
 --- !u!224 &5459002129066589724 stripped
 RectTransform:

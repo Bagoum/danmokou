@@ -43,6 +43,7 @@ public class GroupDisplayController : DisplayController {
     }
 
     public override void FaceInDirection(Vector2 delta) {
+        base.FaceInDirection(delta);
         for (int ii = 0; ii < all.Length; ++ii) all[ii].FaceInDirection(delta);
     }
 

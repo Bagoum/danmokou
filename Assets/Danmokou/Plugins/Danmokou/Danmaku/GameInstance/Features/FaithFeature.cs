@@ -56,7 +56,7 @@ public class FaithFeature : BaseInstanceFeature, IFaithFeature {
 
     public void AddLenience(double time) => AddFaithLenience(time);
 
-    public void OnContinue() {
+    public void OnContinueOrCheckpoint() {
         Faith = FaithLenience = 0;
     }
 

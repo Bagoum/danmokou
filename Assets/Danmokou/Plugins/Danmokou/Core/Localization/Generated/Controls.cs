@@ -67,6 +67,14 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "バックログ"))
 			{ ID = "backlog" };
 		
+		public static readonly LString fly = new LText("Fly",
+			(Locales.JP, "飛ぶ"))
+			{ ID = "fly" };
+		
+		public static readonly LString slowfall = new LText("Glide",
+			(Locales.JP, "グライド"))
+			{ ID = "slowfall" };
+		
 	}
 }
 }

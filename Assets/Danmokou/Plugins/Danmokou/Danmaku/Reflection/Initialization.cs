@@ -164,7 +164,7 @@ public static partial class Reflector {
             ('o', Facing.ORIGINAL),
             ('d', Facing.DEROT),
             ('v', Facing.VELOCITY),
-            ('r', ROTVELOCITY: Facing.ROTATOR)
+            ('r', Facing.ROTATOR)
         });
         SEnum(new[] {
             ("non", PhaseType.Nonspell),

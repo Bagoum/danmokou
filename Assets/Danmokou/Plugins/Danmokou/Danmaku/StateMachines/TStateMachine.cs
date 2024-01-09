@@ -23,12 +23,8 @@ namespace Danmokou.SM {
 public class ScriptTSM : SequentialSM {
     public ScriptTSM([BDSL1ImplicitChildren] StateMachine[] states) : base(states) {}
 
-    public override async Task Start(SMHandoff smh) {
-        using var token = ServiceLocator.FindAll<PlayerController>()
-            .SelectDisposable(p => p.AllControlEnabled.AddConst(false));
-        //Await to keep token in scope until exit
-        await SMReflection.ExecuteVN(vn => RunAsVN(smh, vn), "backwards-compat-script-vn").Start(smh);
-    }
+    public override Task Start(SMHandoff smh) =>
+        SMReflection.ExecuteVN(vn => RunAsVN(smh, vn), "backwards-compat-script-vn").Start(smh);
 
     private async Task RunAsVN(SMHandoff smh, DMKVNState vn) {
         using var smh2 = new SMHandoff(smh, vn.CToken);
@@ -37,12 +33,8 @@ public class ScriptTSM : SequentialSM {
         //_ = md.FadeTo(1, 0.5f).Task;
         vn.DefaultRenderGroup.Alpha = 0.2f;
         _ = vn.DefaultRenderGroup.FadeTo(1, 0.4f).Task;
-        try {
-            await base.Start(smh2);
-            await vn.DefaultRenderGroup.FadeTo(0, 0.4f);
-        } catch (OperationCanceledException) when (!smh.Cancelled) {
-            //Don't throw upwards if the VN was cancelled locally
-        }
+        await base.Start(smh2);
+        await vn.DefaultRenderGroup.FadeTo(0, 0.4f);
     }
 }
 public abstract class ScriptLineSM : StateMachine {}

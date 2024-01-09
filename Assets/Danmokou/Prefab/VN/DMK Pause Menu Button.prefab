@@ -31,7 +31,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2078371772831263740}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -110,15 +109,17 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
+  m_TextWrappingMode: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -171,7 +172,6 @@ RectTransform:
   - {fileID: 4784972706450026759}
   - {fileID: 3019327308830338228}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -205,6 +205,21 @@ MonoBehaviour:
   onClicked:
     m_PersistentCalls:
       m_Calls: []
+  onEnableDisable:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 7017519073511501130}
+        m_TargetAssemblyTypeName: Danmokou.UI.FixedXMLHelper, Danmokou.Core
+        m_MethodName: UpdateNodeIsEnabled
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &4247967260657627424
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -247,8 +262,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6d7bb63060f4550a940ff71310b5400, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  useVisibilityAsPassthrough: 0
   Size: {x: 1.8, y: 0.5}
   Offset: {x: -0.9, y: 0}
+  xmlClasses: []
   actionHandler: {fileID: 355252467682167749}
 --- !u!1 &9212831675359734059
 GameObject:
@@ -281,7 +298,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2078371772831263740}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}

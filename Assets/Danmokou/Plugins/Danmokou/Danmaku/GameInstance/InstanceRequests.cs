@@ -27,6 +27,29 @@ using static Danmokou.Services.GameManagement;
 
 
 namespace Danmokou.GameInstance {
+public record InstanceStepCompletion {
+    public record Cancelled : InstanceStepCompletion;
+
+    public record Completed : InstanceStepCompletion;
+
+    public record RestartCheckpoint(Checkpoint Checkpoint) : InstanceStepCompletion;
+}
+
+/// <summary>
+/// A point in the execution of an instance from which the player can restart. This can be either
+///  at the beginning of a stage phase, or at the beginning of a boss phase (the boss must be summoned by a stage).
+/// </summary>
+public record Checkpoint(IStageConfig Stage, int StagePhase, bool AllowBossCheckpoint) {
+    public (BossConfig boss, int phase)? BossCheckpoint { get; private init; }
+
+    public Checkpoint SetBossCheckpoint(BossConfig boss, int phase) {
+        if (!AllowBossCheckpoint)
+            throw new Exception("Attempted to set a boss checkpoint when the stage does not allow it. " +
+                                $"Make sure the stageboss phase (where you are calling `boss {boss.key}`) has" +
+                                $"the `<!> checkpoint` and `<!> midboss`/`<!> endboss` flags.");
+        return this with { BossCheckpoint = (boss, phase) };
+    }
+}
 
 public interface ILowInstanceRequest {
     public IDanmakuGameDef Game { get; }
@@ -147,7 +170,7 @@ public record InstanceRequest {
     /// <summary>
     /// Callback to run when this instance is complete.
     /// <br/>Note: I use this instead of having <see cref="Run"/> return a task because callbacks can be preserved
-    ///  when <see cref="GameManagement.Restart"/> is called.
+    ///  when <see cref="InstanceData.Restart"/> is called.
     ///  You could theoretically also preserve a <see cref="TaskCompletionSource{TResult}"/>
     ///  if it really becomes necessary to have task support.
     /// </summary>
@@ -156,6 +179,9 @@ public record InstanceRequest {
     public ReplayMode replay { get; }
     public ILowInstanceRequest lowerRequest { get; }
     public int seed { get; }
+    private bool CanRestartWhole { get; init; } = true;
+    public OverrideEvented<bool> CanRestartStage { get; } = new(true);
+    public bool CanRestart => CanRestartWhole && CanRestartStage;
     public ICameraTransitionConfig? PreferredCameraTransition { get; init; }
     public ICancellee InstTracker => instTracker;
     public bool Saveable => replay is not ReplayMode.Replaying;
@@ -218,7 +244,9 @@ public record InstanceRequest {
         var d = GameManagement.Instance;
         record?.Update(d);
         record ??= MakeGameRecord();
-        GameManagement.DeactivateInstance(); //Also stops the replay
+        Logs.Log("Finalizing game instance.");
+        d.Deactivate(true); //Also stops the replay
+        d.Dispose();
         TrySave(record);
         InstanceCompleted.OnNext((d, record));
         return record;
@@ -274,7 +302,7 @@ public record InstanceRequest {
                 //Note: this load during onHalfway is for the express purpose of preventing load lag
                 () => StateMachineManager.FromText(s.stage.stage.stateMachine),
                 () => ServiceLocator.Find<LevelController>()
-                    .RunLevel(new(s.phase, s.method, s.stage.stage, InstTracker)),
+                    .RunLevel(new(s.phase, s.method, s.stage.stage, InstTracker), null),
                 out var tcs).With(PreferredCameraTransition)) is { }) {
             async Task<InstanceRecord> Rest() {
                 await tcs.Task;
@@ -391,13 +419,15 @@ public record InstanceRequest {
             DefaultReturn(req);
         }, metadata, new CampaignRequest(campaign));
 
-        if (SaveData.r.TutorialDone || campaign.Game.MiniTutorial == null) return req.Run();
-        //Note: if you Restart within the mini-tutorial, it will send you to stage 1.
-        // This is because Restart calls campaign.Request.Run().
-        else return ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(campaign.Game.MiniTutorial,
+        if (SaveData.r.TutorialDone || campaign.Game.MiniTutorial == null) 
+            return req.Run();
+        
+        //Create a separate req for the minitutorial, which will get interrupted/overriden by the main req
+        var miniTutorialReq = new InstanceRequest((_, __) => { }, metadata, new CampaignRequest(campaign)) 
+            { CanRestartWhole = false };
+        return ServiceLocator.Find<ISceneIntermediary>().LoadScene(new SceneRequest(campaign.Game.MiniTutorial,
             SceneRequest.Reason.START_ONE,
-            //Prevents hangover information from previous campaign, will be overriden anyways
-            req.SetupInstance,
+            miniTutorialReq.SetupInstance,
             null, 
             () => ServiceLocator.Find<MiniTutorial>().RunMiniTutorial(() => req.Run()))) is {};
     }

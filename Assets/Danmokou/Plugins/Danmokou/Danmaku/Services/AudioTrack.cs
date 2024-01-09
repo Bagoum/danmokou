@@ -72,7 +72,7 @@ public enum AudioTrackState {
 public abstract class BaseRunningAudioTrack : IRunningAudioTrack {
     public IAudioTrackInfo Track { get; }
     public bool IsRunningAsBGM { get; init; }
-    public Evented<AudioTrackState> State { get; private set; } = new(AudioTrackState.Active);
+    public Evented<AudioTrackState> State { get; } = new(AudioTrackState.Active);
     private ICancellee cT;
     protected bool BreakCoroutine => State == AudioTrackState.DestroyReady;
     protected bool UpdateCoroutine =>
@@ -158,7 +158,7 @@ public abstract class BaseRunningAudioTrack : IRunningAudioTrack {
                 FadeOutNextState = next;
             return;
         }
-        Logs.Log($"Fading out audio track: {Track.Title}", level: LogLevel.DEBUG1);
+        Logs.Log($"Fading out audio track: {Track.Title}");
         FadeOutNextState = next;
         State.Value = next - 1;
         Fader.Push(0);
@@ -277,7 +277,7 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
     }
 
     public override void Cancel() {
-        if (State < AudioTrackState.DestroyPrepare) {
+        if (State < AudioTrackState.DestroyReady) {
             base.Cancel();
             Src2Volume.OnCompleted();
             nextSrc.Stop();

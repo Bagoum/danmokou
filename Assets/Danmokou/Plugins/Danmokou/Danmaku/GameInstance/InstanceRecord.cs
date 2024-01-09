@@ -38,7 +38,7 @@ public class CardHistory {
     }
 
     public List<CardRecord>? RecordForBoss(string boss) =>
-        record.TryGetValue(boss, out var l) ? l : null;
+        record.GetValueOrDefault(boss);
 
     public int Stars(string boss) => RecordForBoss(boss)?.Sum(x => x.stars) ?? 0;
     public int NCards(string boss) => RecordForBoss(boss)?.Count ?? 0;

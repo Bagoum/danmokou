@@ -14,7 +14,7 @@ phase 0
 		position 0 3
 		async gem-* <-10;6:> gir2 90 _ <40> {
 			root zero
-			color { red/bs pink/bs }
+			color { red/b pink/b }
 		} gcr2 30 + // &i 4 2 <;:7> {
 			} gsr2 20 <1;:> .
 				s tprot cy -2.5
@@ -24,7 +24,7 @@ phase 0
 		position 0 3
 		async gem-* <-5;6:> gir2 90 _ <40> {
 			root zero
-			color { red/bs pink/bs }
+			color { red/b pink/b }
 		} gcr2 5 + // &i 4 2 <-0.6;:5> {
 			bank <-2;:>
 			} gsr2 20 <1;:> .

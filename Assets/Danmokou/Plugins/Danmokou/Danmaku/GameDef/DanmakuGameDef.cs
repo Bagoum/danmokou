@@ -1,12 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
 using Danmokou.Achievements;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Scriptables;
+using Danmokou.Services;
 using UnityEngine;
 
 namespace Danmokou.Danmaku {
@@ -19,10 +22,10 @@ public interface IDanmakuGameDef : IGameDef {
     SceneConfig ReplaySaveMenu { get; }
     
     public static IEnumerable<ShipConfig> CampaignShots(CampaignConfig? c) =>
-        c == null ? new ShipConfig[0] : c.players;
+        c == null ? Array.Empty<ShipConfig>() : c.players;
 
     public static IEnumerable<ShipConfig> CampaignShots(DayCampaignConfig? c) =>
-        c == null ? new ShipConfig[0] : c.players;
+        c == null ? Array.Empty<ShipConfig>() : c.players;
 
     public IEnumerable<ShipConfig> AllShips { get; }
     public IEnumerable<ShotConfig> AllShots => AllShips.SelectMany(x => x.shots2.Select(s => s.shot));
@@ -75,6 +78,14 @@ public abstract class DanmakuGameDef : GameDef, IDanmakuGameDef {
     public override void ApplyConfigurations() {
         LocationHelpers.UpdateBounds(m_bounds, m_playerMovementBounds);
     }
+    
+    public override (IEnumerable<RebindableInputBinding> kbm, IEnumerable<RebindableInputBinding> controller) GetRebindableControls() =>
+        (InputSettings.i.KBMBindings.Except(new[]{InputSettings.i.Fly, InputSettings.i.SlowFall}), 
+            InputSettings.i.ControllerBindings.Except(new[]{InputSettings.i.CFly, InputSettings.i.CSlowFall}));
+
+    public override FrameInput RecordReplayFrame() => StandardDanmakuInputExtractor.RecordFrame;
+    public override IInputSource CreateReplayInputSource(ReplayPlayer input) =>
+        new StandardDanmakuInputExtractor(input);
 }
 
 public abstract class CampaignDanmakuGameDef : DanmakuGameDef, ICampaignDanmakuGameDef {

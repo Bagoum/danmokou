@@ -107,10 +107,10 @@ if (> t &fadein,
         anim.AssignScales(0, scale(smh.GCX), 0);
         anim.AssignRatios(t1r?.Invoke(smh.GCX), t2r?.Invoke(smh.GCX));
         anim.Initialize(smh.cT, t);
-        var players = ServiceLocator.FindAll<PlayerController>();
-        using var token = players.SelectDisposable(p => p.AllControlEnabled.AddConst(false));
-        foreach (var player in players)
-            player.MakeInvulnerable((int)(t * 120), false);
+        using var token = ServiceLocator.FindAll<PlayerController>().SelectDisposable(p => {
+            p.MakeInvulnerable((int)(t * 120), false);
+            return p.DisableInput();
+        });
         await RUWaitingUtils.WaitFor(smh.Exec, smh.cT, t, false);
     });
 
@@ -211,7 +211,10 @@ if (> t &fadein,
         var bossCfg = ResourceManager.GetBoss(bossKey);
         return new(smh => {
             var beh = Object.Instantiate(bossCfg.boss).GetComponent<BehaviorEntity>();
-            beh.phaseController.SetGoTo(1);
+            if (smh.Context.LoadCheckpoint is { } ch && ch.StagePhase == (smh.Context as PhaseContext)?.Index && ch.BossCheckpoint is {} bc && bc.boss == bossCfg)
+                beh.phaseController.SetGoTo(bc.phase);
+            else
+                beh.phaseController.SetGoTo(1);
             return beh.RunBehaviorSM(SMRunner.CullRoot(StateMachineManager.FromText(bossCfg.stateMachine), smh.cT));
         });
     }
@@ -255,12 +258,14 @@ if (> t &fadein,
     #region Executors
 
     /// <summary>
-    /// Run the provided visual novel script.
+    /// Run the provided visual novel script, disabling <see cref="PlayerController"/> input while it is running.
     /// </summary>
     /// <param name="vnTask">Visual novel script function.</param>
     /// <param name="scriptId">Description of the script used when printing debug messages.</param>
     /// <returns></returns>
     public static ReflectableLASM ExecuteVN([LookupMethod] Func<DMKVNState, Task> vnTask, string scriptId) => new(async smh => {
+        using var _ = ServiceLocator.FindAll<PlayerController>()
+            .SelectDisposable(p => p.DisableInput(true));
         var vn = new DMKVNState(smh.cT, scriptId, GameManagement.Instance.VNData);
         var exec = ServiceLocator.Find<IVNWrapper>().TrackVN(vn);
         Logs.Log($"Starting VN script {vn}");
@@ -268,6 +273,11 @@ if (> t &fadein,
         try {
             await vnTask(vn);
             vn.UpdateInstanceData();
+        } catch (OperationCanceledException e) {
+            Logs.LogException(e);
+            //Don't throw upwards if the VN was cancelled locally
+            if (smh.Cancelled)
+                throw;
         } finally {
             Logs.Log(
                 $"Completed VN script {vn}. Final completion: {vn.CToken.ToCompletion()}");

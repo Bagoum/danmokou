@@ -26,6 +26,7 @@ public interface IFixedXMLReceiver {
 ///  to a provided <see cref="IFixedXMLReceiver"/>.
 /// </summary>
 public class FixedXMLHelper : CoroutineRegularUpdater {
+    public bool useVisibilityAsPassthrough = true;
     //in unity units
     public Vector2 Size = Vector2.one;
     public Vector2 Offset;
@@ -44,11 +45,13 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
     public Vector2 XMLLocation => UIBuilderRenderer.ComputeXMLPosition((Vector2)transform.position + Offset);
     public Vector2 XMLSize => UIBuilderRenderer.ComputeXMLDimensions(Size);
 
+    private bool? delayedStartPassthrough = null;
+
     private void Awake() {
         XML = new(XMLLocation.x, XMLLocation.y, XMLSize.x, XMLSize.y) {
             Descriptor = gameObject.name
         };
-        Node = new(XML, Receiver.OnBuilt) {
+        Node = new(XML, Receiver.OnBuilt, useVisibilityAsPassthrough) {
             OnConfirm = Receiver.OnConfirm,
             OnEnter = Receiver.OnEnter,
             OnLeave = Receiver.OnLeave,
@@ -62,11 +65,21 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
         if (Receiver.Tooltip is { } tt)
             Node.MakeTooltip(menu.Screen, tt);
         menu.AddNodeDynamic(Node);
+        if (delayedStartPassthrough != null)
+            Node.UpdatePassthrough(delayedStartPassthrough);
     }
 
     protected override void OnDisable() {
         base.OnDisable();
         Node.Remove();
+    }
+
+    public void UpdateNodeIsEnabled(bool enable) {
+        // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+        if (Node?.Built is true)
+            Node.UpdatePassthrough(!enable);
+        else
+            delayedStartPassthrough = !enable;
     }
 
     [ContextMenu("Update locations")]

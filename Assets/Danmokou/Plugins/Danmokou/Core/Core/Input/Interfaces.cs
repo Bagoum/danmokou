@@ -27,21 +27,40 @@ public interface IInputHandlerInputSource {
 /// </summary>
 public interface IDescriptiveInputSource : IInputSource {
     IInputHandler arrowLeft { get; }
+    bool? IInputSource.UILeft => arrowLeft.Active;
     IInputHandler arrowRight { get; }
+    bool? IInputSource.UIRight => arrowRight.Active;
     IInputHandler arrowUp { get; }
+    bool? IInputSource.UIUp => arrowUp.Active;
     IInputHandler arrowDown { get; }
+    bool? IInputSource.UIDown => arrowDown.Active;
     
     IInputHandler focusHold { get; }
+    bool? IInputSource.Focus => focusHold.Active;
     IInputHandler fireHold { get; }
+    bool? IInputSource.Firing => fireHold.Active;
     IInputHandler bomb { get; }
+    bool? IInputSource.Bomb => bomb.Active;
     IInputHandler meter { get; }
+    bool? IInputSource.Meter => meter.Active;
     IInputHandler swap { get; }
+    bool? IInputSource.Swap => swap.Active;
+    IInputHandler fly { get; }
+    bool? IInputSource.Fly => fly.Active;
+    IInputHandler slowFall { get; }
+    bool? IInputSource.SlowFall => slowFall.Active;
     
     IInputHandler pause { get; }
+    bool? IInputSource.Pause => pause.Active;
     IInputHandler vnBacklogPause { get; }
+    bool? IInputSource.VNBacklogPause => vnBacklogPause.Active;
     IInputHandler uiConfirm { get; }
+    bool? IInputSource.UIConfirm => uiConfirm.Active;
+    bool? IInputSource.DialogueConfirm => UIConfirm;
     IInputHandler uiBack { get; }
+    bool? IInputSource.UIBack => uiBack.Active;
     IInputHandler? dialogueSkipAll { get; }
+    bool? IInputSource.DialogueSkipAll => dialogueSkipAll?.Active;
 
 }
 
@@ -53,27 +72,11 @@ public interface IKeyedInputSource : IDescriptiveInputSource, IInputHandlerInput
     void AddUpdaters() {
         Handlers.AddRange(new[] {
                 arrowLeft, arrowRight, arrowUp, arrowDown,
-                focusHold, fireHold, bomb, meter, swap,
+                focusHold, fireHold, bomb, meter, swap, fly, slowFall,
                 pause, vnBacklogPause, uiConfirm, uiBack, dialogueSkipAll
             }.FilterNone()
         );
     }
-    bool? IInputSource.Firing => fireHold.Active;
-    bool? IInputSource.Focus => focusHold.Active;
-    bool? IInputSource.Bomb => bomb.Active;
-    bool? IInputSource.Meter => meter.Active;
-    bool? IInputSource.Swap => swap.Active;
-    bool? IInputSource.Pause => pause.Active;
-    bool? IInputSource.VNBacklogPause => vnBacklogPause.Active;
-    bool? IInputSource.UIConfirm => uiConfirm.Active;
-    bool? IInputSource.UIBack => uiBack.Active;
-    
-    bool? IInputSource.UILeft => arrowLeft.Active;
-    bool? IInputSource.UIRight => arrowRight.Active;
-    bool? IInputSource.UIUp => arrowUp.Active;
-    bool? IInputSource.UIDown => arrowDown.Active;
-    bool? IInputSource.DialogueConfirm => UIConfirm;
-    bool? IInputSource.DialogueSkipAll => dialogueSkipAll?.Active;
 }
 
 

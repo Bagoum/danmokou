@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Threading.Tasks;
 using BagoumLib.DataStructures;
 using BagoumLib.Tasks;
@@ -27,6 +28,15 @@ public class PausedGameplayMenu : UIController {
             ISFXService.SFXService.Request(openPauseSound);
             Open().ContinueWithSync();
         }
+    }
+
+    protected void ShowMeAfterFrames(int frames = 1) {
+        IEnumerator WaitThenShow() {
+            for (int ii = 0; ii < frames; ++ii)
+                yield return null;
+            ShowMe();
+        }
+        RunDroppableRIEnumerator(WaitThenShow());
     }
 
     [ContextMenu("Hide menu")]

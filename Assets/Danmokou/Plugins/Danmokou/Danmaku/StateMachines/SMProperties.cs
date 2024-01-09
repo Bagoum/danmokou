@@ -103,14 +103,22 @@ public class PhaseProperty {
     /// </summary>
     /// <returns></returns>
     public static PhaseProperty HideTimeout() => new HideTimeoutFlag();
+    
     /// <summary>
     /// Declares that this phase is a stage announce section.
     /// </summary>
     public static PhaseProperty Announce() => new PhaseTypeProp(PhaseType.Announce);
+    
     /// <summary>
     /// Declares that this phase is a stage section.
     /// </summary>
     public static PhaseProperty Stage() => new PhaseTypeProp(PhaseType.Stage);
+
+    /// <summary>
+    /// Mark a checkpoint at the beginning of this phase. If configured by <see cref="IBasicFeature"/>,
+    ///  then the player can restart from the most recent checkpoint.
+    /// </summary>
+    public static PhaseProperty Checkpoint() => new CheckpointFlag();
 
     /// <summary>
     /// Don't play a sound effect (spellcard clear or stage section clear) when this phase is cleared.
@@ -259,6 +267,7 @@ public class PhaseProperty {
 
     public class HideTimeoutFlag : PhaseProperty {}
     public class SilentFlag : PhaseProperty { }
+    public class CheckpointFlag : PhaseProperty { }
     public class SkipFlag : PhaseProperty { }
     public class LenientFlag : PhaseProperty { }
     
@@ -423,6 +432,7 @@ public class PhaseProperties {
     public readonly float? invulnTime = null;
     public readonly float? hpbar = null;
     public readonly PhaseType? phaseType = null;
+    public readonly bool isCheckpoint = false;
     public readonly List<Func<IDisposable>> phaseObjectGenerators = new();
     
     public SOBgTransition? BgTransitionIn { get; }
@@ -468,6 +478,8 @@ public class PhaseProperties {
                 endSound = false;
             else if (prop is SkipFlag) 
                 skip = true;
+            else if (prop is CheckpointFlag)
+                isCheckpoint = true;
             else if (prop is LenientFlag) 
                 lenient = true;
             else if (prop is BossCutinFlag) 

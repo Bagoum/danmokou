@@ -61,7 +61,9 @@ public class FrameAnimDisplayController : SpriteDisplayController {
         }
 
         private void SetDirection(LRUD?d, bool flipX, bool flipY) {
-            setScale(flipX, flipY);
+            if (d != null)
+                //Only update scale when actively moving in a direction
+                setScale(flipX, flipY);
             setSprite(frames.SetAnimationTypeIfPriority(AsAnimType(d), true, noop));
         }
 
@@ -166,8 +168,8 @@ public class FrameAnimDisplayController : SpriteDisplayController {
     }
 
     public override void FaceInDirection(Vector2 delta) {
-        base.FaceInDirection(delta);
         animate.FaceInDirection(delta);
+        base.FaceInDirection(delta);
     }
 
     public override void Animate(AnimationType typ, bool loop, Action? done) {

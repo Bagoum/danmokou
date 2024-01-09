@@ -14,10 +14,11 @@ public interface IInstanceFeature : IDisposable {
     /// Called when the player loses a life (takes a hit).
     /// </summary>
     void OnDied() { }
+    
     /// <summary>
-    /// Called when the player loses all their lives and selects "continue".
+    /// Called when the player loses all their lives and selects "continue" or "restart from checkpoint".
     /// </summary>
-    void OnContinue() { }
+    void OnContinueOrCheckpoint() { }
 
     /// <summary>
     /// Called every frame while the player is active (ie. not under control restrictions).

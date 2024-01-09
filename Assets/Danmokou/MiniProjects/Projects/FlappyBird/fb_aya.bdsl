@@ -1,0 +1,204 @@
+<#> warnprefix
+pattern { 
+	boss fb.aya
+	bgm {
+        1 fb.stage
+	}
+}
+phase 0
+	paction 0
+		shift-phase-to 4
+		
+!{ power1()
+sync powerup1 <> poweraura boss1
+    witha 0.9 lerp 0 1 t blue red
+    rgba 0.8 0.8 0.8 0.9
+!}
+
+!!{ me aya
+    
+##1
+<!> type non `` #{
+<!> hpi 10500 4
+<!> root 4 1
+<!> showlives 4
+phase 30
+	paction 0
+		gtr {
+			times(_)
+            bindItr(loop)
+			bindLR
+            wait-child
+            sequential
+		} {
+            if(> &loop 0, 
+			    move-target 1.4 out-sine pxy(rand(3, 5), &lr * rand(0.8, 1.8)), noop)
+            ~ async circle-* <180> gir2 2s 2 <> {
+                p this
+                circle
+                color { blue/ red/ }
+                bindItr(color)
+            } gcr {
+                times(_)
+                for(8s - 2s * p)
+                wait(46 / (dl ^ 0.6))
+                rv2incr(angle(38 + 25 * &color))
+                p add
+                bindItr(loop)
+                sfx x-fire-burst-1
+            } gsr2c 2 {
+                p add
+            } guideempty2 p { ploc loc pdir dir }
+                tprot px(lerpt(0, 0.6, 0, 2.2 + 1 * &color)) {
+                gsr2c (12) {
+                } s dtpoffset ploc pdir p rx(lerpt(0, 0.3, 0, 0.2 + 0.1 * softmod(3, &loop)), pm1(&color) * 24 * t)
+            }
+            _ 3.5
+                $power1()
+            _ 1.5
+                gtr { } {
+                    async lightning-yellow/w <1;:> gcr2 360 2 <> {
+                        p this
+                        sfx x-lightning
+                    } gsr2c(12 * dl) {
+                        target a Lplayer
+                    } pather 1 1 tprot
+                        ss 1.1 dcircle(pm1(p) * 2, 1.3, t)
+                        { }
+                    _ 3 async arrow-*/w <> gcr2 12 6 <> {
+                        target a Lplayer
+                        p this
+                        color { red blue }
+                        sfx x-fire-burst-2
+                    } gsr2 (3 + d3d2) <14> {
+                        center
+                    } s tprot(px(1.3 + lerpt(0, 1, 0, 0.4 * p)))
+                }
+		}
+    
+#}
+
+## 2
+<!> dialogue
+<!> root 4 0
+<!> showlives 3
+phase 0
+    saction 0
+        executevn flappybirddialogue2 d2
+        shift-phase
+
+## 3
+<!> type spell `` #{
+<!> hpi 10000 4
+<!> roott(0.1, 4, 0)
+<!> showlives 3
+phase 32
+    paction 0
+        beh-control persist lightning-* flipy> ymax _ 
+        beh-control persist lightning-* flipy< ymin _ 
+    paction 0
+        gtr {
+            times(_)
+            wait-child
+            wait(0.5s)
+            sequential
+            bindLR
+        } {
+!!{ t1 (2 + dc // 2)
+            ~ async arrow-*/w <90> gir2 180 5 <> {
+            } gcr2 8 $t1 <> {
+                p this
+                sfx(x-fire-burst-2)
+                target a Lplayer
+            } gsr2c 2 {
+                bindLr
+            } gsr {
+                times(2)
+                p add
+                color { blue red }
+            } s tprot(lerpt(0.9, 1, px(0.4 + 5 * p1 / $t1), 
+                lerpt(1.4, 1.6, zero, 
+                    rotate(pm1(p2) * lerpt(2.3, 2.8, 0, 8), py(-2 * &lr)))))
+            wait 4
+            async lightning-yellow/w <180> gcr2 60 (2 + d3d1) <> {
+                p this
+            } gsr {
+                times(2)
+                rv2incr(a(100 + 20 * (p - 1)))
+                center
+                sfx x-lightning
+            } pather(1.5, 1.5, rvelocity(px(5)), {
+            })
+            wait 1
+            $power1
+            wait 1.5
+            sync gpather-*/w <> gsr2 25 <10> {
+                center
+                color { red blue }
+                sfx	{ x-fire-tech-6 }
+            } pather 1 0.2 tpnrot(
+                    truerotatelerprate(400, rotify cx 1.4,
+                        ss 0.4 vhome 2 Lplayer)
+                         * lerp3(0.0, 0.3, 1.1, 1.3, t, 14, 2, 8))
+                { }
+            move-target 1.4 out-sine pxy(rand(3.4, 4.5), &lr * rand(0.8, 1.8))
+
+        }
+
+#}
+
+##4
+<!> type non `` #{
+<!> hpi 7000 4
+<!> root 4 0
+<!> showlives 2
+phase 30
+    paction 0
+        movetarget(3, eoutsine, pxy(3, -1))
+        savef(dofire, 0, 1)
+        async circle-* <120> gir2 2s 2 <> {
+            p this
+            circle
+            color { blue/ red/ }
+            bindItr(color)
+        } gcr {
+            times(_)
+            wait(64 / (dl ^ 0.6))
+            rv2incr(angle(38 + 25 * &color))
+            p add
+            bindItr(loop)
+            sfx x-fire-burst-1
+            while(> @0 dofire 0)
+        } guideempty2 p { ploc loc pdir dir }
+            tprot px(lerpt(0, 0.6, 0, 1.8 + 0.8 * &color)) {
+            gsr2c (10 * dl) {
+            } s dtpoffset ploc pdir p rx(lerpt(0, 0.3, 0, lerp(0, 2, softmod(2, t), 2, 4) * (0.2 + 0.1 * softmod(3, &loop))), pm1(&color) * 24 * t)
+        }
+        gtr {
+            delay(4s)
+            sequential
+        } {
+            sfx(x-boss-explode)
+            sync plane <> summonr(rvtp(pxy(-10, -5), nrvelocity(ss0(vhometime(1.7, pxy(3, -1))))), wait(1.8),
+            { hp 999999999 drops3(0, 0, 0) })
+            wait 1.6
+            bullet-control _ sun-* cull(> t 2.8)
+            pool-control(sun-red/w, tint(rgba(1, 1, 1, lerpt(1.4, 2.8, 1, 0))))
+            savef(dofire, 0, 0)
+            sync sun-red/w <> simple null {
+                scale(lerpt(0, 2.4, 0, 5))
+            }
+            ~ _ 1 bullet-control once circle-* softcull _ _
+            draiko(5, 3)
+            shift-phase
+        }
+            
+#}
+
+## 5
+<!> dialogue
+phase 0
+    saction 0
+        executevn flappybirddialogue3 d3
+		move-target 3 in-sine cxy(9, 2)
+        shift-phase

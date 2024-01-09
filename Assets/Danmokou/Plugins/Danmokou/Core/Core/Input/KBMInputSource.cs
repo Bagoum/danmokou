@@ -29,6 +29,8 @@ public class KBMInputSource : IKeyedInputSource, IPrimaryInputSource {
     public IInputHandler bomb { get; } = InputHandler.Trigger(i.Special, special);
     public IInputHandler meter { get; } = InputHandler.Hold(i.Special, special);
     public IInputHandler swap { get; } = InputHandler.Trigger(i.Swap, LocalizedStrings.Controls.swap);
+    public IInputHandler fly { get; } = InputHandler.Hold(i.Fly, LocalizedStrings.Controls.fly);
+    public IInputHandler slowFall { get; } = InputHandler.Hold(i.SlowFall, LocalizedStrings.Controls.slowfall);
     public IInputHandler pause { get; } =InputHandler.Trigger(i.Pause, LocalizedStrings.Controls.pause);
     public IInputHandler vnBacklogPause { get; } = InputHandler.Trigger(i.Backlog, backlog);
     public IInputHandler uiConfirm { get; } = InputHandler.Trigger(i.Confirm, confirm);

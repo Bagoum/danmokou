@@ -49,7 +49,7 @@ public static class XMLHelpers {
         return screen;
     }
     
-    public static UIScreen PlaymodeScreen(this UIController m, ICampaignDanmakuGameDef game, UIScreen bossPractice, UIScreen stagePractice, Dictionary<Mode, Sprite> sprites, PlayModeCommentator? commentator, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, UIResult>> getMetadata) {
+    public static UIScreen PlaymodeScreen(this UIController m, ICampaignDanmakuGameDef game, UIScreen bossPractice, UIScreen stagePractice, Dictionary<Mode, Sprite> sprites, PlayModeCommentator? commentator, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, UIResult>> getMetadata, out bool onlyOneMode) {
         var floater = References.uxmlDefaults.FloatingNode;
         var s = new UIScreen(m, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => ve.CenterElements()
@@ -58,7 +58,7 @@ public static class XMLHelpers {
         bool tutorialIncomplete = !SaveData.r.TutorialDone && game.Tutorial != null;
         PlayModeStatus Wrap(Mode m, bool locked) =>
             new PlayModeStatus(m, locked) { TutorialIncomplete = tutorialIncomplete };
-        s.SetFirst(new CommentatorAxisColumn<PlayModeStatus>(s, new UIRenderDirect(s), new[] {
+        var axisGroup = new CommentatorAxisColumn<PlayModeStatus>(s, new UIRenderDirect(s), new[] {
             (new UINode() {
                 OnConfirm = getMetadata(game.Campaign, meta => 
                     InstanceRequest.RunCampaign(MainCampaign, null, meta)),
@@ -98,7 +98,9 @@ public static class XMLHelpers {
         }) {
             EntryIndexOverride = () => tutorialIncomplete ? -1 : 0,
             Commentator = commentator
-        });
+        };
+        s.SetFirst(axisGroup);
+        onlyOneMode = axisGroup.Nodes.Count == 1;
         return s;
     }
     public static UIScreen StagePracticeScreen(this UIController m,
@@ -232,7 +234,7 @@ public static class XMLHelpers {
                 );
             }) { OnBuilt = n => n.HTML.style.width = 30f.Percent() }.With(small1Class, fontControlsClass);
         }
-        UIGroup[] MakeBindings(RebindableInputBinding[] src, KeyRebindInputNode.Mode mode) => 
+        UIGroup[] MakeBindings(IEnumerable<RebindableInputBinding> src, KeyRebindInputNode.Mode mode) => 
             src.Select(b => (UIGroup)new UIRow(
                 controlsSpace.Construct(Prefabs.UIScreenRow),
                 new PassthroughNode(() => b.Purpose) {
@@ -240,6 +242,7 @@ public static class XMLHelpers {
                 },
                 NodeForBinding(b, 0, mode), NodeForBinding(b, 1, mode)
             )).ToArray();
+        
         var header = new UIRow(controlsHeader,
             new PassthroughNode("Key") {
                 OnBuilt = n => n.HTML.style.width = 40f.Percent()
@@ -676,7 +679,7 @@ public static class XMLHelpers {
             } else {
                 r = Replayer.BeginReplaying(new Replayer.ReplayerConfig(
                     Replayer.ReplayFinishMethod.REPEAT,
-                    () => new []{new InputManager.FrameInput(0, 0, false, false, false, false, false, false, false)}
+                    () => new []{new FrameInput(0, 0, 0)}
                 ));
             }
             GameManagement.NewInstance(InstanceMode.NULL, InstanceFeatures.ShotDemoFeatures, 

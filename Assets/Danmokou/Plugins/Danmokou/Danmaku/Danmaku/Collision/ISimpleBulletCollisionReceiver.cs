@@ -268,6 +268,7 @@ public interface IColliderEnemySimpleBulletCollisionReceiver : IEnemySimpleBulle
         var data = sbc.Data;
         var dmg = sbc.BC.Damage.Value;
         var destroy = sbc.BC.Destructible.Value;
+        //Approximate the bullets as circles
         var cr = sbc.BC.cc.circleCollider.Radius;
         var collider = Collider;
         var loc = Location;

@@ -165,6 +165,22 @@ public static partial class Reflector {
             return null;
         }
 
+        //for language server use
+        public static IEnumerable<(string, MethodSignature)> MethodsAndGenericsForType(Type rt) {
+            if (methodsByReturnType.TryGetValue(rt, out var dct))
+                foreach (var (k, v) in dct)
+                    yield return (k, MethodSignature.Get(v));
+            foreach (var (k, v) in genericMethods) 
+                if (ConstructedGenericTypeMatch(rt, v.ReturnType, out var mapper)) {
+                    var gargs = v.GetGenericArguments()
+                        //GetValueOrDefault doesn't work with language server
+                        .Select(g => mapper.TryGetValue(g, out var v) ? v : null)
+                        .ToArray();
+                    if (gargs.All(x => x != null))
+                        yield return (k, (MethodSignature.Get(v) as GenericMethodSignature)!.Specialize(gargs!));
+                }
+        }
+
         private static readonly Dictionary<(string method, Type returnType), MethodSignature?> getArgTypesCache 
             = new();
 

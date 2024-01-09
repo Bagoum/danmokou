@@ -33,6 +33,7 @@ public class PowerAuraOption {
     public static PowerAuraOption Time(GCXF<float> time) => new TimeProp(time);
 
     public static PowerAuraOption Static() => new StaticFlag();
+    
     /// <summary>
     /// Set positive for inwards power aura, negative for outwards power aura.
     /// </summary>

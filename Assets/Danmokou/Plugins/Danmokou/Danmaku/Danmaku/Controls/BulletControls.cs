@@ -106,6 +106,8 @@ public partial class BulletManager {
         public const int P_CULL = 140;
 
         public const int P_ON_COLLIDE = 300;
+        //For enemy destruction
+        public const int P_ON_DESTROY = 350;
     }
 
     
@@ -184,6 +186,8 @@ public partial class BulletManager {
             Stack<int> indices = new();
             Stack<string> partials = new();
             List<string> done = new();
+            if (selections.Count == 0 || selections.Count == 1 && selections[0].Length == 0)
+                return done;
             partials.Push("");
             int iselection = 0;
             int ichoice = 0;
@@ -274,7 +278,8 @@ public partial class BulletManager {
         if (fromStyle.IndexOf('.') > -1) fromStyle = fromStyle.Substring(0, fromStyle.IndexOf('.'));
         for (int ii = fromStyle.Length - 1; ii >= 0; --ii) {
             if (fromStyle[ii] == '-') {
-                var substrLen = props.sendToC ? (fromStyle.IndexOf('/') + 1 - ii) : (fromStyle.Length - ii);
+                var slashInd = fromStyle.IndexOf('/') + 1;
+                var substrLen = (props.sendToC && slashInd > 0) ? (slashInd - ii) : (fromStyle.Length - ii);
                 var x = $"{props.autocullTarget}{fromStyle.Substring(ii, substrLen)}";
                 target = CheckOrCopyPool(x, out _) ? x : props.DefaultPool;
                 return true;

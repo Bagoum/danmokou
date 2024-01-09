@@ -52,14 +52,14 @@ public struct FrameRunner {
             _ => 0
         };
 
-    private static bool HasPriority(AnimationType curr, AnimationType challenge) {
-        if (curr == challenge) return true; //Same animation should not restart
+    private static bool HasPriority(AnimationType curr, bool currLoop, AnimationType challenge) {
+        if (curr == challenge) return currLoop; //Looping animation should not restart
         if (Priority(curr) > Priority(challenge)) return true;
         return false;
     }
             
     public Sprite? SetAnimationTypeIfPriority(AnimationType typ, Frame[] frames, bool loop, Action? onLoopOrFinish) {
-        return HasPriority(currType, typ) ? null : SetAnimationType(typ, frames, loop, onLoopOrFinish);
+        return HasPriority(currType, doLoop, typ) ? null : SetAnimationType(typ, frames, loop, onLoopOrFinish);
     }
     public Sprite? SetAnimationType(AnimationType typ, Frame[] frames, bool loop, Action? onLoopOrFinish) {
         currType = typ;
@@ -93,22 +93,28 @@ public struct FrameRunner {
 public struct AABB {
     public float x;
     public float y;
-    public float rx;
-    public float ry;
+    public float halfW;
+    public float halfH;
 
-    public AABB(float minX, float maxX, float minY, float maxY, Vector2? offset = null) {
-        var off = offset ?? Vector2.zero;
-        x = off.x + (minX + maxX) / 2f;
-        y = off.y + (minY + maxY) / 2f;
-        rx = (maxX - minX) / 2f;
-        ry = (maxY - minY) / 2f;
+    public AABB(float minX, float maxX, float minY, float maxY) {
+        x = (minX + maxX) / 2f;
+        y = (minY + maxY) / 2f;
+        halfW = (maxX - minX) / 2f;
+        halfH = (maxY - minY) / 2f;
     }
 
     public AABB(Vector2 center, Vector2 radius) {
         x = center.x;
         y = center.y;
-        rx = radius.x;
-        ry = radius.y;
+        halfW = radius.x;
+        halfH = radius.y;
+    }
+
+    public AABB Maxify() {
+        var xd = Math.Abs(x) + halfW;
+        var yd = Math.Abs(y) + halfH;
+        var dim = (float)Math.Sqrt(xd * xd + yd * yd);
+        return new(-dim, dim, -dim, dim);
     }
 }
 [Serializable]

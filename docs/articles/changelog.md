@@ -25,31 +25,42 @@ The goal for this version is to have a fully functional implementation of the ne
 
 # v10.2.0 (2023/12/21)
 
-
-
 I've upgraded the project's Unity version to 2023.2.3f1. Unity 2023 has a critical change where the TextMeshPro package has now been merged into Unity internals, so it is not clear that the project will still run on Unity 2022. As such, please upgrade to Unity 2023 along with updating DMK.
 
 #### Features
 
-- Enemies can now use nonpiercing lasers. As with players shots, simply add the `nonpiercing()` option to the laser options.
+- Enemies can now use nonpiercing lasers. As with players shots, simply add the `nonpiercing()` option to the laser options. Note that nonpiercing only works with `dynamic` lasers.
+- The engine now supports restarting from checkpoints in stage or boss scripts. Add a `<!> checkpoint` flag to any stage phase and/or boss phase where you would like to set up a checkpoint. (If using it on a boss phase, make sure the stage phase that creates the boss also has a checkpoint flag.) The player can then select "Restart from Checkpoint" from the pause menu or the death menu. This will result in their score and other features being reset, as if they had used a Continue. It is supported for the checkpoint to be on a previous stage (ie. if the last checkpoint was on stage 1 and the player dies on stage 2, they will get sent back to stage 1). Since Continues are generally stronger than checkpoints, it may be best (but it is not required) to disable Continues in your GameDef if using this feature.
+  <img src="..\images\rider64_WjEUkgqqUZ.jpg" alt="rider64_WjEUkgqqUZ" style="zoom:33%;" />
 
 #### Breaking Changes
 
-- Instead of being derived automatically, the bounds on player movement are now determined via the `m_playerMovementBounds` fields on GameDef.
+- The method `GameManagement.Restart` has been moved to `GameManagement.Instance.Restart`.
+- Instead of being derived automatically, the bounds on player movement are now determined via the `m_playerMovementBounds` fields on GameDef. By default, this is set to the values that would be derived automatically.
+  <img src="..\images\Unity_xVjFiR1eGx.jpg" alt="Unity_xVjFiR1eGx" style="zoom: 33%;" />
+
+- Replay data storage can now be configured per GameDef via overriding `RecordReplayFrame` and `CreateReplayInputSource`. By default, danmaku games use StandardDanmakuInputExtractor (which supports horizontal/vertical movement and the controls fire, focus, bomb, meter, swap, dialogue confirm, dialogue skip), and non-danmaku games do not support replays.
 
 - Player configurations now require a "movement handler" configuration.  For standard bullet hell ships, you can use the "PlayerStandardMovement" configuration, which has been set on all the existing players. For now, this will default to "PlayerStandardMovement" if not provided, but it may be required in future versions.
-
-  ![move_cfg](..\images\move_cfg.jpg)
+  <img src="..\images\move_cfg.jpg" alt="move_cfg" style="zoom:33%;" />
 
 #### Changes
 
+- The field `CampaignConfig.practiceBosses` has been renamed to `bosses` and now should include *all* bosses used in the campaign. Nonpracticeable bosses should set the field `BossConfig.practiceable` to false.
 - Rearchitectured bullet collision handling so it now uses service location instead of hardcoded targets. Now, any object that implements `IEnemySimpleBulletCollisionReceiver` and calls `RegisterService<IEnemySimpleBulletCollisionReceiver>(this)` will receive collision checks from enemy-fired simple bullets. Likewise for `IPlayerSimpleBulletCollisionReceiver`, `IEnemyPatherCollisionReceiver`, `IPlayerPatherCollisionReceiver`, `IEnemyLaserCollisionReceiver`, `IPlayerLaserCollisionReceiver`, `IEnemyBulletCollisionReceiver`, and `IPlayerBulletCollisionReceiver`. This makes it possible to introduce collisions with other objects such as terrain.
+  - The `BulletBlocker` class/prefab contains a basic implementation of terrain that blocks enemy simple bullets and lasers.
+  - If nonpiercing lasers collide with terrain, they will stop (just as if a player nonpiercing laser collides with an enemy, or just as if an enemy nonpiercing laser collides with the player).
 - UI popups can now choose between having a row of centered action buttons or a row of left-flush and right-flush action buttons, based on the `PopupButtonOpts` argument passed to `PopupUIGroup.CreatePopup` (renamed from `PopupUIGroup.LRB2`).
 
 #### Fixes
 
 - Fixed an issue where the scrolling on the control bindings option screen was too slow (it was correct on all other menus after Unity-side fixes in 2022.2.13).
 - Fixed an issue where trailing options wouldn't have a correct position immediately after a traditional respawn.
+- Fixed an issue where the fairy generated on shot demos would sometimes not be deleted when leaving the shot demo screen.
+- Fixed an issue where the mini-tutorial could prevent running the main campaign.
+- Fixed an issue where the default dialogue box could allow clicking buttons that were disabled.
+- Fixed an issue where replays could be recorded even after they were cancelled.
+- Fixed an issue where simple and rotating lasers would have incorrect bounding box calculations.
 
 # v10.1.0 (2023/04/02)
 

@@ -1,6 +1,8 @@
-﻿using Danmokou.Core;
+﻿using System;
+using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Player;
+// ReSharper disable Unity.InefficientPropertyAccess
 
 namespace Danmokou.Behavior.Items {
 public class ValueItem : Item {
@@ -14,11 +16,16 @@ public class ValueItem : Item {
         collector.AddValueItems(1, bonus);
     
     protected override void CollectMe(PlayerController collector) {
-        var bonus = (autocollected || collection == null) ?
-            MAX_BONUS :
-            M.Lerp(1, MAX_BONUS, M.Ratio(
-                LocationHelpers.BotPlayerBound + 1,
-                collection.Bound.y, tr.position.y));
+        var bonus = MAX_BONUS;
+        if (!autocollected && collection != null) {
+            bonus = M.Lerp(1, MAX_BONUS, 
+                collection.direction switch {
+                    LRUD.RIGHT => M.Ratio(LocationHelpers.LeftPlayerBound + 1, collection.Bound.x, tr.position.x),
+                    LRUD.UP => M.Ratio(LocationHelpers.BotPlayerBound + 1, collection.Bound.y, tr.position.y),
+                    LRUD.LEFT => M.Ratio(LocationHelpers.RightPlayerBound - 1, collection.Bound.x, tr.position.x),
+                    _ => M.Ratio(LocationHelpers.TopPlayerBound - 1, collection.Bound.y, tr.position.y),
+                });
+        }
         AddMe(collector, bonus);
         base.CollectMe(collector);
     }

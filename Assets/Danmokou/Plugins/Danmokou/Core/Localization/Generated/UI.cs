@@ -147,9 +147,13 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "タイトルに戻る"))
 			{ ID = "to_menu" };
 		
-		public static readonly LString restart = new LText("Restart",
-			(Locales.JP, "やり直す"))
-			{ ID = "restart" };
+		public static readonly LString full_restart = new LText("Restart From Beginning",
+			(Locales.JP, "最初からやり直す"))
+			{ ID = "full_restart" };
+		
+		public static readonly LString checkpoint_restart = new LText("Restart From Checkpoint",
+			(Locales.JP, "チェックポイントからやり直す"))
+			{ ID = "checkpoint_restart" };
 		
 		public static readonly LString save_replay = new LText("Save Replay",
 			(Locales.JP, "リプレイを保存する"))

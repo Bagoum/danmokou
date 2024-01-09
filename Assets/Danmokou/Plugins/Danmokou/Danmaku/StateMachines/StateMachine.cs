@@ -17,6 +17,7 @@ using Danmokou.Danmaku;
 using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Danmokou.GameInstance;
 using Danmokou.Reflection;
 using Danmokou.Scriptables;
 using Danmokou.SM.Parsing;
@@ -29,6 +30,7 @@ using Parser = Danmokou.DMath.Parser;
 namespace Danmokou.SM {
 public class SMContext {
     public virtual List<IDisposable> PhaseObjects { get; } = new();
+    public Checkpoint? LoadCheckpoint { get; init; }
 
     public virtual void CleanupObjects() {
         PhaseObjects.DisposeAll();
@@ -38,9 +40,10 @@ public class PatternContext : SMContext {
     public PatternSM SM { get; }
     public PatternProperties Props { get; }
     
-    public PatternContext(PatternSM sm) {
+    public PatternContext(SMContext parent, PatternSM sm) {
         SM = sm;
         Props = sm.Props;
+        LoadCheckpoint = parent.LoadCheckpoint;
     }
 }
 public class PhaseContext : SMContext {
@@ -62,6 +65,7 @@ public class PhaseContext : SMContext {
         Pattern = pattern;
         Index = index;
         Props = props;
+        LoadCheckpoint = pattern?.LoadCheckpoint;
     }
     
     public bool GetSpellCutin(out GameObject go) {
@@ -130,14 +134,14 @@ public readonly struct SMHandoff : IDisposable {
         Context = new SMContext();
     }
 
-    public SMHandoff(BehaviorEntity exec, SMRunner smr, ICancellee? cT = null) {
+    public SMHandoff(BehaviorEntity exec, SMRunner smr, ICancellee? cT = null, SMContext? context = null) {
         var gcx = smr.NewGCX ?? GenCtx.New(exec, V2RV2.Zero);
         gcx.OverrideScope(exec, V2RV2.Zero, exec.rBPI.index);
         this.ch = new CommonHandoff(cT ?? smr.cT, null, gcx);
         gcx.Dispose();
         this.parentCT = smr.cT;
         CanPrepend = false;
-        Context = new SMContext();
+        Context = context ?? new SMContext();
     }
 
     /// <summary>

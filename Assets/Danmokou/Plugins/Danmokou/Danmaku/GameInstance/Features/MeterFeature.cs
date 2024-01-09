@@ -88,7 +88,7 @@ public class MeterFeature : BaseInstanceFeature, IMeterFeature {
         }
     }
 
-    public void OnContinue() => ResetMeter();
+    public void OnContinueOrCheckpoint() => ResetMeter();
     public void OnDied() => Meter = 1;
 
     public void OnGraze(int delta) {

@@ -107,6 +107,10 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "本居小鈴"))
 			{ ID = "dialogue.kosuzu" };
 		
+		public static readonly LString eirin = new LText("Yagokoro Eirin",
+			(Locales.JP, "八意永琳"))
+			{ ID = "dialogue.eirin" };
+		
 		public static readonly LString kutaka = new LText("Niwatari Kutaka",
 			(Locales.JP, "庭渡久侘歌"))
 			{ ID = "dialogue.kutaka" };

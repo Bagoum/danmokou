@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Danmokou.Behavior.Display;
 using Danmokou.Core;
 using Danmokou.Graphics.Backgrounds;
 using NUnit.Framework.Internal;
@@ -64,3 +65,10 @@ public class LS0Drawer : DUCaseDrawer<LocatorStrategy.SourceConfig> { }
 public class LS1Drawer : DUCaseDrawer<LocatorStrategy.TargetConfig> { }
 [CustomPropertyDrawer(typeof(LocatorStrategy.PerimeterConfig))]
 public class LS2Drawer : DUCaseDrawer<LocatorStrategy.PerimeterConfig> { }
+
+[CustomPropertyDrawer(typeof(RotationMethod.ManualConfig))]
+public class RM0Drawer : DUCaseDrawer<RotationMethod.ManualConfig> { }
+[CustomPropertyDrawer(typeof(RotationMethod.InVelocityDirectionConfig))]
+public class RM1Drawer : DUCaseDrawer<RotationMethod.InVelocityDirectionConfig> { }
+[CustomPropertyDrawer(typeof(RotationMethod.LeanByVelocityConfig))]
+public class RM2Drawer : DUCaseDrawer<RotationMethod.LeanByVelocityConfig> { }

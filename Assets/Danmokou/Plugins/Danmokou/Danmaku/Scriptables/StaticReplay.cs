@@ -23,14 +23,14 @@ public class StaticReplay : ScriptableObject {
             ?? throw new Exception($"Couldn't read static replay metadata from {replayMetadata.name}"));
     
     [NonSerialized] private ReplayMetadata? _metadata = null;
-    [NonSerialized] private InputManager.FrameInput[]? _frames = null;
+    [NonSerialized] private FrameInput[]? _frames = null;
 
-    public Func<InputManager.FrameInput[]> Frames => () => {
+    public Func<FrameInput[]> Frames => () => {
         if (_frames == null || _frames.Length == 0)
             try {
                 _frames = SaveData.Replays.LoadReplayFrames(replayFile)();
             } catch (Exception ex) {
-                _frames = Array.Empty<InputManager.FrameInput>();
+                _frames = Array.Empty<FrameInput>();
                 Logs.LogException(new Exception("Failed to load static replay", ex));
             }
         return _frames;

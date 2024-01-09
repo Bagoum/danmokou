@@ -135,9 +135,10 @@ phase 0 #{
 phase 0 #{
 	paction 0
 		position 0 1
-		async gcircle-blue/w <0.5;:> gcr2 2 120 <0.015;:9> {
+		async gcircle-blue* <0.5;:> gcr2 2 120 <0.015;:9> {
 			p this
 		} gsr2 2 <> {
+		    color { /w /b }
 			p add
 		} s tprot rotate + * -90 p2 * 4.5 p1
 			lerpin 0 0.9 cx 2

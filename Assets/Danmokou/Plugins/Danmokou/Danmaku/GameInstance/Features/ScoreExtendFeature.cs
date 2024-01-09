@@ -39,7 +39,7 @@ public class ScoreExtendFeature : BaseInstanceFeature, IScoreExtendFeature {
             nextScoreLifeIndex.Map(scoreLives.TryN);
     }
     
-    public void OnContinue() {
+    public void OnContinueOrCheckpoint() {
         nextScoreLifeIndex.Value = 0;
     }
 

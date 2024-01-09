@@ -136,7 +136,8 @@ public static class ItemPooler {
     public static Item RequestLife(ItemRequestContext ctx) => Request(items.lifeItem, ctx);
     public static Item RequestValue(ItemRequestContext ctx) => Request(items.valueItem, ctx);
     public static Item RequestSmallValue(ItemRequestContext ctx) => Request(items.smallValueItem, ctx);
-    public static Item RequestPointPP(ItemRequestContext ctx) => Request(items.pointppItem, ctx);
+    public static Item? RequestPointPP(ItemRequestContext ctx) => 
+        GameManagement.Instance.ScoreF.AllowPointPlusItemDrops ? Request(items.pointppItem, ctx) : null;
 
     public static Item? RequestGem(ItemRequestContext ctx) =>
         GameManagement.Instance.MeterF.AllowGemDrops ? Request(items.gemItem, ctx) : null;

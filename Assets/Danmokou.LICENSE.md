@@ -107,8 +107,12 @@ Images (Assets/Danmokou/Sprites)
 - entity/dot/dot_seija: by Len.
 - entity/dot/dot_kasen, dot_junko: by Kirbio.
 - entity/taisei_*: by Taisei Project (with modification).
+- entity/book_sheet: by Gokhan Solak on [OpenGameArt](https://opengameart.org/content/pixel-book-animated).
+- entity/airplane: by knik1985 on [OpenGameArt](https://opengameart.org/content/airplan).
 - DD/*: by [DD](https://www.pixiv.net/en/users/4650367) . Noncommercial use only. 
 - .py: Python scripts licensed by Bagoum under MIT.
+- tiles/building_sheet:
+- tiles/windmill: by carchagui on [DeviantArt](https://www.deviantart.com/carchagui/art/Windmill-animation-sheet-875418472).
 - UI/faIcons/*: icons from [FontAwesome](https://github.com/FortAwesome/Font-Awesome), licensed under CC-BY 4. Modifications made to original SVG files.
 - [UI/trophy.png](https://pixabay.com/vectors/success-badge-trophy-award-winner-5974538/)
 - UI/pins/crow*: stock by Roy3D on [DeviantArt](https://www.deviantart.com/roy3d/art/Crows-2-PNG-Stock-412584565), modifications made.

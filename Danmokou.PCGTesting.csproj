@@ -388,6 +388,9 @@
      <Reference Include="UnityEditor.Graphs">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2023.2.3f1\Editor\Data\Managed\UnityEditor.Graphs.dll</HintPath>
      </Reference>
+     <Reference Include="UnityEditor.WebGL.Extensions">
+     <HintPath>C:\Program Files\Unity\Hub\Editor\2023.2.3f1\Editor\Data\PlaybackEngines\WebGLSupport\UnityEditor.WebGL.Extensions.dll</HintPath>
+     </Reference>
      <Reference Include="UnityEditor.WindowsStandalone.Extensions">
      <HintPath>C:\Program Files\Unity\Hub\Editor\2023.2.3f1\Editor\Data\PlaybackEngines\WindowsStandaloneSupport\UnityEditor.WindowsStandalone.Extensions.dll</HintPath>
      </Reference>

@@ -51,8 +51,7 @@ public class EnvFrame {
 
     public Maybe<T> GetValue<T>(string varName) {
         var envFrame = this;
-        while (envFrame != null) {
-            var scope = envFrame.Scope;
+        while (envFrame is { Scope: { } scope }) {
             if (scope.varsAndFns.TryGetValue(varName, out var decl)) {
                 if (decl.FinalizedType != typeof(T))
                     throw new Exception(

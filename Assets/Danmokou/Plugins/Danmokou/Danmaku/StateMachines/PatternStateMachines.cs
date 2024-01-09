@@ -87,7 +87,7 @@ public class PatternSM : SequentialSM {
     }
 
     public override async Task Start(SMHandoff smh) {
-        var ctx = new PatternContext(this);
+        var ctx = new PatternContext(smh.Context, this);
         using var jsmh = smh.CreateJointCancellee(out var cts, ctx);
         var subbosses = new List<Enemy>();
         var subsummons = new List<BehaviorEntity>();
@@ -231,6 +231,14 @@ public class PhaseSM : SequentialSM {
     private void PreparePhase(PhaseContext ctx, IUIManager? ui, SMHandoff smh, out Task cutins, 
         IBackgroundOrchestrator? bgo) {
         cutins = Task.CompletedTask;
+        if (GameManagement.Instance.mode == InstanceMode.CAMPAIGN)
+            if (ctx.Boss == null) 
+                if (props.isCheckpoint)
+                    GameManagement.Instance.UpdateStageCheckpoint(ctx.Index, props.phaseType?.IsStageBoss() is true);
+                else
+                    GameManagement.Instance.UpdateStageNoCheckpoint();
+            else if (props.isCheckpoint)
+                GameManagement.Instance.UpdateBossCheckpoint(ctx.Boss, ctx.Index); 
         ui?.ShowPhaseType(props.phaseType);
         if (props.cardTitle != null || props.phaseType != null) {
             var rate = (ctx.Boss != null) ?
@@ -431,11 +439,15 @@ public class DialoguePhaseSM : PhaseSM {
     }
 }
 
+/// <summary>
+/// A PhaseSM that, when run in the editor, skips its first `from` children.
+/// </summary>
 public class PhaseJSM : PhaseSM {
     public PhaseJSM(float timeout, int from, [NonExplicitParameter] PhaseProperties props, [BDSL1ImplicitChildren] StateMachine[] states)
     #if UNITY_EDITOR
         : base(timeout, props, from == 0 ? states : states.Skip(from).Prepend(states[0]).ToArray()) {
         if (this.states.Try(from == 0 ? 0 : 1) is PhaseParallelActionSM psm) psm.wait = 0f;
+        if (this.states.Try(from == 0 ? 0 : 1) is PhaseSequentialActionSM ssm) ssm.wait = 0f;
     #else
         : base(timeout, props, states) {
     #endif
@@ -468,7 +480,7 @@ public class PhaseParallelActionSM : ParallelSM {
 /// `saction`: A list of actions that are run in sequence. Place this under <see cref="PhaseSM"/>.
 /// </summary>
 public class PhaseSequentialActionSM : SequentialSM {
-    private readonly float wait;
+    public float wait;
 
     /// <summary>
     /// </summary>

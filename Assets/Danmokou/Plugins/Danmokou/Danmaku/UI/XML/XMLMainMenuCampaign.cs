@@ -51,6 +51,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
     }
 
     private UIScreen PlaymodeScreen = null!;
+    private bool onlyOnePlaymode = false;
     private UIScreen DifficultyScreen = null!;
     public UIScreen CustomDifficultyScreen { get; private set; } = null!;
     private UIScreen CampaignShotScreen = null!;
@@ -141,8 +142,13 @@ public class XMLMainMenuCampaign : XMLMainMenu {
 
         Func<UINode, UIResult> GetMetadata(CampaignConfig c, Func<SharedInstanceMetadata, bool> cont) => _ => {
             dfcContinuation = dfc => {
-                shotContinuation = shot => cont(new SharedInstanceMetadata(shot, dfc));
-                return new UIResult.GoToNode(campaignToShotScreenMap[c]);
+                if (c.HasOneShotConfig(out var team)) {
+                    cont(new SharedInstanceMetadata(team, dfc));
+                    return new UIResult.StayOnNode();
+                } else {
+                    shotContinuation = shot => cont(new SharedInstanceMetadata(shot, dfc));
+                    return new UIResult.GoToNode(campaignToShotScreenMap[c]);
+                }
             };
             return new UIResult.GoToNode(DifficultyScreen);
         };
@@ -155,7 +161,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             {Mode.BOSSPRAC, bossMode},
             {Mode.STAGEPRAC, stageMode},
             {Mode.TUTORIAL, tutorialMode}
-        }, modeCommentator, GetMetadata);
+        }, modeCommentator, GetMetadata, out onlyOnePlaymode);
 
         OptionsScreen = this.OptionsScreen(true);
         GameDetailsScreen = new UIScreen(this, "GAME DETAILS") { Builder = XMLHelpers.GameResultsScreenBuilder };
@@ -179,7 +185,10 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                 s?.WithBG(SecondaryBGConfig);
 
         MainScreen.SetFirst(new UIColumn(MainScreen, null, new UINode[] {
-            new TransferNode(main_gamestart, PlaymodeScreen),
+            onlyOnePlaymode ?
+                new FuncNode(main_gamestart, GetMetadata(game.Campaign, meta => 
+                    InstanceRequest.RunCampaign(MainCampaign, null, meta))) :
+                new TransferNode(main_gamestart, PlaymodeScreen) ,
             new TransferNode(main_playerdata, PlayerDataScreen),
             //new TransferNode(main_musicroom, MusicRoomScreen)
             //        {EnabledIf = () => MusicRoomScreen.Groups[0].Nodes.Count > 0}

@@ -117,7 +117,11 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
         rtrack.AddScopedToken(tracks.Add(rtrack));
         var rnode = bgm.AddLast(rtrack);
         rtrack.AddScopedToken(rtrack.State.Subscribe(s => RecheckTracks(rnode, s)));
-        rtrack.AddScopedToken(new JointDisposable(() => bgm.Remove(rnode)));
+        rtrack.AddScopedToken(new JointDisposable(() => {
+            //If ClearRunningBGM was used, then rnode will already have been removed
+            if (rnode.List == bgm)
+                bgm.Remove(rnode);
+        }));
         play_track: ;
         var f = flags ?? BGMInvokeFlags.Default;
         if (f.fadeInNewTime > 0)
@@ -146,7 +150,7 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
                     n.Value.FadeOut(2, AudioTrackState.Paused);
             }
         } else {
-            for (var n = bgm.Last; n != changed; n = n.Previous) {
+            for (var n = bgm.Last; n != changed && n != null; n = n.Previous) {
                 //Something is already playing at a higher priority, no issue
                 if (n!.Value.State == AudioTrackState.Active)
                     return;

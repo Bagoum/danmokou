@@ -7,7 +7,7 @@ phase 0
 <!> stage
 <!> silent
 phase 0
-	saction 0
+	saction 1
 		debug `vnexec start`
 		executeVN ExampleDialogue any_script_id
 		debug `vnexec done`

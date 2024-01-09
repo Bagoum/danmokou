@@ -110,6 +110,11 @@ public static class M {
         return new Vector2(cos_rot * init.x - sin_rot * init.y, sin_rot * init.x + cos_rot * init.y);
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector2 RotateVector(Vector2 init, Vector2 cosSinRot) {
+        return new Vector2(cosSinRot.x * init.x - cosSinRot.y * init.y, cosSinRot.y * init.x + cosSinRot.x * init.y);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 RotateVector(Vector2 init, float ang_rad) {
         float cos_rot = Mathf.Cos(ang_rad);
         float sin_rot = Mathf.Sin(ang_rad);
@@ -255,13 +260,6 @@ public static class M {
     /// <summary>
     /// Returns true if the second point is counterclockwise from the first point relative to the source.
     /// </summary>
-    /// <param name="source_x"></param>
-    /// <param name="source_y"></param>
-    /// <param name="p1_x"></param>
-    /// <param name="p1_y"></param>
-    /// <param name="p2_x"></param>
-    /// <param name="p2_y"></param>
-    /// <returns></returns>
     public static bool IsCounterClockwise(float source_x, float source_y, float p1_x, float p1_y, float p2_x,
         float p2_y) {
         p1_x -= source_x;
@@ -270,6 +268,13 @@ public static class M {
         p2_y -= source_y;
         return p1_x * p2_y - p1_y * p2_x > 0;
     }
+
+    /// <summary>
+    /// Returns true if the second vector is counterclockwise from the first vector.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsCounterClockwise(in float v1x, in float v1y, in float v2x, in float v2y) =>
+        v1x * v2y - v1y * v2x > 0;
 
     public static Vector3 CylinderWrap(float R, float a0, float aMax, float axis, Vector2 loc) {
         var cs = CosSin(axis);

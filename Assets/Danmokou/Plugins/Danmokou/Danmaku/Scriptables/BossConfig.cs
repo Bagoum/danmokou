@@ -88,6 +88,7 @@ public class BossConfig : ScriptableObject {
     public SOBgTransition? defaultIntoNonTransition;
     public GameObject? bossCutin;
     public GameObject[] spellCutins = null!;
+    public bool practiceable = true;
     public SOBgTransition bossCutinTrIn => ResourceManager.WipeTex1;
     public float bossCutinBgTime => 2.0f;
     public SOBgTransition bossCutinTrOut => ResourceManager.Instantaneous;

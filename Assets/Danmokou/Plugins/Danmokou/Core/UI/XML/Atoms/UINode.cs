@@ -544,13 +544,14 @@ public class EmptyNode : UINode {
     public EmptyNode() : base("empty node") {
         DisableAnimations();
     }
-    public EmptyNode(IFixedXMLObject source, Action<EmptyNode>? onBuild = null) : base(source.Descriptor) {
+    public EmptyNode(IFixedXMLObject source, Action<EmptyNode>? onBuild = null, bool useVisiblityPassthrough = true) : 
+            base(source.Descriptor) {
         this.Source = source;
         this.desc = source.Descriptor;
         DisableAnimations().ConfigureAbsoluteLocation(source, extraOnBuild: n => {
             n.HTML.ConfigureEmpty();
             onBuild?.Invoke(this);
-        });
+        }, useVisiblityPassthrough: useVisiblityPassthrough);
     }
 
     public ICObservable<float> CreateCenterOffsetChildX(ICObservable<float> childX) =>

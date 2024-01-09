@@ -12,12 +12,19 @@ public interface IBasicFeature : IInstanceFeature {
     Evented<int> Lives { get; }
     Evented<int> Bombs { get; }
     Event<Unit> PlayerTookHit { get; }
-    int Continues { get;  }
+    int Continues { get; }
     int ContinuesUsed { get; }
     int HitsTaken { get; }
     int LastTookHitFrame { get; }
 
+    bool ContinuesAllowed => Continues + ContinuesUsed > 0;
+    bool ContinuesRemaining => Continues > 0;
+
     bool TryContinue();
+    
+    #if UNITY_EDITOR
+    bool ForceContinue();
+    #endif
     
     /// <summary>
     /// Delta should be negative.
@@ -26,12 +33,12 @@ public interface IBasicFeature : IInstanceFeature {
     bool TryConsumeBombs(int delta);
 
     /// <summary>
-    ///  Add a delta, positive or negative, to the number of lives the player has.
+    /// Add a delta, positive or negative, to the number of lives the player has. If this results in
+    ///  zero lives, also handle firing a GameOver event.
     /// </summary>
     /// <param name="delta">The change in lives (negative if losing a life).</param>
     /// <param name="asHit">True if this was the result of taking damage.</param>
-    /// <returns>True iff the player has </returns>
-    void AddLives(int delta, bool asHit);
+    void AddLives(int delta, bool asHit = true);
 
     void LifeExtend(ExtendType method);
 }
@@ -55,31 +62,38 @@ public class BasicFeature : BaseInstanceFeature, IBasicFeature {
         Bombs = new(this.startBombs = c.StartBombs ?? (inst.mode.OneLife() ? 0 : 3));
         Continues = c.Continues ?? (inst.mode.OneLife() ? 0 : 42);
     }
+    
+
+    public void OnContinueOrCheckpoint() {
+        Inst.CardHistory.Clear();//Partial game is saved when lives=0. Don't double on captures.
+        Lives.Value = startLives;
+        Bombs.Value = startBombs;
+    }
 
     public bool TryContinue() {
         if (Continues > 0) {
-            //We can allow continues in replays! But in the current impl, the watcher will have to press continue.
-            //Replayer.Cancel();
-            --Continues;
-            ++ContinuesUsed;
-            Inst.CardHistory.Clear();//Partial game is saved when lives=0. Don't double on captures.
-            Lives.Value = startLives;
-            Bombs.Value = startBombs;
-            foreach (var f in Inst.Features)
-                f.OnContinue();
+            DoContinue();
             return true;
         } else return false;
     }
     
-    public bool TryConsumeBombs(int delta) {
-        if (Bombs + delta >= 0) {
-            Bombs.Value += delta;
-            return true;
-        }
-        return false;
+    #if UNITY_EDITOR
+    public bool ForceContinue() {
+        DoContinue();
+        return true;
+    }
+    #endif
+
+    private void DoContinue() {
+        //We can allow continues in replays! But in the current impl, the watcher will have to press continue.
+        //Replayer.Cancel();
+        --Continues;
+        ++ContinuesUsed;
+        foreach (var f in Inst.Features)
+            f.OnContinueOrCheckpoint();
     }
     
-    public void AddLives(int delta, bool asHit) {
+    public void AddLives(int delta, bool asHit = true) {
         //if (mode == CampaignMode.NULL) return;
         Logs.Log($"Adding player lives: {delta}");
         if (delta < 0 && asHit) {
@@ -90,12 +104,37 @@ public class BasicFeature : BaseInstanceFeature, IBasicFeature {
                 f.OnDied();
             PlayerTookHit.OnNext(default);
         }
-        Lives.Value = Math.Max(0, Lives + delta);
+        if ((Lives.Value = Math.Max(0, Lives + delta)) == 0) {
+            //Record failure
+            if (Inst.Request?.Saveable == true) {
+                //Special-case boss practice handling
+                if (Inst.Request.lowerRequest is BossPracticeRequest bpr) {
+                    Inst.CardHistory.Add(new CardRecord() {
+                        campaign = bpr.boss.campaign.Key,
+                        boss = bpr.boss.boss.key,
+                        phase = bpr.phase.index,
+                        stars = 0,
+                        hits = 1,
+                        method = null
+                    });
+                }
+                SaveData.r.RecordGame(new InstanceRecord(Inst.Request, Inst, false));
+            }
+            Inst.GameOver.OnNext(default);
+        }
     }
 
     public void LifeExtend(ExtendType method) {
         ++Lives.Value;
         Inst.ExtendAcquired.OnNext(method);
+    }
+    
+    public bool TryConsumeBombs(int delta) {
+        if (Bombs + delta >= 0) {
+            Bombs.Value += delta;
+            return true;
+        }
+        return false;
     }
 }
 

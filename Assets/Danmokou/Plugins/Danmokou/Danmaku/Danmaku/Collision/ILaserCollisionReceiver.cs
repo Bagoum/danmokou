@@ -9,9 +9,14 @@ namespace Danmokou.Danmaku {
 /// </summary>
 public interface IEnemyLaserCollisionReceiver {
     /// <summary>
-    /// Process a collision between the laser's hurtbox and this object's hitbox.
+    /// Check if a collision exists between the laser's hurtbox and this object's hitbox. Do not process the collision.
     /// </summary>
-    CollisionResult Process(CurvedTileRenderLaser laser, Vector2 laserLoc, float cos, float sin, out int segment);
+    CollisionResult Check(CurvedTileRenderLaser laser, Vector2 laserLoc, float cos, float sin, out int segment, out Vector2 collLoc);
+
+    /// <summary>
+    /// Process a collision provided by <see cref="Check"/>.
+    /// </summary>
+    void ProcessActual(CurvedTileRenderLaser laser, Vector2 laserLoc, float cos, float sin, CollisionResult coll, Vector2 collLoc);
 }
 
 /// <summary>
@@ -19,7 +24,7 @@ public interface IEnemyLaserCollisionReceiver {
 /// </summary>
 public interface IPlayerLaserCollisionReceiver {
     /// <summary>
-    /// Process a collision between the laser's hurtbox and this object's hitbox.
+    /// Check and process a collision between the laser's hurtbox and this object's hitbox.
     /// </summary>
     CollisionResult Process(CurvedTileRenderLaser laser, PlayerBullet plb, Vector2 laserLoc, float cos, float sin, out int segment);
 }
@@ -78,16 +83,20 @@ public interface ICircularGrazableEnemyLaserCollisionReceiver: IEnemyLaserCollis
     bool ReceivesBulletCollisions { get; }
     
     
-    CollisionResult IEnemyLaserCollisionReceiver.Process(CurvedTileRenderLaser laser, Vector2 laserLoc, float cos, float sin, out int segment) {
+    CollisionResult IEnemyLaserCollisionReceiver.Check(CurvedTileRenderLaser laser, Vector2 laserLoc, float cos, float sin, out int segment, out Vector2 collLoc) {
         if (ReceivesBulletCollisions) {
-            var coll = laser.ComputeGrazeCollision(laserLoc, cos, sin, Hurtbox, out segment, out var loc);
-            if (coll.graze || coll.collide)
-                TakeHit(laser, loc, coll);
-            return coll;
+            return laser.ComputeGrazeCollision(laserLoc, cos, sin, Hurtbox, out segment, out collLoc);
         } else {
             segment = 0;
+            collLoc = Vector2.zero;
             return CollisionMath.NoCollision;
         }
+    }
+
+    void IEnemyLaserCollisionReceiver.ProcessActual(CurvedTileRenderLaser laser, Vector2 laserLoc, float cos, float sin,
+        CollisionResult coll, Vector2 collLoc) {
+        if (coll.graze || coll.collide)
+            TakeHit(laser, collLoc, coll);
     }
 
     /// <summary>

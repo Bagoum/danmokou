@@ -146,6 +146,7 @@
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\CutinFire2.shader" />
      <Folder Include="Assets\Danmokou\MiniProjects\Namecards\Prefabs" />
      <None Include="Assets\Danmokou\Patterns\feature testing\graphme.bdsl" />
+     <Folder Include="Assets\Danmokou\Sprites\VN\Characters\dairi_eirin" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\UI\UI RT.shader" />
      <None Include="Assets\Danmokou\Patterns\minor utility\demo_setup_sm.bdsl" />
      <Folder Include="Assets\Danmokou\Sprites\VN\Characters\dairi_remilia" />
@@ -193,6 +194,7 @@
      <None Include="Assets\Danmokou\Patterns\examples\kanako poc.bdsl" />
      <None Include="Assets\Danmokou\Plugins\DLLs\protobuf-net.xml" />
      <Folder Include="Assets\Danmokou\Sprites\bullets\straight-png" />
+     <Folder Include="Assets\Danmokou\MiniProjects\raw\fb\tokiko" />
      <Folder Include="Assets\Danmokou\Sprites\VN\Characters\dairi_iku\icons" />
      <Folder Include="Assets\BRuH\Scripts" />
      <Folder Include="Assets\Danmokou\Fonts" />
@@ -213,6 +215,7 @@
      <Folder Include="Assets\Danmokou\UXML\structures" />
      <Folder Include="Assets\Danmokou\Rendering\Materials" />
      <Folder Include="Assets\Danmokou\Sprites\VN\Characters\dairi_marisa98\icons" />
+     <Folder Include="Assets\Danmokou\Sprites\tiles" />
      <Folder Include="Assets\Danmokou\Sprites\VN\Characters\dairi_doremy" />
      <Folder Include="Assets\Danmokou\Sprites\VN\Characters\dairi_kosuzu" />
      <None Include="Assets\Danmokou\MiniProjects\Scripts\BHA3\bha3.dialogue.1.txt" />
@@ -253,11 +256,13 @@
      <None Include="Assets\Danmokou\MiniProjects\WebGL Demo\070 dynamic lasers.txt" />
      <Folder Include="Assets\UI Toolkit" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\BG\EbbFlowFire.shader" />
+     <Folder Include="Assets\Danmokou\MiniProjects\Audio\MP-FB" />
      <None Include="Assets\Danmokou\UXML\structures\Markdown\MkLineFragmentLink.uxml" />
      <None Include="Assets\Danmokou\Patterns\feature testing\draWER.bdsl" />
      <None Include="Assets\Danmokou\MiniProjects\Projects\FlappyBird\fb_collision_testing.bdsl" />
      <Folder Include="Assets\Danmokou\Sprites\bullets\export-png\small" />
      <Folder Include="Assets\Danmokou\Patterns\Testing" />
+     <None Include="Assets\Danmokou\MiniProjects\Projects\FlappyBird\fb_aya.bdsl" />
      <None Include="Assets\Danmokou\Patterns\Testing\Global Slow Test.txt" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
      <Folder Include="Assets\Danmokou\Sprites\items" />
@@ -377,6 +382,7 @@
      <None Include="Assets\SZYU\Fonts\ubuntu-font-family-0.83\CONTRIBUTING.txt" />
      <None Include="Assets\BRuH\Dialogue\en\sagume.2.txt" />
      <None Include="Assets\Danmokou\Patterns\feature testing\sm control.bdsl" />
+     <None Include="Assets\Danmokou\MiniProjects\Projects\FlappyBird\fb_tokiko.bdsl" />
      <Folder Include="Assets\Danmokou\MiniProjects\Projects\BlessedRain" />
      <Folder Include="Assets\Danmokou\Sprites\VN\Characters\dairi_kutaka" />
      <None Include="Assets\Danmokou\Rendering\Shaders\Display\Radial2.shader" />
@@ -749,6 +755,7 @@
      <Folder Include="Assets\Danmokou\MiniProjects\Cutins" />
      <None Include="Assets\Danmokou\Patterns\examples\structural\pathers.bdsl" />
      <None Include="Assets\TextMesh Pro\Fonts\LiberationSans - OFL.txt" />
+     <Folder Include="Assets\Danmokou\MiniProjects\raw\fb" />
      <Folder Include="Assets\Danmokou\Sprites\UI\pins" />
      <None Include="Assets\Danmokou\Rendering\Shaders\WIP\Test Displacement LOC.shader" />
      <Folder Include="Assets\Danmokou\Sprites\VN\Characters\dairi_cirno" />
@@ -765,6 +772,7 @@
      <Folder Include="Assets\Danmokou\Rendering\Materials\Display\BG" />
      <None Include="Assets\Danmokou\Rendering\Shaders\ViewfinderRender.shader" />
      <Folder Include="Assets\Danmokou\SFX\_SO\Looping" />
+     <Folder Include="Assets\Danmokou\MiniProjects\raw\fb\aya" />
      <Folder Include="Assets\Danmokou\Sprites\VN\Characters\dairi_kanako" />
      <Folder Include="Assets\Danmokou\MiniProjects\Audio\MP-BR" />
      <Folder Include="Assets\Danmokou\Prefab" />

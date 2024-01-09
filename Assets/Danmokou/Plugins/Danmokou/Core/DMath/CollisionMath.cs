@@ -6,6 +6,7 @@ using Danmokou.Core;
 using Danmokou.Expressions;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace Danmokou.DMath {
 
@@ -108,38 +109,195 @@ public static class CollisionMath {
         var d2 = dx * dx + dy * dy;
         return new(d2 < rSum * rSum,  d2 < lrSum * lrSum);
     }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float PointToRectSquareDistance(in float px, in float py, in float rx, in float ry, in float rHalfW, in float rHalfH) {
+        var dx = px - rx;
+        var dy = py - ry;
+        if (dx < 0)
+            dx = -dx - rHalfW;
+        else
+            dx = dx - rHalfW;
+        if (dy < 0)
+            dy = -dy - rHalfH;
+        else
+            dy = dy - rHalfH;
+        //Then we are in one of three locations:
+        if (dy < 0) {
+            //In "front" of the rectangle.
+            if (dx < 0) return 0;
+            return dx * dx;
+        }
+        if (dx < 0) {
+            // On "top" of the rectangle.
+            return dy * dy;
+        }
+        //In front and on top.
+        return dx * dx + dy * dy;
+    }
+
+    /// <summary>
+    /// For a line segment (sx1,sy1)->(sx2,sy2), find the closest squared distance of the normal-matched corners of
+    ///  the provided rectangle to the ray defined by the line segment.
+    /// <br/>Returns inf if the closest point is not on the line segment, and 0 if the line segment crosses
+    ///  into the rect.
+    /// <br/>The "normal-matched corners" are the two diagonally opposite corners through which a line has
+    ///  the same positive/negative slope direction as the normal of the line segment.
+    /// <br/>For example, if the line segment is (-2,-1)->(4,6) (positive slope), then the normal-matched
+    ///  corners are the top-left and bottom-right corners, through which a line would have a negative slope.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float SegmentProjectToRectSquareDistance(in float sx1, in float sy1, in float sx2, in float sy2, in float rx, in float ry,
+        in float rHalfW, in float rHalfH) {
+        var sdx = sx2 - sx1;
+        var sdy = sy2 - sy1;
+        var sdmag2 = sdx * sdx + sdy * sdy;
+        var sign = sdx * sdy;
+        var gx = rx - sx1;
+        var gy = ry - sy1;
+        float minDist2 = float.PositiveInfinity;
+        if (sign >= 0) {
+            //Positive slope
+            //Top left corner
+            var tlx = gx - rHalfW;
+            var tly = gy + rHalfH;
+            var tldot = tlx * sdx + tly * sdy;
+            var tlValid = tldot >= 0 && tldot < sdmag2;
+            if (tlValid) {
+                var norm2 = (tlx * tlx + tly * tly) - tldot * tldot / sdmag2;
+                if (norm2 < minDist2)
+                    minDist2 = norm2;
+            }
+            //Bottom right corner
+            var brx = gx + rHalfW;
+            var bry = gy - rHalfH;
+            var brdot = brx * sdx + bry * sdy;
+            var brValid = brdot >= 0 && brdot < sdmag2;
+            if (brValid) {
+                var norm2 = (brx * brx + bry * bry) - brdot * brdot / sdmag2;
+                if (norm2 < minDist2)
+                    minDist2 = norm2;
+            }
+            if ((tlValid && (ry + rHalfH - sy2) * tly <= 0 ||
+                brValid && (ry - rHalfH - sy2) * bry <= 0) &&
+                M.IsCounterClockwise(in sdx, in sdy, in tlx, in tly) != M.IsCounterClockwise(in sdx, in sdy, in brx, in bry))
+                return 0;
+            
+        }
+        if (sign <= 0) {
+            //Negative slope
+            //Top right corner
+            var trx = gx + rHalfW;
+            var trY = gy + rHalfH;
+            var trdot = trx * sdx + trY * sdy;
+            var trValid = trdot >= 0 && trdot < sdmag2;
+            if (trValid) {
+                var norm2 = (trx * trx + trY * trY) - trdot * trdot / sdmag2;
+                if (norm2 < minDist2)
+                    minDist2 = norm2;
+            }
+            //Bottom left corner
+            var blx = gx - rHalfW;
+            var bly = gy - rHalfH;
+            var bldot = blx * sdx + bly * sdy;
+            var blValid = bldot >= 0 && bldot < sdmag2;
+            if (blValid) {
+                var norm2 = (blx * blx + bly * bly) - bldot * bldot / sdmag2;
+                if (norm2 < minDist2)
+                    minDist2 = norm2;
+            }
+            if ((trValid && (ry + rHalfH - sy2) * trY <= 0 ||
+                 blValid && (ry - rHalfH - sy2) * bly <= 0) &&
+                M.IsCounterClockwise(in sdx, in sdy, in trx, in trY) != M.IsCounterClockwise(in sdx, in sdy, in blx, in bly))
+                return 0;
+        }
+        return minDist2;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool CircleOnSegments(Vector2 target, float targetRad, Vector2 src, Vector2[] points, int start, int skip, int end, float radius, float cos_rot, float sin_rot, out int segment) {
-        segment = 0;
+    public static bool RectOnSegments(in Vector2 rLoc, in Vector2 rHalfDim, in Vector2 rRot, in Vector2 src, in Vector2[] points,
+        in int start, in int skip, in int end, in float radius, in float cos_rot, in float sin_rot, out int segment) {
+        segment = start;
         if (start >= end) return false;
-        // use src.x to store delta vector to target, derotated.
-        src.x = target.x - src.x;
-        src.y = target.y - src.y;
-        float _gbg = cos_rot * src.x + sin_rot * src.y;
-        src.y = cos_rot * src.y - sin_rot * src.x;
-        src.x = _gbg;
+        Profiler.BeginSample("RectOnSegments");
+        //Combine rect and laser rotations
+        float rRotX = rRot.x * cos_rot + rRot.y * sin_rot;
+        float rRotY = rRot.y * cos_rot - rRot.x * sin_rot;
+        //Get the position of the rect relative to the segment start
+        var rx = rLoc.x - src.x;
+        var ry = rLoc.y - src.y;
+        float _tmp = rRotX * rx + rRotY * ry;
+        ry = rRotX * ry - rRotY * rx;
+        rx = _tmp;
 
-        float radius2 = (radius + targetRad) * (radius + targetRad);
-        Vector2 delta; Vector2 g;
-        float projection_unscaled; float d2;
-        --end; //Now end refers to the index we will look at for the final check; ie it is inclusive.
+        float radius2 = radius * radius;
+        float prevx = points[start].x, prevy = points[start].y;
+        _tmp = rRotX * prevx + rRotY * prevy;
+        prevy = rRotX * prevy - rRotY * prevx;
+        prevx = _tmp;
         int ii = start + skip;
-        for (; ii < end; ii += skip) {
-            delta.x = points[ii].x - points[ii - skip].x;
-            delta.y = points[ii].y - points[ii - skip].y;
-            g.x = src.x - points[ii - skip].x;
-            g.y = src.y - points[ii - skip].y;
-            projection_unscaled = g.x * delta.x + g.y * delta.y;
-            d2 = g.x * g.x + g.y * g.y;
-            //Check circle collision at every point for accurate out segment
-            if (d2 < radius2) {
+        if (PointToRectSquareDistance(in prevx, in prevy, in rx, in ry, in rHalfDim.x, in rHalfDim.y) < radius2) {
+            Profiler.EndSample();
+            return true;
+        }
+        float nxtx, nxty;
+        for (; ii < end - 1; ii += skip) {
+            nxtx = rRotX * points[ii].x + rRotY * points[ii].y;
+            nxty = rRotX * points[ii].y - rRotY * points[ii].x;
+            if (PointToRectSquareDistance(in nxtx, in nxty, in rx, in ry, in rHalfDim.x, in rHalfDim.y) < radius2 ||
+                SegmentProjectToRectSquareDistance(in prevx, in prevy, in nxtx, in nxty, in rx, in ry, in rHalfDim.x,
+                    in rHalfDim.y) < radius2) {
+                Profiler.EndSample();
                 segment = ii;
                 return true;
-            } else if (projection_unscaled > 0) {
-                float dmag2 = delta.x * delta.x + delta.y * delta.y;
-                if (projection_unscaled < dmag2) {
-                    float norm2 = d2 - projection_unscaled * projection_unscaled / dmag2;
+            }
+            prevx = nxtx;
+            prevy = nxty;
+        }
+        //Last segment check
+        segment = end - 1;
+        nxtx = rRotX * points[segment].x + rRotY * points[segment].y;
+        nxty = rRotX * points[segment].y - rRotY * points[segment].x;
+        var result = PointToRectSquareDistance(in nxtx, in nxty, in rx, in ry, in rHalfDim.x, in rHalfDim.y) < radius2 ||
+               SegmentProjectToRectSquareDistance(in prevx, in prevy, in nxtx, in nxty, in rx, in ry, in rHalfDim.x,
+                   in rHalfDim.y) < radius2;
+        Profiler.EndSample();
+        return result;
+    }
+    
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool CircleOnSegments(in Vector2 target, in float targetRad, in Vector2 src, Vector2[] points, in int start, in int skip, in int end, in float radius, in float cos_rot, in float sin_rot, out int segment) {
+        segment = 0;
+        if (start >= end) return false;
+        // px/py = delta vector to target, derotated.
+        var px = target.x - src.x;
+        var py = target.y - src.y;
+        float _tmp = cos_rot * px + sin_rot * py;
+        py = cos_rot * py - sin_rot * px;
+        px = _tmp;
+
+        float radius2 = (radius + targetRad) * (radius + targetRad);
+        float prevx = points[start].x, prevy = points[start].y;
+        float dx, dy, gx, gy;
+        float dot, d2;
+        int ii = start + skip;
+        for (; ii < end - 1; ii += skip) {
+            gx = px - prevx;
+            gy = py - prevy;
+            d2 = gx * gx + gy * gy;
+            //Check circle collision at every point for accurate out segment
+            if (d2 < radius2) {
+                segment = ii - skip;
+                return true;
+            }
+            dx = -prevx + (prevx = points[ii].x);
+            dy = -prevy + (prevy = points[ii].y);
+            dot = gx * dx + gy * dy;
+            if (dot > 0) {
+                float dmag2 = dx * dx + dy * dy;
+                if (dot < dmag2) {
+                    float norm2 = d2 - dot * dot / dmag2;
                     if (norm2 < radius2) {
                         segment = ii;
                         return true;
@@ -147,29 +305,30 @@ public static class CollisionMath {
                 }
             }
         }
-        //Now perform the last point check
-        ii -= skip;
-        segment = end;
-        delta.x = points[end].x - points[ii].x;
-        delta.y = points[end].y - points[ii].y;
-        g.x = src.x - points[ii].x;
-        g.y = src.y - points[ii].y;
-        projection_unscaled = g.x * delta.x + g.y * delta.y;
-        d2 = g.x * g.x + g.y * g.y;
-        if (projection_unscaled < 0) {
-            if (d2 < radius2) return true;
-        } else {
-            float dmag2 = delta.x * delta.x + delta.y * delta.y;
-            if (projection_unscaled < dmag2) {
-                float norm2 = d2 - projection_unscaled * projection_unscaled / dmag2;
+        //Last segment check
+        gx = src.x - prevx;
+        gy = src.y - prevy;
+        d2 = gx * gx + gy * gy;
+        if (d2 < radius2) {
+            segment = ii - skip;
+            return true;
+        }
+        segment = end - 1;
+        dx = points[segment].x - prevx;
+        dy = points[segment].y - prevy;
+        dot = gx * dx + gy * dy;
+        d2 = gx * gx + gy * gy;
+        if (dot > 0) {
+            float dmag2 = dx * dx + dy * dy;
+            if (dot < dmag2) {
+                float norm2 = d2 - dot * dot / dmag2;
                 if (norm2 < radius2) return true;
             }
         }
         //Last point circle collision
-        g.x = src.x - points[end].x;
-        g.y = src.y - points[end].y;
-        d2 = g.x * g.x + g.y * g.y;
-        return d2 < radius2;
+        gx = px - points[segment].x;
+        gy = py - points[segment].y;
+        return gx * gx + gy * gy < radius2;
     }
 
     
@@ -187,42 +346,39 @@ public static class CollisionMath {
     /// <param name="sin_rot">Sine rotation of sequence of segments</param>
     /// <param name="segment">Segment at which collision occurred</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CollisionResult GrazeCircleOnSegments(in Hurtbox c1, Vector2 src, Vector2[] points, int start, int skip, int end, float radius, float cos_rot, float sin_rot, out int segment) {
+    public static CollisionResult GrazeCircleOnSegments(in Hurtbox c1, in Vector2 src, in Vector2[] points, in int start, in int skip, in int end, in float radius, in float cos_rot, in float sin_rot, out int segment) {
         segment = 0;
         if (start >= end) return NoCollision;
         bool grazed = false;
-        // use src.x to store delta vector to target, derotated.
-        src.x = c1.x - src.x;
-        src.y = c1.y - src.y;
-        float _gbg = cos_rot * src.x + sin_rot * src.y;
-        src.y = cos_rot * src.y - sin_rot * src.x;
-        src.x = _gbg;
+        // px/py = delta vector to target, derotated.
+        var px = c1.x - src.x;
+        var py = c1.y - src.y;
+        float _tmp = cos_rot * px + sin_rot * py;
+        py = cos_rot * py - sin_rot * px;
+        px = _tmp;
 
         float lradius2 = (radius + c1.grazeRadius) * (radius + c1.grazeRadius);
         float radius2 = (radius + c1.radius) * (radius + c1.radius);
-        Vector2 delta; Vector2 g;
-        float projection_unscaled; float d2;
-        --end; //Now end refers to the index we will look at for the final check; ie it is inclusive.
+        float prevx = points[start].x, prevy = points[start].y;
+        float dx, dy, gx, gy;
+        float dot, d2;
         int ii = start + skip;
-        for (; ii < end; ii += skip) {
-            delta.x = points[ii].x - points[ii - skip].x;
-            delta.y = points[ii].y - points[ii - skip].y;
-            g.x = src.x - points[ii - skip].x;
-            g.y = src.y - points[ii - skip].y;
-            projection_unscaled = g.x * delta.x + g.y * delta.y;
-            d2 = g.x * g.x + g.y * g.y;
-            if (projection_unscaled < 0) {
-                //We only check endpoint collision on the first point;
-                //due to segmenting we will end by checking on all points except the last, which is handled outside.
-                grazed |= d2 < lradius2;
-                if (d2 < radius2) {
-                    segment = ii;
-                    return new CollisionResult(true, grazed);
-                }
-            } else {
-                float dmag2 = delta.x * delta.x + delta.y * delta.y;
-                if (projection_unscaled < dmag2) {
-                    float norm2 = d2 - projection_unscaled * projection_unscaled / dmag2;
+        for (; ii < end - 1; ii += skip) {
+            gx = px - prevx;
+            gy = py - prevy;
+            d2 = gx * gx + gy * gy;
+            grazed |= d2 < lradius2;
+            if (d2 < radius2) {
+                segment = ii - skip;
+                return new CollisionResult(true, grazed);
+            }
+            dx = -prevx + (prevx = points[ii].x);
+            dy = -prevy + (prevy = points[ii].y);
+            dot = gx * dx + gy * dy;
+            if (dot > 0) {
+                float dmag2 = dx * dx + dy * dy;
+                if (dot < dmag2) {
+                    float norm2 = d2 - dot * dot / dmag2;
                     grazed |= norm2 < lradius2;
                     if (norm2 < radius2) {
                         segment = ii;
@@ -231,24 +387,23 @@ public static class CollisionMath {
                 }
             }
         }
-        //Now perform the last point check
-        ii -= skip;
-        segment = end;
-        delta.x = points[end].x - points[ii].x;
-        delta.y = points[end].y - points[ii].y;
-        g.x = src.x - points[ii].x;
-        g.y = src.y - points[ii].y;
-        projection_unscaled = g.x * delta.x + g.y * delta.y;
-        d2 = g.x * g.x + g.y * g.y;
-        if (projection_unscaled < 0) {
-            grazed |= d2 < lradius2;
-            if (d2 < radius2) {
-                return new CollisionResult(true, grazed);
-            }
-        } else {
-            float dmag2 = delta.x * delta.x + delta.y * delta.y;
-            if (projection_unscaled < dmag2) {
-                float norm2 = d2 - projection_unscaled * projection_unscaled / dmag2;
+        //Last segment check
+        gx = px - prevx;
+        gy = py - prevy;
+        d2 = gx * gx + gy * gy;
+        grazed |= d2 < lradius2;
+        if (d2 < radius2) {
+            segment = ii - skip;
+            return new CollisionResult(true, grazed);
+        }
+        segment = end - 1;
+        dx = points[segment].x - prevx;
+        dy = points[segment].y - prevy;
+        dot = gx * dx + gy * dy;
+        if (dot > 0) {
+            float dmag2 = dx * dx + dy * dy;
+            if (dot < dmag2) {
+                float norm2 = d2 - dot * dot / dmag2;
                 grazed |= norm2 < lradius2;
                 if (norm2 < radius2) {
                     return new CollisionResult(true, grazed);
@@ -256,11 +411,10 @@ public static class CollisionMath {
             }
         }
         //Last point circle collision
-        g.x = src.x - points[end].x;
-        g.y = src.y - points[end].y;
-        d2 = g.x * g.x + g.y * g.y;
-        grazed |= d2 < lradius2;
-        return new CollisionResult(d2 < radius2, grazed);
+        gx = px - points[segment].x;
+        gy = py - points[segment].y;
+        d2 = gx * gx + gy * gy;
+        return new CollisionResult(d2 < radius2, grazed || d2 < lradius2);
     }
 
 
@@ -328,19 +482,16 @@ public static class CollisionMath {
         float dot = dx * delta.x + dy * delta.y;
         if (dot < 0) {
             //target is in the opposite direction 
-            float d2 = dx * dx + dy * dy;
-            return d2 < radius2;
+            return dx * dx + dy * dy < radius2;
         } else if (dot > delta_mag2) { //ie. proj_B(A) > ||B||
             //target is beyond node2
             dx -= delta.x;
             dy -= delta.y;
-            float d2 = dx * dx + dy * dy;
-            return d2 < radius2;
+            return dx * dx + dy * dy < radius2;
         } else {
             //proj_B(A) = (dot / delta_mag)
             //We have a right triangle A, proj_B(A), norm_B(A)
-            float norm = dx * dx + dy * dy - dot * dot / delta_mag2;
-            return norm < radius2;
+            return dx * dx + dy * dy - dot * dot / delta_mag2 < radius2;
         }
     }
 
@@ -354,47 +505,107 @@ public static class CollisionMath {
     public static readonly ExFunction pointInCircle = ExFunction.Wrap(t, "PointInCircle", new[] {ExUtils.tv2, ExUtils.tcc});
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [UsedImplicitly]
     public static bool PointInRect(Vector2 pt, CRect rect) {
         pt.x -= rect.x;
         pt.y -= rect.y;
         float px = rect.cos_rot * pt.x + rect.sin_rot * pt.y;
         pt.y = rect.cos_rot * pt.y - rect.sin_rot * pt.x;
-        if (px < 0) {
-            px *= -1;
-        }
-        if (pt.y < 0) {
-            pt.y *= -1;
-        }
+        if (px < 0) px *= -1;
+        if (pt.y < 0) pt.y *= -1;
         return px < rect.halfW && pt.y < rect.halfH;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool CircleInRect(Vector2 pt, float radius, CRect rect) {
-        pt.x -= rect.x;
-        pt.y -= rect.y;
-        float px = rect.cos_rot * pt.x + rect.sin_rot * pt.y;
-        pt.y = rect.cos_rot * pt.y - rect.sin_rot * pt.x;
-        if (px < 0) {
-            px *= -1;
-        }
-        if (pt.y < 0) {
-            pt.y *= -1;
-        }
-        return px + radius < rect.halfW && pt.y + radius < rect.halfH;
+    public static bool CircleInRect(float x, float y, float radius, CRect rect) {
+        x -= rect.x;
+        y -= rect.y;
+        float px = rect.cos_rot * x + rect.sin_rot * y;
+        y = rect.cos_rot * y - rect.sin_rot * x;
+        if (px < 0) px *= -1;
+        if (y < 0) y *= -1;
+        return px + radius < rect.halfW && y + radius < rect.halfH;
     }
-    public static readonly ExFunction pointInRect = ExFunction.Wrap(t, "PointInRect", new[] {ExUtils.tv2, ExUtils.tcr});
+    public static readonly ExFunction pointInRect = ExFunction.Wrap(t, "PointInRect", ExUtils.tv2, ExUtils.tcr);
    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool CircleOnAABB(in AABB rect, in float x, in float y, in float rad) {
-        float dx = x - rect.x;
-        float dy = y - rect.y;
+    public static bool CircleOnAABB(in AABB aabb, in float x, in float y, in float rad) {
+        float dx = x - aabb.x;
+        float dy = y - aabb.y;
         //Inlined absolutes are much faster
         if (dx < 0) dx *= -1;
         if (dy < 0) dy *= -1;
-        dx -= rect.rx;
-        dy -= rect.ry;
+        dx -= aabb.halfW;
+        dy -= aabb.halfH;
         return dx < rad && 
                dy < rad && 
                (dx < 0 || dy < 0 || dx * dx + dy * dy < rad * rad);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool AABBOnAABB(in AABB rect1, in AABB rect2) {
+        var dx = rect1.x - rect2.x;
+        var dy = rect1.y - rect2.y;
+        if (dx < 0) dx *= -1;
+        if (dy < 0) dy *= -1;
+        return dx < rect1.halfW + rect2.halfW && dy < rect1.halfH + rect2.halfH;
+    }
+
+    public static bool RectOnAABB(in AABB aabb, in Vector2 rLoc, in Vector2 rHalfDim, in Vector2 rRot) {
+        var dx = rLoc.x - aabb.x;
+        var dy = rLoc.y - aabb.y;
+        float rotx, roty;
+        if (dx < 0) {
+            dx = -dx - aabb.halfW;
+            rotx = -rRot.x;
+        } else {
+            dx = dx - aabb.halfW;
+            rotx = rRot.x;
+        }
+        if (dy < 0) {
+            dy = -dy - aabb.halfH;
+            roty = -rRot.y;
+        } else {
+            dy = dy - aabb.halfH;
+            roty = rRot.y;
+        }
+        //Restrict the rect rotation to (-90,+90)
+        if (rotx < 0) {
+            rotx = -rotx;
+            roty = -roty;
+        }
+        //The rect has been reflected to be above+to the right of the AABB.
+        // dx,dy are the distance of the rect center from the top-right corner of the AABB.
+        
+        if (dx < 0 && dy < 0)
+            //Rect's center is inside the AABB.
+            return true;
+        
+        float rcx = rotx * rHalfDim.x, rsy = roty * rHalfDim.y, rcy = rotx * rHalfDim.y, rsx = roty * rHalfDim.x;
+        //Bottom left corner: (dx,dy) + rotate(-rw, -rh)
+        var bx = dx - rcx + rsy;
+        var by = dy - rcy - rsx;
+        if (bx < 0 && by < 0)
+            return true;
+        
+        if (roty > 0) {
+            //Rect has a positive rotation, so its left wall is the closest wall to the AABB.
+            //Top left corner: (dx,dy) + rotate(-rw, rh)
+            var tx = dx - rcx - rsy;
+            var ty = dy + rcy - rsx;
+            if (tx < 0 && ty < 0)
+                return true;
+            return SegmentProjectToRectSquareDistance(in bx, in by, in tx, in ty, -aabb.halfW, -aabb.halfH, aabb.halfW,
+                aabb.halfH) <= 0;
+        } else {
+            //Rect has a negative rotation, so its bottom wall is the closest wall to the AABB.
+            //Bottom right corner: (dx,dy) + rotate(rw, -rh)
+            var tx = dx + rcx + rsy;
+            var ty = dy - rcy + rsx;
+            if (tx < 0 && ty < 0)
+                return true;
+            return SegmentProjectToRectSquareDistance(in bx, in by, in tx, in ty, -aabb.halfW, -aabb.halfH, aabb.halfW,
+                aabb.halfH) <= 0;
+        }
     }
 
     /// <summary>
@@ -438,33 +649,33 @@ public static class CollisionMath {
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool CircleOnRect(in float cx, in float cy, in float cRad, in float x, in float y, in float rectHalfX, in float rectHalfY, 
+    public static bool CircleOnRect(in float cx, in float cy, in float cRad, in float rectX, in float rectY, in float rectHalfWidth, in float rectHalfHeight, 
         in float diag2, in float scale, in float cos_rot, in float sin_rot) {
-        var dx = (cx - x) / scale;
-        var dy = (cy - y) / scale;
+        var dx = (cx - rectX) / scale;
+        var dy = (cy - rectY) / scale;
         //Early exit condition: ||src -> target||^2 > 2*(diag^2 + Lrad^2)
         //The extra 2 is because 2(x^2+y^2) is an upper bound for (x+y)^2.
         if (dx * dx + dy * dy > 2f * (diag2 + cRad * cRad)) return false;
         //First DErotate the delta vector and get its absolutes. Note we use -sin_rot
-        //Store delta vector in Rect for efficiency
         float _dx = cos_rot * dx + sin_rot * dy;
         dy = cos_rot * dy - sin_rot * dx;
         dx = _dx;
         //Inlined absolutes are much faster
         if (dx < 0) dx *= -1;
         if (dy < 0) dy *= -1;
+        
         //Then we are in one of three locations:
-        if (dy < rectHalfY) {
+        if (dy < rectHalfHeight) {
             //In "front" of the rectangle.
-            return dx - rectHalfX < cRad;
+            return dx - rectHalfWidth < cRad;
         }
-        if (dx < rectHalfX) {
+        if (dx < rectHalfWidth) {
             // On "top" of the rectangle
-            return dy - rectHalfY < cRad;
+            return dy - rectHalfHeight < cRad;
         }
         //In front and on top.
-        dx -= rectHalfX;
-        dy -= rectHalfY;
+        dx -= rectHalfWidth;
+        dy -= rectHalfHeight;
         return dx * dx + dy * dy < cRad * cRad;
     }
     

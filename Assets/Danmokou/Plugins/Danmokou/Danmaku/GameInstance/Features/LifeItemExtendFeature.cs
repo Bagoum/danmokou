@@ -49,7 +49,7 @@ public class LifeItemFeature : BaseInstanceFeature, ILifeItemFeature {
             f.OnItemLife(delta);
     }
 
-    public void OnContinue() {
+    public void OnContinueOrCheckpoint() {
         nextItemLifeIndex = 0;
         LifeItems.Value = 0;
     }

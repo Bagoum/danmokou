@@ -408,6 +408,13 @@ public class TEx {
         Func<TEx<T1>, TEx<T2>, TEx<T3>, TEx<T4>, TEx<T5>, Ex> resolver) =>
         ResolveCopy(x => resolver(x[0], x[1], x[2], x[3], x[4]), t1, t2, t3, t4, t5);
     
+    public static Ex Resolve<T1,T2,T3,T4,T5,T6>(TEx<T1> t1, TEx<T2> t2, TEx<T3> t3, TEx<T4> t4, TEx<T5> t5, 
+        TEx<T6> t6, Func<TEx<T1>, TEx<T2>, TEx<T3>, TEx<T4>, TEx<T5>, TEx<T6>, Ex> resolver) =>
+        ResolveCopy(x => resolver(x[0], x[1], x[2], x[3], x[4], x[5]), t1, t2, t3, t4, t5, t6);
+    public static Ex Resolve<T1,T2,T3,T4,T5,T6,T7>(TEx<T1> t1, TEx<T2> t2, TEx<T3> t3, TEx<T4> t4, TEx<T5> t5, 
+        TEx<T6> t6, TEx<T7> t7, Func<TEx<T1>, TEx<T2>, TEx<T3>, TEx<T4>, TEx<T5>, TEx<T6>, TEx<T7>, Ex> resolver) =>
+        ResolveCopy(x => resolver(x[0], x[1], x[2], x[3], x[4], x[5], x[6]), t1, t2, t3, t4, t5, t6, t7);
+    
     public static bool RequiresCopyOnRepeat(Expression e) => !(
         e.NodeType == ExpressionType.Parameter ||
         e.NodeType == ExpressionType.Constant ||

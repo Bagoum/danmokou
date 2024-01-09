@@ -16,26 +16,25 @@ MonoBehaviour:
   mainMenu: {fileID: 11400000, guid: ea5109e5a9d148f4db1c02b23d76ec2a, type: 2}
   defaultUIFrame: {fileID: 21300000, guid: fd60a7ae3ce4be640b9b311d9d70969e, type: 3}
   unitScene: {fileID: 0}
-  defaultTransition: {fileID: 11400000, guid: 1c9c24ebebfcd504d9bcf96bbaa75e90, type: 2}
+  defaultTransition: {fileID: 11400000, guid: 5cf967b6e8cf9f141876d5c6e3b87aee, type: 2}
   dialogue: []
-  bossMetadata: []
+  bossMetadata:
+  - {fileID: 11400000, guid: fb4bc53fe63e51245969c3d038896906, type: 2}
+  - {fileID: 11400000, guid: da98fea396a10164e9fff24b7e5bf5c8, type: 2}
   tracks:
-  - {fileID: 11400000, guid: 9d9586bf58042744aa6b8ed2c3c14827, type: 2}
-  - {fileID: 11400000, guid: ee23558615347934da7e51454294e0f9, type: 2}
-  - {fileID: 11400000, guid: 2196cac1dd0c01c4ba573d37fa5c6194, type: 2}
-  - {fileID: 11400000, guid: 57b44994773542d49b225e98987df8dc, type: 2}
-  - {fileID: 11400000, guid: eb40e118c5ff73348989f8197c60fb8e, type: 2}
-  - {fileID: 11400000, guid: 95a55accaa086aa4798d46640aa19ac8, type: 2}
-  - {fileID: 11400000, guid: b6b52c8aa3d85e84f9ce61a80ac13ab0, type: 2}
+  - {fileID: 11400000, guid: 9bbb09ba1e8200344a171f1ed922cf3d, type: 2}
+  - {fileID: 11400000, guid: 382ec245c11a07b428a083fbb676554f, type: 2}
+  - {fileID: 11400000, guid: 005bedf27db989a47889d70dc1518900, type: 2}
   items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
   prefabReferences: {fileID: 11400000, guid: 842bcc7c616103e4c9880c49f9735bb4, type: 2}
-  suzunoyaReferences: {fileID: 11400000, guid: a936563f4e58b294db033ff8ee6be6f8, type: 2}
+  suzunoyaReferences: {fileID: 11400000, guid: 8964944bb54f5434e8104e71ceab0731, type: 2}
   advReferences: {fileID: 0}
   uxmlDefaults: {fileID: 11400000, guid: b4213b3830762944fbcb9250a4b73463, type: 2}
   SFX:
   - {fileID: 11400000, guid: 2765638c24dcd6f4684c2acbc07800c4, type: 2}
   summonables:
   - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
+  - {fileID: 11400000, guid: 426d696a644b0f54d95990d794ca1427, type: 2}
   fileStateMachines: []
   licenses:
   - name: Binary

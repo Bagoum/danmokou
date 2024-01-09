@@ -1,6 +1,9 @@
-﻿using Danmokou.Achievements;
+﻿using System;
+using System.Collections.Generic;
+using Danmokou.Achievements;
 using Danmokou.Core.DInput;
 using Danmokou.Scriptables;
+using Danmokou.Services;
 using UnityEngine;
 
 namespace Danmokou {
@@ -23,8 +26,13 @@ public abstract class GameDef : ScriptableObject, IGameDef {
     
     public virtual void ApplyConfigurations() { }
     
-    public virtual (RebindableInputBinding[] kbm, RebindableInputBinding[] controller) GetRebindableControls() =>
+    public virtual (IEnumerable<RebindableInputBinding> kbm, IEnumerable<RebindableInputBinding> controller) GetRebindableControls() =>
         (InputSettings.i.KBMBindings, InputSettings.i.ControllerBindings);
+
+    public virtual FrameInput RecordReplayFrame() =>
+        throw new NotImplementedException($"The game {Key} does not support recording replays, because no replay input recording is defined");
+    public virtual IInputSource CreateReplayInputSource(ReplayPlayer input) =>
+        throw new NotImplementedException($"The game {Key} does not support replaying replays, because no replay input handling is defined");
 }
 
 public interface IGameDef {
@@ -46,6 +54,16 @@ public interface IGameDef {
     /// Get the list of controls that can be rebound from the controls menu.
     /// </summary>
     /// <returns></returns>
-    (RebindableInputBinding[] kbm, RebindableInputBinding[] controller) GetRebindableControls();
+    (IEnumerable<RebindableInputBinding> kbm, IEnumerable<RebindableInputBinding> controller) GetRebindableControls();
+
+    /// <summary>
+    /// Record all relevant game input into a replay frame.
+    /// </summary>
+    FrameInput RecordReplayFrame();
+    
+    /// <summary>
+    /// Create an input source (such as <see cref="StandardDanmakuInputExtractor"/>) from a replay provider.
+    /// </summary>
+    IInputSource CreateReplayInputSource(ReplayPlayer input);
 }
 }

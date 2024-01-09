@@ -210,7 +210,9 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             path.Update(in lifetime, ref bpi, out nextDirectionalDelta, in updateStagger);
             nextTrueDelta = nextDirectionalDelta;
         }
-        bounds = new AABB(minX, maxX, minY, maxY, path.rootPos);
+        bounds = new AABB(minX, maxX, minY, maxY);
+        if (path.HasMovingRotation)
+            bounds = bounds.Maxify();
         for (int iw = 0; iw < startP; ++iw) {
             centers[iw] = centers[startP];
         }
@@ -283,7 +285,9 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                 path.Update(in lifetime, ref bpi, out nextDirectionalDelta, in updateStagger);
                 nextTrueDelta = nextDirectionalDelta;
             }
-            bounds = new AABB(minX, maxX, minY, maxY, path.rootPos);
+            bounds = new AABB(minX, maxX, minY, maxY);
+            if (path.HasMovingRotation)
+                bounds = bounds.Maxify();
             for (int iw = 0; iw < startP; ++iw) {
                 centers[iw] = centers[startP];
                 vertsPtr[iw] = vertsPtr[startP];
@@ -316,7 +320,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private const float BACKSTEP = 2f;
     
     public bool ComputeCircleCollision(Vector2 laserLoc, float cos, float sin, Vector2 location, float radius, out int segment, out Vector2 collisionLocation) {
-        if (CollisionMath.CircleOnAABB(in bounds, in location.x, in location.y, radius + scaledLineRadius)
+        if (CollisionMath.CircleOnAABB(in bounds, location.x - laserLoc.x, location.y - laserLoc.y, radius + scaledLineRadius)
             && CollisionMath.CircleOnSegments(location, radius, laserLoc, centers, 0, 1, maxCollisionLength, 
                 scaledLineRadius, cos, sin, out segment)) {
             collisionLocation = laserLoc + centers[segment];
@@ -327,9 +331,24 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             return false;
         }
     }
+    public bool ComputeRectCollision(Vector2 laserLoc, float cos, float sin, Vector2 rLoc, Vector2 rHalfDim, Vector2 rRot, out int segment, out Vector2 collisionLocation) {
+        Profiler.BeginSample("Compute rect collision");
+        if (CollisionMath.RectOnAABB(in bounds, rLoc - laserLoc, in rHalfDim, in rRot) &&
+            CollisionMath.RectOnSegments(in rLoc, in rHalfDim, in rRot, in laserLoc, in centers, 0, 1, 
+                in maxCollisionLength, in scaledLineRadius, in cos, in sin, out segment)) {
+            collisionLocation = laserLoc + centers[segment];
+            Profiler.EndSample();
+            return true;
+        } else {
+            segment = 0;
+            collisionLocation = Vector2.zero;
+            Profiler.EndSample();
+            return false;
+        }
+    }
     
     public CollisionResult ComputeGrazeCollision(Vector2 laserLoc, float cos, float sin, Hurtbox hb, out int segment, out Vector2 collisionLocation) {
-        if (CollisionMath.CircleOnAABB(in bounds, in hb.x, in hb.y, hb.grazeRadius + scaledLineRadius)) {
+        if (CollisionMath.CircleOnAABB(in bounds, hb.x - laserLoc.x, hb.y - laserLoc.y, hb.grazeRadius + scaledLineRadius)) {
             // 10000 is a number that is big enough to usually ensure only one collision iteration for simple lasers.
             // If it's not big enough, then you'll have two collision iteration, which is fine.
             var coll = CollisionMath.GrazeCircleOnSegments(in hb, laserLoc, centers, 0,
@@ -344,7 +363,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             return CollisionMath.NoCollision;
         }
     }
-    
+
+    private List<(IEnemyLaserCollisionReceiver, CollisionResult, int, Vector2)>? npReceivers;
     public void DoRegularUpdateCollision(bool collisionActive) {
         Laser.IsColliding = false;
         if (!collisionActive)
@@ -369,14 +389,42 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                     }
                 }
             } else {
+                //Need some extra functionality to make sure the player doesn't get hit on frame 0
+                // if they are hiding behind a wall and a nonpiercing laser is fired.
+                if (nonpiercing) npReceivers ??= new();
+                IEnemyLaserCollisionReceiver? smallestReceiver = null;
                 var collidees = ServiceLocator.FindAll<IEnemyLaserCollisionReceiver>();
                 for (int ic = 0; ic < collidees.Count; ++ic) {
-                    if (collidees.GetIfExistsAt(ic, out var receiver) &&
-                        receiver.Process(this, loc, cos, sin, out var segment).collide) {
+                    if (collidees.GetIfExistsAt(ic, out var receiver)) {
+                        var coll = receiver.Check(this, loc, cos, sin, out var segment, out var collLoc);
+                        if (nonpiercing) {
+                            if (coll.collide && segment < smallestCollisionLength) {
+                                smallestCollisionLength = segment + 1;
+                                smallestReceiver = receiver;
+                            }
+                            if (coll.collide || coll.graze)
+                                npReceivers!.Add((receiver, coll, segment, collLoc));
+                        } else {
+                            receiver.ProcessActual(this, loc, cos, sin, coll, collLoc);
+                            Laser.IsColliding = true;
+                            Laser.myStyle.IterateCollideControls(Laser);
+                            smallestCollisionLength = Math.Min(smallestCollisionLength, segment + 1);
+                        }
+                    }
+                }
+                if (nonpiercing) {
+                    if (smallestReceiver != null) {
                         Laser.IsColliding = true;
                         Laser.myStyle.IterateCollideControls(Laser);
-                        smallestCollisionLength = Math.Min(smallestCollisionLength, segment + 1);
                     }
+                    for (int ii = 0; ii < npReceivers!.Count; ++ii) {
+                        var (recv, coll, segment, collLoc) = npReceivers[ii];
+                        if (recv == smallestReceiver)
+                            recv.ProcessActual(this, loc, cos, sin, coll, collLoc);
+                        else if (coll.graze && segment < smallestCollisionLength)
+                            recv.ProcessActual(this, loc, cos, sin, new(false, true), collLoc);
+                    }
+                    npReceivers.Clear();
                 }
             }
             if (nonpiercing)
@@ -457,13 +505,16 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 #if UNITY_EDITOR
     public unsafe void Draw() {
         Handles.color = Color.cyan;
-        GenericColliderInfo.DrawGizmosForSegments(centers, 0, 1, centers.Length, locater.GlobalPosition(), scaledLineRadius, 0);
+        Vector3 rp = locater.GlobalPosition();
+        GenericColliderInfo.DrawGizmosForSegments(centers, 0, 1, centers.Length, rp, scaledLineRadius, 0);
         
         Handles.color = Color.red;
-        Vector3 rp = locater.GlobalPosition();
         for (int ii = 0; ii < texRptWidth + 1; ++ii) {
             Handles.DrawWireDisc(vertsPtr[ii].loc + rp, Vector3.forward, 0.01f);
         }
+        Handles.DrawSolidRectangleWithOutline(
+            new Rect(rp.x + bounds.x - bounds.halfW, rp.y + bounds.y - bounds.halfH, bounds.halfW * 2, bounds.halfH * 2)
+            , Color.clear, Color.green);
         Handles.color = Color.yellow;
         for (int ii = 0; ii < texRptWidth + 1; ++ii) {
             Handles.DrawWireDisc(vertsPtr[ii + texRptWidth + 1].loc + rp, Vector3.forward, 0.01f);

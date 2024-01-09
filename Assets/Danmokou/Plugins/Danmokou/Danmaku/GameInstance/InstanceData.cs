@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reactive;
 using System.Reactive.Subjects;
+using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Events;
@@ -37,7 +38,6 @@ public class InstanceData {
     public readonly Event<ILowInstanceRequest> PracticeSuccess = new();
     
     #endregion
-    public Suzunoya.Data.InstanceData VNData { get; }
     public DifficultySettings Difficulty { get; }
 
     /* "Features" is an architecture by which game mechanics
@@ -84,26 +84,27 @@ public class InstanceData {
     /// <inheritdoc cref="IMeterFeature"/>
     public IMeterFeature MeterF { get; }
     
-    public Evented<long> Graze { get; }
     public readonly InstanceMode mode;
+    
     /// <summary>
     /// Set to false after eg. a game is completed, but before starting a new game
     /// If the mode is null or modeActive is false, the instance will not update
     /// </summary>
     public bool InstanceActive { get; private set; } = true;
-    public void Deactivate() {
+    public void Deactivate(bool isProperCompletion) {
         if (InstanceActive) {
             InstanceActive = false;
             Request?.Cancel();
-            Replay?.Cancel();
+            if (isProperCompletion) {
+                Replay?.TryFinish();
+            } else
+                Replay?.Cancel();
         }
     }
     
     public ActiveTeamConfig? TeamCfg { get; private set; }
 
     public ActiveTeamConfig GetOrSetTeam(ActiveTeamConfig deflt) => TeamCfg ??= deflt;
-
-    public CardHistory CardHistory { get; }
 
     /// <summary>
     /// If this is true, then time-based features (like faith or combo) should not tick.
@@ -113,19 +114,19 @@ public class InstanceData {
     private ICancellee? CurrentBossCT { get; set; }
 
     /// <summary>
-    /// Only present for campaign-type games
-    /// </summary>
-    private readonly CampaignConfig? campaign;
-    /// <summary>
     /// Present for all games, including "null_campaign" default for unscoped games
     /// </summary>
     public readonly string campaignKey;
     public InstanceRequest? Request { get; }
     private readonly Dictionary<BossPracticeRequestKey, (int, int)> PreviousSpellHistory;
-    public ReplayActor? Replay { get; }
     
-    //Miscellaneous stats
+    #region DynamicData
+
+    public Suzunoya.Data.InstanceData VNData { get; }
+    public CardHistory CardHistory { get; }
     public List<BossConfig> BossesEncountered { get; } = new();
+    public ReplayActor? Replay { get; }
+    public Evented<long> Graze { get; }
     public int EnemiesDestroyed { get; private set; }
     public int TotalFrames { get; private set; }
     public int PlayerActiveFrames { get; private set; }
@@ -133,6 +134,16 @@ public class InstanceData {
     public int BombsUsed { get; set; }
     public int SubshotSwitches { get; set; }
     public int OneUpItemsCollected { get; private set; }
+    
+    #endregion
+    
+    #region Checkpoint
+
+    public Checkpoint? LastCheckpoint { get; private set; }
+    private readonly OverrideEvented<(IStageConfig, Action<Checkpoint>)?> checkpointHandler = new(null);
+    public bool CanRestartCheckpoint => LastCheckpoint != null && checkpointHandler.Value != null;
+    
+    #endregion
     
     #region ComputedProperties
 
@@ -159,7 +170,6 @@ public class InstanceData {
         this.mode = mode;
         this.Difficulty = req?.metadata.difficulty ?? GameManagement.defaultDifficulty;
         Difficulty.FixVariables();
-        campaign = req?.lowerRequest is CampaignRequest cr ? cr.campaign.campaign : null;
         campaignKey = req?.lowerRequest.Campaign.Key ?? "null_campaign";
         TeamCfg = req?.metadata.team != null ? new ActiveTeamConfig(req.metadata.team) : null;
         Graze = new Evented<long>(0);
@@ -188,31 +198,10 @@ public class InstanceData {
     }
 
     public void SwapLifeScore(long score, bool usePIVMultiplier) {
-        AddLives(-1, false);
+        BasicF.AddLives(-1, false);
         if (usePIVMultiplier) score = (long) (score * ScoreF.PIV);
         ScoreF.AddScore(score);
         LifeSwappedForScore.OnNext(default);
-    }
-    public void AddLives(int delta, bool asHit = true) {
-        BasicF.AddLives(delta, asHit);
-        if (BasicF.Lives == 0) {
-            //Record failure
-            if (Request?.Saveable == true) {
-                //Special-case boss practice handling
-                if (Request.lowerRequest is BossPracticeRequest bpr) {
-                    CardHistory.Add(new CardRecord() {
-                        campaign = bpr.boss.campaign.Key,
-                        boss = bpr.boss.boss.key,
-                        phase = bpr.phase.index,
-                        stars = 0,
-                        hits = 1,
-                        method = null
-                    });
-                }
-                SaveData.r.RecordGame(new InstanceRecord(Request, this, false));
-            }
-            GameOver.OnNext(default);
-        }
     }
 
     /// <summary>
@@ -225,11 +214,6 @@ public class InstanceData {
         foreach (var f in Features)
             f.OnPlayerFrame(Lenient, state);
     }
-    
-    #region Meter
-
-    
-    #endregion
 
     public void AddGraze(int delta) {
         Graze.Value += delta;
@@ -304,6 +288,56 @@ public class InstanceData {
             CurrentBoss = null;
             CurrentBossCT = null;
         } else Logs.UnityError("You tried to close a boss section when no boss exists.");
+    }
+
+    /// <summary>
+    /// Restarts the game instance from the beginning (same information, new random seed).
+    /// </summary>
+    public bool Restart() {
+        if (Request == null) throw new Exception("No game instance found to restart");
+        Request.Cancel();
+        InstanceRequest.InstanceRestarted.OnNext(Request);
+        return Request.Copy().Run();
+    }
+
+    public IDisposable SetStageCheckpointCancel(IStageConfig stage, Action<Checkpoint> canceller) {
+        if (Replay is ReplayPlayer) return NullDisposable.Default;
+        return checkpointHandler.AddConst((stage, canceller));
+    }
+
+    public void UpdateStageCheckpoint(int checkpointPhase, bool allowBossCheckpoints) {
+        if (Replay is ReplayPlayer) return;
+        if (checkpointHandler.Value is { Item1: { } stage }) {
+            Logs.Log($"Setting a checkpoint at phase {checkpointPhase} (this is a stageboss: {allowBossCheckpoints})");
+            LastCheckpoint = new(stage, checkpointPhase, allowBossCheckpoints);
+        } else
+            throw new Exception("There is no active stage handler on which to update a checkpoint.");
+    }
+
+    public void UpdateStageNoCheckpoint() {
+        if (Replay is ReplayPlayer) return;
+        if (LastCheckpoint != null)
+            LastCheckpoint = LastCheckpoint with { AllowBossCheckpoint = false };
+    }
+
+    public void UpdateBossCheckpoint(BossConfig boss, int checkpointPhase) {
+        if (Replay is ReplayPlayer) return;
+        if (LastCheckpoint != null) {
+            Logs.Log($"Setting a boss checkpoint ({boss.key}) at phase {checkpointPhase} " +
+                     $"(stage phase: {LastCheckpoint.StagePhase})");
+            LastCheckpoint = LastCheckpoint.SetBossCheckpoint(boss, checkpointPhase);
+        } else
+            throw new Exception("Could not set a boss checkpoint because a level checkpoint has not yet been set.");
+    }
+
+    public void RestartFromCheckpoint() {
+        if (CanRestartCheckpoint && checkpointHandler.Value is { Item2: {} cb}) {
+            Logs.Log($"Restarting from checkpoint: {LastCheckpoint}");
+            Replay?.Cancel();
+            foreach (var f in Features)
+                f.OnContinueOrCheckpoint();
+            cb(LastCheckpoint!);
+        } else Logs.UnityError("No checkpoint is recorded, but you tried to restart from a checkpoint.");
     }
 
     public void Dispose() {

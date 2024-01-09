@@ -320,17 +320,17 @@ public static class SaveData {
         }
         private static string ReplayFilename(Replay r) => REPLAYS_DIR + r.Metadata.AsFilename;
 
-        private static InputManager.FrameInput[] AssertReplayLength(InputManager.FrameInput[] frames) {
+        private static FrameInput[] AssertReplayLength(FrameInput[] frames) {
             if (frames.Length == 0) throw new Exception("Loaded a replay with zero length");
             return frames;
         }
-        private static Func<InputManager.FrameInput[]> LoadReplayFrames(string file) => () =>
-            AssertReplayLength(ReadProtoCompressed<InputManager.FrameInput[]>(file + RFRAMEEXT) ?? throw new Exception($"Couldn't load replay from file {file}"));
+        private static Func<FrameInput[]> LoadReplayFrames(string file) => () =>
+            AssertReplayLength(ReadProtoCompressed<FrameInput[]>(file + RFRAMEEXT) ?? throw new Exception($"Couldn't load replay from file {file}"));
         
-        public static Func<InputManager.FrameInput[]> LoadReplayFrames(TextAsset file) => () =>
-            AssertReplayLength(ReadProtoCompressed<InputManager.FrameInput[]>(file) ?? throw new Exception($"Couldn't load replay from textAsset {file.name}"));
+        public static Func<FrameInput[]> LoadReplayFrames(TextAsset file) => () =>
+            AssertReplayLength(ReadProtoCompressed<FrameInput[]>(file) ?? throw new Exception($"Couldn't load replay from textAsset {file.name}"));
         
-        public static void SaveReplayFrames(string file, InputManager.FrameInput[] frames) =>
+        public static void SaveReplayFrames(string file, FrameInput[] frames) =>
             WriteProtoCompressed(file + RFRAMEEXT, frames);
 
     }

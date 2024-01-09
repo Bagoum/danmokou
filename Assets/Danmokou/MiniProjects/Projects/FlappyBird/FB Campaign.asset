@@ -16,11 +16,12 @@ MonoBehaviour:
   shortTitle: FlappyBird
   replayable: 1
   allowDialogueSkip: 1
-  startLives: 3
+  startLives: 6
   players:
   - {fileID: 11400000, guid: a3a6fa3a374af4d4eb6b30a6dadf2d7d, type: 2}
   stages:
   - {fileID: 11400000, guid: aac1573cd96b0bd45b367a63c9facec2, type: 2}
   practiceBosses:
-  - {fileID: 11400000, guid: 17201d06832c65444b4e2faa8c5666a4, type: 2}
+  - {fileID: 11400000, guid: fb4bc53fe63e51245969c3d038896906, type: 2}
+  - {fileID: 11400000, guid: da98fea396a10164e9fff24b7e5bf5c8, type: 2}
   endings: []

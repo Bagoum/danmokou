@@ -88,6 +88,8 @@ public class ControllerInputSource : IKeyedInputSource, IPrimaryInputSource {
         bomb = InputHandler.Trigger(Proxy(i.CSpecial), special);
         meter = InputHandler.Hold(Proxy(i.CSpecial), special);
         swap = InputHandler.Trigger(Proxy(i.CSwap), LocalizedStrings.Controls.swap);
+        fly = InputHandler.Trigger(Proxy(i.CFly), LocalizedStrings.Controls.fly);
+        slowFall = InputHandler.Trigger(Proxy(i.CSlowFall), LocalizedStrings.Controls.slowfall);
         pause = InputHandler.Trigger(Proxy(i.CPause), LocalizedStrings.Controls.pause);
         vnBacklogPause = InputHandler.Trigger(Proxy(i.CBacklog), backlog);
         uiConfirm = InputHandler.Trigger(Proxy(i.CConfirm), confirm);
@@ -105,6 +107,8 @@ public class ControllerInputSource : IKeyedInputSource, IPrimaryInputSource {
     public IInputHandler bomb { get; }
     public IInputHandler meter { get; }
     public IInputHandler swap { get; }
+    public IInputHandler fly { get; }
+    public IInputHandler slowFall { get; }
     public IInputHandler pause { get; }
     public IInputHandler vnBacklogPause { get; }
     public IInputHandler uiConfirm { get; }

@@ -31,6 +31,10 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "霊夢"))
 			{ ID = "players.reimu" };
 		
+		public static readonly LString sagume = new LText("Sagume",
+			(Locales.JP, "サグメ"))
+			{ ID = "players.sagume" };
+		
 		public static readonly LString shot_camera = new LText("Camera",
 			(Locales.JP, "カメラ"))
 			{ ID = "players.shot_camera" };
@@ -81,6 +85,9 @@ public static partial class LocalizedStrings {
 		public static readonly LString shot_reimu_laser = new LText("Youkai Exterminatifier",
 			(Locales.JP, "高効力の妖怪退治ショット"))
 			{ ID = "players.shot_reimu_laser" };
+		
+		public static readonly LString flappy_sagume_straight = new LText("Narrow")
+			{ ID = "players.flappy_sagume_straight" };
 		
 	}
 }

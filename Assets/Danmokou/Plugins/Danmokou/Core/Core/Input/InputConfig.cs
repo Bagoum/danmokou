@@ -108,6 +108,11 @@ public class InputConfig {
         new(special, new KBMKeyInputBinding(KeyCode.X), null);
     public RebindableInputBinding Swap { get; init; } = 
         new(swap, new KBMKeyInputBinding(KeyCode.Space), null);
+    
+    public RebindableInputBinding Fly { get; init; } = 
+        new(fly, new KBMKeyInputBinding(KeyCode.Space), null);
+    public RebindableInputBinding SlowFall { get; init; } = 
+        new(slowfall, new ShiftKeyBinding(), null);
 
     public RebindableInputBinding Left { get; init; } =
         new(left, new KBMKeyInputBinding(KeyCode.LeftArrow), new KBMKeyInputBinding(KeyCode.A));
@@ -165,6 +170,14 @@ public class InputConfig {
     public RebindableInputBinding CSwap { get; init; } = 
         //Y
         new(swap, new AnyControllerInputBinding.Key(KeyCode.JoystickButton3), null);
+    
+    public RebindableInputBinding CFly { get; init; } = 
+        //Y
+        new(fly, new AnyControllerInputBinding.Key(KeyCode.JoystickButton3), null);
+    
+    public RebindableInputBinding CSlowFall { get; init; } = 
+        //r2
+        new(slowfall, new AnyControllerInputBinding.Axis(ControllerAxis.Axis10, true), null);
 
     public RebindableInputBinding CLeft { get; init; } =
         new(left, LJoyX.Flip(), DPadX.Flip());
@@ -199,7 +212,7 @@ public class InputConfig {
         FocusHold,
         ShootHold,
         Special,
-        Swap,
+        Swap, Fly, SlowFall,
         Left, Right, Up, Down,
         Confirm, Back,
         Pause, SkipDialogue, Backlog
@@ -209,7 +222,7 @@ public class InputConfig {
         CFocusHold,
         CShootHold,
         CSpecial,
-        CSwap,
+        CSwap, CFly, CSlowFall,
         CLeft, CRight, CUp, CDown,
         CConfirm, CBack,
         CPause, CSkipDialogue, CBacklog

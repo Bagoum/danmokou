@@ -1,22 +1,38 @@
 <#> strict(comma)
 pattern({
-	#boss simp.kasen
+	boss simp.kasen
 })
 phase(0)
 	paction(0)
 		shift-phase-to(1)
+
 
 <!> type non `Pathers Example`
 <!> hp 10000
 phase 0
 	paction 0
         position 3 0
-        sync blocker <-3;:> gsr2 2 <;3:> { 
+        async pipe-* <8;:> gcr2 360 3 <> { 
             root zero 
             center
-        } summon tpnrot py sine(0, 1, t) stall {
-            rotate(30 * t)
+            color({ blue })
+            preloop {
+                rv2.ry =f rand(-3, 3)
+            }
+        } gsr2 2 <> {
+            p this
+        } summon tpnrot px(-2) stall {
+            rotate(180 * p)
         }
+///
+        sync gdlaser-red* <180> gsr2c 30 {
+            color { /w /b }
+        } laser(nroffset(pxy(cosine(12, 5.3, t) - 5.3, sine(12, 3.8, t))), 0.2, 20, {
+            #rotate(30, 10 * t)
+            dynamic(rvelocity(rotate(10 * &lt, pxy(1, 0.4 * sine(2, 1, t + &lt + 0.5 - cosine(4p, 1h, &lt))))))
+            length(15)
+            nonpiercing
+        })
 ///
         sync spikes <> gsr {
             root zero

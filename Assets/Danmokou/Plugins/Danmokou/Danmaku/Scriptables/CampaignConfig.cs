@@ -7,10 +7,12 @@ using BagoumLib;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.GameInstance;
+using Danmokou.Player;
 using Danmokou.Scenes;
 using Danmokou.SM;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Danmokou.Scriptables {
 public interface ICampaignMeta {
@@ -28,7 +30,12 @@ public abstract class BaseCampaignConfig : ScriptableObject, ICampaignMeta {
     public int? StartLives => startLives > 0 ? startLives : null;
     public ShipConfig[] players = null!;
     public StageConfig[] stages = null!;
-    public BossConfig[] practiceBosses = null!;
+    /// <summary>
+    /// All bosses used in this campaign. Set `BossConfig.practiceable` to whether or not they should appear
+    ///  in the practice menu.
+    /// </summary>
+    [FormerlySerializedAs("practiceBosses")] 
+    public BossConfig[] bosses = null!;
 
     public string Key => key;
     public bool Replayable => replayable;
@@ -36,10 +43,8 @@ public abstract class BaseCampaignConfig : ScriptableObject, ICampaignMeta {
 
     public abstract Task<InstanceRecord>? RunEntireCampaign(InstanceRequest req, SMAnalysis.AnalyzedCampaign c);
 
-    protected SceneLoading? LoadStageScene(InstanceRequest req, int index, out TaskCompletionSource<Unit> tcs) =>
-        LoadStageScene(req, stages[index], out tcs, index == 0);
-
-    protected SceneLoading? LoadStageScene(InstanceRequest req, IStageConfig stage, out TaskCompletionSource<Unit> tcs, bool doSetup = false) =>
+    protected SceneLoading? LoadStageScene(InstanceRequest req, IStageConfig stage, Checkpoint? checkpoint, 
+            out TaskCompletionSource<InstanceStepCompletion> tcs, bool doSetup = false) =>
         ServiceLocator.Find<ISceneIntermediary>().LoadScene(SceneRequest.TaskFromOnFinish(
             stage.Scene,
             SceneRequest.Reason.RUN_SEQUENCE,
@@ -47,17 +52,17 @@ public abstract class BaseCampaignConfig : ScriptableObject, ICampaignMeta {
             //Load stage state machine immediately after scene changes in order to minimize loading lag later
             () => _ = stage.StateMachine,
             () => ServiceLocator.Find<LevelController>()
-                .RunLevel(new(1, LevelController.LevelRunMethod.CONTINUE, stage, req.InstTracker)),
+                .RunLevel(new(1, LevelController.LevelRunMethod.CONTINUE, stage, req.InstTracker), checkpoint),
             out tcs).With(req.PreferredCameraTransition));
 
-    protected TaskCompletionSource<Unit> LoadStageSceneOrThrow(InstanceRequest req, IStageConfig stage) {
-        if (LoadStageScene(req, stage, out var tcs) is null)
+    protected TaskCompletionSource<InstanceStepCompletion> LoadStageSceneOrThrow(InstanceRequest req, IStageConfig stage, Checkpoint? checkpoint) {
+        if (LoadStageScene(req, stage, checkpoint, out var tcs) is null)
             throw new Exception($"Failed to load stage for campaign {Key}");
         return tcs;
     }
 
-    protected TaskCompletionSource<Unit> LoadStageSceneOrThrow(InstanceRequest req, int index) {
-        if (LoadStageScene(req, index, out var tcs) is null)
+    protected TaskCompletionSource<InstanceStepCompletion> LoadStageSceneOrThrow(InstanceRequest req, int index, Checkpoint? checkpoint) {
+        if (LoadStageScene(req, stages[index], checkpoint, out var tcs, doSetup: index == 0 && checkpoint is null) is null)
             throw new Exception($"Failed to load stage {index} for campaign {Key}");
         return tcs;
     }
@@ -74,6 +79,17 @@ public abstract class BaseCampaignConfig : ScriptableObject, ICampaignMeta {
 [CreateAssetMenu(menuName = "Data/Campaign Configuration")]
 public class CampaignConfig : BaseCampaignConfig {
     public EndingConfig[] endings = null!;
+
+    public bool HasOneShotConfig(out TeamConfig team) {
+        team = default;
+        if (players.Length != 1) return false;
+        if (players[0].shots2.Length != 1 || players[0].supports.Length != 1) return false;
+        if (players[0].shots2[0].shot.isMultiShot) return false;
+        team = new(0, Subshot.TYPE_D,
+            players[0].supports[0].ability,
+            (players[0], players[0].shots2[0].shot));
+        return true;
+    }
 
     public bool TryGetEnding(out EndingConfig ed) {
         ed = default!;
@@ -96,11 +112,26 @@ public class CampaignConfig : BaseCampaignConfig {
         // however it's basically impossible for the 0th stage call to fail,
         // so it's ok to throw an exception in such a case
         for (int ii = 0; ii < stages.Length; ++ii) {
-            await LoadStageSceneOrThrow(req, ii).Task;
+            for (Checkpoint? ch = null;;) {
+                switch (await LoadStageSceneOrThrow(req, ii, ch).Task) {
+                    case InstanceStepCompletion.Cancelled:
+                        Logs.Log($"Campaign {c.campaign.Key} was cancelled.", true, LogLevel.INFO);
+                        throw new OperationCanceledException();
+                    case InstanceStepCompletion.RestartCheckpoint restart:
+                        ch = restart.Checkpoint;
+                        ii = stages.IndexOf(restart.Checkpoint.Stage as StageConfig);
+                        break;
+                    default:
+                        goto next_stage;
+                }
+            }
+            next_stage: ;
             InstanceRequest.StageCompleted.OnNext((Key, ii));
         }
         if (TryGetEnding(out var ed)) {
-            await LoadStageSceneOrThrow(req, new EndcardStageConfig(ed.dialogueKey, c.Game.Endcard)).Task;
+            var blockRestart = req.CanRestartStage.AddConst(false);
+            await LoadStageSceneOrThrow(req, new EndcardStageConfig(ed.dialogueKey, c.Game.Endcard), null).Task;
+            blockRestart.Dispose();
             return FinishCampaign(req, ed.key);
         } else 
             return FinishCampaign(req);

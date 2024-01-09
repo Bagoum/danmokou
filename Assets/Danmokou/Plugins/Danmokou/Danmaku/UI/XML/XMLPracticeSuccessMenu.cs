@@ -24,12 +24,12 @@ public class XMLPracticeSuccessMenu : PausedGameplayMenu {
             ve.AddColumn();
         }, MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity };
         _ = new UIColumn(MainScreen, null,
-            new FuncNode(restart, GameManagement.Restart)
+            new FuncNode(full_restart, GameManagement.Instance.Restart)
                 {EnabledIf = (() => GameManagement.CanRestart)},
             new FuncNode(save_replay, () => ServiceLocator.Find<ISceneIntermediary>().LoadScene(
                 new SceneRequest(game!.ReplaySaveMenu,
                     SceneRequest.Reason.FINISH_RETURN))) {
-                EnabledIf = (() => GameManagement.Instance.Replay is ReplayRecorder),
+                EnabledIf = (() => GameManagement.Instance.Replay is ReplayRecorder { State: ReplayActorState.Finalized }),
                 VisibleIf = () => game != null
             },
             new FuncNode(to_menu, GameManagement.GoToMainMenu)) {

@@ -107,8 +107,11 @@ public partial class BehaviorEntity {
         }
 
         public void AddBulletControlEOF(BEHControl pc) => 
-            ETime.QueueEOFInvoke(() => (pc.priority == BulletControl.P_ON_COLLIDE ? onCollideControls : controls)
-                .AddPriority(pc, pc.priority));
+            ETime.QueueEOFInvoke(() => (pc.priority switch {
+                BulletControl.P_ON_COLLIDE => onCollideControls,
+                BulletControl.P_ON_DESTROY => onDestroyControls,
+                _ => controls
+            }).AddPriority(pc, pc.priority));
         
         public void PruneControls() {
             void Prune(DMCompactingArray<BEHControl> carr) {
@@ -121,14 +124,17 @@ public partial class BehaviorEntity {
             }
             Prune(controls);
             Prune(onCollideControls);
+            Prune(onDestroyControls);
         }
         public void ClearControls() {
             controls.Empty();
             onCollideControls.Empty();
+            onDestroyControls.Empty();
         }
 
         private readonly DMCompactingArray<BEHControl> controls = new(4);
         private readonly DMCompactingArray<BEHControl> onCollideControls = new(4);
+        private readonly DMCompactingArray<BEHControl> onDestroyControls = new(4);
 
         public void IterateControls(BehaviorEntity beh) {
             for (int ii = 0; ii < controls.Count && !beh.dying; ++ii) {
@@ -141,6 +147,13 @@ public partial class BehaviorEntity {
             for (int ii = 0; ii < onCollideControls.Count; ++ii) {
                 if (!onCollideControls[ii].cT.Cancelled)
                     onCollideControls[ii].action(beh, onCollideControls[ii].cT);
+            }
+        }
+        
+        public void IterateDestroyControls(BehaviorEntity beh) {
+            for (int ii = 0; ii < onDestroyControls.Count; ++ii) {
+                if (!onDestroyControls[ii].cT.Cancelled)
+                    onDestroyControls[ii].action(beh, onDestroyControls[ii].cT);
             }
         }
     }
@@ -242,6 +255,17 @@ public partial class BehaviorEntity {
         public static cBEHControl Cull(Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) b.InvokeCull();
+            }, BulletControl.P_CULL);
+        }
+        
+        /// <summary>
+        /// Destroy bullets or enemies, while spawning their death effects and running on-destroy controls.
+        /// </summary>
+        /// <param name="cond">Filter condition</param>
+        /// <returns></returns>
+        public static cBEHControl Poof(Pred cond) {
+            return new((b, cT) => {
+                if (cond(b.rBPI)) b.Poof();
             }, BulletControl.P_CULL);
         }
         
@@ -453,6 +477,18 @@ public partial class BehaviorEntity {
                 _ = exec.RunExternalSM(SMRunner.Cull(target, cT, gcx));
             }
         }, BulletControl.P_ON_COLLIDE);
+        
+        /// <summary>
+        /// When the entity is destroyed, if the condition is true, spawn an iNode at the position and run an SM on it.
+        /// <br/>This only works on enemies and other destructible entities.
+        /// </summary>
+        public static cBEHControl OnDestroy(Pred cond, StateMachine target) => new((b, cT) => {
+            if (cond(b.rBPI)) {
+                var exec = b.GetINode("f-destroy-triggered", null);
+                using var gcx = b.rBPI.ctx.RevertToGCX(exec);
+                _ = exec.RunExternalSM(SMRunner.Cull(target, cT, gcx));
+            }
+        }, BulletControl.P_ON_DESTROY);
     }
     
     public static void ControlBullets(Pred persist, StyleSelector styles, cBEHControl control, ICancellee cT) {

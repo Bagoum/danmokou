@@ -221,6 +221,7 @@ public struct LaserMovement {
     public Vector2 rootPos;
     private readonly Vector2 simpleDir;
     private readonly BPY? rotation;
+    public bool HasMovingRotation => rotation != null;
     public float flipX;
     public float flipY;
     private float tflipX;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Mathematics;
 using Danmokou.Behavior;
@@ -14,15 +15,62 @@ using UnityEngine;
 using UnityEngine.Profiling;
 
 namespace Danmokou.Behavior.Display {
-public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependent {
-    public enum RotationMethod {
+[Serializable]
+public class RotationMethod {
+    public enum Strategy {
         Manual,
         InVelocityDirection,
-        VelocityDirectionPlus90,
-        VelocityDirectionMinus90
+        LeanByVelocity,
     }
 
-    public RotationMethod rotationMethod;
+    public Strategy type = Strategy.Manual;
+    public ManualConfig Manual = new();
+    public InVelocityDirectionConfig InVelocityDirection = new();
+    public LeanByVelocityConfig LeanByVelocity = new();
+
+    public RotationConfig Active => type switch {
+        Strategy.Manual => Manual,
+        Strategy.InVelocityDirection => InVelocityDirection,
+        _ => LeanByVelocity
+    };
+
+    public abstract class RotationConfig {
+        public abstract float? GetRotation(bool isFlipX, Vector2 delta);
+    }
+
+    [Serializable]
+    public class ManualConfig : RotationConfig {
+        public override float? GetRotation(bool isFlipX, Vector2 delta) => null;
+    }
+
+    [Serializable]
+    public class InVelocityDirectionConfig : RotationConfig {
+        public float offset = 0f;
+        public override float? GetRotation(bool isFlipX, Vector2 delta) {
+            var rot = BMath.radDeg * (float)Math.Atan2(delta.y, delta.x) + offset;
+            if (isFlipX)
+                return rot - 180;
+            return rot;
+        }
+    }
+
+    [Serializable]
+    public class LeanByVelocityConfig : RotationConfig {
+        public bool xAxis = true;
+        public float multiplier = 8;
+        public float rotationOffset = 0;
+        public Vector2 rotationLimit = new(-30, 30);
+            
+        public override float? GetRotation(bool isFlipX, Vector2 delta) {
+            var velocity = (xAxis ? delta.x : delta.y) / ETime.FRAME_TIME;
+            return M.Clamp(rotationLimit.x, rotationLimit.y, velocity * multiplier + rotationOffset);
+        }
+    }
+}
+
+public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependent {
+
+    public RotationMethod rotationMethod = new();
 
     protected bool flipX;
     protected bool flipY;
@@ -42,6 +90,7 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
     public RString rotator = null!;
     private BPY? rotatorF;
     private float lastScalerValue = 1f;
+    private Vector3 initialScale;
     private Vector3 lastScale = Vector3.one;
 
     protected virtual void Awake() {
@@ -50,6 +99,7 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
 
     public virtual void LinkAndReset(BehaviorEntity parent) {
         tr = transform;
+        initialScale = lastScale = tr.localScale;
         beh = parent;
         beh.LinkDependentUpdater(this);
         pb = CreatePB();
@@ -57,6 +107,10 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
         rotatorF = rotator.Get().IntoIfNotNull<BPY>();
         SetTransform();
         Show();
+    }
+
+    public void Died() {
+        tr.localScale = initialScale;
     }
 
     public abstract void SetMaterial(Material mat);
@@ -102,10 +156,10 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
         }
     }
 
-    protected virtual Vector3 GetScale => new(1, 1, 1);
+    protected virtual Vector3 BaseScale => initialScale;
 
     private void SetTransform() {
-        Vector3 scale = GetScale;
+        Vector3 scale = BaseScale;
         scale.x *= flipX ? -1 : 1;
         scale.y *= flipY ? -1 : 1;
         scale *= lastScalerValue;
@@ -132,13 +186,9 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
     }
 
     public virtual void FaceInDirection(Vector2 delta) {
-        if (rotationMethod != RotationMethod.Manual && delta.x * delta.x + delta.y * delta.y > 0f) {
-            FaceInDirectionRaw(BMath.radDeg * (rotationMethod switch {
-                RotationMethod.InVelocityDirection => (float)Math.Atan2(delta.y, delta.x),
-                RotationMethod.VelocityDirectionPlus90 => (float)Math.Atan2(delta.x, -delta.y),
-                RotationMethod.VelocityDirectionMinus90 => (float)Math.Atan2(-delta.x, delta.y),
-                _ => 0
-            }));
+        if (delta.x * delta.x + delta.y * delta.y > 0f && 
+            rotationMethod.Active.GetRotation(flipX, delta).Try(out var rot)) {
+            FaceInDirectionRaw(rot);
         }
     }
 

@@ -63,14 +63,14 @@ public class GameManagement : CoroutineRegularUpdater {
         // ReSharper disable once ConstantConditionalAccessQualifier
         if (Instance?.InstanceActive == true) {
             Logs.Log("Deactivating game instance.");
-            Instance.Deactivate();
+            Instance.Deactivate(false);
             Instance.Dispose();
         }
     }
 
     public static void NewInstance(InstanceMode mode, InstanceFeatures features, InstanceRequest? req = null, ReplayActor? replay = null) {
         DeactivateInstance();
-        Logs.Log($"Creating new game instance with mode {mode} on difficulty {req?.metadata.difficulty.Describe() ?? "NULL"}.");
+        Logs.Log($"Creating new game instance with mode {mode} on difficulty {req?.metadata.difficulty.Describe() ?? "NULL"}.", true);
         EvInstance.OnNext(new InstanceData(mode, features, req, replay));
     }
 
@@ -166,17 +166,7 @@ public class GameManagement : CoroutineRegularUpdater {
             SceneRequest.Reason.ABORT_RETURN, () => Instance.Request?.Cancel())
                 { Transition = GameManagement.References.defaultTransition.AsQuickFade(false) }) is { };
 
-    /// <summary>
-    /// Restarts the game instance.
-    /// </summary>
-    public static bool Restart() {
-        if (Instance.Request == null) throw new Exception("No game instance found to restart");
-        Instance.Request.Cancel();
-        InstanceRequest.InstanceRestarted.OnNext(Instance.Request);
-        return Instance.Request.Copy().Run();
-    }
-
-    public static bool CanRestart => Instance.Request != null;
+    public static bool CanRestart => Instance.Request is { CanRestart: true };
 
     public static void ClearScene() {
         //TODO: this is necessary because PlayerController/AyaCamera can add tokens to Slowdown in droppable coroutines.
@@ -293,14 +283,14 @@ public class GameManagement : CoroutineRegularUpdater {
                 null;
         }
     }
-    public static AnalyzedBoss[] PBosses => FinishedCampaigns.SelectMany(c => c.bosses).ToArray();
-    public static AnalyzedStage[] PStages => FinishedCampaigns.SelectMany(c => c.practiceStages).ToArray();
+    public static AnalyzedBoss[] PBosses => FinishedCampaigns.SelectMany(c => c.PracticeBosses).ToArray();
+    public static AnalyzedStage[] PStages => FinishedCampaigns.SelectMany(c => c.PracticeStages).ToArray();
 
-    public static bool PracticeBossesExist => Campaigns.SelectMany(c => c.bosses).Any();
-    public static bool PracticeStagesExist => Campaigns.SelectMany(c => c.practiceStages).Any();
+    public static bool PracticeBossesExist => Campaigns.SelectMany(c => c.PracticeBosses).Any();
+    public static bool PracticeStagesExist => Campaigns.SelectMany(c => c.PracticeStages).Any();
 
 #if UNITY_EDITOR
-    public static AnalyzedBoss[] AllPBosses => Campaigns.SelectMany(c => c.bosses).ToArray();
+    public static AnalyzedBoss[] AllPBosses => Campaigns.SelectMany(c => c.PracticeBosses).ToArray();
 
     private PlayerController Player => ServiceLocator.Find<PlayerController>();
 

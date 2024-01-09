@@ -1,0 +1,243 @@
+<#> warnprefix
+pattern { 
+	boss fb.tokiko
+	bgm {
+        1 fb.stage
+		2 fb.tokiko
+	}
+}
+phase 0
+	paction 0
+		shift-phase-to 2
+		
+!!{ me tokiko
+!{ power1()
+sync powerup1 <> poweraura boss1
+    lerp 0 1 t black red
+    blue
+!}
+
+
+## 1
+<!> dialogue
+<!> root 4 0
+<!> showlives 4
+phase 0
+    saction 0
+        executevn flappybirddialogue4 d4s
+        shift-phase
+
+        
+##2
+<!> type non `` #{
+<!> hpi 7000 4
+<!> root 4 -1
+<!> showlives 4
+phase 30
+    paction 0
+        gtr {
+            wait-child
+            wait(1s)
+            times(_)
+            bindLR
+        } {
+            sync book <> gsr2c (8 + d3d2) {
+                sfx x-fire-burst-1
+                preloop mv =f 1
+                expose { f mv }
+            } summon(tprot lerpout 0.5 1 cx 3, stall, { hp 1200 drops3(0,0,0) })
+            beh-control persist book batch (> t 1.2 & = s&(mv, 0) 1) {
+                sm _ async star-** <150> gcr2 8 36 <> {
+                    color { black blue }
+                } gsr2 2 <60> { 
+                    color { /w / } 
+                    sfx x-fire-star-1
+                } simple tprot lerp 0.2 1 t cx 2 cx 4 { dir(starrotb2) }
+                softcull cwheel-blue/w _
+            }
+            async book <> gcr2 40 5 <> {
+                delay 50
+                sfx x-fire-burst-3
+                p this
+            } summon(null, 
+                saction 0
+                    movetarget(1, eoutsine, pxy(2 - 1.8 * p, &lr * 3.7))
+                    >> 1.5 sync gdlaser-black/b rot(-2, 0, -90 * &lr) laser(null, 1, 3, { dsfx })
+                    async gdcircle-red* a(10p * p) gcr2 90 3 <36h> {
+                        color { /b / /w }
+                        p this
+                    } gsr2c (3 + dc) {
+                        sfx x-fire-burst-2
+                    } s rvelocity(px(2.8 + lerpt(0.7, 1, 0, -1 * p)))
+            , { hp 999999 })
+            _ 5
+                move-target 1.4 out-sine pxy(rand(3.4, 4.5), &lr * rand(0.8, 1.8))
+        }
+            
+#}
+
+
+## 3
+<!> type spell `` #{
+<!> hpi 9000 4
+<!> root 5 0
+<!> showlives 3
+phase 32
+    paction 0
+        gtr {
+            times(_)
+            wait-child
+            wait(0.5s)
+            sequential
+            bindLR
+            bindItr(rd)
+        } {
+            ~ async star-blue/ <> gcr2 80 6 <6p> {
+                sfx x-fire-star-3
+            } gsr2c (20 * dl) {
+                
+            } simple tprot cx 1.4 { dir starrotb3 }
+            wait 1
+            $power1
+            wait 1.5
+!!{ itrs (4 + d3d1)
+!!{ xpos 2.4 + mod(0.7, 0.7h * &rd) - (7.6 * p / ($itrs - 1))
+            async book <> gcr2 (40 / dl) $itrs <> {
+                sfx x-fire-burst-3
+                p this
+            } summon(null, 
+                saction 0
+                    movetarget(1 + 0.1 * p, eoutsine, pxy($xpos, &lr * 3.7))
+                    >> 5 sync gdlaser-black/b rot(-2, 0, -90 * &lr) laser(null, 1, 4, { dsfx })
+            , { hp 999999 })
+            async book <> gcr2 (40 / dl) $itrs <> {
+                sfx x-fire-burst-3
+                p this
+            } summon(null, 
+                saction 0
+                    movetarget(1 + 0.1 * p, eoutsine, pxy($xpos, &lr * -3.7))
+                    >> 2.5 sync gdlaser-red/w rot(-4, 0, 0) gsr {
+                        target a Lplayer 
+                    } laser(null, 1, 1.6, { dsfx length(25) })
+            , { hp 999999 })
+
+            move-target 1.4 out-sine pxy(rand(3.4, 4.5), &lr * rand(0.8, 1.8))
+
+        }
+#}
+
+##4
+<!> type non `` #{
+<!> hpi 6200 3
+<!> root 4 -1
+<!> showlives 2
+<!> checkpoint
+phase 29
+    paction 0
+        beh-control(_, book, ondestroy(_, 
+            sync sakura-black/w <> gsr2c (25 * dl) { 
+                sfx(x-fire-burst-3) 
+            } s tprot cx 2.4))
+        gtr {
+            wait-child
+            wait(1s)
+            times(_)
+            bindLR
+            sequential
+        } {
+            ~ async star-*/w <> gcr3 (70 / sqrt(dl)) 6s <6p> {
+            } gsr2 2 <> {
+                p this
+                color { red blue }
+                sfx x-fire-star-3
+            } gsr2c (14 * sqrt(dl)) {
+            } simple polar(1.8 * t, pm1(p) * 3 * t) { dir(&lr * starrotb2) }
+            wait 1.5
+            $power1
+            wait 1.5
+            async book <180> gir2 40 6 a(-23 * &lr) {
+                center
+            } gcr2 12 (6 + d3d1) <2> {
+                sfx x-fire-burst-2
+                p this
+            } summon(rvelocity(px(1.6 + 0.3 * p)), stall, { hp 300 drops3(0,0,0) })
+
+            wait 1
+            move-target 1.4 out-sine pxy(rand(3.4, 4.5), &lr * rand(0.8, 1.8))
+        }
+            
+#}
+
+## 5
+<!> type spell `` #{
+<!> hpi 17000 4
+<!> root 5 0
+<!> showlives 1
+phase 40
+    saction 0
+!!{ itrs (7 + dc)
+!!{ xpos 5 - (10 * p / ($itrs - 1))
+!!{ mov nrvelocity(px(0.4 * lerp4(0, 3, 6, 9, 12, 15, mod(15, timersec(mt)), 0, -1, 1, 0)))
+!!{ fitr (20 * dl)
+        ~ gtr {
+            times(_)
+            wait-child
+            wait(1s)
+            delay(1.6s)
+            sequential
+            bindItr(rd)
+        } {
+            $power1
+            wait 1.5
+            async arrow-blue* <0.2;:10> gcr {
+                wt(if(< t (&times * 0.5), 10, 7) / sqrt(dl), $fitr)
+                p this
+                sfx x-fire-burst-1
+                rv2incr(rot(0.08, 0, if(< t (&times * 0.5), 13 / sqrt(dl), -15 / sqrt(dl))))
+                colorf({ /w / }, if(< t (&times * 0.5), 0, 1))
+                target a Lplayer
+            } gsr2 2 <> {
+                postloop { rv2.a =f (0 - .a &rv2) }
+                bindLR
+            } gsr {
+            } s tprot rotate(&lr * -50, px(lerp(0, 1, p / $fitr, 2, 1)))
+            move-target 1.4 out-sine pxy(rand(3.4, 4.5), pm1(&rd) * rand(0.3, 1))
+        }
+
+        gtr {
+            times(2)
+            wait-child
+            wait(3.3s)
+            sequential
+            bindItr(rd)
+        } {
+            timer(restart(mt))
+            timer(stop(mt))
+            async book <> gcr2 40 $itrs <> {
+                sfx x-fire-burst-3
+                p this
+            } gsr2 2 <> {
+                bindLR
+            } summon($mov, 
+                saction 0
+                    movetarget(1 + 0.1 * p, eoutsine, pxy($xpos, &lr * 3.7))
+                    >> 17 if(= &lr 1, 
+                        sync gstretchlaser-red/ <-90> laser($mov, 1, 16, { dsfx length(7.4) s(4) }), noop)
+                    sync sakura-black/w <> gsr2c (5 + d3d1) { 
+                        sfx(x-fire-burst-3) 
+                    } s tprot cx 1.6
+            , { hp 999999 })
+            wait 1
+            timer(start(mt))
+            wait 14
+        }
+#}
+
+## 6
+<!> dialogue
+<!> root 4 0
+phase 0
+    saction 0
+        executevn flappybirddialogue5 d5
+		move-target 2 in-sine cxy(9, 2)
+        shift-phase

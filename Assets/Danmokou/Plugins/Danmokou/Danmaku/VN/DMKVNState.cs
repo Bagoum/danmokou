@@ -19,7 +19,7 @@ public class DMKVNState : UnityVNState {
         if (LoadTo != null)
             ServiceLocator.FindOrNull<ICameraTransition>()?.StallFadeOutUntil(() => SkippingMode != SkipMode.LOADING);
         this.id = id;
-        AutoplayFastforwardAllowed = !Replayer.RequiresConsistency;
+        AutoplayFastforwardAllowed = GameManagement.Instance.Replay == null;
         AllowFullSkip = GameManagement.Instance.Request?.lowerRequest.Campaign.AllowDialogueSkip ?? false;
         Tokens.Add(SaveData.SettingsEv.Subscribe(s => {
             FastforwardReadTextOnly = s.VNOnlyFastforwardReadText;

@@ -29,7 +29,7 @@ public partial class PlayerController {
     private const float WitchTimeSlowdown = 0.5f;//0.25f;
     private const float WitchTimeAudioMultiplier = 0.8f;
     
-    private const float FreeFocusLerpTime = 0.3f;
+    private const float FreeFocusLerpTime = 0.2f;
     
     private static readonly IGradient scoreGrad = DropLabel.MakeGradient(
         new Color32(100, 150, 255, 255), new Color32(80, 110, 255, 255));

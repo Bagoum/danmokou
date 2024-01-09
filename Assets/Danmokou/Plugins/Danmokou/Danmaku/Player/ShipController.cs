@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Danmokou.Player {
 public class ShipController : BehaviorEntity {
-    public SpriteRenderer ghostSource = null!;
+    public SpriteRenderer? ghostSource;
     public Color meterDisplay;
     public Color meterDisplayInner;
     public Color meterDisplayShadow;
@@ -29,7 +29,8 @@ public class ShipController : BehaviorEntity {
     }
 
     public void DrawGhost(float fadeTime) {
-        Instantiate(ghost).GetComponent<Ghost>().Initialize(ghostSource.sprite, tr.position, fadeTime);
+        if (ghostSource != null)
+            Instantiate(ghost).GetComponent<Ghost>().Initialize(ghostSource.sprite, tr.position, fadeTime);
     }
 }
 }

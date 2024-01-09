@@ -43,12 +43,13 @@ public class RenderablePane {
         g = renderGroup;
     }
 }
-public class UIBuilderRenderer : CoroutineRegularUpdater {
+public class UIBuilderRenderer : RegularUpdater {
     public const int ADV_INTERACTABLES_GROUP = 1;
     
     //Resolution at which UI resources are designed.
     public static readonly (int w, int h) UIResolution = (3840, 2160);
     public static readonly Vector2 UICenter = new(1920, 1080);
+    private static Vector2 globalTransform;
     private readonly DMCompactingArray<UIController> controllers = new(8);
     
     public RenderablePane[] settings = null!;
@@ -86,12 +87,17 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
                 s.renderer!.GetPropertyBlock(s.pb = new MaterialPropertyBlock());
                 AddToken(s.renderingAllowed.Subscribe(b => s.renderer.enabled = b));
             }
+        globalTransform = transform.position;
     }
 
     protected override void BindListeners() {
         base.BindListeners();
         RegisterService(this);
         Listen(RenderHelpers.PreferredResolution, RemakeTexture);
+    }
+
+    public override void RegularUpdate() {
+        globalTransform = transform.position;
     }
 
     private void RemakeTexture((int w, int h) res) {
@@ -147,7 +153,7 @@ public class UIBuilderRenderer : CoroutineRegularUpdater {
             screenDim.y / MainCamera.ScreenHeight * UIResolution.h);
     
     public static Vector2 ComputeXMLPosition(Vector2 screenPosition) {
-        var asDim = ComputeXMLDimensions(screenPosition + LocationHelpers.PlayableBounds.center);
+        var asDim = ComputeXMLDimensions(screenPosition - globalTransform);
         return new Vector2(UICenter.x + asDim.x, UICenter.y - asDim.y);
     }
     

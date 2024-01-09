@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Danmokou.Behavior.Display;
 using Danmokou.Core;
 using Danmokou.Graphics.Backgrounds;
 using UnityEditor;
@@ -84,4 +85,8 @@ public class BGTransitionDrawer : DUDisplayDrawer<BackgroundTransition> {
 [CustomPropertyDrawer(typeof(LocatorStrategy))]
 public class LocatorStrategyDrawer : DUDisplayDrawer<LocatorStrategy> {
     protected override string[] EnumValues { get; } = { "Source", "Target", "Perimeter" };
+}
+[CustomPropertyDrawer(typeof(RotationMethod))]
+public class RotationMethodDrawer : DUDisplayDrawer<RotationMethod> {
+    protected override string[] EnumValues { get; } = { "Manual", "InVelocityDirection", "LeanByVelocity" };
 }

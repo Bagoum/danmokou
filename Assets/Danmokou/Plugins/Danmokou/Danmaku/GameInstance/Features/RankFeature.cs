@@ -154,7 +154,7 @@ public class RankFeature : BaseInstanceFeature, IRankFeature {
         AddRankPoints(RankPointsDeath);
     }
 
-    public void OnContinue() {
+    public void OnContinueOrCheckpoint() {
         SetRankLevel(minLevelByDifficulty);
     }
 

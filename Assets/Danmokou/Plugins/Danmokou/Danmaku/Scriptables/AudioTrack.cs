@@ -36,7 +36,7 @@ public class AudioTrack : ScriptableObject, IAudioTrackInfo {
     public AudioTrackLoopMode Loop => loopMode;
     public Vector2 LoopSeconds => loopSeconds;
     public float StartTime => startWithTime;
-    public string Title => title;
+    public string Title => title.Or(key) ?? "";
     public string TrackPlayLocation => trackPlayLocation;
 
     public LString MusicRoomDescription => musicRoomDescription.Value;

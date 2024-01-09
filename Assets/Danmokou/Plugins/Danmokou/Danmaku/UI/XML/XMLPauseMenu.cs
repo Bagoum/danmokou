@@ -40,13 +40,13 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
     protected override UIScreen?[] Screens => new[] {MainScreen, OptionsScreen, SaveLoadScreen};
 
     public override void FirstFrame() {
-        OptionsScreen = this.OptionsScreen(!Replayer.RequiresConsistency);
+        OptionsScreen = this.OptionsScreen(GameManagement.Instance.Replay == null);
         //Display the standard patterned bg
         OptionsScreen.BackgroundOpacity = 1f;
         //Keep this around to avoid opacity fade oddities
         OptionsScreen.MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity;
         var advMan = ServiceLocator.FindOrNull<ADVManager>();
-        if (!Replayer.RequiresConsistency && advMan != null) {
+        if (GameManagement.Instance.Replay == null && advMan != null) {
             SaveLoadScreen = this.SaveLoadVNScreen(inst => advMan.ExecAdv?.Inst.Request.Restart(inst.GetData()) ?? false, slot => new(advMan.GetSaveReadyADVData(), DateTime.Now, lastSaveLoadSS!.IntoTex(), slot,
                 ServiceLocator.Find<IVNWrapper>().TrackedVNs.First().backlog.LastPublished.Value.readableSpeech));
             SaveLoadScreen.BackgroundOpacity = 1f;
@@ -58,13 +58,16 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
         }, MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity };
         _ = new UIColumn(MainScreen, null,
             new TransferNode(main_options, OptionsScreen),
-            Replayer.RequiresConsistency ? null : new TransferNode(saveload_header, SaveLoadScreen!),
+            GameManagement.Instance.Replay != null ? null : new TransferNode(saveload_header, SaveLoadScreen!),
             unpause,
             advMan == null ? 
-                new ConfirmFuncNode(restart, GameManagement.Restart) {
-                    EnabledIf = () => GameManagement.CanRestart,
-                } :
-                null,
+                new ConfirmFuncNode(full_restart, GameManagement.Instance.Restart) {
+                    EnabledIf = () => GameManagement.CanRestart
+                } : null,
+            advMan == null ? 
+                new ConfirmFuncNode(checkpoint_restart, GameManagement.Instance.RestartFromCheckpoint) {
+                    EnabledIf = () => GameManagement.CanRestart && GameManagement.Instance.CanRestartCheckpoint
+                } : null,
             new ConfirmFuncNode(to_menu, GameManagement.GoToMainMenu),
             new ConfirmFuncNode(to_desktop, Application.Quit)) { ExitNodeOverride = unpause };
         base.FirstFrame();
