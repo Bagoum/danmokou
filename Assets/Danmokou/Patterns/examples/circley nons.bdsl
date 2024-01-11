@@ -21,8 +21,7 @@ phase 0 #{
 			root zero
 		} gsr2 6 <> { 
 			p add
-			alternate p1 
-		} { 
+		} alternate p1 { 
 				summons offset zero @ el p
 					paction 0
 						sync scircle-red/w <> world s offset zero @ el p

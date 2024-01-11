@@ -670,7 +670,7 @@ public partial class PlayerController : BehaviorEntity,
     
     private IEnumerator WaitDeathbomb(int livesLost, int frames, bool forceTraditionalRespawn) {
         SpawnedShip.OnPreHitEffect.Proc(bpi.loc, bpi.loc, 1f);
-        using var gcx = GenCtx.New(this, V2RV2.Zero);
+        using var gcx = GenCtx.New(this);
         BulletManager.RequestPowerAura("powerup1", 0, 0, gcx, new RealizedPowerAuraOptions(
             new PowerAuraOptions(new[] {
                 PowerAuraOption.Color(_ => ColorHelpers.CV4(SpawnedShip.meterDisplay.WithA(1.5f))),

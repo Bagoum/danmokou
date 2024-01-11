@@ -10,6 +10,7 @@ using Danmokou.Danmaku.Descriptors;
 using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Player;
+using Danmokou.Reflection2;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using TypeDefKey = Danmokou.Core.FreezableArray<(System.Type type, string name)>;
@@ -37,7 +38,7 @@ public class ConstructedType {
         this.TypeIndex = typeIndex;
     }
 
-    public PICustomData MakeNew(GenCtx? gcx = null) {
+    public PICustomData MakeNew((LexicalScope scope, GenCtx gcx)? parent = null) {
         PICustomData data;
         if (Cache.Count > 0) {
             data = Cache.Pop();
@@ -46,8 +47,12 @@ public class ConstructedType {
             data = Constructor();
             ++Allocated;
         }
+        if (parent.Try(out var p) && p.scope is not DMKScope) {
+            data.envFrame = EnvFrame.Create(p.scope, p.gcx.EnvFrame);
+        } else
+            data.envFrame = EnvFrame.Empty;
         data.typeIndex = TypeIndex;
-        data.firer = gcx?.exec;
+        data.firer = parent?.gcx.exec;
         data.playerController = data.firer switch {
             PlayerController pi => pi,
             FireOption fo => fo.Player,
@@ -55,7 +60,7 @@ public class ConstructedType {
             _ => null
         };
         if (data.playerController == null)
-            data.playerController = gcx?.playerController;
+            data.playerController = parent?.gcx.playerController;
         return data;
     }
 
@@ -80,9 +85,9 @@ public class ConstructedType {
 
 public class PICustomDataBuilder : CustomDataBuilder {
     //For AOT cases, we should fall back to always using dictionary lookups (dynamic lookup).
-    public const bool DISABLE_TYPE_BUILDING = 
+    public const bool DISABLE_TYPE_BUILDING =
 #if !EXBAKE_SAVE && !EXBAKE_LOAD && !WEBGL
-        false;
+        true;
 #else
         true;
 #endif

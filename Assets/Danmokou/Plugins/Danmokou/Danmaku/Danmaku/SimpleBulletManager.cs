@@ -11,6 +11,7 @@ using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using BagoumLib.Functional;
+using BagoumLib.Reflection;
 using BagoumLib.Sorting;
 using CommunityToolkit.HighPerformance;
 using Danmokou.Behavior;
@@ -22,6 +23,7 @@ using Danmokou.Expressions;
 using Danmokou.Graphics;
 using Danmokou.Pooling;
 using Danmokou.Reflection.CustomData;
+using Danmokou.Reflection2;
 using Danmokou.Services;
 using Danmokou.SM;
 using JetBrains.Annotations;
@@ -347,8 +349,7 @@ public partial class BulletManager {
             var bpi = Data[ii].bpi;
             var inode = GetINodeAt(ii, "bulletcontrol-sm-triggered");
             //Note: this pattern is safe because GCX is copied immediately by SMRunner
-            using var gcx = bpi.ctx.RevertToGCX(inode);
-            gcx.fs["bulletTime"] = bpi.t;
+            using var gcx = bpi.ctx.RevertToGCX(target.Scope, inode);
             _ = inode.RunExternalSM(SMRunner.Cull(target, cT, gcx));
             return inode;
         }
@@ -649,7 +650,7 @@ public partial class BulletManager {
 
         public void DebugBuckets() {
             var sb = new StringBuilder();
-            sb.Append($"{bucketsX}*{bucketsY}={buckets.Length} buckets (size {invBucketSize}\n");
+            sb.Append($"{bucketsX}*{bucketsY}={buckets!.Length} buckets (size {invBucketSize}\n");
             for (var iy = 0; iy < bucketsY; ++iy)
             for (var ix = 0; ix < bucketsX; ++ix) {
                 var b = buckets[ix + iy * bucketsX];
@@ -1063,6 +1064,11 @@ public partial class BulletManager {
 #if UNITY_EDITOR
     [ContextMenu("Debug FCTX usage")]
     public void DebugFCTX() {
+        void LogFV<T>() {
+            //Logs.Log($"FV<{typeof(T).RName()} rent {FrameVars<T>.rented} return {FrameVars<T>.returned}");
+        }
+        LogFV<float>();
+        LogFV<Vector2>();
         foreach (var ct in PICustomDataBuilder.Builder.TypeList)
             Logs.Log($"Custom type {ct.BuiltType.Name}({ct.Descriptor.Descriptor}): Alloc {ct.Allocated} / Popped {ct.Popped} / Cached {ct.Recached} / Copied {ct.Copied} / Cleared {ct.Cleared}");
     }

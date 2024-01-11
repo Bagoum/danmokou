@@ -23,7 +23,7 @@ public class XMLDeathMenu : PausedGameplayMenu {
         
         _ = new UIColumn(MainScreen, null,
             #if UNITY_EDITOR
-                new FuncNode(() => death_continue_ls(GameManagement.Instance.BasicF.Continues), () => {
+                new FuncNode("Force continue (EDITOR ONLY)", () => {
                     if (GameManagement.Instance.BasicF.ForceContinue()) {
                         ProtectHide();
                         return new UIResult.StayOnNode();

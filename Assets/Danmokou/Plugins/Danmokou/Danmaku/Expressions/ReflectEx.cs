@@ -12,6 +12,7 @@ using Danmokou.DataHoist;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Reflection;
+using Danmokou.Reflection2;
 using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
@@ -89,12 +90,15 @@ public static class ReflectEx {
     public static Ex SetAlias(Alias[] aliases, Func<Ex> inner, TExArgCtx tac) {
         var stmts = new List<Ex>();
         foreach (var a in aliases) {
-            if (tac.Ctx.GCXURefs != null && tac.Ctx.GCXURefs.TryResolve(a.type, a.alias, out var ex)) {
+            //variables in EnvFrame
+            if (tac.Ctx.Scope.TryGetLocalOrParent(tac, a.type, a.alias, out var decl, out var p) is { } aex) {
+                stmts.Add(aex.Is(a.func(tac)));
+            } else if (tac.Ctx.GCXURefs != null && tac.Ctx.GCXURefs.TryResolve(tac, a.type, a.alias, out var ex)) {
                 tac.Ctx.GCXURefs.MarkDirty(a.type, a.alias);
                 _ = a.func(tac); //if the call requires any aliases
                 //pass-- we can't assign to this temp var
             } else
-                stmts.Add(PICustomData.SetValue(tac, a.type, a.alias, a.func(tac)));
+                stmts.Add(PICustomData.SetValue(tac, a.type, a.alias, a.func));
         }
         stmts.Add(inner());
         return Ex.Block(stmts);
@@ -107,8 +111,8 @@ public static class ReflectEx {
     }*/
 
     public interface ICompileReferenceResolver {
-        bool TryResolve<T>(string alias, out Ex ex) => TryResolve(typeof(T), alias, out ex);
-        bool TryResolve(Type t, string alias, out Ex ex);
+        bool TryResolve<T>(TExArgCtx tac, string alias, out Ex ex) => TryResolve(tac, typeof(T), alias, out ex);
+        bool TryResolve(TExArgCtx tac, Type t, string alias, out Ex ex);
 
         /// <summary>
         /// Mark that an aliased variable is written to (via <see cref="ExM.Set{T}"/>) and therefore must be
@@ -123,7 +127,11 @@ public static class ReflectEx {
         return null;
     }
     
-    //T is on the level of typeof(float)
+    /// <summary>
+    /// Get the value of a variable that may be provided as an alias (<see cref="Let{L}"/>),
+    ///  as a GCX variable, as a variable bound to the PICustomData for a bullet, or as a function argument.
+    /// <br/>T is on the level of typeof(float).
+    /// </summary>
     public static Ex ReferenceExpr<T>(string alias, TExArgCtx tac, TEx<T>? deflt = null) {
         if (alias[0] == Parser.SM_REF_KEY_C) alias = alias.Substring(1); //Important for reflector handling of &x
         bool isExplicit = alias.StartsWith(".");
@@ -132,13 +140,15 @@ public static class ReflectEx {
         //Standard method, used by Let and GCXPath.expose (which internally compiles to Let) 
         if (GetAliasFromStack(alias, tac) is { } ex)
             return ex;
-        //Used by GCXF<T>, ie. when a fixed GCX exists. This is for slower pattern expressions
-        if (tac.MaybeGetByExprType<TExGCX>(out _).Try(out var gcx))
-            return gcx.FindReference<T>(alias);
         if (tac.MaybeGetByName<T>(alias).Try(out var prm))
             return prm;
+        //variables in EnvFrame (GCXU or GCXF)
+        if (tac.Ctx.Scope.TryGetLocalOrParent(tac, typeof(T), alias, out var decl, out var p) is { } aex) {
+            return aex;
+        }
+        
         //Automatic GCXPath.expose resolution
-        if (tac.Ctx.GCXURefs != null && tac.Ctx.GCXURefs.TryResolve<T>(alias, out ex))
+        if (!isExplicit && tac.Ctx.GCXURefs != null && tac.Ctx.GCXURefs.TryResolve<T>(tac, alias, out ex))
             return ex;
         //In functions not scoped by the GCX (eg. bullet controls)
         //The reason for using the special marker is that we cannot give good errors if an incorrect value is entered
@@ -146,10 +156,8 @@ public static class ReflectEx {
         //so we need to make opting into this completely explicit. 
         if ((isExplicit || deflt != null) && tac.MaybeBPI != null) {
             try {
-                return deflt is null ?
-                    PICustomData.GetValue<T>(tac, alias) :
-                    PICustomData.GetIfDefined<T>(tac, alias, deflt);
-            } catch (Exception) {
+                return PICustomData.GetIfDefined<T>(tac, alias, deflt is null ? null : (Ex)deflt);
+            } catch (Exception e) {
                 //pass
             }
         }
@@ -228,11 +236,11 @@ public readonly struct ReferenceMember {
 
     public override string ToString() => $"{var}.{String.Join(".", members)}";
 
-    private void Precheck<T>(IReadOnlyDictionary<string, T> data, GCOperator op) {
-        if (!data.ContainsKey(var) && members.Count > 0)
+    private void Precheck(GCOperator op) {
+        /*if (!data.ContainsKey(var) && members.Count > 0)
             throw new Exception($"Can't write members when value does not exist: {this}");
         if (!data.ContainsKey(var) && op != GCOperator.Assign)
-            throw new Exception($"New variable {this} can only be assigned, but was given operator {op}");
+            throw new Exception($"New variable {this} can only be assigned, but was given operator {op}");*/
         if (members.Count > 1) throw new Exception($"Can't write to members two layers deep: {this}");
     }
 
@@ -245,104 +253,93 @@ public readonly struct ReferenceMember {
         else src = other;
     }
 
-    public float Resolve(IReadOnlyDictionary<string, float> data, float assigned, GCOperator op) {
+    public void Resolve(ref float variable, float assigned, GCOperator op) {
         if (members.Count > 0) throw new Exception($"Float value {this} has no members.");
-        Precheck(data, op);
-        if (op == GCOperator.Assign) return assigned;
-        float x = data[var];
-        ResolveFloat(ref x, assigned, op);
-        return x;
+        Precheck(op);
+        ResolveFloat(ref variable, assigned, op);
     }
 
-    public Vector2 ResolveMembers(IReadOnlyDictionary<string, Vector2> data, Vector2 assigned, GCOperator op) {
-        Precheck(data, op);
+    public void ResolveMembers(ref Vector2 variable, Vector2 assigned, GCOperator op) {
+        Precheck(op);
         if (members.Count > 0) throw new Exception($"Can't assign V2 to V2 member {this}");
-        if (op == GCOperator.Assign) return assigned;
-        var v2 = data[var];
-        ResolveFloat(ref v2.x, assigned.x, op);
-        ResolveFloat(ref v2.y, assigned.y, op);
-        return v2;
+        ResolveFloat(ref variable.x, assigned.x, op);
+        ResolveFloat(ref variable.y, assigned.y, op);
     }
 
-    public Vector2 ResolveMembers(IReadOnlyDictionary<string, Vector2> data, float assigned, GCOperator op) {
-        Precheck(data, op);
+    public void ResolveMembers(ref Vector2 variable, float assigned, GCOperator op) {
+        Precheck(op);
         if (members.Count == 0) throw new Exception($"Can't assign float to V2 {this}");
-        var v2 = data[var];
-        if (members[0] == "x") ResolveFloat(ref v2.x, assigned, op);
-        else if (members[0] == "y") ResolveFloat(ref v2.y, assigned, op);
+        if (members[0] == "x") ResolveFloat(ref variable.x, assigned, op);
+        else if (members[0] == "y") ResolveFloat(ref variable.y, assigned, op);
         else throw new Exception($"Can't get V2.f member {members[0]}");
-        return v2;
     }
 
-    public Vector3 ResolveMembers(IReadOnlyDictionary<string, Vector3> data, Vector3 assigned, GCOperator op) {
-        Precheck(data, op);
+    public Vector3 ResolveMembers(ref Vector3 variable, Vector3 assigned, GCOperator op) {
+        Precheck(op);
         if (members.Count > 0) throw new Exception($"Can't assign V3 to V3 member {this}");
         if (op == GCOperator.Assign) return assigned;
-        var v3 = data[var];
-        ResolveFloat(ref v3.x, assigned.x, op);
-        ResolveFloat(ref v3.y, assigned.y, op);
-        ResolveFloat(ref v3.z, assigned.z, op);
-        return v3;
+        ResolveFloat(ref variable.x, assigned.x, op);
+        ResolveFloat(ref variable.y, assigned.y, op);
+        ResolveFloat(ref variable.z, assigned.z, op);
+        return variable;
     }
 
-    public Vector3 ResolveMembers(IReadOnlyDictionary<string, Vector3> data, Vector2 assigned, GCOperator op) {
-        Precheck(data, op);
+    public Vector3 ResolveMembers(ref Vector3 variable, Vector2 assigned, GCOperator op) {
+        Precheck(op);
         if (members.Count == 0) throw new Exception($"Can't assign V2 to V3 {this}");
-        var v3 = data[var];
         if (members[0] == "xy") {
-            ResolveFloat(ref v3.x, assigned.x, op);
-            ResolveFloat(ref v3.y, assigned.y, op);
+            ResolveFloat(ref variable.x, assigned.x, op);
+            ResolveFloat(ref variable.y, assigned.y, op);
         } else if (members[0] == "yz") {
-            ResolveFloat(ref v3.y, assigned.x, op);
-            ResolveFloat(ref v3.z, assigned.y, op);
+            ResolveFloat(ref variable.y, assigned.x, op);
+            ResolveFloat(ref variable.z, assigned.y, op);
         } else if (members[0] == "xz") {
-            ResolveFloat(ref v3.x, assigned.x, op);
-            ResolveFloat(ref v3.z, assigned.y, op);
+            ResolveFloat(ref variable.x, assigned.x, op);
+            ResolveFloat(ref variable.z, assigned.y, op);
         } else throw new Exception($"Can't get V3.V2 member {members[0]}");
-        return v3;
+        return variable;
     }
 
-    public Vector3 ResolveMembers(IReadOnlyDictionary<string, Vector3> data, float assigned, GCOperator op) {
-        Precheck(data, op);
+    public Vector3 ResolveMembers(ref Vector3 variable, float assigned, GCOperator op) {
+        Precheck(op);
         if (members.Count == 0) throw new Exception($"Can't assign float to V3 {this}");
-        var v3 = data[var];
-        if (members[0] == "x") ResolveFloat(ref v3.x, assigned, op);
-        else if (members[0] == "y") ResolveFloat(ref v3.y, assigned, op);
-        else if (members[0] == "z") ResolveFloat(ref v3.z, assigned, op);
+        if (members[0] == "x") ResolveFloat(ref variable.x, assigned, op);
+        else if (members[0] == "y") ResolveFloat(ref variable.y, assigned, op);
+        else if (members[0] == "z") ResolveFloat(ref variable.z, assigned, op);
         else throw new Exception($"Can't get V3.f member {members[0]}");
-        return v3;
+        return variable;
     }
 
-    public V2RV2 ResolveMembers(IReadOnlyDictionary<string, V2RV2> data, V2RV2 assigned, GCOperator op) {
-        Precheck(data, op);
+    public V2RV2 ResolveMembers(ref V2RV2 variable, V2RV2 assigned, GCOperator op) {
+        Precheck(op);
         if (members.Count > 0) throw new Exception($"Can't assign RV2 to RV2 member {this}");
         if (op == GCOperator.Assign) return assigned;
-        MutV2RV2 rv2 = data[var];
+        MutV2RV2 rv2 = variable;
         ResolveFloat(ref rv2.nx, assigned.nx, op);
         ResolveFloat(ref rv2.ny, assigned.ny, op);
         ResolveFloat(ref rv2.rx, assigned.rx, op);
         ResolveFloat(ref rv2.ry, assigned.ry, op);
         ResolveFloat(ref rv2.angle, assigned.angle, op);
-        return rv2;
+        return variable = rv2;
     }
 
-    public V2RV2 ResolveMembers(IReadOnlyDictionary<string, V2RV2> data, float assigned, GCOperator op) {
-        Precheck(data, op);
+    public V2RV2 ResolveMembers(ref V2RV2 variable, float assigned, GCOperator op) {
+        Precheck(op);
         if (members.Count == 0) throw new Exception($"Can't assign float to V2RV2 {this}");
-        MutV2RV2 rv2 = data[var];
+        MutV2RV2 rv2 = variable;
         if (members[0] == "nx") ResolveFloat(ref rv2.nx, assigned, op);
         else if (members[0] == "ny") ResolveFloat(ref rv2.ny, assigned, op);
         else if (members[0] == "rx") ResolveFloat(ref rv2.rx, assigned, op);
         else if (members[0] == "ry") ResolveFloat(ref rv2.ry, assigned, op);
         else if (members[0].StartsWith("a")) ResolveFloat(ref rv2.angle, assigned, op);
         else throw new Exception($"Can't get RV2.f member {members[0]}");
-        return rv2;
+        return variable = rv2;
     }
 
-    public V2RV2 ResolveMembers(IReadOnlyDictionary<string, V2RV2> data, Vector2 assigned, GCOperator op) {
-        Precheck(data, op);
+    public V2RV2 ResolveMembers(ref V2RV2 variable, Vector2 assigned, GCOperator op) {
+        Precheck(op);
         if (members.Count == 0) throw new Exception($"Can't assign V2 to V2RV2 {this}");
-        MutV2RV2 rv2 = data[var];
+        MutV2RV2 rv2 = variable;
         if (members[0] == "rxy") {
             ResolveFloat(ref rv2.rx, assigned.x, op);
             ResolveFloat(ref rv2.ry, assigned.y, op);
@@ -350,7 +347,7 @@ public readonly struct ReferenceMember {
             ResolveFloat(ref rv2.nx, assigned.x, op);
             ResolveFloat(ref rv2.ny, assigned.y, op);
         } else throw new Exception($"Can't get RV2.V2 member {members[0]}");
-        return rv2;
+        return variable = rv2;
     }
 
     public static implicit operator ReferenceMember(string s) => new(s);

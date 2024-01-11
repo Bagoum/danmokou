@@ -45,7 +45,8 @@ public static class FileUtils {
     /// </summary>
     public static void CheckPath(ref string path) {
 #if !UNITY_EDITOR && !UNITY_STANDALONE_WIN
-        path = $"{Application.persistentDataPath}/{path}";
+        if (!path.StartsWith(Application.persistentDataPath))
+            path = $"{Application.persistentDataPath}/{path}";
 #endif
         void CheckDirectory(string? dir) {
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) {

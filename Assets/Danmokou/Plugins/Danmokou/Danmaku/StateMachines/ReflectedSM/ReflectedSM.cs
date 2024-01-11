@@ -20,6 +20,7 @@ using Danmokou.Expressions;
 using Danmokou.Graphics;
 using Danmokou.Player;
 using Danmokou.Reflection;
+using Danmokou.Reflection2;
 using Danmokou.Services;
 using Danmokou.UI;
 using Danmokou.VN;
@@ -290,9 +291,12 @@ if (> t &fadein,
     /// </summary>
     public static ReflectableLASM Async(string style, GCXF<V2RV2> rv2, AsyncPattern ap) => new(smh => {
         var abh = new AsyncHandoff(new DelegatedCreator(smh.Exec, 
-                BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style)), GetAwaiter(out Task t), smh);
-        abh.ch.gcx.OverrideRV2(rv2(smh.GCX) + smh.GCX.RV2);
+                BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style)), GetAwaiter(out Task t), smh,
+                rv2(smh.GCX) + (smh.ch.rv2Override.Try(out var o) ? o : 
+                    (smh.GCX.AutoVars is AutoVars.GenCtx ? smh.GCX.RV2 : V2RV2.Zero))
+                );
         smh.RunTryPrependRIEnumerator(ap(abh));
+        //don't dispose SBH since we didn't copy GCX
         return t;
     });
     
@@ -300,10 +304,13 @@ if (> t &fadein,
     /// Synchronous bullet pattern fire.
     /// </summary>
     public static ReflectableLASM Sync(string style, GCXF<V2RV2> rv2, SyncPattern sp) => new(smh => {
-        using var sbh = new SyncHandoff(new DelegatedCreator(smh.Exec,
-            BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style), null), smh);
-        sbh.ch.gcx.OverrideRV2(rv2(smh.GCX) + smh.GCX.RV2);
+        var sbh = new SyncHandoff(new DelegatedCreator(smh.Exec,
+            BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style), null), smh,
+            rv2(smh.GCX) + (smh.ch.rv2Override.Try(out var o) ? o : 
+                (smh.GCX.AutoVars is AutoVars.GenCtx ? smh.GCX.RV2 : V2RV2.Zero))
+            );
         sp(sbh);
+        //don't dispose SBH since we didn't copy GCX
         return Task.CompletedTask;
     });
 

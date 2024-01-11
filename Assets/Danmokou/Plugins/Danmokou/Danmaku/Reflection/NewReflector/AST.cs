@@ -94,7 +94,7 @@ public interface IAST : ITypeTree, IDebugPrint {
     /// <summary>
     /// (Stage 2) A function called on the root AST to typecheck the entire structure.
     /// </summary>
-    public static Either<Type, TypeUnifyErr> Typecheck(IAST root, TypeResolver resolver, LexicalScope globalScope) {
+    public static Either<Type, TypeUnifyErr> Typecheck(IAST root, TypeResolver resolver, LexicalScope rootScope) {
         var tDes = root.PossibleUnifiers(resolver, Unifier.Empty).BindL(ts => ts.Count != 1 ?
             new TypeUnifyErr.TooManyPossibleTypes(ts.Select(t => t.Item1).ToList()) :
             root.ResolveUnifiers(ts[0].Item1, resolver, ts[0].Item2)
@@ -103,7 +103,7 @@ public interface IAST : ITypeTree, IDebugPrint {
             return tDes.Right;
         //var _ = globalScope.FinalizeVariableTypes(tDes.Left.Item2);
         root.FinalizeUnifiers(tDes.Left.Item2);
-        var varErr = globalScope.FinalizeVariableTypes(tDes.Left.Item2);
+        var varErr = rootScope.FinalizeVariableTypes(tDes.Left.Item2);
         if (varErr.IsRight)
             return varErr.Right;
         if (!root.IsFullyResolved) {
@@ -219,7 +219,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
     /// The lexical scope that this AST creates for any nested ASTs.
     /// <br/>This is either null or a direct child of <see cref="EnclosingScope"/>.
     /// </summary>
-    public LexicalScope? LocalScope { get; set; }
+    public LexicalScope? LocalScope { get; private set; }
     
     /// <inheritdoc cref="ITypeTree.ImplicitCast"/>
     public IRealizedImplicitCast? ImplicitCast { get; set; }
@@ -251,6 +251,8 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         return ThreadChildReplaceScope(prev, inserted, u);
     }
 
+    //TODO envframe this isn't generally sound since it doesn't move declarations, but
+    // i think the current usage for implicit cast only is sound.
     protected Either<Unifier, TypeUnifyErr>
         ThreadChildReplaceScope(LexicalScope prev, LexicalScope inserted, Unifier u) {
         foreach (var a in Params) {
@@ -376,13 +378,13 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 // then automatically expose the value via ICRR, as with the standard auto-expose pattern.
                 if (v.Assignments == 1) {
                     if (tac.Ctx.GCXURefs is { } icrr 
-                        && icrr.TryResolve(v.FinalizedType!, v.Name, out var ex))
+                        && icrr.TryResolve(tac, v.FinalizedType!, v.Name, out var ex))
                         return ex;
                     if (tac.Ctx.GCXURefs is CompilerHelpers.GCXUDummyResolver &&
                         ReflectEx.GetAliasFromStack(v.Name, tac) is { } stackEx)
                         return stackEx;
                 }
-                return EnclosingScope.GetLocalOrParent(tac, tac.EnvFrame, v);
+                return EnclosingScope.LocalOrParent(tac, tac.EnvFrame, v, out _);
                 /*
                 //var x = ...
                 if (Declaration.IsLeft)
@@ -430,7 +432,20 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
     //Not necessarily a tex func type-- depends on method def
     public record MethodCall(PositionRange Position, PositionRange MethodPosition,
         LexicalScope EnclosingScope, Reflector.InvokedMethod[] Methods, params IAST[] Params) : 
-        AST(Position, EnclosingScope, Params), IMethodAST<Reflector.InvokedMethod> {
+        AST(Position, MaybeCreateLocalScope(EnclosingScope, Methods), Params), IMethodAST<Reflector.InvokedMethod> {
+        private static LexicalScope MaybeCreateLocalScope(LexicalScope scope, Reflector.InvokedMethod[] methods) {
+            var nWithScope = methods.Count(m => m.Mi.GetAttribute<CreatesInternalScopeAttribute>() != null);
+            if (nWithScope > 0)
+                return scope;
+            if (nWithScope != methods.Length)
+                throw new StaticException(
+                    $"Some overloads for method {methods[0].Name} have local scopes, and some don't." +
+                    $"This is not permitted by the language design. Please report this.");
+            return methods[0].Mi.GetAttribute<CreatesInternalScopeAttribute>()!.dynamic ?
+                    new DynamicLexicalScope(scope) :
+                    LexicalScope.Derive(scope);
+        }
+        
         //We have to hide subtypes of StateMachine since the unifier can't generally handle subtypes
         public Reflector.InvokedMethod[] Methods { get; } = Methods.Select(m => m.HideSMReturn()).ToArray();
         public IReadOnlyList<Reflector.InvokedMethod> Overloads => Methods;
@@ -444,38 +459,16 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
 
         public Either<Unifier, TypeUnifyErr> WillSelectOverload(Reflector.InvokedMethod method, IImplicitTypeConverterInstance? cast, Unifier u) {
             if (cast?.Converter is IScopedTypeConverter c && (c.ScopeArgs != null || c.Kind != ScopedConversionKind.Trivial)) {
-                LocalScope = new ScopedConversionScope(c, EnclosingScope);
-                LocalScope.DeclareImplicitArgs(c.ScopeArgs ?? System.Array.Empty<IDelegateArg>());
+                LocalScope = LexicalScope.Derive(EnclosingScope, c);
                 var uerr = ThreadChildReplaceScope(EnclosingScope, LocalScope, u);
                 if (uerr.IsRight)
                     return uerr.Right;
                 u = uerr.Left;
             }
-            if (method.Mi.GetAttribute<CreatesInternalScopeAttribute>() is { } cis) {
-                foreach (var mcall in Params[cis.Index].EnumerateByLevel().OfType<MethodCall>()) {
-                    var indices = mcall.Overloads
-                        .SelectNotNull(o => o.Mi.GetAttribute<ScopeRaiseSourceAttribute>()?.Index)
-                        .Distinct()
-                        .ToList();
-                    if (indices.Count == 0) continue;
-                    //this needs to be done before type resolution on any children,
-                    // so we can't wait for the child overload to be determined
-                    if (indices.Count > 1)
-                        throw new StaticException(
-                            $"{nameof(ScopeRaiseSourceAttribute)} should not be used differently between overloads");
-                    if (mcall.Params[indices[0]] is not Block { LocalScope : { } ls } b)
-                        break;
-                    if (LocalScope != null)
-                        throw new Exception(
-                            $"MethodCall already has a local scope, it cannot be subject to {nameof(CreatesInternalScopeAttribute)}");
-                    LocalScope = ls;
-                    b.LocalScope = null;
-                    
-                    var uerr = ThreadChildReplaceScope(EnclosingScope, LocalScope, u);
-                    if (uerr.IsRight)
-                        return uerr.Right;
-                    return uerr.Left;
-                }
+            if (method.Mi.GetAttribute<CreatesInternalScopeAttribute>() is { } cis)
+                LocalScope!.AutoDeclareVariables(MethodPosition, cis.type);
+            else if (method.Mi.GetAttribute<ExtendsInternalScopeAttribute>() is { } eis) {
+                EnclosingScope.AutoDeclareExtendedVariables(MethodPosition, eis.type);
             }
             return u;
         }
@@ -492,10 +485,13 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
 
         public override object? _RealizeWithoutCast() {
+            var mi = SelectedOverload!.Value.method.Mi;
+            using var _ = LocalScope == null || mi.GetAttribute<CreatesInternalScopeAttribute>() == null ?
+                null :
+                new LexicalScope.ParsingScope(LocalScope);
             var prms = new object?[Params.Length];
             for (int ii = 0; ii < prms.Length; ++ii)
                 prms[ii] = Params[ii].Realize();
-            var mi = SelectedOverload!.Value.method.Mi;
             if (mi is Reflector.IGenericMethodSignature gm) {
                 //ok to use shared type as we are doing a check on empty unifier that is discarded
                 if (mi.SharedType.Unify(SelectedOverload.Value.simplified, Unifier.Empty) is { IsLeft: true } unifier) {
@@ -507,21 +503,27 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                     throw new ReflectionException(Position, 
                         $"SelectedOverload has unsound types for generic method {mi.AsSignature}");
             }
-            if (LocalScope != null && mi.GetAttribute<CreatesInternalScopeAttribute>() is { } cis) {
-                switch (prms[cis.Index]) {
-                    case GenCtxProperties props:
-                        props.IterationScope = LocalScope;
+            if (LocalScope != null && mi.GetAttribute<CreatesInternalScopeAttribute>() is { } cis)
+                AttachScope(prms, LocalScope, cis, LocalScope.AutoVars);
+            return mi.InvokeStatic(this, prms);
+        }
+
+        public static void AttachScope(object?[] prms, LexicalScope localScope, CreatesInternalScopeAttribute cis, AutoVars? autoVars) {
+            for (int ii = 0; ii < prms.Length; ++ii)
+                switch (prms[ii]) {
+                    case IAutoVarRequestor<AutoVars.GenCtx> props:
+                        props.Assign(localScope, (AutoVars.GenCtx?)autoVars ?? 
+                                         throw new StaticException("Autovars not configured correctly"));
                         break;
                     case GenCtxProperty[] props:
-                        prms[cis.Index] = props.Append(GenCtxProperty._AssignLexicalScope(LocalScope)).ToArray();
+                        prms[ii] = props.Append(
+                            GenCtxProperty._AssignLexicalScope(localScope, (AutoVars.GenCtx?)autoVars ?? 
+                                                                           throw new StaticException("Autovars not configured correctly"))).ToArray();
                         break;
-                    default:
-                        throw new StaticException(
-                            $"CreatesInternalScope annotation on method {mi.AsSignature} is incorrect; {cis.Index}th" +
-                            $"argument is not GCXProps or GCXProp[]");
+                    case ILexicalScopeRequestor lsr:
+                        lsr.Assign(localScope);
+                        break;
                 }
-            }
-            return mi.InvokeStatic(this, prms);
         }
     
         public ReflectionException Raise(Helpers.NotWriteableException exc) =>

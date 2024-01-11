@@ -458,10 +458,11 @@ public partial class BehaviorEntity {
         /// <summary>
         /// If the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl SM(Pred cond, StateMachine target) => new((b, cT) => {
             if (cond(b.rBPI)) {
                 var exec = b.GetINode("f-pool-triggered", null);
-                using var gcx = b.rBPI.ctx.RevertToGCX(exec);
+                using var gcx = b.rBPI.ctx.RevertToGCX(target.Scope, exec);
                 _ = exec.RunExternalSM(SMRunner.Cull(target, cT, gcx));
             }
         }, BulletControl.P_RUN);
@@ -470,10 +471,11 @@ public partial class BehaviorEntity {
         /// <summary>
         /// When the bullet collides, if the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl OnCollide(Pred cond, StateMachine target) => new((b, cT) => {
             if (cond(b.rBPI)) {
                 var exec = b.GetINode("f-collide-triggered", null);
-                using var gcx = b.rBPI.ctx.RevertToGCX(exec);
+                using var gcx = b.rBPI.ctx.RevertToGCX(target.Scope, exec);
                 _ = exec.RunExternalSM(SMRunner.Cull(target, cT, gcx));
             }
         }, BulletControl.P_ON_COLLIDE);
@@ -482,10 +484,11 @@ public partial class BehaviorEntity {
         /// When the entity is destroyed, if the condition is true, spawn an iNode at the position and run an SM on it.
         /// <br/>This only works on enemies and other destructible entities.
         /// </summary>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl OnDestroy(Pred cond, StateMachine target) => new((b, cT) => {
             if (cond(b.rBPI)) {
                 var exec = b.GetINode("f-destroy-triggered", null);
-                using var gcx = b.rBPI.ctx.RevertToGCX(exec);
+                using var gcx = b.rBPI.ctx.RevertToGCX(target.Scope, exec);
                 _ = exec.RunExternalSM(SMRunner.Cull(target, cT, gcx));
             }
         }, BulletControl.P_ON_DESTROY);

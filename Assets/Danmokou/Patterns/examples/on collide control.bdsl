@@ -11,18 +11,17 @@ phase 0
 		poolcontrol(fireball*, damage(0))
 		poolcontrol(fireball*, nograze)
 		# Without a "cooldown" limiter, this will run once per frame while the bullet is colliding
-		bullet-control persist fireball* oncollide _
+		bullet-control persist fireball* oncollide cooldown(5, _)
 			sync pather-*/ <0.4;:90> gsr {
 				colorf({ red green blue yellow }, p)
 			} pather(0.3, 0.3, tprot cx 2, { })
 
 		# Collisions with simple bullets occur at the center of the bullet
-		async fireball-*/w <-30> gcr2 120 _ <> {
+		async fireball-*/w <150> gcr2 120 _ <> {
 			p this
 			colorf({ red green blue yellow }, p)
 		} gsr2c 3 {
 		} s tprot cx 2
-        
 
 <!> type(non, `pather collision`)
 phase 0
@@ -49,7 +48,6 @@ phase 0
 			s(4)
 		})
 
-
 <!> type(non, `laser collision`)
 phase 0
 	paction 0
@@ -62,7 +60,7 @@ phase 0
 		))
 
 		# Collisions with lasers occur at the "root" of the laser
-		async gdlaser-*/b <-90> gsr2c 3 {
+		sync gdlaser-*/b <-90> gsr2c 3 {
 			p this
 			color({ red green blue })
 		} laser(null, 1, 40, { 

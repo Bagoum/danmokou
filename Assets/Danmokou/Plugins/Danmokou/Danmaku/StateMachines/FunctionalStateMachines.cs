@@ -25,7 +25,7 @@ public class GTRepeat2 : GTRepeat {
     /// <param name="rpp">Amount to increment rv2 between invocations</param>
     /// <param name="props">Other properties</param>
     /// <param name="target">Child StateMachines to run</param>
-    [CreatesInternalScope(3)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public GTRepeat2(GCXF<float> wait, GCXF<float> times, GCXF<V2RV2> rpp, GenCtxProperty[] props, StateMachine[] target) :
         base(new GenCtxProperties<StateMachine>(props.Append(GenCtxProperty.Async(wait, times, rpp))), target) { }
 
@@ -48,7 +48,8 @@ public class GTRepeat : UniversalSM {
             this.caller = caller;
             //Make a derived copy for the canPrepend override
             this.smh = new SMHandoff(smh, smh.ch, null, true);
-            looper = new LoopControl<StateMachine>(props, this.smh.ch, out isClipped);
+            //But use the provided smh for its envframe
+            looper = new LoopControl<StateMachine>(props, smh.ch, out isClipped);
             waitChild = props.waitChild;
             sequential = props.sequential;
             checkIsChildDone = null;
@@ -75,10 +76,10 @@ public class GTRepeat : UniversalSM {
 
         //this needs to be pulled into a separate function so it doesn't cause local function->delegate cast overhead
         // in the standard case
-        private async Task DoAIterationSequentialStep(Action? loopDone) {
+        private async Task DoAIterationSequentialStep(SMHandoff itrsmh, Action? loopDone) {
             for (int ii = 0; ii < caller.states.Length; ++ii) {
                 if (looper.Handoff.cT.Cancelled) break;
-                await DoAIteration(ii, null);
+                await DoAIteration(ii, itrsmh, null);
             }
             loopDone?.Invoke();
             /*
@@ -92,40 +93,31 @@ public class GTRepeat : UniversalSM {
             DoNext(-1);*/
         }
         public void DoAIteration(ref float extraFrames) {
-            Action? loopDone = null;
+            bool done = false;
+            //Clone the envframe before each iteration of all children
+            var itrsmh = new SMHandoff(smh, looper.Handoff, null);
+            Action loopDone = () => {
+                done = true;
+                itrsmh.Dispose();
+            };
             if (waitChild) {
-                bool done = false;
-                loopDone = () => done = true;
                 checkIsChildDone = () => done;
                 --extraFrames;
             } else checkIsChildDone = null;
 
-            if (looper.props.childSelect == null) {
-                if (sequential) {
-                    _ = DoAIterationSequentialStep(loopDone).ContinueWithSync();
-                } else {
-                    var loopFragmentDone = loopDone == null ? null : GetManyCallback(caller.states.Length, loopDone);
-                    for (int ii = 0; ii < caller.states.Length; ++ii) {
-                        _ = DoAIteration(caller.states[ii], loopFragmentDone).ContinueWithSync();
-                    }
+            if (sequential) {
+                _ = DoAIterationSequentialStep(itrsmh, loopDone).ContinueWithSync();
+            } else {
+                var loopFragmentDone = GetManyCallback(caller.states.Length, loopDone);
+                for (int ii = 0; ii < caller.states.Length; ++ii) {
+                    _ = DoAIteration(ii, itrsmh, loopFragmentDone).ContinueWithSync();
                 }
-            } else
-                _ = DoAIteration(caller.states[(int)looper.props.childSelect(looper.GCX) % caller.states.Length],
-                    loopDone).ContinueWithSync();
-        }
-
-        private async Task DoAIteration(int index, Action<int>? childDone) {
-            using var itrSMH = new SMHandoff(smh, looper.Handoff, null);
-            try {
-                await caller.states[index].Start(itrSMH);
-            } finally {
-                childDone?.Invoke(index);
             }
         }
-        private async Task DoAIteration(StateMachine target, Action? childDone) {
-            using var itrSMH = new SMHandoff(smh, looper.Handoff, null);
+
+        private async Task DoAIteration(int index, SMHandoff itrsmh, Action? childDone) {
             try {
-                await target.Start(itrSMH);
+                await caller.states[index].Start(itrsmh);
             } finally {
                 childDone?.Invoke();
             }
@@ -136,19 +128,20 @@ public class GTRepeat : UniversalSM {
             // and calls its cleanup code in Start.
             //Therefore, this code follows the wait-child pattern.
             bool done = false;
-            Action loopDone = () => done = true;
+            var itrsmh = new SMHandoff(smh, looper.Handoff, null);
+            Action loopDone = () => {
+                done = true;
+                itrsmh.Dispose();
+            };
             checkIsChildDone = () => done;
-            if (looper.props.childSelect == null) {
-                if (sequential) {
-                    _ = DoAIterationSequentialStep(loopDone).ContinueWithSync();
-                } else {
-                    var loopFragmentDone = GetManyCallback(caller.states.Length, loopDone);
-                    for (int ii = 0; ii < caller.states.Length; ++ii) {
-                        _ = DoAIteration(caller.states[ii], loopFragmentDone).ContinueWithSync();
-                    }
+            if (sequential) {
+                _ = DoAIterationSequentialStep(itrsmh, loopDone).ContinueWithSync();
+            } else {
+                var loopFragmentDone = GetManyCallback(caller.states.Length, loopDone);
+                for (int ii = 0; ii < caller.states.Length; ++ii) {
+                    _ = DoAIteration(ii, itrsmh, loopFragmentDone).ContinueWithSync();
                 }
-            } else 
-                _ = DoAIteration(caller.states[(int) looper.props.childSelect(looper.GCX) % caller.states.Length], loopDone).ContinueWithSync();
+            }
         }
 
         /// <summary>
@@ -195,7 +188,7 @@ public class GTRepeat : UniversalSM {
 
     private readonly GenCtxProperties<StateMachine> props;
     
-    [CreatesInternalScope(0)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public GTRepeat(GenCtxProperties<StateMachine> props, StateMachine[] target) : base(target) {
         this.props = props;
     }
@@ -270,6 +263,18 @@ public class GTRepeat : UniversalSM {
 
 
 
+}
+
+/// <summary>
+/// `alternate`: Run only one of the provided StateMachines, using the indexer function to determine which.
+/// </summary>
+public class AlternateUSM : UniversalSM {
+    private readonly GCXF<float> indexer;
+    public AlternateUSM(GCXF<float> indexer, StateMachine[] target) : base(target) {
+        this.indexer = indexer;
+    }
+
+    public override Task Start(SMHandoff smh) => states[(int)indexer(smh.GCX) % states.Length].Start(smh);
 }
 
 }

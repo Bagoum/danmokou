@@ -613,13 +613,13 @@ public partial class BulletManager {
         /// Update existing V2 values in the private data hoisting for the bullet.
         /// </summary>
         public static exBulletControl UpdateV2((string target, ExTP valuer)[] targets, ExPred cond) => new((st, ct, bpi) =>
-            bpi.When(cond, Ex.Block(targets.Select(t => PICustomData.SetValue<Vector2>(bpi, t.target, t.valuer(bpi))))), BulletControl.P_SAVE);
+            bpi.When(cond, Ex.Block(targets.Select(t => PICustomData.SetValue<Vector2>(bpi, t.target, t.valuer)))), BulletControl.P_SAVE);
         
         /// <summary>
         /// Update existing float values in the private data hoisting for the bullet.
         /// </summary>
         public static exBulletControl UpdateF((string target, ExBPY valuer)[] targets, ExPred cond) => new((st, ct, bpi) =>
-            bpi.When(cond, Ex.Block(targets.Select(t => PICustomData.SetValue<float>(bpi, t.target, t.valuer(bpi))))), BulletControl.P_SAVE);
+            bpi.When(cond, Ex.Block(targets.Select(t => PICustomData.SetValue<float>(bpi, t.target, t.valuer)))), BulletControl.P_SAVE);
 
         /// <summary>
         /// Execute an event if the condition is satisfied.
@@ -668,12 +668,14 @@ public partial class BulletManager {
         /// <summary>
         /// If the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static exBulletControl SM(ExPred cond, StateMachine target) => new((st, ct, bpi) => 
             bpi.When(cond, st.sbc.RunINodeAt(st.ii, Ex.Constant(bpi.Proxy(target)), ct)), BulletControl.P_RUN);
         
         /// <summary>
         /// When a bullet collides, if the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static exBulletControl OnCollide(ExPred cond, StateMachine target) => new((st, ct, bpi) => 
             bpi.When(cond, st.sbc.RunINodeAt(st.ii, Ex.Constant(bpi.Proxy(target)), ct)), BulletControl.P_ON_COLLIDE);
     }

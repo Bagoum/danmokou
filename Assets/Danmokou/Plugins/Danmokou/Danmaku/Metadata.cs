@@ -174,7 +174,7 @@ public readonly struct SMRunner {
             (ICancellee)new PassthroughCancellee(cT.Root, local);
     
     private readonly GenCtx? gcx;
-    public GenCtx? NewGCX => gcx?.Copy();
+    public GenCtx? NewGCX => gcx?.Copy(null);
 
     public static SMRunner Null => new(null, Cancellable.Null, false, false, null);
     /// <summary>

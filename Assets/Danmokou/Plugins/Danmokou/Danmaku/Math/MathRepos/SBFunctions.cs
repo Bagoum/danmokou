@@ -110,8 +110,8 @@ public class TExSBC : TEx<SimpleBulletCollection> {
         new[] {typeof(SimpleBulletCollection), typeof(int), typeof(SoftcullProperties)});
     public static readonly ExFunction copyFrom = ExFunction.Wrap<SimpleBulletCollection>("CopyFrom", 
         new[] {typeof(SimpleBulletCollection), typeof(int)});
-    public static readonly ExFunction runINodeAt = ExFunction.Wrap<SimpleBulletCollection>("RunINodeAt", 
-        new[] {typeof(int), typeof(StateMachine), typeof(ICancellee)});
+    public static readonly ExFunction runINodeAt = ExFunction.Wrap<SimpleBulletCollection>(
+        nameof(SimpleBulletCollection.RunINodeAt), new[] {typeof(int), typeof(StateMachine), typeof(ICancellee)});
     public static readonly ExFunction makeCulledCopy = ExFunction.Wrap<SimpleBulletCollection>("MakeCulledCopy",
         new[] {typeof(int)});
     

@@ -31,7 +31,7 @@ public static class BDSL2ParsingTests {
         var res = Reflection2.Parser.Parse(source, tokens, out var stream);
         if (res.IsRight)
             Assert.Fail(stream.ShowAllFailures(res.Right));
-        var gs = new LexicalScope(DMKScope.Singleton);
+        var gs = LexicalScope.NewTopLevelScope();
         return (res.Left.AnnotateTopLevel(gs, args), gs);
     }
     private static void AssertASTFail(string source, string pattern, IDelegateArg[] args) {

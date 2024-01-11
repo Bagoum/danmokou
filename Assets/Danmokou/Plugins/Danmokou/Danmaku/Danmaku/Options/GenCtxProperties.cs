@@ -160,11 +160,7 @@ public record GenCtxProperty {
     /// </summary>
     /// <returns></returns>
     public static GenCtxProperty Sequential() => new SequentialFlag();
-    /// <summary>
-    /// Instead of executing all children simultaneously,
-    /// execute only the one at the index given by the indexer.
-    /// </summary>
-    public static GenCtxProperty Alternate(GCXF<float> indexer) => new AlternateProp(indexer);
+    
     /// <summary>
     /// Causes all objects to be summoned in world space relative to an origin.
     /// Resolved before start rules.
@@ -400,16 +396,11 @@ public record GenCtxProperty {
     public static GenCtxProperty Expose((Reflector.ExType, string)[] variables) => new ExposeProp(variables);
 
     /// <summary>
-    /// Run arbitrary code before each iteration loop on an environment frame specific to that loop.
-    /// </summary>
-    [BDSL2Only] [ScopeRaiseSource(0)]
-    public static GenCtxProperty Scoped(ErasedGCXF initializer) => new ScopedProp(initializer);
-
-    /// <summary>
     /// (Internal BDSL2 usage) Specify the lexical scope for a GenCtxProperties that is not yet created.
     /// </summary>
     [DontReflect]
-    public static GenCtxProperty _AssignLexicalScope(LexicalScope scope) => new _LexicalScopeProp(scope);
+    public static GenCtxProperty _AssignLexicalScope(LexicalScope scope, AutoVars.GenCtx autoVars) => 
+        new _LexicalScopeProp(scope, autoVars);
 
     /// <summary>
     /// Reset the summonTime variable (&amp;st) provided in GCX every iteration.
@@ -439,25 +430,33 @@ public record GenCtxProperty {
     /// Bind the values axd, ayd, aixd, aiyd in the GCX preloop section.
     /// </summary>
     /// <returns></returns>
+    [ExtendsInternalScope(AutoVarExtend.BindArrow)]
     public static GenCtxProperty BindArrow() => new BindArrowTag();
+    
     /// <summary>
     /// Bind the values lr, rl in the GCX preloop section.
     /// </summary>
     /// <returns></returns>
+    [ExtendsInternalScope(AutoVarExtend.BindLR)]
     public static GenCtxProperty BindLR() => new BindLRTag();
+    
     /// <summary>
     /// Bind the values ud, du in the GCX preloop section.
     /// </summary>
     /// <returns></returns>
+    [ExtendsInternalScope(AutoVarExtend.BindUD)]
     public static GenCtxProperty BindUD() => new BindUDTag();
+    
     /// <summary>
     /// Bind the value angle to the RV2 angle in the GCX preloop section.
     /// </summary>
+    [ExtendsInternalScope(AutoVarExtend.BindAngle)]
     public static GenCtxProperty BindAngle() => new BindAngleTag();
     
     /// <summary>
     /// Bind a value corresponding to the loop number in the GCX preloop section.
     /// </summary>
+    [BDSL1Only] [ExtendsInternalScope(AutoVarExtend.BindItr)]
     public static GenCtxProperty BindItr(string value) => new BindItrTag(value);
 
 
@@ -488,9 +487,6 @@ public record GenCtxProperty {
     }
     public record FRV2Prop(GCXF<V2RV2> value) : ValueProp<GCXF<V2RV2>>(value);
 
-    public record AlternateProp : BPYProp {
-        public AlternateProp(GCXF<float> f) : base(f) { }
-    }
     public record WhileProp : PredProp {
         public WhileProp(GCXF<bool> f) : base(f) { }
     }
@@ -588,10 +584,8 @@ public record GenCtxProperty {
     public record SaveV2Prop((ReflectEx.Hoist<Vector2>, GCXF<float>, GCXF<Vector2>)[] targets) : GenCtxProperty;
 
     public record ExposeProp((Reflector.ExType, string)[] value) : ValueProp<(Reflector.ExType, string)[]>(value);
-
-    public record ScopedProp(ErasedGCXF Initializer) : GenCtxProperty;
     
-    public record _LexicalScopeProp(LexicalScope scope) : GenCtxProperty;
+    public record _LexicalScopeProp(LexicalScope scope, AutoVars.GenCtx autoVars) : GenCtxProperty;
 
     public record TimerProp(ETime.Timer value) : ValueProp<ETime.Timer>(value);
 
@@ -633,19 +627,19 @@ public static class GenCtxUtils {
 /// <summary>
 /// A set of properties modifying the behavior of a generic repeater (GIRepeat/GCRepeat/GSRepeat).
 /// </summary>
-public abstract class GenCtxProperties {
+public abstract class GenCtxProperties : IAutoVarRequestor<AutoVars.GenCtx> {
     public (Reflector.ExType, string)[]? Expose { get; protected init; }
-    
+
     /// <summary>
-    /// In BDSL2, this points to the lexical scope of the children array.
+    /// The lexical scope of this repeater.
     /// <br/>Commands like <see cref="GenCtxProperty.BindItr"/> bind to variables in this scope.
     /// </summary>
-    public LexicalScope? IterationScope { get; set; }
-    
-    /// <summary>
-    /// In BDSL2, this is the code executed within <see cref="IterationScope"/> before children are run.
-    /// </summary>
-    public ErasedGCXF? IterationInitializer { get; init; }
+    public (LexicalScope, AutoVars.GenCtx)? ScopeAndVars { get; protected set; } = null;
+
+
+    public void Assign(LexicalScope scope, AutoVars.GenCtx autoVars) {
+        ScopeAndVars = (scope, autoVars);
+    }
 }
 
 /// <inheritdoc cref="GenCtxProperties"/>
@@ -682,7 +676,6 @@ public class GenCtxProperties<T> : GenCtxProperties {
     public readonly StateMachine? unpause;
     public readonly IReadOnlyList<(ReflectEx.Hoist<float>, GCXF<float>, GCXF<float>)>? saveF;
     public readonly IReadOnlyList<(ReflectEx.Hoist<Vector2>, GCXF<float>, GCXF<Vector2>)>? saveV2;
-    public readonly GCXF<float>? childSelect;
     public readonly GCXF<bool>? clipIf;
     public readonly GCXF<bool>? cancelIf;
     public readonly ETime.Timer? timer;
@@ -791,7 +784,6 @@ public class GenCtxProperties<T> : GenCtxProperties {
             else if (prop is UnpauseProp up && allowWait) unpause = up.value;
             else if (prop is SaveFProp sfp) saveF = sfp.targets;
             else if (prop is SaveV2Prop sv2p) saveV2 = sv2p.targets;
-            else if (prop is AlternateProp ap) childSelect = ap.value;
             else if (prop is ClipProp clipper) clipIf = clipper.value;
             else if (prop is CancelProp canceller) cancelIf = canceller.value;
             else if (prop is TimeResetTag) resetTime = true;
@@ -806,9 +798,9 @@ public class GenCtxProperties<T> : GenCtxProperties {
             else if (prop is BindItrTag bit) bindItr = bit.value;
             else if (prop is ResetColorTag) resetColor = true;
             else if (prop is ExposeProp exp) Expose = exp.value;
-            else if (prop is ScopedProp scoped) IterationInitializer = scoped.Initializer;
-            else if (prop is _LexicalScopeProp scope) IterationScope = scope.scope;
-            else throw new Exception($"{t.RName()} is not allowed to have properties of type {prop.GetType()}.");
+            else if (prop is _LexicalScopeProp scope) {
+                ScopeAndVars = (scope.scope, scope.autoVars);
+            } else throw new Exception($"{t.RName()} is not allowed to have properties of type {prop.GetType()}.");
         }
         if (sah != null) {
             if (frv2 != null) throw new Exception("A summon-along handler cannot be declared with an RV2 function handler.");

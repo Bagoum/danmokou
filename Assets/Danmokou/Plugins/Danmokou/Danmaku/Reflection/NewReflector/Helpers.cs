@@ -18,7 +18,7 @@ public static class Helpers {
         var parse = Parser.Parse(source, tokens, out var stream);
         if (parse.IsRight) 
             throw new CompileException(stream.ShowAllFailures(parse.Right));
-        var gs = new LexicalScope(DMKScope.Singleton);
+        var gs = LexicalScope.NewTopLevelScope();
         var ast = parse.Left.AnnotateTopLevel(gs, args);
         foreach (var exc in (ast as IAST).FirstPassExceptions)
             throw exc;

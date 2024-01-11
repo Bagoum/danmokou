@@ -107,15 +107,16 @@ public static partial class Reflector {
             if (attrs.Any(x => x is DontReflectAttribute)) return;
             bool isExCompiler = (attrs.Any(x => x is ExprCompilerAttribute));
             bool addNormal = true;
-            bool addBDSL2 = !attrs.Any(x => x is BDSL2OperatorAttribute);
+            bool addBDSL2 = !attrs.Any(x => x is BDSL2OperatorAttribute or BDSL1OnlyAttribute);
+            bool addBDSL1 = !attrs.Any(x => x is BDSL2OnlyAttribute);
             foreach (var attr in attrs) {
                 if (attr is AliasAttribute aa) {
-                    AddMI(aa.alias, mi);
+                    if (addBDSL1) AddMI(aa.alias, mi);
                     if (addBDSL2) AddBDSL2(aa.alias, mi);
                 } else if (attr is GAliasAttribute ga) {
                     var gsig = MethodSignature.Get(mi) as GenericMethodSignature;
                     var rsig = gsig!.Specialize(ga.type);
-                    AddMI(ga.alias, (MethodInfo)rsig.Mi);
+                    if (addBDSL1) AddMI(ga.alias, (MethodInfo)rsig.Mi);
                     if (addBDSL2) AddBDSL2_Sig(ga.alias, gsig);
                     addNormal = false;
                 } else if (attr is FallthroughAttribute fa) {
@@ -134,8 +135,8 @@ public static partial class Reflector {
                 }
             }
             if (addNormal) {
-                AddMI(mi.Name, mi);
-                if(addBDSL2) AddBDSL2(mi.Name, mi);
+                if (addBDSL1) AddMI(mi.Name, mi);
+                if (addBDSL2) AddBDSL2(mi.Name, mi);
             }
         }
 

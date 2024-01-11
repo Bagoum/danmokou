@@ -15,6 +15,7 @@ namespace Danmokou.Expressions {
 public static class ExUtils {
     public static readonly Type tfloat = typeof(float);
     public static readonly Type tint = typeof(int);
+    public static readonly Type tbool = typeof(bool);
     public static readonly Type tv2 = typeof(Vector2);
     public static readonly Type tv3 = typeof(Vector3);
     public static readonly Type tv4 = typeof(Vector4);

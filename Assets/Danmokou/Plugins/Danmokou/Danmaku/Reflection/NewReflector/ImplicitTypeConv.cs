@@ -45,6 +45,23 @@ public interface IScopedTypeConverter : IImplicitTypeConverter {
     ScopedConversionKind Kind { get; }
 }
 
+public record DummyScopedTypeConverter(IDelegateArg[] ScopeArgs, ScopedConversionKind Kind) : IScopedTypeConverter, IImplicitTypeConverterInstance {
+    public IImplicitTypeConverter Converter => this;
+    public IImplicitTypeConverterInstance NextInstance => this;
+    public IRealizedImplicitCast Realize(Unifier u) {
+        throw new NotImplementedException();
+    }
+
+    public void MarkUsed() {
+        throw new NotImplementedException();
+    }
+
+    public TypeDesignation.Dummy MethodType => 
+        throw new NotImplementedException();
+    public TypeDesignation.Variable[] Generic { get; } = 
+        Array.Empty<TypeDesignation.Variable>();
+}
+
 /// <summary>
 /// Implicit type conversion for non-generic types.
 /// </summary>

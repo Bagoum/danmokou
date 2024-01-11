@@ -30,6 +30,11 @@ public class TExArgCtx {
     /// </summary>
     public class RootCtx {
         /// <summary>
+        /// The lexical scope in which this expression is being compiled.
+        /// </summary>
+        public LexicalScope Scope { get; set; } = DMKScope.Singleton;
+        
+        /// <summary>
         /// A handler that tracks usages of yet-unbound variables in the precompilation step of GCXU.
         /// <br/>This is *NOT* used for any actual compilation.
         /// <br/>It is set to <see cref="CompilerHelpers.GCXUCompileResolver"/> in the first phase of GCXU compilation,
@@ -43,9 +48,13 @@ public class TExArgCtx {
         public (Type type, Func<TExArgCtx, Expression> bpiAsType)? CustomDataType { get; set; }
         public Dictionary<string, Stack<Expression>> AliasStack { get; } =
             new();
+        public readonly Dictionary<(string, Type), (ParameterExpression, ParameterExpression, ParameterExpression)>
+            UnscopedEnvframeAcess = new();
 
-        private static uint suffixNum = 0;
-        public string NameWithSuffix(string s) => $"{s}CG{suffixNum++}";
+        private static uint nextCtxIndex = 0;
+        public uint CtxIndex { get; } = nextCtxIndex++;
+        private uint suffixNum = 0;
+        public string NameWithSuffix(string s) => $"{s}CG{CtxIndex}_{suffixNum++}";
        
 #if EXBAKE_SAVE || EXBAKE_LOAD
         private static uint proxyArgNum = 0;
@@ -153,7 +162,10 @@ public class TExArgCtx {
     public TExArgCtx(params Arg[] args) : this(null, args) { }
     public TExArgCtx(TExArgCtx? parent, params Arg[] args) {
         this.parent = parent;
-        if (parent == null) this.ctx = new RootCtx();
+        if (parent == null)
+            this.ctx = new RootCtx() {
+                Scope = LexicalScope.OpenLexicalScopes.TryPeek(out var r) ? r : DMKScope.Singleton
+            };
         this.args = args;
         argNameToIndexMap = new Dictionary<string, int>();
         argTypeToIndexMap = new Dictionary<Type, int>();

@@ -23,26 +23,65 @@ The goal for this version is to have a fully functional implementation of the ne
 
 
 
-# v10.2.0 (2023/12/21)
+# v10.2.0 (2024/01/20)
 
 I've upgraded the project's Unity version to 2023.2.3f1. Unity 2023 has a critical change where the TextMeshPro package has now been merged into Unity internals, so it is not clear that the project will still run on Unity 2022. As such, please upgrade to Unity 2023 along with updating DMK.
+
+#### Language Changes
+
+This build overhauls much of the internal handling for the scripting language in preparation for improvements in the next version. As a result of this, there is one major change to language functionality: variables are now **shared** by all consumers. Consider the following code:
+
+```
+gtr {
+	start { speed =f 1 }
+} {
+	sync fireball-red/w <-90>  s rvelocity(px(&speed))
+	_ 2 debugf(set { f speed 4 } &speed)
+}
+```
+
+This code launches one bullet with a velocity of `&speed`, then sets `&speed` to 4 after 2 seconds. In previous versions of the engine, the bullet would always move slowly, even after the speed variable was updated. Now, the bullet will start moving faster after two seconds.
+
+The rules for variable sharing are the same as in a `for` loop in a standard language: every loop iteration has its own variables. For example, if we instead fired multiple bullets:
+
+```
+gtr {
+	start { speed =f 1 }
+	wait 1s
+	rv2incr <30>
+	times _
+} {
+	sync fireball-red/w <-90>  s rvelocity(px(&speed))
+	_ 2 debugf(set { f speed 4 } &speed)
+}
+```
+
+Each bullet would have its own `&speed` since each bullet occurs in a separate loop iteration of GTR, where `&speed` is declared. On the other hand, if instead of firing one bullet we fired multiple (eg. `async fireball-red/w <-90> gcr2 10 10 <2> { } s rvelocity(px(&speed))`), then each group of 10 bullets would share the same `&speed`, since they occur in the same loop iteration of GTR.
+
+
+
+There are also a few minor changes:
+
+- The automatically-bound variable `&bulletTime` has been removed (it was unused in the engine as provided).
+- `EventLASM.Listen` has been removed. I plan to replace it in the next version.
+- SyncPatterns `oArrowI`, `FArrow`, and `TreeArrow` have been removed. I plan to replace them in the next version.
 
 #### Features
 
 - Enemies can now use nonpiercing lasers. As with players shots, simply add the `nonpiercing()` option to the laser options. Note that nonpiercing only works with `dynamic` lasers.
 - The engine now supports restarting from checkpoints in stage or boss scripts. Add a `<!> checkpoint` flag to any stage phase and/or boss phase where you would like to set up a checkpoint. (If using it on a boss phase, make sure the stage phase that creates the boss also has a checkpoint flag.) The player can then select "Restart from Checkpoint" from the pause menu or the death menu. This will result in their score and other features being reset, as if they had used a Continue. It is supported for the checkpoint to be on a previous stage (ie. if the last checkpoint was on stage 1 and the player dies on stage 2, they will get sent back to stage 1). Since Continues are generally stronger than checkpoints, it may be best (but it is not required) to disable Continues in your GameDef if using this feature.
   <img src="..\images\rider64_WjEUkgqqUZ.jpg" alt="rider64_WjEUkgqqUZ" style="zoom:33%;" />
+- The Newtonsoft.JSON package has been changed from jillieJr's package to the new inbuilt one, which resolves some issues with AoT code stripping.
 
 #### Breaking Changes
 
 - The method `GameManagement.Restart` has been moved to `GameManagement.Instance.Restart`.
 - Instead of being derived automatically, the bounds on player movement are now determined via the `m_playerMovementBounds` fields on GameDef. By default, this is set to the values that would be derived automatically.
   <img src="..\images\Unity_xVjFiR1eGx.jpg" alt="Unity_xVjFiR1eGx" style="zoom: 33%;" />
-
 - Replay data storage can now be configured per GameDef via overriding `RecordReplayFrame` and `CreateReplayInputSource`. By default, danmaku games use StandardDanmakuInputExtractor (which supports horizontal/vertical movement and the controls fire, focus, bomb, meter, swap, dialogue confirm, dialogue skip), and non-danmaku games do not support replays.
-
 - Player configurations now require a "movement handler" configuration.  For standard bullet hell ships, you can use the "PlayerStandardMovement" configuration, which has been set on all the existing players. For now, this will default to "PlayerStandardMovement" if not provided, but it may be required in future versions.
   <img src="..\images\move_cfg.jpg" alt="move_cfg" style="zoom:33%;" />
+- The repeater modifier `alternate(GCXF<float>)` has been removed. It has been replaced with the function `SyncPattern Alternate(GCXF<float>, SyncPattern[])` (with similar signatures for AsyncPattern and StateMachine), which do the same thing.
 
 #### Changes
 
@@ -55,12 +94,13 @@ I've upgraded the project's Unity version to 2023.2.3f1. Unity 2023 has a critic
 #### Fixes
 
 - Fixed an issue where the scrolling on the control bindings option screen was too slow (it was correct on all other menus after Unity-side fixes in 2022.2.13).
-- Fixed an issue where trailing options wouldn't have a correct position immediately after a traditional respawn.
+- Fixed an issue where trailing options wouldn't have a correct position immediately after a traditional respawn. Also fixed an issue where items could be collected while in the process of respawning.
 - Fixed an issue where the fairy generated on shot demos would sometimes not be deleted when leaving the shot demo screen.
 - Fixed an issue where the mini-tutorial could prevent running the main campaign.
 - Fixed an issue where the default dialogue box could allow clicking buttons that were disabled.
 - Fixed an issue where replays could be recorded even after they were cancelled.
 - Fixed an issue where simple and rotating lasers would have incorrect bounding box calculations.
+- Fixed an issue where replays could be saved but not viewed on Mac builds.
 
 # v10.1.0 (2023/04/02)
 

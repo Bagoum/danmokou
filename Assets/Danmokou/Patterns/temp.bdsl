@@ -13,18 +13,35 @@ phase(0)
 $%f(%x)
 !}
 
+
 <!> type non `Pathers Example`
 <!> hp 10000
 phase 0
-	saction 0
+	paction 0
 		position 0 2
-		sync ellipse-red/w <> gsr2c 30 {
-			
-		} s polar
-		logsumshiftt -0.8 1.5 * 3 t * -3 t
-		logsumshiftt 0.1 1 0 
-			logsumshiftt -0.1 2 * 90 t 0
+		#bullet-control _ ellipse-red/w restyle(ellipse-blue/w, & > &.var2 #1 > t 2)
+		#bullet-control _ ellipse-*/w sm(onlyonce > t 1,
+		#	sync sakura-black/w <> s tprot px(2 + &.lr)
+		#)
+		async ellipse-*/w <-90> gcr2 360 _ <3h> {
+			start { var1 =f 0 var3 =f 0 lr =f 1 }
+			postloop { lr +=f 1 }
+		} {
+			gsr2 10 <10> {
+				colorf({ red green }, &pi)
+				center
+				bindItr(itr)
+			} s rvelocity(rotate(6 * &pi * t, px(
+				1 + z1(&itr)
+			)))
+		}
+///
+		sync ellipse-blue/w <180> gsr2 10 <10> {
+			center
+			start { lr =f -1 }
+		} s rvelocity(px(1.2))
 
+///
 
 <!> type non abc
 <!> hp 10000

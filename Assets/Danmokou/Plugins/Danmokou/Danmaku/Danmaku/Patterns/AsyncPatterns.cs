@@ -30,7 +30,7 @@ public static partial class AsyncPatterns {
         private static readonly Action noop = () => { };
         private LoopControl<AsyncPattern> looper;
         /// <summary>
-        /// Basic AsyncHandoff to pass around.
+        /// AsyncHandoff provided by caller. Contains the callback for marking completion.
         /// </summary>
         private readonly AsyncHandoff abh;
         public APExecutionTracker(GenCtxProperties<AsyncPattern> props, AsyncHandoff abh, out bool isClipped) {
@@ -54,12 +54,8 @@ public static partial class AsyncPatterns {
         public bool PrepareLastIteration() => looper.PrepareLastIteration();
         public void DoSIteration(SyncPattern[] target) {
             using var itrSBH = new SyncHandoff(looper.Handoff, extraFrames * ETime.FRAME_TIME);
-            if (looper.props.childSelect != null) {
-                target[(int) looper.props.childSelect(looper.GCX) % target.Length](itrSBH);
-            } else {
-                for (int ii = 0; ii < target.Length; ++ii) {
-                    target[ii](itrSBH);
-                }
+            for (int ii = 0; ii < target.Length; ++ii) {
+                target[ii](itrSBH);
             }
         }
         public void FinishIteration() => looper.FinishIteration();
@@ -120,8 +116,12 @@ public static partial class AsyncPatterns {
             //To prevent secondary sequential children from trying to copy this object's GCX
             // which will have already changed when the next loop starts.
             bool done = false;
+            //iteration abh is disabled done call because it is shared between all children,
+            // and will only be cleaned up manually via loop_done
+            AsyncHandoff itrABH = new AsyncHandoff(abh, looper.Handoff, null);
             Action loop_done = () => {
                 done = true;
+                itrABH.Cleanup();
             };
             if (waitChild) {
                 checkIsChildDone = () => done;
@@ -131,26 +131,23 @@ public static partial class AsyncPatterns {
                 --elapsedFrames;
             } else checkIsChildDone = null;
             
-            if (looper.props.childSelect == null) {
-                if (sequential) {
-                    void DoNext(int ii) {
-                        if (ii >= target.Length || looper.Handoff.cT.Cancelled) {
-                            loop_done();
-                        } else 
-                            DoAIteration(target[ii], () => DoNext(ii + 1));
-                    }
-                    DoNext(0);
-                } else {
-                    var loop_fragment_done = GetManyCallback(target.Length, loop_done);
-                    for (int ii = 0; ii < target.Length; ++ii) {
-                        DoAIteration(target[ii], loop_fragment_done);
-                    }
+            if (sequential) {
+                void DoNext(int ii) {
+                    if (ii >= target.Length || looper.Handoff.cT.Cancelled) {
+                        loop_done();
+                    } else 
+                        DoAIteration(target[ii], itrABH, () => DoNext(ii + 1));
                 }
-            } else DoAIteration(target[(int)looper.props.childSelect(looper.GCX) % target.Length], loop_done);
+                DoNext(0);
+            } else {
+                var loop_fragment_done = GetManyCallback(target.Length, loop_done);
+                for (int ii = 0; ii < target.Length; ++ii) {
+                    DoAIteration(target[ii], itrABH, loop_fragment_done);
+                }
+            }
         }
 
-        private void DoAIteration(AsyncPattern target, Action done) {
-            var itrABH = new AsyncHandoff(abh, looper.Handoff, done);
+        private void DoAIteration(AsyncPattern target, AsyncHandoff itrABH, Action done) {
             //RunPrepend steps the coroutine and places it before the current one,
             //so we can continue running on the same frame that the child finishes (if using waitchild). 
             itrABH.RunPrependRIEnumerator(target(itrABH));
@@ -164,25 +161,27 @@ public static partial class AsyncPatterns {
         }
         
         public void DoLastAIteration(AsyncPattern[] target) {
+            //iteration abh is disabled done call because it is shared between all children,
+            // and will only be cleaned up manually via loop_done
+            AsyncHandoff itrABH = new AsyncHandoff(abh, looper.Handoff, null);
             Action loop_done = () => {
                 AllADone();
+                itrABH.Cleanup();
             };
-            if (looper.props.childSelect == null) {
-                if (sequential) {
-                    void DoNext(int ii) {
-                        if (ii >= target.Length || looper.Handoff.cT.Cancelled)
-                            loop_done();
-                        else
-                            DoAIteration(target[ii], () => DoNext(ii + 1));
-                    }
-                    DoNext(0);
-                } else {
-                    var loop_fragment_done = GetManyCallback(target.Length, loop_done);
-                    for (int ii = 0; ii < target.Length; ++ii) {
-                        DoAIteration(target[ii], loop_fragment_done);
-                    }
+            if (sequential) {
+                void DoNext(int ii) {
+                    if (ii >= target.Length || looper.Handoff.cT.Cancelled)
+                        loop_done();
+                    else
+                        DoAIteration(target[ii], itrABH, () => DoNext(ii + 1));
                 }
-            } else DoAIteration(target[(int)looper.props.childSelect(looper.GCX) % target.Length], loop_done);
+                DoNext(0);
+            } else {
+                var loop_fragment_done = GetManyCallback(target.Length, loop_done);
+                for (int ii = 0; ii < target.Length; ++ii) {
+                    DoAIteration(target[ii], itrABH, loop_fragment_done);
+                }
+            }
         }
         
         public void WaitStep() {
@@ -212,7 +211,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GCR")]
-    [CreatesInternalScope(0)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static AsyncPattern GCRepeat(GenCtxProperties<AsyncPattern> props, SyncPattern[] target) {
         IEnumerator Inner(AsyncHandoff abh) {
             APExecutionTracker tracker = new APExecutionTracker(props, abh, out bool isClipped);
@@ -252,7 +251,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GCR2")]
-    [CreatesInternalScope(3)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static AsyncPattern GCRepeat2(GCXF<float> wait, GCXF<float> times, GCXF<V2RV2> rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.Async(wait, times, rpp))), target);
 
@@ -268,7 +267,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GCR2d")]
-    [CreatesInternalScope(4)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static AsyncPattern GCRepeat2d(ExBPY difficulty, ExBPY wait, ExBPY times, GCXF<V2RV2> rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.AsyncD(difficulty, wait, times, rpp))), target);
     
@@ -277,12 +276,12 @@ public static partial class AsyncPatterns {
     /// where all three are adjusted for difficulty.
     /// </summary>
     [Alias("GCR2dr")]
-    [CreatesInternalScope(4)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static AsyncPattern GCRepeat2dr(ExBPY difficulty, ExBPY wait, ExBPY times, ExBPRV2 rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.AsyncDR(difficulty, wait, times, rpp))), target);
 
     [Alias("GCRf")]
-    [CreatesInternalScope(3)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static AsyncPattern GCRepeatFRV2(GCXF<float> wait, GCXF<float> times, GCXF<V2RV2> frv2, GenCtxProperty[] props, SyncPattern[] target) =>
         GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.WT(wait, times)).Append(GenCtxProperty.FRV2(frv2))), target);
     
@@ -296,7 +295,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GCR3")]
-    [CreatesInternalScope(3)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static AsyncPattern GCRepeat3(GCXF<float> wait, GCXF<float> forTime, GCXF<V2RV2> rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.AsyncFor(wait, forTime, rpp))), target);
     public static AsyncPattern _AsGCR(SyncPattern target, params GenCtxProperty[] props) =>
@@ -317,13 +316,29 @@ public static partial class AsyncPatterns {
      */
 
     /// <summary>
+    /// Run only one of the provided patterns, using the indexer function to determine which.
+    /// </summary>
+    public static AsyncPattern Alternate(GCXF<float> indexer, AsyncPattern[] aps) => abh =>
+        aps[(int)indexer(abh.ch.gcx) % aps.Length](abh);
+
+    /// <summary>
     /// Execute the child SyncPattern once.
     /// </summary>
     /// <param name="target">Child SyncPattern to run unchanged</param>
     /// <returns></returns>
     [Fallthrough(1)]
-    public static AsyncPattern COnce(SyncPattern target) => _AsGCR(target, GCP.Times(_ => 1));
-    
+    public static AsyncPattern COnce(SyncPattern target) {
+        IEnumerator Inner(AsyncHandoff abh) {
+            if (!abh.Cancelled) {
+                using var itrSBH = new SyncHandoff(abh.ch, 0);
+                target(itrSBH);
+            }
+            abh.Done();
+            yield break;
+        }
+        return Inner;
+    }
+
 
     /// <summary>
     /// Delay a synchronous invokee by a given number of frames.
@@ -348,7 +363,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child AsyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GIR")]
-    [CreatesInternalScope(0)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static AsyncPattern GIRepeat(GenCtxProperties<AsyncPattern> props, AsyncPattern[] target) {
         IEnumerator Inner(AsyncHandoff abh) {
             IPExecutionTracker tracker = new(props, abh, out bool isClipped);
@@ -387,7 +402,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child AsyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GIR2")]
-    [CreatesInternalScope(3)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static AsyncPattern GIRepeat2(GCXF<float> wait, GCXF<float> times, GCXF<V2RV2> rpp, GenCtxProperty[] props, AsyncPattern[] target) =>
         GIRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.Async(wait, times, rpp))), target);
     
@@ -403,7 +418,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child AsyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GIR2d")]
-    [CreatesInternalScope(4)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static AsyncPattern GIRepeat2d(ExBPY difficulty, ExBPY wait, ExBPY times, GCXF<V2RV2> rpp, GenCtxProperty[] props, AsyncPattern[] target) =>
         GIRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.AsyncD(difficulty, wait, times, rpp))), target);
     
@@ -417,7 +432,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child AsyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GIR3")]
-    [CreatesInternalScope(3)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static AsyncPattern GIRepeat3(GCXF<float> wait, GCXF<float> forTime, GCXF<V2RV2> rpp, GenCtxProperty[] props, AsyncPattern[] target) =>
         GIRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.AsyncFor(wait, forTime, rpp))), target);
     private static AsyncPattern _AsGIR(AsyncPattern target, params GenCtxProperty[] props) =>

@@ -10,11 +10,13 @@ using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Danmokou.Reflection2;
 using Danmokou.SM;
 using Danmokou.SM.Parsing;
 using JetBrains.Annotations;
 using Mizuhashi;
 using UnityEngine.Profiling;
+using Parser = Danmokou.DMath.Parser;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
@@ -202,6 +204,9 @@ public static partial class Reflector {
                 d.Log();
             if (p.Ctx.ParseEndFailure(p, ast) is { } exc)
                 throw exc;
+            var rootScope = LexicalScope.NewTopLevelScope();
+            using var __ = new LexicalScope.ParsingScope(rootScope);
+            ast.AttachLexicalScope(rootScope);
             Profiler.BeginSample("AST realization");
             var val = ast.EvaluateObject(new());
             Profiler.EndSample();

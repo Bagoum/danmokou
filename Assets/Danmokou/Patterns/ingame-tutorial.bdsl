@@ -112,8 +112,7 @@ phase 0
 phase 0
 	paction 0
 		async _ <1;:12> gcr2 60 _ <8c> {
-			alternate t
-		} {
+		} alternate t {
 			gsr2c 10 {
 			} valueitem
 			gsr2c 100 {

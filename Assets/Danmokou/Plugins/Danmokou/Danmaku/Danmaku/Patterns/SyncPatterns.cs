@@ -76,6 +76,12 @@ public static partial class SyncPatterns {
     }
 
     /// <summary>
+    /// Run only one of the provided patterns, using the indexer function to determine which.
+    /// </summary>
+    public static SyncPattern Alternate(GCXF<float> indexer, SyncPattern[] sps) => sbh =>
+        sps[(int)indexer(sbh.GCX) % sps.Length](sbh);
+
+    /// <summary>
     /// Equal to `gsr { start rv2.rx +=f rand from to } sp`
     /// </summary>
     public static SyncPattern RandomX(ExBPY from, ExBPY to, SyncPattern sp) => _AsGSR(sp,
@@ -271,14 +277,11 @@ public static partial class SyncPatterns {
         public bool PrepareIteration() => looper.PrepareIteration();
 
         public void DoIteration(SyncPattern[] target) {
-            sbh.ch = looper.Handoff;
-            if (looper.props.childSelect != null) {
-                target[(int)looper.props.childSelect(looper.GCX) % target.Length](sbh);
-            } else {
-                for (int ii = 0; ii < target.Length; ++ii) {
-                    target[ii](sbh);
-                }
+            sbh.ch = looper.Handoff.Copy();
+            for (int ii = 0; ii < target.Length; ++ii) {
+                target[ii](sbh);
             }
+            sbh.ch.Dispose();
         }
         public void FinishIteration() => looper.FinishIteration();
         public void AllDone(bool normalEnd) {
@@ -295,7 +298,7 @@ public static partial class SyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GSR")]
-    [CreatesInternalScope(0)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static SyncPattern GSRepeat(GenCtxProperties<SyncPattern> props, SyncPattern[] target) {
         return sbh => {
             SPExecutionTracker exec = new SPExecutionTracker(props, sbh, out bool isClipped);
@@ -321,7 +324,7 @@ public static partial class SyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GSR2")]
-    [CreatesInternalScope(2)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static SyncPattern GSRepeat2(GCXF<float> times, GCXF<V2RV2> rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GSRepeat(new GenCtxProperties<SyncPattern>(props.Append(GenCtxProperty.Sync(times, rpp))), target);
     
@@ -335,7 +338,7 @@ public static partial class SyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GSRf")]
-    [CreatesInternalScope(2)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static SyncPattern GSRepeatFRV2(GCXF<float> times, GCXF<V2RV2> frv2, GenCtxProperty[] props, SyncPattern[] target) =>
         GSRepeat(new GenCtxProperties<SyncPattern>(props.Append(GenCtxProperty.Times(times)).Append(GenCtxProperty.FRV2(frv2))), target);
     
@@ -349,7 +352,7 @@ public static partial class SyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GSR2c")]
-    [CreatesInternalScope(1)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static SyncPattern GSRepeat2c(GCXF<float> times, GenCtxProperty[] props, SyncPattern[] target) =>
         GSRepeat(new GenCtxProperties<SyncPattern>(props.Append(GenCtxProperty.TimesCircle(times))), target);
     
@@ -357,7 +360,7 @@ public static partial class SyncPatterns {
     /// Like GSRepeat, but has specific handling for the TIMES and rpp properties, where both are mutated by the difficulty.
     /// </summary>
     [Alias("GSR2dr")]
-    [CreatesInternalScope(3)]
+    [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static SyncPattern GSRepeat2dr(ExBPY difficulty, ExBPY times, ExBPRV2 rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GSRepeat(new GenCtxProperties<SyncPattern>(props.Append(GenCtxProperty.SyncDR(difficulty, times, rpp))), target);
 

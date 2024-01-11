@@ -10,6 +10,7 @@ using BagoumLib.Cancellation;
 using BagoumLib.Functional;
 using BagoumLib.Reflection;
 using BagoumLib.Tasks;
+using BagoumLib.Unification;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
@@ -19,12 +20,15 @@ using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.GameInstance;
 using Danmokou.Reflection;
+using Danmokou.Reflection2;
 using Danmokou.Scriptables;
 using Danmokou.SM.Parsing;
 using Mizuhashi;
 using UnityEngine;
 using UnityEngine.Profiling;
 using static BagoumLib.Tasks.WaitingUtils;
+using AST = Danmokou.Reflection.AST;
+using IAST = Danmokou.Reflection.IAST;
 using Parser = Danmokou.DMath.Parser;
 
 namespace Danmokou.SM {
@@ -125,9 +129,7 @@ public readonly struct SMHandoff : IDisposable {
     }
 
     public SMHandoff(BehaviorEntity exec, ICancellee? cT = null, int? index = null) {
-        var gcx = GenCtx.New(exec, V2RV2.Zero);
-        this.ch = new CommonHandoff(cT ?? Cancellable.Null, null, gcx);
-        gcx.Dispose();
+        this.ch = new CommonHandoff(cT ?? Cancellable.Null, null, GenCtx.New(exec), null);
         ch.gcx.index = index.GetValueOrDefault(exec.rBPI.index);
         parentCT = Cancellable.Null;
         CanPrepend = false;
@@ -135,10 +137,10 @@ public readonly struct SMHandoff : IDisposable {
     }
 
     public SMHandoff(BehaviorEntity exec, SMRunner smr, ICancellee? cT = null, SMContext? context = null) {
-        var gcx = smr.NewGCX ?? GenCtx.New(exec, V2RV2.Zero);
-        gcx.OverrideScope(exec, V2RV2.Zero, exec.rBPI.index);
-        this.ch = new CommonHandoff(cT ?? smr.cT, null, gcx);
-        gcx.Dispose();
+        var gcx = smr.NewGCX ?? GenCtx.New(exec);
+        gcx.OverrideScope(exec, exec.rBPI.index);
+        //TODO envframe should this be V2RV2.zero or null?
+        this.ch = new CommonHandoff(cT ?? smr.cT, null, gcx, V2RV2.Zero);
         this.parentCT = smr.cT;
         CanPrepend = false;
         Context = context ?? new SMContext();
@@ -149,7 +151,7 @@ public readonly struct SMHandoff : IDisposable {
     /// <br/>The common handoff is copied.
     /// </summary>
     public SMHandoff(SMHandoff parent, ICancellee newCT) {
-        this.ch = new CommonHandoff(newCT, parent.ch.bc, parent.ch.gcx.Copy());
+        this.ch = new CommonHandoff(newCT, parent.ch.bc, parent.ch.gcx.Copy(null), parent.ch.rv2Override);
         parentCT = parent.parentCT;
         CanPrepend = parent.CanPrepend;
         Context = DerivedSMContext.DeriveFrom(parent.Context);
@@ -171,7 +173,7 @@ public readonly struct SMHandoff : IDisposable {
     /// </summary>
     private SMHandoff(SMHandoff parent, SMContext? context, out ICancellable cts) {
         this.parentCT = parent.parentCT;
-        this.ch = new CommonHandoff(cts = new JointCancellable(parent.cT), parent.ch.bc, parent.ch.gcx);
+        this.ch = new CommonHandoff(cts = new JointCancellable(parent.cT), parent.ch.bc, parent.ch.gcx.Copy(null), null);
         CanPrepend = parent.CanPrepend;
         Context = context ?? DerivedSMContext.DeriveFrom(parent.Context);
     }
@@ -192,7 +194,7 @@ public readonly struct SMHandoff : IDisposable {
 }
 // WARNING: StateMachines must NOT store any state. As in, you must be able to call the same SM twice concurrently,
 // and it should run twice without interfering.
-public abstract class StateMachine {
+public abstract class StateMachine : ILexicalScopeRequestor {
     #region InitStuff
 
     public static readonly Dictionary<string, Type> SMInitMap = new(StringComparer.OrdinalIgnoreCase) {
@@ -215,6 +217,7 @@ public abstract class StateMachine {
         {"gtr", typeof(GTRepeat)},
         {"gtrepeat", typeof(GTRepeat)},
         {"gtr2", typeof(GTRepeat2)},
+        {"alternate", typeof(AlternateUSM)},
         {"if", typeof(IfUSM)},
         {"script", typeof(ScriptTSM)},
         {"debugf", typeof(DebugFloat)}
@@ -484,6 +487,11 @@ public abstract class StateMachine {
             d.Log();
         if (p.Ctx.ParseEndFailure(p, ast) is { } exc)
             throw exc;
+        var rootScope = LexicalScope.NewTopLevelScope();
+        using var __ = new LexicalScope.ParsingScope(rootScope);
+        ast.AttachLexicalScope(rootScope);
+        if (rootScope.FinalizeVariableTypes(Unifier.Empty).TryR(out var err))
+            throw Reflection2.IAST.EnrichError(err);
         Profiler.BeginSample("SM AST realization");
         var result = ast.Evaluate(new());
         Profiler.EndSample();
@@ -511,6 +519,9 @@ public abstract class StateMachine {
     }
     
     protected readonly StateMachine[] states;
+    public LexicalScope Scope { get; private set; } = DMKScope.Singleton;
+
+    public void Assign(LexicalScope scope) => Scope = scope;
 
     public abstract Task Start(SMHandoff smh);
 }

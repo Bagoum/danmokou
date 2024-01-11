@@ -6,6 +6,8 @@ using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Expressions;
 using BagoumLib.Mathematics;
+using BagoumLib.Reflection;
+using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DataHoist;
@@ -162,31 +164,34 @@ public static class CompilerHelpers {
         public int TotalUsages { get; private set; } = 0;
         private readonly List<(Type, string)> bound = new();
         public IReadOnlyList<(Type, string)> Bound => bound;
+        public bool RequiresBinding => bound.Count > 0;
         private readonly Dictionary<(Type, string), int> counters = new();
         private readonly HashSet<(Type, string)> dirty = new();
 
-        public bool TryResolve(Type t, string alias, out Ex ex) {
+        
+        public bool TryResolve(TExArgCtx tac, Type t, string alias, out Ex ex) {
             if (!counters.ContainsKey((t, alias))) {
                 bound.Add((t, alias));
                 counters[(t, alias)] = 0;
             }
             ++counters[(t, alias)];
             ++TotalUsages;
-            ex = Ex.Default(t);
+            ex = Ex.Variable(t, "$deferred_gcxu_variable");
             return true;
         }
-
         public void MarkDirty(Type t, string alias) => dirty.Add((t, alias));
 
+        public static string FrameVarCSEName(int parentage, Type type) => $"$fv{type.RName()}_{parentage}";
+
         public ReflectEx.Alias[] ToAliases(ReflectEx.Alias? extra) {
-            var aliases = new ReflectEx.Alias[Bound.Count + (extra.HasValue ? 1 : 0)];
+            int exOffset = (extra.HasValue ? 1 : 0);
+            var aliases = new ReflectEx.Alias[exOffset + Bound.Count];
             if (extra.Try(out var ex))
                 aliases[0] = ex;
             for (int ii = 0; ii < Bound.Count; ++ii) {
                 var (t, s) = Bound[ii];
-                aliases[ii + (extra.HasValue ? 1 : 0)] = 
-                    new ReflectEx.Alias(t, s,
-                        tac => PICustomData.GetValue(tac, t, s)) {
+                aliases[exOffset + Bound.Count + ii] = 
+                    new ReflectEx.Alias(t, s, tac => PICustomData.GetValue(tac, t, s)) {
                         DirectAssignment = counters[(t, s)] == 1 || dirty.Contains((t, s))
                     };
             }
@@ -200,7 +205,8 @@ public static class CompilerHelpers {
     /// </summary>
     public class GCXUDummyResolver : ReflectEx.ICompileReferenceResolver {
         public static readonly GCXUDummyResolver Singleton = new();
-        public bool TryResolve(Type t, string alias, out Expression ex) {
+
+        public bool TryResolve(TExArgCtx tac, Type t, string alias, out Expression ex) {
             ex = default!;
             return false;
         }
@@ -223,13 +229,15 @@ public static class CompilerHelpers {
     /// <returns></returns>
     public static GCXU<T> Automatic<S, T>(Func<S, ReadyToCompileExpr<T>> compiler, S exp, Func<S, ReflectEx.Alias[], S> modifyLets, Func<S, Func<TExArgCtx, TExArgCtx>, S> modifyArgBag) where T : Delegate {
         var resolver = new GCXUCompileResolver();
-        _ = compiler(modifyArgBag(exp, tac => {
+        LexicalScope enclosingScope = null!;
+        var ww = compiler(modifyArgBag(exp, tac => {
+            enclosingScope = tac.Ctx.Scope;
             tac.Ctx.GCXURefs = resolver;
             return tac;
         }));
-        return new GCXU<T>(resolver.Bound, type => {
+        return new GCXU<T>(resolver.Bound, enclosingScope, type => {
             ReflectEx.Alias? bpiAsTypeAlias = null;
-            if (resolver.Bound.Count > 0) {
+            if (resolver.RequiresBinding) {
                 //When there are multiple usages of (bpi.data as CustomDataType), cache the value of that in an local variable.
                 //Note: in practice this optimization for type-as doesn't seem to do much, probably because MSIL automatically
                 // optimizes for it even if you don't do it here.
@@ -240,6 +248,7 @@ public static class CompilerHelpers {
                 exp = modifyLets(exp, resolver.ToAliases(bpiAsTypeAlias));
             }
             return compiler(modifyArgBag(exp, tac => {
+                tac.Ctx.Scope = enclosingScope;
                 tac.Ctx.GCXURefs = GCXUDummyResolver.Singleton;
                 tac.Ctx.CustomDataType = (type.BuiltType,
                     bpiAsTypeAlias.Try(out var alias) ?
@@ -263,7 +272,7 @@ public static class Compilers {
     /// </summary>
     public static Func<TExArgCtx, TEx<T>> Expose<T>((Reflector.ExType, string)[] variables, Func<TExArgCtx, TEx<T>> inner) => tac => {
         foreach (var (ext, name) in variables)
-            tac.Ctx.GCXURefs?.TryResolve(ext.AsType(), name, out _);
+            tac.Ctx.GCXURefs?.TryResolve(tac, ext.AsType(), name, out _);
         return inner(tac);
     };
     

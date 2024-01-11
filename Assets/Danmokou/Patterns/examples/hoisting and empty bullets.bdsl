@@ -14,10 +14,10 @@ phase 0
 			 mydir p dir
 		 _
 		sync enemy01 <1;:45> gsr2 4 <;:90> { p this } summon tprot cx 1
-			async empty <1;:> gcr2 120 4 <200> { p add } {
+			async empty <0.3;:> gcr2 120 4 <-90> { p add } {
 				s tprot rotatelerprate 90 cx 1 cr 1 90
-				loc0c gem-red/bs gsr2 10 <30> . s offset 
-					rotate @ mydir p px 0.5
+				loc0c gem-red/b gsr2 10 <30> . s offset 
+					zero
 					@ myloc p
 			} { }
 			

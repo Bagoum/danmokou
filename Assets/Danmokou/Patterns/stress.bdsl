@@ -12,14 +12,22 @@ phase 0
 <!> hp 50000
 phase 0
     paction 0
+        #bullet-control persist circle-green/w restyle circle-blue/w (> &.var2 100)
         async circle-*/w <0.8;0:0> gcr2 1 _ <0;0:.11386> {
-			p this
 		} gsr2c 120 { 
             color green
+            start { 
+                var1 =f 2
+                var2 =f 0
+                var3 =f 0
+             }
+            #expose { f var1 f var2 }
 			##colorf({ red green blue orange yellow purple }, t * 6 // &times)
-		} simple rvelocity cx 2 { 
-			dir2 cx 1
+		} simple rvelocity px(&var1 + &var2 + &var3) { 
+			#dir2 cx 1
 		}
+
+///
 
 ## Flip control tester
 <!> type non hello

@@ -406,9 +406,11 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                                 npReceivers!.Add((receiver, coll, segment, collLoc));
                         } else {
                             receiver.ProcessActual(this, loc, cos, sin, coll, collLoc);
-                            Laser.IsColliding = true;
-                            Laser.myStyle.IterateCollideControls(Laser);
-                            smallestCollisionLength = Math.Min(smallestCollisionLength, segment + 1);
+                            if (coll.collide) {
+                                Laser.IsColliding = true;
+                                Laser.myStyle.IterateCollideControls(Laser);
+                                smallestCollisionLength = Math.Min(smallestCollisionLength, segment + 1);
+                            }
                         }
                     }
                 }

@@ -16,6 +16,7 @@ using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.Pooling;
 using Danmokou.Reflection;
+using Danmokou.Reflection2;
 using Danmokou.Services;
 using Danmokou.SM;
 using JetBrains.Annotations;
@@ -42,18 +43,25 @@ public struct CommonHandoff : IDisposable {
     public readonly ICancellee cT;
     public DelegatedCreator bc;
     public readonly GenCtx gcx;
+    public readonly V2RV2? rv2Override;
 
     /// <summary>
-    /// GCX is automatically copied.
+    /// GCX is NOT automatically copied.
     /// </summary>
-    public CommonHandoff(ICancellee cT, DelegatedCreator? bc, GenCtx gcx) {
+    public CommonHandoff(ICancellee cT, DelegatedCreator? bc, GenCtx gcx, V2RV2? rv2Override) {
         this.cT = cT;
         this.bc = bc ?? new DelegatedCreator(gcx.exec, "");
-        this.gcx = gcx.Copy();
+        this.gcx = gcx;
+        if (gcx.AutoVars is AutoVars.GenCtx && rv2Override.Try(out var overr)) {
+            gcx.BaseRV2 = gcx.RV2 = overr;
+            this.rv2Override = null;
+        } else {
+            this.rv2Override = rv2Override;
+        }
     }
 
     public readonly CommonHandoff Copy(string? newStyle = null) {
-        var nch = new CommonHandoff(cT, bc, gcx);
+        var nch = new CommonHandoff(cT, bc, gcx.Copy(null), rv2Override);
         if (newStyle != null)
             nch.bc.style = newStyle;
         return nch;
@@ -71,7 +79,7 @@ public struct CommonHandoff : IDisposable {
 public struct SyncHandoff : IDisposable {
     public CommonHandoff ch;
     public DelegatedCreator bc => ch.bc;
-    public V2RV2 RV2 => GCX.RV2;
+    public V2RV2 RV2 => ch.rv2Override ?? GCX.RV2;
     public int index => GCX.index;
     /// <summary>
     /// Starting time of summoned objects (seconds)
@@ -80,10 +88,10 @@ public struct SyncHandoff : IDisposable {
     public GenCtx GCX => ch.gcx;
 
     /// <summary>
-    /// The common handoff is copied from SMH.
+    /// The common handoff is not copied. (Be careful on calling Dispose.)
     /// </summary>
-    public SyncHandoff(in DelegatedCreator bc, in SMHandoff smh) {
-        this.ch = new CommonHandoff(smh.cT, bc, smh.GCX);
+    public SyncHandoff(in DelegatedCreator bc, in SMHandoff smh, V2RV2 rv2Override) {
+        this.ch = new CommonHandoff(smh.cT, bc, smh.GCX, rv2Override);
         this.timeOffset = 0f;
     }
 
@@ -116,10 +124,10 @@ public struct AsyncHandoff {
     private readonly BehaviorEntity exec;
 
     /// <summary>
-    /// The common handoff is copied from SMHandoff.
+    /// The common handoff is NOT copied from SMHandoff.
     /// </summary>
-    public AsyncHandoff(in DelegatedCreator bc, Action? callback, in SMHandoff smh) {
-        this.ch = new CommonHandoff(smh.ch.cT, bc, smh.GCX);
+    public AsyncHandoff(in DelegatedCreator bc, Action? callback, in SMHandoff smh, V2RV2 rv2Override) {
+        this.ch = new CommonHandoff(smh.ch.cT, bc, smh.GCX, rv2Override);
         this.callback = callback;
         exec = smh.Exec;
     }
@@ -137,11 +145,18 @@ public struct AsyncHandoff {
     public void RunPrependRIEnumerator(IEnumerator cor) => exec.RunPrependRIEnumerator(cor);
 
     /// <summary>
-    /// Send completion information via the callback and also dispose the copied handoff.
+    /// Send completion information via the callback.
+    /// <br/>This does not clean up resources- <see cref="Cleanup"/> must be called separately.
     /// </summary>
     public readonly void Done() {
-        ch.Dispose();
         callback?.Invoke();
+    }
+    
+    /// <summary>
+    /// Dispose the copied handoff.
+    /// </summary>
+    public readonly void Cleanup() {
+        ch.Dispose();
     }
 }
 
@@ -454,11 +469,11 @@ public struct LoopControl<T> {
     private CommonHandoff ch;
     public CommonHandoff Handoff => ch;
     public GenCtx GCX => ch.gcx;
-    public LoopControl(GenCtxProperties<T> props, in CommonHandoff _ch, out bool isClipped) {
+    public LoopControl(GenCtxProperties<T> props, in CommonHandoff baseCh, out bool isClipped) {
         isClipped = false;
         this.props = props;
         p = props.p;
-        ch = _ch.Copy();
+        ch = new CommonHandoff(baseCh.cT, baseCh.bc, baseCh.gcx.Copy(props.ScopeAndVars), baseCh.rv2Override);
         parent_index = (props.p_mutater == null) ? ch.gcx.index : (int)props.p_mutater(ch.gcx);
         if (props.resetColor) ch.bc.style = "_";
         if (props.bank != null) {
@@ -502,13 +517,14 @@ public struct LoopControl<T> {
         parent_style = ch.bc.style;
         if (props.facing != null) ch.bc.facing = props.facing.Value;
         ch.gcx.BaseRV2 = ch.gcx.RV2;
-        ch.gcx.fs["times"] = times = (int)props.times(ch.gcx);
+        ch.gcx.EnvFrame.Value<float>(ch.gcx.GCXVars.times) = times = (int)props.times(ch.gcx);
         ch.gcx.UpdateRules(props.start);
         if (props.centered) ch.gcx.RV2 -= (times - 1f) / 2f * props.PostloopRV2Incr(ch.gcx, times);
         isClipped = isClipped || (props.clipIf?.Invoke(ch.gcx) ?? false);
         elapsed_frames = 0;
         float? af = props.fortime?.Invoke(ch.gcx);
         allowed_frames = af.HasValue ? (int) af : int.MaxValue;
+        ch.gcx.pi = ch.gcx.i;
         ch.gcx.i = 0;
         _hasbeencancelled = false;
         //if (props.Expose != null) ch.gcx.exposed.AddRange(props.Expose);
@@ -556,16 +572,21 @@ public struct LoopControl<T> {
         props.timer?.Restart();
         GCX.index = GetFiringIndex(p, parent_index, GCX.i, props.maxTimes);
         //Automatic bindings
-        if (props.bindArrow) {
-            ch.gcx.fs["axd"] = M.HMod(times, GCX.i);
-            ch.gcx.fs["ayd"] = M.HNMod(times, GCX.i);
-            ch.gcx.fs["aixd"] = M.HMod(times, times - 1 - GCX.i);
-            ch.gcx.fs["aiyd"] = M.HNMod(times, times - 1 - GCX.i);
+        var gcxv = GCX.GCXVars;
+        if (gcxv.bindArrow is {} bav) {
+            GCX.EnvFrame.Value<float>(bav.axd) = M.HMod(times, GCX.i);
+            GCX.EnvFrame.Value<float>(bav.ayd) = M.HNMod(times, GCX.i);
+            GCX.EnvFrame.Value<float>(bav.aixd) = M.HMod(times, times - 1 - GCX.i);
+            GCX.EnvFrame.Value<float>(bav.aiyd) = M.HNMod(times, times - 1 - GCX.i);
         }
-        if (props.bindLR) ch.gcx.fs["rl"] = -1 * (ch.gcx.fs["lr"] = M.PM1Mod(GCX.i));
-        if (props.bindUD) ch.gcx.fs["du"] = -1 * (ch.gcx.fs["ud"] = M.PM1Mod(GCX.i));
-        if (props.bindAngle) ch.gcx.fs["angle"] = GCX.RV2.angle;
-        if (props.bindItr != null) ch.gcx.fs[props.bindItr] = GCX.i;
+        if (gcxv.bindLR is {} lrv) 
+            GCX.EnvFrame.Value<float>(lrv.rl) = -1 * (GCX.EnvFrame.Value<float>(lrv.lr) = M.PM1Mod(GCX.i));
+        if (gcxv.bindUD is {} udv) 
+            GCX.EnvFrame.Value<float>(udv.ud) = -1 * (GCX.EnvFrame.Value<float>(udv.ud) = M.PM1Mod(GCX.i));
+        if (gcxv.bindAngle is {} av) 
+            GCX.EnvFrame.Value<float>(av) = GCX.RV2.angle;
+        if (gcxv.bindItr is {} biv)
+            GCX.EnvFrame.Value<float>(biv) = GCX.i;
         //
         ch.gcx.UpdateRules(props.preloop);
         if (IsCancelled) return false;
@@ -577,7 +598,7 @@ public struct LoopControl<T> {
         }
         if (props.sah != null) {
             GCX.RV2 = GCX.BaseRV2 + V2RV2.Rot(props.sah.Locate(GCX));
-            var simp_gcx = GCX.Copy();
+            var simp_gcx = GCX.Copy(null);
             simp_gcx.FinishIteration(props.postloop, V2RV2.Zero);
             simp_gcx.UpdateRules(props.preloop);
             GCX.RV2 = props.sah.Angle(GCX, GCX.RV2, GCX.BaseRV2 + V2RV2.Rot(props.sah.Locate(simp_gcx)));

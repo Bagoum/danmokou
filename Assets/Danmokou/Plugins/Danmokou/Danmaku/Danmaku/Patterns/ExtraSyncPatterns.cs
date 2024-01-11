@@ -51,7 +51,7 @@ public static partial class AtomicPatterns {
 public static partial class SyncPatterns {
     public static SyncPattern Aim1(ExBPY speed) => Target(GCXF(_ => LPlayer()), new[] {S(GCXU(VTPRepo.RVelocity(TPr.PX(speed))))});
     
-    
+    /*
     public static SyncPattern oArrowI(ExBPY times, ExBPY xstep, ExBPY ystep, GenCtxProperty[] props,
         SyncPattern[] inner) =>
         GSRepeat2(GCXF(times), RV2Zero, props.Prepend(
@@ -115,7 +115,7 @@ public static partial class SyncPatterns {
                     x => Mul(treeYStep(x), HNMod(treeYLen(x), T()(x)))
                 )) })
         )));
-    }
+    }*/
 }
 
 public static partial class AsyncPatterns {

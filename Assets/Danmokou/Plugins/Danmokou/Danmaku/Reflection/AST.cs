@@ -16,11 +16,13 @@ using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
+using Danmokou.Reflection2;
 using Danmokou.SM;
 using JetBrains.Annotations;
 using LanguageServer.VsCode.Contracts;
 using Mizuhashi;
 using static Danmokou.Reflection.Reflector;
+using Parser = Danmokou.DMath.Parser;
 
 namespace Danmokou.Reflection {
 /// <summary>
@@ -52,6 +54,14 @@ public interface IAST {
     /// Get the type of the object that would be generated from this AST.
     /// </summary>
     Type ResultType => throw new NotImplementedException();
+
+    LexicalScope LexicalScope { get; }
+    
+    /// <summary>
+    /// Attach a lexical scope to the AST, deriving it and declaring variables where appropriate.
+    /// <br/>This is implemented for compatibility with BDSL2 engine changes.
+    /// </summary>
+    void AttachLexicalScope(LexicalScope scope);
     
     /// <summary>
     /// Generate the object.
@@ -118,9 +128,12 @@ public record ASTRuntimeCast<T>(IAST Source) : IAST<T> {
     public List<AST.NestedFailure> Errors => Source.Errors;
     public bool IsUnsound => Source.IsUnsound;
 
+    public LexicalScope LexicalScope => Source.LexicalScope;
+
     public T Evaluate(ASTEvaluationData data) => Source.EvaluateObject(data) is T result ?
         result :
         throw new StaticException("Runtime AST cast failed");
+    public void AttachLexicalScope(LexicalScope scope) => Source.AttachLexicalScope(scope);
 
     public IEnumerable<IAST> Children => new[] { Source };
 
@@ -142,7 +155,11 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
     public PositionRange Position => Source.Position;
     public List<AST.NestedFailure> Errors => Source.Errors;
     public bool IsUnsound => Source.IsUnsound;
+
+    public LexicalScope LexicalScope => Source.LexicalScope;
     public U Evaluate(ASTEvaluationData data) => Map(Source.Evaluate(data));
+    
+    public void AttachLexicalScope(LexicalScope scope) => Source.AttachLexicalScope(scope);
     
     public IEnumerable<IAST> Children => new[] { Source };
 
@@ -162,6 +179,8 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
 public abstract record AST(PositionRange Position, params IAST[] Params) : IAST {
     public virtual IEnumerable<IAST> Children => Params;
     public ReflectDiagnostic[] Diagnostics { get; init; } = Array.Empty<ReflectDiagnostic>();
+
+    public LexicalScope LexicalScope { get; protected set; } = null!;
     public virtual List<NestedFailure> Errors {
         get {
             var errs = new List<NestedFailure>();
@@ -191,6 +210,11 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         return new (IAST, int?)[] { (this, null) };
     }
 
+    public virtual void AttachLexicalScope(LexicalScope scope) {
+        LexicalScope = scope;
+        foreach (var c in Children)
+            c.AttachLexicalScope(scope);
+    }
     public abstract string Explain();
     public abstract DocumentSymbol ToSymbolTree();
     public abstract IEnumerable<SemanticToken> ToSemanticTokens();
@@ -274,6 +298,19 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         /// Whether the argument list is provided in parentheses (ie. as `func(arg1, arg2)` as opposed to `func arg1 arg2`).
         /// </summary>
         public bool Parenthesized { get; init; } = false;
+
+        public override void AttachLexicalScope(LexicalScope scope) {
+            if (BaseMethod.Mi.GetAttribute<CreatesInternalScopeAttribute>() is { } cis) {
+                scope = cis.dynamic ? new DynamicLexicalScope(scope) : LexicalScope.Derive(scope);
+                scope.AutoDeclareVariables(MethodPosition, cis.type);
+            } else if (BaseMethod.Mi.GetAttribute<ExtendsInternalScopeAttribute>() is { } eis) {
+                scope.AutoDeclareExtendedVariables(MethodPosition, eis.type, 
+                    //bindItr support- BDSL1 only
+                    (Params.Try(0) as Preconstructed<object>)?.Value as string);
+            }
+            base.AttachLexicalScope(scope);
+        }
+        
         public override string Explain() => $"{CompactPosition} {BaseMethod.Mi.AsSignature}";
         public override DocumentSymbol ToSymbolTree() {
             if (BaseMethod.Mi.IsCtor && BaseMethod.Mi.ReturnType == typeof(PhaseSM) && !Params[1].IsUnsound && Params[1].EvaluateObject(new()) is PhaseProperties props) {
@@ -325,6 +362,9 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         private static readonly Type gcxPropArrType = typeof(GenCtxProperty[]);
         public object? EvaluateObject(ASTEvaluationData data) {
             var prms = new object?[Params.Length];
+            using var _ = Method.Mi.GetAttribute<CreatesInternalScopeAttribute>() == null ?
+                null :
+                new LexicalScope.ParsingScope(LexicalScope);
             for (int ii = 0; ii < prms.Length; ++ii) {
                 //If we have a GCX Expose property, add it into EvaluationData before constructing the other children
                 if (Params[ii].ResultType.IsWeakSubclassOf(gcxPropsType)) {
@@ -348,9 +388,12 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
                     goto construct;
                 }
             }
-            for (int ii = 0; ii < prms.Length; ++ii)
+            for (int ii = 0; ii < prms.Length; ++ii) {
                 prms[ii] = Params[ii].EvaluateObject(data);
+            }
             construct:
+            if (Method.Mi.GetAttribute<CreatesInternalScopeAttribute>() is { } cis)
+                Reflection2.AST.MethodCall.AttachScope(prms, LexicalScope, cis, LexicalScope.AutoVars);
             var result = Method.Mi.InvokeStatic(null, prms);
             if (Method.Mi.GetAttribute<ExtendGCXUExposedAttribute>() != null && data.ExposedVariables.Count > 0) {
                 var gcxu = (result as GCXU ?? throw new StaticException(
@@ -586,7 +629,14 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         IAST<GCXF<T>> Rule) : AST(RefPosition.Merge(OpPosition).Merge(Rule.Position), Rule), IAST<Danmokou.Danmaku.GCRule<T>> {
         public Danmokou.Danmaku.GCRule<T> Evaluate(ASTEvaluationData data) => 
             new(Type, Reference, Operator, Rule.Evaluate(data));
-
+        
+        public override void AttachLexicalScope(LexicalScope scope) {
+            if (scope.FindDeclaration(Reference.var) == null) {
+                scope.DeclareVariable(new VarDecl(RefPosition, Type.AsType(), Reference.var));
+            }
+            base.AttachLexicalScope(scope);
+        }
+        
         public override IEnumerable<SemanticToken> ToSemanticTokens() => new[] {
             new SemanticToken(RefPosition, SemanticTokenTypes.Parameter),
             new SemanticToken(OpPosition, SemanticTokenTypes.Operator)

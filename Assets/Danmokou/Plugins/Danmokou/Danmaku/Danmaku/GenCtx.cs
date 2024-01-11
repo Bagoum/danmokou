@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using BagoumLib;
+using BagoumLib.Functional;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -21,37 +22,37 @@ namespace Danmokou.Danmaku {
 /// </summary>
 public class GenCtx : IDisposable {
     public static readonly GenCtx Empty = new();
+    public EnvFrame EnvFrame { get; private set; } = EnvFrame.Empty;
+    public AutoVars? AutoVars { get; set; } = null!;
+    public AutoVars.GenCtx GCXVars => (AutoVars.GenCtx?)AutoVars ?? throw new Exception("GXR autovars not provided");
     
-    //BDSL1
-    public readonly Dictionary<string, float> fs = new();
-    public readonly Dictionary<string, Vector2> v2s = new();
-    public IReadOnlyDictionary<string, Vector2> V2s => v2s;
-    public readonly Dictionary<string, Vector3> v3s = new();
-    public IReadOnlyDictionary<string, Vector3> V3s => v3s;
-    public readonly Dictionary<string, V2RV2> rv2s = new();
-    public IReadOnlyDictionary<string, V2RV2> RV2s => rv2s;
-    //BDSL2
-    public EnvFrame envFrame = EnvFrame.Empty;
-    
-    
-    public float? MaybeGetFloat(string key) {
-        //Note: duplicate all entries here in TExGCX
-        if (key == "i") return i;
-        else if (key == "pi") return pi;
-        else if (fs.TryGetValue(key, out var f)) return f;
-        else return null;
-    }
-    
-    //No longer supported as of DMK v9.2.0
-    //public readonly List<(Reflector.ExType, string)> exposed = new();
+    public int _i = 0;
+    public int _pi = 0;
+
     /// <summary>
     /// Loop iteration
     /// </summary>
-    public int i = 0;
+    public int i {
+        get => _i;
+        set {
+            _i = value;
+            if (AutoVars is AutoVars.GenCtx g)
+                EnvFrame.Value<float>(g.i) = value;
+        }
+    }
+    
     /// <summary>
     /// Parent loop iteration
     /// </summary>
-    public int pi = 0;
+    public int pi {
+        get => _pi;
+        set {
+            _pi = value;
+            if (AutoVars is AutoVars.GenCtx g)
+                EnvFrame.Value<float>(g.pi) = value;
+        }
+    }
+
     /// <summary>
     /// Firing index
     /// </summary>
@@ -66,18 +67,9 @@ public class GenCtx : IDisposable {
     public PlayerController? playerController;
     //Note: this doesn't store any bound variables, just the references like PICustomData.playerController
     private PICustomData fctx = null!;
-    public V2RV2 RV2 {
-        get => rv2s["rv2"];
-        set => rv2s["rv2"] = value;
-    }
-    public V2RV2 BaseRV2 {
-        get => rv2s["brv2"];
-        set => rv2s["brv2"] = value;
-    }
-    public float SummonTime {
-        get => fs["st"];
-        set => fs["st"] = value;
-    }
+    public ref V2RV2 RV2 => ref EnvFrame.Value<V2RV2>(GCXVars.rv2);
+    public ref V2RV2 BaseRV2 => ref EnvFrame.Value<V2RV2>(GCXVars.brv2);
+    public ref float SummonTime => ref EnvFrame.Value<float>(GCXVars.st);
     public Vector2 Loc => exec.GlobalPosition();
     public uint? idOverride = null;
     /// <summary>
@@ -103,7 +95,7 @@ public class GenCtx : IDisposable {
 
     public uint NextID() => RNG.GetUInt();
 
-    public static GenCtx New(BehaviorEntity exec, V2RV2 rv2) {
+    private static GenCtx NewUnscoped(BehaviorEntity exec) {
         //Logs.Log($"Acquiring new GCX {itrCounter}", true, LogLevel.DEBUG1);
         /*if (cache.Count > 0)
             ++decachedCount;
@@ -113,20 +105,19 @@ public class GenCtx : IDisposable {
         newgc._isInCache = false;
         //newgc._itr = itrCounter++;
         newgc.exec = exec;
-        newgc.RV2 = newgc.BaseRV2 = rv2;
-        newgc.SummonTime = 0;
         newgc.fctx = PICustomData.New(newgc);
         return newgc;
     }
-
-    public void OverrideScope(BehaviorEntity nexec, V2RV2 rv2, int ind) {
-        exec = nexec;
-        OverrideRV2(rv2);
-        index = ind;
+    public static GenCtx New(BehaviorEntity exec, EnvFrame? ef = null) {
+        var newgc = NewUnscoped(exec);
+        newgc.EnvFrame = ef ?? EnvFrame.Empty;
+        newgc.AutoVars = newgc.EnvFrame.Scope.AutoVars;
+        return newgc;
     }
 
-    public void OverrideRV2(V2RV2 rv2) {
-        RV2 = BaseRV2 = rv2;
+    public void OverrideScope(BehaviorEntity nexec, int ind) {
+        exec = nexec;
+        index = ind;
     }
 
     public void Dispose() {
@@ -135,36 +126,38 @@ public class GenCtx : IDisposable {
             throw new Exception("GenCtx was disposed twice. Please report this.");
         //Logs.Log($"Disposing GCX {_itr}", true, LogLevel.DEBUG1);
         _isInCache = true;
-        fs.Clear();
-        v2s.Clear();
-        v3s.Clear();
-        rv2s.Clear();
-        //exposed.Clear();
         fctx.Dispose();
-        i = 0;
-        pi = 0;
         exec = null!;
         playerController = null;
         idOverride = null;
-        envFrame.Dispose();
-        envFrame = EnvFrame.Empty;
+        EnvFrame.Free();
+        EnvFrame = EnvFrame.Empty;
+        AutoVars = null!;
+        i = 0;
+        pi = 0;
         cache.Push(this);
         //++recachedCount;
     }
 
-    public GenCtx Copy() {
-        var cp = New(exec, RV2);
-        this.fs.CopyInto(cp.fs);
-        this.v2s.CopyInto(cp.v2s);
-        this.v3s.CopyInto(cp.v3s);
-        this.rv2s.CopyInto(cp.rv2s);
-        //cp.exposed.AddRange(this.exposed);
-        cp.BaseRV2 = RV2; //this gets overwritten by copyinto...
-        cp.i = cp.pi = this.i;
+    public GenCtx Copy((LexicalScope scope, AutoVars autoVars)? newScope) {
+        var cp = NewUnscoped(exec);
         cp.index = this.index;
         cp.idOverride = this.idOverride;
         cp.playerController = playerController;
-        //todo handle envframe? depends on whether this is for a new scope or not
+        if (newScope.Try(out var ns)) {
+            cp.EnvFrame = EnvFrame.Create(ns.scope, EnvFrame);
+            cp.AutoVars = ns.autoVars;
+            if (AutoVars is AutoVars.GenCtx) {
+                cp.RV2 = RV2;
+                cp.BaseRV2 = BaseRV2;
+                cp.SummonTime = SummonTime;
+            }
+        } else {
+            cp.EnvFrame = EnvFrame.Clone();
+            cp.AutoVars = AutoVars;
+        }
+        cp.i = this.i;
+        cp.pi = this.pi;
         return cp;
     }
 
@@ -174,68 +167,51 @@ public class GenCtx : IDisposable {
         ++i;
     }
 
-    private bool TryGetType(ReferenceMember refr, out Reflector.ExType ext) {
-        ext = default;
-        if (fs.ContainsKey(refr.var)) ext = Reflector.ExType.Float;
-        else if (v2s.ContainsKey(refr.var)) ext = Reflector.ExType.V2;
-        else if (v3s.ContainsKey(refr.var)) ext = Reflector.ExType.V3;
-        else if (rv2s.ContainsKey(refr.var)) ext = Reflector.ExType.RV2;
-        else return false;
-        return true;
-    }
-
-    /// <summary>
-    /// If obj is a type that can be bound to GCX, then bind it, otherwise noop.
-    /// <br/>Returns true if the object was bound.
-    /// </summary>
-    public bool SetValue(string key, object? obj) {
-        if (obj is float f)
-            fs[key] = f;
-        else if (obj is Vector2 v2)
-            v2s[key] = v2;
-        else if (obj is Vector3 v3)
-            v3s[key] = v3;
-        else if (obj is V2RV2 rv2)
-            rv2s[key] = rv2;
-        else return false;
-        return true;
+    private bool TryGetType(ReferenceMember refr, out Type ext) {
+        if (EnvFrame.Scope.FindDeclaration(refr.var) is { } decl) {
+            ext = decl.FinalizedType!;
+            return true;
+        }
+        ext = null!;
+        return false;
     }
 
     private void UpdateRule(GCRule rule) {
-        if (!TryGetType(rule.refr, out var variableType)) variableType = rule.exType;
+        if (!TryGetType(rule.refr, out var variableType)) variableType = rule.exType.AsType();
+        ref T Value<T>() => ref EnvFrame.Value<T>(rule.refr.var);
         if (rule is GCRule<float> rf) {
             float value = rf.Evaluate(this);
             if (rule.refr.var == "_") return;
-            if      (variableType == Reflector.ExType.Float) 
-                fs[rule.refr.var] = rule.refr.Resolve(fs, value, rule.op);
-            else if (variableType == Reflector.ExType.V2)
-                v2s[rule.refr.var] = rule.refr.ResolveMembers(v2s, value, rule.op);
-            else if (variableType == Reflector.ExType.V3)
-                v3s[rule.refr.var] = rule.refr.ResolveMembers(v3s, value, rule.op);
-            else if (variableType == Reflector.ExType.RV2)
-                rv2s[rule.refr.var] = rule.refr.ResolveMembers(rv2s, value, rule.op);
+            if      (variableType == typeof(float)) 
+                rule.refr.Resolve(ref Value<float>(), value, rule.op);
+            else if (variableType == typeof(Vector2))
+                rule.refr.ResolveMembers(ref Value<Vector2>(), value, rule.op);
+            else if (variableType == typeof(Vector3))
+                rule.refr.ResolveMembers(ref Value<Vector3>(), value, rule.op);
+            else if (variableType == typeof(V2RV2))
+                rule.refr.ResolveMembers(ref Value<V2RV2>(), value, rule.op);
             else throw new Exception($"Can't assign float to {variableType}");
         } else if (rule is GCRule<Vector2> r2) {
             Vector2 value = r2.Evaluate(this);
             if (rule.refr.var == "_") return;
-            if      (variableType == Reflector.ExType.V2) 
-                v2s[rule.refr.var] = rule.refr.ResolveMembers(v2s, value, rule.op);
-            else if (variableType == Reflector.ExType.V3)
-                v3s[rule.refr.var] = rule.refr.ResolveMembers(v3s, value, rule.op);
-            else if (variableType == Reflector.ExType.RV2)
-                rv2s[rule.refr.var] = rule.refr.ResolveMembers(rv2s, value, rule.op);
+            if      (variableType == typeof(Vector2)) 
+                rule.refr.ResolveMembers(ref Value<Vector2>(), value, rule.op);
+            else if (variableType == typeof(Vector3))
+                rule.refr.ResolveMembers(ref Value<Vector3>(), value, rule.op);
+            else if (variableType == typeof(V2RV2))
+                rule.refr.ResolveMembers(ref Value<V2RV2>(), value, rule.op);
             else throw new Exception($"Can't assign V2 to {variableType}");
         } else if (rule is GCRule<Vector3> r3) {
             Vector3 value = r3.Evaluate(this);
             if (rule.refr.var == "_") return;
-            if (variableType == Reflector.ExType.V3) 
-                v3s[rule.refr.var] = rule.refr.ResolveMembers(v3s, value, rule.op);
+            if (variableType == typeof(Vector3)) 
+                rule.refr.ResolveMembers(ref Value<Vector3>(), value, rule.op);
             else throw new Exception($"Can't assign V2 to {variableType}");
         } else if (rule is GCRule<V2RV2> rrv) {
             V2RV2 value = rrv.Evaluate(this);
             if (rule.refr.var == "_") return;
-            if (variableType == Reflector.ExType.RV2)
-                rv2s[rule.refr.var] = rule.refr.ResolveMembers(rv2s, value, rule.op);
+            if (variableType == typeof(V2RV2))
+                rule.refr.ResolveMembers(ref Value<V2RV2>(), value, rule.op);
             else throw new Exception($"Can't assign RV2 to {variableType}");
         }
     }

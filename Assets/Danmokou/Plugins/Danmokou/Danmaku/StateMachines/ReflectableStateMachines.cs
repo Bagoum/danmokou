@@ -13,6 +13,7 @@ using Danmokou.DMath.Functions;
 using Danmokou.GameInstance;
 using Danmokou.Player;
 using Danmokou.Reflection;
+using Danmokou.Reflection2;
 using Danmokou.Services;
 using static Danmokou.Danmaku.BulletManager;
 using static Danmokou.Core.Extensions;
@@ -48,6 +49,8 @@ public class EventLASM : ReflectableLASM {
     
     public EventLASM(EventTask rs) : base(new TaskPattern(rs)) { }
     
+    //TODO envframe replace in v11
+    /*
     /// <summary>
     /// Subscribe to a runtime event and run a StateMachine when a value is provided.
     /// </summary>
@@ -64,7 +67,7 @@ public class EventLASM : ReflectableLASM {
         });
         await RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, 0f, true);
         smh.ThrowIfCancelled();
-    };
+    };*/
 
     /// <summary>
     /// Set a trigger event to reset when a given reset event is dispatched.

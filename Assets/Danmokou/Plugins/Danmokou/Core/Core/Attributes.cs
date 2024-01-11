@@ -85,16 +85,22 @@ public class WarnOnStrictAttribute : Attribute {
     }
 }
 
+/// <summary>
+/// A parameter that should be reflected by looking for a method by name and returning it as a lambda.
+/// </summary>
 [AttributeUsage(AttributeTargets.Parameter)]
 public class LookupMethodAttribute : Attribute {
 }
 
+/// <summary>
+/// A parameter that should be reflected by specialized type-specific rules instead of reading text.
+/// </summary>
 [AttributeUsage(AttributeTargets.Parameter)]
 public class NonExplicitParameterAttribute : Attribute {
 }
 
 /// <summary>
-/// Attribute marking that a StateMachine[] parameter should be realized by
+/// A StateMachine[] parameter that should be realized by
 ///  parsing as many state machine children as possible according to SM parenting rules,
 ///  without looking for array {} markers.
 /// </summary>
@@ -148,43 +154,58 @@ public class AssignsAttribute : Attribute {
 }
 
 /// <summary>
+/// The marked method can only be reflected in BDSL1.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public class BDSL1OnlyAttribute : Attribute { }
+
+/// <summary>
 /// The marked method can only be reflected in BDSL2.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 public class BDSL2OnlyAttribute : Attribute { }
 
 /// <summary>
-/// (BDSL2) The marked method has a lexical scope governing its arguments, and the `index`th argument
-///  is either GenCtxProperty[] or GenCtxProperties and may have a <see cref="ScopeRaiseSourceAttribute"/>
-///  in one of its descendants. Used on GXR repeaters.
+/// (BDSL2) The marked method has a lexical scope governing its arguments.
+/// <br/>It may have automatically-defined variables, as defined by <see cref="AutoVarMethod"/>.
+/// <br/>If any of the arguments are GenCtxProperty or GenCtxProperties, then the compiler
+///  will assign the lexical scope to the constructed properties.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Constructor)]
 public class CreatesInternalScopeAttribute : Attribute {
-    public int Index { get; }
+    public readonly AutoVarMethod type;
+    public readonly bool dynamic;
 
-    public CreatesInternalScopeAttribute(int i) {
-        this.Index = i;
+    public CreatesInternalScopeAttribute(AutoVarMethod Type, bool Dynamic = false) {
+        this.type = Type;
+        this.dynamic = Dynamic;
     }
 }
 
 /// <summary>
-/// (BDSL2) The `index`th argument of the marked method may generate a lexical scope that should be raised
-///  up to an ancestor <see cref="CreatesInternalScopeAttribute"/>.
+/// (BDSL2) The marked method automatically declared variables in its enclosing lexical scope.
 /// </summary>
-[AttributeUsage(AttributeTargets.Method)]
-public class ScopeRaiseSourceAttribute : Attribute {
-    public int Index { get; }
-    public ScopeRaiseSourceAttribute(int i) {
-        this.Index = i;
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Constructor)]
+public class ExtendsInternalScopeAttribute : Attribute {
+    public readonly AutoVarExtend type;
+
+    public ExtendsInternalScopeAttribute(AutoVarExtend Type) {
+        this.type = Type;
     }
 }
 
-/// <summary>
-/// (BDSL2) The marked method should be typechecked/compiled separately in the local context of each of its usages,
-///  and should not be typechecked/compiled where it is initially called.
-/// </summary>
-[AttributeUsage(AttributeTargets.Method)]
-public class CompileAtCallsiteAttribute : Attribute { }
+public enum AutoVarMethod {
+    None,
+    GenCtx
+}
+
+public enum AutoVarExtend {
+    BindItr,
+    BindAngle,
+    BindLR,
+    BindUD,
+    BindArrow
+}
 
 /// <summary>
 /// (BDSL2) The marked method is a callsite for bullet code that executes atomic actions such as "fire a simple bullet".

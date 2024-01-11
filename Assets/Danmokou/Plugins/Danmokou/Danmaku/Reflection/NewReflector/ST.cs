@@ -393,7 +393,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
         public Block(IReadOnlyList<ST> args) : this(args[0].Position.Merge(args[^1].Position), args.ToArray()) { }
         
         protected override IAST _AnnotateInner(LexicalScope scope) {
-            var localScope = new LexicalScope(scope);
+            var localScope = LexicalScope.Derive(scope);
             return new AST.Block(Position, scope, localScope, Args.Select(a => a.Annotate(localScope)).ToArray());
         }
 

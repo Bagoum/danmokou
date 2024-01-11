@@ -591,8 +591,8 @@ phase 54
 			bindUD
 			color $circColors
 			frv2(v2v2f(mulentry(pxy(&lr, &ud), $hexpos(p / $segsplit)), zero, 0))
-			alternate(if(= mod($segsplit, p) 0, 1, 0))
-		} { 
+			
+		} alternate(if(= mod($segsplit, p) 0, 1, 0)) { 
 			color gcircle s null
 			color glcircle simple null {
 				scale(lerpt(0.45, 0.65, 0.5, 0))
@@ -718,8 +718,8 @@ phase 42
 				} { 
 					s rvelocity rotate(-10p * &stalk, px(lerp(0, 1, t - $stayt + 0f * $outerwait * &stalk, 0.01, 1) * 2))
 					gir {
-						alternate(&dobranch)
-					} {
+						
+					} alternate(&dobranch) {
 						noop
 						gcr {
 							color sakura-green/
@@ -744,8 +744,8 @@ phase 42
 							saoffset(bt, 0, rotate(90 + 180 * &branchtype, 
 								multiplyy(&rot, $spiral(&pr2i) - $spiral(1))))
 								
-							alternate(if(= t -- &times, 1, 0))
-						} {
+							
+						} alternate(if(= t -- &times, 1, 0)) {
 							s rvelocity px(lerp(0, 1, t - $stayt + 0f * $outerwait * &stalk + 0f * $innerwait * &branch, 0, 1) * 1.5)
 							gsr2c(10 * dl) {
 								bank <0.3;:>

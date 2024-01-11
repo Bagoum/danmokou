@@ -343,6 +343,8 @@ public static class SaveData {
     public static Suzunoya.Data.Settings VNSettings => r.GlobalVNData.Settings;
 
     static SaveData() {
+        //Prevents code stripping for HashSet types
+        Newtonsoft.Json.Utilities.AotHelper.EnsureList<string>();
         s = ReadJson<Settings>(SETTINGS) ?? Settings.Default;
         _ = ServiceLocator.Register<IDMKLocaleProvider>(s);
         UpdateResolution(s.Resolution);

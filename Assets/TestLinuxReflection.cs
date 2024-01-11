@@ -37,7 +37,7 @@ public class TestLinuxReflection : MonoBehaviour {
 
 	IEnumerator Start() {
 	    GameManagement.Instance.PowerF.Power.OnNext(2);
-	    var gcx = GenCtx.New(GetComponent<BehaviorEntity>(), V2RV2.Zero);
+	    var gcx = GenCtx.New(GetComponent<BehaviorEntity>());
 	    gcx.index = 7;
 	    var bpi = gcx.AsBPI;
         for (float t = 0; t < 1f; t += Time.deltaTime)

@@ -6,6 +6,7 @@ using BagoumLib.Reflection;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
 using Danmokou.Reflection;
+using Danmokou.Reflection2;
 using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using UnityEngine;
@@ -143,39 +144,15 @@ public class TExRV2 : TEx<V2RV2> {
     }
 }
 public class TExGCX : TEx<GenCtx> {
-    private readonly MemberExpression fs;
-    private readonly MemberExpression v2s;
-    private readonly MemberExpression v3s;
-    private readonly MemberExpression rv2s;
     public readonly MemberExpression index;
-    public readonly Expression i_float;
-    public readonly Expression pi_float;
     public readonly MemberExpression beh_loc;
     public readonly MemberExpression bpi;
     public MemberExpression exec => Ex.Field(ex, "exec");
-    public Expression EnvFrame => ex.Field(nameof(GenCtx.envFrame));
+    public Expression EnvFrame => ex.Field(nameof(GenCtx.EnvFrame));
     public TExGCX(Expression ex_) : base(ex_) {
-        fs = Ex.Field(ex, "fs");
-        v2s = Ex.Field(ex, "v2s");
-        v3s = Ex.Field(ex, "v3s");
-        rv2s = Ex.Field(ex, "rv2s");
         index = Ex.Field(ex, "index");
-        i_float = Ex.Field(ex, "i").Cast<float>();
-        pi_float = Ex.Field(ex, "pi").Cast<float>();
         beh_loc = Ex.Property(ex, "Loc");
         bpi = Ex.Property(ex, "AsBPI");
-    }
-    public Ex FindReference<T>(string name) {
-        var t = typeof(T);
-        if (t == tfloat) {
-            if (name == "i") return i_float;
-            else if (name == "pi") return pi_float;
-            else return fs.DictGetOrThrow(ExC(name), $"No float exists by name {name}.");
-        }
-        if (t == tv2) return v2s.DictGetOrThrow(ExC(name), $"No v2 exists by name {name}.");
-        if (t == tv3) return v3s.DictGetOrThrow(ExC(name), $"No v3 exists by name {name}.");
-        if (t == tv2rv2) return rv2s.DictGetOrThrow(ExC(name), $"No V2RV2 exists by name {name}.");
-        throw new Exception($"No handling in GenCtx for type {t.RName()}");
     }
 }
 }
