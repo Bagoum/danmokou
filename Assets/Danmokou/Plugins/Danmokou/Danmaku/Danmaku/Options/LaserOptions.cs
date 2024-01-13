@@ -26,24 +26,24 @@ public record LaserOption {
     /// <summary>
     /// Set the length, in time, of a laser. The length may be variable but bounded by a maximum.
     /// </summary>
-    public static LaserOption VarLength(GCXF<float> maxLength, GCXU<BPY> length) => new LengthProp(maxLength, length);
+    public static LaserOption VarLength(GCXF<float> maxLength, BPY length) => new LengthProp(maxLength, length);
 
     /// <summary>
     /// Set the time along the laser length at which the laser starts drawing.
     /// </summary>
-    public static LaserOption Start(GCXU<BPY> time) => new StartProp(time);
+    public static LaserOption Start(BPY time) => new StartProp(time);
 
     /// <summary>
     /// Every frame, the laser will check the condition and destroy itself if it is true.
     /// <br/>Note: This is generally only necessary for player lasers.
     /// <br/>Note: This is the same as BehOption.Delete.
     /// </summary>
-    public static LaserOption Delete(GCXU<Pred> cond) => new DeleteProp(cond);
+    public static LaserOption Delete(Pred cond) => new DeleteProp(cond);
 
     /// <summary>
     /// Every frame, if the condition is true, sets LastActiveTime in private data hoisting to the current laser time (but only once).
     /// </summary>
-    public static LaserOption Deactivate(GCXU<Pred> cond) => new DeactivateProp(cond);
+    public static LaserOption Deactivate(Pred cond) => new DeactivateProp(cond);
     
     /// <summary>
     /// Set a laser to repeat.
@@ -67,22 +67,22 @@ public record LaserOption {
     /// <param name="rotOffset">Initial angle in degrees</param>
     /// <param name="rot">Additional rotation as a function of time in degrees</param>
     /// <returns></returns>
-    public static LaserOption Rotate(GCXF<float> rotOffset, GCXU<BPY> rot) => new CompositeProp(new RotateOffsetProp(rotOffset), new RotateProp(rot));
+    public static LaserOption Rotate(GCXF<float> rotOffset, BPY rot) => new CompositeProp(new RotateOffsetProp(rotOffset), new RotateProp(rot));
     /// <summary>
     /// Draw a curved laser that does not update.
     /// </summary>
-    public static LaserOption Static(GCXU<LVTP> path) => new CurveProp(false, path);
+    public static LaserOption Static(LVTP path) => new CurveProp(false, path);
     /// <summary>
     /// Draw a curved laser that does update.
     /// </summary>
-    public static LaserOption Dynamic(GCXU<LVTP> path) => new CurveProp(true, path);
+    public static LaserOption Dynamic(LVTP path) => new CurveProp(true, path);
     /// <summary>
     /// Set some values in the custom data context once per frame, right before drawing the laser.
     /// <br/>Use this to calculate <see cref="Parametrics.LNearestEnemy"/> for player lasers.
     /// </summary>
-    /// <param name="setter">A function that modifies the <see cref="PICustomData"/> using <see cref="ExM.Set{T}"/>. The return value is discarded.</param>
+    /// <param name="setter">A function that modifies the <see cref="PIData"/> using <see cref="ExM.Set{T}"/>. The return value is discarded.</param>
     /// <returns></returns>
-    public static LaserOption BeforeDraw(GCXU<BPY> setter) => new BeforeDrawProp(setter);
+    public static LaserOption BeforeDraw(BPY setter) => new BeforeDrawProp(setter);
     /// <summary>
     /// Draw a laser with an endpoint BEH.
     /// </summary>
@@ -119,20 +119,20 @@ public record LaserOption {
     /// Provide a function that indicates how much to shift the color of the summon (in degrees) at any point in time.
     /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
     /// </summary>
-    public static LaserOption HueShift(GCXU<BPY> shift) => new HueShiftProp(shift);
+    public static LaserOption HueShift(BPY shift) => new HueShiftProp(shift);
 
     /// <summary>
     /// Manually construct a two-color gradient for the object.
     /// <br/> Note: This will only have effect if you use it with the `recolor` palette.
     /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
     /// </summary>
-    public static LaserOption Recolor(GCXU<TP4> black, GCXU<TP4> white) => new RecolorProp(black, white);
+    public static LaserOption Recolor(TP4 black, TP4 white) => new RecolorProp(black, white);
     
     /// <summary>
     /// Tint the laser. This is a multiplicative effect on its normal color.
     /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
     /// </summary>
-    public static LaserOption Tint(GCXU<TP4> tint) => new TintProp(tint);
+    public static LaserOption Tint(TP4 tint) => new TintProp(tint);
 
     /// <summary>
     /// By default, lasers go through enemies. Setting this makes lasers stop at the first enemy.
@@ -178,39 +178,39 @@ public record LaserOption {
             this.onOn = onOn;
         }
     }
-    public record LengthProp : ValueProp<(GCXF<float>, GCXU<BPY>?)> {
-        public LengthProp(GCXF<float> f, GCXU<BPY>? var = null) : base((f, var)) { }
+    public record LengthProp : ValueProp<(GCXF<float>, BPY?)> {
+        public LengthProp(GCXF<float> f, BPY? var = null) : base((f, var)) { }
     }
 
-    public record StartProp : ValueProp<GCXU<BPY>> {
-        public StartProp(GCXU<BPY> f) : base(f) {}
+    public record StartProp : ValueProp<BPY> {
+        public StartProp(BPY f) : base(f) {}
     }
 
-    public record DeleteProp : ValueProp<GCXU<Pred>> {
-        public DeleteProp(GCXU<Pred> f) : base(f) { }
+    public record DeleteProp : ValueProp<Pred> {
+        public DeleteProp(Pred f) : base(f) { }
     }
-    public record DeactivateProp : ValueProp<GCXU<Pred>> {
-        public DeactivateProp(GCXU<Pred> f) : base(f) { }
+    public record DeactivateProp : ValueProp<Pred> {
+        public DeactivateProp(Pred f) : base(f) { }
     }
     public record RotateOffsetProp : ValueProp<GCXF<float>> {
         public RotateOffsetProp(GCXF<float> f) : base(f) { }
     }
-    public record RotateProp : ValueProp<GCXU<BPY>> {
-        public RotateProp(GCXU<BPY> f) : base(f) { }
+    public record RotateProp : ValueProp<BPY> {
+        public RotateProp(BPY f) : base(f) { }
     }
 
     public record CurveProp : LaserOption {
-        public readonly GCXU<LVTP> curve;
+        public readonly LVTP curve;
         public readonly bool dynamic;
 
-        public CurveProp(bool dynamic, GCXU<LVTP> curve) {
+        public CurveProp(bool dynamic, LVTP curve) {
             this.curve = curve;
             this.dynamic = dynamic;
         }
     }
     
-    public record BeforeDrawProp : ValueProp<GCXU<BPY>> {
-        public BeforeDrawProp(GCXU<BPY> f) : base(f) { }
+    public record BeforeDrawProp : ValueProp<BPY> {
+        public BeforeDrawProp(BPY f) : base(f) { }
     }
     public record RepeatProp : ValueProp<GCXF<bool>> {
         public RepeatProp(GCXF<bool> f) : base(f) { }
@@ -226,20 +226,20 @@ public record LaserOption {
     public record StaggerProp : ValueProp<float> {
         public StaggerProp(float v) : base(v) { }
     }
-    public record HueShiftProp : ValueProp<GCXU<BPY>> {
-        public HueShiftProp(GCXU<BPY> v) : base(v) { }
+    public record HueShiftProp : ValueProp<BPY> {
+        public HueShiftProp(BPY v) : base(v) { }
     }
     public record RecolorProp : LaserOption {
-        public readonly GCXU<TP4> black;
-        public readonly GCXU<TP4> white;
+        public readonly TP4 black;
+        public readonly TP4 white;
 
-        public RecolorProp(GCXU<TP4> b, GCXU<TP4> w) {
+        public RecolorProp(TP4 b, TP4 w) {
             black = b;
             white = w;
         }
     }
-    public record TintProp : ValueProp<GCXU<TP4>> {
-        public TintProp(GCXU<TP4> v) : base(v) { }
+    public record TintProp : ValueProp<TP4> {
+        public TintProp(TP4 v) : base(v) { }
     }
 
     public record PlayerBulletProp : ValueProp<PlayerBulletCfg> {
@@ -283,33 +283,33 @@ public readonly struct RealizedLaserOptions {
 
     public RealizedBehOptions AsBEH => new(this);
 
-    public RealizedLaserOptions(LaserOptions opts, GenCtx gcx, PICustomData fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
+    public RealizedLaserOptions(LaserOptions opts, GenCtx gcx, PIData fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
         maxLength = opts.length?.max.Invoke(gcx) ?? DEFAULT_LASER_LEN;
-        varLength = opts.length?.var?.Execute(gcx, fctx);
-        start = opts.start?.Execute(gcx, fctx);
-        delete = opts.delete?.Execute(gcx, fctx);
-        deactivate = opts.deactivate?.Execute(gcx, fctx);
+        varLength = opts.length?.var;
+        start = opts.start;
+        delete = opts.delete;
+        deactivate = opts.deactivate;
         repeat = opts.repeat?.Invoke(gcx) ?? false;
         endpoint = opts.endpoint;
         firesfx = opts.firesfx;
         hotsfx = opts.hotsfx;
         layer = opts.layer;
         staggerMultiplier = opts.staggerMultiplier;
-        beforeDraw = opts.beforeDraw?.Execute(gcx, fctx);
+        beforeDraw = opts.beforeDraw;
         if (opts.curve != null) {
-            lpath = new LaserMovement(opts.curve.Execute(gcx, fctx), parentOffset, localOffset);
+            lpath = new LaserMovement(opts.curve, parentOffset, localOffset);
             isStatic = !opts.dynamic;
         } else {
-            lpath = new LaserMovement(localOffset.angle + (opts.rotateOffset?.Invoke(gcx) ?? 0f), opts.rotate?.Execute(gcx, fctx));
+            lpath = new LaserMovement(localOffset.angle + (opts.rotateOffset?.Invoke(gcx) ?? 0f), opts.rotate);
             isStatic = true;
         }
         smr = SMRunner.Run(opts.sm, cT, gcx);
         yScale = opts.yScale?.Invoke(gcx) ?? 1f;
-        hueShift = opts.hueShift?.Execute(gcx, fctx);
+        hueShift = opts.hueShift;
         if (opts.recolor.Try(out var rc)) {
-            recolor = (rc.black.Execute(gcx, fctx), rc.white.Execute(gcx, fctx));
+            recolor = (rc.black, rc.white);
         } else recolor = null;
-        tint = opts.tint?.Execute(gcx, fctx);
+        tint = opts.tint;
         damage = (opts.damage?.Invoke(gcx)).FMap(x => (int)x);
         nonpiercing = opts.nonpiercing;
         grazeAllowed = opts.grazeAllowed;
@@ -323,26 +323,26 @@ public readonly struct RealizedLaserOptions {
 public class LaserOptions {
     //Note: If adding GCXU objects here, also add them to
     // the GCXU.ShareTypeAndCompile call in AtomicPatterns
-    public readonly (GCXF<float> max, GCXU<BPY>? var)? length;
-    public readonly GCXU<BPY>? start;
-    public readonly GCXU<Pred>? delete;
-    public readonly GCXU<Pred>? deactivate;
+    public readonly (GCXF<float> max, BPY? var)? length;
+    public readonly BPY? start;
+    public readonly Pred? delete;
+    public readonly Pred? deactivate;
     public readonly GCXF<bool>? repeat;
     public readonly string? endpoint;
     public readonly string? firesfx;
     public readonly string? hotsfx;
     public readonly bool dynamic;
-    public readonly GCXU<LVTP>? curve = null;
-    public readonly GCXU<BPY>? beforeDraw;
+    public readonly LVTP? curve = null;
+    public readonly BPY? beforeDraw;
     public readonly GCXF<float>? rotateOffset;
-    public readonly GCXU<BPY>? rotate = null;
+    public readonly BPY? rotate = null;
     public readonly StateMachine? sm;
     public readonly GCXF<float>? yScale;
     public readonly int? layer = null;
     public readonly float staggerMultiplier = 1f;
-    public readonly GCXU<BPY>? hueShift;
-    public readonly (GCXU<TP4> black, GCXU<TP4> white)? recolor;
-    public readonly GCXU<TP4>? tint;
+    public readonly BPY? hueShift;
+    public readonly (TP4 black, TP4 white)? recolor;
+    public readonly TP4? tint;
     public readonly GCXF<float>? damage;
     public readonly bool nonpiercing;
     public readonly bool grazeAllowed = true;

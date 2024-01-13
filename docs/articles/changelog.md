@@ -23,13 +23,13 @@ The goal for this version is to have a fully functional implementation of the ne
 
 
 
-# v10.2.0 (2024/01/20)
+# v11.0.0b (2024/01/20)
 
 I've upgraded the project's Unity version to 2023.2.3f1. Unity 2023 has a critical change where the TextMeshPro package has now been merged into Unity internals, so it is not clear that the project will still run on Unity 2022. As such, please upgrade to Unity 2023 along with updating DMK.
 
 #### Language Changes
 
-This build overhauls much of the internal handling for the scripting language in preparation for improvements in the next version. As a result of this, there is one major change to language functionality: variables are now **shared** by all consumers. Consider the following code:
+This build overhauls much of the internal handling for the scripting language in preparation for improvements in the next version. As a result of this, dynamic type construction (introduced in v9.2.0) and the GCXU type abstraction have been removed and replaced with a more "standard" data model based on environment frames. For the most part, this shouldn't affect script code, except for one major change to language functionality: variables are now **shared** by all consumers. Consider the following code:
 
 ```
 gtr {
@@ -42,7 +42,7 @@ gtr {
 
 This code launches one bullet with a velocity of `&speed`, then sets `&speed` to 4 after 2 seconds. In previous versions of the engine, the bullet would always move slowly, even after the speed variable was updated. Now, the bullet will start moving faster after two seconds.
 
-The rules for variable sharing are the same as in a `for` loop in a standard language: every loop iteration has its own variables. For example, if we instead fired multiple bullets:
+The rules for variable sharing are the same as in a `for` loop in a standard language: every loop iteration has its own variables. For example, if we repeated the GTR multiple times:
 
 ```
 gtr {

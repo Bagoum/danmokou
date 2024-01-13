@@ -4,8 +4,6 @@ using System.Linq.Expressions;
 using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
-using Danmokou.Reflection;
-using Danmokou.Reflection.CustomData;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.DMath.Functions.ExM;
@@ -179,15 +177,6 @@ public static class VTPControllers {
             delta.x *= vel.flipX * dT;
             delta.y *= vel.flipY * dT;
         };
-        
-/*
-    public static VTP FVelocity(CoordF coordF) {
-        return delegate(ref Movement vel, in float dT, ref ParametricInfo bpi, ref Vector3 delta) {
-            coordF(vel.cos_rot, vel.sin_rot, bpi, ref delta);
-            delta.x *= (bpi.ctx.boundFloats.TryGetValue(kx, out var fx) ? fx : 1) * dT;
-            delta.y *= (bpi.ctx.boundFloats.TryGetValue(ky, out var fy) ? fy : 1) * dT;
-        };
-    }*/
 
     public static ExVTP Offset(ExCoordF cf) => (vel, dt, bpi, delta) => InLetCtx(vel, bpi, tac =>
         cf(vel.cos, vel.sin, tac, (x, y, z) =>
@@ -358,17 +347,6 @@ public static class VTPRepo {
     /// <returns></returns>
     public static ExVTP VPolar(ExBPY radius, ExBPY theta) =>
         VTPControllers.Velocity(VTPConstructors.Polar(radius, theta));
-
-    /// <summary>
-    /// Assert that the variables provided are stored in the bullet's custom data, then execute the inner content.
-    /// <br/>Since <see cref="GCXU{Fn}"/> automatically stores variables used in its scope, you generally only
-    /// need to call this function when the variables will be used by some other scope, such as bullet controls.
-    /// </summary>
-    public static ExVTP Expose((Reflector.ExType, string)[] variables, ExVTP inner) => (v, dt, tac, delta) => {
-        foreach (var (ext, name) in variables)
-            tac.Ctx.GCXURefs?.TryResolve(tac, ext.AsType(), name, out _);
-        return inner(v, dt, tac, delta);
-    };
     
     private static ExVTP WrapLet<T>((string, Func<TExArgCtx, TEx<T>>)[] aliases, ExVTP inner) =>
         (v, t, bpi, nrv) => ReflectEx.Let(aliases, () => inner(v, t, bpi, nrv), bpi);

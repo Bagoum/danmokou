@@ -15,10 +15,6 @@ namespace Danmokou.Reflection2 {
 /// </summary>
 public enum ScopedConversionKind {
     /// <summary>
-    /// A conversion method that converts eg. ExVTP to GCXU{VTP}.
-    /// </summary>
-    GCXUFunction,
-    /// <summary>
     /// A conversion method that converts eg. ExTP to GCXF{Vector2}.
     /// </summary>
     GCXFFunction,

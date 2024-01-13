@@ -44,7 +44,7 @@ public static partial class Parametrics {
 public static class MovementPatterns {
     private static ExBPY f(float f) => _ => ExC(f);
     public static RootedVTP Null(GCXF<Vector2> root) => new(root, VTPRepo.Null());
-    public static RootedVTP RVTP(GCXF<Vector2> root, GCXU<VTP> path) => new(root, path);
+    public static RootedVTP RVTP(GCXF<Vector2> root, VTP path) => new(root, path);
 
     private static ExBPY ModTime(ExBPY letValue, string withLet) =>
         LetFloats(new[] {

@@ -14,7 +14,6 @@ using Danmokou.DataHoist;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
-using Danmokou.Reflection.CustomData;
 using Danmokou.Reflection2;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -138,145 +137,12 @@ public static class CompilerHelpers {
         
         return PrepareDelegate<D>((func.Into(exType) as Func<TExArgCtx, TEx>)!, args).Compile();
     }
-
-    public static GCXU<T2> GCXU11<T1, T2>(Func<Func<TExArgCtx, TEx<T1>>, ReadyToCompileExpr<T2>> compiler, Func<TExArgCtx, TEx<T1>> f) where T2 : Delegate =>
-        Automatic(compiler, f, (ex, aliases) => tac => ReflectEx.LetAlias(aliases, () => ex(tac), tac), 
-            (ex, mod) => tac => ex(mod(tac)));
-    
-    
-    public static GCXU<D> CompileGCXU<D>(Func<TExArgCtx, TEx> func, params IDelegateArg[] args) where D : Delegate =>
-        Automatic(ex => PrepareDelegate<D>(ex, args), func,
-            (ex, aliases) => tac => ReflectEx.LetAlias(aliases, () => ex(tac), tac),
-            (ex, mod) => tac => ex(mod(tac)));
-    
-    public static GCXU<D> CompileGCXU<D, DR>(string func, params IDelegateArg[] args) where D : Delegate =>
-        CompileGCXU<D>(func.Into<Func<TExArgCtx, TEx<DR>>>(), args);
     
     #endregion
-    
-    
-    /// <summary>
-    /// Tracks references to variables from GCX which have not been exposed.
-    /// <br/>This is used in the first phase of GCXU compilation, and marked variables
-    ///  will be automatically exposed during the second phase.
-    /// </summary>
-    private class GCXUCompileResolver : ReflectEx.ICompileReferenceResolver {
-        public int TotalUsages { get; private set; } = 0;
-        private readonly List<(Type, string)> bound = new();
-        public IReadOnlyList<(Type, string)> Bound => bound;
-        public bool RequiresBinding => bound.Count > 0;
-        private readonly Dictionary<(Type, string), int> counters = new();
-        private readonly HashSet<(Type, string)> dirty = new();
-
-        
-        public bool TryResolve(TExArgCtx tac, Type t, string alias, out Ex ex) {
-            if (!counters.ContainsKey((t, alias))) {
-                bound.Add((t, alias));
-                counters[(t, alias)] = 0;
-            }
-            ++counters[(t, alias)];
-            ++TotalUsages;
-            ex = Ex.Variable(t, "$deferred_gcxu_variable");
-            return true;
-        }
-        public void MarkDirty(Type t, string alias) => dirty.Add((t, alias));
-
-        public static string FrameVarCSEName(int parentage, Type type) => $"$fv{type.RName()}_{parentage}";
-
-        public ReflectEx.Alias[] ToAliases(ReflectEx.Alias? extra) {
-            int exOffset = (extra.HasValue ? 1 : 0);
-            var aliases = new ReflectEx.Alias[exOffset + Bound.Count];
-            if (extra.Try(out var ex))
-                aliases[0] = ex;
-            for (int ii = 0; ii < Bound.Count; ++ii) {
-                var (t, s) = Bound[ii];
-                aliases[exOffset + Bound.Count + ii] = 
-                    new ReflectEx.Alias(t, s, tac => PICustomData.GetValue(tac, t, s)) {
-                        DirectAssignment = counters[(t, s)] == 1 || dirty.Contains((t, s))
-                    };
-            }
-            return aliases;
-        }
-    }
-
-    /// <summary>
-    /// A dummy reference resolver that always returns false.
-    /// <br/>This is used to mark that the GCXU compilation is in its second phase.
-    /// </summary>
-    public class GCXUDummyResolver : ReflectEx.ICompileReferenceResolver {
-        public static readonly GCXUDummyResolver Singleton = new();
-
-        public bool TryResolve(TExArgCtx tac, Type t, string alias, out Expression ex) {
-            ex = default!;
-            return false;
-        }
-
-        public void MarkDirty(Type t, string alias) {
-            throw new NotImplementedException();
-        }
-    }
-
-    /// <summary>
-    /// Detect if there are any bound variables in the provided expression function,
-    ///  and handle exposing them if there are.
-    /// </summary>
-    /// <param name="compiler">Function that compiles the expression function into a delegate</param>
-    /// <param name="exp">Expression function (eg. TExArgCtx -> TEx)</param>
-    /// <param name="modifyLets">Function that modifies the expression function by exposing variables</param>
-    /// <param name="modifyArgBag">Function that modifies the input to the expression function</param>
-    /// <typeparam name="S">Expression function (eg. TExArgCtx -> TEx)</typeparam>
-    /// <typeparam name="T">Delegate type (eg. BPY)</typeparam>
-    /// <returns></returns>
-    public static GCXU<T> Automatic<S, T>(Func<S, ReadyToCompileExpr<T>> compiler, S exp, Func<S, ReflectEx.Alias[], S> modifyLets, Func<S, Func<TExArgCtx, TExArgCtx>, S> modifyArgBag) where T : Delegate {
-        var resolver = new GCXUCompileResolver();
-        LexicalScope enclosingScope = null!;
-        var ww = compiler(modifyArgBag(exp, tac => {
-            enclosingScope = tac.Ctx.Scope;
-            tac.Ctx.GCXURefs = resolver;
-            return tac;
-        }));
-        return new GCXU<T>(resolver.Bound, enclosingScope, type => {
-            ReflectEx.Alias? bpiAsTypeAlias = null;
-            if (resolver.RequiresBinding) {
-                //When there are multiple usages of (bpi.data as CustomDataType), cache the value of that in an local variable.
-                //Note: in practice this optimization for type-as doesn't seem to do much, probably because MSIL automatically
-                // optimizes for it even if you don't do it here.
-                if (resolver.TotalUsages > 1 && !PICustomDataBuilder.DISABLE_TYPE_BUILDING) {
-                    bpiAsTypeAlias = new ReflectEx.Alias(type.BuiltType, PICustomData.bpiAsCustomDataTypeAlias, 
-                        tac => tac.BPI.FiringCtx.As(type.BuiltType));
-                }
-                exp = modifyLets(exp, resolver.ToAliases(bpiAsTypeAlias));
-            }
-            return compiler(modifyArgBag(exp, tac => {
-                tac.Ctx.Scope = enclosingScope;
-                tac.Ctx.GCXURefs = GCXUDummyResolver.Singleton;
-                tac.Ctx.CustomDataType = (type.BuiltType,
-                    bpiAsTypeAlias.Try(out var alias) ?
-                        //Read the local variable for (bpi.data as CustomDataType) if we set it above
-                        tac => ReflectEx.GetAliasFromStack(alias.alias, tac) ??
-                               throw new Exception("Couldn't find bpi-as-customtype alias on the stack")
-                        //Otherwise recalculate it
-                        : tac => tac.BPI.FiringCtx.As(type.BuiltType));
-                return tac;
-            })).Compile();
-        });
-    }
 
 }
 [Reflect]
 public static class Compilers {
-    /// <summary>
-    /// Assert that the variables provided are stored in the bullet's custom data, then execute the inner content.
-    /// <br/>Since <see cref="GCXU{Fn}"/> automatically stores variables used in its scope, you generally only
-    /// need to call this function when the variables will be used by some other scope, such as bullet controls.
-    /// </summary>
-    public static Func<TExArgCtx, TEx<T>> Expose<T>((Reflector.ExType, string)[] variables, Func<TExArgCtx, TEx<T>> inner) => tac => {
-        foreach (var (ext, name) in variables)
-            tac.Ctx.GCXURefs?.TryResolve(tac, ext.AsType(), name, out _);
-        return inner(tac);
-    };
-    
-
     #region FallthroughCompilers
     
     [Fallthrough]
@@ -402,75 +268,7 @@ public static class Compilers {
             GCXFArgs).Compile();
     }
 
-    [Fallthrough]
-    [ExprCompiler]
-    [ExtendGCXUExposed]
-    public static GCXU<BPY> GCXU(ExBPY f) => GCXU11(PrepareDelegateBPI<BPY>, f);
-
-    [Fallthrough]
-    [ExprCompiler]
-    [ExtendGCXUExposed]
-    public static GCXU<Pred> GCXU(ExPred f) => GCXU11(PrepareDelegateBPI<Pred>, f);
-
-    [Fallthrough]
-    [ExprCompiler]
-    [ExtendGCXUExposed]
-    public static GCXU<TP> GCXU(ExTP f) => GCXU11(PrepareDelegateBPI<TP>, f);
-
-    [Fallthrough]
-    [ExprCompiler]
-    [ExtendGCXUExposed]
-    public static GCXU<TP3> GCXU(ExTP3 f) => GCXU11(PrepareDelegateBPI<TP3>, f);
-
-    [Fallthrough]
-    [ExprCompiler]
-    [ExtendGCXUExposed]
-    public static GCXU<TP4> GCXU(ExTP4 f) => GCXU11(PrepareDelegateBPI<TP4>, f);
-
-    [Fallthrough]
-    [ExprCompiler]
-    [ExtendGCXUExposed]
-    public static GCXU<BPRV2> GCXU(ExBPRV2 f) => GCXU11(PrepareDelegateBPI<BPRV2>, f);
-
-    [Fallthrough]
-    [ExprCompiler]
-    [ExtendGCXUExposed]
-    public static GCXU<SBF> GCXUSB(ExBPY f) => GCXU11(PrepareDelegateRSB<SBF>, f);
-    [Fallthrough]
-    [ExprCompiler]
-    [ExtendGCXUExposed]
-    public static GCXU<SBV2> GCXUSB(ExTP f) => GCXU11(PrepareDelegateRSB<SBV2>, f);
-
-    [Fallthrough]
-    [ExprCompiler]
-    [ExtendGCXUExposed]
-    public static GCXU<VTP> GCXU(ExVTP f) => Automatic(_VTP, f, (ex, aliases) => VTPRepo.Let(aliases, ex), 
-        (ex, mod) => (a, b, tac, d) => ex(a, b, mod(tac), d));
-
-    [Fallthrough]
-    [ExprCompiler]
-    [ExtendGCXUExposed]
-    public static GCXU<LVTP> LGCXU(ExVTP f) => Automatic(_LVTP, f, (ex, aliases) => VTPRepo.Let(aliases, ex),
-        (ex, mod) => (a, b, tac, d) => ex(a, b, mod(tac), d));
-
     #endregion
-
-    #region GenericCompilers
-
-    [Fallthrough]
-    [ExprCompiler]
-    [ExtendGCXUExposed]
-    public static Func<T1, T2, R> Compile<T1, T2, R>(Func<TExArgCtx, TEx<R>> ex) =>
-        PrepareDelegate<Func<T1, T2, R>>(ex, new DelegateArg<T1>("arg1"), new DelegateArg<T2>("arg2")).Compile();
-
-    [Fallthrough]
-    [ExprCompiler]
-    [ExtendGCXUExposed]
-    public static GCXU<Func<T1, T2, R>> CompileGCXU<T1, T2, R>(Func<TExArgCtx, TEx<R>> ex) =>
-        CompileGCXU<Func<T1, T2, R>>(ex, new DelegateArg<T1>("arg1"), new DelegateArg<T2>("arg2"));
     
-    #endregion
-
-
 }
 }

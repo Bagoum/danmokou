@@ -104,7 +104,7 @@ public static partial class ExM {
         ReflectEx.LetAlias(aliases, () => inner(bpi), bpi);
 
     /// <summary>
-    /// Assign values to the BPI firing data. The values must already exist in the <see cref="PICustomData"/> context.
+    /// Assign values to the BPI firing data. The values must already exist in the <see cref="PIData"/> context.
     /// </summary>
     /// <param name="aliases">List of each variable's type, name, and assigned value (eg. f myFloat 5 + t)</param>
     /// <param name="inner">Code to execute after values are set</param>
@@ -670,15 +670,15 @@ public static partial class ExM {
         var t = typeof(T);
         var fctx = tac.FCTX;
         if (t == typeof(Bullet)) {
-            return fctx.Field(nameof(PICustomData.Bullet));
+            return fctx.Field(nameof(PIData.Bullet));
         }else if (t == typeof(CurvedTileRenderLaser)) {
-            return fctx.Field(nameof(PICustomData.Laser));
+            return fctx.Field(nameof(PIData.Laser));
         } else if (t == typeof(PlayerController)) {
-            return fctx.Field(nameof(PICustomData.PlayerController));
+            return fctx.Field(nameof(PIData.PlayerController));
         } else if (t == typeof(FireOption)) {
-            return fctx.Field(nameof(PICustomData.OptionFirer));
+            return fctx.Field(nameof(PIData.OptionFirer));
         } else if (t == typeof(BehaviorEntity)) {
-            return fctx.Field(nameof(PICustomData.Firer));
+            return fctx.Field(nameof(PIData.Firer));
         }
         throw new Exception($"FCTX has no handling for `Mine` constructor of type {t.RName()}");
     };

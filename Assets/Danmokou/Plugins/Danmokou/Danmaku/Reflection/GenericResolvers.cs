@@ -7,6 +7,7 @@ using BagoumLib;
 using BagoumLib.DataStructures;
 using BagoumLib.Functional;
 using BagoumLib.Reflection;
+using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
@@ -204,9 +205,12 @@ public static partial class Reflector {
                 d.Log();
             if (p.Ctx.ParseEndFailure(p, ast) is { } exc)
                 throw exc;
-            var rootScope = LexicalScope.NewTopLevelScope();
+            //In-code scopes can get called arbitrarily
+            var rootScope = LexicalScope.NewTopLevelDynamicScope();
             using var __ = new LexicalScope.ParsingScope(rootScope);
             ast.AttachLexicalScope(rootScope);
+            if (rootScope.FinalizeVariableTypes(Unifier.Empty).TryR(out var err))
+                throw Reflection2.IAST.EnrichError(err);
             Profiler.BeginSample("AST realization");
             var val = ast.EvaluateObject(new());
             Profiler.EndSample();

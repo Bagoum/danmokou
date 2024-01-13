@@ -38,6 +38,7 @@ public class LexicalScope {
     }
 
     public static LexicalScope NewTopLevelScope() => new(DMKScope.Singleton);
+    public static LexicalScope NewTopLevelDynamicScope() => new DynamicLexicalScope(DMKScope.Singleton);
     
     public DMKScope Root { get; protected set; }
     public LexicalScope? Parent { get; protected set; }
@@ -434,8 +435,6 @@ public class DMKScope : LexicalScope {
                 { ScopeArgs = Compilers.GCXFArgs, Kind = ScopedConversionKind.GCXFFunction },
             new GenericMethodConv1(GetCompilerMethod("ErasedGCXF"))
                 { ScopeArgs = Compilers.GCXFArgs, Kind = ScopedConversionKind.GCXFFunction },
-            new FixedImplicitTypeConv<ExVTP, GCXU<VTP>>(Compilers.GCXU) 
-                { ScopeArgs = Compilers.VTPArgs, Kind = ScopedConversionKind.GCXUFunction },
             new FixedImplicitTypeConv<ExVTP, VTP>(Compilers.VTP) 
                 { ScopeArgs = Compilers.VTPArgs, Kind = ScopedConversionKind.SimpleFunction },
             

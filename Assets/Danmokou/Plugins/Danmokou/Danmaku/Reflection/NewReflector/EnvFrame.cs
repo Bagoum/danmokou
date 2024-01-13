@@ -65,18 +65,14 @@ public class EnvFrame {
                                      throw new Exception(
                                          "Dynamic lexical scopes must be instantiated with a parent envFrame"));
         }
-        if (scope == parent?.Scope) {
-            ++parent.owners;
-            return parent;
-        }
+        if (scope == parent?.Scope)
+            return parent.Mirror();
         var np = scope.Parent;
         for (; np is { UseEF: false }; np = np.Parent) { }
         if ((parent?.Scope ?? DMKScope.Singleton) != np)
             throw new Exception("Incorrect envframe instantiation: parent scope is not the same as scope parent");
-        if (!scope.UseEF) {
-            ++(parent ?? throw new StaticException("Parent EF must be provided for non-EF scopes")).owners;
-            return parent;
-        }
+        if (!scope.UseEF) 
+            return (parent ?? throw new StaticException("Parent EF must be provided for non-EF scopes")).Mirror();
         var ef = cache.Count > 0 ? cache.Pop() : new();
         ef.TakeParent(parent);
         //Logs.Log($"CREATE {ef.Ctr} ({ef.Parent?.Ctr})", stackTrace: true);
@@ -182,6 +178,12 @@ public class EnvFrame {
         TakeParent(null); //calls FreeDependent
     }
 
+    public EnvFrame Mirror() {
+        if (this == Empty) return Empty;
+        ++owners;
+        return this;
+    }
+    
     public EnvFrame Clone() {
         if (this == Empty) return Empty;
         var nxt = cache.Count > 0 ? cache.Pop() : new();

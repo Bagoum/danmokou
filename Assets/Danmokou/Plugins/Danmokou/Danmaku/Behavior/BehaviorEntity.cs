@@ -171,7 +171,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public DisplayController DisplayerOrThrow => (displayer != null) ? displayer : throw new Exception($"BEH {ID} does not have a displayer");
     private bool isSummoned = false;
     protected virtual int Findex => 0;
-    protected virtual PICustomData DefaultFCTX() => PICustomData.New();
+    protected virtual PIData DefaultFCTX() => PIData.NewUnscoped();
     protected override void Awake() {
         base.Awake();
         DefaultLayer = gameObject.layer;

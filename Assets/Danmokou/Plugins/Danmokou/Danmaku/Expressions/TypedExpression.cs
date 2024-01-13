@@ -35,14 +35,7 @@ public class TExArgCtx {
         public LexicalScope Scope { get; set; } = DMKScope.Singleton;
         
         /// <summary>
-        /// A handler that tracks usages of yet-unbound variables in the precompilation step of GCXU.
-        /// <br/>This is *NOT* used for any actual compilation.
-        /// <br/>It is set to <see cref="CompilerHelpers.GCXUCompileResolver"/> in the first phase of GCXU compilation,
-        ///  and <see cref="CompilerHelpers.GCXUDummyResolver"/> in the second phase of GCXU compilation.
-        /// </summary>
-        public ReflectEx.ICompileReferenceResolver? GCXURefs { get; set; }
-        /// <summary>
-        /// When the type of the custom data (<see cref="PICustomData"/>) is known, this contains
+        /// When the type of the custom data (<see cref="PIData"/>) is known, this contains
         ///  the type, as well as a function to get the custom data downcast to that type.
         /// </summary>
         public (Type type, Func<TExArgCtx, Expression> bpiAsType)? CustomDataType { get; set; }
@@ -286,9 +279,9 @@ public class TExArgCtx {
     public Expression When(Func<TExArgCtx, TEx<bool>> pred, Expression then) => Expression.IfThen(pred(this), then);
 
     //Methods for dynamic (dict-based) data lookup
-    public Expression DynamicHas<T>(string key) => PICustomData.ContainsDynamic<T>(this, key);
-    public Expression DynamicGet<T>(string key) => PICustomData.GetValueDynamic<T>(this, key);
-    public Expression DynamicSet<T>(string key, Expression val) => PICustomData.SetValueDynamic<T>(this, key, val);
+    public Expression DynamicHas<T>(string key) => PIData.ContainsDynamic<T>(this, key);
+    public Expression DynamicGet<T>(string key) => PIData.GetValueDynamic<T>(this, key);
+    public Expression DynamicSet<T>(string key, Expression val) => PIData.SetValueDynamic<T>(this, key, val);
 }
 
 /// <summary>

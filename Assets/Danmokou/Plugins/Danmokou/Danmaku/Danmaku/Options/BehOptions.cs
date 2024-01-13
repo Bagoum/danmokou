@@ -65,7 +65,7 @@ public record BehOption {
     /// Provide a function that indicates how much to shift the color of the summon (in degrees) at any point in time.
     /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
     /// </summary>
-    public static BehOption HueShift(GCXU<BPY> shift) => new HueShiftProp(shift);
+    public static BehOption HueShift(BPY shift) => new HueShiftProp(shift);
     
     /// <summary>
     /// Manually construct a two-color gradient for the object.
@@ -73,27 +73,27 @@ public record BehOption {
     /// <br/> Note: This will only have effect if you use it with the `recolor` palette.
     /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
     /// </summary>
-    public static BehOption Recolor(GCXU<TP4> black, GCXU<TP4> white) => new RecolorProp(black, white);
+    public static BehOption Recolor(TP4 black, TP4 white) => new RecolorProp(black, white);
 
     /// <summary>
     /// Tint the object. This is a multiplicative effect on its normal color.
     /// <br/> Note: Currently only supported on pathers (there is a LaserOption equivalent).
     /// <br/> WARNING: This is a rendering function. Do not use `rand` (`brand` ok), or else replays will desync.
     /// </summary>
-    public static BehOption Tint(GCXU<TP4> tint) => new TintProp(tint);
+    public static BehOption Tint(TP4 tint) => new TintProp(tint);
 
     /// <summary>
     /// Rotate the BEH sprite.
     /// Not supported on pathers/lasers.
     /// Does not affect collision.
     /// </summary>
-    public static BehOption Rotate(GCXU<BPY> rotator) => new RotateProp(rotator);
+    public static BehOption Rotate(BPY rotator) => new RotateProp(rotator);
     
     /// <summary>
     /// Every frame, the entity will check the condition and destroy itself if it is true.
     /// <br/>Note: This is generally only necessary for player lasers. 
     /// </summary>
-    public static BehOption Delete(GCXU<Pred> cond) => new DeleteProp(cond);
+    public static BehOption Delete(Pred cond) => new DeleteProp(cond);
 
     /// <summary>
     /// Mark a Bullet as fired by the player, and allow it to check collision against enemies.
@@ -145,26 +145,26 @@ public record BehOption {
     public record LayerProp : ValueProp<Layer> {
         public LayerProp(Layer l) : base(l) { }
     }
-    public record HueShiftProp : ValueProp<GCXU<BPY>> {
-        public HueShiftProp(GCXU<BPY> f) : base(f) { }
+    public record HueShiftProp : ValueProp<BPY> {
+        public HueShiftProp(BPY f) : base(f) { }
     }
-    public record TintProp : ValueProp<GCXU<TP4>> {
-        public TintProp(GCXU<TP4> f) : base(f) { }
+    public record TintProp : ValueProp<TP4> {
+        public TintProp(TP4 f) : base(f) { }
     }
-    public record RotateProp : ValueProp<GCXU<BPY>> {
-        public RotateProp(GCXU<BPY> f) : base(f) { }
+    public record RotateProp : ValueProp<BPY> {
+        public RotateProp(BPY f) : base(f) { }
     }
     public record RecolorProp : BehOption {
-        public readonly GCXU<TP4> black;
-        public readonly GCXU<TP4> white;
+        public readonly TP4 black;
+        public readonly TP4 white;
 
-        public RecolorProp(GCXU<TP4> b, GCXU<TP4> w) {
+        public RecolorProp(TP4 b, TP4 w) {
             black = b;
             white = w;
         }
     }
-    public record DeleteProp : ValueProp<GCXU<Pred>> {
-        public DeleteProp(GCXU<Pred> f) : base(f) { }
+    public record DeleteProp : ValueProp<Pred> {
+        public DeleteProp(Pred f) : base(f) { }
     }
     
     public record PlayerBulletProp : ValueProp<PlayerBulletCfg> {
@@ -197,7 +197,7 @@ public readonly struct RealizedBehOptions {
     public readonly PlayerBullet? playerBullet;
     public readonly bool grazeAllowed;
 
-    public RealizedBehOptions(BehOptions opts, GenCtx gcx, PICustomData fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
+    public RealizedBehOptions(BehOptions opts, GenCtx gcx, PIData fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
         smooth = opts.smooth;
         smr = SMRunner.Run(opts.sm, cT, gcx);
         scale = opts.scale?.Invoke(gcx) ?? 1f;
@@ -205,13 +205,13 @@ public readonly struct RealizedBehOptions {
         layer = opts.layer;
         damage = (opts.damage?.Invoke(gcx)).FMap(x => (int)x);
         drops = opts.drops;
-        hueShift = opts.hueShift?.Execute(gcx, fctx);
-        tint = opts.tint?.Execute(gcx, fctx);
-        rotator = opts.rotator?.Execute(gcx, fctx);
+        hueShift = opts.hueShift;
+        tint = opts.tint;
+        rotator = opts.rotator;
         if (opts.recolor.Try(out var rc)) {
-            recolor = (rc.black.Execute(gcx, fctx), rc.white.Execute(gcx, fctx));
+            recolor = (rc.black, rc.white);
         } else recolor = null;
-        delete = opts.delete?.Execute(gcx, fctx);
+        delete = opts.delete;
         playerBullet = opts.playerBullet?.Realize(fctx.PlayerController);
         grazeAllowed = opts.grazeAllowed;
     }
@@ -245,13 +245,13 @@ public class BehOptions {
     public readonly GCXF<float>? scale;
     public readonly GCXF<float>? hp;
     public readonly GCXF<float>? damage;
-    public readonly GCXU<Pred>? delete;
+    public readonly Pred? delete;
     public readonly int? layer = null;
     public readonly ItemDrops? drops = null;
-    public readonly GCXU<BPY>? hueShift;
-    public readonly GCXU<TP4>? tint;
-    public readonly GCXU<BPY>? rotator;
-    public readonly (GCXU<TP4> black, GCXU<TP4> white)? recolor;
+    public readonly BPY? hueShift;
+    public readonly TP4? tint;
+    public readonly BPY? rotator;
+    public readonly (TP4 black, TP4 white)? recolor;
     public readonly PlayerBulletCfg? playerBullet;
     public readonly bool grazeAllowed = true;
     private readonly string? id = null;

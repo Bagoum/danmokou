@@ -19,15 +19,15 @@ public class SBOption {
     /// <summary>
     /// Give the bullet a custom scale.
     /// </summary>
-    public static SBOption Scale(GCXU<BPY> scale) => new ScaleProp(scale);
+    public static SBOption Scale(BPY scale) => new ScaleProp(scale);
     /// <summary>
     /// Give the bullet a custom rotation function, in degrees.
     /// </summary>
-    public static SBOption Dir(Func<TExArgCtx, TEx<float>> dir) => new DirProp(Compilers.GCXUSB(x => CosSinDeg(dir(x))));
+    public static SBOption Dir(Func<TExArgCtx, TEx<float>> dir) => new DirProp(Compilers.SBV2(x => CosSinDeg(dir(x))));
     /// <summary>
     /// Give the bullet a custom rotation function, in cos/sin coordinates.
     /// </summary>
-    public static SBOption Dir2(GCXU<SBV2> dir) => new DirProp(dir);
+    public static SBOption Dir2(SBV2 dir) => new DirProp(dir);
 
     /// <summary>
     /// Mark the bullet as a player shot.
@@ -44,12 +44,12 @@ public class SBOption {
         protected ValueProp(T value) => this.value = value;
     }
     
-    public class ScaleProp : ValueProp<GCXU<BPY>> {
-        public ScaleProp(GCXU<BPY> f) : base(f) { }
+    public class ScaleProp : ValueProp<BPY> {
+        public ScaleProp(BPY f) : base(f) { }
     }
     
-    public class DirProp : ValueProp<GCXU<SBV2>> {
-        public DirProp(GCXU<SBV2> f) : base(f) { }
+    public class DirProp : ValueProp<SBV2> {
+        public DirProp(SBV2 f) : base(f) { }
     }
 
     public class PlayerProp : ValueProp<(int bossDmg, int stageDmg, string effStrat)> {
@@ -65,8 +65,8 @@ public class SBOption {
 public class SBOptions {
     //Note: If adding GCXU objects here, also add them to
     // the GCXU.ShareTypeAndCompile call in AtomicPAtterns
-    public readonly GCXU<BPY>? scale = null;
-    public readonly GCXU<SBV2>? direction = null;
+    public readonly BPY? scale = null;
+    public readonly SBV2? direction = null;
     public readonly (int boss, int stage, EffectStrategy effStrat)? player = null;
 
     public SBOptions(IEnumerable<SBOption> props) {

@@ -344,7 +344,6 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\GenericMath\ExMConditionals.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Cutin\PiecewiseAppear.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\LetterboxedInput.cs" />
-    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\PICustomDataBuilder.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\ASTEvaluationData.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\ADV\Examples\ExampleADVInstanceRequest.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\DoremyMimic.cs" />

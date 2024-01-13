@@ -19,7 +19,6 @@ using Danmokou.DMath.Functions;
 using Danmokou.Graphics;
 using Danmokou.Player;
 using Danmokou.Reflection;
-using Danmokou.Reflection.CustomData;
 using Danmokou.Reflection2;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
@@ -33,19 +32,25 @@ using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TE
 
 namespace Danmokou.DMath {
 /// <summary>
-/// DMK v10 replacement for FiringCtx. This class is subclassed via runtime MSIL generation to
-///  provide efficient lookup of arbitrary fields.
+/// A class storing state information for bullets and other entities.
+/// <br/>Contains a link to the environment frame where the bullet was created, which contains most relevant data.
 /// </summary>
-public class PICustomData {
-    public const string bpiAsCustomDataTypeAlias = "$_typedCustomData";
-    public static readonly PICustomData Empty = new();
+public class PIData {
+    public static readonly PIData Empty = new();
     //For dictionary variables, such as those created for state control in SS0 or onlyonce
     private static readonly Dictionary<(Type type, string name), int> dynamicKeyNames = new();
+    private static readonly Dictionary<Type, int> lastVarID = new();
     public static int GetDynamicKey(Type t, string name) {
-        return dynamicKeyNames[(t, name)] = PICustomDataBuilder.Builder.GetVariableKey(name, t);
+        if (dynamicKeyNames.TryGetValue((t, name), out var res)) return res;
+        lastVarID.TryAdd(t, 0);
+        return dynamicKeyNames[(t, name)] = lastVarID[t]++;
     }
-    public int typeIndex;
-    public ConstructedType Constructor => Metadata.GetTypeDef(this);
+    private static Stack<PIData> Cache { get; } = new();
+    public static int Allocated { get; private set; } 
+    public static int Popped { get; private set; } //Popped and recached should be about equal
+    public static int Recached { get; private set; }
+    public static int Copied { get; internal set; }
+    public static int Cleared { get; private set; }
 
     //For culled bullets, sb.bpi.t points to a countdown from FADE_TIME to 0, and this points to the
     // lifetime of the bullet (including the lifetime of the original bullet), which is used to calculate direction.
@@ -56,7 +61,6 @@ public class PICustomData {
     public EnvFrame envFrame = EnvFrame.Empty;
     
     //Late-bound variables, such as those created for state control in SS0 or onlyonce
-    // In the DISABLE_TYPE_BUILDING case, this is used for all bound variables
     public readonly Dictionary<int, int> boundInts = new();
     public readonly Dictionary<int, float> boundFloats = new();
     public readonly Dictionary<int, Vector2> boundV2s = new();
@@ -103,15 +107,14 @@ public class PICustomData {
     /// Copy this object's variables into another object of the same type.
     /// <br/>Not virtual, so only this class' variables are copied.
     /// </summary>
-    public PICustomData CopyInto(PICustomData copyee) {
-        ++Metadata.GetTypeDef(this).Copied;
+    public PIData CopyInto(PIData copyee) {
+        ++Copied;
         boundInts.CopyInto(copyee.boundInts);
         boundFloats.CopyInto(copyee.boundFloats);
         boundV2s.CopyInto(copyee.boundV2s);
         boundV3s.CopyInto(copyee.boundV3s);
         boundRV2s.CopyInto(copyee.boundRV2s);
         copyee.envFrame = envFrame.Clone();
-        copyee.typeIndex = typeIndex;
         copyee.firer = firer;
         copyee.playerController = playerController;
         copyee.laserController = laserController;
@@ -121,66 +124,11 @@ public class PICustomData {
     }
 
     /// <summary>
-    /// Copy this object's variables into another object of the same type.
-    /// <br/>Virtual, so subclasses should implement this by casting the argument to their own type
-    /// and then calling their own <see cref="CopyInto"/>.
-    /// </summary>
-    public virtual PICustomData CopyIntoVirtual(PICustomData copyee) => CopyInto(copyee);
-    
-    /// <summary>
-    /// Clone this object.
-    /// <br/>This methor makes garbage; use <see cref="Clone_NoAlloc"/> instead.
-    /// </summary>
-    public virtual PICustomData Clone() => CopyInto(new PICustomData());
-
-    /// <summary>
     /// Clone this object. The data type is pooled, so this method has amortized O(0) allocations.
     /// </summary>
-    public PICustomData Clone_NoAlloc() => 
+    public PIData Clone_NoAlloc() => 
         //Don't need logic for lexical scope, envFrame will be cloned in CopyInto
-        CopyIntoVirtual(Constructor.MakeNew(null)); 
-
-    public virtual bool HasFloat(int id) => 
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING && boundFloats.ContainsKey(id);
-    public virtual bool HasInt(int id) => 
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING && boundInts.ContainsKey(id);
-    public virtual bool HasVector2(int id) => 
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING && boundV2s.ContainsKey(id);
-    public virtual bool HasVector3(int id) => 
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING && boundV3s.ContainsKey(id);
-    public virtual bool HasV2RV2(int id) => 
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING && boundRV2s.ContainsKey(id);
-    public virtual float ReadFloat(int id) =>
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundFloats[id] : throw new Exception(
-        $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(ReadFloat)}");
-    public virtual int ReadInt(int id) =>
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundInts[id] : throw new Exception(
-        $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(ReadInt)}");
-    public virtual Vector2 ReadVector2(int id) =>
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundV2s[id] : throw new Exception(
-        $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(ReadVector2)}");
-    public virtual Vector3 ReadVector3(int id) =>
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundV3s[id] : throw new Exception(
-        $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(ReadVector3)}");
-    public virtual V2RV2 ReadV2RV2(int id) =>
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundRV2s[id] : throw new Exception(
-        $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(ReadV2RV2)}");
-    
-    public virtual float WriteFloat(int id, float val) => 
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundFloats[id] = val : throw new Exception(
-        $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(WriteFloat)}");
-    public virtual int WriteInt(int id, int val) => 
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundInts[id] = val : throw new Exception(
-        $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(WriteInt)}");
-    public virtual Vector2 WriteVector2(int id, Vector2 val) =>
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundV2s[id] = val : throw new Exception(
-        $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(WriteVector2)}");
-    public virtual Vector3 WriteVector3(int id, Vector3 val) =>
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundV3s[id] = val : throw new Exception(
-        $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(WriteVector3)}");
-    public virtual V2RV2 WriteV2RV2(int id, V2RV2 val) =>
-        PICustomDataBuilder.DISABLE_TYPE_BUILDING ? boundRV2s[id] = val : throw new Exception(
-        $"The base {nameof(PICustomData)} class has no dynamic variables for {nameof(WriteV2RV2)}");
+        CopyInto(New(null)); 
 
     /// <summary>
     /// ONLY CALL THIS FROM FUNCTIONS WITH <see cref="CreatesInternalScopeAttribute"/> WITH DYNAMIC=TRUE
@@ -190,72 +138,25 @@ public class PICustomData {
             throw new Exception("RevertToGCX may only be called with a dynamic lexical scope");
         var gcx = GenCtx.New(exec, EnvFrame.Create(dynamicScope, envFrame));
         gcx.playerController = playerController;
-        foreach (var field in PICustomDataBuilder.Builder.GetTypeDef(this).Descriptor.Fields) {
-            throw new StaticException("NOT SUPPORTED IN v11");
-        }
         //Dynamic keys (such as those bound via StopSampling) are not copied
         return gcx;
     }
 
     public void Dispose() {
-        envFrame.Free();
         if (this == Empty) return;
-        Constructor.Return(this);
-    }
-
-    public void UploadWrite(Type ext, string varName, GenCtx gcx, object? defaultValue = null) {
-        throw new StaticException("NOT SUPPORTED IN v11");
-        /*
-        if (PICustomDataBuilder.DISABLE_TYPE_BUILDING) {
-            if (ext == ExUtils.tfloat)
-                envFrame.Value<float>(varName) = gcx.MaybeGetFloat(varName) ?? (float)(defaultValue ?? 
-                    throw new Exception($"No float {varName} in bullet GCX"));
-            else if (ext == ExUtils.tv2)
-                envFrame.Value<Vector2>(varName) = gcx.V2s.MaybeGet(varName) ?? (Vector2)(defaultValue ??
-                    throw new Exception($"No vector2 {varName} in bullet GCX"));
-            else if (ext == ExUtils.tv3)
-                envFrame.Value<Vector3>(varName) = gcx.V3s.MaybeGet(varName) ?? (Vector3)(defaultValue ??
-                    throw new Exception($"No vector3 {varName} in bullet GCX"));
-            else if (ext == ExUtils.tv2rv2)
-                envFrame.Value<V2RV2>(varName) = gcx.RV2s.MaybeGet(varName) ?? (V2RV2)(defaultValue ??
-                    throw new Exception($"No V2RV2 {varName} in bullet GCX"));
-            else throw new ArgumentOutOfRangeException($"{ext}");
-        } else {
-            var id = PICustomDataBuilder.Builder.GetVariableKey(varName, ext);
-            if (ext == ExUtils.tfloat)
-                WriteFloat(id, gcx.MaybeGetFloat(varName) ?? 
-                               gcx.EnvFrame.MaybeGetValue<float>(varName).ValueOrSNull() ??
-                               (float)(defaultValue ??
-                                       throw new Exception($"No float {varName} in bullet GCX")));
-            else if (ext == ExUtils.tint)
-                WriteInt(id, 
-                    gcx.EnvFrame.MaybeGetValue<int>(varName).ValueOrSNull() ??
-                        (int)(defaultValue ?? throw new Exception($"No int {varName} in bullet GCX")));
-            else if (ext == ExUtils.tv2)
-                WriteVector2(id, gcx.V2s.MaybeGet(varName) ?? 
-                                 gcx.EnvFrame.MaybeGetValue<Vector2>(varName).ValueOrSNull() ??
-                                 (Vector2)(defaultValue ??throw new Exception($"No vector2 {varName} in bullet GCX")));
-            else if (ext == ExUtils.tv3)
-                WriteVector3(id, gcx.V3s.MaybeGet(varName) ??
-                                 gcx.EnvFrame.MaybeGetValue<Vector3>(varName).ValueOrSNull() ??
-                                 (Vector3)(defaultValue ?? throw new Exception($"No vector3 {varName} in bullet GCX")));
-            else if (ext == ExUtils.tv2rv2)
-                WriteV2RV2(id, gcx.RV2s.MaybeGet(varName) ??
-                               gcx.EnvFrame.MaybeGetValue<V2RV2>(varName).ValueOrSNull() ??
-                               (V2RV2) (defaultValue ?? throw new Exception($"No V2RV2 {varName} in bullet GCX")));
-            else throw new ArgumentOutOfRangeException($"{ext}");
-        }*/
-    }
-    
-    /// <summary>
-    /// Retrieve the variables defined in <see cref="boundVars"/> from <see cref="gcx"/>
-    ///  and set them on this object.
-    /// </summary>
-    public void UploadAdd(IReadOnlyList<(Type, string)> boundVars, GenCtx gcx) {
-        for (int ii = 0; ii < boundVars.Count; ++ii) {
-            var (ext, varNameS) = boundVars[ii];
-            UploadWrite(ext, varNameS, gcx);
-        }
+        envFrame.Free();
+        boundInts.Clear();
+        boundFloats.Clear();
+        boundV2s.Clear();
+        boundV3s.Clear();
+        boundRV2s.Clear();
+        firer = null;
+        playerController = null;
+        laserController = null;
+        bullet = null;
+        playerBullet = null;
+        ++Recached;
+        Cache.Push(this);
     }
     
 
@@ -266,66 +167,26 @@ public class PICustomData {
     ///  if it exists. If it doesn't exist, returns <see cref="deflt"/> or throws an exception.
     /// </summary>
     public static Ex GetIfDefined<T>(TExArgCtx tac, string name, Ex? deflt) {
-        if (PICustomDataBuilder.DISABLE_TYPE_BUILDING)
-            return LexicalScope.VariableWithoutLexicalScope(tac, name, typeof(T), deflt);
-        var t = typeof(T);
-        var id = Ex.Constant(Metadata.GetVariableKey(name, t));
-        var get = ExFunction.WrapAny<PICustomData>(Metadata.FieldReaderMethodName(t));
-        if (deflt == null) 
-            return get.InstanceOf(tac.BPI.FiringCtx, id);
-        var has = ExFunction.WrapAny<PICustomData>(Metadata.FieldCheckerMethodName(t));
-        return Ex.Condition(
-            has.InstanceOf(tac.BPI.FiringCtx, id),
-            get.InstanceOf(tac.BPI.FiringCtx, id),
-            deflt);
+        return LexicalScope.VariableWithoutLexicalScope(tac, name, typeof(T), deflt);
     }
 
     /// <summary>
     /// Create an expression that retrieves a field with name <see cref="name"/>.
-    /// <br/>If the subclass of <see cref="PICustomData"/> is known, then does this by direct field access,
-    /// otherwise uses the ReadT jumptable lookup.
     /// </summary>
     public static Ex GetValue(TExArgCtx tac, Type t, string name) {
-        if (PICustomDataBuilder.DISABLE_TYPE_BUILDING) {
-            return tac.Ctx.Scope.TryGetLocalOrParent(tac, t, name, out _, out _) ?? 
-                   LexicalScope.VariableWithoutLexicalScope(tac, name, t);
-        } else return
-                tac.Ctx.CustomDataType is var (_, downcast) ?
-                    //For scoped calls, use field access, eg. (bpi.ctx as CustomData1).m0_myFloat
-                    downcast(tac).Field(Metadata.GetFieldName(name, t)) :
-                    //For unscoped calls, use the ReadT call
-                    ExFunction.WrapAny<PICustomData>(
-                            Metadata.FieldReaderMethodName(t))
-                        .InstanceOf(
-                            tac.BPI.FiringCtx,
-                            Ex.Constant(Metadata.GetVariableKey(name, t)));
+        return tac.Ctx.Scope.TryGetLocalOrParent(tac, t, name, out _, out _) ?? 
+               LexicalScope.VariableWithoutLexicalScope(tac, name, t);
     }
-
-    /// <summary>
-    /// <inheritdoc cref="GetValue"/>
-    /// </summary>
-    public static Ex GetValue<T>(TExArgCtx tac, string name) =>
-        GetValue(tac, typeof(T), name);
 
     
     /// <summary>
     /// Create an expression that sets the value of a field with name <see cref="name"/>.
-    /// <br/>If the subclass of <see cref="PICustomData"/> is known, then does this by direct field access,
+    /// <br/>If the subclass of <see cref="PIData"/> is known, then does this by direct field access,
     /// otherwise uses the WriteT jumptable lookup.
     /// </summary>
     public static Ex SetValue(TExArgCtx tac, Type t, string name, Func<TExArgCtx, TEx> val) {
-        if (PICustomDataBuilder.DISABLE_TYPE_BUILDING) {
-            return tac.Ctx.Scope.TryGetLocalOrParent(tac, t, name, out _, out _)?.Is(val(tac)) ??
-                   LexicalScope.VariableWithoutLexicalScope(tac, name, t, opOnValue: l => l.Is(val(tac)));
-        } else return 
-            tac.Ctx.CustomDataType is var (_, downcast) ?
-                downcast(tac).Field(Metadata.GetFieldName(name, t)).Is(val(tac)) :
-                ExFunction.WrapAny<PICustomData>(
-                        Metadata.FieldWriterMethodName(t))
-                    .InstanceOf(
-                        tac.BPI.FiringCtx,
-                        Ex.Constant(Metadata.GetVariableKey(name, t)),
-                        val(tac));
+        return tac.Ctx.Scope.TryGetLocalOrParent(tac, t, name, out _, out _)?.Is(val(tac)) ??
+               LexicalScope.VariableWithoutLexicalScope(tac, name, t, opOnValue: l => l.Is(val(tac)));
     }
 
     /// <summary>
@@ -358,16 +219,10 @@ public class PICustomData {
 
     public static Expression ContainsDynamic<T>(TExArgCtx tac, string name) =>
         ContainsDynamic(tac, typeof(T), name);
-    
-    public static TEx GetValueDynamic(TExArgCtx tac, Type typ, string name) =>
-        Hoisted(tac, typ, name, key => GetDict(tac.BPI.FiringCtx, typ).DictGet(key));
     public static Expression GetValueDynamic<T>(TExArgCtx tac, string name, TEx<T>? deflt = null) =>
         Hoisted(tac, typeof(T), name, key => deflt != null ?
             GetDict(tac.BPI.FiringCtx, typeof(T)).DictSafeGet(key, deflt) :
             GetDict(tac.BPI.FiringCtx, typeof(T)).DictGet(key));
-
-    public static Expression SetValueDynamic(TExArgCtx tac, Type typ, string name, Expression val) =>
-        Hoisted(tac, typ, name, key => GetDict(tac.BPI.FiringCtx, typ).DictSet(key, val));
     public static Expression SetValueDynamic<T>(TExArgCtx tac, string name, Expression val) =>
         Hoisted(tac, typeof(T), name, key => GetDict(tac.BPI.FiringCtx, typeof(T)).DictSet(key, val));
     
@@ -385,263 +240,39 @@ public class PICustomData {
         throw new ArgumentOutOfRangeException(typ.Name);
     }
 
-    private static Type piDataType = typeof(PICustomData);
-    private static PICustomDataBuilder Metadata => PICustomDataBuilder.Builder;
-
-    /// <summary>
-    /// Create a new instance of the base <see cref="PICustomData"/> class.
-    /// Only use this if you don't need to store any bound variables.
-    /// </summary>
-    public static PICustomData New(GenCtx? gcx = null) =>
-        Metadata.ConstructedBaseType.MakeNew(gcx == null ? null : (DMKScope.Singleton, gcx));
-
-}
-/*
-public class FiringCtx {
-    public const string FLIPX = "flipX";
-    public const int FLIPX_KEY = -1;
-    public const string FLIPY = "flipY";
-    public const int FLIPY_KEY = -2;
-    private static readonly Dictionary<string, int> keyNames = new();
-    //Negative values are reserved
-    private static int lastKey = 0;
-
-    static FiringCtx() {
-        ClearNames();
-    }
-
-    private static void ReserveNames() {
-        keyNames[FLIPX] = FLIPX_KEY;
-        keyNames[FLIPY] = FLIPY_KEY;
-    }
-    public static void ClearNames() {
-        keyNames.Clear();
-        ReserveNames();
-        lastKey = 0;
-    }
-    public static int GetKey(string name) {
-        if (keyNames.TryGetValue(name, out var res)) return res;
-        keyNames[name] = lastKey;
-        return lastKey++;
-    }
-    
-    public enum DataType {
-        Int,
-        Float,
-        V2,
-        V3,
-        RV2
-    }
-    public readonly Dictionary<int, int> boundInts = new();
-    public readonly Dictionary<int, float> boundFloats = new();
-    public readonly Dictionary<int, Vector2> boundV2s = new();
-    public readonly Dictionary<int, Vector3> boundV3s = new();
-    public readonly Dictionary<int, V2RV2> boundRV2s = new();
-    public BehaviorEntity? firer; //Note this may be repooled or otherwise destroyed during execution
-    
-    public PlayerController? playerController; //For player bullets
-    [UsedImplicitly]
-    public PlayerController PlayerController =>
-        playerController != null ?
-            playerController :
-            throw new Exception("FiringCtx does not have a player controller. " +
-                                "Please make sure that player bullets are fired in player scripts only.");
-
-    [UsedImplicitly]
-    public FireOption OptionFirer {
-        get {
-            if (firer is FireOption fo)
-                return fo;
-            throw new Exception("FiringCtx does not have an option firer");
-        }
-    }
-
-    public CurvedTileRenderLaser? laserController;
-    [UsedImplicitly]
-    public CurvedTileRenderLaser LaserController => 
-        laserController ?? throw new Exception("FiringCtx does not have a laser controller");
-    public PlayerBullet? playerBullet;
-    
-    private static readonly Stack<FiringCtx> cache = new();
-    public static int Allocated { get; private set; }
-    public static int Popped { get; private set; }
-    public static int Recached { get; private set; }
-    public static int Copied { get; private set; }
-
-    public static readonly FiringCtx Empty = new();
-
-    private FiringCtx() { }
-    public static FiringCtx New(GenCtx? gcx = null) {
-        FiringCtx nCtx;
-        if (cache.Count > 0) {
-            nCtx = cache.Pop();
+    public static PIData New((LexicalScope scope, GenCtx gcx)? parent = null) {
+        PIData data;
+        if (Cache.Count > 0) {
+            data = Cache.Pop();
             ++Popped;
         } else {
-            nCtx = new FiringCtx();
+            data = new();
             ++Allocated;
         }
-        nCtx.firer = gcx?.exec;
-        nCtx.playerController = nCtx.firer switch {
+        if (parent.Try(out var p) && p.scope is not DMKScope) {
+            data.envFrame = EnvFrame.Create(p.scope, p.gcx.EnvFrame);
+        } else
+            data.envFrame = EnvFrame.Empty;
+        data.firer = parent?.gcx.exec;
+        data.playerController = data.firer switch {
             PlayerController pi => pi,
             FireOption fo => fo.Player,
             Bullet b => b.Player?.firer,
             _ => null
         };
-        if (nCtx.playerController == null)
-            nCtx.playerController = gcx?.playerController;
-        return nCtx;
-    }
-
-    public void FlipX() => boundFloats[FLIPX_KEY] *= -1;
-    public void FlipY() => boundFloats[FLIPY_KEY] *= -1;
-    
-    public static Expression ExFlipX(TExArgCtx tac) {
-        var d = GetDict(tac.BPI.FiringCtx, DataType.Float);
-        return d.DictSet(Expression.Constant(FLIPX_KEY), d.DictGet(Expression.Constant(FLIPX_KEY)).Mul(-1f));
-    }
-    public static Expression ExFlipY(TExArgCtx tac) {
-        var d = GetDict(tac.BPI.FiringCtx, DataType.Float);
-        return d.DictSet(Expression.Constant(FLIPY_KEY), d.DictGet(Expression.Constant(FLIPY_KEY)).Mul(-1f));
+        if (data.playerController == null)
+            data.playerController = parent?.gcx.playerController;
+        return data;
     }
     
-    private float? DefaultFloatValue(string varName) => varName switch {
-        "flipX" => 1,
-        "flipY" => 1,
-        _ => null
-    };
-    private void UploadAddOne(Reflector.ExType ext, string varName, GenCtx gcx) {
-        var varId = GetKey(varName);
-        if (ext == Reflector.ExType.Float)
-            boundFloats[varId] = gcx.MaybeGetFloat(varName) ?? DefaultFloatValue(varName) ??
-                throw new Exception($"No float {varName} in bullet GCX");
-        else if (ext == Reflector.ExType.V2)
-            boundV2s[varId] = gcx.V2s.MaybeGet(varName) ??
-                              throw new Exception($"No vector2 {varName} in bullet GCX");
-        else if (ext == Reflector.ExType.V3)
-            boundV3s[varId] = gcx.V3s.MaybeGet(varName) ??
-                              throw new Exception($"No vector3 {varName} in bullet GCX");
-        else if (ext == Reflector.ExType.RV2)
-            boundRV2s[varId] = gcx.RV2s.MaybeGet(varName) ??
-                               throw new Exception($"No V2RV2 {varName} in bullet GCX");
-        else throw new Exception($"Cannot hoist GCX data {varName}<{ext}>.");
-    }
-    public void UploadAdd(IList<(Reflector.ExType, string)> boundVars, GenCtx gcx) {
-        for (int ii = 0; ii < boundVars.Count; ++ii) {
-            var (ext, varNameS) = boundVars[ii];
-            UploadAddOne(ext, varNameS, gcx);
-        }
-        //for (int ii = 0; ii < gcx.exposed.Count; ++ii) {
-        //    var (ext, varNameS) = gcx.exposed[ii];
-        //    UploadAddOne(ext, varNameS, gcx);
-        //}
-    }
+    /// <summary>
+    /// Create a new instance of the base <see cref="PIData"/> class.
+    /// Only use this if you don't need to store any bound variables.
+    /// </summary>
+    public static PIData NewUnscoped(GenCtx? gcx = null) =>
+        New(gcx == null ? null : (DMKScope.Singleton, gcx));
 
-    public GenCtx RevertToGCX(BehaviorEntity exec) {
-        var gcx = GenCtx.New(exec, V2RV2.Zero);
-        gcx.playerController = playerController;
-        foreach (var sk in keyNames) {
-            if (boundFloats.ContainsKey(sk.Value))
-                gcx.fs[sk.Key] = boundFloats[sk.Value];
-            if (boundV2s.ContainsKey(sk.Value))
-                gcx.v2s[sk.Key] = boundV2s[sk.Value];
-            if (boundV3s.ContainsKey(sk.Value))
-                gcx.v3s[sk.Key] = boundV3s[sk.Value];
-            if (boundRV2s.ContainsKey(sk.Value))
-                gcx.rv2s[sk.Key] = boundRV2s[sk.Value];
-        }
-        return gcx;
-    }
-
-    public FiringCtx Copy() {
-        ++Copied;
-        var nCtx = New();
-        boundInts.CopyInto(nCtx.boundInts);
-        boundFloats.CopyInto(nCtx.boundFloats);
-        boundV2s.CopyInto(nCtx.boundV2s);
-        boundV3s.CopyInto(nCtx.boundV3s);
-        boundRV2s.CopyInto(nCtx.boundRV2s);
-        nCtx.firer = firer;
-        nCtx.playerController = playerController;
-        nCtx.laserController = laserController;
-        nCtx.playerBullet = playerBullet;
-        return nCtx;
-    }
-
-    public void Dispose() {
-        if (this == Empty) return;
-        boundInts.Clear();
-        boundFloats.Clear();
-        boundV2s.Clear();
-        boundV3s.Clear();
-        boundRV2s.Clear();
-        firer = null;
-        playerController = null;
-        laserController = null;
-        playerBullet = null;
-        ++Recached;
-        cache.Push(this);
-    }
-
-    //Expression methods
-
-    public static DataType FromType<T>() {
-        var t = typeof(T);
-        if (t == typeof(Vector2))
-            return DataType.V2;
-        if (t == typeof(Vector3))
-            return DataType.V3;
-        if (t == typeof(V2RV2))
-            return DataType.RV2;
-        if (t == typeof(int))
-            return DataType.Int;
-        else
-            return DataType.Float;
-    }
-
-    private static TEx Hoisted(TExArgCtx tac, DataType typ, string name, Func<Expression, Expression> constructor) {
-        var ex = constructor(exGetKey(name));
-#if EXBAKE_SAVE
-        //Don't duplicate hoisted references
-        var key_name = "_hoisted" + name;
-        var key_assign = FormattableString.Invariant(
-            $"var {key_name} = FiringCtx.GetKey(\"{name}\");");
-        if (!tac.Ctx.HoistedVariables.Contains(key_assign)) {
-            tac.Ctx.HoistedVariables.Add(key_assign);
-            tac.Ctx.HoistedReplacements[exGetKey(name)] = Expression.Variable(typeof(int), key_name);
-        }
-#endif
-        return ex;
-    }
-    
-    public static TEx Contains(TExArgCtx tac, DataType typ, string name) =>
-        Hoisted(tac, typ, name, key => GetDict(tac.BPI.FiringCtx, typ).DictContains(key));
-    public static Expression Contains<T>(TExArgCtx tac, string name) =>
-        Hoisted(tac, FromType<T>(), name, key => GetDict(tac.BPI.FiringCtx, FromType<T>()).DictContains(key));
-    
-    public static TEx GetValue(TExArgCtx tac, DataType typ, string name) =>
-        Hoisted(tac, typ, name, key => GetDict(tac.BPI.FiringCtx, typ).DictGet(key));
-    public static Expression GetValue<T>(TExArgCtx tac, string name, TEx<T>? deflt = null) =>
-        Hoisted(tac, FromType<T>(), name, key => deflt != null ?
-            GetDict(tac.BPI.FiringCtx, FromType<T>()).DictSafeGet(key, deflt) :
-            GetDict(tac.BPI.FiringCtx, FromType<T>()).DictGet(key));
-
-    public static Expression SetValue(TExArgCtx tac, DataType typ, string name, Expression val) =>
-        Hoisted(tac, typ, name, key => GetDict(tac.BPI.FiringCtx, typ).DictSet(key, val));
-    public static Expression SetValue<T>(TExArgCtx tac, string name, Expression val) =>
-        Hoisted(tac, FromType<T>(), name, key => GetDict(tac.BPI.FiringCtx, FromType<T>()).DictSet(key, val));
-    
-    public static Expression GetDict(Expression fctx, DataType typ) => typ switch {
-        DataType.RV2 => fctx.Field("boundRV2s"),
-        DataType.V3 => fctx.Field("boundV3s"),
-        DataType.V2 => fctx.Field("boundV2s"),
-        DataType.Int => fctx.Field("boundInts"),
-        _ => fctx.Field("boundFloats")
-    };
-
-    private static Expression exGetKey(string name) => Expression.Constant(GetKey(name));
-    
 }
-*/
 
 /// <summary>
 /// A struct containing the input required for a parametric equation.
@@ -657,7 +288,7 @@ public struct ParametricInfo {
     /// <summary>Life-time (with minor adjustment)</summary>
     public float t;
     /// <summary>Context containing additional bound variables</summary>
-    public PICustomData ctx;
+    public PIData ctx;
 
     /// <summary>
     /// Global location as a Vector2 (ignores Z-coordinate)
@@ -675,11 +306,11 @@ public struct ParametricInfo {
         index = findex;
         this.id = id ?? RNG.GetUInt();
         this.t = t;
-        this.ctx = PICustomData.New(firer);
+        this.ctx = PIData.NewUnscoped(firer);
     }
-    public ParametricInfo(PICustomData ctx, in Movement mov, int findex = 0, uint? id = null, float t = 0) : 
+    public ParametricInfo(PIData ctx, in Movement mov, int findex = 0, uint? id = null, float t = 0) : 
         this(ctx, mov.rootPos, findex, id, t) { }
-    public ParametricInfo(PICustomData ctx, Vector3 position, int findex = 0, uint? id = null, float t = 0) {
+    public ParametricInfo(PIData ctx, Vector3 position, int findex = 0, uint? id = null, float t = 0) {
         loc = position;
         index = findex;
         this.id = id ?? RNG.GetUInt();
@@ -708,7 +339,7 @@ public struct ParametricInfo {
     public void Dispose() {
         ctx.Dispose();
         //Prevents double dispose
-        ctx = PICustomData.Empty;
+        ctx = PIData.Empty;
     }
 }
 
@@ -739,17 +370,17 @@ public delegate void LVTP(ref LaserMovement vel, in float dT, in float lT, ref P
 
 public readonly struct RootedVTP {
     public readonly GCXF<Vector2> root;
-    public readonly GCXU<VTP> path;
+    public readonly VTP path;
 
-    public RootedVTP(GCXF<Vector2> root, GCXU<VTP> path) {
+    public RootedVTP(GCXF<Vector2> root, VTP path) {
         this.root = root;
         this.path = path;
     }
 
-    public RootedVTP(GCXF<Vector2> root, ExVTP path) : this(root, Compilers.GCXU(path)) { }
+    public RootedVTP(GCXF<Vector2> root, ExVTP path) : this(root, Compilers.VTP(path)) { }
 
     public RootedVTP(ExBPY x, ExBPY y, ExVTP path) : this(Parametrics.PXY(x, y), path) { }
-    public RootedVTP(ExTP root, ExVTP path) : this(Compilers.GCXF(root), Compilers.GCXU(path)) { }
+    public RootedVTP(ExTP root, ExVTP path) : this(Compilers.GCXF(root), Compilers.VTP(path)) { }
     public RootedVTP(float x, float y, ExVTP path) : this(_ => new Vector2(x, y), path) { }
 }
 
@@ -805,131 +436,6 @@ public delegate T GCXF<T>(GenCtx gcx);
 /// A wrapper around <see cref="GCXF{T}"/> whose return value is discarded.
 /// </summary>
 public delegate void ErasedGCXF(GenCtx gcx);
-
-//public delegate Fn GCXUFn<Fn>(GenCtx gcx, out FiringCtx fctx);
-
-/// <summary>
-/// A wrapper type used to upload values from a GCX to private data hoisting before providing a delegate to a new object.
-/// <br/>It is recommended to call <see cref="CompileDelegate"/> or <see cref="ShareTypeAndCompile"/> immediately after construction, as this avoids compiling expressions or types during gameplay, and is also required for AOT support.
-/// </summary>
-public abstract record GCXU(IReadOnlyList<(Type type, string name)> BoundAliases, LexicalScope Scope) {
-    public ConstructedType? CustomDataType { get; private set; }
-
-    public abstract void CompileDelegate();
-    
-    /// <summary>
-    /// Compile the custom data type for this GCXU if it is not already set.
-    /// </summary>
-    public ConstructedType CompileCustomDataType() {
-        if (CustomDataType == null)
-            ShareType(this);
-        return CustomDataType!;
-    }
-
-    /// <summary>
-    /// Set the custom data type, throwing an exception if it is already set.
-    /// </summary>
-    protected void SetNewCustomDataType(ConstructedType type) {
-        if (CustomDataType == null) {
-            CustomDataType = type;
-        } else if (CustomDataType != type)
-            throw new Exception("GCXU's custom data type cannot be changed once set");
-    }
-    
-    /// <summary>
-    /// Create a single shared type for multiple GCXUs.
-    /// </summary>
-    public static ConstructedType ShareType(params GCXU?[] gcxus) {
-        ConstructedType type;
-        //TODO envframe use gcx scope
-        LexicalScope? encScope = null;
-        for (int ii = 0; ii < gcxus.Length; ++ii) {
-            if (gcxus[ii] is { Scope: {} s})
-                if ((encScope ??= s) != s)
-                    throw new StaticException("GCXUs at different lexical scopes");
-        }
-        var scope = encScope ?? throw new StaticException("No valid GCXU scope found");
-        for (int ii = 0; ii < gcxus.Length; ++ii) {
-            if (gcxus[ii]?.BoundAliases.Count > 0)
-                goto multiple;
-        }
-        type = PICustomDataBuilder.Builder.ConstructedBaseType;
-        goto assign;
-        
-        multiple:
-        var aliases = new HashSet<(Type, string)>();
-        int totalIndex = 0;
-        for (int gi = 0; gi < gcxus.Length; ++gi)
-        for (int vi = 0; vi < gcxus[gi]?.BoundAliases.Count; ++vi) {
-            var alias = gcxus[gi]!.BoundAliases[vi];
-            if (aliases.Add((alias.type, alias.name))) {
-                //TODO envframe
-                throw new Exception("temp @nocommit: custom data types unsupported");
-                var p = new Position(totalIndex++, 0, 0);
-                scope.DeclareVariable(new VarDecl(new PositionRange(p, p), alias.type, alias.name));
-            }
-        }
-        type = PICustomDataBuilder.Builder.GetCustomDataType(aliases.OrderBy(x => (x.Item1.Name, x.Item2)).ToArray());
-        
-        assign:
-        //scope.FinalizeVariableTypes(Unifier.Empty);
-        for (int ii = 0; ii < gcxus.Length; ++ii)
-            gcxus[ii]?.SetNewCustomDataType(type);
-        return type;
-    }
-
-    /// <summary>
-    /// Create a single shared type for multiple GCXUs, and compile them all with that type.
-    /// </summary>
-    public static ConstructedType ShareTypeAndCompile(params GCXU?[] gcxus) {
-        var type = ShareType(gcxus);
-        for (int ii = 0; ii < gcxus.Length; ++ii)
-            gcxus[ii]?.CompileDelegate();
-        return type;
-    }
-    
-}
-
-/// <inheritdoc/>
-/// <typeparam name="Fn">Delegate type (eg. TP, BPY, Pred)</typeparam>
-public record GCXU<Fn>(IReadOnlyList<(Type, string)> BoundAliases, LexicalScope Scope, Func<ConstructedType, Fn> LazyDelegate) : GCXU(BoundAliases, Scope) {
-    private Func<ConstructedType, Fn> LazyDelegate { get; set; } = LazyDelegate;
-    private Fn? _delegate;
-
-    /// <summary>
-    /// Compile the delegate for this GCXU, using the custom data type that is already set or automatically determining it
-    /// via <see cref="GCXU.ShareType"/>.
-    /// <br/>After this is called, the custom data type cannot be changed.
-    /// </summary>
-    public override void CompileDelegate() {
-        if (_delegate is null) {
-            Profiler.BeginSample("GCXU compilation");
-            _delegate = LazyDelegate(CompileCustomDataType());
-            LazyDelegate = null!;
-            Profiler.EndSample();
-        }
-    }
-
-    /// <summary>
-    /// When a FiringCtx already exists, write bound values to it
-    ///  and then return the delegate.
-    /// </summary>
-    public Fn Execute(GenCtx gcx, PICustomData fctx) {
-        fctx.UploadAdd(BoundAliases, gcx);
-        CompileDelegate();
-        return _delegate!;
-    }
-    
-    /// <summary>
-    /// Create a new FiringCtx, write bound values to it,
-    ///  and then return the delegate.
-    /// </summary>
-    public Fn Execute(GenCtx gcx, out PICustomData fctx) {
-        fctx = CompileCustomDataType().MakeNew((Scope, gcx));
-        return Execute(gcx, fctx);
-    }    
-
-}
 
 /// <summary>
 /// A bullet control function performing some operation on a SimpleBullet.

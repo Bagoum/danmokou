@@ -24,6 +24,7 @@ public class GenCtx : IDisposable {
     public static readonly GenCtx Empty = new();
     public EnvFrame EnvFrame { get; private set; } = EnvFrame.Empty;
     public AutoVars? AutoVars { get; set; } = null!;
+    public bool HasGCXVars => AutoVars is AutoVars.GenCtx;
     public AutoVars.GenCtx GCXVars => (AutoVars.GenCtx?)AutoVars ?? throw new Exception("GXR autovars not provided");
     
     public int _i = 0;
@@ -66,7 +67,7 @@ public class GenCtx : IDisposable {
     /// </summary>
     public PlayerController? playerController;
     //Note: this doesn't store any bound variables, just the references like PICustomData.playerController
-    private PICustomData fctx = null!;
+    private PIData fctx = null!;
     public ref V2RV2 RV2 => ref EnvFrame.Value<V2RV2>(GCXVars.rv2);
     public ref V2RV2 BaseRV2 => ref EnvFrame.Value<V2RV2>(GCXVars.brv2);
     public ref float SummonTime => ref EnvFrame.Value<float>(GCXVars.st);
@@ -105,7 +106,7 @@ public class GenCtx : IDisposable {
         newgc._isInCache = false;
         //newgc._itr = itrCounter++;
         newgc.exec = exec;
-        newgc.fctx = PICustomData.New(newgc);
+        newgc.fctx = PIData.NewUnscoped(newgc);
         return newgc;
     }
     public static GenCtx New(BehaviorEntity exec, EnvFrame? ef = null) {
@@ -119,6 +120,8 @@ public class GenCtx : IDisposable {
         exec = nexec;
         index = ind;
     }
+
+    public PIData DeriveFCTX() => PIData.New((EnvFrame.Scope, this));
 
     public void Dispose() {
         if (this == Empty) return;
@@ -151,6 +154,9 @@ public class GenCtx : IDisposable {
                 cp.RV2 = RV2;
                 cp.BaseRV2 = BaseRV2;
                 cp.SummonTime = SummonTime;
+            } else if (cp.AutoVars is AutoVars.GenCtx) {
+                cp.RV2 = cp.BaseRV2 = V2RV2.Zero;
+                cp.SummonTime = 0;
             }
         } else {
             cp.EnvFrame = EnvFrame.Clone();
@@ -161,9 +167,10 @@ public class GenCtx : IDisposable {
         return cp;
     }
 
-    public void FinishIteration(List<GCRule>? postloop, V2RV2 rv2Increment) {
+    public void FinishIteration(List<GCRule>? postloop, V2RV2? rv2Increment) {
         UpdateRules(postloop);
-        RV2 += rv2Increment;
+        if (rv2Increment is {} incr)
+            RV2 += incr;
         ++i;
     }
 

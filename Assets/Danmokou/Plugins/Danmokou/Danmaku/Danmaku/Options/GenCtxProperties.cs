@@ -167,6 +167,7 @@ public record GenCtxProperty {
     /// </summary>
     /// <returns></returns>
     public static GenCtxProperty Root(GCXF<Vector2> root) => new RootProp(root, false);
+    
     /// <summary>
     /// Causes all objects to be summoned in world space relative to an origin.
     /// Adjusts the nonrotational offset of the RV2 so the final summoning position is unaffected.
@@ -174,6 +175,14 @@ public record GenCtxProperty {
     /// </summary>
     /// <returns></returns>
     public static GenCtxProperty RootAdjust(GCXF<Vector2> root) => new RootProp(root, true);
+
+    /// <summary>
+    /// Before start rules, override the current V2RV2.
+    /// </summary>
+    /// <param name="newRV2"></param>
+    /// <returns></returns>
+    public static GenCtxProperty SetRV2(GCXF<V2RV2> newRV2) => new SetRV2Prop(newRV2);
+    
     /// <summary>
     /// Before start rules, move the current V2RV2 into nonrotational coordinates only,
     /// inheriting the angle, and set a new offset. This is useful for doing inner repeats.
@@ -181,6 +190,7 @@ public record GenCtxProperty {
     /// <param name="newOffset"></param>
     /// <returns></returns>
     public static GenCtxProperty Bank(GCXF<V2RV2> newOffset) => new BankProp(false, newOffset);
+    
     /// <summary>
     /// Before start rules, move the current V2RV2 into nonrotational coordinates only,
     /// setting the angle to zero, and set a new offset. This is useful for doing inner repeats.
@@ -188,7 +198,7 @@ public record GenCtxProperty {
     /// <param name="newOffset"></param>
     /// <returns></returns>
     public static GenCtxProperty Bank0(GCXF<V2RV2> newOffset) => new BankProp(true, newOffset);
-
+    
     /// <summary>
     /// = start({ rv2 +=rv2 OFFSET })
     /// </summary>
@@ -527,6 +537,7 @@ public record GenCtxProperty {
         }
     }
 
+    public record SetRV2Prop(GCXF<V2RV2> overrider) : GenCtxProperty;
     public record BankProp(bool toZero, GCXF<V2RV2> banker) : GenCtxProperty;
 
     public record ValueProp<T>(T value) : GenCtxProperty;
@@ -653,6 +664,7 @@ public class GenCtxProperties<T> : GenCtxProperties {
     public readonly bool sequential;
     public readonly GCXF<Vector2>? forceRoot;
     public readonly bool forceRootAdjust;
+    public readonly GCXF<V2RV2>? rv2Overrider;
     public readonly (bool, GCXF<V2RV2>)? bank;
     public readonly List<GCRule>? preloop;
     public readonly List<GCRule>? postloop = new();
@@ -700,16 +712,15 @@ public class GenCtxProperties<T> : GenCtxProperties {
         return rv2IncrType.Value;
     }
 
-    public V2RV2 PostloopRV2Incr(GenCtx gcx, int t) =>
+    public V2RV2? PostloopRV2Incr(GenCtx gcx, int t) =>
         rv2IncrType switch {
             RV2IncrType.FUNC => 
-                rv2pp?.Invoke(gcx) ?? V2RV2.Zero,
+                rv2pp?.Invoke(gcx),
             RV2IncrType.CIRCLE => 
                 V2RV2.Angle(360f / t),
             RV2IncrType.SPREAD => 
                 t == 1 ? V2RV2.Zero : 1f / (t - 1) * (rv2Spread?.Invoke(gcx) ?? V2RV2.Zero),
-            _ => 
-                V2RV2.Zero
+            _ => null
         };
 
 
@@ -750,7 +761,8 @@ public class GenCtxProperties<T> : GenCtxProperties {
             else if (prop is RootProp rp) {
                 forceRoot = rp.value;
                 forceRootAdjust = rp.doAdjust;
-            } else if (prop is BankProp bp) bank = (bp.toZero, bp.banker);
+            } else if (prop is SetRV2Prop srp) rv2Overrider = srp.overrider;
+            else if (prop is BankProp bp) bank = (bp.toZero, bp.banker);
             else if (prop is PreLoopProp prel) prel.rules.AssignOrExtend(ref preloop);
             else if (prop is PostLoopProp pol) pol.rules.AssignOrExtend(ref postloop);
             else if (prop is RV2IncrProp rvp) {

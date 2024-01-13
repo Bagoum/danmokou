@@ -90,35 +90,10 @@ public static class ReflectEx {
     public static Ex SetAlias(Alias[] aliases, Func<Ex> inner, TExArgCtx tac) {
         var stmts = new List<Ex>();
         foreach (var a in aliases) {
-            //variables in EnvFrame
-            if (tac.Ctx.Scope.TryGetLocalOrParent(tac, a.type, a.alias, out var decl, out var p) is { } aex) {
-                stmts.Add(aex.Is(a.func(tac)));
-            } else if (tac.Ctx.GCXURefs != null && tac.Ctx.GCXURefs.TryResolve(tac, a.type, a.alias, out var ex)) {
-                tac.Ctx.GCXURefs.MarkDirty(a.type, a.alias);
-                _ = a.func(tac); //if the call requires any aliases
-                //pass-- we can't assign to this temp var
-            } else
-                stmts.Add(PICustomData.SetValue(tac, a.type, a.alias, a.func));
+            stmts.Add(PIData.SetValue(tac, a.type, a.alias, a.func));
         }
         stmts.Add(inner());
         return Ex.Block(stmts);
-    }
-    
-/*
-    private static TEx<T> LetLambda<WF, T, L>((string alias, string[] args, Func<WF, TEx<L>> content)[] lambdas,
-        Func<TEx<T>> inner, Dictionary<string, (string[], Func<WF, TEx<L>>)> stack) {
-        
-    }*/
-
-    public interface ICompileReferenceResolver {
-        bool TryResolve<T>(TExArgCtx tac, string alias, out Ex ex) => TryResolve(tac, typeof(T), alias, out ex);
-        bool TryResolve(TExArgCtx tac, Type t, string alias, out Ex ex);
-
-        /// <summary>
-        /// Mark that an aliased variable is written to (via <see cref="ExM.Set{T}"/>) and therefore must be
-        ///  recomputed by every reader.
-        /// </summary>
-        void MarkDirty(Type t, string alias);
     }
 
     public static Expression? GetAliasFromStack(string alias, TExArgCtx tac) {
@@ -146,17 +121,13 @@ public static class ReflectEx {
         if (tac.Ctx.Scope.TryGetLocalOrParent(tac, typeof(T), alias, out var decl, out var p) is { } aex) {
             return aex;
         }
-        
-        //Automatic GCXPath.expose resolution
-        if (!isExplicit && tac.Ctx.GCXURefs != null && tac.Ctx.GCXURefs.TryResolve<T>(tac, alias, out ex))
-            return ex;
         //In functions not scoped by the GCX (eg. bullet controls)
         //The reason for using the special marker is that we cannot give good errors if an incorrect value is entered
         //(good error handling would make lookup slower, and this is hotpath),
         //so we need to make opting into this completely explicit. 
         if ((isExplicit || deflt != null) && tac.MaybeBPI != null) {
             try {
-                return PICustomData.GetIfDefined<T>(tac, alias, deflt is null ? null : (Ex)deflt);
+                return PIData.GetIfDefined<T>(tac, alias, deflt is null ? null : (Ex)deflt);
             } catch (Exception e) {
                 //pass
             }
@@ -164,7 +135,7 @@ public static class ReflectEx {
         var maybe_outofscope = isExplicit ?
             "" :
             "\n\tIf you are defining a bullet control or some other unscoped function, " +
-            "then you may need to make the reference explicit by prefixing it with \"&.\" instead of \"&\".";
+            "then you may need to make the reference explicit by prefixing it with \"&.\" instead of \"&\"";
         throw new CompileException(
             $"The reference {alias} is used, but does not have a value.{maybe_outofscope}");
     }
@@ -277,7 +248,6 @@ public readonly struct ReferenceMember {
     public Vector3 ResolveMembers(ref Vector3 variable, Vector3 assigned, GCOperator op) {
         Precheck(op);
         if (members.Count > 0) throw new Exception($"Can't assign V3 to V3 member {this}");
-        if (op == GCOperator.Assign) return assigned;
         ResolveFloat(ref variable.x, assigned.x, op);
         ResolveFloat(ref variable.y, assigned.y, op);
         ResolveFloat(ref variable.z, assigned.z, op);
@@ -313,7 +283,6 @@ public readonly struct ReferenceMember {
     public V2RV2 ResolveMembers(ref V2RV2 variable, V2RV2 assigned, GCOperator op) {
         Precheck(op);
         if (members.Count > 0) throw new Exception($"Can't assign RV2 to RV2 member {this}");
-        if (op == GCOperator.Assign) return assigned;
         MutV2RV2 rv2 = variable;
         ResolveFloat(ref rv2.nx, assigned.nx, op);
         ResolveFloat(ref rv2.ny, assigned.ny, op);

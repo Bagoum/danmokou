@@ -374,16 +374,6 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             }
             return GetUnwrappedType(SelectedOverload!).MakeTypedLambda(tac => {
                 var v = Declaration.Bound;
-                //if the value is unchanging and we are within a GCXU,
-                // then automatically expose the value via ICRR, as with the standard auto-expose pattern.
-                if (v.Assignments == 1) {
-                    if (tac.Ctx.GCXURefs is { } icrr 
-                        && icrr.TryResolve(tac, v.FinalizedType!, v.Name, out var ex))
-                        return ex;
-                    if (tac.Ctx.GCXURefs is CompilerHelpers.GCXUDummyResolver &&
-                        ReflectEx.GetAliasFromStack(v.Name, tac) is { } stackEx)
-                        return stackEx;
-                }
                 return EnclosingScope.LocalOrParent(tac, tac.EnvFrame, v, out _);
                 /*
                 //var x = ...

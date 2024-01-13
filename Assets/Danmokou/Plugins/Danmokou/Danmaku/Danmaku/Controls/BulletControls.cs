@@ -613,13 +613,13 @@ public partial class BulletManager {
         /// Update existing V2 values in the private data hoisting for the bullet.
         /// </summary>
         public static exBulletControl UpdateV2((string target, ExTP valuer)[] targets, ExPred cond) => new((st, ct, bpi) =>
-            bpi.When(cond, Ex.Block(targets.Select(t => PICustomData.SetValue<Vector2>(bpi, t.target, t.valuer)))), BulletControl.P_SAVE);
+            bpi.When(cond, Ex.Block(targets.Select(t => PIData.SetValue<Vector2>(bpi, t.target, t.valuer)))), BulletControl.P_SAVE);
         
         /// <summary>
         /// Update existing float values in the private data hoisting for the bullet.
         /// </summary>
         public static exBulletControl UpdateF((string target, ExBPY valuer)[] targets, ExPred cond) => new((st, ct, bpi) =>
-            bpi.When(cond, Ex.Block(targets.Select(t => PICustomData.SetValue<float>(bpi, t.target, t.valuer)))), BulletControl.P_SAVE);
+            bpi.When(cond, Ex.Block(targets.Select(t => PIData.SetValue<float>(bpi, t.target, t.valuer)))), BulletControl.P_SAVE);
 
         /// <summary>
         /// Execute an event if the condition is satisfied.

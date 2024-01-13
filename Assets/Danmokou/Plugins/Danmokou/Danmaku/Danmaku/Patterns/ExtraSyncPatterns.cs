@@ -41,15 +41,15 @@ public static partial class AtomicPatterns {
     /// </summary>
     public static SyncPattern DS(ReflectEx.Hoist<Vector2> hoistLoc, ReflectEx.Hoist<Vector2> hoistDir, ExBPY indexer,
         ExTP offset) =>
-        Simple(GCXU(VTPRepo.DTPOffset(hoistLoc, hoistDir, indexer, offset)), new SBOptions(new[] {
-            SBOption.Dir2(GCXUSB(RetrieveHoisted(hoistDir, indexer)))
+        Simple(VTP(VTPRepo.DTPOffset(hoistLoc, hoistDir, indexer, offset)), new SBOptions(new[] {
+            SBOption.Dir2(SBV2(RetrieveHoisted(hoistDir, indexer)))
         }));
 
     public static SyncPattern dPather() => Pather(0.5f, _ => 0.3f,
-        "tprot px lerpt3 0 0.2 0.5 1 6 2 9".Into<GCXU<VTP>>(), new BehOptions());
+        "tprot px lerpt3 0 0.2 0.5 1 6 2 9".Into<VTP>(), new BehOptions());
 }
 public static partial class SyncPatterns {
-    public static SyncPattern Aim1(ExBPY speed) => Target(GCXF(_ => LPlayer()), new[] {S(GCXU(VTPRepo.RVelocity(TPr.PX(speed))))});
+    public static SyncPattern Aim1(ExBPY speed) => Target(GCXF(_ => LPlayer()), new[] {S(VTP(VTPRepo.RVelocity(TPr.PX(speed))))});
     
     /*
     public static SyncPattern oArrowI(ExBPY times, ExBPY xstep, ExBPY ystep, GenCtxProperty[] props,
@@ -122,7 +122,7 @@ public static partial class AsyncPatterns {
     public static AsyncPattern gEruption(GCXF<float> wait, GCXF<float> times, ExBPY angleOffset,
         ExBPY speed, ExBPY gravity) => Eruption(wait, times, angleOffset, speed, gravity, new GenCtxProperty[] { });
     public static AsyncPattern Eruption(GCXF<float> wait, GCXF<float> times, ExBPY angleOffset,
-        ExBPY speed, ExBPY gravity, GenCtxProperty[] props) => _AsGCR(S(GCXU(VTPRepo.Velocity(
+        ExBPY speed, ExBPY gravity, GenCtxProperty[] props) => _AsGCR(S(VTP(VTPRepo.Velocity(
         TPr.PX(speed),
         TPr.PY(gravity)
     ))), props, GenCtxProperty.WT(wait, times), GenCtxProperty.PreLoop(new GCRule[] {

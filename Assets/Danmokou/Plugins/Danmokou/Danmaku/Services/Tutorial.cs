@@ -118,7 +118,7 @@ public class Tutorial : BehaviorEntity {
         yield return waitlf(() => EngineStateManager.State == EngineState.RUN);
         var mov = new Movement(new Vector2(-2, 2.5f), 0);
         BulletManager.RequestSimple("lcircle-red/", _ => 4f, null, mov, new ParametricInfo(in mov));
-        var nrx = new RealizedLaserOptions(new LaserOptions(), GenCtx.New(this), PICustomData.New(), new Vector2(3, 5),
+        var nrx = new RealizedLaserOptions(new LaserOptions(), GenCtx.New(this), PIData.NewUnscoped(), new Vector2(3, 5),
             V2RV2.Angle(-90), Cancellable.Null);
         mov = new Movement(new Vector2(2, 5), -90);
         BulletManager.RequestLaser(null, "mulaser-blue/b", mov, new ParametricInfo(in mov), 999, 0, ref nrx);

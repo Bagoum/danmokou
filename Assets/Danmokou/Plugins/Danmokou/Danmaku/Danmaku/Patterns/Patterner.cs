@@ -23,15 +23,6 @@ using JetBrains.Annotations;
 using UnityEngine;
 using GCP = Danmokou.Danmaku.Options.GenCtxProperty;
 using static Danmokou.Reflection.Compilers;
-using static Danmokou.Expressions.ExMHelpers;
-using static Danmokou.DMath.Functions.ExM;
-using static Danmokou.DMath.Functions.ExMRV2;
-using Ex = System.Linq.Expressions.Expression;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
-using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
-using static BagoumLib.Tasks.WaitingUtils;
-using GCXU = Danmokou.DMath.GCXU;
 
 namespace Danmokou.Danmaku.Patterns {
 public delegate void SyncPattern(SyncHandoff sbh);
@@ -43,7 +34,7 @@ public struct CommonHandoff : IDisposable {
     public readonly ICancellee cT;
     public DelegatedCreator bc;
     public readonly GenCtx gcx;
-    public readonly V2RV2? rv2Override;
+    public V2RV2? rv2Override;
 
     /// <summary>
     /// GCX is NOT automatically copied.
@@ -52,12 +43,19 @@ public struct CommonHandoff : IDisposable {
         this.cT = cT;
         this.bc = bc ?? new DelegatedCreator(gcx.exec, "");
         this.gcx = gcx;
-        if (gcx.AutoVars is AutoVars.GenCtx && rv2Override.Try(out var overr)) {
-            gcx.BaseRV2 = gcx.RV2 = overr;
-            this.rv2Override = null;
-        } else {
-            this.rv2Override = rv2Override;
-        }
+        this.rv2Override = rv2Override;
+    }
+
+    /// <summary>
+    /// Copies the GCX, possibly deriving a new environment frame if a scope is provided.
+    /// </summary>
+    public readonly CommonHandoff TryDerive((LexicalScope, AutoVars)? scope) {
+        var ngcx = gcx.Copy(scope);
+        if (scope != null && ngcx.AutoVars is AutoVars.GenCtx && rv2Override is { } overr) {
+            ngcx.BaseRV2 = ngcx.RV2 = overr;
+            return new(cT, bc, ngcx, null);
+        } else
+            return new(cT, bc, ngcx, rv2Override);
     }
 
     public readonly CommonHandoff Copy(string? newStyle = null) {
@@ -120,7 +118,7 @@ public struct SyncHandoff : IDisposable {
 public struct AsyncHandoff {
     public CommonHandoff ch;
     public bool Cancelled => ch.cT.Cancelled;
-    private readonly Action? callback;
+    public Action? callback;
     private readonly BehaviorEntity exec;
 
     /// <summary>
@@ -170,21 +168,6 @@ public static partial class AtomicPatterns {
     #region Erasers
 
     public static SyncPattern Erase<T>(GCXF<T> meth) => sbh => meth(sbh.GCX);
-    
-    #endregion
-    
-    #region GCXUCompileHelpers
-    
-    /// <inheritdoc cref="GCXU.ShareTypeAndCompile"/>
-    private static void ShareTypeAndCompile(GCXU<VTP> path, BehOptions options) {
-        GCXU.ShareTypeAndCompile(path, options.delete, options.hueShift, options.tint, options.rotator, options.recolor?.black, options.recolor?.white);
-    }
-    
-    /// <inheritdoc cref="GCXU.ShareTypeAndCompile"/>
-    private static void ShareTypeAndCompile(GCXU<VTP> path, LaserOptions options) {
-        GCXU.ShareTypeAndCompile(path, options.length?.var, options.start, options.delete, options.deactivate, options.curve, options.beforeDraw, options.rotate, options.hueShift, options.recolor?.black, options.recolor?.white, options.tint);
-    }
-    
     
     #endregion
     
@@ -246,7 +229,7 @@ public static partial class AtomicPatterns {
     /// <param name="path">Movement descriptor</param>
     /// <returns></returns>
     [Alias("simp")]
-    public static SyncPattern S(GCXU<VTP> path) => Simple(path, new SBOptions(Array.Empty<SBOption>()));
+    public static SyncPattern S(VTP path) => Simple(path, new SBOptions(Array.Empty<SBOption>()));
 
     /// <summary>
     /// Fires a simple bullet. Takes an array of simple bullet options as modifiers.
@@ -255,16 +238,13 @@ public static partial class AtomicPatterns {
     /// <param name="path"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    public static SyncPattern Simple(GCXU<VTP> path, SBOptions options) {
-        GCXU.ShareTypeAndCompile(path, options.direction, options.scale);
-        return sbh => {
-            uint id = sbh.GCX.NextID();
-            if (options.player.HasValue) {
-                sbh.ch.bc.style = BulletManager.GetOrMakePlayerCopy(sbh.bc.style);
-            }
-            sbh.bc.Simple(sbh, options, path, id);
-        };
-    }
+    public static SyncPattern Simple(VTP path, SBOptions options) => sbh => {
+        uint id = sbh.GCX.NextID();
+        if (options.player.HasValue) {
+            sbh.ch.bc.style = BulletManager.GetOrMakePlayerCopy(sbh.bc.style);
+        }
+        sbh.bc.Simple(sbh, options, path, id);
+    };
 
     #endregion
 
@@ -275,13 +255,10 @@ public static partial class AtomicPatterns {
     /// <param name="path">Movement descriptor</param>
     /// <param name="options">Bullet constructor options</param>
     /// <returns></returns>
-    public static SyncPattern Complex(GCXU<VTP> path, BehOptions options) {
-        ShareTypeAndCompile(path, options);
-        return sbh => {
-            uint id = sbh.GCX.NextID();
-            sbh.bc.Complex(sbh, path, id, options);
-        };
-    }
+    public static SyncPattern Complex(VTP path, BehOptions options) => sbh => {
+        uint id = sbh.GCX.NextID();
+        sbh.bc.Complex(sbh, path, id, options);
+    };
 
     /// <summary>
     /// Fires a Pather/Tracker projectile, which "remembers" the points it has gone through and draws a path through them.
@@ -291,13 +268,10 @@ public static partial class AtomicPatterns {
     /// <param name="path">Movement descriptor</param>
     /// <param name="options">Bullet constructor options</param>
     /// <returns></returns>
-    public static SyncPattern Pather(float maxTime, BPY remember, GCXU<VTP> path, BehOptions options) {
-        ShareTypeAndCompile(path, options);
-        return sbh => {
-            uint id = sbh.GCX.NextID();
-            sbh.bc.Pather(sbh, maxTime > 0 ? maxTime : (float?)null, remember, path, id, options);
-        };
-    }
+    public static SyncPattern Pather(float maxTime, BPY remember, VTP path, BehOptions options) => sbh => {
+        uint id = sbh.GCX.NextID();
+        sbh.bc.Pather(sbh, maxTime > 0 ? maxTime : (float?)null, remember, path, id, options);
+    };
 
     /// <summary>
     /// Create a laser.
@@ -307,25 +281,22 @@ public static partial class AtomicPatterns {
     /// <param name="hot">Time that the laser is in a damaging state</param>
     /// <param name="options">Laser constructor options</param>
     /// <returns></returns>
-    public static SyncPattern Laser(GCXU<VTP> path, GCXF<float> cold, GCXF<float> hot, LaserOptions options) {
-        ShareTypeAndCompile(path, options);
-        return sbh => {
-            uint id = sbh.GCX.NextID();
-            sbh.bc.Laser(sbh, path, cold(sbh.GCX), hot(sbh.GCX), id, options);
-        };
-    }
+    public static SyncPattern Laser(VTP path, GCXF<float> cold, GCXF<float> hot, LaserOptions options) => sbh => {
+        uint id = sbh.GCX.NextID();
+        sbh.bc.Laser(sbh, path, cold(sbh.GCX), hot(sbh.GCX), id, options);
+    };
 
     public static SyncPattern SafeLaser(GCXF<float> cold, LaserOptions options) =>
-        Laser("null".Into<GCXU<VTP>>(), cold, _ => 0f, options); 
+        Laser("null".Into<VTP>(), cold, _ => 0f, options); 
     
-    public static SyncPattern SafeLaserM(GCXU<VTP> path, GCXF<float> cold, LaserOptions options) =>
+    public static SyncPattern SafeLaserM(VTP path, GCXF<float> cold, LaserOptions options) =>
         Laser(path, cold, _ => 0f, options); 
 
-    public static SyncPattern SummonS(GCXU<VTP> path, StateMachine? sm) =>
+    public static SyncPattern SummonS(VTP path, StateMachine? sm) =>
         Summon(path, sm, new BehOptions());
-    public static SyncPattern SummonSUP(GCXU<VTP> path, StateMachine? sm) =>
+    public static SyncPattern SummonSUP(VTP path, StateMachine? sm) =>
         SummonUP(path, sm, new BehOptions());
-    public static SyncPattern Inode(GCXU<VTP> path, StateMachine? sm) {
+    public static SyncPattern Inode(VTP path, StateMachine? sm) {
         var f = SummonS(path, sm);
         return sbh => {
             sbh.ch.bc.style = "inode";
@@ -333,39 +304,27 @@ public static partial class AtomicPatterns {
         };
     }
 
-    private static SyncHandoff _Summon(SyncHandoff sbh, bool pool, GCXU<VTP> path, StateMachine? sm, BehOptions options) {
+    private static SyncHandoff _Summon(SyncHandoff sbh, bool pool, VTP path, StateMachine? sm, BehOptions options) {
         uint id = sbh.GCX.NextID();
         sbh.bc.Summon(pool, sbh, options, path, SMRunner.Cull(sm, sbh.ch.cT, sbh.GCX), id);
         return sbh;
     }
 
-    public static SyncPattern Summon(GCXU<VTP> path, StateMachine? sm, BehOptions options) {
-        ShareTypeAndCompile(path, options);
-        return sbh =>
-            _Summon(sbh, true, path, sm, options);
-    }
+    public static SyncPattern Summon(VTP path, StateMachine? sm, BehOptions options) => sbh =>
+        _Summon(sbh, true, path, sm, options);
 
-    public static SyncPattern SummonUP(GCXU<VTP> path, StateMachine? sm, BehOptions options) {
-        ShareTypeAndCompile(path, options);
-        return sbh =>
-            _Summon(sbh, false, path, sm, options);
-    }
+    public static SyncPattern SummonUP(VTP path, StateMachine? sm, BehOptions options) => sbh =>
+        _Summon(sbh, false, path, sm, options);
 
-    public static SyncPattern SummonR(RootedVTP path, StateMachine? sm, BehOptions options) {
-        ShareTypeAndCompile(path.path, options);
-        return sbh => {
-            sbh.ch.bc.Root(path.root(sbh.GCX));
-            _Summon(sbh, true, path.path, sm, options);
-        };
-    }
+    public static SyncPattern SummonR(RootedVTP path, StateMachine? sm, BehOptions options) => sbh => {
+        sbh.ch.bc.Root(path.root(sbh.GCX));
+        _Summon(sbh, true, path.path, sm, options);
+    };
 
-    public static SyncPattern SummonRUP(RootedVTP path, StateMachine? sm, BehOptions options) {
-        ShareTypeAndCompile(path.path, options);
-        return sbh => {
-            sbh.ch.bc.Root(path.root(sbh.GCX));
-            _Summon(sbh, false, path.path, sm, options);
-        };
-    }
+    public static SyncPattern SummonRUP(RootedVTP path, StateMachine? sm, BehOptions options) => sbh => {
+        sbh.ch.bc.Root(path.root(sbh.GCX));
+        _Summon(sbh, false, path.path, sm, options);
+    };
 
     public static SyncPattern SummonRZ(StateMachine? sm, BehOptions options) =>
         SummonR(new RootedVTP(0, 0, VTPRepo.Null()), sm, options);
@@ -473,19 +432,24 @@ public struct LoopControl<T> {
         isClipped = false;
         this.props = props;
         p = props.p;
-        ch = new CommonHandoff(baseCh.cT, baseCh.bc, baseCh.gcx.Copy(props.ScopeAndVars), baseCh.rv2Override);
+        ch = baseCh.TryDerive(props.ScopeAndVars);
         parent_index = (props.p_mutater == null) ? ch.gcx.index : (int)props.p_mutater(ch.gcx);
         if (props.resetColor) ch.bc.style = "_";
+        if (props.rv2Overrider != null) {
+            var orv2 = props.rv2Overrider(ch.gcx);
+            if (ch.gcx.HasGCXVars)
+                ch.gcx.RV2 = orv2;
+            else
+                ch.rv2Override = orv2;
+        }
         if (props.bank != null) {
             var (toZero, banker) = props.bank.Value;
             ch.gcx.RV2 = ch.gcx.RV2.Bank(toZero ? (float?)0f : null) + banker(ch.gcx);
         }
         if (props.forceRoot != null) {
             Vector2 newRoot = props.forceRoot(ch.gcx);
-            Vector2 offsetBy = (props.forceRootAdjust) ? 
-                ch.bc.ParentOffset - newRoot
-                : Vector2.zero;
-            ch.gcx.RV2 += offsetBy;
+            if (props.forceRootAdjust)
+                ch.gcx.RV2 += ch.bc.ParentOffset - newRoot;
             ch.bc.Root(newRoot);
         } else if (props.laserIndexer != null) {
             var l = (ch.gcx.exec as Laser) ??
@@ -516,10 +480,13 @@ public struct LoopControl<T> {
         }
         parent_style = ch.bc.style;
         if (props.facing != null) ch.bc.facing = props.facing.Value;
-        ch.gcx.BaseRV2 = ch.gcx.RV2;
-        ch.gcx.EnvFrame.Value<float>(ch.gcx.GCXVars.times) = times = (int)props.times(ch.gcx);
+        times = (int)props.times(ch.gcx);
+        if (ch.gcx.AutoVars is AutoVars.GenCtx) {
+            ch.gcx.BaseRV2 = ch.gcx.RV2;
+            ch.gcx.EnvFrame.Value<float>(ch.gcx.GCXVars.times) = times;
+        }
         ch.gcx.UpdateRules(props.start);
-        if (props.centered) ch.gcx.RV2 -= (times - 1f) / 2f * props.PostloopRV2Incr(ch.gcx, times);
+        if (props.centered) ch.gcx.RV2 -= (times - 1f) / 2f * (props.PostloopRV2Incr(ch.gcx, times) ?? V2RV2.Zero);
         isClipped = isClipped || (props.clipIf?.Invoke(ch.gcx) ?? false);
         elapsed_frames = 0;
         float? af = props.fortime?.Invoke(ch.gcx);
@@ -527,8 +494,7 @@ public struct LoopControl<T> {
         ch.gcx.pi = ch.gcx.i;
         ch.gcx.i = 0;
         _hasbeencancelled = false;
-        //if (props.Expose != null) ch.gcx.exposed.AddRange(props.Expose);
-        unmutated_rv2 = ch.gcx.RV2;
+        unmutated_rv2 = ch.gcx.AutoVars is AutoVars.GenCtx ? ch.gcx.RV2 : null;
     }
 
     public bool RemainsExceptLast => ch.gcx.i < times - 1;
@@ -572,21 +538,22 @@ public struct LoopControl<T> {
         props.timer?.Restart();
         GCX.index = GetFiringIndex(p, parent_index, GCX.i, props.maxTimes);
         //Automatic bindings
-        var gcxv = GCX.GCXVars;
-        if (gcxv.bindArrow is {} bav) {
-            GCX.EnvFrame.Value<float>(bav.axd) = M.HMod(times, GCX.i);
-            GCX.EnvFrame.Value<float>(bav.ayd) = M.HNMod(times, GCX.i);
-            GCX.EnvFrame.Value<float>(bav.aixd) = M.HMod(times, times - 1 - GCX.i);
-            GCX.EnvFrame.Value<float>(bav.aiyd) = M.HNMod(times, times - 1 - GCX.i);
+        if (GCX.AutoVars is AutoVars.GenCtx gcxv) {
+            if (gcxv.bindArrow is { } bav) {
+                GCX.EnvFrame.Value<float>(bav.axd) = M.HMod(times, GCX.i);
+                GCX.EnvFrame.Value<float>(bav.ayd) = M.HNMod(times, GCX.i);
+                GCX.EnvFrame.Value<float>(bav.aixd) = M.HMod(times, times - 1 - GCX.i);
+                GCX.EnvFrame.Value<float>(bav.aiyd) = M.HNMod(times, times - 1 - GCX.i);
+            }
+            if (gcxv.bindLR is { } lrv)
+                GCX.EnvFrame.Value<float>(lrv.rl) = -1 * (GCX.EnvFrame.Value<float>(lrv.lr) = M.PM1Mod(GCX.i));
+            if (gcxv.bindUD is { } udv)
+                GCX.EnvFrame.Value<float>(udv.ud) = -1 * (GCX.EnvFrame.Value<float>(udv.ud) = M.PM1Mod(GCX.i));
+            if (gcxv.bindAngle is { } av)
+                GCX.EnvFrame.Value<float>(av) = GCX.RV2.angle;
+            if (gcxv.bindItr is { } biv)
+                GCX.EnvFrame.Value<float>(biv) = GCX.i;
         }
-        if (gcxv.bindLR is {} lrv) 
-            GCX.EnvFrame.Value<float>(lrv.rl) = -1 * (GCX.EnvFrame.Value<float>(lrv.lr) = M.PM1Mod(GCX.i));
-        if (gcxv.bindUD is {} udv) 
-            GCX.EnvFrame.Value<float>(udv.ud) = -1 * (GCX.EnvFrame.Value<float>(udv.ud) = M.PM1Mod(GCX.i));
-        if (gcxv.bindAngle is {} av) 
-            GCX.EnvFrame.Value<float>(av) = GCX.RV2.angle;
-        if (gcxv.bindItr is {} biv)
-            GCX.EnvFrame.Value<float>(biv) = GCX.i;
         //
         ch.gcx.UpdateRules(props.preloop);
         if (IsCancelled) return false;
@@ -622,14 +589,15 @@ public struct LoopControl<T> {
             int index = (props.sfxIndexer == null) ? GCX.i : (int) props.sfxIndexer(GCX);
             ISFXService.SFXService.Request(props.sfx.ModIndex(index));
         }
-        unmutated_rv2 = GCX.RV2;
+        if (unmutated_rv2 != null)
+            unmutated_rv2 = GCX.RV2;
         if (props.rv2aMutater != null) {
             GCX.RV2 = GCX.RV2.ForceAngle(props.rv2aMutater(GCX));
         }
         return true;
     }
 
-    private V2RV2 unmutated_rv2;
+    private V2RV2? unmutated_rv2;
 
     public bool PrepareLastIteration() {
         if (GCX.i == times - 1) {
@@ -639,7 +607,8 @@ public struct LoopControl<T> {
     }
         
     public void FinishIteration() {
-        GCX.RV2 = unmutated_rv2;
+        if (unmutated_rv2 is {} urv2)
+            GCX.RV2 = urv2;
         GCX.FinishIteration(props.postloop, props.PostloopRV2Incr(GCX, times));
     }
 

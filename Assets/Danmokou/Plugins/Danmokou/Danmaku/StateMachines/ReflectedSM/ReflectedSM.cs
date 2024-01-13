@@ -76,9 +76,7 @@ if (> t &fadein,
             GCXFRepo.RV2Zero,
             new[] { GenCtxProperty.SaveV2((locSave, cindexer, locator)) }, new[] {AtomicPatterns.Noop()}
         ));
-        var path = Compilers.GCXU(VTPRepo.NROffset(RetrieveHoisted(locSave, indexer)));
-        //AOT handling requires compiling this now
-        path.CompileDelegate();
+        var path = Compilers.VTP(VTPRepo.NROffset(RetrieveHoisted(locSave, indexer)));
         return new(async smh => {
             float homesec = homeSec(smh.GCX);
             float sticksec = stickSec(smh.GCX);
@@ -296,7 +294,7 @@ if (> t &fadein,
                     (smh.GCX.AutoVars is AutoVars.GenCtx ? smh.GCX.RV2 : V2RV2.Zero))
                 );
         smh.RunTryPrependRIEnumerator(ap(abh));
-        //don't dispose SBH since we didn't copy GCX
+        //don't dispose ABH since we didn't copy GCX
         return t;
     });
     
@@ -315,7 +313,7 @@ if (> t &fadein,
     });
 
     public static ReflectableLASM CreateShot1(V2RV2 rv2, float speed, float angle, string style) =>
-        Sync(style, _ => rv2, AtomicPatterns.S(Compilers.GCXU(VTPRepo.RVelocity(Parametrics.CR(speed, angle)))));
+        Sync(style, _ => rv2, AtomicPatterns.S(Compilers.VTP(VTPRepo.RVelocity(Parametrics.CR(speed, angle)))));
 
     public static ReflectableLASM CreateShot2(float x, float y, float speed, float angle, string style) =>
         CreateShot1(new V2RV2(0, 0, x, y, 0), speed, angle, style);
@@ -430,36 +428,33 @@ if (> t &fadein,
     /// <summary>
     /// Move the executing entity, but cancel movement if the predicate is false.
     /// </summary>
-    public static ReflectableLASM MoveWhile(GCXF<float> time, Pred? condition, GCXU<VTP> path) { 
-        path.CompileDelegate();
-        return new(smh => {
-            uint randId = RNG.GetUInt();
-            var epath = path.Execute(smh.GCX, out var fctx);
-            var old_override = smh.GCX.idOverride;
-            //Note that this use case is limited to when the BEH is provided a temporary new ID (ie. only in MoveWhile).
-            //I may deprecate this by having the move function not use a new ID.
-            smh.GCX.idOverride = randId;
-            var etime = time(smh.GCX);
-            smh.GCX.idOverride = old_override;
-            var cor = smh.Exec.ExecuteVelocity(new LimitedTimeMovement(epath, etime,
-                FuncExtensions.Then(() => fctx.Dispose(),
-                    GetAwaiter(out Task t)), smh.cT,
-                new ParametricInfo(fctx, Vector2.zero, smh.GCX.index, randId), condition));
-            smh.RunTryPrependRIEnumerator(cor);
-            return t;
-        });
-    }
+    public static ReflectableLASM MoveWhile(GCXF<float> time, Pred? condition, VTP path) => new(smh => {
+        uint randId = RNG.GetUInt();
+        var old_override = smh.GCX.idOverride;
+        //Note that this use case is limited to when the BEH is provided a temporary new ID (ie. only in MoveWhile).
+        //I may deprecate this by having the move function not use a new ID.
+        smh.GCX.idOverride = randId;
+        var etime = time(smh.GCX);
+        smh.GCX.idOverride = old_override;
+        var fctx = smh.GCX.DeriveFCTX();
+        var cor = smh.Exec.ExecuteVelocity(new LimitedTimeMovement(path, etime,
+            FuncExtensions.Then(() => fctx.Dispose(),
+                GetAwaiter(out Task t)), smh.cT,
+            new ParametricInfo(fctx, Vector2.zero, smh.GCX.index, randId), condition));
+        smh.RunTryPrependRIEnumerator(cor);
+        return t;
+    });
 
     /// <summary>
     /// Move the executing entity.
     /// </summary>
-    public static ReflectableLASM Move(GCXF<float> time, GCXU<VTP> path) => MoveWhile(time, null, path);
+    public static ReflectableLASM Move(GCXF<float> time, VTP path) => MoveWhile(time, null, path);
     
     /// <summary>
     /// Move the executing entity to a target position over time. This has zero error.
     /// </summary>
     public static ReflectableLASM MoveTarget(ExBPY time, [LookupMethod] Func<tfloat, tfloat> ease, ExTP target) 
-        => Move(GCXF(time), Compilers.GCXU(
+        => Move(GCXF(time), Compilers.VTP(
             VTPRepo.NROffset(Parametrics.EaseToTarget(ease, time, target))));
 
     /// <summary>

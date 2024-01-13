@@ -62,12 +62,12 @@ public struct DelegatedCreator {
 
     public void SFX() => ISFXService.SFXService.Request(style);
 
-    private (Movement, ParametricInfo) PathHandlers(SyncHandoff sbh, GCXU<VTP> path, uint? id = null) {
-        var mov = new Movement(path.Execute(sbh.GCX, out var fctx), ParentOffset, FacedRV2(sbh.RV2));
-        var pi = new ParametricInfo(fctx, in mov, sbh.index, id, sbh.timeOffset);
+    private (Movement, ParametricInfo) PathHandlers(SyncHandoff sbh, VTP path, uint? id = null) {
+        var mov = new Movement(path, ParentOffset, FacedRV2(sbh.RV2));
+        var pi = new ParametricInfo(sbh.GCX.DeriveFCTX(), in mov, sbh.index, id, sbh.timeOffset);
         return (mov, pi);
     }
-    public void Simple(SyncHandoff sbh, SBOptions options, GCXU<VTP> path, uint? id) {
+    public void Simple(SyncHandoff sbh, SBOptions options, VTP path, uint? id) {
         var (mov, pi) = PathHandlers(sbh, path, id);
         if (options.player.Try(out var bse)) {
             //TODO add cdframes to sb Player cmd
@@ -75,12 +75,10 @@ public struct DelegatedCreator {
             pi.ctx.playerBullet = new PlayerBullet(new PlayerBulletCfg(bc.againstEnemyCooldown, bc.Destructible, bse.boss, bse.stage, bse.effStrat), pi.ctx.PlayerController);
         } else
             pi.ctx.playerBullet = null;
-        BulletManager.RequestSimple(style, 
-            options.scale?.Execute(sbh.GCX, pi.ctx), 
-            options.direction?.Execute(sbh.GCX, pi.ctx), in mov, pi);
+        BulletManager.RequestSimple(style, options.scale, options.direction, in mov, pi);
     }
 
-    public void Complex(SyncHandoff sbh, GCXU<VTP> path, uint id, BehOptions options) {
+    public void Complex(SyncHandoff sbh, VTP path, uint id, BehOptions options) {
         var (mov, pi) = PathHandlers(sbh, path, id);
         V2RV2 lrv2 = FacedRV2(sbh.RV2);
         var opts = new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, lrv2, sbh.ch.cT);
@@ -89,7 +87,7 @@ public struct DelegatedCreator {
     }
 
     private const float DEFAULT_REMEMBER = 3f;
-    public void Pather(SyncHandoff sbh, float? maxLength, BPY remember, GCXU<VTP> path, uint id, BehOptions options) {
+    public void Pather(SyncHandoff sbh, float? maxLength, BPY remember, VTP path, uint id, BehOptions options) {
         var (mov, pi) = PathHandlers(sbh, path, id);
         var opts = new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.RV2), sbh.ch.cT);
         if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
@@ -97,14 +95,14 @@ public struct DelegatedCreator {
             maxLength.GetValueOrDefault(DEFAULT_REMEMBER), remember, ref opts);
     }
 
-    public void Laser(SyncHandoff sbh, GCXU<VTP> path, float cold, float hot, uint id, LaserOptions options) {
+    public void Laser(SyncHandoff sbh, VTP path, float cold, float hot, uint id, LaserOptions options) {
         var (mov, pi) = PathHandlers(sbh, path, id);
         var opts = new RealizedLaserOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.RV2), sbh.ch.cT);
         if (opts.playerBullet != null) style = BulletManager.GetOrMakeComplexPlayerCopy(style);
         BulletManager.RequestLaser(transformParent, style, in mov, pi, cold, hot, ref opts);
     }
 
-    public void Summon(bool pooled, SyncHandoff sbh, BehOptions options, GCXU<VTP> path, SMRunner sm, uint id) {
+    public void Summon(bool pooled, SyncHandoff sbh, BehOptions options, VTP path, SMRunner sm, uint id) {
         var (mov, pi) = PathHandlers(sbh, path, id);
         BulletManager.RequestSummon(pooled, style, in mov, pi, options.ID, transformParent, sm,
             new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.RV2), sbh.ch.cT));

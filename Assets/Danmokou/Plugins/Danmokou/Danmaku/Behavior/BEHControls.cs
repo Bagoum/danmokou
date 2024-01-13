@@ -11,8 +11,6 @@ using Danmokou.DMath;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.Danmaku.Descriptors;
-using Danmokou.DataHoist;
-using Danmokou.Reflection.CustomData;
 using Danmokou.Services;
 using JetBrains.Annotations;
 using Danmokou.SM;
@@ -417,29 +415,22 @@ public partial class BehaviorEntity {
             if (cond(b.rBPI)) b.nextUpdateAllowed = false;
         }, BulletControl.P_TIMECONTROL);
 
-        public static cBEHControl UpdateF((string target, BPY valuer)[] targets, Pred cond) {
-            var ftargets = targets.Select(t => (PICustomDataBuilder.Builder.GetVariableKey(t.target, typeof(float)), t.valuer)).ToArray();
-            return new cBEHControl((b, cT) => {
-                if (cond(b.rBPI)) {
-                    var bpi = b.rBPI;
-                    for (int ii = 0; ii < ftargets.Length; ++ii) {
-                        //TODO add TYPE_BUILDING_DISABLED switch
-                        bpi.ctx.WriteFloat(ftargets[ii].Item1, ftargets[ii].valuer(bpi));
-                    }
+        public static cBEHControl UpdateF((string target, BPY valuer)[] targets, Pred cond) => new((b, cT) => {
+            if (cond(b.rBPI)) {
+                var bpi = b.rBPI;
+                for (int ii = 0; ii < targets.Length; ++ii) 
+                    bpi.ctx.envFrame.Value<float>(targets[ii].target) = targets[ii].valuer(bpi);
+            }
+        }, BulletControl.P_SAVE);
+        
+        public static cBEHControl UpdateV2((string target, TP valuer)[] targets, Pred cond) => new((b, cT) => {
+            if (cond(b.rBPI)) {
+                var bpi = b.rBPI;
+                for (int ii = 0; ii < targets.Length; ++ii) {
+                    bpi.ctx.envFrame.Value<Vector2>(targets[ii].target) = targets[ii].valuer(bpi);
                 }
-            }, BulletControl.P_SAVE);
-        }
-        public static cBEHControl UpdateV2((string target, TP valuer)[] targets, Pred cond) {
-            var ftargets = targets.Select(t => (PICustomDataBuilder.Builder.GetVariableKey(t.target, typeof(Vector2)), t.valuer)).ToArray();
-            return new cBEHControl((b, cT) => {
-                if (cond(b.rBPI)) {
-                    var bpi = b.rBPI;
-                    for (int ii = 0; ii < ftargets.Length; ++ii) {
-                        bpi.ctx.WriteVector2(ftargets[ii].Item1, ftargets[ii].valuer(bpi));
-                    }
-                }
-            }, BulletControl.P_SAVE);
-        }
+            }
+        }, BulletControl.P_SAVE);
 
         /// <summary>
         /// Batch several commands together under one predicate.

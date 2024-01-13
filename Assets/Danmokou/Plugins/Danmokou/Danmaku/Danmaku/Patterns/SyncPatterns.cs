@@ -46,9 +46,7 @@ public static partial class SyncPatterns {
     public static SyncPattern Loc0(SyncPattern sp) => _AsGSR(sp, RootZero, GCP.Face(Facing.DEROT), Loc0Start);
 
     private static readonly GenCtxProperty RootZero = GCP.Root(GCXFRepo.V2Zero);
-    private static readonly GenCtxProperty Loc0Start = GCP.Start(new GCRule[] {
-        new GCRule<V2RV2>(ExType.RV2, "rv2", GCOperator.Assign, GCXFRepo.RV2Zero)
-    });
+    private static readonly GenCtxProperty Loc0Start = GCP.SetRV2(_ => V2RV2.Zero);
 
     /// <summary>
     /// Spawn the final bullet relative to the origin instead of the firing entity.
@@ -195,7 +193,7 @@ public static partial class SyncPatterns {
     /// <summary>
     /// GuideEmpty with a random suffix and no saved floats.
     /// </summary>
-    public static SyncPattern GuideEmpty2(ExBPY indexer, (string, ExTP)[] saveV2s, GCXU<VTP> emptyPath,
+    public static SyncPattern GuideEmpty2(ExBPY indexer, (string, ExTP)[] saveV2s, VTP emptyPath,
         SyncPattern[] guided) => GuideEmpty(null, indexer, saveV2s, AutoSaveF, emptyPath, guided);
 
     /// <summary>
@@ -209,18 +207,18 @@ public static partial class SyncPatterns {
     /// <param name="guided">The child fires that follow the empty bullet. They have Loc0 applied to them.</param>
     /// <returns></returns>
     public static SyncPattern GuideEmpty(string? suffix, ExBPY indexer, (string, ExTP)[] saveV2s,
-        (string, ExBPY)[] saveFs, GCXU<VTP> emptyPath, SyncPattern[] guided) =>
+        (string, ExBPY)[] saveFs, VTP emptyPath, SyncPattern[] guided) =>
         _GuideEmpty(suffix, indexer, saveV2s, saveFs, emptyPath, guided, false);
     
     /// <summary>
     /// Set up an empty-guided fire for player bullets.
     /// </summary>
     public static SyncPattern PlayerGuideEmpty(string? suffix, ExBPY indexer, (string, ExTP)[] saveV2s,
-        (string, ExBPY)[] saveFs, GCXU<VTP> emptyPath, SyncPattern[] guided) =>
+        (string, ExBPY)[] saveFs, VTP emptyPath, SyncPattern[] guided) =>
         _GuideEmpty(suffix, indexer, saveV2s, saveFs, emptyPath, guided, true);
     
     private static SyncPattern _GuideEmpty(string? suffix, ExBPY indexer, (string, ExTP)[] saveV2s,
-        (string, ExBPY)[] saveFs, GCXU<VTP> emptyPath, SyncPattern[] guided, bool isPlayer) {
+        (string, ExBPY)[] saveFs, VTP emptyPath, SyncPattern[] guided, bool isPlayer) {
         var emptySP = isPlayer ?
             AtomicPatterns.Simple(emptyPath, new SBOptions(new[] {SBOption.Player(0, 0, "null")})) :
             AtomicPatterns.S(emptyPath);

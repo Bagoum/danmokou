@@ -394,16 +394,11 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             construct:
             if (Method.Mi.GetAttribute<CreatesInternalScopeAttribute>() is { } cis)
                 Reflection2.AST.MethodCall.AttachScope(prms, LexicalScope, cis, LexicalScope.AutoVars);
-            var result = Method.Mi.InvokeStatic(null, prms);
-            if (Method.Mi.GetAttribute<ExtendGCXUExposedAttribute>() != null && data.ExposedVariables.Count > 0) {
-                var gcxu = (result as GCXU ?? throw new StaticException(
-                    $"{nameof(ExtendGCXUExposedAttribute)} used on method {Method.Name} that does not return GCXU"));
-                return gcxu with {
-                    BoundAliases = gcxu.BoundAliases.Concat(
-                        data.ExposedVariables.Select(x => (x.Item1.AsType(), x.Item2))).ToList()
-                };
+            try {
+                return Method.Mi.InvokeStatic(null, prms);
+            } catch (Exception e) {
+                throw new ReflectionException(Position, $"Failed to execute method {Method.Name}.", e);
             }
-            return result;
         }
     }
 

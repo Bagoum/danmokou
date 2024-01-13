@@ -38,7 +38,7 @@ public static partial class Reflector {
         { typeof(Func<TExSBC, TEx<int>, TEx<BagoumLib.Cancellation.ICancellee>, TExArgCtx, TEx>), typeof(SBCF) }
     };
     private static readonly Type[] BypassTypes = {
-        typeof(GCXU<>), typeof(TEx<>), //typeof(EEx<>)
+        typeof(TEx<>), //typeof(EEx<>)
     };
     public static Type RemapExType(Type t) => exTypeRemap.TryGetValue(t, out var v) ? v : t;
     public static string SimpRName(this Type t) => SimplifiedExprPrinter.Default.Print(t);

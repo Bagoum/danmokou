@@ -150,6 +150,7 @@ public static partial class AsyncPatterns {
         private void DoAIteration(AsyncPattern target, AsyncHandoff itrABH, Action done) {
             //RunPrepend steps the coroutine and places it before the current one,
             //so we can continue running on the same frame that the child finishes (if using waitchild). 
+            itrABH.callback = done;
             itrABH.RunPrependRIEnumerator(target(itrABH));
         }
 
@@ -298,7 +299,8 @@ public static partial class AsyncPatterns {
     [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static AsyncPattern GCRepeat3(GCXF<float> wait, GCXF<float> forTime, GCXF<V2RV2> rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.AsyncFor(wait, forTime, rpp))), target);
-    public static AsyncPattern _AsGCR(SyncPattern target, params GenCtxProperty[] props) =>
+
+    private static AsyncPattern _AsGCR(SyncPattern target, params GenCtxProperty[] props) =>
         _AsGCR(new[] {target}, props);
     private static AsyncPattern _AsGCR(SyncPattern target, GenCtxProperty[] props1, params GenCtxProperty[] props) =>
         _AsGCR(new[] {target}, props1, props);

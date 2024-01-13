@@ -30,7 +30,6 @@ using SuzunoyaUnity;
 using UnityEditor;
 using static Danmokou.SM.SMAnalysis;
 using Danmokou.Core.DInput;
-using Danmokou.Reflection.CustomData;
 using Danmokou.UI.XML;
 
 namespace Danmokou.Services {
@@ -178,7 +177,6 @@ public class GameManagement : CoroutineRegularUpdater {
         //PICustomData.ClearNames();
         ReflWrap.ClearWrappers();
         StateMachineManager.ClearCachedSMs();
-        PICustomDataBuilder.Builder.ClearCustomDataTypeCaches();
         Events.SceneCleared.OnNext(default);
     }
 
@@ -195,7 +193,6 @@ public class GameManagement : CoroutineRegularUpdater {
         BulletManager.ClearPoolControls();
         BulletManager.ClearAllBullets();
         BulletManager.DestroyCopiedPools();
-        PICustomDataBuilder.Builder.ClearCustomDataTypeCaches();
         GC.Collect();
         //Ordered last so cancellations from HardCancel will occur under old data
         NewInstance(InstanceMode.DEBUG, DefaultFeatures);

@@ -60,8 +60,8 @@ public class FireOption : BehaviorEntity {
     private float powerLerp = 0.2f;
     public int findex;
     protected override int Findex => findex;
-    protected override PICustomData DefaultFCTX() {
-        var f = PICustomData.New();
+    protected override PIData DefaultFCTX() {
+        var f = PIData.NewUnscoped();
         f.firer = this;
         f.playerController = Player;
         return f;
