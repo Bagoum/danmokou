@@ -29,13 +29,7 @@ namespace Danmokou.Reflection {
 /// A lightweight set of instructions for compiling an object
 ///  from 'code'.
 /// </summary>
-public interface IAST {
-    /// <summary>
-    /// Position of the code that will generate this object.
-    /// <br/>This is used for debugging/logging/error messaging.
-    /// </summary>
-    PositionRange Position { get; }
-
+public interface IAST : IDebugAST {
     /// <summary>
     /// Return all nonfatal errors in the parse tree.
     /// </summary>
@@ -67,48 +61,8 @@ public interface IAST {
     /// Generate the object.
     /// </summary>
     object? EvaluateObject(ASTEvaluationData data) => throw new NotImplementedException();
-    
-    /// <summary>
-    /// Get all ASTs that are children to this one.
-    /// </summary>
-    IEnumerable<IAST> Children { get; }
-
-    /// <summary>
-    /// Return the furthest-down AST in the tree that encloses the given position,
-    /// then its ancestors up to the root.
-    /// <br/>Each element is paired with the index of the child that preceded it,
-    ///  or null if it is the lowermost AST returned.
-    /// <br/>Returns null if the AST does not enclose the given position.
-    /// </summary>
-    IEnumerable<(IAST tree, int? childIndex)>? NarrowestASTForPosition(PositionRange p);
-
-    /// <summary>
-    /// Print out a readable, preferably one-line description of the AST (not including its children). Consumed by language server.
-    /// </summary>
-    [PublicAPI]
-    string Explain();
-
-    /// <summary>
-    /// Return a parse tree for the AST. Consumed by language server.
-    /// </summary>
-    [PublicAPI]
-    DocumentSymbol ToSymbolTree();
-
-    /// <summary>
-    /// Describe the semantics of all the parsed tokens in the source code.
-    /// Consumed by language server.
-    /// </summary>
-    [PublicAPI]
-    IEnumerable<SemanticToken> ToSemanticTokens();
-
-    /// <summary>
-    /// Print a readable description of the entire AST.
-    /// </summary>
-    IEnumerable<PrintToken> DebugPrint();
 
     IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx);
-
-    string DebugPrintStringify() => new ExpressionPrinter().Stringify(DebugPrint().ToArray());
 }
 
 /// <summary>
@@ -135,13 +89,13 @@ public record ASTRuntimeCast<T>(IAST Source) : IAST<T> {
         throw new StaticException("Runtime AST cast failed");
     public void AttachLexicalScope(LexicalScope scope) => Source.AttachLexicalScope(scope);
 
-    public IEnumerable<IAST> Children => new[] { Source };
+    public IEnumerable<IDebugAST> Children => new[] { Source };
 
-    public IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p)
+    public IEnumerable<(IDebugAST, int?)>? NarrowestASTForPosition(PositionRange p)
         => Source.NarrowestASTForPosition(p);
 
     public string Explain() => $"{Position.Print(true)} Cast to type {typeof(T).SimpRName()}";
-    public DocumentSymbol ToSymbolTree() => Source.ToSymbolTree();
+    public DocumentSymbol ToSymbolTree(string? descr = null) => Source.ToSymbolTree(descr);
     public IEnumerable<SemanticToken> ToSemanticTokens() => Source.ToSemanticTokens();
 
     public IEnumerable<PrintToken> DebugPrint() => Source.DebugPrint();
@@ -161,15 +115,15 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
     
     public void AttachLexicalScope(LexicalScope scope) => Source.AttachLexicalScope(scope);
     
-    public IEnumerable<IAST> Children => new[] { Source };
+    public IEnumerable<IDebugAST> Children => new[] { Source };
 
-    public IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p)
+    public IEnumerable<(IDebugAST, int?)>? NarrowestASTForPosition(PositionRange p)
         => Source.NarrowestASTForPosition(p);
 
     public string Explain() => $"{Position.Print(true)} " +
                                $"Map from type {typeof(T).SimpRName()} to type {typeof(U).SimpRName()}";
 
-    public DocumentSymbol ToSymbolTree() => Source.ToSymbolTree();
+    public DocumentSymbol ToSymbolTree(string? descr = null) => Source.ToSymbolTree(descr);
     public IEnumerable<SemanticToken> ToSemanticTokens() => Source.ToSemanticTokens();
 
     public IEnumerable<PrintToken> DebugPrint() => Source.DebugPrint().Prepend($"({typeof(U).SimpRName()})");
@@ -177,7 +131,7 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
 }
 
 public abstract record AST(PositionRange Position, params IAST[] Params) : IAST {
-    public virtual IEnumerable<IAST> Children => Params;
+    public virtual IEnumerable<IDebugAST> Children => Params;
     public ReflectDiagnostic[] Diagnostics { get; init; } = Array.Empty<ReflectDiagnostic>();
 
     public LexicalScope LexicalScope { get; protected set; } = null!;
@@ -200,23 +154,23 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     }
     public virtual bool IsUnsound => Params.Any(p => p.IsUnsound);
 
-    public virtual IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p) {
+    public virtual IEnumerable<(IDebugAST, int?)>? NarrowestASTForPosition(PositionRange p) {
         if (p.Start.Index < Position.Start.Index || p.End.Index > Position.End.Index) return null;
         for (int ii = 0; ii < Params.Length; ++ii) {
             var arg = Params[ii];
             if (arg.NarrowestASTForPosition(p) is { } results)
                 return results.Append((this, ii));
         }
-        return new (IAST, int?)[] { (this, null) };
+        return new (IDebugAST, int?)[] { (this, null) };
     }
 
     public virtual void AttachLexicalScope(LexicalScope scope) {
         LexicalScope = scope;
-        foreach (var c in Children)
+        foreach (var c in Params)
             c.AttachLexicalScope(scope);
     }
     public abstract string Explain();
-    public abstract DocumentSymbol ToSymbolTree();
+    public abstract DocumentSymbol ToSymbolTree(string? descr = null);
     public abstract IEnumerable<SemanticToken> ToSemanticTokens();
 
     public virtual IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx) =>
@@ -229,26 +183,18 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     //This drastically improves readability as these are often deeply nested
     private static readonly Type[] flattenArrayTypes =
         { typeof(StateMachine), typeof(AsyncPattern), typeof(SyncPattern) };
-    protected IEnumerable<DocumentSymbol> FlattenParams() {
+    protected IEnumerable<DocumentSymbol> FlattenParams(Func<IAST, int, DocumentSymbol> mapper) {
         bool DefaultFlatten(IAST ast) =>
             ast is SequenceList<StateMachine> ||
             ast is SequenceArray seq && flattenArrayTypes.Contains(seq.ElementType);
-        foreach (var p in Params) {
+        foreach (var (p, sym) in Params.Select((p, i) => (p, mapper(p, i)))) {
             if (DefaultFlatten(p))
-                foreach (var s in p.ToSymbolTree().Children ?? Array.Empty<DocumentSymbol>())
+                foreach (var s in sym.Children ?? Array.Empty<DocumentSymbol>())
                     yield return s;
             else
-                yield return p.ToSymbolTree();
+                yield return sym;
         }
     }
-    protected DocumentSymbol MethodToSymbolTree(InvokedMethod Method) =>
-        Method.Mi.IsFallthrough ? 
-            Params[0].ToSymbolTree() :
-            new(Method.Name, Method.Mi.TypeOnlySignature, SymbolKind.Method, Position.ToRange(),
-                FlattenParams());
-
-    protected IEnumerable<SemanticToken> MethodToSemanticTokens(InvokedMethod method, PositionRange methodPosition) =>
-        Params.SelectMany(p => p.ToSemanticTokens()).Prepend(SemanticToken.FromMethod(method.Mi, methodPosition));
 
     protected IEnumerable<PrintToken> DebugPrintMethod(InvokedMethod Method) {
         yield return $"{CompactPosition} {Method.TypeEnclosedName}(";
@@ -312,16 +258,19 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         }
         
         public override string Explain() => $"{CompactPosition} {BaseMethod.Mi.AsSignature}";
-        public override DocumentSymbol ToSymbolTree() {
+        public override DocumentSymbol ToSymbolTree(string? descr = null) {
             if (BaseMethod.Mi.IsCtor && BaseMethod.Mi.ReturnType == typeof(PhaseSM) && !Params[1].IsUnsound && Params[1].EvaluateObject(new()) is PhaseProperties props) {
                 return new($"{props.phaseType?.ToString() ?? "Phase"}", props.cardTitle?.Value ?? "",
-                    SymbolKind.Method, Position.ToRange(), FlattenParams());
+                    SymbolKind.Method, Position.ToRange(), FlattenParams((p, i) => p.ToSymbolTree($"({BaseMethod.Params[i].Name})")));
             }
-            return MethodToSymbolTree(BaseMethod);
+            return BaseMethod.Mi.IsFallthrough ? 
+                    Params[0].ToSymbolTree(descr) :
+                    new(BaseMethod.Name, BaseMethod.Mi.TypeOnlySignature, SymbolKind.Method, Position.ToRange(),
+                        FlattenParams((p, i) => p.ToSymbolTree($"({BaseMethod.Params[i].Name})")));
         }
 
         public override IEnumerable<SemanticToken> ToSemanticTokens() =>
-            MethodToSemanticTokens(BaseMethod, MethodPosition);
+            Params.SelectMany(p => p.ToSemanticTokens()).Prepend(SemanticToken.FromMethod(BaseMethod.Mi, MethodPosition));
 
         public override IEnumerable<PrintToken> DebugPrint() => DebugPrintMethod(BaseMethod);
 
@@ -392,10 +341,10 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
                 prms[ii] = Params[ii].EvaluateObject(data);
             }
             construct:
-            if (Method.Mi.GetAttribute<CreatesInternalScopeAttribute>() is { } cis)
-                Reflection2.AST.MethodCall.AttachScope(prms, LexicalScope, cis, LexicalScope.AutoVars);
+            if (Method.Mi.GetAttribute<CreatesInternalScopeAttribute>() != null)
+                Reflection2.AST.MethodCall.AttachScope(prms, LexicalScope, LexicalScope.AutoVars);
             try {
-                return Method.Mi.InvokeStatic(null, prms);
+                return Method.Mi.Invoke(null, prms);
             } catch (Exception e) {
                 throw new ReflectionException(Position, $"Failed to execute method {Method.Name}.", e);
             }
@@ -427,7 +376,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             var fprms = new object?[Params.Length];
             for (int ii = 0; ii < fprms.Length; ++ii)
                 fprms[ii] = Params[ii].EvaluateObject(data);
-            return Method.TypedFMi.InvokeMiFunced(null, null, fprms);
+            return Method.TypedFMi.InvokeMiFunced(null, fprms);
         }
     }
 
@@ -466,7 +415,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         public override string Explain() =>
             $"{CompactPosition} {MyType.SimpRName()} {Description}";
 
-        public override DocumentSymbol ToSymbolTree() =>
+        public override DocumentSymbol ToSymbolTree(string? descr = null) =>
             new DocumentSymbol(Description, MyType.SimpRName(), SymbolType, Position.ToRange());
 
         public override IEnumerable<SemanticToken> ToSemanticTokens() => 
@@ -486,6 +435,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     ///  directly from <see cref="ExMEasers.EOutSine"/>.
     /// </summary>
     public record MethodLookup : AST, IAST {
+        private bool lifted;
         /// <summary>
         /// Type of the parameter, eg. Func&lt;tfloat, tfloat&gt;.
         /// <br/>The return type of the func type is the return type of the linked <see cref="Method"/>.
@@ -504,6 +454,10 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         public MethodSignature Method { get; }
 
         public MethodLookup(PositionRange p, Type funcType, string methodName) : base(p) {
+            if (funcType.GenericTypeArguments[0] == typeof(TExArgCtx)) {
+                lifted = true;
+                funcType = funcType.GenericTypeArguments[1];
+            }
             this.FuncType = funcType;
             //The type should be Func<A,...R>, where A...R are types like TEx<float>
             FuncAllTypes = funcType.GenericTypeArguments;
@@ -522,7 +476,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
                 if (FuncAllTypes[ii] != Method.Params[ii].Type)
                     throw new ReflectionException(p,
                         $"Provided method {methodName} has parameter #{ii + 1} as type" +
-                        $" {Method.Params[ii].Type.RName()} (required {FuncAllTypes[ii].RName()})");
+                        $" {Method.Params[ii].Type.ExRName()} (required {FuncAllTypes[ii].ExRName()})");
             }
         }
 
@@ -533,14 +487,19 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
                                ?.MakeGenericMethod(FuncAllTypes) ??
                            throw new StaticException($"Couldn't find lambda constructor method for " +
                                                      $"count {Method.Params.Length}");
-            return lambdaer.Invoke(null, new object[] {
-                (Func<object?[], object?>)(prms => (Method as IMethodSignature).InvokeStatic(null, prms))
+            var lambda = lambdaer.Invoke(null, new object[] {
+                (Func<object?[], object?>)(prms => (Method as IMethodSignature).Invoke(null, prms))
             });
+            if (lifted) {
+                return (Func<TExArgCtx, object>)(_ => lambda);
+            } else {
+                return lambda;
+            }
         }
 
         public override string Explain() => $"{CompactPosition} {Method.Name}";
 
-        public override DocumentSymbol ToSymbolTree() =>
+        public override DocumentSymbol ToSymbolTree(string? descr = null) =>
             new DocumentSymbol(Method.Name, FuncType.SimpRName(), SymbolKind.Function, Position.ToRange());
 
         public override IEnumerable<SemanticToken> ToSemanticTokens() =>
@@ -553,12 +512,12 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// An AST that generates a state machine by reading a file.
     /// </summary>
     public record SMFromFile(PositionRange CallPosition, PositionRange FilePosition, string Filename) : AST(CallPosition.Merge(FilePosition)), IAST<StateMachine?> {
-        public StateMachine? Evaluate(ASTEvaluationData data) => StateMachineManager.FromName(Filename);
+        public StateMachine? Evaluate(ASTEvaluationData data) => StateMachineManager.FromName(Filename)?.SM;
 
         public override string Explain() => $"{CompactPosition} StateMachine from file: {Filename}";
 
-        public override DocumentSymbol ToSymbolTree() =>
-            new DocumentSymbol($"SMFromFile({Filename})", null, SymbolKind.Object, Position.ToRange());
+        public override DocumentSymbol ToSymbolTree(string? descr = null) =>
+            new DocumentSymbol($"SMFromFile({Filename})", descr, SymbolKind.Object, Position.ToRange());
         public override IEnumerable<SemanticToken> ToSemanticTokens() =>
             new[] {
                 new SemanticToken(CallPosition, SemanticTokenTypes.Keyword),
@@ -583,9 +542,9 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
 
         public override string Explain() => $"{CompactPosition} List<{typeof(T).SimpRName()}>";
 
-        public override DocumentSymbol ToSymbolTree()
-            => new($"List<{typeof(T).SimpRName()}>", null, SymbolKind.Array, 
-                Position.ToRange(), FlattenParams());
+        public override DocumentSymbol ToSymbolTree(string? descr = null)
+            => new($"List<{typeof(T).SimpRName()}>", descr, SymbolKind.Array, 
+                Position.ToRange(), FlattenParams((p, i) => p.ToSymbolTree()));
 
         public override IEnumerable<SemanticToken> ToSemanticTokens() => 
             Parts.SelectMany(p => p.ToSemanticTokens());
@@ -606,9 +565,9 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
 
         public Type ResultType => ElementType.MakeArrayType();
         public override string Explain() => $"{CompactPosition} {ElementType.SimpRName()}[]";
-        public override DocumentSymbol ToSymbolTree()
-            => new($"{ElementType.SimpRName()}[]", null, SymbolKind.Array, 
-                Position.ToRange(), FlattenParams());
+        public override DocumentSymbol ToSymbolTree(string? descr = null)
+            => new($"{ElementType.SimpRName()}[]", descr, SymbolKind.Array, 
+                Position.ToRange(), FlattenParams((p, i) => p.ToSymbolTree()));
         
         public override IEnumerable<SemanticToken> ToSemanticTokens() => 
             Params.SelectMany(p => p.ToSemanticTokens());
@@ -638,9 +597,9 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         }.Concat(Rule.ToSemanticTokens());
 
         public override string Explain() => $"{CompactPosition} GCRule<{typeof(T).SimpRName()}>";
-        public override DocumentSymbol ToSymbolTree()
+        public override DocumentSymbol ToSymbolTree(string? descr = null)
             => new($"GCRule<{typeof(T).SimpRName()}>", null, SymbolKind.Struct, 
-                Position.ToRange(), FlattenParams());
+                Position.ToRange(), FlattenParams((p, i) => p.ToSymbolTree()));
 
         public override IEnumerable<PrintToken> DebugPrint() =>
             Rule.DebugPrint().Prepend($"{CompactPosition} {Reference} {Operator}{Type} ");
@@ -659,10 +618,10 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             new SemanticToken(AliasPos, SemanticTokenTypes.Parameter)
         }.Concat(Content.ToSemanticTokens());
 
-        public override string Explain() => $"{CompactPosition} Variable '{Name}' (type {Type.RName()})";
-        public override DocumentSymbol ToSymbolTree()
+        public override string Explain() => $"{CompactPosition} Variable '{Name}' (type {Type.ExRName()})";
+        public override DocumentSymbol ToSymbolTree(string? descr = null)
             => new(Name, $"Alias", SymbolKind.Variable, 
-                Position.ToRange(), FlattenParams());
+                Position.ToRange(), FlattenParams((p, i) => p.ToSymbolTree()));
 
         public override IEnumerable<PrintToken> DebugPrint() =>
             Content.DebugPrint().Prepend($"{CompactPosition} {Name} = ");
@@ -672,7 +631,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// A failed AST parse.
     /// </summary>
     public record Failure(ReflectionException Exc, Type ReturnType) : AST(Exc.Position), IAST {
-        public override IEnumerable<IAST> Children => Basis == null ? Array.Empty<IAST>() : new[] { Basis };
+        public override IEnumerable<IDebugAST> Children => Basis == null ? Array.Empty<IDebugAST>() : new[] { Basis };
         public Type ResultType => ReturnType;
         /// <summary>
         /// In the case when an error invalidates a certain block of code, this contains the object initially
@@ -692,16 +651,16 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
                     _ => $"(ERROR) {CompactPosition} Failed parse for type {ReturnType.SimpRName()}"
                 };
 
-        public override IEnumerable<(IAST, int?)>? NarrowestASTForPosition(PositionRange p) {
+        public override IEnumerable<(IDebugAST, int?)>? NarrowestASTForPosition(PositionRange p) {
             if (p.Start.Index < Position.Start.Index || p.End.Index > Position.End.Index) return null;
             if (Basis?.NarrowestASTForPosition(p) is { } results)
                 return results.Append((this, 0));
-            return new (IAST, int?)[] { (this, null) };
+            return new (IDebugAST, int?)[] { (this, null) };
         }
 
         public object? EvaluateObject(ASTEvaluationData data) => throw FirstException;
 
-        public override DocumentSymbol ToSymbolTree() => throw FirstException;
+        public override DocumentSymbol ToSymbolTree(string? descr = null) => throw FirstException;
 
         public override IEnumerable<SemanticToken> ToSemanticTokens() => throw FirstException;
 

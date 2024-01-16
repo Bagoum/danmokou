@@ -12,6 +12,7 @@ using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
 using Danmokou.SM;
+using LanguageServer.VsCode.Contracts;
 using Mizuhashi;
 using UnityEngine;
 using static Danmokou.Reflection2.Lexer;
@@ -32,8 +33,7 @@ public static class Parser {
     private static readonly Parser<Token, Token> semicolon = TokenOfType(TokenType.Semicolon);
 
     private static Parser<Token, Token> ImplicitBreak(TokenType breaker) {
-        //var terr = new ParserError.Expected($"{breaker}");
-        var err = new ParserError.Expected($"{breaker}, or uniform newline indentation");
+        var err = new ParserError.Expected($"{breaker.ToString().ToLower()} or uniform newline indentation after previous line");
         return input => {
             if (!input.Empty) {
                 if (input.Next.Type == breaker)
@@ -58,50 +58,51 @@ public static class Parser {
     public static readonly Parser<Token, Token> Newline = Flags(TokenFlags.PrecededByNewline, "newline");
 
 
-    public static Reflector.LiftedMethodSignature<TExArgCtx> Lift(Type t, string method) =>
+    public static LiftedMethodSignature<TExArgCtx> Lift(Type t, string method) =>
         ExFunction.WrapAny(t, method).Mi.Signature().Lift<TExArgCtx>();
-    private static ST FnIdentFor(Token t, params Reflector.MethodSignature[] overloads) =>
+    private static ST FnIdentFor(Token t, params MethodSignature[] overloads) =>
         new ST.FnIdent(t.Position, overloads.Select(o => o.Call(t.Content)).ToArray());
 
-    private static Func<ST, Token, ST, ST> InfixCaller(params Reflector.MethodSignature[] overloads) =>
+    private static Func<ST, Token, ST, ST> InfixCaller(params MethodSignature[] overloads) =>
         (a, t, b) => new ST.FunctionCall(a.Position.Merge(b.Position), FnIdentFor(t, overloads), a, b);
-    private static Func<ST, Token, ST, ST> InfixCallerEquivOverloads(params Reflector.MethodSignature[] overloads) =>
+    private static Func<ST, Token, ST, ST> InfixCallerEquivOverloads(params MethodSignature[] overloads) =>
         (a, t, b) => new ST.FunctionCall(a.Position.Merge(b.Position), FnIdentFor(t, overloads), a, b) { OverloadsInterchangeable = true };
-    private static Func<Token, ST, ST> PrefixCaller(params Reflector.MethodSignature[] overloads) =>
+    private static Func<Token, ST, ST> PrefixCaller(params MethodSignature[] overloads) =>
         (t, x) => new ST.FunctionCall(t.Position.Merge(x.Position), FnIdentFor(t, overloads), x);
-    private static Func<ST, Token, ST> PostfixCaller(params Reflector.MethodSignature[] overloads) =>
+    private static Func<ST, Token, ST> PostfixCaller(params MethodSignature[] overloads) =>
         (x, t) => new ST.FunctionCall(x.Position.Merge(t.Position), FnIdentFor(t, overloads), x);
     
     private static Parser<Token, Token> op(string op) => TokenOfTypeValue(TokenType.Operator, op);
+    private static Parser<Token, Token> sop(string sop) => TokenOfTypeValue(TokenType.SpecialOperator, sop);
     private static Parser<Token, Token> opNoFlag(string op, TokenFlags f, string desc) => 
         TokenOfTypeValueNotFlag(TokenType.Operator, op, f, desc);
     private static Op infix(string op, Associativity assoc, int precedence,
-        params Reflector.MethodSignature[] overloads) => 
+        params MethodSignature[] overloads) => 
         new Op.Infix(TokenOfTypeValue(TokenType.Operator, op), InfixCaller(overloads), assoc, precedence);
     private static Op prefix(string op, int precedence,
-        params Reflector.MethodSignature[] overloads) => 
+        params MethodSignature[] overloads) => 
         new Op.Prefix(TokenOfTypeValue(TokenType.Operator, op), PrefixCaller(overloads), precedence);
 
     private static Op assigner(string op, string method) =>
         infix(op, Associativity.Right, 2, Lift(typeof(ExMAssign), method));
     
 
-    //these operators are higher precedence than partial function application.
+    //these operators are higher precedence than curried function application.
     // eg. f x op y = f(x op y)
     public static readonly Op[] tightOperators = {
         new Op.Postfix(opNoFlag("++", TokenFlags.PrecededByWhitespace, "postfix operator `++`"), 
-            PostfixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PostIncr))), 20),
+            PostfixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PostIncrement))), 20),
         new Op.Postfix(opNoFlag("--", TokenFlags.PrecededByWhitespace, "postfix operator `--`"), 
-            PostfixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PostDecr))), 20),
+            PostfixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PostDecrement))), 20),
         
         new Op.Prefix(opNoFlag("++", TokenFlags.PostcededByWhitespace, "prefix operator `++`"), 
-            PrefixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PreIncr))), 18),
+            PrefixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PreIncrement))), 18),
         new Op.Prefix(opNoFlag("--", TokenFlags.PostcededByWhitespace, "prefix operator `--`"), 
-            PrefixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PreDecr))), 18),
+            PrefixCaller(Lift(typeof(ExMAssign), nameof(ExMAssign.PreDecrement))), 18),
         
         //NB: It is critical to have the noWhitespace parse for +/- operators, because if we don't,
-        // then partial function application of a unary number becomes higher precedence than arithmetic.
-        // eg. `x - y` has higher precedence as Partial(x, Negate(y)) than Subtract(x, y).
+        // then curried function application of a unary number becomes higher precedence than arithmetic.
+        // eg. `x - y` has higher precedence as Curried(x, Negate(y)) than Subtract(x, y).
         //F# handles this quite well by parsing only no-whitespace +/- as unary.
         new Op.Prefix(opNoFlag("+", TokenFlags.PostcededByWhitespace, "prefix operator `+`"), 
             (t, x) => x with { Position = t.Position.Merge(x.Position) }, 18),
@@ -109,7 +110,7 @@ public static class Parser {
             PrefixCaller(Lift(typeof(ExM), nameof(ExM.Negate))), 18),
         prefix("!", 18, Lift(typeof(ExMPred), nameof(ExMPred.Not))),
     };
-    //these operators are lower precedence than partial function application.
+    //these operators are lower precedence than curried function application.
     //eg. f x op y = f(x) op y
     public static readonly Op[] looseOperators = {
         infix("%", Associativity.Left, 14, Lift(typeof(ExMMod), nameof(ExMMod.Modulo))),
@@ -142,36 +143,35 @@ public static class Parser {
         infix("&", Associativity.Left, 6, Lift(typeof(ExMPred), nameof(ExMPred.And))),
         infix("|", Associativity.Left, 6, Lift(typeof(ExMPred), nameof(ExMPred.Or))),
 
-        assigner("=", nameof(ExMAssign.Is)),
-        assigner("+=", nameof(ExMAssign.IsAdd)),
-        assigner("-=", nameof(ExMAssign.IsSub)),
-        assigner("*=", nameof(ExMAssign.IsMul)),
-        assigner("/=", nameof(ExMAssign.IsDiv)),
-        assigner("%=", nameof(ExMAssign.IsMod)),
-        assigner("&=", nameof(ExMAssign.IsAnd)),
-        assigner("|=", nameof(ExMAssign.IsOr))
+        assigner("=", nameof(ExMAssign.Assign)),
+        assigner("+=", nameof(ExMAssign.AddAssign)),
+        assigner("-=", nameof(ExMAssign.SubAssign)),
+        assigner("*=", nameof(ExMAssign.MulAssign)),
+        assigner("/=", nameof(ExMAssign.DivAssign)),
+        assigner("%=", nameof(ExMAssign.ModAssign)),
+        assigner("&=", nameof(ExMAssign.AndAssign)),
+        assigner("|=", nameof(ExMAssign.OrAssign))
     };
 
-    private static Parser<Token, ST> Paren1(Parser<Token, ST> p) {
+    private static Parser<Token, T> Paren1<T>(Parser<Token, T> p) {
         var err = new ParserError.Failure(
             "Expected parentheses with only a single object. The parentheses should close here.");
         return inp => {
             var ropen = openParen(inp);
             if (!ropen.Result.Valid)
-                return ropen.CastFailure<ST>();
+                return ropen.CastFailure<T>();
             var rval = p(inp);
             if (!rval.Result.Valid)
                 return new(rval.Result, rval.Error, ropen.Start, rval.End);
             var rclose = closeParen(inp);
             if (!rclose.Result.Valid)
-                return new(Maybe<ST>.None, new LocatedParserError(rclose.Start, err), ropen.Start, rclose.End);
+                return new(Maybe<T>.None, new LocatedParserError(rclose.Start, err), ropen.Start, rclose.End);
             return new(rval.Result, rval.Error, ropen.Start, rclose.End);
         };
     }
     
-    private static Parser<Token, (PositionRange allPosition, List<ST> args)> Paren(Parser<Token, ST> p) {
-        //empty parens allowed
-        var args = p.SepBy(comma);
+    private static Parser<Token, (PositionRange allPosition, List<ST> args)> Paren(Parser<Token, ST> p, bool atleastOne = false) {
+        var args = p.SepBy(comma, atleastOne);
         return inp => {
             var ropen = openParen(inp);
             if (!ropen.Result.Valid)
@@ -187,8 +187,8 @@ public static class Parser {
         };
     }
 
-    private static readonly Reflector.MethodSignature constFloat =
-        Reflector.MethodSignature.Get(ExFunction.WrapAny(typeof(AtomicBPYRepo), "Const").Mi);
+    private static readonly MethodSignature constFloat =
+        MethodSignature.Get(ExFunction.WrapAny(typeof(AtomicBPYRepo), "Const").Mi);
 
     private static readonly ParserError blockKWErr = new ParserError.Expected("`block` or `b{` keyword");
     private static readonly Parser<Token, Token> blockKW = input => {
@@ -199,12 +199,20 @@ public static class Parser {
     };
     
     //Atom: identifier; number/string/etc; parenthesized value; block 
-    private static readonly Parser<Token, ST> atom = ChoiceL("atom (identifier, number, array, block, or parenthesized expression)",
+    private static readonly Parser<Token, ST> atom = ChoiceL(
+        "atom (identifier, number, array, block, or parenthesized expression)",
         //Identifier
         IdentOrType.FMap(id => new ST.Ident(id) as ST),
         //num/string/v2rv2
-        Num.FMap(t => new ST.Number(t.Position, DMath.Parser.Float(t.Content)) as ST),
-        TokenOfType(TokenType.String).FMap(t => new ST.TypedValue<string>(t.Position, t.Content) as ST),
+        Num.FMap(t => new ST.Number(t.Position, t.Content) as ST),
+        TokenOfType(TokenType.ValueKeyword).FMap(t => {
+            if (t.Content == "true")
+                return new ST.TypedValue<bool>(t.Position, true) { Kind = SymbolKind.Boolean } as ST;
+            else
+                return new ST.TypedValue<bool>(t.Position, false) { Kind = SymbolKind.Boolean };
+        }),
+        TokenOfType(TokenType.String).FMap(t => new ST.TypedValue<string>(t.Position, t.Content) 
+            { Kind = SymbolKind.String} as ST),
         TokenOfType(TokenType.LString).Bind(t => {
             LString v;
             var diagnostics = Array.Empty<ReflectDiagnostic>();
@@ -224,12 +232,14 @@ public static class Parser {
             else
                 v = t.Content;
             return new ParseResult<ST>(new ST.TypedValue<LString>(t.Position, v) {
+                Kind = SymbolKind.String,
                 Diagnostics = diagnostics
             }, null, t.Position.Start.Index, t.Position.End.Index);
         }),
-        TokenOfType(TokenType.V2RV2).FMap(t => new ST.TypedValue<V2RV2>(t.Position, DMath.Parser.ParseV2RV2(t.Content)) as ST),
-        //Parenthesized value
-        Paren1(Value),
+        TokenOfType(TokenType.V2RV2).FMap(t => new ST.TypedValue<V2RV2>(t.Position, DMath.Parser.ParseV2RV2(t.Content)) 
+                { Kind = SymbolKind.Number } as ST),
+        //Parenthesized value/tuple
+        Paren(Value).FMap(vs => vs.args.Count == 1 ? vs.args[0] : new ST.Tuple(vs.allPosition, vs.args)).LabelV("tuple"),
         //Block
         Sequential(blockKW, openBrace, Statements, closeBrace,
             (o, _, stmts, c) => new ST.Block(o.Position.Merge(c.Position), stmts.ToArray()) as ST).LabelV("block"),
@@ -238,34 +248,73 @@ public static class Parser {
             (o, vals, c) => new ST.Array(o.Position.Merge(c.Position), vals.ToArray()) as ST).LabelV("array")
     );
 
-    //Term: member access `x.y`; C#-style function application `f(x, y)`.
+    private static readonly Parser<Token, (Maybe<Token>, Maybe<(PositionRange, List<ST>)>)> termMemberFn =
+        op(".").IgThen(Ident).Opt().Then(NoWhitespace.IgThen(Paren(Value)).Opt());
+    private static readonly Parser<Token, (Maybe<Token>, Maybe<(PositionRange, List<ST>)>)> termMemberFnFollow = inp => {
+            var follow = termMemberFn(inp);
+            if (follow.Result.Try(out var lr)) {
+                if (!lr.Item1.Valid && !lr.Item2.Valid)
+                    return follow.AsSameError(termMemberFollowErr);
+            }
+            return follow;
+        };
+    private static readonly ParserError termMemberFollowErr =
+        new ParserError.Expected("member access x.y and/or function application f(x, y)");
+    
+    //Term: member access `x.y`, member function `x.f(y)`, 
+    // C#-style function application `f(x, y)`, partial function call `$(f, x)`
     //Haskell-style function application `f x y` is handled in term2.
     private static readonly Parser<Token, ST> term =
-        Sequential(atom,
-            Either(op(".").IgThen(Ident), NoWhitespace.IgThen(Paren(Value))).Many(),
+        Sequential(atom, termMemberFnFollow.Many(),
             (x, seqs) => {
                 for (int ii = 0; ii < seqs.Count; ++ii) {
-                    var s = seqs[ii];
-                    if (s.IsLeft)
-                        x = new ST.MemberAccess(x, new ST.Ident(s.Left));
-                    else
-                        x = new ST.FunctionCall(s.Right.Item1, x, s.Right.Item2.ToArray());
+                    var (mem, fn) = seqs[ii];
+                    if (mem.Try(out var m))
+                        if (fn.Try(out var f))
+                            x = new ST.MemberFunction(x.Position.Merge(f.Item1), x, new ST.Ident(m), f.Item2);
+                        else
+                            x = new ST.MemberAccess(x, new ST.Ident(m));
+                    else if (fn.Try(out var f))
+                        x = new ST.FunctionCall(x.Position.Merge(f.Item1), x, f.Item2.ToArray());
                 }
                 return x;
-            });
+            }
+        ).Or(sop("$").IgThen(NoWhitespace).IgThen(
+                Paren1(Combinators.SepBy(Value, comma, true, Ident.FMap(id => new ST.Ident(id) as ST)))).FMap(
+                    args => new ST.PartialFunctionCall(
+                        PositionRange.Merge(args.Select(a => a.Position)), 
+                        (ST.Ident)args[0], args.Skip(1).ToArray()) as ST
+                )
+            );
 
     //Term + tight operators
     private static readonly Parser<Token, ST> termOps1 = ParseOperators(tightOperators, term);
 
-    //Term + tight operators + partial function application
-    private static readonly Parser<Token, ST> term2 =
-        termOps1.SepBy1(NotFlags(TokenFlags.ImplicitBreak, "indent: partial function application across newlines must change the indentation level").IgThen(Whitespace)).FMap(ops => {
-            for (int ii = 1; ii < ops.Count; ++ii)
-                ops[0] = new ST.PartialFunctionCall(ops[0], ops[ii]);
-            return ops[0];
-        });
+    private static readonly Parser<Token, Token> curryFnAppSep = NotFlags(TokenFlags.ImplicitBreak, 
+        "indent: curried function application across newlines must change the indentation level").IgThen(Whitespace);
+    
+    //Term + tight operators + curried function application
+    private static readonly Parser<Token, ST> term2 = inp => {
+        var rf = termOps1(inp);
+        //First element must be Ident
+        if (!rf.Result.Try(out var f) || f is not ST.Ident)
+            return rf;
+        var start = rf.Start;
+        while (true) {
+            var rsep = curryFnAppSep(inp);
+            //this separator cannot fatal
+            if (rsep.Status != ResultStatus.OK)
+                return new(f, rf.MergeErrors(rsep), start, rf.End);
+            rf = termOps1(inp);
+            if (rf.Status == ResultStatus.FATAL)
+                return rf;
+            if (rf.Status == ResultStatus.ERROR && !rsep.Consumed)
+                return new(f, rsep.MergeErrors(rf), start, rf.End);
+            f = new ST.CurriedFunctionCall(f, rf.Result.Value);
+        }
+    };
 
-    //Value: Operator over term/partial fn app, or lambda
+    //Value: Operator over term/curried fn app, or lambda
     //Note that this would be called an "expression" in most parsers but I won't call it that to avoid ambiguity
     // with Linq.Expression
     private static readonly Parser<Token, ST> value = ChoiceL("value expression",
@@ -273,12 +322,48 @@ public static class Parser {
         //todo lambda
     );
     private static ParseResult<ST> Value(InputStream<Token> inp) => value(inp);
+
+    private static readonly Parser<Token, (Token, (Token, Maybe<Token>))> varInitLeft = 
+        Kw("var").Then(IdentOrType.Then(Ident.Opt()));
+    private static readonly Parser<Token, ST> varInitRight = op("=").IgThen(value);
+    private static Parser<Token, ST> varInit = inp => {
+        var rleft = varInitLeft(inp);
+        if (!rleft.Result.Try(out var decl))
+            return rleft.CastFailure<ST>();
+        var (kw, (a, b)) = decl;
+        var rright = varInitRight(inp);
+        if (!rright.Result.Try(out var val))
+            return rright.CastFailure<ST>();
+        if (b.Try(out var id)) {
+            //type(a) + id(b) specification
+            var tDef = ParseType(a.Content);
+            if (tDef.IsRight)
+                return new ParseResult<ST>(tDef.Right.Error, rleft.Start, rleft.End);
+            var typ = tDef.Left.TryCompile();
+            if (typ.IsRight)
+                return new ParseResult<ST>(new ParserError.Failure(typ.Right), rleft.Start, rleft.End);
+            return new ParseResult<ST>(new ST.VarDeclAssign(kw.Position,
+                        new VarDecl(id.Position, typ.Left, id.Content), val)
+                    { TypeKwPos = a.Position } as ST,
+                rleft.MergeErrors(in rright), rleft.Start, rright.End);
+        } else {
+            //id(a) specification
+            if (a.Type == TokenType.TypeIdentifier)
+                return new ParseResult<ST>(new ParserError.Expected(
+                    "`var VARIABLE` or `var TYPE VARIABLE`"), rleft.Start, rleft.End);
+            return new ParseResult<ST>(new ST.VarDeclAssign(kw.Position,
+                    new VarDecl(a.Position, null, a.Content), val) as ST,
+                rleft.MergeErrors(in rright), rleft.Start, rright.End);
+        }
+    };
     
     //Statement: value, variable declaration, or void-type block (if/else, for, while)
     private static readonly Parser<Token, ST> statement = ChoiceL("statement",
         value,
-        //var is required even with type specified to avoid parsing `type name` as a partial function application
-        Kw("var").IgThen(IdentOrType).Then(Ident.Opt()).ThenIg(op("=")).Then(value).Bind(decl => {
+        //var is required even with type specified to avoid parsing `type name` as a curried function application
+        varInit
+        /*Kw("var").Then(IdentOrType.Then(Ident.Opt()).ThenIg(op("=")).Then(value)).Bind(kwdecl => {
+            var (kw, decl) = kwdecl;
             if (decl.a.b.Try(out var id)) {
                 //type + id specification
                 var tDef = ParseType(decl.a.a.Content);
@@ -291,19 +376,20 @@ public static class Parser {
                     return new ParseResult<ST>(
                         new LocatedParserError(decl.a.a.Index, new ParserError.Failure(typ.Right)), decl.a.a.Index,
                         decl.a.a.Position.End.Index);
-                return new ParseResult<ST>(new ST.VarDeclAssign(
-                        new VarDecl(decl.a.a.Position.Merge(id.Position), typ.Left, id.Content), decl.b) as ST,
+                return new ParseResult<ST>(new ST.VarDeclAssign(kw.Position, 
+                        new VarDecl(decl.a.a.Position.Merge(id.Position), typ.Left, id.Content), decl.b)
+                        { TypeKwPos = decl.a.a.Position } as ST,
                     null, decl.a.a.Index, decl.b.Position.End.Index);
             } else {
                 if (decl.a.a.Type == TokenType.TypeIdentifier)
                     return new ParseResult<ST>(
                         new LocatedParserError(decl.a.a.Index, new ParserError.Expected(
                             "`var VARIABLE` or `var TYPE VARIABLE`")), decl.a.a.Index, decl.a.a.Position.End.Index);
-                return new ParseResult<ST>(new ST.VarDeclAssign(
+                return new ParseResult<ST>(new ST.VarDeclAssign(kw.Position, 
                         new VarDecl(decl.a.a.Position, null, decl.a.a.Content), decl.b) as ST,
                     null, decl.a.a.Index, decl.b.Position.End.Index);
             }
-        })
+        })*/
         //todo
     );
     private static readonly Parser<Token, List<ST>> statements = 

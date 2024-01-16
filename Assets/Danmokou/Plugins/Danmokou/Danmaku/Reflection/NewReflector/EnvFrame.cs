@@ -9,6 +9,7 @@ using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Danmokou.Reflection;
 using JetBrains.Annotations;
 using UnityEngine.Profiling;
 using Ex = System.Linq.Expressions.Expression;
@@ -98,7 +99,7 @@ public class EnvFrame {
             if (envFrame.Scope.varsAndFns.TryGetValue(varName, out var decl)) {
                 if (decl.FinalizedType != typeof(T))
                     throw new Exception(
-                        $"Types do not align for variable {varName}. Requested: {typeof(T).RName()}; found: {decl.FinalizedType?.RName()}");
+                        $"Types do not align for variable {varName}. Requested: {typeof(T).ExRName()}; found: {decl.FinalizedType?.ExRName()}");
                 return ((FrameVars<T>)envFrame.Variables[decl.TypeIndex]).Values[decl.Index];
             }
         }
@@ -113,7 +114,7 @@ public class EnvFrame {
             if (envFrame.Scope.varsAndFns.TryGetValue(varName, out var decl)) {
                 if (decl.FinalizedType != typeof(T))
                     throw new Exception(
-                        $"Types do not align for variable {varName}. Requested: {typeof(T).RName()}; found: {decl.FinalizedType?.RName()}");
+                        $"Types do not align for variable {varName}. Requested: {typeof(T).ExRName()}; found: {decl.FinalizedType?.ExRName()}");
                 return ref ((FrameVars<T>)envFrame.Variables[decl.TypeIndex]).Values[decl.Index];
             }
         }
@@ -129,7 +130,7 @@ public class EnvFrame {
             if (decl.DeclarationScope == envFrame.Scope || decl.DeclarationScope == envFrame.Scope.DynRealizeSource)
                 return ref ((FrameVars<T>)envFrame.Variables[decl.TypeIndex]).Values[decl.Index];
         }
-        throw new Exception($"Variable {decl.Name}<{decl.FinalizedType!.RName()}> not found in environment frame");
+        throw new Exception($"Variable {decl.Name}<{decl.FinalizedType!.ExRName()}> not found in environment frame");
     }
 
     public static Ex FrameVarValues(LexicalScope scope, Ex envFrame, int parentage, Type typ) {
@@ -215,7 +216,7 @@ public abstract class FrameVars {
         if (!creators.TryGetValue(t, out var c))
             creators[t] = c = Activator.CreateInstance(typeof(VariableStoreCreator<>).MakeGenericType(t)) 
                                   as IVariableStoreCreator ?? 
-                              throw new Exception($"Failed to generate VariableStoreCreator for type {t.RName()}");
+                              throw new Exception($"Failed to generate VariableStoreCreator for type {t.ExRName()}");
         return c.Create();
     }
     
@@ -257,7 +258,7 @@ public class VariableStoreCreator<T> : IVariableStoreCreator {
     FrameVars IVariableStoreCreator.Create() => FrameVars<T>.Create();
 }
 
-//Implementation of ArrayPool that isn't thread-safe but has zero amortized allocation
+//Implementation of ArrayPool of small lengths that isn't thread-safe but has zero amortized allocation
 public static class EFArrayPool<T> {
     //We have buckets as follows:
     //One bucket for each length up to 8.

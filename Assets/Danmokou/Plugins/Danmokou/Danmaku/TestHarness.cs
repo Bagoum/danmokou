@@ -43,7 +43,7 @@ public class TestHarness : RegularUpdater {
     public static void OnSOF(Action doThing) => Check(0, doThing);
 
     public static bool Running => checks.Count > 0;
-    public static StateMachine? LoadBehaviorScript(string sname) {
+    public static EFStateMachine LoadBehaviorScript(string sname) {
         if (!scriptsByName.TryGetValue(sname, out var script)) {
             foreach (var key in scriptsByName.Keys) {
                 if (key.ToLower().StartsWith(sname.ToLower())) {
@@ -53,7 +53,7 @@ public class TestHarness : RegularUpdater {
             }
         }
         if (script == null) throw new Exception($"Couldn't find testing script {sname}");
-        return StateMachineManager.FromText(script);
+        return StateMachineManager.FFromText(script);
     }
     
     #if UNITY_EDITOR

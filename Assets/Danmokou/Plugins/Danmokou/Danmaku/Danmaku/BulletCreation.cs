@@ -102,7 +102,7 @@ public struct DelegatedCreator {
         BulletManager.RequestLaser(transformParent, style, in mov, pi, cold, hot, ref opts);
     }
 
-    public void Summon(bool pooled, SyncHandoff sbh, BehOptions options, VTP path, SMRunner sm, uint id) {
+    public void Summon(bool pooled, SyncHandoff sbh, BehOptions options, VTP path, SMRunner? sm, uint id) {
         var (mov, pi) = PathHandlers(sbh, path, id);
         BulletManager.RequestSummon(pooled, style, in mov, pi, options.ID, transformParent, sm,
             new RealizedBehOptions(options, sbh.GCX, pi.ctx, ParentOffset, FacedRV2(sbh.RV2), sbh.ch.cT));
@@ -190,7 +190,7 @@ public partial class BulletManager {
         } else throw new Exception("Laser must be an faBulletStyle: " + style);
     }
     
-    public static BehaviorEntity RequestSummon(bool pooled, string prefabName, in Movement mov, ParametricInfo pi, string behName, BehaviorEntity? parent, SMRunner sm, RealizedBehOptions? opts) {
+    public static BehaviorEntity RequestSummon(bool pooled, string prefabName, in Movement mov, ParametricInfo pi, string behName, BehaviorEntity? parent, SMRunner? sm, RealizedBehOptions? opts) {
         CheckSentry();
         if (CheckComplexPool(prefabName, out var bsm)) {
             BehaviorEntity beh = pooled ?

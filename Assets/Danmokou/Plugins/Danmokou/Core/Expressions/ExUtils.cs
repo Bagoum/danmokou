@@ -30,7 +30,14 @@ public static class ExUtils {
         tv2rv2.GetConstructor(new[] {tfloat, tfloat, tfloat, tfloat, tfloat})!;
     private static readonly ExFunction quatEuler = ExFunction.Wrap<Quaternion, float>(nameof(Quaternion.Euler), 3);
     private static readonly ExFunction quatEuler3 = ExFunction.Wrap<Quaternion, Vector3>(nameof(Quaternion.Euler), 1);
+    private static readonly Dictionary<(Type, Type), ConstructorInfo> tuple2Constrs = new();
 
+    public static Ex Tuple<T, R>(Ex x, Ex y) {
+        if (!tuple2Constrs.TryGetValue((x.Type, y.Type), out var cons))
+            tuple2Constrs[(x.Type, y.Type)] = cons = typeof(ValueTuple<T, R>).GetConstructor(new[] { x.Type, y.Type });
+        return Ex.New(cons!, x, y);
+    }
+    
     public static Ex V2(Ex x, Ex y) {
         return Ex.New(constrV2, x, y);
     }

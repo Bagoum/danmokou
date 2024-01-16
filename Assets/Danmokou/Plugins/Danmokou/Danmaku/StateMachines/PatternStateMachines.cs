@@ -66,7 +66,7 @@ public class PatternSM : SequentialSM {
             if (i > 0) {
                 target = Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
                 var mov = new Movement(new Vector2(-50f, 0f), 0f);
-                target.Initialize(null, mov, new ParametricInfo(in mov), SMRunner.Null);
+                target.Initialize(null, mov, new ParametricInfo(in mov), null);
                 subsummons.Add(target);
             }
             if (target.TryAsEnemy(out var e)) {

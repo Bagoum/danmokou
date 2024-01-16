@@ -11,6 +11,7 @@ using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
+using Danmokou.Reflection2;
 using JetBrains.Annotations;
 using Danmokou.SM;
 using Danmokou.SM.Parsing;
@@ -23,26 +24,50 @@ using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TE
 using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector3>>;
 using ExTP4 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector4>>;
 using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
+using MethodCall = Danmokou.Reflection2.AST.MethodCall;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
-    private static readonly Dictionary<Type, Type> exTypeRemap = new() {
-        { typeof(ExTP), typeof(TP) },
-        { typeof(ExTP3), typeof(TP3) },
-        { typeof(ExTP4), typeof(TP4) },
-        { typeof(ExBPY), typeof(BPY) },
-        { typeof(ExBPRV2), typeof(BPRV2) },
-        { typeof(Func<TExArgCtx, TEx<bool>>), typeof(Pred) },
-        { typeof(Func<ITexMovement, TEx<float>, TExArgCtx, TExV3, TEx>), typeof(VTP) },
-        { typeof(Func<ITexMovement, TEx<float>, TEx<float>, TExArgCtx, TExV2, TEx>), typeof(LVTP) },
-        { typeof(Func<TExSBC, TEx<int>, TEx<BagoumLib.Cancellation.ICancellee>, TExArgCtx, TEx>), typeof(SBCF) }
+    private static readonly Dictionary<Type, (string descr, Type compiled)> exTypeRemap = new() {
+        { typeof(ExTP), ("ExTP/TP/GCXF<Vector2>", typeof(TP)) },
+        { typeof(ExTP3), ("ExTP3/TP3/GCXF<Vector3>", typeof(TP3)) },
+        { typeof(ExTP4), ("ExTP4/TP4/GCXF<Vector4>", typeof(TP4)) },
+        { typeof(ExBPY), ("ExBPY/BPY/GCXF<float>", typeof(BPY)) },
+        { typeof(ExBPRV2), ("ExBPRV2/BPRV2/GCXF<V2RV2>", typeof(BPRV2)) },
+        { typeof(Func<TExArgCtx, TEx<bool>>), ("ExPred/Pred/GCXF<bool>", typeof(Pred)) },
+        { typeof(Func<ITexMovement, TEx<float>, TExArgCtx, TExV3, TEx>), ("ExVTP/VTP", typeof(VTP)) },
+        { typeof(Func<ITexMovement, TEx<float>, TEx<float>, TExArgCtx, TExV2, TEx>), ("ExLVTP/LVTP", typeof(LVTP)) },
+        { typeof(Func<TExSBC, TEx<int>, TEx<BagoumLib.Cancellation.ICancellee>, TExArgCtx, TEx>), ("ExSBCF/SBCF", typeof(SBCF)) }
     };
     private static readonly Type[] BypassTypes = {
-        typeof(TEx<>), //typeof(EEx<>)
+        typeof(TEx<>),
     };
-    public static Type RemapExType(Type t) => exTypeRemap.TryGetValue(t, out var v) ? v : t;
-    public static string SimpRName(this Type t) => SimplifiedExprPrinter.Default.Print(t);
+    public static Type RemapExType(Type t) => exTypeRemap.TryGetValue(t, out var v) ? v.compiled : t;
 
+    public static string ExRName(this Type t) {
+        return exTypeRemap.TryGetValue(t, out var v) ? v.descr : t.RName();
+    }
+    public static string ExRName(this TypeDesignation t) {
+        if (t.IsResolved)
+            return t.Resolve(Unifier.Empty).LeftOrThrow.ExRName();
+        if (t is TypeDesignation.Known kt) {
+            if (kt.IsArrayTypeConstructor)
+                return ExRName(kt.Arguments[0]) + "[]";
+            if (kt.Arguments.Length == 0)
+                return kt.Typ.ExRName();
+            if (ReflectionUtils.TupleTypesByArity.Contains(kt.Typ))
+                return $"({string.Join(", ", kt.Arguments.Select(ExRName))})";
+            return kt.Typ.ExRName() + $"<{string.Join(",", kt.Arguments.Select(ExRName))}>";
+        } else if (t is TypeDesignation.Dummy d) {
+            return $"({string.Join(",", d.Arguments.Take(d.Arguments.Length - 1).Select(ExRName))})->{ExRName(d.Last)}";
+        } else if (t is TypeDesignation.Variable { RestrictedTypes: { } rt })
+            return $"{string.Join(" or ", rt.Select(ExRName).Distinct())}";
+        else
+            return t.ToString();
+    }
+
+    public static string SimpRName(this Type t) => SimplifiedExprPrinter.Default.Print(t);
+    
     public static string SimpRName(this TypeDesignation t) {
         if (t.IsResolved)
             return t.Resolve(Unifier.Empty).LeftOrThrow.SimpRName();
@@ -51,11 +76,13 @@ public static partial class Reflector {
                 return SimpRName(kt.Arguments[1]);
             } else if (BypassTypes.Contains(kt.Typ))
                 return SimpRName(kt.Arguments[0]);
-            return kt.IsArrayTypeConstructor ?
-                SimpRName(kt.Arguments[0]) + "[]" :
-                kt.Arguments.Length == 0 ?
-                    kt.Typ.RName() :
-                    kt.Typ.RName() + $"<{string.Join(",", kt.Arguments.Select(SimpRName))}>";
+            if (kt.IsArrayTypeConstructor)
+                return SimpRName(kt.Arguments[0]) + "[]";
+            if (kt.Arguments.Length == 0)
+                return kt.Typ.ExRName();
+            if (ReflectionUtils.TupleTypesByArity.Contains(kt.Typ))
+                return $"({string.Join(", ", kt.Arguments.Select(SimpRName))})";
+            return kt.Typ.ExRName() + $"<{string.Join(",", kt.Arguments.Select(SimpRName))}>";
         } else if (t is TypeDesignation.Dummy d) {
             return $"({string.Join(",", d.Arguments[..^1].Select(SimpRName))})->{SimpRName(d.Last)}";
         } else if (t is TypeDesignation.Variable { RestrictedTypes: { } rt })
@@ -66,8 +93,6 @@ public static partial class Reflector {
     private class SimplifiedExprPrinter : CSharpTypePrinter {
         public new static readonly ITypePrinter Default = new SimplifiedExprPrinter();
         public override string Print(Type t) {
-            if (exTypeRemap.TryGetValue(t, out var v))
-                return Print(v);
             if (t.IsConstructedGenericType) {
                 if (t.GetGenericTypeDefinition() == typeof(Func<,>) && t.GenericTypeArguments[0] == typeof(TExArgCtx)) {
                     return Print(t.GenericTypeArguments[1]);
@@ -75,6 +100,8 @@ public static partial class Reflector {
                 if (BypassTypes.Contains(t.GetGenericTypeDefinition()))
                     return Print(t.GenericTypeArguments[0]);
             }
+            if (exTypeRemap.TryGetValue(t, out var v))
+                return Print(v.compiled);
             return base.Print(t);
         }
     }
@@ -86,7 +113,7 @@ public static partial class Reflector {
     /// <param name="LookupMethod">Whether this parameter has LookupMethodAttribute</param>
     /// <param name="NonExplicit">Whether this parameter has NonExplicitAttribute</param>
     /// <param name="BDSL1ImplicitSMList">Whether this parameter has <see cref="BDSL1ImplicitChildrenAttribute"/></param>
-    public record NamedParam(Type Type, string Name, bool LookupMethod, bool NonExplicit, bool BDSL1ImplicitSMList) {
+    public record NamedParam(Type Type, string Name, bool LookupMethod = false, bool NonExplicit = false, bool BDSL1ImplicitSMList = false) {
         public static implicit operator NamedParam(ParameterInfo pi) => 
             new(pi.ParameterType, pi.Name, 
                 pi.GetCustomAttribute<LookupMethodAttribute>() != null,
@@ -161,14 +188,9 @@ public static partial class Reflector {
         T? GetAttribute<T>() where T : Attribute;
 
         /// <summary>
-        /// Invoke this method.
+        /// Invoke this method. If this is an instance method, the instance should be the first argument of `args`.
         /// </summary>
-        object? InvokeStatic(Reflection2.AST.MethodCall? ast, params object?[] args) => Invoke(ast, null, args);
-
-        /// <summary>
-        /// Invoke this method.
-        /// </summary>
-        object? Invoke(Reflection2.AST.MethodCall? ast, object? instance, params object?[] args);
+        object? Invoke(MethodCall? ast, params object?[] args);
 
         /// <summary>
         /// If this method is defined in a file, make a link to the file.
@@ -185,284 +207,6 @@ public static partial class Reflector {
         /// </summary>
         /// <returns></returns>
         string Name { get; }
-    }
-    /// <summary>
-    /// An annotated method signature.
-    /// </summary>
-    public record MethodSignature : IMethodSignature {
-        private static readonly Dictionary<MethodBase, MethodSignature> globals = new();
-        /// <summary><see cref="MethodInfo"/> or <see cref="ConstructorInfo"/> for the method.</summary>
-        public MethodBase Mi { get; init; }
-        /// <summary>Simplified description of the method parameters.</summary>
-        public NamedParam[] Params { get; init; }
-        /// <inheritdoc/>
-        public TypeDesignation.Dummy SharedType { get; init; }
-        /// <inheritdoc cref="IGenericMethodSignature.SharedGenericTypes"/>
-        public TypeDesignation.Variable[] SharedGenericTypes { get; }
-
-        protected MethodSignature(MethodBase Mi, NamedParam[] Params) {
-            this.Mi = Mi;
-            this.Params = Params;
-            SharedType = TypeDesignation.FromMethod(ReturnType, 
-                Params.Select(p => p.Type).And(p => (Mi.IsStatic || Mi.IsConstructor) ? p : p.Prepend(Mi.DeclaringType)) , out var map);
-            SharedGenericTypes = 
-                Mi.IsGenericMethodDefinition ? 
-                    Mi.GetGenericArguments()
-                    //it's possible for t to not be in map if it's "useless", eg. int Method<T>(int x).
-                        .Select(t => map.TryGetValue(t, out var vt) ? vt : new TypeDesignation.Variable())
-                        .ToArray()
-                    : Array.Empty<TypeDesignation.Variable>();
-        }
-        public bool IsFallthrough { get; init; } = false;
-        public string TypeName => Mi.DeclaringType!.SimpRName();
-        public string Name => Mi.Name;
-        public bool IsCtor => Mi.Name == ".ctor";
-        public bool IsStatic => Mi.IsStatic;
-
-        public Type? DeclaringType => Mi.DeclaringType;
-
-        public virtual Type ReturnType => Mi switch {
-            ConstructorInfo constructorInfo => constructorInfo.DeclaringType!,
-            MethodInfo methodInfo => methodInfo.ReturnType,
-            _ => throw new ArgumentOutOfRangeException(nameof(Mi))
-        };
-
-        public string TypeOnlySignature {
-            get {
-                if (Params.Length == 0)
-                    return IsCtor ? "" : $"{ReturnType.SimpRName()}";
-                var suffix = IsCtor ? "" : $": {ReturnType.SimpRName()}";
-                return $"({string.Join(", ", Params.Select(p => p.Type.SimpRName()))}){suffix}";
-            }
-        }
-
-        public string AsSignature => AsSignatureWithParamMod((p, _) => p.AsParameter);
-
-        public string AsSignatureWithParamMod(Func<NamedParam, int, string> paramMod) =>
-            IsCtor ?
-                $"new {TypeName}({string.Join(", ", Params.Select(paramMod))})" :
-                $"{ReturnType.SimpRName()} {Name}({string.Join(", ", Params.Select(paramMod))})";
-
-        /// <summary>
-        /// Number of parameters that must be parsed by reflection.
-        /// </summary>
-        public int ExplicitParameterCount(int start = 0, int? end = null) {
-            var ct = 0;
-            for (int ii = start; ii < (end ?? Params.Length); ++ii)
-                if (!Params[ii].NonExplicit)
-                    ++ct;
-            return ct;
-        }
-
-        public T? GetAttribute<T>() where T : Attribute => Mi.GetCustomAttribute<T>();
-
-        public virtual object? Invoke(Reflection2.AST.MethodCall? ast, object? instance, params object?[] args) => 
-            InvokeMi(ast, instance, Mi, args);
-        
-        protected static object? InvokeMi(Reflection2.AST.MethodCall? ast, object? instance, MethodBase mi, object?[] args) 
-            => mi switch {
-                ConstructorInfo cI => cI.Invoke(args),
-                _ => mi.Invoke(instance, args)
-            };
-
-        public string? MakeFileLink(string typName) =>
-            Mi.DeclaringType!.GetCustomAttribute<ReflectAttribute>(false)?.FileLink(typName);
-
-        public virtual InvokedMethod Call(string? calledAs) => new(this, calledAs);
-
-        /// <summary>
-        /// Returns a <see cref="MethodSignature"/> or <see cref="GenericMethodSignature"/> for this method.
-        /// </summary>
-        public static MethodSignature Get(MethodBase mi) {
-            if (globals.TryGetValue(mi, out var sig))
-                return sig;
-            var prms = mi.GetParameters();
-            var nPrms = new NamedParam[prms.Length];
-            for (int ii = 0; ii < nPrms.Length; ++ii)
-                nPrms[ii] = prms[ii];
-            var fallthrough = mi.GetCustomAttribute<FallthroughAttribute>() != null;
-            if (mi.IsGenericMethodDefinition && mi is MethodInfo inf)
-                return globals[mi] = new GenericMethodSignature(inf, nPrms) { IsFallthrough = fallthrough };
-            return globals[mi] = new(mi, nPrms) { IsFallthrough = fallthrough };
-        }
-
-        public virtual LiftedMethodSignature<T> Lift<T>() => LiftedMethodSignature<T>.Lift(this);
-    }
-
-    public interface IGenericMethodSignature : IMethodSignature {
-        /// <summary>
-        /// Make a concrete method out of a generic one using the provided type parameter.
-        /// </summary>
-        MethodSignature Specialize(params Type[] t);
-        
-        /// <summary>
-        /// Get the type designations for each of the generic types of this method.
-        /// Note this should not be used for unification, as it is shared between all invocations.
-        /// </summary>
-        TypeDesignation.Variable[] SharedGenericTypes { get; }
-    }
-
-    /// <inheritdoc cref="MethodSignature"/>
-    public record GenericMethodSignature(MethodInfo Minf, NamedParam[] Params) : MethodSignature(Minf, Params), IGenericMethodSignature {
-        public static readonly Dictionary<(FreezableArray<Type>, MethodSignature), MethodSignature> specializeCache = new();
-        
-        public override object? Invoke(Reflection2.AST.MethodCall? ast, object? instance, params object?[] prms) {
-            throw new Exception("A generic method signature cannot be invoked");
-        }
-
-        public MethodSignature Specialize(params Type[] t) {
-            var typDef = new FreezableArray<Type>(t);
-            return specializeCache.TryGetValue((typDef, this), out var m) ?
-                m :
-                specializeCache[(typDef, this)] = MethodSignature.Get(Minf.MakeGenericMethod(t));
-        }
-
-        public override LiftedMethodSignature<T> Lift<T>() => LiftGeneric<T>();
-
-        public GenericLiftedMethodSignature<T> LiftGeneric<T>() => 
-            LiftedMethodSignature<T>.Lift(this) as GenericLiftedMethodSignature<T> ??
-            throw new StaticException("Incorrect lifting behavior on generic method signature");
-    }
-
-    /// <summary>
-    /// A description of a funcified method called in reflection.
-    /// <br/>A funcified method has a "source" signature (A, B, C)->R, but is internally
-    /// converted to "funcified" signature (T->A, T->B, T->C)->(T->R);
-    ///  ie. it is lifted over the reader functor. This is because
-    /// some internal reflection functions are of type <see cref="TExArgCtx"/>->TEx,
-    ///  but it is generally easier to write them as type TEx where possible.
-    /// </summary>
-    /// <param name="Mi">Method info for the method. This has the source signature (A, B, C)->R.</param>
-    /// <param name="FuncedParams">The parameter list [T->A, T->B, T->C]. This is provided as <see cref="MethodSignature.Params"/>.</param>
-    /// <param name="BaseParams">The parameter list [A, B, C].</param>
-    public abstract record LiftedMethodSignature
-        (MethodBase Mi, NamedParam[] FuncedParams, NamedParam[] BaseParams) : MethodSignature(Mi, FuncedParams) {
-        protected static readonly Dictionary<(Type, Type), (Type lmsTR, ConstructorInfo constr)> typeSpecCache = new();
-        protected static readonly Type[] consTypes = { typeof(MethodBase), typeof(NamedParam[]), typeof(NamedParam[]) };
-
-        public override InvokedMethod Call(string? calledAs) => new LiftedInvokedMethod(this, calledAs);
-        
-        public override object? Invoke(Reflection2.AST.MethodCall? ast, object? instance, params object?[] prms) {
-            throw new Exception(
-                "This lifted method signature does not have a specified return type and therefore cannot be invoked");
-        }
-
-        /// <summary>
-        /// Lift a set of parameters over the reader functor T->.
-        /// </summary>
-        public static NamedParam[] LiftParams<T>(MethodSignature method) => LiftParams(typeof(T), method);
-        
-        public static NamedParam[] LiftParams(Type t, MethodSignature method) {
-            var baseTypes = method.Params;
-            NamedParam[] fTypes = new NamedParam[baseTypes.Length];
-            for (int ii = 0; ii < baseTypes.Length; ++ii) {
-                var bt = baseTypes[ii].Type;
-                fTypes[ii] = baseTypes[ii] with {
-                    Type = ReflectionData.LiftType(t, bt, out var result) ? result : bt
-                };
-            }
-            return fTypes;
-        }
-        
-    }
-
-    /// <inheritdoc cref="LiftedMethodSignature"/>
-    public abstract record LiftedMethodSignature<T>(MethodBase Mi, NamedParam[] FuncedParams, NamedParam[] BaseParams) :
-        LiftedMethodSignature(Mi, FuncedParams, BaseParams) {
-        private static readonly Dictionary<MethodBase, LiftedMethodSignature<T>> liftCache = new();
-        
-        /// <summary>
-        /// Lift a method over the reader functor T->.
-        /// <br/>If R is known statically, use <see cref="LiftedMethodSignature{T,R}"/>'s Lift instead.
-        /// </summary>
-        public static LiftedMethodSignature<T> Lift(MethodSignature method) {
-            if (liftCache.TryGetValue(method.Mi, out var sig))
-                return sig;
-            if (method is LiftedMethodSignature)
-                throw new Exception("Tried to lift a method twice");
-            
-            //easy case
-            if (method is GenericMethodSignature gm)
-                return liftCache[method.Mi] = new GenericLiftedMethodSignature<T>(gm.Minf, LiftParams<T>(gm), gm.Params);
-
-            //not-easy case
-            var t = typeof(T);
-            var r = method.ReturnType;
-            if (!typeSpecCache.TryGetValue((t, r), out var info)) {
-                var type = typeof(LiftedMethodSignature<,>).MakeGenericType(t, r);
-                var cons = type.GetConstructor(consTypes);
-                typeSpecCache[(t, r)] = info = (type, cons);
-            }
-            return liftCache[method.Mi] = info.constr!.Invoke(new object[] { method.Mi, LiftParams(t, method), method.Params })
-                as LiftedMethodSignature<T> ?? throw new StaticException(
-                $"Dynamic instantiation of LiftedMethodSignature<{t.RName()},{r.RName()}> failed");
-        }
-    }
-    
-    /// <inheritdoc cref="LiftedMethodSignature"/>
-    public record GenericLiftedMethodSignature<T>(MethodInfo Minf, NamedParam[] FuncedParams, NamedParam[] BaseParams) : LiftedMethodSignature<T>(Minf, FuncedParams, BaseParams), IGenericMethodSignature  {
-        public override Type ReturnType => Func2Type(typeof(T), base.ReturnType);
-
-        public override object? Invoke(Reflection2.AST.MethodCall? ast, object? instance, params object?[] prms)
-            => throw new Exception("A generic lifted method cannot be invoked");
-        
-        public LiftedMethodSignature<T> Specialize(Type[] t) {
-            var typDef = new FreezableArray<Type>(t);
-            if (GenericMethodSignature.specializeCache.TryGetValue((typDef, this), out var m))
-                return m as LiftedMethodSignature<T> ??
-                       throw new StaticException("Cached specialization of lifted generic method failed");
-            var method =  MethodSignature.Get(Minf.MakeGenericMethod(t)).Lift<T>();
-            GenericMethodSignature.specializeCache[(typDef, this)] = method;
-            return method;
-        }
-
-        MethodSignature IGenericMethodSignature.Specialize(Type[] t) => Specialize(t);
-    }
-    
-    //Note that we must eventually specify the R in LiftedMethodSignature in order to ensure that
-    // InvokeMiFunced creates a correctly-typed Func<T,R>.
-    /// <inheritdoc cref="LiftedMethodSignature"/>
-    public record LiftedMethodSignature<T, R>
-        (MethodBase Mi, NamedParam[] FuncedParams, NamedParam[] BaseParams) : LiftedMethodSignature<T>(Mi, FuncedParams, BaseParams) {
-        private static readonly Dictionary<MethodBase, LiftedMethodSignature<T, R>> liftCache = new();
-        private Type? LiftedInstanceType => Mi.IsStatic ? null :
-            ReflectionData.LiftType(typeof(T), Mi.DeclaringType!, out var result) ? result : Mi.DeclaringType!;
-        public override Type ReturnType => typeof(Func<T, R>);
-
-        public override object? Invoke(Reflection2.AST.MethodCall? ast, object? instance, params object?[] prms)
-            => InvokeMiFunced(ast, instance, prms);
-        public Func<T,R> InvokeMiFunced(Reflection2.AST.MethodCall? ast, object? instance, params object?[] fprms) => 
-            //Note: this lambda capture generally prevents using ArrayCache
-            bpi => {
-                if (IsStatic && instance != null)
-                    throw new Exception($"Static method {Name} provided with an instance argument");
-                if (!IsStatic && instance == null)
-                    throw new Exception($"Instance method {Name} provided with no instance argument");
-                var baseArgs = new object?[BaseParams.Length];
-                for (int ii = 0; ii < baseArgs.Length; ++ii)
-                    //Convert from funced object to base object (eg. TExArgCtx->TEx<float> to TEx<float>)
-                    baseArgs[ii] = ReflectionData.Defuncify(BaseParams[ii].Type, FuncedParams[ii].Type, fprms[ii]!, bpi!);
-                foreach (var writeable in Mi.GetCustomAttribute<AssignsAttribute>()?.Indices ?? Array.Empty<int>()) {
-                    if (Reflection2.Helpers.AssertWriteable(writeable, baseArgs[writeable]!) is { } exc)
-                        throw ast?.Raise(exc) as Exception ?? exc;
-                }
-                if (instance != null)
-                    instance = ReflectionData.Defuncify(DeclaringType!, LiftedInstanceType!, instance, bpi!);
-                return (R)InvokeMi(ast, instance, Mi, baseArgs)!;
-            };
-
-        public override InvokedMethod Call(string? calledAs) => new LiftedInvokedMethod<T,R>(this, calledAs);
-
-        /// <summary>
-        /// Lift a method over the reader functor T->.
-        /// <br/>If R is not known statically, use <see cref="LiftedMethodSignature{T}"/>'s Lift instead.
-        /// </summary>
-        public new static LiftedMethodSignature<T, R> Lift(MethodSignature method) {
-            if (liftCache.TryGetValue(method.Mi, out var sig))
-                return sig;
-            //funced methods are not fallthrough
-            return liftCache[method.Mi] = new(method.Mi, LiftedMethodSignature.LiftParams<T>(method), method.Params);
-        }
     }
 
     public static MethodSignature Signature(this MethodBase mi) => MethodSignature.Get(mi);
@@ -592,18 +336,18 @@ public static partial class Reflector {
 
     public static object? ExtInvokeMethod(Type t, string member, object[] prms) {
         if (TryCompileOption(t, out var compiler)) {
-            return compiler.mi.InvokeStatic(null, ExtInvokeMethod(compiler.source, member, prms));
+            return compiler.mi.Invoke(null, ExtInvokeMethod(compiler.source, member, prms));
         } else if (t == typeof(StateMachine)) {
             return StateMachine.Create(member, prms).Evaluate(new());
         }
         if (ASTTryLookForMethod(t, member) is { } result)
-            return result.InvokeStatic(null, prms);
+            return result.Invoke(null, prms);
         //this also requires fallthrough support, which is handled through parent methods in the inner call.
         if (FallThroughOptions.TryGetValue(t, out var ftmi)) {
             if ((result = ASTTryLookForMethod(ftmi.mi.Params[0].Type, member)) != null)
-                return ftmi.mi.InvokeStatic(null, result.InvokeStatic(null, prms));
+                return ftmi.mi.Invoke(null, result.Invoke(null, prms));
         }
-        throw new Exception($"External method invocation failed for type {t.RName()}, method {member}. " +
+        throw new Exception($"External method invocation failed for type {t.ExRName()}, method {member}. " +
                             "This is probably an error in static code.");
     }
 

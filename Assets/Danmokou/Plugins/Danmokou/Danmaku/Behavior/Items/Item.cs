@@ -28,7 +28,7 @@ public abstract class Item : Pooled<Item> {
     protected Vector2 loc;
 
     public SFXConfig? onCollect;
-    private PlayerController target = null!;
+    private PlayerController? target;
 
     public enum HomingState {
         NO,
@@ -71,7 +71,7 @@ public abstract class Item : Pooled<Item> {
     
     
     public virtual void Initialize(Vector2 root, Vector2 targetOffset, PoC? collectionPoint = null) {
-        target = ServiceLocator.Find<PlayerController>();
+        target = ServiceLocator.FindOrNull<PlayerController>();
         tr.localEulerAngles = Vector3.zero;
         tr.position = loc = root;
         summonTarget = targetOffset;
@@ -105,18 +105,19 @@ public abstract class Item : Pooled<Item> {
         if (State == HomingState.WAITING && time > MinTimeBeforeHome) {
             State = HomingState.HOMING;
         }
-        bool playerIsValid = target.State != PlayerController.PlayerState.RESPAWN;
-        if (playerIsValid && CollisionMath.CircleOnPoint(loc, target.Ship.itemCollectRadius + CollectRadiusBonus, target.Location)) {
+        bool playerIsValid = target != null && target.State != PlayerController.PlayerState.RESPAWN;
+        if (playerIsValid && CollisionMath.CircleOnPoint(loc, target!.Ship.itemCollectRadius + CollectRadiusBonus, target.Location)) {
             CollectMe(target);
             return;
         } 
         if (State == HomingState.HOMING && playerIsValid) {
             timeHoming += ETime.FRAME_TIME;
-            loc = Vector2.Lerp(loc, target.Location, M.Lerp(homeRate * ETime.FRAME_TIME, peakedHomeRate, timeHoming/maxTimeHoming));
+            loc = Vector2.Lerp(loc, target!.Location, M.Lerp(homeRate * ETime.FRAME_TIME, peakedHomeRate, timeHoming/maxTimeHoming));
         } else {
             loc += ETime.FRAME_TIME * (Velocity(time) + summonTarget * 
                 M.DEOutSine(Mathf.Clamp01(time / lerpIntoOffsetTime)) / lerpIntoOffsetTime);
-            if (Attractible && CollisionMath.CircleOnPoint(loc, target.Ship.itemAttractRadius, target.Location)) SetHome();
+            if (Attractible && playerIsValid && CollisionMath.CircleOnPoint(loc, target!.Ship.itemAttractRadius, target.Location)) 
+                SetHome();
             else if (!LocationHelpers.OnScreenInDirection(loc, -screenRange * Direction) || 
                      (time > MinCullTime && !LocationHelpers.OnPlayableScreenBy(CullRadius, loc))) {
                 ItemCulled.OnNext(Type);

@@ -183,7 +183,7 @@ public record BehOption {
 
 public readonly struct RealizedBehOptions {
     public readonly bool smooth;
-    public readonly SMRunner smr;
+    public readonly SMRunner? smr;
     public readonly float scale;
     public readonly int? hp;
     public readonly int? layer;

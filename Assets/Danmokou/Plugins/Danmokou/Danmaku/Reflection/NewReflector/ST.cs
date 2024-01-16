@@ -12,9 +12,11 @@ using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.DMath.Functions;
 using Danmokou.Reflection;
+using LanguageServer.VsCode.Contracts;
 using MathNet.Numerics;
 using Mizuhashi;
 using Ex = System.Linq.Expressions.Expression;
+using SemanticTokenTypes = Danmokou.Reflection.SemanticTokenTypes;
 
 namespace Danmokou.Reflection2 {
 
@@ -87,11 +89,17 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
     public record Ident(PositionRange Position, string Name, bool Generic) : ST(Position) {
         public Ident(Lexer.Token token) : this(token.Position, token.Content, token.Type == Lexer.TokenType.TypeIdentifier) { }
         protected override IAST _AnnotateInner(LexicalScope scope) {
+            if (Name.StartsWith("&"))
+                return new AST.WeakReference(Position, scope, Name.Substring(1));
+            var asEnumTypes = Reflector.enumResolversByKey.TryGetValue(Name, out var vals) ? vals : null;
             if (scope.FindDeclaration(Name) is { } decl)
-                return new AST.Reference(Position, scope, Name, decl);
+                return new AST.Reference(Position, scope, Name, decl, asEnumTypes);
             if (scope.FindStaticMethodDeclaration(Name) is { } meths)
-                return new AST.MethodCall(Position, Position, scope, meths.Select(m => m.Call(Name)).ToArray());
-            return new AST.Reference(Position, scope, Name, scope.RequestDeclaration(Position, Name));
+                return AST.MethodCall.Make(Position, Position, scope, meths.Select(m => m.Call(Name)).ToArray(), System.Array.Empty<ST>());
+            if (asEnumTypes != null)
+                return new AST.Reference(Position, scope, Name, null, asEnumTypes);
+            
+            return new AST.Failure(new(Position, $"The name \"{Name}\" does not refer to anything."), scope);
         }
 
         public override IEnumerable<PrintToken> DebugPrint() {
@@ -117,20 +125,28 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
     /// </summary>
     /// <param name="Declaration">The variable declaration.</param>
     /// <param name="AssignValue">The value to which the variable is assigned, eg. `5`.</param>
-    public record VarDeclAssign(VarDecl Declaration, ST AssignValue) : ST(Declaration.Position.Merge(AssignValue.Position)) {
+    public record VarDeclAssign(PositionRange VarKwPos, VarDecl Declaration, ST AssignValue) : ST(VarKwPos.Merge(AssignValue.Position)) {
+        public PositionRange? TypeKwPos { get; init; }
+        
         private readonly FunctionCall Assignment =
             new(Declaration.Position.Merge(AssignValue.Position),
                 new FnIdent(new(Declaration.Position.End, AssignValue.Position.Start),
-                    Parser.Lift(typeof(ExMAssign), nameof(ExMAssign.Is)).Call(null)),
+                    Parser.Lift(typeof(ExMAssign), nameof(ExMAssign.Assign)).Call(null)),
                 new Ident(Declaration.Position, Declaration.Name, false),
                 AssignValue);
         protected override IAST _AnnotateInner(LexicalScope scope) {
             if (scope.DeclareVariable(Declaration) is { IsRight:true} r)
                 return new AST.Failure(new(Position, 
-                    $"The declaration ({Declaration.KnownType?.RName() ?? "(type undetermined)"} {Declaration.Name}) " +
-                    $"conflicts with the declaration ({r.Right.KnownType?.RName() ?? "(type undetermined)"} " +
+                    $"The declaration ({Declaration.KnownType?.ExRName() ?? "(type undetermined)"} {Declaration.Name}) " +
+                    $"conflicts with the declaration ({r.Right.KnownType?.ExRName() ?? "(type undetermined)"} " +
                     $"{r.Right.Name}) at {r.Right.Position}"), scope);
-            return Assignment.Annotate(scope);
+            var ret = Assignment.Annotate(scope);
+            if (ret is AST.MethodCall meth)
+                meth.PrecedingTokens = new[] {
+                    new SemanticToken(VarKwPos, SemanticTokenTypes.Keyword),
+                    TypeKwPos is { } typ ? new SemanticToken(typ, SemanticTokenTypes.Type) : null
+                }.Where(x => x != null).ToArray()!;
+            return ret;
         }
 
         public override IEnumerable<PrintToken> DebugPrint() {
@@ -158,6 +174,39 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                 yield return w;
         }
     }
+    /// <summary>
+    /// A member function call `x.f(y)`.
+    /// </summary>
+    public record MemberFunction(PositionRange Position, ST Object, Ident Member, IEnumerable<ST> Args) : ST(Position) {
+        private ST[] AllArgs { get; } = Args.Prepend(Object).ToArray();
+
+        protected override IAST _AnnotateInner(LexicalScope scope) {
+            var id = Member;
+            //TODO we allow C# extension-styles calls, but no support for instance methods
+            if (scope.FindStaticMethodDeclaration(id.Name.ToLower()) is { } decls) {
+                var argFilter = decls.Where(d => d.Params.Length == AllArgs.Length).ToList();
+                if (argFilter.Count > 0)
+                    return AST.MethodCall.Make(Position, id.Position, scope,
+                        argFilter.Select(d => d.Call(id.Name)).ToArray(), AllArgs, false);
+                else
+                    return new AST.Failure(new(Position, id.Position,
+                        $"There is no method by name `{id.Name}` that takes {AllArgs.Length} arguments." +
+                        $"\nThe signatures of the methods named `{id.Name}` are as follows:" +
+                        $"\n\t{string.Join("\n\t", decls.Select(o => o.AsSignature))}"), scope) {
+                        Completions = decls
+                    };
+            } else
+                return new AST.Failure(new(Position, $"Couldn't find any method by the name `{id.Name}`."), scope);
+        }
+
+        public override IEnumerable<PrintToken> DebugPrint() {
+            foreach (var w in Object.DebugPrint())
+                yield return w;
+            yield return ".";
+            foreach (var w in Member.DebugPrint())
+                yield return w;
+        }
+    }
 
     /// <summary>
     /// A C#-style function call with parentheses and commas, such as `f(x, y)`,
@@ -169,26 +218,24 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
         protected override IAST _AnnotateInner(LexicalScope scope) {
             //If we're directly calling a *static method*, then we already know the signatures
             if (Fn is FnIdent fn) {
-                return new AST.MethodCall(Position, fn.Position, scope, fn.Func, 
-                    Args.Select(a => a.Annotate(scope)).ToArray()) 
-                    { OverloadsAreInterchangeable = OverloadsInterchangeable};
+                return AST.MethodCall.Make(Position, fn.Position, scope, fn.Func, Args,  OverloadsInterchangeable);
             } else if (Fn is Ident id) {
                 if (scope.FindStaticMethodDeclaration(id.Name.ToLower()) is { } decls) {
                     var argFilter = decls.Where(d => d.Params.Length == Args.Length).ToList();
                     if (argFilter.Count > 0)
-                        return new AST.MethodCall(Position, id.Position, scope,
-                            decls.Select(d => d.Call(id.Name)).ToArray(),
-                            Args.Select(a => a.Annotate(scope)).ToArray())
-                            { OverloadsAreInterchangeable = OverloadsInterchangeable};
+                        return AST.MethodCall.Make(Position, id.Position, scope,
+                            argFilter.Select(d => d.Call(id.Name)).ToArray(), Args, OverloadsInterchangeable);
                     else
                         return new AST.Failure(new(Position, id.Position,
                             $"There is no method by name `{id.Name}` that takes {Args.Length} arguments." +
                             $"\nThe signatures of the methods named `{id.Name}` are as follows:" +
-                            $"\n\t{string.Join("\n\t", decls.Select(o => o.AsSignature))}"), scope);
+                            $"\n\t{string.Join("\n\t", decls.Select(o => o.AsSignature))}"), scope) {
+                            Completions = decls
+                        };
                 } else
                     return new AST.Failure(new(Position, $"Couldn't find any method by the name `{id.Name}`."), scope);
             }
-            //instance function calls, lambda calls, etc
+            //TODO lambda calls, etc
             throw new NotImplementedException();
         }
 
@@ -203,16 +250,51 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
     }
 
     /// <summary>
-    /// A Haskell-style partial function call, such as `f x`.
+    /// A function call that explicitly declares possibly fewer arguments than required by the function.
+    /// <br/>In the form #(f, a1, a2, a3); where in this case function f requires 3 or more arguments.
+    /// </summary>
+    public record PartialFunctionCall(PositionRange Position, Ident Fn, params ST[] Args) : ST(Position) {
+        public bool OverloadsInterchangeable { get; init; } = false;
+        protected override IAST _AnnotateInner(LexicalScope scope) {
+            //If we're directly calling a *static method*, then we already know the signatures
+            if (scope.FindStaticMethodDeclaration(Fn.Name.ToLower()) is { } decls) {
+                var argFilter = decls.Where(d => d.Params.Length >= Args.Length).ToList();
+                if (argFilter.Count > 0)
+                    return AST.MethodCall.Make(Position, Fn.Position, scope, argFilter.Select(d => 
+                        d.PartiallyApply(Args.Length).Call(Fn.Name)).ToArray(), Args, OverloadsInterchangeable);
+                else
+                    return new AST.Failure(new(Position, Fn.Position,
+                        $"There is no method by name `{Fn.Name}` that takes {Args.Length} arguments." +
+                        $"\nThe signatures of the methods named `{Fn.Name}` are as follows:" +
+                        $"\n\t{string.Join("\n\t", decls.Select(o => o.AsSignature))}"), scope) {
+                        Completions = decls
+                    };
+            } else
+                return new AST.Failure(new(Position, $"Couldn't find any method by the name `{Fn.Name}`."), scope);
+        }
+
+        public override IEnumerable<PrintToken> DebugPrint() {
+            foreach (var w in Fn.DebugPrint())
+                yield return w;
+            yield return "(";
+            foreach (var w in IDebugPrint.PrintArgs(Args))
+                yield return w;
+            yield return ")";
+        }
+    }
+
+    
+    /// <summary>
+    /// A Haskell-style curried function call, such as `f x`.
     /// <br/>In cases where multiple arguments are applied, this is constructed left-associatively as
     ///  `f x y z` = P(P(P(f, x), y), z).
     /// </summary>
-    public record PartialFunctionCall(ST Fn, ST Arg) : ST(Fn.Position.Merge(Arg.Position)) {
+    public record CurriedFunctionCall(ST Fn, ST Arg) : ST(Fn.Position.Merge(Arg.Position)) {
         protected override IAST _AnnotateInner(LexicalScope scope) {
             //Get the leftmost function and a list of args
             var argsl = new List<ST>() { Arg };
             var leftmost = Fn;
-            while (leftmost is PartialFunctionCall pfc) {
+            while (leftmost is CurriedFunctionCall pfc) {
                 argsl.Add(pfc.Arg);
                 leftmost = pfc.Fn;
             }
@@ -268,9 +350,9 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             }
             if (GetOverloads(leftmost, scope) is not { } overloads) {
                 return new AST.Failure(new(leftmost.Position,
-                    "The function in a partial function application must be a " +
-                    "named static function. Please replace this with a parenthesized " +
-                    "function call."), scope);
+                    "The parser thinks this is a method call, but no static method with this name was found. " +
+                    "If this is an instance method, script function, or lambda, please parenthesize the arguments. " +
+                    "If this is not a method call, then there is something wrong with your syntax."), scope);
             }
             //Do a quick check to see if the function grouping makes sense in terms of types
             // This is a weak check, so it may return True if the grouping is actually unsound
@@ -298,8 +380,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             //If there are overloads that match the numerical requirements, use them
             var sameArgsReq = overloads.Where(f => f.Params.Length == args.Length).ToArray();
             if (sameArgsReq.Length > 0)
-                return new AST.MethodCall(Position, leftmost.Position, scope,
-                    sameArgsReq, args.ToArray().Select(a => a.Annotate(scope)).ToArray());
+                return AST.MethodCall.Make(Position, leftmost.Position, scope, sameArgsReq, args);
             //If there are overloads that require fewer args than provided, use them and do smart grouping
             var lessArgsReq = overloads.Where(f => f.Params.Length < args.Length).ToArray();
             if (lessArgsReq.Length > 0) {
@@ -333,12 +414,12 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                         $"combined to {argsl.Count} parameters. Please try using parentheses.\n\t{argsErr}"), scope);
                 }
                 var argsCts = possibleArgGroupings[0].pArgs.ToDictionary(kv => kv.index, kv => kv.argCt);
-                var argStack = new Stack<IAST>();
-                var mArgsTmp = new List<IAST>();
+                var argStack = new Stack<ST>();
+                var mArgsTmp = new List<ST>();
                 for (int ii = args.Length - 1; ii >= -1; --ii) {
                     var st = ii >= 0 ? args[ii] : leftmost;
                     if (!argsCts.TryGetValue(ii, out var mArgCt) || mArgCt == 0)
-                        argStack.Push(st.Annotate(scope));
+                        argStack.Push(st);
                     else {
                         for (int ima = 0; ima < mArgCt; ++ima)
                             mArgsTmp.Add(argStack.Pop());
@@ -348,12 +429,11 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                             .ToArray();
                         if (mOverloads.Length == 0)
                             throw new StaticException("Incorrect partial application overload lookup");
-                        argStack.Push(new AST.MethodCall(st.Position.Merge(mArgsTmp[^1].Position), 
-                            st.Position, scope, mOverloads, mArgsTmp.ToArray()));
+                        argStack.Push(new FunctionCall(st.Position.Merge(mArgsTmp[^1].Position), st, mArgsTmp.ToArray()));
                         mArgsTmp.Clear();
                     }
                 }
-                return argStack.Pop();
+                return argStack.Pop().Annotate(scope);
             } else
                 throw new NotImplementedException();
         }
@@ -390,11 +470,12 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
     /// A block of statements.
     /// </summary>
     public record Block(PositionRange Position, ST[] Args) : ST(Position) {
+        public bool MakeLocalScope { get; init; } = false;
         public Block(IReadOnlyList<ST> args) : this(args[0].Position.Merge(args[^1].Position), args.ToArray()) { }
         
         protected override IAST _AnnotateInner(LexicalScope scope) {
-            var localScope = LexicalScope.Derive(scope);
-            return new AST.Block(Position, scope, localScope, Args.Select(a => a.Annotate(localScope)).ToArray());
+            var localScope = MakeLocalScope ? LexicalScope.Derive(scope) : null;
+            return new AST.Block(Position, scope, localScope, Args.Select(a => a.Annotate(localScope ?? scope)).ToArray());
         }
 
         public AST.Block AnnotateTopLevel(LexicalScope gs, IDelegateArg[] topLevelArgs) {
@@ -440,21 +521,39 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
     /// A number such as `5.0`. This is not included in TypedValue since numbers can have their type
     ///  auto-determined (eg. float vs int) based on usage.
     /// </summary>
-    public record Number(PositionRange Position, float Value) : ST(Position) {
+    public record Number(PositionRange Position, string Value) : ST(Position) {
         protected override IAST _AnnotateInner(LexicalScope scope) => new AST.Number(Position, scope, Value);
 
         public override IEnumerable<PrintToken> DebugPrint() {
-            yield return Value.ToString();
+            yield return Value;
         }
     }
-
+    
     /// <summary>
     /// A fixed value of a type not subject to type auto-determination, such as strings, but not numbers.
     /// </summary>
     public record TypedValue<T>(PositionRange Position, T Value) : ST(Position) {
-        protected override IAST _AnnotateInner(LexicalScope scope) => new AST.TypedValue<T>(Position, scope, Value);
+        public SymbolKind Kind { get; init; } = SymbolKind.Constant;
+        protected override IAST _AnnotateInner(LexicalScope scope) => 
+            new AST.TypedValue<T>(Position, scope, Value, Kind);
         public override IEnumerable<PrintToken> DebugPrint() {
             yield return Value?.ToString() ?? "<null>";
+        }
+    }
+
+    public record Tuple(PositionRange Position, List<ST> Args) : ST(Position) {
+        protected override IAST _AnnotateInner(LexicalScope scope) =>
+            new AST.Tuple(Position, scope, Args.Select(a => a.Annotate(scope)).ToArray());
+
+        public override IEnumerable<PrintToken> DebugPrint() {
+            yield return "(";
+            for (int ii = 0; ii < Args.Count; ++ii) {
+                if (ii > 0) 
+                    yield return ", ";
+                foreach (var x in Args[ii].DebugPrint())
+                    yield return x;
+            }
+            yield return ")";
         }
     }
 

@@ -36,8 +36,8 @@ public static partial class Reflector {
         ///   and generic methods are non-specialized except when specializations
         ///   are specified via <see cref="GAliasAttribute"/>.
         /// </summary>
-        public static readonly Dictionary<string, List<IMethodSignature>> AllBDSL2Methods =
-            SanitizedKeyDict<List<IMethodSignature>>();
+        public static readonly Dictionary<string, List<MethodSignature>> AllBDSL2Methods =
+            SanitizedKeyDict<List<MethodSignature>>();
         
         /// <summary>
         /// Contains non-generic methods keyed by return type.
@@ -103,12 +103,30 @@ public static partial class Reflector {
                     d[name] = method;
                 }
             }
-            var attrs = Attribute.GetCustomAttributes(mi);
-            if (attrs.Any(x => x is DontReflectAttribute)) return;
-            bool isExCompiler = (attrs.Any(x => x is ExprCompilerAttribute));
             bool addNormal = true;
-            bool addBDSL2 = !attrs.Any(x => x is BDSL2OperatorAttribute or BDSL1OnlyAttribute);
-            bool addBDSL1 = !attrs.Any(x => x is BDSL2OnlyAttribute);
+            var addBDSL1 = true;
+            var addBDSL2 = true;
+            bool isExBoundary = false;
+            FallthroughAttribute? fallthrough = null;
+            var attrs = Attribute.GetCustomAttributes(mi);
+            foreach (var attr in attrs) {
+                switch (attr) {
+                    case DontReflectAttribute:
+                        return;
+                    case ExpressionBoundaryAttribute:
+                        isExBoundary = true;
+                        break;
+                    case FallthroughAttribute fa:
+                        fallthrough = fa;
+                        break;
+                    case BDSL2OperatorAttribute or BDSL1OnlyAttribute:
+                        addBDSL2 = false;
+                        break;
+                    case BDSL2OnlyAttribute:
+                        addBDSL1 = false;
+                        break;
+                }
+            }
             foreach (var attr in attrs) {
                 if (attr is AliasAttribute aa) {
                     if (addBDSL1) AddMI(aa.alias, mi);
@@ -116,23 +134,21 @@ public static partial class Reflector {
                 } else if (attr is GAliasAttribute ga) {
                     var gsig = MethodSignature.Get(mi) as GenericMethodSignature;
                     var rsig = gsig!.Specialize(ga.type);
-                    if (addBDSL1) AddMI(ga.alias, (MethodInfo)rsig.Mi);
+                    if (addBDSL1 && rsig.Member is TypeMember.Method m) AddMI(ga.alias, m.Mi);
                     if (addBDSL2) AddBDSL2_Sig(ga.alias, gsig);
                     addNormal = false;
-                } else if (attr is FallthroughAttribute fa) {
-                    var sig = MethodSignature.Get(mi);
-                    if (sig.Params.Length != 1) {
-                        throw new StaticException($"Fallthrough methods must have exactly one argument: {mi.Name}");
-                    }
-                    if (FallThroughOptions.ContainsKey(mi.ReturnType)) {
-                        throw new StaticException(
-                            $"Cannot have multiple fallthroughs for the same return type {mi.ReturnType}");
-                    }
-                    if (isExCompiler)
-                        AddCompileOption(mi);
-                    else 
-                        FallThroughOptions[mi.ReturnType] = (fa, sig);
                 }
+            }
+            if (fallthrough != null) {
+                var sig = MethodSignature.Get(mi);
+                if (sig.Params.Length != 1)
+                    throw new StaticException($"Fallthrough methods must have exactly one argument: {mi.Name}");
+                if (FallThroughOptions.ContainsKey(mi.ReturnType))
+                    throw new StaticException($"Cannot have multiple fallthroughs for the same return type {mi.ReturnType}");
+                if (isExBoundary)
+                    AddCompileOption(mi);
+                else 
+                    FallThroughOptions[mi.ReturnType] = (fallthrough, sig);
             }
             if (addNormal) {
                 if (addBDSL1) AddMI(mi.Name, mi);
@@ -284,7 +300,7 @@ public static partial class Reflector {
             
             if (!funcInvokeCache.TryGetValue(funcType, out var mi)) {
                 mi = funcInvokeCache[funcType] = funcType.GetMethod("Invoke") ??
-                                            throw new Exception($"No invoke method found for {funcType.RName()}");
+                                            throw new Exception($"No invoke method found for {funcType.ExRName()}");
             }
             return mi.Invoke(func, new[] {arg});
         }

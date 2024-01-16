@@ -9,6 +9,7 @@ using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Services;
 using Danmokou.GameInstance;
+using Danmokou.Reflection2;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using ProtoBuf;
@@ -153,7 +154,7 @@ public class DifficultySettings {
     public string DescribePadR() => Describe().PadRight(7);
 }
 public readonly struct SMRunner {
-    public readonly StateMachine? sm;
+    public readonly StateMachine sm;
     public readonly ICancellee cT;
     public readonly bool cullOnFinish;
     private readonly bool root;
@@ -174,37 +175,48 @@ public readonly struct SMRunner {
             (ICancellee)new PassthroughCancellee(cT.Root, local);
     
     private readonly GenCtx? gcx;
-    public GenCtx? NewGCX => gcx?.Copy(null);
+    private readonly EnvFrame? ef;
+    public GenCtx NewGCX(BehaviorEntity beh) => 
+        gcx?.Copy(ef is null ? null : new(ef)) ?? GenCtx.New(beh, ef);
 
-    public static SMRunner Null => new(null, Cancellable.Null, false, false, null);
     /// <summary>
     /// Run the SM and then destroy the executing object.
     /// </summary>
-    public static SMRunner Cull(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, true, false, gcx);
+    public static SMRunner? Cull(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) =>
+        sm != null ? new(sm, cT, true, false, gcx) : null;
     /// <summary>
     /// Run the SM and then destroy the executing object.
     /// <br/>Also, any nested summons will be bounded by <see cref="cT"/>.
     /// </summary>
-    public static SMRunner CullRoot(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, true, true, gcx);
+    public static SMRunner CullRoot(EFStateMachine sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, true, true, gcx);
+    
     /// <summary>
     /// Run the SM.
     /// </summary>
-    public static SMRunner Run(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, false, false, gcx);
+    public static SMRunner? Run(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) => 
+        sm != null ? new(sm, cT, false, false, gcx) : null;
+    
     /// <summary>
     /// Run the SM.
     /// <br/>Also, any nested summons will be bounded by <see cref="cT"/>.
     /// </summary>
-    public static SMRunner RunRoot(StateMachine? sm, ICancellee cT) => new(sm, cT, false, true, null);
+    public static SMRunner RunRoot(EFStateMachine sm, ICancellee cT) => new(sm, cT, false, true, null);
+    
     /// <summary>
-    /// See <see cref="RunRoot(Danmokou.SM.StateMachine?,BagoumLib.Cancellation.ICancellee)"/>.
+    /// See <see cref="RunRoot(Danmokou.SM.EFStateMachine,BagoumLib.Cancellation.ICancellee)"/>.
     /// </summary>
-    public static SMRunner RunRoot(TextAsset? sm, ICancellee cT) => RunRoot(StateMachineManager.FromText(sm), cT);
-    public SMRunner(StateMachine? sm, ICancellee cT, bool cullOnFinish, bool root, GenCtx? gcx) {
+    public static SMRunner RunRoot(TextAsset sm, ICancellee cT) => RunRoot(StateMachineManager.FFromText(sm), cT);
+    public SMRunner(StateMachine sm, ICancellee cT, bool cullOnFinish, bool root, GenCtx? gcx) {
         this.sm = sm;
         this.cT = cT;
         this.cullOnFinish = cullOnFinish;
         this.gcx = gcx;
         this.root = root;
+        ef = null;
+    }
+    public SMRunner(EFStateMachine sm, ICancellee cT, bool cullOnFinish, bool root, GenCtx? gcx) : 
+        this(sm.SM, cT, cullOnFinish, root, gcx) {
+        ef = sm.RootFrame;
     }
 }
 

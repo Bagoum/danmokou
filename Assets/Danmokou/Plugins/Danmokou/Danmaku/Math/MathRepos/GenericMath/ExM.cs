@@ -108,6 +108,7 @@ public static partial class ExM {
     /// </summary>
     /// <param name="aliases">List of each variable's type, name, and assigned value (eg. f myFloat 5 + t)</param>
     /// <param name="inner">Code to execute after values are set</param>
+    [BDSL1Only]
     public static Func<TExArgCtx, TEx<T>> Set<T>(ReflectEx.Alias[] aliases, Func<TExArgCtx, TEx<T>> inner) => bpi =>
         ReflectEx.SetAlias(aliases, () => inner(bpi), bpi);
     
@@ -697,7 +698,7 @@ public static partial class ExM {
         } else if (t == typeof(PlayerInput)) {
             return fctx.Field("playerController");
         }
-        throw new Exception($"FCTX has no handling for `Mine?` constructor of type {t.RName()}");
+        throw new Exception($"FCTX has no handling for `Mine?` constructor of type {t.ExRName()}");
     };*/
 
     #endregion

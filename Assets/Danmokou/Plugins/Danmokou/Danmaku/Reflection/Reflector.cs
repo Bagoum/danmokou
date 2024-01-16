@@ -98,7 +98,7 @@ public static partial class Reflector {
     /// </summary>
     /// <exception cref="StaticException">Thrown if the type has no public constructors.</exception>
     public static MethodSignature GetConstructorSignature(Type t) {
-        return TryGetConstructorSignature(t) ?? throw new StaticException($"Type {t.RName()} has no applicable constructors.");
+        return TryGetConstructorSignature(t) ?? throw new StaticException($"Type {t.ExRName()} has no applicable constructors.");
     }
 
     /// <summary>

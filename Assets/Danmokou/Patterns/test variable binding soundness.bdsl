@@ -15,7 +15,7 @@ sync powerup1 <> poweraura boss1
 <!> type non nest
 <!> hp 1001
 <!> roott 1 0 0
-phase 0
+phase 033
 	paction 0
 		bullet-control persist circle-*/w restyle circle-blue/ (> t 1 & = &.loop2 0)
 		
@@ -47,7 +47,7 @@ phase 0
 			color { red green }
 			bindItr loop2
 		} simple
-			rvelocity px (1.6 + sine(7p, 0.7, &loop1)) {
+			rvelocity px (1.6 + sine(7p, lerpsmooth(eoutback, 2, 1, t, 0.7, 3), &loop1)) {
 				scale(&size)
 			}
 

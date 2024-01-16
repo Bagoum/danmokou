@@ -17,7 +17,7 @@ public class StageConfig : ScriptableObject, IStageConfig {
     public bool practiceable = true;
 
     public SceneConfig Scene => sceneConfig;
-    public StateMachine? StateMachine => StateMachineManager.FromText(stateMachine);
+    public EFStateMachine? StateMachine => StateMachineManager.FromText(stateMachine);
     public string DefaultSuicideStyle => defaultSuicideStyle;
 }
 }

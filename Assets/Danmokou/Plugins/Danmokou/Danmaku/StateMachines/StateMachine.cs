@@ -128,16 +128,23 @@ public readonly struct SMHandoff : IDisposable {
             target.SetResult(default);
     }
 
-    public SMHandoff(BehaviorEntity exec, ICancellee? cT = null, int? index = null) {
-        this.ch = new CommonHandoff(cT ?? Cancellable.Null, null, GenCtx.New(exec), null);
-        ch.gcx.index = index.GetValueOrDefault(exec.rBPI.index);
+    /// <summary>
+    /// Create a SMHandoff for top-level direct execution.
+    /// <br/>If provided, the EnvFrame is *copied*.
+    /// </summary>
+    public SMHandoff(BehaviorEntity exec, ICancellee? cT = null, EnvFrame? ef = null) {
+        this.ch = new CommonHandoff(cT ?? Cancellable.Null, null, GenCtx.New(exec, ef?.Clone()), null);
+        ch.gcx.index = exec.rBPI.index;
         parentCT = Cancellable.Null;
         CanPrepend = false;
         Context = new SMContext();
     }
 
+    /// <summary>
+    /// Create an SMHandoff for top-level execution with <see cref="SMRunner"/>.
+    /// </summary>
     public SMHandoff(BehaviorEntity exec, SMRunner smr, ICancellee? cT = null, SMContext? context = null) {
-        var gcx = smr.NewGCX ?? GenCtx.New(exec);
+        var gcx = smr.NewGCX(exec);
         gcx.OverrideScope(exec, exec.rBPI.index);
         //TODO envframe should this be V2RV2.zero or null?
         this.ch = new CommonHandoff(cT ?? smr.cT, null, gcx, V2RV2.Zero);
@@ -147,7 +154,7 @@ public readonly struct SMHandoff : IDisposable {
     }
 
     /// <summary>
-    /// Derive an SMHandoff from a parent for localized execution.
+    /// Derive an SMHandoff from a parent for localized execution with a new cancellation token.
     /// <br/>The common handoff is copied.
     /// </summary>
     public SMHandoff(SMHandoff parent, ICancellee newCT) {
@@ -178,6 +185,17 @@ public readonly struct SMHandoff : IDisposable {
         Context = context ?? DerivedSMContext.DeriveFrom(parent.Context);
     }
 
+    /// <summary>
+    /// Copy the SMHandoff, overriding the environment frame.
+    /// <br/>The EnvFrame is *copied*.
+    /// </summary>
+    public SMHandoff(SMHandoff parent, EnvFrame newFrame) {
+        ch = parent.ch.OverrideFrame(newFrame);
+        parentCT = parent.parentCT;
+        CanPrepend = parent.CanPrepend;
+        Context = DerivedSMContext.DeriveFrom(parent.Context);
+    }
+
     public SMHandoff CreateJointCancellee(out ICancellable cts, SMContext? innerContext) => 
         new(this, innerContext, out cts);
 
@@ -192,6 +210,21 @@ public readonly struct SMHandoff : IDisposable {
         else RunRIEnumerator(cor);
     }
 }
+
+/// <summary>
+/// A state machine paired with the environment frame that produced it in script code.
+/// </summary>
+public record EFStateMachine(EnvFrame? RootFrame, StateMachine SM) {
+    public async Task Execute(SMHandoff smh) {
+        if (RootFrame != null) {
+            using var efsmh = new SMHandoff(smh, RootFrame);
+            await SM.Start(efsmh);
+        } else {
+            await SM.Start(smh);
+        }
+    }
+}
+
 // WARNING: StateMachines must NOT store any state. As in, you must be able to call the same SM twice concurrently,
 // and it should run twice without interfering.
 public abstract class StateMachine : ILexicalScopeRequestor {
@@ -222,7 +255,7 @@ public abstract class StateMachine : ILexicalScopeRequestor {
         {"script", typeof(ScriptTSM)},
         {"debugf", typeof(DebugFloat)}
     };
-    public static readonly Dictionary<string, List<Reflector.IMethodSignature>> SMInitMethodMap;
+    public static readonly Dictionary<string, List<MethodSignature>> SMInitMethodMap;
     public static readonly Dictionary<Type, Type[]> SMChildMap = new() {
         {typeof(PatternSM), new[] { typeof(PhaseSM)}}, {
             typeof(PhaseSM), new[] {
@@ -248,7 +281,7 @@ public abstract class StateMachine : ILexicalScopeRequestor {
         var childMapper = myType;
         while (!SMChildMap.ContainsKey(childMapper)) {
             if (childMapper.BaseType is not {} bt)
-                throw new StaticException($"Could not verify base type for {myType.RName()}");
+                throw new StaticException($"Could not verify base type for {myType.ExRName()}");
             childMapper = bt;
         }
         Type[] allowedTypes = SMChildMap[childMapper];
@@ -470,14 +503,17 @@ public abstract class StateMachine : ILexicalScopeRequestor {
         }
     }
 
-    public static StateMachine CreateFromDump(string dump) {
+    public const string bdsl2Prefix = "<#> bdsl2";
+    public static EFStateMachine CreateFromDump(string dump) {
         using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
-        if (dump.StartsWith("<#> bdsl2")) {
-            Profiler.BeginSample("SM AST (BDSL2)");
-            var b2ret = Reflection2.Helpers.CompileToDelegate<Func<StateMachine>>(dump["<#> bdsl2".Length..]);
-            var b2result = b2ret.Compile()();
+        if (dump.StartsWith(bdsl2Prefix)) {
+            Profiler.BeginSample("SM AST (BDSL2) Parsing/Compilation");
+            var b2ret = Reflection2.Helpers.ParseAndCompile<Func<(EnvFrame, StateMachine)>>(dump);
             Profiler.EndSample();
-            return b2result;
+            Profiler.BeginSample("SM AST (BDSL2) Execution");
+            var b2result = b2ret();
+            Profiler.EndSample();
+            return new(b2result.Item1, b2result.Item2);
         }
         var p = IParseQueue.Lex(dump);
         Profiler.BeginSample("SM AST construction");
@@ -495,7 +531,7 @@ public abstract class StateMachine : ILexicalScopeRequestor {
         Profiler.BeginSample("SM AST realization");
         var result = ast.Evaluate(new());
         Profiler.EndSample();
-        return result;
+        return new(EnvFrame.Create(rootScope, null), result);
     }
 
     public static List<PhaseProperties> ParsePhases(string dump) {

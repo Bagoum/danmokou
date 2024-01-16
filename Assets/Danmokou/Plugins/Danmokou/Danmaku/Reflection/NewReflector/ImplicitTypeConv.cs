@@ -41,23 +41,6 @@ public interface IScopedTypeConverter : IImplicitTypeConverter {
     ScopedConversionKind Kind { get; }
 }
 
-public record DummyScopedTypeConverter(IDelegateArg[] ScopeArgs, ScopedConversionKind Kind) : IScopedTypeConverter, IImplicitTypeConverterInstance {
-    public IImplicitTypeConverter Converter => this;
-    public IImplicitTypeConverterInstance NextInstance => this;
-    public IRealizedImplicitCast Realize(Unifier u) {
-        throw new NotImplementedException();
-    }
-
-    public void MarkUsed() {
-        throw new NotImplementedException();
-    }
-
-    public TypeDesignation.Dummy MethodType => 
-        throw new NotImplementedException();
-    public TypeDesignation.Variable[] Generic { get; } = 
-        Array.Empty<TypeDesignation.Variable>();
-}
-
 /// <summary>
 /// Implicit type conversion for non-generic types.
 /// </summary>
@@ -134,17 +117,20 @@ public abstract record GenericTypeConv1 : IScopedTypeConverter {
     }
 }
 
-public record GenericMethodConv1(Reflector.IGenericMethodSignature GMi) : GenericTypeConv1(GMi.SharedType) {
+public record GenericMethodConv1(IGenericMethodSignature GMi) : GenericTypeConv1(GMi.SharedType) {
     public override object? Convert<T>(object? castee) => throw new NotImplementedException();
 
     public override object? ConvertForType(Type t, object? castee) =>
         //gmi.specialize is cached
-        GMi.Specialize(t).Invoke(null, null, castee);
+        GMi.Specialize(t).Invoke(null, castee);
 }
 
-public record ConstantToExprConv() : GenericTypeConv1(new TypeDesignation.Variable().And(v =>
-    TypeDesignation.Dummy.Method(v.MakeTExFunc(), v))) {
+public record ConstantToExprConv(Type[] prohibitTypes) : GenericTypeConv1(new TypeDesignation.Variable().And(v =>
+    TypeDesignation.Dummy.Method(v.MakeTExFunc(), v))), IImplicitTypeConverter {
     public override object? Convert<T>(object? castee) =>
         (Func<TExArgCtx, TEx<T>>)(_ => Ex.Constant(castee, typeof(T)));
+
+    bool IImplicitTypeConverter.SourceAllowed(TypeDesignation source) =>
+        source is not TypeDesignation.Known k || !prohibitTypes.Contains(k.Typ);
 }
 }

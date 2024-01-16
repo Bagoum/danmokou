@@ -11,6 +11,7 @@ using Danmokou.Graphics;
 using Danmokou.SM;
 using JetBrains.Annotations;
 using Mizuhashi;
+using UnityEngine;
 
 namespace Danmokou.Reflection {
 public class SemanticTokenTypes {
@@ -34,7 +35,6 @@ public class SemanticTokenTypes {
 public class SemanticTokenModifiers {
     public const string Static = "static";
     public const string Deprecated = "deprecated";
-
     public const string Atomic = "dmkatomic";
     
     //Method modifiers
@@ -51,9 +51,11 @@ public class SemanticTokenModifiers {
     public const string BPRV2 = "dmkbprv2";
     public const string Pred = "dmkpred";
 
+    public const string DynamicVar = "dmkdynamicvar";
+
     public static readonly string[] Values = {
         Static, Deprecated, Atomic, SM, AsyncP, SyncP, VTP, Control,
-        Properties, TP4, TP3, TP, BPY, BPRV2, Pred
+        Properties, TP4, TP3, TP, BPY, BPRV2, Pred, DynamicVar
     };
 
     public static readonly Dictionary<string, Type[]> MethodModToTypes = new() {
@@ -63,12 +65,12 @@ public class SemanticTokenModifiers {
         { VTP, new[] { typeof(VTP), typeof(LVTP) } },
         { Control, new[] { typeof(BulletManager.exBulletControl), typeof(BulletManager.cBulletControl), typeof(BehaviorEntity.cBEHControl), typeof(CurvedTileRenderLaser.cLaserControl)} },
         { Properties, new[] { typeof(PatternProperty), typeof(PhaseProperty), typeof(GenCtxProperty), typeof(LaserOption), typeof(SBOption), typeof(BehOption) } },
-        { TP4, new[] {typeof(TP4)} },
-        { TP3, new[] { typeof(TP3)} },
-        { TP, new[] { typeof(TP)} },
-        { BPY, new[] { typeof(BPY), typeof(FXY) } },
-        { BPRV2, new[] { typeof(BPRV2)} },
-        { Pred, new[] { typeof(Pred)} },
+        { TP4, new[] {typeof(TP4), typeof(GCXF<Vector4>)} },
+        { TP3, new[] { typeof(TP3), typeof(GCXF<Vector3>)} },
+        { TP, new[] { typeof(TP), typeof(GCXF<Vector2>)} },
+        { BPY, new[] { typeof(BPY), typeof(FXY), typeof(GCXF<float>) } },
+        { BPRV2, new[] { typeof(BPRV2), typeof(GCXF<V2RV2>)} },
+        { Pred, new[] { typeof(Pred), typeof(GCXF<bool>)} },
         
     };
     public static readonly Dictionary<Type, string> TypeToMethodMod = new();

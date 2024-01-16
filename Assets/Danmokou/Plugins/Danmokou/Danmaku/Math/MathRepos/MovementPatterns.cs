@@ -77,24 +77,28 @@ public static class MovementPatterns {
     //Standard model for stage enemy paths: Fixed root, fixed path,
     // time along path (as parametric input) is controllable as a separate parameter.
     //Note: use ^^ instead of ^ in order to avoid NaN errors when logsumshift pushes t negative (this can happen quite commonly).
+    [ExpressionBoundary]
     public static RootedVTP DipUp1(ExBPY xmul, ExBPY time) => new(b => xmul(b).Mul(LeftMinus1), b => 1.5f, 
         SetupTime(time, NROffset(PXY(
                 b => xmul(b).Mul(t(b)),
                 b => Pow(t(b), 1.4f).Sub(t(b).Mul(1.9f))
             ))));
     
+    [ExpressionBoundary]
     public static RootedVTP DipUp2(ExBPY xmul, ExBPY time) => new(b => xmul(b).Mul(LeftMinus1), b => 0.5f, 
         SetupTime(time, NROffset(PXY(
             b => xmul(b).Mul(t(b)),
             b => If<float>(Gt(t(b), 4), 0.4f, 0.02f).Mul(Pow(t(b).Add(-4f), 2f))
         ))));
     
+    [ExpressionBoundary]
     public static RootedVTP DipUp3(ExBPY xmul, ExBPY time) => new(b => xmul(b).Mul(LeftMinus1), b => 0.5f, 
         SetupTime(time, NROffset(PXY(
             b_ => xmul(b_).Mul(LogSumShift<TExPI>(_ => -1, _ => 2f, b => t(b).Mul(3f), b => t(b).Mul(0.2f), "&t")(b_)),
             b_ => LogSumShift<TExPI>(_ => 2, _ => 1.9f, _ => 0, b => t(b).Mul(2.7f), "&t")(b_)
         ))));
 
+    [ExpressionBoundary]
     public static RootedVTP Cross1(GCXF<float> x, GCXF<float> y, ExBPY xmul, ExBPY ymul, ExBPY time) =>
         new(gcx => new Vector2(x(gcx), y(gcx)), SetupTime(time, NROffset(PXY(
             b => xmul(b).Mul(t(b)),
@@ -104,17 +108,22 @@ public static class MovementPatterns {
     private static readonly ExBPY b1 = _ => Ex.Constant(1f);
     private static readonly ExBPY bn1 = _ => Ex.Constant(-1f);
 
+    [ExpressionBoundary]
     public static RootedVTP CrossUp(ExBPY xmul, ExBPY time) => 
         Cross1(GCXF<float>(b => xmul(b).Mul(LeftMinus1)), _ => 1f, xmul, _ => ExC(0.12f), time);
+    [ExpressionBoundary]
     public static RootedVTP CrossDown(ExBPY xmul, ExBPY time) => 
         Cross1(GCXF<float>(b => xmul(b).Mul(LeftMinus1)), _ => 3f, xmul, _ => ExC(-0.12f), time);
+    [ExpressionBoundary]
     public static RootedVTP CrossUp2(ExBPY xmul, ExBPY time) =>
         Cross1(GCXF<float>(b => xmul(b).Mul(LeftMinus1)), _ => -4.5f, xmul, b1, time);
+    [ExpressionBoundary]
     public static RootedVTP CrossDown2(ExBPY xmul, ExBPY time) =>
         Cross1(GCXF<float>(b => xmul(b).Mul(LeftMinus1)), _ => 5f, xmul, bn1, time);
 
     //WARNING/TODO: velocity-based RootedVTP needs to multiply by the derivative of the time function.
     // This means you are restricted to only using fairly rudimentary time functions.
+    [ExpressionBoundary]
     public static RootedVTP CrossDownLoopBack(ExBPY xmul, ExBPY time) => Setup(b => xmul(b).Mul(-4.6f), 4f, time,
         NRVelocity(MultiplyX(xmul,
                 b => RotateLerpCCW(2f, 3.5f, t(b), CXY(2.7f, -1.4f)(b), CXY(-2f, 0.3f)(b))
@@ -123,11 +132,13 @@ public static class MovementPatterns {
     private static ExBPY t => Reference<float>("t");
     private static ExBPY dt => Reference<float>("dt");
 
+    [ExpressionBoundary]
     public static RootedVTP CircDown(ExBPY xmul, ExBPY time) => Setup(b => xmul(b).Mul(-0.2f), 3.8f, time,
         NROffset(PXY(b => xmul(b).Mul(-2.8f).Mul(Sin(t(b).Add(1.4f))),
             b => If<float>(Gt(t(b), 5), t(b).Mul(2), Cos(t(b).Add(1.2f)).Mul(2.4f)))));
     //"nroffset pxy(-2.8 * sin(1.4 + &t), if(> &t 5, 2 * t, 2.4 * cos(1.2 + &t)))"
 
+    [ExpressionBoundary]
     public static RootedVTP CornerLoop(ExBPY xmul, ExBPY time) => Setup(b => xmul(b).Mul(-4.6f), 5f, time,
         NRVelocity(MultiplyX(xmul, b => PolarToXY(
             dt(b).Mul(3f),
@@ -135,34 +146,46 @@ public static class MovementPatterns {
         ))), true
     );
     
+    [ExpressionBoundary]
     public static RootedVTP CircDown2L(ExBPY time) => Setup(-1f, 3f, time,
         "nroffset pxy (-5 * sin(1.7 + damp(pi, 0.7, &t)), if(> &t 5, 2 * t, 3 * cos(1.2 + 0.96 * &t)))");
+    [ExpressionBoundary]
     public static RootedVTP CircDown2R(ExBPY time) => Setup(1f, 3f, time,
         "nroffset pxy (5 * sin(1.7 + damp(pi, 0.7, &t)), if(> &t 5, 2 * t, 3 * cos(1.2 + 0.96 * &t)))");
 
+    [ExpressionBoundary]
     public static RootedVTP BendDownHL(ExBPY time) => Setup(-3, 5, time,
         $"nroffset pxy(logsumshift(&t, 5, 2, 0.5 * &t, &t),  " +
         $"logsumshift(&t, 5, 2, -1.2 * &t, -0.13 * ^^ &t 0.6))");
+    [ExpressionBoundary]
     public static RootedVTP BendDownHR(ExBPY time) => Setup(3, 5, time,
         $"nroffset pxy(neg logsumshift(&t, 5, 2, 0.5 * &t, &t),  " +
         $"logsumshift(&t, 5, 2, -1.2 * &t, -0.13 * ^^ &t 0.6))");
+    [ExpressionBoundary]
     public static RootedVTP BendUpL(ExBPY time) => Setup(LeftMinus1, 3f, time,
         "nroffset pxy(exp(0.12 * &t), -0.8 * exp(2.4 - 0.2 * &t))");
+    [ExpressionBoundary]
     public static RootedVTP BendUpR(ExBPY time) => Setup(RightPlus1, 3f, time,
         "nroffset pxy(neg exp(0.12 * &t), -0.8 * exp(2.4 - 0.2 * &t))");
 
+    [ExpressionBoundary]
     public static RootedVTP CornerL(ExBPY time) => Setup(LeftMinus1, 0, time,
         $"nroffset pxy(lsshat(-2, 1, 3 * &t, 0.5 * &t), " +
         $"lsshat(2, 1, 0.5 * &t, 3 * &t))");
+    [ExpressionBoundary]
     public static RootedVTP CornerR(ExBPY time) => Setup(RightPlus1, 0, time,
         $"nroffset pxy(neg lsshat(-2, 1, 3 * &t, 0.5 * &t), " +
         $"lsshat(2, 1, 0.5 * &t, 3 * &t))");
     
     
+    [ExpressionBoundary]
     public static RootedVTP Up(ExBPY time) => Setup(0, -5, time, "nroffset(py(&t))");
+    [ExpressionBoundary]
     public static RootedVTP Down(ExBPY time) => Setup(0, 5, time, "nroffset(py(neg(&t)))");
     
+    [ExpressionBoundary]
     public static RootedVTP AcrossL(ExBPY time) => Setup(LeftMinus1, 0, time, "nroffset(px(&t))");
+    [ExpressionBoundary]
     public static RootedVTP AcrossR(ExBPY time) => Setup(RightPlus1, 0, time, "nroffset(px(neg(&t)))");
 }
 

@@ -178,7 +178,7 @@ public class PIData {
                LexicalScope.VariableWithoutLexicalScope(tac, name, t);
     }
 
-    
+
     /// <summary>
     /// Create an expression that sets the value of a field with name <see cref="name"/>.
     /// <br/>If the subclass of <see cref="PIData"/> is known, then does this by direct field access,
@@ -436,6 +436,11 @@ public delegate T GCXF<T>(GenCtx gcx);
 /// A wrapper around <see cref="GCXF{T}"/> whose return value is discarded.
 /// </summary>
 public delegate void ErasedGCXF(GenCtx gcx);
+
+/// <summary>
+/// A wrapper around a function of ParametricInfo whose return value is discarded.
+/// </summary>
+public delegate void ErasedParametric(ParametricInfo bpi);
 
 /// <summary>
 /// A bullet control function performing some operation on a SimpleBullet.

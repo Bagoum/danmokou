@@ -17,10 +17,6 @@ The following features are planned for future releases.
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
-# [Future] v11.0.0
-
-The goal for this version is to have a fully functional implementation of the new scripting language, tentatively titled BDSL2.
-
 
 
 # v11.0.0b (2024/01/20)

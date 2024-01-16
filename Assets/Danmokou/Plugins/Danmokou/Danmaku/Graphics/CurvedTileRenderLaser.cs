@@ -689,11 +689,13 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <summary>
         /// If the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cLaserControl SM(LPred cond, SM.StateMachine sm) => new((b, cT) => {
             if (cond(b.bpi, b.lifetime)) {
                 var mov = new Movement(b.bpi.loc, V2RV2.Angle(b.Laser.original_angle));
+                using var gcx = b.bpi.ctx.RevertToGCX(sm.Scope, b.Laser);
                 _ = BEHPooler.INode(mov, new ParametricInfo(in mov, b.bpi.index), b.nextTrueDelta, "l-pool-triggered")
-                    .RunExternalSM(SMRunner.Cull(sm, cT));
+                    .RunExternalSM(SMRunner.Cull(sm, cT, gcx));
             }
         }, BulletManager.BulletControl.P_RUN);
     }

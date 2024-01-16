@@ -20,9 +20,9 @@ public static class Lexer {
     private const string uLetter = @"\p{L}";
     private const string num = @"[0-9]";
     private const string numMult = @"pi?|[hfsc]";
-    private static readonly string numLiteral;
-    private static readonly HashSet<string> specialOps = new[] { "\\", "->" }.ToHashSet();
-    private static readonly HashSet<string> keywords = new[] { "function", "var", "true", "false", "block" }.ToHashSet();
+    private static readonly string[] specialOps = new[] { "\\", "->", "$" };
+    private static readonly string[] keywords = new[] { "function", "var", "block" };
+    private static readonly string[] valueKeywords = new[] { "true", "false", };
     private static readonly HashSet<string> operators = new[] {
         "++", "--",
         "!", 
@@ -33,7 +33,7 @@ public static class Lexer {
         "&&", "||", "&", "|",
         "=", "+=", "-=", "*=", "/=", "%=", "|=", "&=",
         
-        ".", "$", "?", "::",
+        ".", "?", "::",
         //no use planned for these yet, but they are occasionally important in parsing
         "@", "#", "~"
         //":" removed because it's unused and it interferes with LString
@@ -41,13 +41,24 @@ public static class Lexer {
     private static readonly Trie operatorTrie = new(operators.Concat(specialOps));
 
     static Lexer() {
-        numLiteral = $@"((({num}+(\.{num}+)?)|(\.{num}+))({numMult})?)";
+        var numLiteral = $@"(((({num}+(\.{num}+)?)|(\.{num}+))({numMult})?)|inf)";
         lexer = new(
             T(@"[^\S\n]+", TokenType.InlineWhitespace),
             //`b{` is short for `block {`
             T(@"b\{", (p, s) => (new Token(TokenType.Keyword, p, "b"), 1)),
-            T($@"{uLetter}({uLetter}|{num}|[_'])*", (p, s) =>
-                new Token(keywords.Contains(s.Value) ? TokenType.Keyword : TokenType.Identifier, p, s)),
+            //123, 123.456, .456
+            //Note that the preceding sign is parsed by Operator
+            //This is to make basic cases like 5-6 vs 5+ -6 easier to handle
+            //Must be above keyword/ident to handle 'inf' case
+            T(numLiteral, TokenType.Number),
+            T($@"&?({uLetter}|_)({uLetter}|{num}|[_'])*", (p, s) => {
+                var typ = TokenType.Identifier;
+                if (keywords.Contains(s.Value))
+                    typ = TokenType.Keyword;
+                else if (valueKeywords.Contains(s.Value))
+                    typ = TokenType.ValueKeyword;
+                return new Token(typ, p, s);
+            }),
             //Preprocess out other newlines
             T(@"\n", TokenType.Newline),
             T(@"[\(\)\[\]\{\},;]", (p, s) => new Token(s.Value switch {
@@ -61,11 +72,14 @@ public static class Lexer {
                 ";" => TokenType.Semicolon,
                 _ => throw new ArgumentOutOfRangeException($"Not a special symbol: {s.Value}")
             }, p, s)),
-            //123, 123.456, .456
-            //Note that the preceding sign is parsed by Operator
-            //This is to make basic cases like 5-6 vs 5+ -6 easier to handle
-            T(numLiteral, TokenType.Number),
             T($@"<({numLiteral}?;{numLiteral}?:){{0,2}}{numLiteral}?>", TokenType.V2RV2),
+            
+            //A block comment "fragment" is either a sequence of *s followed by a not-/ character, or a sequence of not-*s.
+            T(@"/\*((\*+[^/])|([^*]+))*\*/", TokenType.Comment),
+            T(@"//[^\n]*", TokenType.Comment),
+            //Treating parsing properties as comments for now
+            T("<#>[^\n]*", TokenType.Comment),
+            
             T(@"[!@#$%^&*+\-.<=>?/\\|~:]+", (p, s) => {
                 if (s.Value.StartsWith("//")) //this is a comment, not an operator
                     return Maybe<(Token, int)>.None;
@@ -80,11 +94,8 @@ public static class Lexer {
             T(@"'([^'\\]+|\\([a-zA-Z0-9\\""'&]))*'",
                 (p, s) => new Token(TokenType.String, p.CreateRange(s.Value, s.Length), s.Value[1..^1])),
             //LStrings are :like.this
-            T(@":[a-zA-Z0-9.]+", TokenType.LString),
+            T(@":[a-zA-Z0-9.]+", TokenType.LString)
 
-    //A block comment "fragment" is either a sequence of *s followed by a not-/ character, or a sequence of not-*s.
-            T(@"/\*((\*+[^/])|([^*]+))*\*/", TokenType.Comment),
-            T(@"//[^\n]*", TokenType.Comment)
         );
     }
 
@@ -134,6 +145,10 @@ public static class Lexer {
         /// A reserved keyword (that would otherwise be parsed as an identifier).
         /// </summary>
         Keyword,
+        /// <summary>
+        /// Value-based keywords (ie. just "true" and "false").
+        /// </summary>
+        ValueKeyword,
         /// <summary>
         /// A special operator, such as :: or ->, which has functionality more
         ///  advanced than calling a function.
@@ -186,6 +201,7 @@ public static class Lexer {
         V2RV2,
         /// <summary>
         /// A number (integer or float). Can be preceded by signs and postceded by numerical multipliers pi, p, h, c, s.
+        /// <br/>Can also be the code `inf`.
         /// </summary>
         Number,
         /// <summary>
@@ -323,7 +339,7 @@ public static class Lexer {
             
             if (firstNonWSTokenOnLine) {
                 t = t.WithFlags(TokenFlags.PrecededByNewline);
-                if (indent == blockIndent)
+                if (indent <= blockIndent)
                     t = t.WithFlags(TokenFlags.ImplicitBreak);
             }
             //set new layout rule indent
@@ -401,10 +417,13 @@ public static class Lexer {
         public string SourceStream => Source;
         
         public string ShowErrorPosition(LocatedParserError error) {
-            var pos = Stream.Source.Try(error.Index, out var token) ?
+            var start = Stream.Source.Try(error.Index, out var token) ?
                 token.Position :
                 new PositionRange(new(Source, Source.Length), new(Source, Source.Length));
-            return ITokenWitness.ShowErrorPositionInSource(error.Error, pos, Source);
+            var end = Stream.Source.Try(error.End, out token) ?
+                token.Position :
+                new PositionRange(new(Source, Source.Length), new(Source, Source.Length));
+            return ITokenWitness.ShowErrorPositionInSource(new(start.Start, end.Start), Source);
         }
 
         public ParserError Unexpected(int index) => new ParserError.Unexpected(Stream.Source[index].ToString());
@@ -417,7 +436,7 @@ public static class Lexer {
         }
 
         public PositionRange ToPosition(int start, int end) =>
-            Stream.Source[start].Position.Merge(Stream.Source[end].Position);
+            new(Stream.Source[start].Position.Start, Stream.Source[end].Position.Start);
 
         public string ShowConsumed(int start, int end) =>
             new(Source.AsSpan()[Stream.Source[start].Index..Stream.Source[end].Index]);

@@ -214,7 +214,7 @@ if (> t &fadein,
                 beh.phaseController.SetGoTo(bc.phase);
             else
                 beh.phaseController.SetGoTo(1);
-            return beh.RunBehaviorSM(SMRunner.CullRoot(StateMachineManager.FromText(bossCfg.stateMachine), smh.cT));
+            return beh.RunBehaviorSM(SMRunner.CullRoot(StateMachineManager.FromText(bossCfg.stateMachine)!, smh.cT));
         });
     }
 
@@ -319,11 +319,11 @@ if (> t &fadein,
         CreateShot1(new V2RV2(0, 0, x, y, 0), speed, angle, style);
 
     public static ReflectableLASM Dialogue(string file) {
-        StateMachine? sm = null;
+        EFStateMachine? sm = null;
         return new(smh => {
             Logs.Log($"Opening dialogue section {file}");
             sm ??= StateMachineManager.LoadDialogue(file);
-            return sm.Start(smh);
+            return sm.Execute(smh);
         });
     }
 

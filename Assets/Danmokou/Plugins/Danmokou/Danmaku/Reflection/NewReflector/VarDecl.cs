@@ -9,6 +9,7 @@ using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Danmokou.Reflection;
 using Mizuhashi;
 
 namespace Danmokou.Reflection2 {
@@ -22,10 +23,6 @@ public interface IUsedVariable {
 }
 
 public record UntypedVariable(VarDecl Declaration) : TypeUnifyErr;
-
-public record UnboundPromise(VarDeclPromise Promise) : TypeUnifyErr;
-
-public record PromiseBindingFailure(VarDeclPromise Promise, VarDecl Bound, TypeUnifyErr Err) : TypeUnifyErr;
 
 /// <summary>
 /// A declaration of a variable.
@@ -126,7 +123,7 @@ public class VarDecl : IUsedVariable {
         if (KnownType == null)
             yield return $"var &{Name}";
         else
-            yield return $"var &{Name}::{KnownType.RName()}";
+            yield return $"var &{Name}::{KnownType.ExRName()}";
     }
 }
 
@@ -150,52 +147,7 @@ public class ImplicitArgDecl<T> : ImplicitArgDecl {
         return Unit.Default;
     }
 
-    public override string ToString() => $"{Name}<{typeof(T).RName()}>";
-}
-
-/// <summary>
-/// A variable declaration that has not yet been made. 
-/// </summary>
-public record VarDeclPromise(PositionRange UsedAt, string Name) : IUsedVariable {
-    public TypeDesignation TypeDesignation { get; } = new TypeDesignation.Variable();
-    public TypeDesignation? FinalizedType { get; private set; }
-    private VarDecl? _binding;
-    public bool IsBound => _binding != null;
-    public VarDecl Bound => _binding ?? throw new Exception($"The variable {Name} is unbound.");
-    private readonly HashSet<AST.Reference> requirers = new();
-
-    public void IsRequiredBy(AST.Reference r) {
-        requirers.Add(r);
-    }
-
-    public void IsNotRequiredBy(AST.Reference r) {
-        requirers.Remove(r);
-    }
-
-    public Either<Unit, TypeUnifyErr> FinalizeType(Unifier u) {
-        if (!IsBound) {
-            FinalizedType = TypeDesignation.Simplify(u);
-            if (requirers.Count == 0)
-                return Unit.Default;
-            return new UnboundPromise(this);
-        } else {
-            FinalizedType = _binding!.FinalizedTypeDesignation;
-            return Unit.Default;
-        }
-    }
-
-    public Either<Unifier, TypeUnifyErr> MaybeBind(LexicalScope scope, in Unifier u) {
-        if (scope.FindDeclaration(Name) is { } decl) {
-            _binding = decl;
-            var uerr = _binding.TypeDesignation.Unify(TypeDesignation, u);
-            if (uerr.IsLeft)
-                return uerr.Left;
-            else
-                return new PromiseBindingFailure(this, decl, uerr.Right);
-        } else return u;
-    }
-
-    public override string ToString() => _binding?.ToString() ?? $"Unbound variable {Name}";
+    public override string ToString() => $"{Name}<{typeof(T).ExRName()}>";
 }
 
 public record AutoVars {

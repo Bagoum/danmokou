@@ -5,6 +5,7 @@ using Ex = System.Linq.Expressions.Expression;
 using System.Reflection;
 using System.Text;
 using BagoumLib;
+using BagoumLib.Reflection;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -41,6 +42,9 @@ public static partial class Reflector {
         AllowFuncification<TEx<Vector3>>();
         AllowFuncification<TEx<Vector4>>();
         AllowFuncification<TEx<V2RV2>>();
+        //Important for partial function application in BDSL2
+        foreach (var t in ReflectionUtils.FuncTypesByArity)
+            funcifiableReturnTypeGenerics.Add(t); 
         
         foreach (var type in ReflectorUtils.ReflectableAssemblyTypes) {
             if (type.GetCustomAttribute<ReflectAttribute>(false) is { } ra)

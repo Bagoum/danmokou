@@ -49,13 +49,22 @@ public struct CommonHandoff : IDisposable {
     /// <summary>
     /// Copies the GCX, possibly deriving a new environment frame if a scope is provided.
     /// </summary>
-    public readonly CommonHandoff TryDerive((LexicalScope, AutoVars)? scope) {
+    public readonly CommonHandoff TryDerive((LexicalScope, AutoVars.GenCtx)? scope) {
         var ngcx = gcx.Copy(scope);
         if (scope != null && ngcx.AutoVars is AutoVars.GenCtx && rv2Override is { } overr) {
             ngcx.BaseRV2 = ngcx.RV2 = overr;
             return new(cT, bc, ngcx, null);
         } else
             return new(cT, bc, ngcx, rv2Override);
+    }
+
+    /// <summary>
+    /// Copies the GCX with a new EnvFrame, ignoring the previous EnvFrame.
+    /// <br/>The new envFrame is *copied*.
+    /// </summary>
+    public readonly CommonHandoff OverrideFrame(EnvFrame newFrame) {
+        var ngcx = gcx.Copy(newFrame);
+        return new(cT, bc, ngcx, rv2Override);
     }
 
     public readonly CommonHandoff Copy(string? newStyle = null) {
@@ -342,7 +351,7 @@ public static partial class AtomicPatterns {
         };
     }
 
-    private static SMRunner WaitForPhase(ICancellee cT) => SMRunner.Cull(Reflector.WaitForPhaseSM, cT);
+    private static SMRunner WaitForPhase(ICancellee cT) => SMRunner.Cull(Reflector.WaitForPhaseSM, cT)!.Value;
 
     public static SyncPattern Circ(TP4 color, BPRV2 locScaleAngle) => sbh => {
         uint id = sbh.GCX.NextID();

@@ -24,6 +24,8 @@ namespace Danmokou.Danmaku.Patterns {
 /// </summary>
 [Reflect]
 public static partial class SyncPatterns {
+    public static SyncPattern Exec(ErasedGCXF code) => sbh => code(sbh.GCX);
+    
     /*
      * PASS-ALONG SYNCPATTERNS
      */

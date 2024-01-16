@@ -11,11 +11,15 @@ using Danmokou.DMath;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.Danmaku.Descriptors;
+using Danmokou.Expressions;
+using Danmokou.Reflection;
 using Danmokou.Services;
 using JetBrains.Annotations;
 using Danmokou.SM;
 using UnityEngine;
 using static Danmokou.Danmaku.BulletManager;
+using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
+using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
 
 namespace Danmokou.Behavior {
 
@@ -415,22 +419,42 @@ public partial class BehaviorEntity {
             if (cond(b.rBPI)) b.nextUpdateAllowed = false;
         }, BulletControl.P_TIMECONTROL);
 
-        public static cBEHControl UpdateF((string target, BPY valuer)[] targets, Pred cond) => new((b, cT) => {
-            if (cond(b.rBPI)) {
-                var bpi = b.rBPI;
-                for (int ii = 0; ii < targets.Length; ++ii) 
-                    bpi.ctx.envFrame.Value<float>(targets[ii].target) = targets[ii].valuer(bpi);
-            }
-        }, BulletControl.P_SAVE);
-        
-        public static cBEHControl UpdateV2((string target, TP valuer)[] targets, Pred cond) => new((b, cT) => {
-            if (cond(b.rBPI)) {
-                var bpi = b.rBPI;
-                for (int ii = 0; ii < targets.Length; ++ii) {
-                    bpi.ctx.envFrame.Value<Vector2>(targets[ii].target) = targets[ii].valuer(bpi);
+        [BDSL1Only]
+        public static cBEHControl UpdateF((string target, ExBPY valuer)[] targets, Pred cond) {
+            var ctargets = targets.Select(t => (t.target, valuer: Compilers.BPY(t.valuer))).ToArray();
+            return new cBEHControl((b, cT) => {
+                if (cond(b.rBPI)) {
+                    var bpi = b.rBPI;
+                    for (int ii = 0; ii < targets.Length; ++ii)
+                        bpi.ctx.envFrame.Value<float>(ctargets[ii].target) = ctargets[ii].valuer(bpi);
                 }
-            }
-        }, BulletControl.P_SAVE);
+            }, BulletControl.P_SAVE);
+        }
+
+        [BDSL1Only]
+        public static cBEHControl UpdateV2((string target, ExTP valuer)[] targets, Pred cond) {
+            var ctargets = targets.Select(t => (t.target, valuer: Compilers.TP(t.valuer))).ToArray();
+            return new cBEHControl((b, cT) => {
+                if (cond(b.rBPI)) {
+                    var bpi = b.rBPI;
+                    for (int ii = 0; ii < targets.Length; ++ii) {
+                        bpi.ctx.envFrame.Value<Vector2>(ctargets[ii].target) = ctargets[ii].valuer(bpi);
+                    }
+                }
+            }, BulletControl.P_SAVE);
+        }
+        
+        /// <summary>
+        /// Run some code on bullets that pass the condition.
+        /// </summary>
+        [BDSL2Only]
+        public static cBEHControl Exec<T>(Func<TExArgCtx, TEx<T>> code, Pred cond) {
+            var _code = Compilers.ErasedParametric(code);
+            return new cBEHControl((b, cT) => {
+                if (cond(b.rBPI))
+                    _code(b.bpi);
+            }, BulletControl.P_SAVE);
+        }
 
         /// <summary>
         /// Batch several commands together under one predicate.

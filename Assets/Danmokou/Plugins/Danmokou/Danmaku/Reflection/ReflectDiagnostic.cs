@@ -10,7 +10,7 @@ public abstract record ReflectDiagnostic(PositionRange Position, string Message,
     public void Log(){
         Logs.Log($"{Position}: {Message}", true, Level);
     }
-    public record Warning(PositionRange Position, string Message) : ReflectDiagnostic(Position, Message) {
+    public record Warning(PositionRange Position, string Message, ReflectDiagnostic? Inner = null) : ReflectDiagnostic(Position, Message, Inner) {
         protected override LogLevel Level => LogLevel.WARNING;
     }
 

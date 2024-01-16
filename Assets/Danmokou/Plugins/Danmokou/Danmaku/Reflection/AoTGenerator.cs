@@ -47,11 +47,11 @@ public static class AoTHelper_CG {{
             funcs.Add($"{typePrinter.Print(mi.DeclaringType!)}.{mi.Name}<{type_prms}>({args});");
         }
         foreach (var (gmib, ts) in GenericMethodSignature.specializeCache
-                     .Select(kv => (kv.Key.Item2.Mi, kv.Key.Item1))
+                     .Select(kv => (Mi: kv.Key.Item2.Member, kv.Key.Item1))
                      .Distinct()
                      .OrderBy(g => g.Mi.Name)) {
-            if (gmib is MethodInfo gmi)
-                AddConstructedMethod(gmi, ts.Data);
+            if (gmib is TypeMember.Method gmi)
+                AddConstructedMethod(gmi.Mi, ts.Data);
             else
                 throw new Exception($"Can't bake {gmib.GetType()}");
         }

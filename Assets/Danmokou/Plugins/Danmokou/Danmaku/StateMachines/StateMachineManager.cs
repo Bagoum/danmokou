@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Danmokou.SM {
 
 public class LoadedStateMachine {
-    public StateMachine? SM { get; set; } = null;
+    public EFStateMachine? SM { get; set; } = null;
     //As of DMK v10.1 it is possible to preserve state machines and reflected objects between scenes.
     // However, it is generally good hygeine to destroy them in order to prevent hanging allocations.
     public bool Preserve { get; set; } = false;
@@ -41,7 +41,7 @@ public static class StateMachineManager  {
         }
     }
 
-    public static StateMachine LoadDialogue(string file, string? lc = null) {
+    public static EFStateMachine LoadDialogue(string file, string? lc = null) {
         var locale = lc ?? SaveData.s.TextLocale.Value ?? "";
         if (!Dialogue.TryGetValue(file, out var locales)) 
             throw new Exception($"No dialogue file by name {file}");
@@ -51,15 +51,17 @@ public static class StateMachineManager  {
         return StateMachine.CreateFromDump(tx.text);
     }
     
-    public static StateMachine? FromName(string name) {
+    public static EFStateMachine? FromName(string name) {
         if (SMFileByName.TryGetValue(name, out TextAsset? txt)) return FromText(txt);
         throw new Exception($"No StateMachine file by name {name} exists.");
     }
 
     public static void ClearCachedSMs() {
         foreach (var lsm in SMMapByFile.Values)
-            if (!lsm.Preserve)
+            if (!lsm.Preserve) {
+                lsm.SM?.RootFrame?.Free();
                 lsm.SM = null;
+            }
     }
     
     /// <summary>
@@ -74,8 +76,12 @@ public static class StateMachineManager  {
         return SMMapByFile[id] = new();
     }
 
-    public static StateMachine? FromText(TextAsset? t) {
+    public static EFStateMachine? FromText(TextAsset? t) {
         if (t == null) return null;
+        return FFromText(t);
+    }
+
+    public static EFStateMachine FFromText(TextAsset t) {
         return FromText(t.GetInstanceID(), t.text, t.name);
     }
 
@@ -83,7 +89,7 @@ public static class StateMachineManager  {
     /// Return the state machine for the given TextAsset only if it has already been loaded
     /// (via <see cref="FromText(UnityEngine.TextAsset?)"/>). Otherwise return null.
     /// </summary>
-    public static StateMachine? GetIfAlreadyLoaded(TextAsset? t) {
+    public static EFStateMachine? GetIfAlreadyLoaded(TextAsset? t) {
         if (t == null) return null;
         return GetLSM(t.GetInstanceID()).SM;
     }
@@ -92,7 +98,7 @@ public static class StateMachineManager  {
     // background loading from fucking stuff up
     //note that this can still theoretically interfere with other top-level loaders such as reflwrap
     private static readonly string topLevelLock = "";
-    public static StateMachine FromText(int id, string text, string name) {
+    public static EFStateMachine FromText(int id, string text, string name) {
         lock (topLevelLock) {
         var lsm = GetLSM(id);
             if (lsm.SM == null) {

@@ -612,14 +612,23 @@ public partial class BulletManager {
         /// <summary>
         /// Update existing V2 values in the private data hoisting for the bullet.
         /// </summary>
+        [BDSL1Only]
         public static exBulletControl UpdateV2((string target, ExTP valuer)[] targets, ExPred cond) => new((st, ct, bpi) =>
             bpi.When(cond, Ex.Block(targets.Select(t => PIData.SetValue<Vector2>(bpi, t.target, t.valuer)))), BulletControl.P_SAVE);
         
         /// <summary>
         /// Update existing float values in the private data hoisting for the bullet.
         /// </summary>
+        [BDSL1Only]
         public static exBulletControl UpdateF((string target, ExBPY valuer)[] targets, ExPred cond) => new((st, ct, bpi) =>
             bpi.When(cond, Ex.Block(targets.Select(t => PIData.SetValue<float>(bpi, t.target, t.valuer)))), BulletControl.P_SAVE);
+
+        /// <summary>
+        /// Run some code on bullets that pass the condition.
+        /// </summary>
+        [BDSL2Only]
+        public static exBulletControl Exec<T>(Func<TExArgCtx, TEx<T>> code, ExPred cond) => new((st, ct, bpi) =>
+            bpi.When(cond, code(bpi)), BulletControl.P_SAVE);
 
         /// <summary>
         /// Execute an event if the condition is satisfied.

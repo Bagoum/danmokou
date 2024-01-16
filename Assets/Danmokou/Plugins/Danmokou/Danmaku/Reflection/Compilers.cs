@@ -58,7 +58,7 @@ public readonly struct DelegateArg<T> : IDelegateArg {
 }
 
 /// <summary>
-/// A layer of indirection placed after expression construction but before compilation in order to allow efficient handling of two-pass expressions with <see cref="CompilerHelpers.Automatic{S,T}"/>.
+/// A layer of indirection placed after expression construction but before compilation.
 /// </summary>
 public readonly struct ReadyToCompileExpr<D> where D : Delegate {
     private readonly TEx expression;
@@ -146,31 +146,20 @@ public static class Compilers {
     #region FallthroughCompilers
     
     [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static TP TP(ExTP ex) => PrepareDelegateBPI<TP>(ex).Compile();
 
     [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static SBV2 SBV2(ExTP ex) => PrepareDelegateRSB<SBV2>(ex).Compile();
 
     [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static TP3 TP3(ExTP3 ex) => PrepareDelegateBPI<TP3>(ex).Compile();
 
     [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static TP4 TP4(ExTP4 ex) => PrepareDelegateBPI<TP4>(ex).Compile();
-
-    private static ReadyToCompileExpr<VTP> _VTP(ExVTP ex) {
-        if (ex == VTPRepo.ExNoVTP) return new(VTPRepo.NoVTP);
-        return PrepareDelegate<VTP>(tac => ex(
-                tac.GetByExprType<TExMov>(),
-                tac.GetByExprType<TEx<float>>(),
-                tac,
-                tac.GetByExprType<TExV3>()),
-            VTPArgs
-        );
-    }
 
     public static readonly IDelegateArg[] VTPArgs = {
         new DelegateArg<Movement>("vtp_mov", true, true),
@@ -180,10 +169,21 @@ public static class Compilers {
     };
 
     [Fallthrough]
-    [ExprCompiler]
-    public static VTP VTP(ExVTP ex) => _VTP(ex).Compile();
-
-    private static ReadyToCompileExpr<LVTP> _LVTP(ExVTP ex) =>
+    [ExpressionBoundary]
+    public static VTP VTP(ExVTP ex) {
+        if (ex == VTPRepo.ExNoVTP) return new(VTPRepo.NoVTP);
+        return PrepareDelegate<VTP>(tac => ex(
+                tac.GetByExprType<TExMov>(),
+                tac.GetByExprType<TEx<float>>(),
+                tac,
+                tac.GetByExprType<TExV3>()),
+            VTPArgs
+        ).Compile();
+    }
+    
+    [Fallthrough]
+    [ExpressionBoundary]
+    public static LVTP LVTP(ExVTP ex) =>
         PrepareDelegate<LVTP>(tac => ex(
                 tac.GetByExprType<TExLMov>(),
                 tac.GetByName<float>("lvtp_dt"),
@@ -194,55 +194,51 @@ public static class Compilers {
             new DelegateArg<float>(LASER_TIME_ALIAS, true),
             new DelegateArg<ParametricInfo>("lvtp_bpi", true, true),
             new DelegateArg<Vector3>("lvtp_delta", true, true)
-        );
-    [Fallthrough]
-    [ExprCompiler]
-    public static LVTP LVTP(ExVTP ex) =>
-        _LVTP(ex).Compile();
+        ).Compile();
 
     [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static FXY FXY(ExBPY ex) => PrepareDelegate<FXY>(ex, 
         TExArgCtx.Arg.Make<float>("x", true)).Compile();
     
     [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static Easer Easer(ExBPY ex) => PrepareDelegate<Easer>(ex, 
         TExArgCtx.Arg.Make<float>("x", true)).Compile();
 
     [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static BPY BPY(ExBPY ex) => PrepareDelegateBPI<BPY>(ex).Compile();
 
     [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static SBF SBF(ExBPY ex) => PrepareDelegateRSB<SBF>(ex).Compile();
     
 
     [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static BPRV2 BPRV2(ExBPRV2 ex) => PrepareDelegateBPI<BPRV2>(ex).Compile();
 
     [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static Pred Pred(ExPred ex) => PrepareDelegateBPI<Pred>(ex).Compile();
 
     [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static LPred LPred(ExPred ex) => PrepareDelegate<LPred>(ex,
         new DelegateArg<ParametricInfo>("lpred_bpi", priority: true),
         new DelegateArg<float>(LASER_TIME_ALIAS)
     ).Compile();
 
     [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static SBCF SBCF(ExSBCF ex) =>
         PrepareDelegate<SBCF>(tac => {
                 var st = tac.GetByExprType<TExSBCUpdater>();
                 var ct = tac.GetByExprType<TEx<ICancellee>>();
                 return ex(st, ct, tac.AppendSB("sbcf_sbc_ref_sb", st.sb));
             },
-    new DelegateArg<BulletManager.SimpleBulletCollection.VelocityUpdateState>("sbcf_updater", true),
+            new DelegateArg<BulletManager.SimpleBulletCollection.VelocityUpdateState>("sbcf_updater", true),
             new DelegateArg<ParametricInfo>("sbcf_bpi", true),
             new DelegateArg<ICancellee>("sbcf_ct", true)
         ).Compile();
@@ -252,21 +248,24 @@ public static class Compilers {
     };
     
     [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static GCXF<T> GCXF<T>(Func<TExArgCtx, TEx<T>> ex) {
         //We don't make a BPI variable, instead it is assigned in the _Fake method.
         // This is because gcx.BPI is a property that creates a random ID every time it is called, which we don't want.
         return PrepareDelegate<GCXF<T>>(tac => GCXFRepo._Fake(ex)(tac), GCXFArgs).Compile();
     }
     
-    [Fallthrough]
-    [ExprCompiler]
+    [ExpressionBoundary]
     public static ErasedGCXF ErasedGCXF<T>(Func<TExArgCtx, TEx<T>> ex) {
         //We don't make a BPI variable, instead it is assigned in the _Fake method.
         // This is because gcx.BPI is a property that creates a random ID every time it is called, which we don't want.
         return PrepareDelegate<ErasedGCXF>(tac => Ex.Block(GCXFRepo._Fake(ex)(tac), Ex.Empty()), 
             GCXFArgs).Compile();
     }
+    
+    [ExpressionBoundary]
+    public static ErasedParametric ErasedParametric<T>(Func<TExArgCtx, TEx<T>> ex) => 
+        PrepareDelegateBPI<ErasedParametric>(tac => Ex.Block(ex(tac), Ex.Empty())).Compile();
 
     #endregion
     

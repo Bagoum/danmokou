@@ -13,7 +13,7 @@ public class tmp_addaudio : MonoBehaviour {
         var a = gameObject.AddComponent<AudioSource>();
         Logs.Log("added source");
         var ex = GetComponent<RunBGM>().bgm;
-        a.clip = ex.clip;
+        a.clip = ex!.clip;
         a.pitch = ex.pitch;
         a.Play();
     }

@@ -107,7 +107,7 @@
     <None Include="Assets\Danmokou\Patterns\PlayerFire\TEST Position Tracking 1234.bdsl" />
     <None Include="Assets\link.xml" />
     <None Include="Assets\Danmokou\Sprites\bullets\export-png\laser\DO TILING SETTINGS.txt" />
-    <None Include="Assets\Danmokou\Patterns\bdsl2 temp.bdsl" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 temp.bdsl" />
     <None Include="Assets\Danmokou\UXML\UIFullScreenMenu Container.uss" />
     <None Include="Assets\Danmokou\Patterns\feature testing\isimulate.bdsl" />
     <None Include="Assets\Danmokou\UXML\structures\Markdown\MkEmpty.uxml" />

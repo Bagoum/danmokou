@@ -216,7 +216,7 @@ public static partial class Reflector {
             Profiler.EndSample();
             return val;
         } catch (Exception e) {
-            throw new Exception($"Failed to parse below string into type {t.RName()}:\n{argstring}", e);
+            throw new Exception($"Failed to parse below string into type {t.ExRName()}:\n{argstring}", e);
         }
     }
     
@@ -274,7 +274,7 @@ public static partial class Reflector {
             if (p.Items.Length == 1) q = p.NextChild();
             else
                 throw p.WrapThrow(
-                    $"Tried to find an object of type {t.RName()}, but there is a parentheses with" +
+                    $"Tried to find an object of type {t.ExRName()}, but there is a parentheses with" +
                     $" {p.Items.Length} elements. Any parentheses should only have one element.");
         }
     }
@@ -304,7 +304,7 @@ public static partial class Reflector {
             q.Ctx.QueuedProps.Clear();
             return props;
         } else
-            throw new StaticException($"No non-explicit reflection handling exists for type {p.Type.RName()}");
+            throw new StaticException($"No non-explicit reflection handling exists for type {p.Type.ExRName()}");
     }
 
     private static IAST ReflectParam(IParseQueue q, NamedParam p) {
@@ -354,7 +354,7 @@ public static partial class Reflector {
             }
             var arg = (pu as SMParser.ParsedUnit.Str) ?? throw new StaticException($"Couldn't result {pu.GetType()}");
             if (q.Empty)
-                throw q.WrapThrow($"Ran out of text when trying to create an object of type {t.RName()}.");
+                throw q.WrapThrow($"Ran out of text when trying to create an object of type {t.ExRName()}.");
             else if (t == tsm)
                 ast = ReflectSM(q);
             else if (ReflectMethod(arg, t, q) is { } methodAST) {
@@ -469,9 +469,7 @@ public static partial class Reflector {
         TryGetSignature(member, typeof(T));
 
     public static InvokedMethod? TryGetSignature(string member, Type rt) {
-        Profiler.BeginSample("Signature lookup");
         var res = ASTTryLookForMethod(rt, member);
-        Profiler.EndSample();
         return res?.Call(member);
     }
 

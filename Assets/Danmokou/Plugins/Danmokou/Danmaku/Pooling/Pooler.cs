@@ -69,7 +69,7 @@ public static class BEHPooler {
 
     public static BehaviorEntity INode(Movement mov, ParametricInfo pi, Vector2 rotation, string behName) {
         var beh = RequestUninitialized(Prefabs.inode, out _);
-        beh.Initialize(mov, pi, SMRunner.Null, behName);
+        beh.Initialize(mov, pi, null, behName);
         beh.SetMovementDelta(rotation);
         return beh;
     }

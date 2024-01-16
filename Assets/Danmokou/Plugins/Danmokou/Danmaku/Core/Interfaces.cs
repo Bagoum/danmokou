@@ -6,12 +6,12 @@ namespace Danmokou.Core {
 
 public interface IStageConfig {
     SceneConfig Scene { get; }
-    StateMachine? StateMachine { get; }
+    EFStateMachine? StateMachine { get; }
     string DefaultSuicideStyle { get; }
 }
 
 public record EndcardStageConfig(string dialogueKey, SceneConfig Scene) : IStageConfig {
-    public StateMachine StateMachine => SMReflection.Dialogue(dialogueKey);
+    public EFStateMachine StateMachine => new(null, SMReflection.Dialogue(dialogueKey));
     public string DefaultSuicideStyle => "";
 }
 

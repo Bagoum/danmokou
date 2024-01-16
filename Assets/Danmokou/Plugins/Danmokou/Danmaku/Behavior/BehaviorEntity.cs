@@ -189,13 +189,14 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             Listen(Events.LocalReset, () => {
                 HardCancel(false);
                 //Allows all cancellations processes to go through before rerunning
-                ETime.QueueEOFInvoke(() => _ = RunBehaviorSM(SMRunner.RunRoot(behaviorScript, Cancellable.Null)));
+                if (behaviorScript != null)
+                    ETime.QueueEOFInvoke(() => _ = RunBehaviorSM(SMRunner.RunRoot(behaviorScript, Cancellable.Null)));
             });
         }
 #endif
     }
 
-    public void Initialize(Movement mov, ParametricInfo pi, SMRunner sm, string behName = "") =>
+    public void Initialize(Movement mov, ParametricInfo pi, SMRunner? sm, string behName = "") =>
         Initialize(null, mov, pi, sm, null, behName);
 
     /// <summary>
@@ -213,7 +214,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// <param name="parent">Transform parent of this BEH. Use sparingly</param>
     /// <param name="behName"></param>
     /// <param name="options"></param>
-    public void Initialize(BEHStyleMetadata? style, Movement mov, ParametricInfo pi, SMRunner smr,
+    public void Initialize(BEHStyleMetadata? style, Movement mov, ParametricInfo pi, SMRunner? smr,
         BehaviorEntity? parent=null, string behName="", RealizedBehOptions? options=null) {
         if (parent != null) TakeParent(parent);
         isSummoned = true;
@@ -235,8 +236,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
         
         if (IsNontrivialID(behName)) ID = behName;
-        if (smr.sm != null)
-            _ = RunBehaviorSM(smr);
+        if (smr is {} runner)
+            _ = RunBehaviorSM(runner);
         //This comes after so SMs run due to ~@ commands are not destroyed by BeginBehaviorSM
         RegisterID();
         UpdateStyle(style ?? defaultMeta);
@@ -621,8 +622,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// Do not call with pattern SMs.
     /// <param name="cancelOnFinish">If true, will cancel the local Cancellable upon exit, which is the behavior for BeginBehaviorSM. This is set to false for Retarget functions, which are generally run many times on persistent objects. Even if set to false, the Cancellable will still be cancelled by HardCancel.</param>
     /// </summary>
-    public async Task RunExternalSM(SMRunner sm, bool cancelOnFinish = true) {
-        if (sm.sm == null || sm.cT.Cancelled) return;
+    public async Task RunExternalSM(SMRunner? smr, bool cancelOnFinish = true) {
+        if (smr is not {} sm || sm.cT.Cancelled) return;
         var cT = new Cancellable();
         var joint = sm.MakeNested(cT);
         using var smh = new SMHandoff(this, sm, joint);

@@ -269,7 +269,7 @@ public readonly struct RealizedLaserOptions {
     public readonly BPY? beforeDraw;
     public readonly LaserMovement lpath;
     public readonly bool isStatic;
-    public readonly SMRunner smr;
+    public readonly SMRunner? smr;
     public readonly float yScale;
     public readonly int? layer;
     public readonly float staggerMultiplier;

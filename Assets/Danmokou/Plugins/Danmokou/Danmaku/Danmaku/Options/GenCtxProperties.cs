@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Functional;
 using Danmokou.Core;
 using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
@@ -13,6 +14,7 @@ using Danmokou.Reflection2;
 using Danmokou.SM;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.XR;
 using static Danmokou.Danmaku.Options.GenCtxProperty;
 using static Danmokou.Reflection.Compilers;
 using static Danmokou.Danmaku.Options.GenCtxUtils;
@@ -209,26 +211,41 @@ public record GenCtxProperty {
     /// <summary>
     /// Rules that are run before any invocations.
     /// </summary>
-    /// <param name="rules"></param>
-    /// <returns></returns>
+    public static GenCtxProperty Start(ErasedGCXF rule) => new StartProp(rule);
+    
+    /// <summary>
+    /// Rules that are run before any invocations.
+    /// </summary>
     public static GenCtxProperty Start(GCRule[] rules) => new StartProp(rules);
+    
     /// <summary>
     /// Rules that are run every loop, after `i` is set for the loop, and before the invocation.
     /// </summary>
-    /// <param name="rules"></param>
-    /// <returns></returns>
+    public static GenCtxProperty PreLoop(ErasedGCXF rule) => new PreLoopProp(rule);
+    
+    /// <summary>
+    /// Rules that are run every loop, after `i` is set for the loop, and before the invocation.
+    /// </summary>
     public static GenCtxProperty PreLoop(GCRule[] rules) => new PreLoopProp(rules);
+    
     /// <summary>
     /// Rules that are run every loop, after the invocation and after waiting is complete.
     /// </summary>
-    /// <param name="rules"></param>
-    /// <returns></returns>
+    public static GenCtxProperty PostLoop(ErasedGCXF rule) => new PostLoopProp(rule);
+    
+    /// <summary>
+    /// Rules that are run every loop, after the invocation and after waiting is complete.
+    /// </summary>
     public static GenCtxProperty PostLoop(GCRule[] rules) => new PostLoopProp(rules);
+    
     /// <summary>
     /// Rules that are run when the repeater is done.
     /// </summary>
-    /// <param name="rules"></param>
-    /// <returns></returns>
+    public static GenCtxProperty End(ErasedGCXF rule) => new EndProp(rule);
+    
+    /// <summary>
+    /// Rules that are run when the repeater is done.
+    /// </summary>
     public static GenCtxProperty End(GCRule[] rules) => new EndProp(rules);
     /// <summary>
     /// Increment the RV2 by a certain amount every loop. Resolved after PostLoop.
@@ -560,23 +577,20 @@ public record GenCtxProperty {
         }
     }
 
-    public abstract record RuleListProp : GenCtxProperty {
-        public readonly List<GCRule> rules;
-        public RuleListProp(GCRule[] rules) => this.rules = new List<GCRule>(rules);
-    }
+    public abstract record RuleListProp(Either<ErasedGCXF, GCRule[]> Rules) : GenCtxProperty;
 
     public record PreLoopProp : RuleListProp {
-        public PreLoopProp(GCRule[] rules) : base(rules) { }
+        public PreLoopProp(Either<ErasedGCXF, GCRule[]> rules) : base(rules) { }
     }
 
     public record PostLoopProp : RuleListProp {
-        public PostLoopProp(GCRule[] rules) : base(rules) { }
+        public PostLoopProp(Either<ErasedGCXF, GCRule[]> rules) : base(rules) { }
     }
     public record StartProp : RuleListProp {
-        public StartProp(GCRule[] rules) : base(rules) { }
+        public StartProp(Either<ErasedGCXF, GCRule[]> rules) : base(rules) { }
     }
     public record EndProp : RuleListProp {
-        public EndProp(GCRule[] rules) : base(rules) { }
+        public EndProp(Either<ErasedGCXF, GCRule[]> rules) : base(rules) { }
     }
 
     /// <summary>
@@ -666,10 +680,10 @@ public class GenCtxProperties<T> : GenCtxProperties {
     public readonly bool forceRootAdjust;
     public readonly GCXF<V2RV2>? rv2Overrider;
     public readonly (bool, GCXF<V2RV2>)? bank;
-    public readonly List<GCRule>? preloop;
-    public readonly List<GCRule>? postloop = new();
-    public readonly List<GCRule>? start;
-    public readonly List<GCRule>? end;
+    public readonly (List<ErasedGCXF>?, List<GCRule>?) preloop;
+    public readonly (List<ErasedGCXF>?, List<GCRule>?) postloop;
+    public readonly (List<ErasedGCXF>?, List<GCRule>?) start;
+    public readonly (List<ErasedGCXF>?, List<GCRule>?) end;
     public readonly Parametrization p = Parametrization.DEFER;
     public readonly GCXF<float>? p_mutater;
     public readonly bool resetColor = false;
@@ -735,6 +749,13 @@ public class GenCtxProperties<T> : GenCtxProperties {
         return rv2pp(gcx);
     }*/
 
+    private void HandleRules(RuleListProp rp, ref (List<ErasedGCXF>?, List<GCRule>?) acc) {
+        if (rp.Rules.TryL(out var fn)) {
+            (acc.Item1 ??= new()).Add(fn);
+        } else
+            (acc.Item2 ??= new()).AddRange(rp.Rules.Right);
+    }
+
     public GenCtxProperties(params GenCtxProperty[] props) : this(props as IEnumerable<GenCtxProperty>) { }
 
     public GenCtxProperties(IEnumerable<GenCtxProperty> props) {
@@ -748,7 +769,7 @@ public class GenCtxProperties<T> : GenCtxProperties {
         } else if (t == tTP) {
             allowWait = true;
             allowWaitChild = true;
-        } else throw new StaticException($"Cannot call GenCtxProperties with class {t.RName()}");
+        } else throw new StaticException($"Cannot call GenCtxProperties with class {t.ExRName()}");
         foreach (var prop in props.Unroll().OrderBy(x => x.Priority)) {
             if (prop is TimesProp gt) {
                 maxTimes = gt.max ?? maxTimes;
@@ -763,8 +784,8 @@ public class GenCtxProperties<T> : GenCtxProperties {
                 forceRootAdjust = rp.doAdjust;
             } else if (prop is SetRV2Prop srp) rv2Overrider = srp.overrider;
             else if (prop is BankProp bp) bank = (bp.toZero, bp.banker);
-            else if (prop is PreLoopProp prel) prel.rules.AssignOrExtend(ref preloop);
-            else if (prop is PostLoopProp pol) pol.rules.AssignOrExtend(ref postloop);
+            else if (prop is PreLoopProp prel) HandleRules(prel, ref preloop);
+            else if (prop is PostLoopProp pol) HandleRules(pol, ref postloop);
             else if (prop is RV2IncrProp rvp) {
                 rv2IncrType = Max(RV2IncrType.FUNC);
                 rv2pp = rvp.value;
@@ -774,8 +795,8 @@ public class GenCtxProperties<T> : GenCtxProperties {
                 rv2Spread = rsp.value;
             } else if (prop is MAngProp map) rv2aMutater = map.value;
             else if (prop is FRV2Prop frv2p) frv2 = frv2p.value;
-            else if (prop is StartProp sp) sp.rules.AssignOrExtend(ref start);
-            else if (prop is EndProp ep) ep.rules.AssignOrExtend(ref end);
+            else if (prop is StartProp sp) HandleRules(sp, ref start);
+            else if (prop is EndProp ep) HandleRules(ep, ref end);
             else if (prop is ParametrizationProp pp) {
                 p = pp.value;
                 p_mutater = pp.mutater;
@@ -812,7 +833,7 @@ public class GenCtxProperties<T> : GenCtxProperties {
             else if (prop is ExposeProp exp) Expose = exp.value;
             else if (prop is _LexicalScopeProp scope) {
                 ScopeAndVars = (scope.scope, scope.autoVars);
-            } else throw new Exception($"{t.RName()} is not allowed to have properties of type {prop.GetType()}.");
+            } else throw new Exception($"{t.ExRName()} is not allowed to have properties of type {prop.GetType()}.");
         }
         if (sah != null) {
             if (frv2 != null) throw new Exception("A summon-along handler cannot be declared with an RV2 function handler.");

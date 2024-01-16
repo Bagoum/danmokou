@@ -187,7 +187,7 @@ public class TExArgCtx {
             throw new CompileException($"The variable \"{name}\" is not provided as an argument.");
         return args[idx].expr is TEx<T> arg ?
             arg :
-            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).RName()}");
+            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).ExRName()}");
     }
     public TEx<T>? MaybeGetByName<T>(string name) {
         if (!argNameToIndexMap.TryGetValue(name, out var idx))
@@ -195,7 +195,7 @@ public class TExArgCtx {
         return args[idx].expr is TEx<T> arg ?
             arg :
             //Still throw an error in this case
-            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).RName()}");
+            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).ExRName()}");
     }
     
     public TEx? MaybeGetByName(Type t, string name) {
@@ -204,12 +204,12 @@ public class TExArgCtx {
         return args[idx].expr.GetType().GetGenericArguments()[0] == t ?
             args[idx].expr :
             //Still throw an error in this case
-            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {t.RName()}");
+            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {t.ExRName()}");
     }
     
     public TEx GetByType<T>(out int idx) {
         if (!argTypeToIndexMap.TryGetValue(typeof(T), out idx))
-            throw new CompileException($"No variable of type {typeof(T).RName()} is provided as an argument.");
+            throw new CompileException($"No variable of type {typeof(T).ExRName()} is provided as an argument.");
         return args[idx].expr;
     }
     public TEx GetByType<T>() => GetByType<T>(out _);
@@ -220,7 +220,7 @@ public class TExArgCtx {
     
     public Tx GetByExprType<Tx>(out int idx) where Tx : TEx {
         if (!argExTypeToIndexMap.TryGetValue(typeof(Tx), out idx))
-            throw new CompileException($"No variable of type {typeof(Tx).RName()} is provided as an argument.");
+            throw new CompileException($"No variable of type {typeof(Tx).ExRName()} is provided as an argument.");
         return (Tx)args[idx].expr;
     }
     public Tx GetByExprType<Tx>() where Tx : TEx => GetByExprType<Tx>(out _);
@@ -228,6 +228,10 @@ public class TExArgCtx {
         argExTypeToIndexMap.TryGetValue(typeof(Tx), out idx) ? 
             (Tx) args[idx].expr : 
             null;
+
+    /*private Type GetTExInnerType(Type tx) {
+        
+    }*/
     
     public TExArgCtx Rehash() {
         var bpi = GetByExprType<TExPI>(out var bidx);

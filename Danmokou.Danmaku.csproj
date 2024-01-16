@@ -74,6 +74,7 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\Player\Movement\StandardMovementCfg.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Items\GemItem.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\TestHarness.cs" />
+    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\MethodSignature.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\BulletBlocker.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Core\SaveData.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\GenericMath\ExMEasers.cs" />
@@ -189,6 +190,7 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\ADV\InteractableMimic.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\Reflector.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\Player\ShipConfig.cs" />
+    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\LanguageServerSupport.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\Player\Ability\AbilityCfg.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\XMLVNBacklogMenu.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\SagumeMimic.cs" />
@@ -281,6 +283,7 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\Collision\ILaserCollisionReceiver.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\XMLMainMenu_NLBug.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Display\SpriteDisplayController.cs" />
+    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\TypeMember.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\FadeWhenPlayerNearby.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\AoTGenerator.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\YachieMimic.cs" />

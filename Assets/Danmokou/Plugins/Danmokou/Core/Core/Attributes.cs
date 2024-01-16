@@ -19,18 +19,16 @@ public class FallthroughAttribute : Attribute {
 }
 
 /// <summary>
-/// Attribute marking a reflection method that is automatically applied if none other match, and which
-///  converts an expression type into a real type (eg. ExTP to TP).
-/// <br/>Must occur together with <see cref="FallthroughAttribute"/>.
+/// A reflection method that takes expressions/expression functions as arguments (such as ExTP)
+///  and returns something that is not expression based (such as TP or RootedVTP).
+/// <br/>If this occurs alongside <see cref="FallthroughAttribute"/>,
+///  then it is treated as an expression compiler in BDSL1.
+/// <br/>Replaces ExprCompilerAttribute.
 /// </summary>
-[AttributeUsage(AttributeTargets.Method)]
-public class ExprCompilerAttribute : Attribute {
-    
-}
+public class ExpressionBoundaryAttribute : Attribute { }
 
 [AttributeUsage(AttributeTargets.All)]
-public class DontReflectAttribute : Attribute {
-}
+public class DontReflectAttribute : Attribute { }
 /// <summary>
 /// Attribute marking a reflection alias for this method.
 /// </summary>
@@ -76,6 +74,21 @@ public class WarnOnStrictAttribute : Attribute {
     public readonly int strictness;
     public WarnOnStrictAttribute(int strict = 1) {
         strictness = strict;
+    }
+}
+
+/// <summary>
+/// Attribute marking that the `typeIndex`th generic variable in this method should only be allowed
+///  to take on one of the provided `possibleTypes`.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public class RestrictTypesAttribute : Attribute {
+    public readonly int typeIndex;
+    public readonly Type[] possibleTypes;
+
+    public RestrictTypesAttribute(int typeIndex, params Type[] possibleTypes) {
+        this.typeIndex = typeIndex;
+        this.possibleTypes = possibleTypes;
     }
 }
 

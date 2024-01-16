@@ -32,6 +32,12 @@ public static class ExMLerps {
     /// <param name="x">Resulting lerp value</param>
     /// <returns></returns>
     public static tfloat Ratio(tfloat a, tfloat b, tfloat x) => TEx.Resolve(a, _a => x.Sub(a).Div(b.Sub(a)));
+
+    public static TEx<T> TestLookup2<T>(Func<TEx<T>, TEx<T>, TEx<T>> generic, TEx<T> subject1, TEx<T> subject2) 
+        => generic(subject1, subject2);
+    public static TEx<T> TestLookup1<T>(Func<TEx<T>,  TEx<T>> generic, TEx<T> subject1) 
+        => generic(subject1);
+    public static TEx<T> AddTest<T>(TEx<T> x, TEx<T> y) => x.Add(y);
     
     /// <summary>
     /// Lerp between two functions.

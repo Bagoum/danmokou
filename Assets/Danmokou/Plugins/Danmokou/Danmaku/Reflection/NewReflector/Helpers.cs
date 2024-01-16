@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using BagoumLib.Functional;
 using BagoumLib.Reflection;
 using BagoumLib.Unification;
 using Danmokou.Core;
@@ -13,21 +14,51 @@ using static BagoumLib.Unification.TypeDesignation;
 
 namespace Danmokou.Reflection2 {
 public static class Helpers {
-    public static (IAST, LexicalScope) CompileToAST(ref string source, params IDelegateArg[] args) {
+    /// <summary>
+    /// (Stage 0) Convert the provided script into an ST.
+    /// </summary>
+    /// <param name="source"></param>
+    /// <returns></returns>
+    public static Either<ST.Block, ReflectionException> Parse(ref string source) {
         var tokens = Lexer.Lex(ref source);
         var parse = Parser.Parse(source, tokens, out var stream);
         if (parse.IsRight) 
-            throw new CompileException(stream.ShowAllFailures(parse.Right));
-        var gs = LexicalScope.NewTopLevelScope();
-        var ast = parse.Left.AnnotateTopLevel(gs, args);
-        foreach (var exc in (ast as IAST).FirstPassExceptions)
+            return new ReflectionException(stream.TokenWitness.ToPosition(parse.Right.Index, parse.Right.End), 
+                stream.ShowAllFailures(parse.Right));
+        return parse.Left;
+    }
+    
+    /// <summary>
+    /// (Stage 1) Convert the provided script into an ST, then annotate it into an AST.
+    /// <br/>This does not perform typechecking (<see cref="Typecheck"/>).
+    /// </summary>
+    /// <param name="source">Script code</param>
+    /// <param name="args">Top-level script arguments</param>
+    /// <returns></returns>
+    /// <exception cref="ReflectionException">Thrown when the script could not be parsed or there are basic errors in the AST.</exception>
+    public static (IAST, LexicalScope) ParseAnnotate(ref string source, params IDelegateArg[] args) {
+        var parse = Parse(ref source);
+        if (parse.IsRight)
+            throw parse.Right;
+        var scope = LexicalScope.NewTopLevelScope();
+        var ast = parse.Left.AnnotateTopLevel(scope, args);
+        foreach (var exc in (ast as IAST).FirstPassExceptions) {
             throw exc;
-        
-        return (ast, gs);
+            //throw new Exception(ITokenWitness.ShowErrorPositionInSource(exc.Position, source), exc);
+        }
+        return (ast, scope);
     }
 
-    public static IAST Typecheck(this IAST ast, LexicalScope globalScope, out Type type) {
-        var typ = IAST.Typecheck(ast, globalScope.Root.Resolver, globalScope);
+    /// <summary>
+    /// (Stage 2) Typecheck the provided AST.
+    /// </summary>
+    /// <param name="ast">The AST to typecheck (as returned by <see cref="ParseAnnotate"/>).</param>
+    /// <param name="rootScope">The top-level scope of the AST (as returned by <see cref="ParseAnnotate"/>).</param>
+    /// <param name="type">The output type of the AST, which is generally in the form Func&lt;TExArgCtx, &lt;TEx&gt;&gt;.</param>
+    /// <returns>The typechecked AST.</returns>
+    /// <exception cref="Exception">Thrown when there are typechecking errors.</exception>
+    public static IAST Typecheck(this IAST ast, LexicalScope rootScope, out Type type) {
+        var typ = IAST.Typecheck(ast, rootScope.Root.Resolver, rootScope);
         if (typ.IsRight)
             throw IAST.EnrichError(typ.Right);
         type = typ.Left;
@@ -35,10 +66,31 @@ public static class Helpers {
             d.Log();
         return ast;
     }
-    public static ReadyToCompileExpr<D> CompileToDelegate<D>(string source, params IDelegateArg[] args) where D : Delegate {
-        var (ast, gs) = CompileToAST(ref source, args);
-        var expr = ast.Typecheck(gs, out _).Realize() as Func<TExArgCtx, TEx>;
-        return CompilerHelpers.PrepareDelegate<D>(expr!, args);
+    
+    /// <inheritdoc cref="IAST.Verify"/>
+    public static IAST Finalize(this IAST ast) {
+        foreach (var exc in ast.Verify())
+            throw exc;
+        return ast;
+    }
+    
+    /// <summary>
+    /// (Stage 4) Realize the AST into an expression function, then compile it into a delegate.
+    /// </summary>
+    public static D Compile<D>(this IAST ast, params IDelegateArg[] args) where D : Delegate {
+        var expr = (Func<TExArgCtx, TEx>)ast.Realize()!;
+        return CompilerHelpers.PrepareDelegate<D>(expr, args).Compile();
+    }
+    
+    /// <summary>
+    /// Runs all four stages of script parsing (<see cref="ParseAnnotate"/>, <see cref="Typecheck"/>,
+    /// <see cref="Finalize"/>, <see cref="Compile{D}"/>) on a script.
+    /// </summary>
+    public static D ParseAndCompile<D>(string source, params IDelegateArg[] args) where D : Delegate {
+        var (ast, gs) = ParseAnnotate(ref source, args);
+        var typechecked = ast.Typecheck(gs, out _);
+        var verified = typechecked.Finalize();
+        return verified.Compile<D>(args);
     }
 
     /// <summary>
@@ -105,11 +157,11 @@ public static class Helpers {
     /// Retype the provided function as TExArgCtx -> TEx{T}.
     /// </summary>
     public static Func<TExArgCtx, TEx> MakeTypedLambda(this Type t, Func<TExArgCtx, TEx> f) =>
-        LambdaTyper.ConvertForType(t, f);
+        TExLambdaTyper.ConvertForType(t, f);
 
-    public class LambdaTyper {
+    private static class TExLambdaTyper {
         private static readonly Dictionary<Type, MethodInfo> converters = new();
-        private static readonly MethodInfo mi = typeof(LambdaTyper).GetMethod(nameof(Convert))!;
+        private static readonly MethodInfo mi = typeof(TExLambdaTyper).GetMethod(nameof(Convert))!;
 
         public static Func<TExArgCtx, TEx<T>> Convert<T>(Func<TExArgCtx, TEx> f) => tac => (Ex)f(tac);
         public static Func<TExArgCtx, TEx> ConvertForType(Type t, Func<TExArgCtx, TEx> f) {
@@ -158,12 +210,12 @@ public static class Helpers {
                     FieldInfo f => !(f.IsInitOnly || f.IsLiteral) ?
                         null :
                         Err($"The field {f.Name} is not writeable."),
-                    { } m => Err($"Member {m.Name} is of an unhandled type {m.GetType().RName()}")
+                    { } m => Err($"Member {m.Name} is of an unhandled type {m.GetType().ExRName()}")
                 };
             case ParameterExpression:
                 return null;
             default:
-                return Err($"This expression has type {ex.GetType().RName()}:{ex.NodeType}, which is not writeable." +
+                return Err($"This expression has type {ex.GetType().ExRName()}:{ex.NodeType}, which is not writeable." +
                            " A writeable expression is an array indexer, property, field, or variable.");
             
         }

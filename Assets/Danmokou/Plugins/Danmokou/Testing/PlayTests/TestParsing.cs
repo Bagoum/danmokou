@@ -89,7 +89,7 @@ async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy
 <!> bgt-out shatter4
 phase 0
 paction 0
-noop") as PhaseSM).TField<PhaseProperties>("props");
+noop").SM as PhaseSM).TField<PhaseProperties>("props");
         AreEqual(PhaseType.Spell, props.phaseType);
         AreEqual("en4", props.cardTitle?.ToString());
         AreEqual(21000, props.hp);
@@ -109,7 +109,7 @@ paction 0
         paction 0 :1
             noop
     noop
-    noop") as PhaseParallelActionSM;
+    noop").SM as PhaseParallelActionSM;
         AreEqual(4, sm.TField<List<StateMachine>>("states").Count);
         sm = StateMachine.CreateFromDump(@"
 paction 0
@@ -118,7 +118,7 @@ paction 0
         paction 0 :2
             noop
             noop
-    noop") as PhaseParallelActionSM;
+    noop").SM as PhaseParallelActionSM;
         AreEqual(3, sm.TField<List<StateMachine>>("states").Count);
         sm = StateMachine.CreateFromDump(@"
 paction 0
@@ -127,7 +127,7 @@ paction 0
         paction 0
             noop
             noop
-            noop") as PhaseParallelActionSM;
+            noop").SM as PhaseParallelActionSM;
         AreEqual(2, sm.TField<List<StateMachine>>("states").Count);
 
     }

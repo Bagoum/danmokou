@@ -142,21 +142,26 @@ public class GenCtx : IDisposable {
         //++recachedCount;
     }
 
-    public GenCtx Copy((LexicalScope scope, AutoVars autoVars)? newScope) {
+    public GenCtx Copy(Either<(LexicalScope scope, AutoVars.GenCtx autoVars), EnvFrame>? newScope) {
         var cp = NewUnscoped(exec);
         cp.index = this.index;
         cp.idOverride = this.idOverride;
         cp.playerController = playerController;
         if (newScope.Try(out var ns)) {
-            cp.EnvFrame = EnvFrame.Create(ns.scope, EnvFrame);
-            cp.AutoVars = ns.autoVars;
-            if (AutoVars is AutoVars.GenCtx) {
-                cp.RV2 = RV2;
-                cp.BaseRV2 = BaseRV2;
-                cp.SummonTime = SummonTime;
-            } else if (cp.AutoVars is AutoVars.GenCtx) {
-                cp.RV2 = cp.BaseRV2 = V2RV2.Zero;
-                cp.SummonTime = 0;
+            if (ns.IsLeft) {
+                cp.EnvFrame = EnvFrame.Create(ns.Left.scope, EnvFrame);
+                cp.AutoVars = ns.Left.autoVars;
+                if (AutoVars is AutoVars.GenCtx) {
+                    cp.RV2 = RV2;
+                    cp.BaseRV2 = BaseRV2;
+                    cp.SummonTime = SummonTime;
+                } else {
+                    cp.RV2 = cp.BaseRV2 = V2RV2.Zero;
+                    cp.SummonTime = 0;
+                }
+            } else {
+                //overriden scope
+                cp.EnvFrame = ns.Right;
             }
         } else {
             cp.EnvFrame = EnvFrame.Clone();
@@ -167,7 +172,7 @@ public class GenCtx : IDisposable {
         return cp;
     }
 
-    public void FinishIteration(List<GCRule>? postloop, V2RV2? rv2Increment) {
+    public void FinishIteration((List<ErasedGCXF>?, List<GCRule>?) postloop, V2RV2? rv2Increment) {
         UpdateRules(postloop);
         if (rv2Increment is {} incr)
             RV2 += incr;
@@ -223,9 +228,13 @@ public class GenCtx : IDisposable {
         }
     }
 
-    public void UpdateRules(List<GCRule>? rules) {
-        if (rules == null) return;
-        for (int ii = 0; ii < rules.Count; ++ii) UpdateRule(rules[ii]);
+    public void UpdateRules((List<ErasedGCXF>? code, List<GCRule>? rules) rules) {
+        if (rules.code is {} c)
+            for (int ii = 0; ii < c.Count; ++ii)
+                c[ii](this);
+        if (rules.rules is {} r)
+            for (int ii = 0; ii < r.Count; ++ii) 
+                UpdateRule(r[ii]);
     }
 }
 

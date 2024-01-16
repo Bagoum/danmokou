@@ -73,7 +73,7 @@ phase 0
 phase 0
 <!> type spell `My First Spell`
 phase 0
-") as PatternSM;
+").SM as PatternSM;
         AssertListEq(new List<SMAnalysis.Phase>() {
                 //phase 0,3 are ignored since they don't have type
                 new SMAnalysis.Phase(null!, PhaseType.Dialogue, 1, null),

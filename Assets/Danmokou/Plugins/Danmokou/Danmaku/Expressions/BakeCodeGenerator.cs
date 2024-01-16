@@ -275,7 +275,7 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
                     if (obj is D del) 
                         return del;
                     throw new Exception($"Baked expression #{index}/{compiled.Count} for file {FileIdentifier} " +
-                                        $"is of type {obj.GetType().RName()}, requested {typeof(D).RName()}");
+                                        $"is of type {obj.GetType().ExRName()}, requested {typeof(D).ExRName()}");
                 }
             
                 public override void Dispose() {
@@ -330,10 +330,11 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
             .Next<D>(tac.Ctx.ProxyArguments.ToArray());
 #endif
         var f = FlattenVisitor.Flatten(ex, true, true);
-        /*
-        if (typeof(D) == typeof(VTP) || typeof(D) == typeof(SBCF) || typeof(D) == typeof(GCXF<float>))
-            Debug.Log($"Ex:{typeof(D).RName()} " +
-                      $"{new ExpressionPrinter{ObjectPrinter = new DMKObjectPrinter {FallbackToToString = true}}.LinearizePrint(ex)}");*/
+#if UNITY_EDITOR
+        //if (typeof(D) == typeof(VTP) || typeof(D) == typeof(SBCF) || typeof(D) == typeof(GCXF<float>))
+            Debug.Log($"Ex:{typeof(D).ExRName()} " +
+                      $"{new ExpressionPrinter{ObjectPrinter = new DMKObjectPrinter {FallbackToToString = true}}.LinearizePrint(ex)}");
+#endif
         var result = Ex.Lambda<D>(f, prms).Compile();
 #if EXBAKE_SAVE
         var printer = new ExpressionPrinter() {ObjectPrinter = new DMKObjectPrinter()};
@@ -396,8 +397,8 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
                         //generally caused by unfilled field, can be ignored.
                     } else
                         throw new Exception("ReflectInto has resultType set on an invalid property type: " +
-                                            $"{typ.RName()}.{m.Name}<{val.GetType().RName()}/" +
-                                            $"{ra.resultType.RName()}>");
+                                            $"{typ.ExRName()}.{m.Name}<{val.GetType().ExRName()}/" +
+                                            $"{ra.resultType.ExRName()}>");
                 }
             }
         }

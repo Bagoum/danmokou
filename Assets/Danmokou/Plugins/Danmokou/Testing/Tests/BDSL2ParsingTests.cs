@@ -96,7 +96,7 @@ x++ + block {
     y + block {
         var z = x;
         var w = y;
-        z + (myArg = w)
+        z + (myArg += w)
     }
 }";
         var args = new IDelegateArg[] { new DelegateArg<float>("myArg") };
@@ -108,7 +108,8 @@ x++ + block {
             (1, "y")
         });
         var result = ast.Realize() as Func<TExArgCtx, TEx>;
-        var f = CompilerHelpers.PrepareDelegate<Func<float, float>>(result!, args);
+        var f = CompilerHelpers.PrepareDelegate<Func<float, float>>(result!, args).Compile();
+        Assert.AreEqual(f(100), 131);
     }
 
     [Test]
@@ -164,58 +165,11 @@ async 'circle-green/w' <1;:> gcr {
     
     
     [Test]
-    public static void tmp() {
-        /* todo: scoping of gcx binders with alternate
-         * eg.
-         * gsr { ...
-         *  binditr(myItr)
-         *  alternate myItr
-         * } { sp1, sp2 }
-         * maybe we write this as:
-         * gsr {
-         *  scoped { itr = ITERATION }
-         *  alternate myItr
-         * } { sp1, sp2 }
-         * the idea is that instead of creating a scope within all arrays (which doesn't work with alternate),
-         *  we generally create a scope for each iteration of a GXR repeater (can be done by tagging all GXR methods
-         *  with [CreatesInternalScope]), and put any commands that must be scoped over all children 
-            in the scoped command, which runs under this internal per-iteration scope
-         * BindItr can be implicitly translated to a scoped command (note: this is nontrivial, 
-         * Note that this requires manual EF creation in the GXR methods, though the LexicalScope will be handled
-         *  in the AST. This said it's not exactly clear how to store the LexicalScope in the GXR method,
-         *  since except for GTR they're just functions. Maybe we modify the GenCtxProperties<T> param?
-         * Note that it'd still be beneficial to allow statements as SyncPattern children, which we can still do with
-         *  an EraseToSP:: GCXF<T>->SP or something
-         */
-        //rotate myArg rotate (v2x zero) rotate t rotate x pxy 1 2
-        var source = @"gsr {
-    circle
-    times 10
-    scoped(b{ //scoped has type ErasedGCXF -> GenCtxProperty
-        var itr = 1;
-        var xyz = 2.5
-    })
-} {
-    s tprot px itr
-    s tprot px xyz
-    erase(b{ xyz += 2 })
-}";
+    public static void tmp2() {
         var args = new IDelegateArg[] { };
-        var ast = AssertVerified(source, args);
-
+        var ast = AssertVerified("gsr2c 10 { bindLR() } { s tprot rotate(lr * 20, block{ var aa = 4; px(aa + aa) }) }");
         var exResult = ast.Realize() as Func<TExArgCtx, TEx>;
         var result = CompilerHelpers.PrepareDelegate<Func<SyncPattern>>(exResult!, args);
-        //var f = CompilerHelpers.PrepareDelegate<Func<float, float>>(result!, args);
-        //var sp = f.Compile()(1000);
-        Debug.Log(5);
-    }
-    
-    
-    [Test]
-    public static void tmp2() {
-        var str = "gsr2c 10 { bindItr(i1) } s tprot rotate(&i1, :: { a 4 } px(&a + &a))";
-        var p = IParseQueue.Lex(str);
-        var ast = p.IntoAST(typeof(SyncPattern));
         int k = 5;
     }
 }

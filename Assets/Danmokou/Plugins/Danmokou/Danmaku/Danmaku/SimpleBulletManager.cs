@@ -1064,7 +1064,7 @@ public partial class BulletManager {
     [ContextMenu("Debug FCTX usage")]
     public void DebugFCTX() {
         void LogFV<T>() {
-            //Logs.Log($"FV<{typeof(T).RName()} rent {FrameVars<T>.rented} return {FrameVars<T>.returned}");
+            //Logs.Log($"FV<{typeof(T).ExRName()} rent {FrameVars<T>.rented} return {FrameVars<T>.returned}");
         }
         LogFV<float>();
         LogFV<Vector2>();
