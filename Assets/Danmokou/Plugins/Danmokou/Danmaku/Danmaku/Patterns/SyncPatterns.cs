@@ -70,8 +70,8 @@ public static partial class SyncPatterns {
     /// <returns></returns>
     public static SyncPattern AddTime(GCXF<float> frames, SyncPattern sp) {
         return sbh => {
-            using var sbh2 = new SyncHandoff(sbh.ch, sbh.timeOffset + frames(sbh.GCX) * ETime.FRAME_TIME);
-            sp(sbh2);
+            sbh.timeOffset += frames(sbh.GCX) * ETime.FRAME_TIME;
+            sp(sbh);
         };
     }
 
@@ -185,17 +185,18 @@ public static partial class SyncPatterns {
     
     #region SimplifiedSP
 
-    private static (string, ExTP)[] AutoSaveV2(string loc, string dir) => new[] {
+    private static (string, UncompiledCode<Vector2>)[] AutoSaveV2(string loc, string dir) => 
+        new(string, UncompiledCode<Vector2>)[] {
         (loc, SBV2Repo.Loc()),
         (dir, SBV2Repo.Dir())
     };
 
-    private static readonly (string, ExBPY)[] AutoSaveF = { };
+    private static readonly (string, UncompiledCode<float>)[] AutoSaveF = { };
 
     /// <summary>
     /// GuideEmpty with a random suffix and no saved floats.
     /// </summary>
-    public static SyncPattern GuideEmpty2(ExBPY indexer, (string, ExTP)[] saveV2s, VTP emptyPath,
+    public static SyncPattern GuideEmpty2(ExBPY indexer, (string, UncompiledCode<Vector2>)[] saveV2s, VTP emptyPath,
         SyncPattern[] guided) => GuideEmpty(null, indexer, saveV2s, AutoSaveF, emptyPath, guided);
 
     /// <summary>
@@ -208,19 +209,19 @@ public static partial class SyncPatterns {
     /// <param name="emptyPath">The movement path of the empty bullet.</param>
     /// <param name="guided">The child fires that follow the empty bullet. They have Loc0 applied to them.</param>
     /// <returns></returns>
-    public static SyncPattern GuideEmpty(string? suffix, ExBPY indexer, (string, ExTP)[] saveV2s,
-        (string, ExBPY)[] saveFs, VTP emptyPath, SyncPattern[] guided) =>
+    public static SyncPattern GuideEmpty(string? suffix, ExBPY indexer, (string, UncompiledCode<Vector2>)[] saveV2s,
+        (string, UncompiledCode<float>)[] saveFs, VTP emptyPath, SyncPattern[] guided) =>
         _GuideEmpty(suffix, indexer, saveV2s, saveFs, emptyPath, guided, false);
     
     /// <summary>
     /// Set up an empty-guided fire for player bullets.
     /// </summary>
-    public static SyncPattern PlayerGuideEmpty(string? suffix, ExBPY indexer, (string, ExTP)[] saveV2s,
-        (string, ExBPY)[] saveFs, VTP emptyPath, SyncPattern[] guided) =>
+    public static SyncPattern PlayerGuideEmpty(string? suffix, ExBPY indexer, (string, UncompiledCode<Vector2>)[] saveV2s,
+        (string, UncompiledCode<float>)[] saveFs, VTP emptyPath, SyncPattern[] guided) =>
         _GuideEmpty(suffix, indexer, saveV2s, saveFs, emptyPath, guided, true);
     
-    private static SyncPattern _GuideEmpty(string? suffix, ExBPY indexer, (string, ExTP)[] saveV2s,
-        (string, ExBPY)[] saveFs, VTP emptyPath, SyncPattern[] guided, bool isPlayer) {
+    private static SyncPattern _GuideEmpty(string? suffix, ExBPY indexer, (string, UncompiledCode<Vector2>)[] saveV2s,
+        (string, UncompiledCode<float>)[] saveFs, VTP emptyPath, SyncPattern[] guided, bool isPlayer) {
         var emptySP = isPlayer ?
             AtomicPatterns.Simple(emptyPath, new SBOptions(new[] {SBOption.Player(0, 0, "null")})) :
             AtomicPatterns.S(emptyPath);
@@ -229,7 +230,7 @@ public static partial class SyncPatterns {
         string estyle = $"{BulletManager.EMPTY}{suffix}";
         var controlsL = new List<BulletManager.cBulletControl>();
         if (saveV2s.Length > 0) {
-            var data = new (ReflectEx.Hoist<Vector2> target, ExBPY indexer, ExTP valuer)[saveV2s.Length];
+            var data = new (ReflectEx.Hoist<Vector2> target, UncompiledCode<float> indexer, UncompiledCode<Vector2> valuer)[saveV2s.Length];
             for (int ii = 0; ii < saveV2s.Length; ++ii) {
                 data[ii] = (new ReflectEx.Hoist<Vector2>(saveV2s[ii].Item1), indexer, saveV2s[ii].Item2);
             }
@@ -237,7 +238,7 @@ public static partial class SyncPatterns {
                 BulletManager.SimpleBulletControls.SaveV2(data, _ => ExMPred.True())));
         }
         if (saveFs.Length > 0) {
-            var data = new (ReflectEx.Hoist<float> target, ExBPY indexer, ExBPY valuer)[saveFs.Length];
+            var data = new (ReflectEx.Hoist<float> target, UncompiledCode<float> indexer, UncompiledCode<float> valuer)[saveFs.Length];
             for (int ii = 0; ii < saveFs.Length; ++ii) {
                 data[ii] = (new ReflectEx.Hoist<float>(saveFs[ii].Item1), indexer, saveFs[ii].Item2);
             }
@@ -251,7 +252,8 @@ public static partial class SyncPatterns {
                 //See ParticleControl for explanation of why .Root is used here
                 controls.Add(new BulletManager.BulletControl(controlsL[ii], BulletManager.Consts.PERSISTENT, sbh.ch.cT.Root));
             BulletManager.AssertControls(isPlayer ? BulletManager.GetOrMakePlayerCopy(estyle) : estyle, controls);
-            using var emptySbh = sbh.Copy(estyle);
+            var emptySbh = sbh;
+            emptySbh.ch.bc.style = estyle;
             emptySP(emptySbh);
             for (int ii = 0; ii < guided.Length; ++ii) {
                 guided[ii](sbh);

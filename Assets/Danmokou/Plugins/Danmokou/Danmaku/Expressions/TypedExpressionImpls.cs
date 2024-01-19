@@ -155,4 +155,16 @@ public class TExGCX : TEx<GenCtx> {
         bpi = Ex.Property(ex, "AsBPI");
     }
 }
+
+/// <summary>
+/// Dummy class used to compile VTP
+/// </summary>
+public class VTPExpr { }
+
+/// <summary>
+/// Dummy class used to compile LVTP
+/// </summary>
+public class LVTPExpr { }
+
+
 }

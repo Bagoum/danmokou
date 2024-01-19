@@ -28,7 +28,7 @@ using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TE
 using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector3>>;
 using ExTP4 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector4>>;
 using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
-using ExVTP = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TExV3, Danmokou.Expressions.TEx>;
+using ExVTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.Expressions.VTPExpr>>;
 using ExSBCF = System.Func<Danmokou.Expressions.TExSBCUpdater, Danmokou.Expressions.TEx<BagoumLib.Cancellation.ICancellee>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx>;
 
 namespace Danmokou.Reflection {
@@ -160,40 +160,28 @@ public static class Compilers {
     [Fallthrough]
     [ExpressionBoundary]
     public static TP4 TP4(ExTP4 ex) => PrepareDelegateBPI<TP4>(ex).Compile();
-
-    public static readonly IDelegateArg[] VTPArgs = {
-        new DelegateArg<Movement>("vtp_mov", true, true),
-        new DelegateArg<float>("vtp_dt", true, true),
-        new DelegateArg<ParametricInfo>("vtp_bpi", true, true),
-        new DelegateArg<Vector3>("vtp_delta", true, true)
-    };
-
+    
     [Fallthrough]
     [ExpressionBoundary]
     public static VTP VTP(ExVTP ex) {
         if (ex == VTPRepo.ExNoVTP) return new(VTPRepo.NoVTP);
-        return PrepareDelegate<VTP>(tac => ex(
-                tac.GetByExprType<TExMov>(),
-                tac.GetByExprType<TEx<float>>(),
-                tac,
-                tac.GetByExprType<TExV3>()),
-            VTPArgs
+        return PrepareDelegate<VTP>(ex,
+            new DelegateArg<Movement>("vtp_mov", true, true),
+            new DelegateArg<float>("vtp_dt", true, true),
+            new DelegateArg<ParametricInfo>("vtp_bpi", true, true),
+            new DelegateArg<Vector3>("vtp_delta", true, true)
         ).Compile();
     }
     
     [Fallthrough]
     [ExpressionBoundary]
     public static LVTP LVTP(ExVTP ex) =>
-        PrepareDelegate<LVTP>(tac => ex(
-                tac.GetByExprType<TExLMov>(),
-                tac.GetByName<float>("lvtp_dt"),
-                tac,
-                tac.GetByExprType<TExV3>()),
-            new DelegateArg<LaserMovement>("lvtp_mov", true, true),
-            new DelegateArg<float>("lvtp_dt", true),
+        PrepareDelegate<LVTP>(ex,
+            new DelegateArg<LaserMovement>("vtp_mov", true, true),
+            new DelegateArg<float>("vtp_dt", true),
             new DelegateArg<float>(LASER_TIME_ALIAS, true),
-            new DelegateArg<ParametricInfo>("lvtp_bpi", true, true),
-            new DelegateArg<Vector3>("lvtp_delta", true, true)
+            new DelegateArg<ParametricInfo>("vtp_bpi", true, true),
+            new DelegateArg<Vector3>("vtp_delta", true, true)
         ).Compile();
 
     [Fallthrough]
@@ -263,11 +251,33 @@ public static class Compilers {
             GCXFArgs).Compile();
     }
     
+    
     [ExpressionBoundary]
     public static ErasedParametric ErasedParametric<T>(Func<TExArgCtx, TEx<T>> ex) => 
         PrepareDelegateBPI<ErasedParametric>(tac => Ex.Block(ex(tac), Ex.Empty())).Compile();
 
     #endregion
+
+    /// <summary>
+    /// Code that has not yet been compiled in a script.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public struct UncompiledCode<T> {
+        public readonly Func<TExArgCtx, TEx<T>> code;
+        public UncompiledCode(Func<TExArgCtx, TEx<T>> code) {
+            this.code = code;
+        }
+
+        public static implicit operator UncompiledCode<T>(Func<TExArgCtx, TEx<T>> code) => new(code);
+
+        public override string ToString() => $"Uncompiled<{typeof(T).RName()}>";
+    }
+
+    /// <summary>
+    /// Mark that some code should not be compiled in a script.
+    /// </summary>
+    [UsedImplicitly]
+    public static UncompiledCode<T> Code<T>(Func<TExArgCtx, TEx<T>> ex) => new(ex);
     
 }
 }

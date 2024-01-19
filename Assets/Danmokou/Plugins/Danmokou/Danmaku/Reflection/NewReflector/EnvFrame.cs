@@ -179,12 +179,20 @@ public class EnvFrame {
         TakeParent(null); //calls FreeDependent
     }
 
+    /// <summary>
+    /// Return this envframe, but mark an additional owner such that the envframe will only be disposed
+    ///  when both owners are finished using it.
+    /// </summary>
     public EnvFrame Mirror() {
         if (this == Empty) return Empty;
         ++owners;
         return this;
     }
     
+    /// <summary>
+    /// Copy all the values inside this envframe into a new envframe. The parent frame is shared, but the
+    ///  local values are not.
+    /// </summary>
     public EnvFrame Clone() {
         if (this == Empty) return Empty;
         var nxt = cache.Count > 0 ? cache.Pop() : new();

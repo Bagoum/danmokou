@@ -248,6 +248,8 @@ public static class Parser {
             (o, vals, c) => new ST.Array(o.Position.Merge(c.Position), vals.ToArray()) as ST).LabelV("array")
     );
 
+    private static readonly ParserError termMemberFollowErr =
+        new ParserError.Expected("member access x.y and/or function application f(x, y)");
     private static readonly Parser<Token, (Maybe<Token>, Maybe<(PositionRange, List<ST>)>)> termMemberFn =
         op(".").IgThen(Ident).Opt().Then(NoWhitespace.IgThen(Paren(Value)).Opt());
     private static readonly Parser<Token, (Maybe<Token>, Maybe<(PositionRange, List<ST>)>)> termMemberFnFollow = inp => {
@@ -258,34 +260,35 @@ public static class Parser {
             }
             return follow;
         };
-    private static readonly ParserError termMemberFollowErr =
-        new ParserError.Expected("member access x.y and/or function application f(x, y)");
     
     //Term: member access `x.y`, member function `x.f(y)`, 
-    // C#-style function application `f(x, y)`, partial function call `$(f, x)`
+    // C#-style function application `f(x, y)`, partial function call `$(f, x)`,
+    // type specifier 
     //Haskell-style function application `f x y` is handled in term2.
     private static readonly Parser<Token, ST> term =
-        Sequential(atom, termMemberFnFollow.Many(),
-            (x, seqs) => {
-                for (int ii = 0; ii < seqs.Count; ++ii) {
-                    var (mem, fn) = seqs[ii];
-                    if (mem.Try(out var m))
-                        if (fn.Try(out var f))
-                            x = new ST.MemberFunction(x.Position.Merge(f.Item1), x, new ST.Ident(m), f.Item2);
-                        else
-                            x = new ST.MemberAccess(x, new ST.Ident(m));
-                    else if (fn.Try(out var f))
-                        x = new ST.FunctionCall(x.Position.Merge(f.Item1), x, f.Item2.ToArray());
+        Choice(
+            Sequential(atom, termMemberFnFollow.Many(),
+                (x, seqs) => {
+                    for (int ii = 0; ii < seqs.Count; ++ii) {
+                        var (mem, fn) = seqs[ii];
+                        if (mem.Try(out var m))
+                            if (fn.Try(out var f))
+                                x = new ST.MemberFunction(x.Position.Merge(f.Item1), x, new ST.Ident(m), f.Item2);
+                            else
+                                x = new ST.MemberAccess(x, new ST.Ident(m));
+                        else if (fn.Try(out var f))
+                            x = new ST.FunctionCall(x.Position.Merge(f.Item1), x, f.Item2.ToArray());
+                    }
+                    return x;
                 }
-                return x;
-            }
-        ).Or(sop("$").IgThen(NoWhitespace).IgThen(
+            ),
+            sop("$").IgThen(NoWhitespace).IgThen(
                 Paren1(Combinators.SepBy(Value, comma, true, Ident.FMap(id => new ST.Ident(id) as ST)))).FMap(
                     args => new ST.PartialFunctionCall(
                         PositionRange.Merge(args.Select(a => a.Position)), 
                         (ST.Ident)args[0], args.Skip(1).ToArray()) as ST
                 )
-            );
+        );
 
     //Term + tight operators
     private static readonly Parser<Token, ST> termOps1 = ParseOperators(tightOperators, term);
@@ -323,10 +326,11 @@ public static class Parser {
     );
     private static ParseResult<ST> Value(InputStream<Token> inp) => value(inp);
 
+    //var is required even with type specified to avoid parsing `type name` as a curried function application
     private static readonly Parser<Token, (Token, (Token, Maybe<Token>))> varInitLeft = 
-        Kw("var").Then(IdentOrType.Then(Ident.Opt()));
+        Kw("var").Or(Kw("hvar")).Then(IdentOrType.Then(Ident.Opt()));
     private static readonly Parser<Token, ST> varInitRight = op("=").IgThen(value);
-    private static Parser<Token, ST> varInit = inp => {
+    private static readonly Parser<Token, ST> varInit = inp => {
         var rleft = varInitLeft(inp);
         if (!rleft.Result.Try(out var decl))
             return rleft.CastFailure<ST>();
@@ -343,7 +347,7 @@ public static class Parser {
             if (typ.IsRight)
                 return new ParseResult<ST>(new ParserError.Failure(typ.Right), rleft.Start, rleft.End);
             return new ParseResult<ST>(new ST.VarDeclAssign(kw.Position,
-                        new VarDecl(id.Position, typ.Left, id.Content), val)
+                        new VarDecl(id.Position, kw.Content == "hvar", typ.Left, id.Content), val)
                     { TypeKwPos = a.Position } as ST,
                 rleft.MergeErrors(in rright), rleft.Start, rright.End);
         } else {
@@ -352,7 +356,7 @@ public static class Parser {
                 return new ParseResult<ST>(new ParserError.Expected(
                     "`var VARIABLE` or `var TYPE VARIABLE`"), rleft.Start, rleft.End);
             return new ParseResult<ST>(new ST.VarDeclAssign(kw.Position,
-                    new VarDecl(a.Position, null, a.Content), val) as ST,
+                    new VarDecl(a.Position, kw.Content == "hvar", null, a.Content), val) as ST,
                 rleft.MergeErrors(in rright), rleft.Start, rright.End);
         }
     };
@@ -360,37 +364,8 @@ public static class Parser {
     //Statement: value, variable declaration, or void-type block (if/else, for, while)
     private static readonly Parser<Token, ST> statement = ChoiceL("statement",
         value,
-        //var is required even with type specified to avoid parsing `type name` as a curried function application
         varInit
-        /*Kw("var").Then(IdentOrType.Then(Ident.Opt()).ThenIg(op("=")).Then(value)).Bind(kwdecl => {
-            var (kw, decl) = kwdecl;
-            if (decl.a.b.Try(out var id)) {
-                //type + id specification
-                var tDef = ParseType(decl.a.a.Content);
-                if (tDef.IsRight)
-                    return new ParseResult<ST>(
-                        new LocatedParserError(decl.a.a.Index + tDef.Right.Index, tDef.Right.Error), decl.a.a.Index,
-                        decl.a.a.Position.End.Index);
-                var typ = tDef.Left.TryCompile();
-                if (typ.IsRight)
-                    return new ParseResult<ST>(
-                        new LocatedParserError(decl.a.a.Index, new ParserError.Failure(typ.Right)), decl.a.a.Index,
-                        decl.a.a.Position.End.Index);
-                return new ParseResult<ST>(new ST.VarDeclAssign(kw.Position, 
-                        new VarDecl(decl.a.a.Position.Merge(id.Position), typ.Left, id.Content), decl.b)
-                        { TypeKwPos = decl.a.a.Position } as ST,
-                    null, decl.a.a.Index, decl.b.Position.End.Index);
-            } else {
-                if (decl.a.a.Type == TokenType.TypeIdentifier)
-                    return new ParseResult<ST>(
-                        new LocatedParserError(decl.a.a.Index, new ParserError.Expected(
-                            "`var VARIABLE` or `var TYPE VARIABLE`")), decl.a.a.Index, decl.a.a.Position.End.Index);
-                return new ParseResult<ST>(new ST.VarDeclAssign(kw.Position, 
-                        new VarDecl(decl.a.a.Position, null, decl.a.a.Content), decl.b) as ST,
-                    null, decl.a.a.Index, decl.b.Position.End.Index);
-            }
-        })*/
-        //todo
+        //todo: if/else, for, while
     );
     private static readonly Parser<Token, List<ST>> statements = 
         statement.SepBy(ImplicitBreak(TokenType.Semicolon)).Label("statement block");

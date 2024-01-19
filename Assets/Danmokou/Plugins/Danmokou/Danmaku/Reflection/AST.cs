@@ -512,7 +512,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// An AST that generates a state machine by reading a file.
     /// </summary>
     public record SMFromFile(PositionRange CallPosition, PositionRange FilePosition, string Filename) : AST(CallPosition.Merge(FilePosition)), IAST<StateMachine?> {
-        public StateMachine? Evaluate(ASTEvaluationData data) => StateMachineManager.FromName(Filename)?.SM;
+        public StateMachine? Evaluate(ASTEvaluationData data) => StateMachineManager.FromName(Filename);
 
         public override string Explain() => $"{CompactPosition} StateMachine from file: {Filename}";
 
@@ -586,7 +586,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         
         public override void AttachLexicalScope(LexicalScope scope) {
             if (scope.FindDeclaration(Reference.var) == null) {
-                scope.DeclareVariable(new VarDecl(RefPosition, Type.AsType(), Reference.var));
+                scope.DeclareVariable(new VarDecl(RefPosition, false, Type.AsType(), Reference.var));
             }
             base.AttachLexicalScope(scope);
         }

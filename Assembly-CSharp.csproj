@@ -315,6 +315,7 @@
     <None Include="Assets\Danmokou\Rendering\Shaders\Display\BG\FireTransition.shader" />
     <None Include="Assets\Danmokou\Patterns\examples\seija screen flip.bdsl" />
     <None Include="Assets\Danmokou\Rendering\Shaders\Display\Radial Flat Bar.shader" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 hoisting and empty bullets.bdsl" />
     <None Include="Assets\SiMP\Scripts\simp.shinkiEx.bdsl" />
     <None Include="Assets\Danmokou\Fonts\YoZ\Font compressed for repo size control.txt" />
     <None Include="Assets\Danmokou\Rendering\Shaders\Core Firing\Basic Sprite.shader" />

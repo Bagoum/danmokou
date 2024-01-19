@@ -58,7 +58,7 @@ public static class Helpers {
     /// <returns>The typechecked AST.</returns>
     /// <exception cref="Exception">Thrown when there are typechecking errors.</exception>
     public static IAST Typecheck(this IAST ast, LexicalScope rootScope, out Type type) {
-        var typ = IAST.Typecheck(ast, rootScope.Root.Resolver, rootScope);
+        var typ = IAST.Typecheck(ast, rootScope.GlobalRoot.Resolver, rootScope);
         if (typ.IsRight)
             throw IAST.EnrichError(typ.Right);
         type = typ.Left;
@@ -94,35 +94,27 @@ public static class Helpers {
     }
 
     /// <summary>
-    /// Make the type TExArgCtx->TEx&lt;T&gt;.
+    /// If this type is of the form TExArgCtx->TEx&lt;R&gt;, then return R, otherwise return this type.
     /// </summary>
-    public static Known MakeTExFunc(this TypeDesignation simpleType) =>
-        new (typeof(Func<,>),
-            new Known(typeof(TExArgCtx)),
-            new Known(typeof(TEx<>),
-                simpleType
-            ));
-
-    public static bool IsTExFunc(this TypeDesignation t) {
-        if (t is not Known kt0 || kt0.Typ != typeof(Func<,>) || 
-            kt0.Arguments[0] is not Known kt1 || kt1.Typ != typeof(TExArgCtx))
-            return false;
-        return IsTExType(kt0.Arguments[1]);
+    public static Type MaybeUnwrapTExFuncType(this Type t) {
+        IsTExFuncType(t, out var inner);
+        return inner;
     }
-    public static TypeDesignation UnwrapTExFunc(this TypeDesignation texFuncType) {
-        if (!IsTExFunc(texFuncType))
-            throw new Exception($"Not a TExArgCtx->TEx designator: {texFuncType}");
-        return texFuncType.Arguments[1].UnwrapTExType();
-    }
-
-    public static bool IsTExType(this TypeDesignation t) {
-        return t is Known kt1 && kt1.Typ == typeof(TEx<>);
-    }
-
-    public static TypeDesignation UnwrapTExType(this TypeDesignation texType) {
-        if (!IsTExType(texType))
-            throw new Exception($"Not a TEx<T> designator: {texType}");
-        return texType.Arguments[0];
+    
+    /// <summary>
+    /// If this type is of the form TExArgCtx->TEx&lt;R&gt;, then return true and set inner to R.
+    /// </summary>
+    public static bool IsTExFuncType(this Type t, out Type inner) {
+        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Func<,>)) {
+            var gargs = t.GetGenericArguments();
+            if (gargs[0] == typeof(TExArgCtx) && gargs[1].IsGenericType &&
+                gargs[1].GetGenericTypeDefinition() == typeof(TEx<>)) {
+                inner = gargs[1].GetGenericArguments()[0];
+                return true;
+            }
+        }
+        inner = t;
+        return false;
     }
 
     private static readonly Dictionary<Type, (Type, ConstructorInfo)> texTypeCache = new();
@@ -134,9 +126,10 @@ public static class Helpers {
         var tt = typeof(TEx<>).MakeGenericType(kt.Typ);
         return texTypeCache[kt.Typ] = (tt, tt.GetConstructor(new[] { typeof(Expression) }));
     }
-
+    
+/*
     public static ConstructorInfo GetTExConstructor(this TypeDesignation texFuncType) =>
-        texFuncType.UnwrapTExFunc().GetTExType().exConstructor;
+        texFuncType.UnwrapTExFunc().GetTExType().exConstructor;*/
 
     public static Type AssertKnown(this TypeDesignation t) {
         if (!t.IsResolved)

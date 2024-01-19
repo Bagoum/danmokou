@@ -7,6 +7,7 @@ using BagoumLib.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Expressions;
+using Danmokou.Reflection;
 using Ex = System.Linq.Expressions.Expression;
 using tfloat = Danmokou.Expressions.TEx<float>;
 using static Danmokou.Expressions.ExMHelpers;
@@ -32,6 +33,13 @@ public static partial class Parametrics {
     /// The zero vector.
     /// </summary>
     public static ExTP Zero() => CXY(0, 0);
+
+    /// <summary>
+    /// The starting position of a bullet.
+    /// </summary>
+    [Atomic]
+    public static ExTP Root() => tac => ReflectEx.GetAliasFromStack(Aliases.MOV_ROOT_ALIAS, tac) ?? 
+                                        throw new Exception($"The function {nameof(Root)} only works in VTP contexts.");
 
     #region ConstantVectors
 
@@ -168,14 +176,6 @@ public static partial class Parametrics {
     }
 
     #region Wrappers
-    
-    /// <summary>
-    /// Get the BPI position.
-    /// </summary>
-    /// <returns></returns>
-    public static ExTP Loc() {
-        return bpi => bpi.LocV2;
-    }
 
     /// <summary>
     /// Derive a Vector2 from two floats.

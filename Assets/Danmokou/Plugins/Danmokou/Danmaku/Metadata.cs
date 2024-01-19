@@ -175,9 +175,8 @@ public readonly struct SMRunner {
             (ICancellee)new PassthroughCancellee(cT.Root, local);
     
     private readonly GenCtx? gcx;
-    private readonly EnvFrame? ef;
     public GenCtx NewGCX(BehaviorEntity beh) => 
-        gcx?.Copy(ef is null ? null : new(ef)) ?? GenCtx.New(beh, ef);
+        gcx?.Copy(null) ?? GenCtx.New(beh);
 
     /// <summary>
     /// Run the SM and then destroy the executing object.
@@ -188,7 +187,7 @@ public readonly struct SMRunner {
     /// Run the SM and then destroy the executing object.
     /// <br/>Also, any nested summons will be bounded by <see cref="cT"/>.
     /// </summary>
-    public static SMRunner CullRoot(EFStateMachine sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, true, true, gcx);
+    public static SMRunner CullRoot(StateMachine sm, ICancellee cT, GenCtx? gcx=null) => new(sm, cT, true, true, gcx);
     
     /// <summary>
     /// Run the SM.
@@ -200,10 +199,10 @@ public readonly struct SMRunner {
     /// Run the SM.
     /// <br/>Also, any nested summons will be bounded by <see cref="cT"/>.
     /// </summary>
-    public static SMRunner RunRoot(EFStateMachine sm, ICancellee cT) => new(sm, cT, false, true, null);
+    public static SMRunner RunRoot(StateMachine sm, ICancellee cT) => new(sm, cT, false, true, null);
     
     /// <summary>
-    /// See <see cref="RunRoot(Danmokou.SM.EFStateMachine,BagoumLib.Cancellation.ICancellee)"/>.
+    /// See <see cref="RunRoot(Danmokou.SM.StateMachine,BagoumLib.Cancellation.ICancellee)"/>.
     /// </summary>
     public static SMRunner RunRoot(TextAsset sm, ICancellee cT) => RunRoot(StateMachineManager.FFromText(sm), cT);
     public SMRunner(StateMachine sm, ICancellee cT, bool cullOnFinish, bool root, GenCtx? gcx) {
@@ -212,11 +211,6 @@ public readonly struct SMRunner {
         this.cullOnFinish = cullOnFinish;
         this.gcx = gcx;
         this.root = root;
-        ef = null;
-    }
-    public SMRunner(EFStateMachine sm, ICancellee cT, bool cullOnFinish, bool root, GenCtx? gcx) : 
-        this(sm.SM, cT, cullOnFinish, root, gcx) {
-        ef = sm.RootFrame;
     }
 }
 

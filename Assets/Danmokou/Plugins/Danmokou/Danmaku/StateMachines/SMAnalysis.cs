@@ -257,13 +257,13 @@ public static class SMAnalysis {
 
     public static List<Phase> Analyze(AnalyzedPhasedConstruct parent, TextAsset? sm) {
         if (sm == null) return new List<Phase>();
-        if (StateMachineManager.GetIfAlreadyLoaded(sm)?.SM is PatternSM psm)
+        if (StateMachineManager.GetIfAlreadyLoaded(sm) is PatternSM psm)
             return Analyze(parent, psm);
 #if !EXBAKE_LOAD
         if (GameManagement.References.fastParsing)
             return Analyze(parent, StateMachine.ParsePhases(sm.text));
 #endif
-        return Analyze(parent, StateMachineManager.FFromText(sm).SM as PatternSM);
+        return Analyze(parent, StateMachineManager.FFromText(sm) as PatternSM);
     }
 
     public static List<DayPhase> AnalyzeDay(AnalyzedDayBoss boss, PatternSM pat, bool ignoreZero = true) {
@@ -358,7 +358,7 @@ public static class SMAnalysis {
 
         public AnalyzedDayBoss(AnalyzedDay day, int index) {
             boss = (this.day = day).day.bosses[bossIndex = index];
-            phases = SMAnalysis.AnalyzeDay(this, (PatternSM)StateMachineManager.FFromText(boss.stateMachine).SM);
+            phases = SMAnalysis.AnalyzeDay(this, (PatternSM)StateMachineManager.FFromText(boss.stateMachine));
         }
         public static AnalyzedDayBoss Reconstruct(string campaign, int dayIndex, string boss) {
             return AnalyzedDay.Reconstruct(campaign, dayIndex).bossKeyMap[boss];

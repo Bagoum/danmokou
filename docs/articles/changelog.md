@@ -25,7 +25,7 @@ I've upgraded the project's Unity version to 2023.2.3f1. Unity 2023 has a critic
 
 #### Language Changes
 
-This build overhauls much of the internal handling for the scripting language in preparation for improvements in the next version. As a result of this, dynamic type construction (introduced in v9.2.0) and the GCXU type abstraction have been removed and replaced with a more "standard" data model based on environment frames. For the most part, this shouldn't affect script code, except for one major change to language functionality: variables are now **shared** by all consumers. Consider the following code:
+This build introduces a beta version of the new scripting language, BDSL2 (details and guide pending). Existing scripts will function as-is, though there have been some internal data model changes to support BDSL2. Critically, dynamic type construction (introduced in v9.2.0) and the GCXU type abstraction have been removed and replaced with a more "standard" data model based on [environment frames](https://www.composingprograms.com/pages/16-higher-order-functions.html). For the most part, this shouldn't affect script code, except for one major change to language functionality: variables are now **shared** by all consumers. Consider the following code:
 
 ```
 gtr {
@@ -56,11 +56,12 @@ Each bullet would have its own `&speed` since each bullet occurs in a separate l
 
 
 
-There are also a few minor changes:
+There are also a few less impactful changes:
 
 - The automatically-bound variable `&bulletTime` has been removed (it was unused in the engine as provided).
 - `EventLASM.Listen` has been removed. I plan to replace it in the next version.
 - SyncPatterns `oArrowI`, `FArrow`, and `TreeArrow` have been removed. I plan to replace them in the next version.
+- `FinishPSM` (the `finish` StateMachine) has been removed. It was unused in the engine as provided and it was also buggy. 
 
 #### Features
 

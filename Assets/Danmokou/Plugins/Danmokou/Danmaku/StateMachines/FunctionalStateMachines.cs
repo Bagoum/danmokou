@@ -47,7 +47,7 @@ public class GTRepeat : UniversalSM {
         public SMExecutionTracker(GTRepeat caller, GenCtxProperties<StateMachine> props, SMHandoff smh, out bool isClipped) {
             this.caller = caller;
             //Make a derived copy for the canPrepend override
-            this.smh = new SMHandoff(smh, smh.ch, null, true);
+            this.smh = new SMHandoff(smh, smh.ch.Mirror(), null, true);
             //But use the provided smh for its envframe
             looper = new LoopControl<StateMachine>(props, smh.ch, out isClipped);
             waitChild = props.waitChild;
@@ -95,7 +95,7 @@ public class GTRepeat : UniversalSM {
         public void DoAIteration(ref float extraFrames) {
             bool done = false;
             //Clone the envframe before each iteration of all children
-            var itrsmh = new SMHandoff(smh, looper.Handoff, null);
+            var itrsmh = new SMHandoff(smh, looper.Handoff.Copy(), null);
             Action loopDone = () => {
                 done = true;
                 itrsmh.Dispose();
@@ -128,7 +128,8 @@ public class GTRepeat : UniversalSM {
             // and calls its cleanup code in Start.
             //Therefore, this code follows the wait-child pattern.
             bool done = false;
-            var itrsmh = new SMHandoff(smh, looper.Handoff, null);
+            //Clone the envframe before each iteration of all children
+            var itrsmh = new SMHandoff(smh, looper.Handoff.Copy(), null);
             Action loopDone = () => {
                 done = true;
                 itrsmh.Dispose();

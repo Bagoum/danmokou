@@ -25,7 +25,7 @@ public abstract partial record Ability {
         public virtual double? PowerRequired => null;
         public virtual int? BombsRequired => 1;
         
-        public EFStateMachine? SM => StateMachineManager.FromText(SMFile);
+        public StateMachine? SM => StateMachineManager.FromText(SMFile);
 
 
         protected abstract IEnumerator Execute(PlayerController bomber, IDisposable bombDisabler);

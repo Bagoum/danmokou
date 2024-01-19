@@ -113,14 +113,11 @@ public static partial class Reflector {
     private static readonly Dictionary<Type, Dictionary<string, PostAggregate>> postAggregators =
         new();
 
-    public static readonly Dictionary<string, List<(Type, object)>> enumResolversByKey = new();
+    public static readonly Dictionary<string, List<(Type, object)>> bdsl2EnumResolvers = new();
 
     private static void InitializeEnumResolvers() {
         void CEnum<E>((char first, E value)[] values) {
             Type e = typeof(E);
-            foreach (var (first, value) in values) {
-                enumResolversByKey.AddToList(first.ToString(), (e, value!));
-            }
             SimpleFunctionResolver[e] = s => {
                 char c = char.ToLower(s[0]);
                 for (int ii = 0; ii < values.Length; ++ii) {
@@ -135,11 +132,10 @@ public static partial class Reflector {
                 throw new NotImplementedException($"Enum {e.Name}.{s} does not exist. The valid values are:\n\t{sb}");
             };
         }
-        void SEnum<E>((string first, E value)[] values) {
+        void SEnum<E>(bool copyToBDSL2Enum, (string first, E value)[] values) {
             Type e = typeof(E);
-            foreach (var (first, value) in values) {
-                enumResolversByKey.AddToList(first, (e, value!));
-            }
+            if (copyToBDSL2Enum)
+                BDSL2Enum(values);
             SimpleFunctionResolver[e] = s => {
                 for (int ii = 0; ii < values.Length; ++ii) {
                     if (s.StartsWith(values[ii].first)) return values[ii].value!;
@@ -153,6 +149,12 @@ public static partial class Reflector {
                 throw new NotImplementedException($"Enum {e.Name}.{s} does not exist. The valid values are:\n\t{sb}");
             };
         }
+        void BDSL2Enum<E>((string first, E value)[] values) {
+            Type e = typeof(E);
+            foreach (var (first, value) in values) {
+                bdsl2EnumResolvers.AddToList(first, (e, value!));
+            }
+        }
         CEnum(new[] {
             ('l', LR.LEFT),
             ('r', LR.RIGHT)
@@ -164,13 +166,27 @@ public static partial class Reflector {
             ('m', Parametrization.MOD),
             ('i', Parametrization.INVMOD),
         });
+        BDSL2Enum(new[] {
+            ("this", Parametrization.THIS),
+            ("defer", Parametrization.DEFER),
+            ("add", Parametrization.ADDITIVE),
+            ("mod", Parametrization.MOD),
+            ("invmod", Parametrization.INVMOD),
+        });
         CEnum(new[] {
             ('o', Facing.ORIGINAL),
             ('d', Facing.DEROT),
             ('v', Facing.VELOCITY),
             ('r', Facing.ROTATOR)
         });
-        SEnum(new[] {
+        BDSL2Enum(new[] {
+            ("original", Facing.ORIGINAL),
+            ("derot", Facing.DEROT),
+            ("velocity", Facing.VELOCITY),
+            ("rotator", Facing.ROTATOR)
+        });
+        
+        SEnum(true, new[] {
             ("non", PhaseType.Nonspell),
             ("spell", PhaseType.Spell),
             ("final", PhaseType.FinalSpell),
@@ -178,13 +194,13 @@ public static partial class Reflector {
             ("survival", PhaseType.Timeout),
             ("dialogue", PhaseType.Dialogue)
         });
-        SEnum(new[] {
+        SEnum(false, new[] {
             ("f", ExType.Float),
             ("v2", ExType.V2),
             ("v3", ExType.V3),
             ("rv", ExType.RV2),
         });
-        SEnum(new[] {
+        SEnum(false, new[] {
             ("=", GCOperator.Assign),
             ("+=", GCOperator.AddAssign),
             ("*=", GCOperator.MulAssign),
@@ -192,13 +208,13 @@ public static partial class Reflector {
             ("/=", GCOperator.DivAssign),
             ("//=", GCOperator.FDivAssign),
         });
-        SEnum(new[] {
+        SEnum(false, new[] {
             ("bo", SAAngle.ORIGINAL_BANK),
             ("br", SAAngle.REL_ORIGIN_BANK),
             ("bt", SAAngle.TANGENT_BANK),
             ("o", SAAngle.ORIGINAL)
         });
-        SEnum(new[] {
+        SEnum(true, new[] {
             ("nx", RV2ControlMethod.NX),
             ("ny", RV2ControlMethod.NY),
             ("rx", RV2ControlMethod.RX),
@@ -206,14 +222,14 @@ public static partial class Reflector {
             ("a", RV2ControlMethod.ANG),
             ("ra", RV2ControlMethod.RANG)
         });
-        SEnum(new[] {
+        SEnum(false, new[] {
             ("l1", TSMReflection.StandLocation.LEFT1),
             ("l2", TSMReflection.StandLocation.LEFT2),
             ("r1", TSMReflection.StandLocation.RIGHT1),
             ("r2", TSMReflection.StandLocation.RIGHT2),
             ("center", TSMReflection.StandLocation.CENTER)
         });
-        SEnum(new[] {
+        SEnum(false, new[] {
             ("none", ReflCtx.Strictness.NONE),
             ("comma", ReflCtx.Strictness.COMMAS)
         });

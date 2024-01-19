@@ -8,6 +8,7 @@ using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Danmokou.Reflection;
 using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExMHelpers;
@@ -31,6 +32,32 @@ public static class AtomicBPYRepo {
     /// </summary>
     /// <returns></returns>
     public static ExBPY T() => bpi => bpi.MaybeBPI?.t ?? bpi.FloatVal;
+
+    /// <summary>
+    /// Return the lifetime of a laser. (This function only works on lasers.)
+    /// </summary>
+    public static ExBPY LT() => bpi => bpi.MaybeGetByName<float>(Aliases.LASER_TIME_ALIAS) ??
+                                       throw new Exception($"The function {nameof(LT)} retrieves the lifetime of a laser. " +
+                                                           $"It only works on laser functions.");
+    
+    /// <summary>
+    /// The starting angle of rotation of a bullet.
+    /// </summary>
+    public static ExBPY Angle() => tac => ReflectEx.GetAliasFromStack(Aliases.MOV_ANGLE_ALIAS, tac) ?? 
+                                          throw new Exception($"The function {nameof(Angle)} only works in VTP contexts.");
+    
+    /// <summary>
+    /// The starting cosine of rotation of a bullet.
+    /// </summary>
+    public static ExBPY CosRot() => tac =>ReflectEx.GetAliasFromStack(Aliases.MOV_COS_ALIAS, tac) ?? 
+                                          throw new Exception($"The function {nameof(CosRot)} only works in VTP contexts.");
+    
+    /// <summary>
+    /// The starting cosine of rotation of a bullet.
+    /// </summary>
+    public static ExBPY SinRot() => tac => ReflectEx.GetAliasFromStack(Aliases.MOV_SIN_ALIAS, tac) ?? 
+                                           throw new Exception($"The function {nameof(SinRot)} only works in VTP contexts.");
+    
     /// <summary>
     /// Return the parametric firing index.
     /// </summary>

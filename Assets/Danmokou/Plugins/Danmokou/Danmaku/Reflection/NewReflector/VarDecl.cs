@@ -31,6 +31,11 @@ public class VarDecl : IUsedVariable {
     public PositionRange Position { get; }
     
     /// <summary>
+    /// True if this variable should be hoisted into the parent scope of the location where its declaration occured.
+    /// </summary>
+    public bool Hoisted { get; }
+    
+    /// <summary>
     /// The type of this variable as provided in the declaration. May be empty, in which case it will be inferred.
     /// </summary>
     public Type? KnownType { get; }
@@ -83,8 +88,9 @@ public class VarDecl : IUsedVariable {
     /// <summary>
     /// A declaration of a variable.
     /// </summary>
-    public VarDecl(PositionRange Position, Type? knownType, string Name) {
+    public VarDecl(PositionRange Position, bool Hoist, Type? knownType, string Name) {
         this.Position = Position;
+        this.Hoisted = Hoist;
         this.KnownType = knownType;
         this.Name = Name;
         TypeDesignation = knownType == null ?
@@ -128,7 +134,7 @@ public class VarDecl : IUsedVariable {
 }
 
 public class ImplicitArgDecl : VarDecl {
-    public ImplicitArgDecl(PositionRange Position, Type? knownType, string Name) : base(Position, knownType, Name) { }
+    public ImplicitArgDecl(PositionRange Position, Type? knownType, string Name) : base(Position, false, knownType, Name) { }
 }
 
 /// <summary>
@@ -152,7 +158,6 @@ public class ImplicitArgDecl<T> : ImplicitArgDecl {
 
 public record AutoVars {
     public record None : AutoVars;
-    
 
     /// <summary>
     /// </summary>
@@ -169,23 +174,9 @@ public record AutoVars {
         public (VarDecl ud, VarDecl du)? bindUD;
         public (VarDecl axd, VarDecl ayd, VarDecl aixd, VarDecl aiyd)? bindArrow;
     }
+
+    public override string ToString() => "-Scope Autovars-";
 }
 
-public interface ILexicalScopeRequestor {
-    void Assign(LexicalScope scope);
-}
-
-public interface IAutoVarRequestor<T> where T : AutoVars {
-    void Assign(LexicalScope scope, T autoVars);
-}
-
-public class AutoVarRequestor<T> : IAutoVarRequestor<T> where T : AutoVars {
-    public LexicalScope Scope { get; private set; } = null!;
-    public T AutoVars { get; private set; } = null!;
-    public void Assign(LexicalScope scope, T autoVars) {
-        Scope = scope;
-        AutoVars = autoVars;
-    }
-}
 
 }

@@ -609,8 +609,10 @@ public record GenCtxProperty {
     public record SaveV2Prop((ReflectEx.Hoist<Vector2>, GCXF<float>, GCXF<Vector2>)[] targets) : GenCtxProperty;
 
     public record ExposeProp((Reflector.ExType, string)[] value) : ValueProp<(Reflector.ExType, string)[]>(value);
-    
-    public record _LexicalScopeProp(LexicalScope scope, AutoVars.GenCtx autoVars) : GenCtxProperty;
+
+    public record _LexicalScopeProp(LexicalScope scope, AutoVars.GenCtx autoVars) : GenCtxProperty {
+        public override string ToString() => "-Scope Metadata-";
+    }
 
     public record TimerProp(ETime.Timer value) : ValueProp<ETime.Timer>(value);
 
@@ -652,7 +654,7 @@ public static class GenCtxUtils {
 /// <summary>
 /// A set of properties modifying the behavior of a generic repeater (GIRepeat/GCRepeat/GSRepeat).
 /// </summary>
-public abstract class GenCtxProperties : IAutoVarRequestor<AutoVars.GenCtx> {
+public abstract class GenCtxProperties {
     public (Reflector.ExType, string)[]? Expose { get; protected init; }
 
     /// <summary>

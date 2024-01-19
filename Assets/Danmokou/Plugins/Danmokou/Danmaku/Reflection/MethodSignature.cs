@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using BagoumLib.Reflection;
 using BagoumLib.Unification;
@@ -17,7 +18,9 @@ namespace Danmokou.Reflection {
         private static readonly Dictionary<MemberInfo, MethodSignature> globals = new();
         /// <summary>Executable information for the method/constructor/field/property.</summary>
         public TypeMember Member { get; init; }
-        /// <summary>Simplified description of the method parameters.</summary>
+        /// <summary>
+        /// Simplified description of the method parameters. Lifted methods have lifted parameters.
+        /// </summary>
         public Reflector.NamedParam[] Params { get; init; }
         /// <inheritdoc/>
         public TypeDesignation.Dummy SharedType { get; init; }
@@ -44,7 +47,9 @@ namespace Danmokou.Reflection {
                         { RestrictedTypes = typeRestrs.TryGetValue(i, out var v) ? v : null })
                     .ToArray();
             }
-            SharedType = TypeDesignation.FromMethod(ReturnType, Params.Select(p => p.Type), GenericTypeMap);
+            SharedType =
+                TypeDesignation.FromMethod(ReturnType.MaybeUnwrapTExFuncType(), 
+                    Params.Select(p => p.Type.MaybeUnwrapTExFuncType()), GenericTypeMap);
         }
         public bool IsFallthrough { get; init; } = false;
         public string TypeName => Member.TypeName;
@@ -92,6 +97,14 @@ namespace Danmokou.Reflection {
             PartialArgs is { } pargs ?
                 LambdaHelpers.MakePartialFunc(Params.Length - pargs, ast, this, PartiallyAppliedFnTypeArgs(pargs, Params, ReturnType), args) :
                 Member.Invoke(args);
+        
+        /// <summary>
+        /// Return the invocation of this method as an expression node.
+        /// </summary>
+        public virtual Ex InvokeEx(Reflection2.AST.MethodCall? ast, params Ex[] args) =>
+            PartialArgs is { } pargs ?
+                throw new NotImplementedException("invoke ex partial") :
+                Member.InvokeEx(args);
 
         public string? MakeFileLink(string typName) =>
             Member.BaseMi.DeclaringType!.GetCustomAttribute<ReflectAttribute>(false)?.FileLink(typName);
@@ -106,38 +119,16 @@ namespace Danmokou.Reflection {
                 return sig;
             var member = TypeMember.Make(mi);
             var fallthrough = mi.GetCustomAttribute<FallthroughAttribute>() != null;
-            if (member is TypeMember.Method { Mi : MethodInfo {IsGenericMethodDefinition : true} } inf)
+            if (member is TypeMember.Method { Mi : {IsGenericMethodDefinition : true} } inf)
                 return globals[mi] = new GenericMethodSignature(inf, member.Params) { IsFallthrough = fallthrough };
             return globals[mi] = new(member, member.Params) { IsFallthrough = fallthrough };
         }
 
-        /// <summary>
-        /// Convert a method of one argument to a lambda of one argument.
-        /// </summary>
-        public static Func<T, R> AsLambda<T, R>(MethodSignature m) {
-            if (m.Params.Length != 1 || !m.IsStatic || m.Params[0].Type != typeof(T) || m.ReturnType != typeof(R))
-                throw new StaticException($"Incorrect call to AsLambda {m.Name} -> " +
-                                          $"Func<{typeof(T).ExRName()},{typeof(R).ExRName()}>");
-            return src => (R)m.Invoke(null, src)!;
-        }
-
-        /// <summary>
-        /// Convert a method of one argument to an implicit type converter.
-        /// </summary>
-        public static FixedImplicitTypeConv<T, R> AsImplicitTypeConv<T, R>(MethodSignature m, ScopedConversionKind kind) {
-            return new FixedImplicitTypeConv<T,R>(AsLambda<T, R>(m)) { Kind = kind };
-        }
-        private static readonly Dictionary<(Type, Type), MethodInfo> impconverters = new();
-        private static readonly MethodInfo impmi = typeof(MethodSignature).GetMethod(nameof(AsImplicitTypeConv))!;
-
-        public static FixedImplicitTypeConv AsImplicitTypeConvUntyped(MethodSignature m, ScopedConversionKind kind) {
-            var t = m.Params[0].Type;
-            var r = m.ReturnType;
-            var conv = impconverters.TryGetValue((t, r), out var c) ?
-                c :
-                impconverters[(t, r)] = impmi.MakeGenericMethod(t, r);
-            return (conv.Invoke(null, new object[] { m, kind }) as FixedImplicitTypeConv)!;
-        }
+        public ScopedConversionKind ImplicitTypeConvKind =>
+            GetAttribute<ExpressionBoundaryAttribute>() != null ?
+                ScopedConversionKind.ScopedExpression :
+                ScopedConversionKind.Trivial;
+    
 
         public virtual LiftedMethodSignature<T> Lift<T>() => LiftedMethodSignature<T>.Lift(this);
 
@@ -204,6 +195,10 @@ namespace Danmokou.Reflection {
             throw new Exception("A generic method signature cannot be invoked");
         }
 
+        public override Ex InvokeEx(Reflection2.AST.MethodCall? ast, params Ex[] args) {
+            throw new Exception("A generic method signature cannot be invoked");
+        }
+
         public MethodSignature Specialize(params Type[] t) {
             var typDef = new FreezableArray<Type>(t);
             var specialized = specializeCache.TryGetValue((typDef, this), out var m) ?
@@ -242,6 +237,10 @@ namespace Danmokou.Reflection {
         public override object? Invoke(Reflection2.AST.MethodCall? ast, params object?[] prms) {
             throw new Exception(
                 "This lifted method signature does not have a specified return type and therefore cannot be invoked");
+        }
+
+        public override Ex InvokeEx(Reflection2.AST.MethodCall? ast, params Ex[] args) {
+            throw new Exception("Lifted methods cannot be invoked as expressions");
         }
 
         /// <summary>
@@ -324,6 +323,10 @@ namespace Danmokou.Reflection {
         public override object? Invoke(Reflection2.AST.MethodCall? ast, params object?[] prms)
             => throw new Exception("A generic lifted method cannot be invoked");
         
+        public override Ex InvokeEx(Reflection2.AST.MethodCall? ast, params Ex[] args) {
+            throw new Exception("Lifted methods cannot be invoked as expressions");
+        }
+        
         public LiftedMethodSignature<T> Specialize(Type[] t) {
             var typDef = new FreezableArray<Type>(t);
             LiftedMethodSignature<T> method;
@@ -360,6 +363,10 @@ namespace Danmokou.Reflection {
 
         public override object? Invoke(Reflection2.AST.MethodCall? ast, params object?[] prms) {
             return InvokeMiFunced(ast, prms);
+        }
+        
+        public override Ex InvokeEx(Reflection2.AST.MethodCall? ast, params Ex[] args) {
+            throw new Exception("Lifted methods cannot be invoked as expressions");
         }
 
         public Func<T,R> InvokeMiFunced(Reflection2.AST.MethodCall? ast, object?[] fprms) => 

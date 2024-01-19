@@ -36,10 +36,15 @@ namespace Danmokou.DMath.Functions {
 /// </summary>
 [Reflect]
 public static partial class ExM {
+    /// <summary>
+    /// Access a variable in public (shared) data.
+    /// </summary>
+    public static ReflectEx.Hoist<T> H<T>(string name) => new(name);
+    
     #region Aliasing
     //I have type-generalized the code for Reference/Lets but it's not possible to turn them into math expressions.
     // The reason is because they require binding information before realizing the child expression.
-    // This is actually what prevents me from trashing the Func<Ex, Ex> paradigm.
+    // This is actually what prevents me from trashing the Func<TExArgCtx, TEx> paradigm.
 
     /// <summary>
     /// Reference a value defined in a let function, or bound within a GCX, or bound within bullet data,
@@ -64,6 +69,7 @@ public static partial class ExM {
     /// <param name="hoist">Hoisted variable name</param>
     /// <param name="indexer">Indexer</param>
     [Alias("@")]
+    [Alias("load")]
     public static Func<TExArgCtx, TEx<T>> RetrieveHoisted<T>(ReflectEx.Hoist<T> hoist, Func<TExArgCtx, TEx<float>> indexer) => 
         tac => hoist.Retrieve(indexer(tac), tac);
     
@@ -72,6 +78,7 @@ public static partial class ExM {
     /// </summary>
     /// <param name="hoist">Hoisted variable name</param>
     [Alias("@0")]
+    [Alias("rh0")]
     public static Func<TExArgCtx, TEx<T>> RetrieveHoisted0<T>(ReflectEx.Hoist<T> hoist) => 
         tac => hoist.Retrieve(E0, tac);
 
@@ -169,14 +176,17 @@ public static partial class ExM {
     /// When two firing indices have been combined via additive parametrization (see <see cref="Core.Parametrization"/>), this retrieves the parent firing index.
     /// </summary>
     /// <returns></returns>
+    [DontReflect]
     public static Ex P1(Ex t) => P1M(SHIFT, t);
     /// <summary>
     /// When two firing indices have been combined via modular parametrization (see <see cref="Core.Parametrization"/>), this retrieves the parent firing index.
     /// </summary>
     /// <returns></returns>
+    [DontReflect]
     public static Ex P1M(int mod, Ex t) {
         return t.Cast<int>().Div(ExC(mod)).Cast<float>();
     }
+    [DontReflect]
     public static Ex exP1M(Ex mod, Ex t) {
         return t.Cast<int>().Div(mod.Cast<int>()).Cast<float>();
     }
@@ -185,15 +195,18 @@ public static partial class ExM {
     /// When two firing indices have been combined via additive parametrization (see <see cref="Core.Parametrization"/>), this retrieves the child firing index.
     /// </summary>
     /// <returns></returns>
+    [DontReflect]
     public static Ex P2(Ex t) => P2M(SHIFT, t);
     /// <summary>
     /// When two firing indices have been combined via modular parametrization (see <see cref="Core.Parametrization"/>), this retrieves the child firing index.
     /// </summary>
     /// <returns></returns>
+    [DontReflect]
     public static Ex P2M(int mod, Ex t) {
         return Ex.Modulo(t.Cast<int>(), ExC(mod)).Cast<float>();
     }
     
+    [DontReflect]
     public static Ex exP2M(Ex mod, Ex t) {
         return Ex.Modulo(t.Cast<int>(), mod.Cast<int>()).Cast<float>();
     }
@@ -205,16 +218,19 @@ public static partial class ExM {
     /// <param name="children">Product of the mod sizes of all children. Set to 1 if this is the final point.</param>
     /// <param name="t">Index</param>
     /// <returns></returns>
+    [DontReflect]
     public static Ex PM(int self, int children, Ex t) {
         if (self == 0) self = SHIFT;
         return Ex.Modulo(t.Cast<int>().Div(ExC(children)), ExC(self)).Cast<float>();
     }
     
+    [DontReflect]
     public static Ex exPM(Ex self, Ex children, Ex t) {
         if (self is ConstantExpression {Value: int smod} && smod == 0) 
             self = ExC(SHIFT);
         return Ex.Modulo(t.Cast<int>().Div(children.Cast<int>()), self.Cast<int>()).Cast<float>();
     }
+    [DontReflect]
     public static int __Combine(int x, int y, int mod = SHIFT) {
         return (x * mod) + y;
     }

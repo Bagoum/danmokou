@@ -6,6 +6,7 @@ using System;
 using BagoumLib;
 using BagoumLib.DataStructures;
 using BagoumLib.Expressions;
+using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DataHoist;
@@ -128,7 +129,7 @@ public static class ReflectEx {
         if ((isExplicit || deflt != null) && tac.MaybeBPI != null) {
             try {
                 return PIData.GetIfDefined<T>(tac, alias, deflt is null ? null : (Ex)deflt);
-            } catch (Exception e) {
+            } catch (Exception) {
                 //pass
             }
         }
@@ -142,6 +143,7 @@ public static class ReflectEx {
 
     public static Func<TExArgCtx, TEx<T>> ReferenceExpr<T>(string alias) => bpi => ReferenceExpr<T>(alias, bpi);
 
+    
     //TODO consider replacing SafeResizeable here with a dictionary
     
     /// <summary>
@@ -150,7 +152,6 @@ public static class ReflectEx {
     public readonly struct Hoist<T> {
         private readonly string name;
         private readonly SafeResizableArray<T> data;
-
         public Hoist(string name) {
             data = PublicDataHoisting.Register<T>(this.name = name);
         }
@@ -181,6 +182,8 @@ public static class ReflectEx {
             Bake(tac);
             return safeGet.InstanceOf(Ex.Constant(data), Ex.Convert(index, tint));
         }
+
+        public override string ToString() => $"{name}<{typeof(T).RName()}>";
     }
 }
 

@@ -675,7 +675,7 @@ public static class XMLHelpers {
                 demoCT = new Cancellable();
                 if (effShot.demoSetupSM != null) {
                     var esm = StateMachineManager.FFromText(effShot.demoSetupSM);
-                    esm.SM.Start(new SMHandoff(demoSetup, demoCT, esm.RootFrame));
+                    esm.Start(new SMHandoff(demoSetup, demoCT));
                 }
             } else {
                 r = Replayer.BeginReplaying(new Replayer.ReplayerConfig(

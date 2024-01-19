@@ -10,16 +10,7 @@ using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.DMath.Functions.VTPConstructors;
 using static Danmokou.DMath.Functions.ExMConversions;
 using static Danmokou.Reflection.Aliases;
-//ExCoordF does not necessarily return a TEx<V2>, but this is used for consistency.
-//We don't compile ExCoordF. This is why its structure is different from CoordF. Instead of
-// having out Vector2, it takes a delegate that operates over the Vector2 that it would otherwise return.
-using ExCoordF =
-    System.Func<Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx, System
-        .Func<Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TEx<float>,
-            Danmokou.Expressions.TEx<UnityEngine.Vector2>>, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
-using ExVTP =
-    System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExArgCtx,
-        Danmokou.Expressions.TExV3, Danmokou.Expressions.TEx>;
+using ExVTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.Expressions.VTPExpr>>;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
 using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
@@ -27,13 +18,20 @@ using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.T
 
 
 namespace Danmokou.DMath.Functions {
+//We don't compile V2ToCoords. This is why its structure is different from CoordF. Instead of
+// having out Vector3, it takes a delegate that operates over the Vector3 that it would otherwise return.
+public delegate TEx<VTPExpr> V2ToCoords(TEx<float> cosRot, TEx<float> sinRot, TExArgCtx tac,
+    Func<TEx<float>, TEx<float>, TEx<float>, TEx> continuation);
+
+public delegate TEx<VTPExpr> CoordsToDelta(ITexMovement vel, TEx<float> dt, TExV3 delta,
+    TEx<float> x, TEx<float> y, TEx<float> z);
 /// <summary>
 /// Repository for constructing path expressions by converting lesser computations into Cartesian coordinates
 /// and applying appropriate rotation.
 /// <br/>These functions should not be invoked by users; instead, use the functions in <see cref="VTPRepo" />.
 /// </summary>
 public static class VTPConstructors {
-    public static ExCoordF CartesianRot(ExTP erv) => (c, s, bpi, fxy) => {
+    public static V2ToCoords CartesianRot(ExTP erv) => (c, s, bpi, fxy) => {
         var v2 = new TExV2();
         return Ex.Block(new ParameterExpression[] { v2 },
             Ex.Assign(v2, erv(bpi)),
@@ -51,7 +49,7 @@ public static class VTPConstructors {
         vec.z = 0;
     };
 
-    public static ExCoordF CartesianNRot(ExTP enrv) => (c, s, bpi, fxy) => {
+    public static V2ToCoords CartesianNRot(ExTP enrv) => (c, s, bpi, fxy) => {
         var nrv = new TExV2();
         return Ex.Block(new ParameterExpression[] { nrv },
             Ex.Assign(nrv, enrv(bpi)),
@@ -64,7 +62,7 @@ public static class VTPConstructors {
         vec = tpnrv(bpi);
     };
 
-    public static ExCoordF Cartesian(ExTP erv, ExTP enrv) {
+    public static V2ToCoords Cartesian(ExTP erv, ExTP enrv) {
         var nrv = new TExV2();
         var v2 = new TExV2();
         return (c, s, bpi, fxy) => Ex.Block(
@@ -78,7 +76,7 @@ public static class VTPConstructors {
         );
     }
 
-    public static ExCoordF Cartesian3D(ExTP3 erv, ExTP3 enrv) {
+    public static V2ToCoords Cartesian3D(ExTP3 erv, ExTP3 enrv) {
         var nrv = new TExV3();
         var rv = new TExV3();
         return (c, s, bpi, fxy) => Ex.Block(
@@ -99,7 +97,7 @@ public static class VTPConstructors {
         vec.y = v2n.y + s * v2.x + c * v2.y;
     };
 
-    public static ExCoordF Polar(ExBPY r, ExBPY theta) {
+    public static V2ToCoords Polar(ExBPY r, ExBPY theta) {
         var vr = ExUtils.VFloat();
         var lookup = new TExV2();
         return (c, s, bpi, fxy) => Ex.Block(new[] { vr, lookup },
@@ -112,7 +110,7 @@ public static class VTPConstructors {
         );
     }
 
-    public static ExCoordF Polar2(ExTP radThetaDeg) {
+    public static V2ToCoords Polar2(ExTP radThetaDeg) {
         var rt = new TExV2();
         var lookup = new TExV2();
         return (c, s, bpi, fxy) => Ex.Block(new ParameterExpression[] { rt, lookup },
@@ -138,22 +136,24 @@ public static class VTPConstructors {
 /// <br/>These functions should not be invoked by users; instead, use the functions in <see cref="VTPRepo" />.
 /// </summary>
 public static class VTPControllers {
-    private static T InLetCtx<T>(ITexMovement vel, TExArgCtx tac, Func<TExArgCtx, T> exec) {
+    private static TEx<VTPExpr> InLetCtx(TExArgCtx tac, V2ToCoords coords, CoordsToDelta next) {
+        var vel =  tac.MaybeGetByExprType<TExMov>(out _) ?? (tac.GetByExprType<TExLMov>() as ITexMovement);
+        var dt = tac.GetByName<float>("vtp_dt");
+        var delta = tac.GetByExprType<TExV3>();
         using var root = tac.Let(MOV_ROOT_ALIAS, vel.root);
         using var ang = tac.Let(MOV_ANGLE_ALIAS, vel.angle);
         using var angc = tac.Let(MOV_COS_ALIAS, vel.cos);
         using var angs = tac.Let(MOV_SIN_ALIAS, vel.sin);
-        return exec(tac);
+        return coords(vel.cos, vel.sin, tac, (x, y, z) => next(vel, dt, delta, x, y, z));
     }
 
-    public static ExVTP Velocity(ExCoordF cf) => (vel, dt, bpi, delta) => InLetCtx(vel, bpi, tac =>
-        cf(vel.cos, vel.sin, tac, (x, y, z) =>
+    public static ExVTP Velocity(V2ToCoords cf) => tac => InLetCtx(tac, cf, (vel, dt, delta, x, y, z) =>
             Ex.Block(
                 //TODO: automatically detect if flipX/Y are present on custom data,
                 // if they are, use FVelocity instead.
                 delta.x.Is(vel.flipX.Mul(x).Mul(dt)),
                 delta.y.Is(vel.flipY.Mul(y).Mul(dt))
-            )));
+            ));
     
     /*
     public static ExVTP FVelocity(ExCoordF cf) => (vel, dt, bpi, delta) => InLetCtx(vel, bpi, tac =>
@@ -163,13 +163,12 @@ public static class VTPControllers {
                 delta.y.Is(ReflectEx.ReferenceExpr<float>(FiringCtx.FLIPY, tac).Mul(y).Mul(dt))
             )));*/
 
-    public static ExVTP Velocity3D(ExCoordF cf) => (vel, dt, bpi, delta) => InLetCtx(vel, bpi, tac =>
-        cf(vel.cos, vel.sin, tac, (x, y, z) =>
+    public static ExVTP Velocity3D(V2ToCoords cf) => tac => InLetCtx(tac, cf, (vel, dt, delta, x, y, z) =>
             Ex.Block(
                 delta.x.Is(vel.flipX.Mul(x).Mul(dt)),
                 delta.y.Is(vel.flipY.Mul(y).Mul(dt)),
                 delta.z.Is(z.Mul(dt))
-            )));
+            ));
 
     public static VTP Velocity(CoordF coordF) =>
         delegate(ref Movement vel, in float dT, ref ParametricInfo bpi, ref Vector3 delta) {
@@ -178,20 +177,18 @@ public static class VTPControllers {
             delta.y *= vel.flipY * dT;
         };
 
-    public static ExVTP Offset(ExCoordF cf) => (vel, dt, bpi, delta) => InLetCtx(vel, bpi, tac =>
-        cf(vel.cos, vel.sin, tac, (x, y, z) =>
+    public static ExVTP Offset(V2ToCoords cf) => tac => InLetCtx(tac, cf, (vel, dt, delta, x, y, z) =>
             Ex.Block(
-                delta.x.Is(vel.flipX.Mul(x).Add(vel.rootX).Sub(bpi.locx)),
-                delta.y.Is(vel.flipY.Mul(y).Add(vel.rootY).Sub(bpi.locy))
-            )));
+                delta.x.Is(vel.flipX.Mul(x).Add(vel.rootX).Sub(tac.locx)),
+                delta.y.Is(vel.flipY.Mul(y).Add(vel.rootY).Sub(tac.locy))
+            ));
 
-    public static ExVTP Offset3D(ExCoordF cf) => (vel, dt, bpi, delta) => InLetCtx(vel, bpi, tac =>
-        cf(vel.cos, vel.sin, tac, (x, y, z) =>
+    public static ExVTP Offset3D(V2ToCoords cf) => tac => InLetCtx(tac, cf, (vel, dt, delta, x, y, z) =>
             Ex.Block(
-                delta.x.Is(vel.flipX.Mul(x).Add(vel.rootX).Sub(bpi.locx)),
-                delta.y.Is(vel.flipY.Mul(y).Add(vel.rootY).Sub(bpi.locy)),
-                delta.z.Is(z.Sub(bpi.locz))
-            )));
+                delta.x.Is(vel.flipX.Mul(x).Add(vel.rootX).Sub(tac.locx)),
+                delta.y.Is(vel.flipY.Mul(y).Add(vel.rootY).Sub(tac.locy)),
+                delta.z.Is(z.Sub(tac.locz))
+            ));
 
     public static VTP Offset(CoordF coordF) =>
         delegate(ref Movement vel, in float dT, ref ParametricInfo bpi, ref Vector3 delta) {
@@ -224,8 +221,8 @@ public static class VTPRepo {
     /// <br/>You can use this to smoothly switch from offset to velocity equations,
     /// but switching from velocity to offset will give you strange results. 
     /// </summary>
-    public static ExVTP If(ExPred cond, ExVTP ifTrue, ExVTP ifFalse) => (vel, dt, bpi, nrv) =>
-        Ex.Condition(cond(bpi), ifTrue(vel, dt, bpi, nrv), ifFalse(vel, dt, bpi, nrv));
+    public static ExVTP If(ExPred cond, ExVTP ifTrue, ExVTP ifFalse) => tac =>
+        Ex.Condition(cond(tac), ifTrue(tac), ifFalse(tac));
 
     /// <summary>
     /// Movement with Cartesian rotational velocity only.
@@ -349,7 +346,7 @@ public static class VTPRepo {
         VTPControllers.Velocity(VTPConstructors.Polar(radius, theta));
     
     private static ExVTP WrapLet<T>((string, Func<TExArgCtx, TEx<T>>)[] aliases, ExVTP inner) =>
-        (v, t, bpi, nrv) => ReflectEx.Let(aliases, () => inner(v, t, bpi, nrv), bpi);
+        tac => ReflectEx.Let(aliases, () => inner(tac), tac);
 
     /// <summary>
     /// Bind float values to the aliases and then execute the inner content with those aliases.
@@ -366,8 +363,8 @@ public static class VTPRepo {
     /// <summary>
     /// Bind values to the aliases and then execute the inner content with those aliases.
     /// </summary>
-    public static ExVTP Let(ReflectEx.Alias[] aliases, ExVTP inner) => (c, s, bpi, nrv) =>
-        ReflectEx.LetAlias(aliases, () => inner(c, s, bpi, nrv), bpi);
+    public static ExVTP Let(ReflectEx.Alias[] aliases, ExVTP inner) => tac =>
+        ReflectEx.LetAlias(aliases, () => inner(tac), tac);
 }
 
 public static class CSVTPRepo {

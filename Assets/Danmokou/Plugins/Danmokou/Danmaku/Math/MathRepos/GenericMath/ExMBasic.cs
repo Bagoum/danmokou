@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -152,7 +153,16 @@ public static partial class ExM {
     /// Returns -x.
     /// </summary>
     [BDSL2Operator]
-    public static TEx<T> Negate<T>(TEx<T> x) => Ex.Negate(x);
+    public static TEx<T> Negate<T>(TEx<T> x) {
+        if ((Ex)x is ConstantExpression ce) {
+            return ce.Value switch {
+                float f => ExC(-f),
+                int i => ExC(-i),
+                _ => Ex.Negate(x)
+            };
+        }
+        return Ex.Negate(x);
+    }
 
     /// <summary>
     /// Returns -1 if x lt 0 and 1 otherwise. (Note: Sign(0) = 1)

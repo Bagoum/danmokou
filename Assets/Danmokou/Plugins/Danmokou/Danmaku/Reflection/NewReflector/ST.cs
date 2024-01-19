@@ -91,15 +91,23 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
         protected override IAST _AnnotateInner(LexicalScope scope) {
             if (Name.StartsWith("&"))
                 return new AST.WeakReference(Position, scope, Name.Substring(1));
-            var asEnumTypes = Reflector.enumResolversByKey.TryGetValue(Name, out var vals) ? vals : null;
+            var asEnumTypes = Reflector.bdsl2EnumResolvers.TryGetValue(Name, out var vals) ? vals : null;
             if (scope.FindDeclaration(Name) is { } decl)
                 return new AST.Reference(Position, scope, Name, decl, asEnumTypes);
             if (scope.FindStaticMethodDeclaration(Name) is { } meths)
                 return AST.MethodCall.Make(Position, Position, scope, meths.Select(m => m.Call(Name)).ToArray(), System.Array.Empty<ST>());
             if (asEnumTypes != null)
                 return new AST.Reference(Position, scope, Name, null, asEnumTypes);
-            
-            return new AST.Failure(new(Position, $"The name \"{Name}\" does not refer to anything."), scope);
+
+            var unreachable = scope.ScriptRoot.AllVarsInAllScopes.Where(x => x.Name == Name).ToList();
+            var err = $"Could not determine what \"{Name}\" refers to.";
+            if (unreachable.Count > 0) {
+                err +=
+                    $"\nThere are some declarations for \"{Name}\", but they are not reachable from this lexical scope:" +
+                    $"\n\t{string.Join("\n\t", unreachable.Select(x => $"{x.Name} at {x.Position}"))}";
+                err += $"\nMaybe you need to hoist the declaration for \"{Name}\" (use `hvar` instead of `var`).";
+            }
+            return new AST.Failure(new(Position, err), scope);
         }
 
         public override IEnumerable<PrintToken> DebugPrint() {
@@ -137,9 +145,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
         protected override IAST _AnnotateInner(LexicalScope scope) {
             if (scope.DeclareVariable(Declaration) is { IsRight:true} r)
                 return new AST.Failure(new(Position, 
-                    $"The declaration ({Declaration.KnownType?.ExRName() ?? "(type undetermined)"} {Declaration.Name}) " +
-                    $"conflicts with the declaration ({r.Right.KnownType?.ExRName() ?? "(type undetermined)"} " +
-                    $"{r.Right.Name}) at {r.Right.Position}"), scope);
+                    $"The variable {Declaration.Name} has already been declared at {r.Right.Position}."), scope);
             var ret = Assignment.Annotate(scope);
             if (ret is AST.MethodCall meth)
                 meth.PrecedingTokens = new[] {
@@ -375,7 +381,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                 var (tree, last) = MakeForIndex(-1);
                 if (last != args.Length)
                     return false;
-                return tree.PossibleUnifiers(scope.Root.Resolver, Unifier.Empty).IsLeft;
+                return tree.PossibleUnifiers(scope.GlobalRoot.Resolver, Unifier.Empty).IsLeft;
             }
             //If there are overloads that match the numerical requirements, use them
             var sameArgsReq = overloads.Where(f => f.Params.Length == args.Length).ToArray();
@@ -429,13 +435,19 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                             .ToArray();
                         if (mOverloads.Length == 0)
                             throw new StaticException("Incorrect partial application overload lookup");
-                        argStack.Push(new FunctionCall(st.Position.Merge(mArgsTmp[^1].Position), st, mArgsTmp.ToArray()));
+                        argStack.Push(
+                            new FunctionCall(st.Position.Merge(mArgsTmp[^1].Position), st, mArgsTmp.ToArray()));
                         mArgsTmp.Clear();
                     }
                 }
                 return argStack.Pop().Annotate(scope);
             } else
-                throw new NotImplementedException();
+                return new AST.Failure(new(leftmost.Position,
+                    $"When resolving the partial method invocation for `{overloads[0].CalledAs ?? overloads[0].Name}`," +
+                    $" {argsl.Count} parameters were provided, but overloads were only found with " +
+                    $"{string.Join(", ", overloads.Select(o => o.Params.Length).Distinct().OrderBy(x => x))} parameters."),
+                    scope
+                );
         }
 
         public override IEnumerable<PrintToken> DebugPrint() {
@@ -470,12 +482,11 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
     /// A block of statements.
     /// </summary>
     public record Block(PositionRange Position, ST[] Args) : ST(Position) {
-        public bool MakeLocalScope { get; init; } = false;
         public Block(IReadOnlyList<ST> args) : this(args[0].Position.Merge(args[^1].Position), args.ToArray()) { }
         
         protected override IAST _AnnotateInner(LexicalScope scope) {
-            var localScope = MakeLocalScope ? LexicalScope.Derive(scope) : null;
-            return new AST.Block(Position, scope, localScope, Args.Select(a => a.Annotate(localScope ?? scope)).ToArray());
+            var localScope = LexicalScope.Derive(scope);
+            return new AST.Block(Position, scope, localScope, Args.Select(a => a.Annotate(localScope)).ToArray());
         }
 
         public AST.Block AnnotateTopLevel(LexicalScope gs, IDelegateArg[] topLevelArgs) {
@@ -486,7 +497,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             for (int ii = 0; ii < topLevelArgs.Length; ++ii) {
                 var arg = topLevelArgs[ii];
                 gs.DeclareVariable((decls[ii] = 
-                    (new VarDecl(default, arg.Type, arg.Name), arg.MakeImplicitArgDecl())).Item1);
+                    (new VarDecl(default, false, arg.Type, arg.Name), arg.MakeImplicitArgDecl())).Item1);
             }
             return new AST.Block(Position, gs.Parent, gs, Args.Select(a => a.Annotate(gs)).ToArray())
                 .WithTopLevelArgs(decls);

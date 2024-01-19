@@ -21,7 +21,7 @@ public static class Lexer {
     private const string num = @"[0-9]";
     private const string numMult = @"pi?|[hfsc]";
     private static readonly string[] specialOps = new[] { "\\", "->", "$" };
-    private static readonly string[] keywords = new[] { "function", "var", "block" };
+    private static readonly string[] keywords = new[] { "function", "hvar", "var", "block" };
     private static readonly string[] valueKeywords = new[] { "true", "false", };
     private static readonly HashSet<string> operators = new[] {
         "++", "--",
@@ -72,7 +72,8 @@ public static class Lexer {
                 ";" => TokenType.Semicolon,
                 _ => throw new ArgumentOutOfRangeException($"Not a special symbol: {s.Value}")
             }, p, s)),
-            T($@"<({numLiteral}?;{numLiteral}?:){{0,2}}{numLiteral}?>", TokenType.V2RV2),
+            //V2RV2 can have negatives inside num literals, but normal num literals have negatives parsed as operators
+            T($@"<((-?{numLiteral})?;(-?{numLiteral})?:){{0,2}}(-?{numLiteral})?>", TokenType.V2RV2),
             
             //A block comment "fragment" is either a sequence of *s followed by a not-/ character, or a sequence of not-*s.
             T(@"/\*((\*+[^/])|([^*]+))*\*/", TokenType.Comment),

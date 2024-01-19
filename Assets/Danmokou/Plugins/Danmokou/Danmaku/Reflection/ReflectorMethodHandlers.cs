@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using BagoumLib;
 using BagoumLib.Expressions;
@@ -133,7 +134,8 @@ public static partial class Reflector {
         /// Get a representation of this method's type. This should not directly be used for unification, as
         ///  its variable types should not be shared between all invocations.
         ///  Call <see cref="TypeDesignation.RecreateVariables"/> before using for unification.
-        /// <br/>Note that lifted methods return a lifted type here.
+        /// <br/>Note that lifted methods do NOT return a lifted type here. The types here are *unlifted*
+        ///  over the TExArgCtx->TEx&lt;&gt; functor.
         /// <br/>Note that instance methods should prepend the instance type at the beginning of the argument array.
         /// </summary>
         TypeDesignation.Dummy SharedType { get; }
@@ -190,7 +192,23 @@ public static partial class Reflector {
         /// <summary>
         /// Invoke this method. If this is an instance method, the instance should be the first argument of `args`.
         /// </summary>
-        object? Invoke(MethodCall? ast, params object?[] args);
+        object? Invoke(MethodCall? ast, object?[] args);
+        
+        /// <summary>
+        /// Invoke this method. If this is an instance method, the instance should be the first argument of `args`.
+        /// </summary>
+        Expression InvokeEx(MethodCall? ast, params Expression[] args);
+        
+        /// <summary>
+        /// Return the invocation of this method as an expression node,
+        /// but if all arguments are constant, then instead call the method and wrap it in Ex.Constant.
+        /// </summary>
+        public Expression InvokeExIfNotConstant(Reflection2.AST.MethodCall? ast, params Expression[] args) {
+            for (int ii = 0; ii < args.Length; ++ii)
+                if (args[ii] is not ConstantExpression)
+                    return InvokeEx(ast, args);
+            return Expression.Constant(Invoke(ast, args.Select(a => ((ConstantExpression)a).Value).ToArray()));
+        }
 
         /// <summary>
         /// If this method is defined in a file, make a link to the file.
@@ -336,7 +354,7 @@ public static partial class Reflector {
 
     public static object? ExtInvokeMethod(Type t, string member, object[] prms) {
         if (TryCompileOption(t, out var compiler)) {
-            return compiler.mi.Invoke(null, ExtInvokeMethod(compiler.source, member, prms));
+            return compiler.mi.Invoke(null, new[]{ExtInvokeMethod(compiler.source, member, prms)});
         } else if (t == typeof(StateMachine)) {
             return StateMachine.Create(member, prms).Evaluate(new());
         }
@@ -345,7 +363,7 @@ public static partial class Reflector {
         //this also requires fallthrough support, which is handled through parent methods in the inner call.
         if (FallThroughOptions.TryGetValue(t, out var ftmi)) {
             if ((result = ASTTryLookForMethod(ftmi.mi.Params[0].Type, member)) != null)
-                return ftmi.mi.Invoke(null, result.Invoke(null, prms));
+                return ftmi.mi.Invoke(null, new[]{result.Invoke(null, prms)});
         }
         throw new Exception($"External method invocation failed for type {t.ExRName()}, method {member}. " +
                             "This is probably an error in static code.");

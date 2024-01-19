@@ -43,7 +43,7 @@ public class TestHarness : RegularUpdater {
     public static void OnSOF(Action doThing) => Check(0, doThing);
 
     public static bool Running => checks.Count > 0;
-    public static EFStateMachine LoadBehaviorScript(string sname) {
+    public static StateMachine LoadBehaviorScript(string sname) {
         if (!scriptsByName.TryGetValue(sname, out var script)) {
             foreach (var key in scriptsByName.Keys) {
                 if (key.ToLower().StartsWith(sname.ToLower())) {

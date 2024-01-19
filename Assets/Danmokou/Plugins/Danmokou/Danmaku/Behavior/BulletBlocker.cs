@@ -80,7 +80,7 @@ public class BulletBlocker : CoroutineRegularUpdater, IBehaviorEntityDependent,
     CollisionResult IEnemyLaserCollisionReceiver.Check(CurvedTileRenderLaser laser, Vector2 laserLoc, float cos, float sin, out int segment, out Vector2 collLoc) {
         if (ReceivesBulletCollisions &&
             Styles.Contains(laser.Laser.myStyle.style ?? "") &&
-            laser.ComputeRectCollision(laserLoc, cos, sin, Location, rectCollider.halfRect, Direction, out segment,
+            laser.ComputeRectCollision(laserLoc, cos, sin, Location, rectCollider!.halfRect, Direction, out segment,
                 out collLoc)) {
             return new(true, false);
         } else {

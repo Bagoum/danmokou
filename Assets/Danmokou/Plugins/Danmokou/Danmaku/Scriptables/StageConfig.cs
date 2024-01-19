@@ -10,14 +10,14 @@ namespace Danmokou.Scriptables {
 [CreateAssetMenu(menuName = "Data/Stage Configuration")]
 public class StageConfig : ScriptableObject, IStageConfig {
     public SceneConfig sceneConfig = null!;
-    public TextAsset? stateMachine;
+    public TextAsset stateMachine = null!;
     public string description = "";
     public string stageNumber = "";
     public string defaultSuicideStyle = "";
     public bool practiceable = true;
 
     public SceneConfig Scene => sceneConfig;
-    public EFStateMachine? StateMachine => StateMachineManager.FromText(stateMachine);
+    public StateMachine StateMachine => StateMachineManager.FFromText(stateMachine);
     public string DefaultSuicideStyle => defaultSuicideStyle;
 }
 }

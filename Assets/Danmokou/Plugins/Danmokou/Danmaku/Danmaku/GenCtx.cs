@@ -142,6 +142,10 @@ public class GenCtx : IDisposable {
         //++recachedCount;
     }
 
+    /// <summary>
+    /// Copy a GCX, possibly with a new scope or environment frame.
+    /// </summary>
+    /// <param name="newScope"></param>
     public GenCtx Copy(Either<(LexicalScope scope, AutoVars.GenCtx autoVars), EnvFrame>? newScope) {
         var cp = NewUnscoped(exec);
         cp.index = this.index;
@@ -169,6 +173,18 @@ public class GenCtx : IDisposable {
         }
         cp.i = this.i;
         cp.pi = this.pi;
+        return cp;
+    }
+
+    public GenCtx Mirror() {
+        var cp = NewUnscoped(exec);
+        cp.index = this.index;
+        cp.idOverride = this.idOverride;
+        cp.playerController = playerController;
+        cp.i = this.i;
+        cp.pi = this.pi;
+        cp.EnvFrame = EnvFrame.Mirror();
+        cp.AutoVars = AutoVars;
         return cp;
     }
 

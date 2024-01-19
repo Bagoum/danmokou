@@ -14,6 +14,7 @@ using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Graphics.Backgrounds;
 using Danmokou.Player;
+using Danmokou.Reflection2;
 using Danmokou.Scenes;
 using Danmokou.Scriptables;
 using Danmokou.Services;
@@ -27,9 +28,10 @@ namespace Danmokou.SM {
 /// `pattern`: Top-level controller for SMs involving danmaku or level control.
 /// Does not encompass text control (<see cref="ScriptTSM"/>).
 /// </summary>
-public class PatternSM : SequentialSM {
+public class PatternSM : SequentialSM, EnvFrameAttacher {
     public PatternProperties Props { get; }
     public PhaseSM[] Phases { get; }
+    public EnvFrame? EnvFrame { get; set; }
 
     public PatternSM(PatternProperties props, [BDSL1ImplicitChildren] StateMachine[] states) : base(states) {
         this.Props = props;
@@ -88,7 +90,8 @@ public class PatternSM : SequentialSM {
 
     public override async Task Start(SMHandoff smh) {
         var ctx = new PatternContext(smh.Context, this);
-        using var jsmh = smh.CreateJointCancellee(out var cts, ctx);
+        using var efsmh = smh.OverrideEnvFrame(EnvFrame);
+        using var jsmh = efsmh.CreateJointCancellee(out var cts, ctx);
         var subbosses = new List<Enemy>();
         var subsummons = new List<BehaviorEntity>();
         var ui = ServiceLocator.FindOrNull<IUIManager>();
@@ -138,24 +141,6 @@ public class PatternSM : SequentialSM {
     }
 }
 
-/// <summary>
-/// `finish`: Child of PhaseSM. When the executing BEH finishes this phase due to timeout (shift-phase) or loss of HP,
-/// runs the child SM on a new inode.
-/// <br/>Does not run if the executing BEH is destroyed by a cull command, or goes out of range, or the scene is changed.
-/// </summary>
-public class FinishPSM : StateMachine {
-
-    public FinishPSM(StateMachine state) : base(state) { }
-
-    public void Trigger(BehaviorEntity Exec, GenCtx gcx, ICancellee cT) {
-        _ = Exec.GetINode("finish-triggered", null).RunExternalSM(SMRunner.Cull(this.states[0], cT, gcx));
-    }
-
-    public override Task Start(SMHandoff smh) {
-        throw new NotImplementedException("Do not call Start on FinishSM");
-    }
-}
-
 
 /// <summary>
 /// `phase`: A high-level SM that controls a "phase", which is a sequence of SMs that may run for variable time
@@ -167,11 +152,6 @@ public class PhaseSM : SequentialSM {
     //Note that this is only for planned cancellation (eg. phase shift/ synchronization),
     //and is primary used for bosses/multiphase enemies.
     private readonly EndPSM? endPhase = null;
-    /// <summary>
-    /// This is a callback invoked for planned cancellation as well as the case where
-    /// an enemy is killed via normal sources (player bullets, not culling). Use for revenge fire
-    /// </summary>
-    private readonly FinishPSM? finishPhase = null;
     private readonly float _timeout = 0;
     private float Timeout(BossConfig? boss) => 
         ServiceLocator.FindOrNull<IChallengeManager>()?.BossTimeoutOverride(boss) 
@@ -193,13 +173,6 @@ public class PhaseSM : SequentialSM {
         for (int ii = 0; ii < states.Length; ++ii) {
             if (states[ii] is EndPSM) {
                 endPhase = states[ii] as EndPSM;
-                states = states.Where((x, i) => i != ii).ToArray();
-                break;
-            }
-        }
-        for (int ii = 0; ii < states.Length; ++ii) {
-            if (states[ii] is FinishPSM) {
-                finishPhase = states[ii] as FinishPSM;
                 states = states.Where((x, i) => i != ii).ToArray();
                 break;
             }
@@ -344,8 +317,6 @@ public class PhaseSM : SequentialSM {
             float finishDelay = 0f;
             var finishTask = Task.CompletedTask;
             if (smh.Exec.AllowFinishCalls) {
-                //TODO why does this use parentCT?
-                finishPhase?.Trigger(smh.Exec, smh.GCX, smh.parentCT);
                 (finishDelay, finishTask) = OnFinish(ctx, smh, pcTS, start_campaign, bgo);
                 prePrepareNextPhase?.Invoke(bgo);
             }

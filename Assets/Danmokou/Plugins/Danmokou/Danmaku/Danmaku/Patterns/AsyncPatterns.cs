@@ -53,7 +53,7 @@ public static partial class AsyncPatterns {
 
         public bool PrepareLastIteration() => looper.PrepareLastIteration();
         public void DoSIteration(SyncPattern[] target) {
-            using var itrSBH = new SyncHandoff(looper.Handoff, extraFrames * ETime.FRAME_TIME);
+            using var itrSBH = new SyncHandoff(looper.Handoff.Copy(), extraFrames * ETime.FRAME_TIME);
             for (int ii = 0; ii < target.Length; ++ii) {
                 target[ii](itrSBH);
             }
@@ -332,7 +332,7 @@ public static partial class AsyncPatterns {
     public static AsyncPattern COnce(SyncPattern target) {
         IEnumerator Inner(AsyncHandoff abh) {
             if (!abh.Cancelled) {
-                using var itrSBH = new SyncHandoff(abh.ch, 0);
+                var itrSBH = new SyncHandoff(abh.ch, 0);
                 target(itrSBH);
             }
             abh.Done();

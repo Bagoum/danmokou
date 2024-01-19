@@ -60,18 +60,26 @@ public struct CommonHandoff : IDisposable {
 
     /// <summary>
     /// Copies the GCX with a new EnvFrame, ignoring the previous EnvFrame.
-    /// <br/>The new envFrame is *copied*.
+    /// <br/>The provided envframe is copied. (If the envframe is null, then the existing GCX is mirrored instead.)
     /// </summary>
-    public readonly CommonHandoff OverrideFrame(EnvFrame newFrame) {
-        var ngcx = gcx.Copy(newFrame);
+    public readonly CommonHandoff OverrideFrame(EnvFrame? newFrame) {
+        var ngcx = newFrame is null ? gcx.Mirror() : gcx.Copy(newFrame);
         return new(cT, bc, ngcx, rv2Override);
     }
 
-    public readonly CommonHandoff Copy(string? newStyle = null) {
-        var nch = new CommonHandoff(cT, bc, gcx.Copy(null), rv2Override);
-        if (newStyle != null)
-            nch.bc.style = newStyle;
-        return nch;
+    /// <summary>
+    /// Copy the contained GCX (ie. copy the GCX, and copy the internal envframe).
+    /// </summary>
+    public readonly CommonHandoff Copy() {
+        return new CommonHandoff(cT, bc, gcx.Copy(null), rv2Override);
+    }
+
+    /// <summary>
+    /// Mirror the contained GCX (ie. copy the GCX, and mirror the internal envframe).
+    /// </summary>
+    /// <returns></returns>
+    public readonly CommonHandoff Mirror() {
+        return new CommonHandoff(cT, bc, gcx.Mirror(), rv2Override);
     }
 
     public readonly void Dispose() {
@@ -91,7 +99,7 @@ public struct SyncHandoff : IDisposable {
     /// <summary>
     /// Starting time of summoned objects (seconds)
     /// </summary>
-    public readonly float timeOffset;
+    public float timeOffset;
     public GenCtx GCX => ch.gcx;
 
     /// <summary>
@@ -103,16 +111,14 @@ public struct SyncHandoff : IDisposable {
     }
 
     /// <summary>
-    /// The common handoff is copied.
+    /// The common handoff is not copied. (Be careful on calling Dispose.)
     /// </summary>
-    public SyncHandoff(in CommonHandoff ch, float extraTimeSeconds, string? newStyle = null) {
-        this.ch = ch.Copy(newStyle);
+    public SyncHandoff(in CommonHandoff ch, float extraTimeSeconds) {
+        this.ch = ch;
         this.timeOffset = extraTimeSeconds;
     }
 
     public static implicit operator GenCtx(SyncHandoff sbh) => sbh.GCX;
-
-    public SyncHandoff Copy(string? newStyle) => new(ch, timeOffset, newStyle);
 
     public readonly void Dispose() {
         ch.Dispose();

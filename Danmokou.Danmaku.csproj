@@ -263,10 +263,12 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\SunnyMimic.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\DayCampaignConfig.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\DamageMeasurer.cs" />
+    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\NewReflector\IAST.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\AudioTrack.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\GameInstance\Features\ConfigurationFeature.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Expressions\FlattenVisitor.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\SupportAbility\Bombs\MokouThousandSuns.cs" />
+    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\NewReflector\EnvFrameAttacher.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\GenericMath\ExMAssign.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\AyaPhoto.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\MarisaMimic.cs" />

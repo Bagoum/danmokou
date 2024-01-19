@@ -49,7 +49,7 @@ public static class BDSL2ParsingTests {
     }
     private static void AssertTypecheckFail(string source, string pattern, params IDelegateArg[] args) {
         var (ast, gs) = AssertASTOK(source, args);
-        var typ = IAST.Typecheck(ast, gs.Root.Resolver, gs);
+        var typ = IAST.Typecheck(ast, gs.GlobalRoot.Resolver, gs);
         if (typ.IsRight)
             RegexMatches(pattern, IAST.EnrichError(typ.Right).Message);
         else
@@ -57,7 +57,7 @@ public static class BDSL2ParsingTests {
     }
     private static IAST AssertTypecheckOK(string source, params IDelegateArg[] args) {
         var (ast, gs) = AssertASTOK(source, args);
-        var typ = IAST.Typecheck(ast, gs.Root.Resolver, gs);
+        var typ = IAST.Typecheck(ast, gs.GlobalRoot.Resolver, gs);
         Debug.Log(ast.DebugPrintStringify());
         if (typ.IsRight)
             Assert.Fail(IAST.EnrichError(typ.Right).Message);

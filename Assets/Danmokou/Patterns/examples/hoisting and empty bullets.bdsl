@@ -31,7 +31,7 @@ phase 0
 					regpoly 0.4 5 &a
 				color ellipse-yellow/w s nroffset @ pl p
 				color ellipse-orange/w s dtpoffset pl pd p
-					pxy -0.5 -0.5
+					pxy -0.15 -0.15
 			}
 		##Legacy/expanded syntax
 		bullet-control persist empty savev2 {
@@ -47,7 +47,7 @@ phase 0
 			@ myloc p
 		async ellipse-purple/w <> gcr2 24 _ <> { p this } world s offset zero
 			+ @ myloc p
-			rotatev @ mydir p cxy -0.5 -0.5
+			rotatev @ mydir p cxy -0.15 -0.15
 		async strip-green/w <> gcr2 24 _ <> { p this } gsr2c 20 { p add } world s offset zero
 			+ @ myloc p1
 			polartoxy

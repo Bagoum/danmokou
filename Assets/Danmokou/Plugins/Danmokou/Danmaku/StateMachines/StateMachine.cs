@@ -113,7 +113,6 @@ public readonly struct SMHandoff : IDisposable {
     public SMContext Context { get; }
     
     public readonly CommonHandoff ch;
-    public readonly ICancellee parentCT;
     public ICancellee cT => ch.cT;
     public GenCtx GCX => ch.gcx;
     public BehaviorEntity Exec => GCX.exec;
@@ -130,12 +129,11 @@ public readonly struct SMHandoff : IDisposable {
 
     /// <summary>
     /// Create a SMHandoff for top-level direct execution.
-    /// <br/>If provided, the EnvFrame is *copied*.
+    /// The GCX will contain an empty EnvFrame.
     /// </summary>
-    public SMHandoff(BehaviorEntity exec, ICancellee? cT = null, EnvFrame? ef = null) {
-        this.ch = new CommonHandoff(cT ?? Cancellable.Null, null, GenCtx.New(exec, ef?.Clone()), null);
+    public SMHandoff(BehaviorEntity exec, ICancellee? cT = null) {
+        this.ch = new CommonHandoff(cT ?? Cancellable.Null, null, GenCtx.New(exec), null);
         ch.gcx.index = exec.rBPI.index;
-        parentCT = Cancellable.Null;
         CanPrepend = false;
         Context = new SMContext();
     }
@@ -148,52 +146,46 @@ public readonly struct SMHandoff : IDisposable {
         gcx.OverrideScope(exec, exec.rBPI.index);
         //TODO envframe should this be V2RV2.zero or null?
         this.ch = new CommonHandoff(cT ?? smr.cT, null, gcx, V2RV2.Zero);
-        this.parentCT = smr.cT;
         CanPrepend = false;
         Context = context ?? new SMContext();
     }
 
     /// <summary>
     /// Derive an SMHandoff from a parent for localized execution with a new cancellation token.
-    /// <br/>The common handoff is copied.
+    /// <br/>The common handoff is mirrored.
     /// </summary>
     public SMHandoff(SMHandoff parent, ICancellee newCT) {
-        this.ch = new CommonHandoff(newCT, parent.ch.bc, parent.ch.gcx.Copy(null), parent.ch.rv2Override);
-        parentCT = parent.parentCT;
+        this.ch = new CommonHandoff(newCT, parent.ch.bc, parent.ch.gcx.Mirror(), parent.ch.rv2Override);
         CanPrepend = parent.CanPrepend;
         Context = DerivedSMContext.DeriveFrom(parent.Context);
     }
 
     /// <summary>
     /// Derive an SMHandoff from a parent for localized execution.
-    /// <br/>The common handoff is copied.
+    /// <br/>The common handoff is NOT copied.
+    /// Since SM usage is async, you should either mirror or copy it before passing it here.
     /// </summary>
     public SMHandoff(SMHandoff parent, CommonHandoff ch, SMContext? context, bool? canPrepend = null) {
-        this.ch = ch.Copy();
-        parentCT = parent.parentCT;
+        this.ch = ch;
         CanPrepend = canPrepend ?? parent.CanPrepend;
         Context = context ?? DerivedSMContext.DeriveFrom(parent.Context);
     }
 
     /// <summary>
-    /// Derive a joint-token SMHandoff.
+    /// Derive an SMHandoff with an override env frame. The env frame is mirrored or copied and this instance
+    ///  should be disposed.
     /// </summary>
-    private SMHandoff(SMHandoff parent, SMContext? context, out ICancellable cts) {
-        this.parentCT = parent.parentCT;
-        this.ch = new CommonHandoff(cts = new JointCancellable(parent.cT), parent.ch.bc, parent.ch.gcx.Copy(null), null);
-        CanPrepend = parent.CanPrepend;
-        Context = context ?? DerivedSMContext.DeriveFrom(parent.Context);
+    public SMHandoff OverrideEnvFrame(EnvFrame? ef) {
+        return new(this, ch.OverrideFrame(ef), null);
     }
 
     /// <summary>
-    /// Copy the SMHandoff, overriding the environment frame.
-    /// <br/>The EnvFrame is *copied*.
+    /// Derive a joint-token SMHandoff. Mirrors the GCX.
     /// </summary>
-    public SMHandoff(SMHandoff parent, EnvFrame newFrame) {
-        ch = parent.ch.OverrideFrame(newFrame);
-        parentCT = parent.parentCT;
+    private SMHandoff(SMHandoff parent, SMContext? context, out ICancellable cts) {
+        this.ch = new CommonHandoff(cts = new JointCancellable(parent.cT), parent.ch.bc, parent.ch.gcx.Mirror(), null);
         CanPrepend = parent.CanPrepend;
-        Context = DerivedSMContext.DeriveFrom(parent.Context);
+        Context = context ?? DerivedSMContext.DeriveFrom(parent.Context);
     }
 
     public SMHandoff CreateJointCancellee(out ICancellable cts, SMContext? innerContext) => 
@@ -211,23 +203,9 @@ public readonly struct SMHandoff : IDisposable {
     }
 }
 
-/// <summary>
-/// A state machine paired with the environment frame that produced it in script code.
-/// </summary>
-public record EFStateMachine(EnvFrame? RootFrame, StateMachine SM) {
-    public async Task Execute(SMHandoff smh) {
-        if (RootFrame != null) {
-            using var efsmh = new SMHandoff(smh, RootFrame);
-            await SM.Start(efsmh);
-        } else {
-            await SM.Start(smh);
-        }
-    }
-}
-
 // WARNING: StateMachines must NOT store any state. As in, you must be able to call the same SM twice concurrently,
 // and it should run twice without interfering.
-public abstract class StateMachine : ILexicalScopeRequestor {
+public abstract class StateMachine {
     #region InitStuff
 
     public static readonly Dictionary<string, Type> SMInitMap = new(StringComparer.OrdinalIgnoreCase) {
@@ -235,7 +213,6 @@ public abstract class StateMachine : ILexicalScopeRequestor {
         {"phase", typeof(PhaseSM)},
         {"phased", typeof(DialoguePhaseSM)},
         {"phasej", typeof(PhaseJSM)},
-        {"finish", typeof(FinishPSM)},
         {"paction", typeof(PhaseParallelActionSM)},
         {"saction", typeof(PhaseSequentialActionSM)},
         {"end", typeof(EndPSM)},
@@ -259,7 +236,7 @@ public abstract class StateMachine : ILexicalScopeRequestor {
     public static readonly Dictionary<Type, Type[]> SMChildMap = new() {
         {typeof(PatternSM), new[] { typeof(PhaseSM)}}, {
             typeof(PhaseSM), new[] {
-                typeof(PhaseParallelActionSM), typeof(PhaseSequentialActionSM), typeof(EndPSM), typeof(FinishPSM),
+                typeof(PhaseParallelActionSM), typeof(PhaseSequentialActionSM), typeof(EndPSM),
                 typeof(UniversalSM)
             }
         },
@@ -504,16 +481,16 @@ public abstract class StateMachine : ILexicalScopeRequestor {
     }
 
     public const string bdsl2Prefix = "<#> bdsl2";
-    public static EFStateMachine CreateFromDump(string dump) {
+    public static StateMachine CreateFromDump(string dump) {
         using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
         if (dump.StartsWith(bdsl2Prefix)) {
             Profiler.BeginSample("SM AST (BDSL2) Parsing/Compilation");
-            var b2ret = Reflection2.Helpers.ParseAndCompile<Func<(EnvFrame, StateMachine)>>(dump);
+            var b2ret = Reflection2.Helpers.ParseAndCompile<Func<StateMachine>>(dump);
             Profiler.EndSample();
             Profiler.BeginSample("SM AST (BDSL2) Execution");
             var b2result = b2ret();
             Profiler.EndSample();
-            return new(b2result.Item1, b2result.Item2);
+            return b2result;
         }
         var p = IParseQueue.Lex(dump);
         Profiler.BeginSample("SM AST construction");
@@ -530,8 +507,9 @@ public abstract class StateMachine : ILexicalScopeRequestor {
             throw Reflection2.IAST.EnrichError(err);
         Profiler.BeginSample("SM AST realization");
         var result = ast.Evaluate(new());
+        EnvFrameAttacher.AttachSM(result, EnvFrame.Create(rootScope, null));
         Profiler.EndSample();
-        return new(EnvFrame.Create(rootScope, null), result);
+        return result;
     }
 
     public static List<PhaseProperties> ParsePhases(string dump) {
@@ -555,9 +533,7 @@ public abstract class StateMachine : ILexicalScopeRequestor {
     }
     
     protected readonly StateMachine[] states;
-    public LexicalScope Scope { get; private set; } = DMKScope.Singleton;
-
-    public void Assign(LexicalScope scope) => Scope = scope;
+    public LexicalScope Scope { get; set; } = DMKScope.Singleton;
 
     public abstract Task Start(SMHandoff smh);
 }
@@ -652,7 +628,7 @@ public class NoBlockUSM : UniversalSM {
 
     private async Task ExecuteBlocking(SMHandoff smh) {
         //The GCX may be disposed by the parent before the child has run (due to early return), so we copy it
-        using var smh2 = new SMHandoff(smh, smh.ch, null);
+        using var smh2 = new SMHandoff(smh, smh.ch.Mirror(), null);
         await states[0].Start(smh2);
     }
 }

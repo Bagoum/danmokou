@@ -23,34 +23,49 @@ var sm = pattern({
 				&size = &size + 1f
 			}, t > 0.2 &  t < 1.2)
 			behcontrol true "pather-purple/w" exec(b{
-				&opacity = &opacity - 0.4f
+				&opacity = &opacity - 0.4f //try -1, may need type specific
 			}, t > 0.4 & t < 1.7)
-			
-			async "pather-purple/w" <90> gcr2 120 inf <15> {
-				start(b{
-					var opacity = 1
-				})
-			} pather 2 2 rvelocity px 2 {
-				tint(rgba(opacity, 1, 1, opacity))
-				s(2)
+
+			gtr {
+				wait 70
+				times inf
+				preloop block {
+					hvar tloop = i
+				}
+				rv2incr <180>
+				waitchild
+			} {
+				async "pather-purple*" <90> gcr2 120 4 <15> {
+					start(b{
+						hvar opacity = 1
+					})
+					colorf({ "/w", "/b" }, pi)
+				} pather 2 2 rvelocity px 2 {
+					tint(rgba(opacity, 1, 1, opacity))
+					s(2)
+				}
 			}
+			sync("gdlaser-green/w", <270>, laser(null, 2, 20, {
+				dynamic(roffset(pxy(t, sine(3, 0.8 + sine(3p, 0.6, lt), t))))
+			}))
 			
-		
 			async "circle-*/w" <> gcr2 24 inf <3> {
 				//bindItr(loop1)
-				preloop b{
-					var loop1 = i
-					var size = 1 //shared between red and green!
+				preloop block {
+					hvar loop1 = i
+					hvar size = 1 //shared between red and green!
 				}
+				bindlr
 			} gsr2c 2 {
 				color { "red", "green" }
 				preloop b{
-					var loop2 = i
+					hvar loop2 = i
 				}
 			} simple
-				rvelocity px (1.6 + sine(7p, lerpsmooth($(eoutback), 2, 1, t, 0.7, 1), loop1)) {
+				rvelocity px (1.6 + sine(7p, lerp(2, 1, t, 0.7, 1), loop1)) {
 					scale(b{
-						//size += 0.5f;
+						var hello = 0.5f;
+						size += hello;
 						size
 					})
 				}
@@ -58,5 +73,4 @@ var sm = pattern({
 		}
 	}
 })
-var Vector2 z = cxy(5, 4);
 sm

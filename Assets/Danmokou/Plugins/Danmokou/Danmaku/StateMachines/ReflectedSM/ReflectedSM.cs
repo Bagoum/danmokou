@@ -319,11 +319,11 @@ if (> t &fadein,
         CreateShot1(new V2RV2(0, 0, x, y, 0), speed, angle, style);
 
     public static ReflectableLASM Dialogue(string file) {
-        EFStateMachine? sm = null;
+        StateMachine? sm = null;
         return new(smh => {
             Logs.Log($"Opening dialogue section {file}");
             sm ??= StateMachineManager.LoadDialogue(file);
-            return sm.Execute(smh);
+            return sm.Start(smh);
         });
     }
 

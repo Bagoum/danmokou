@@ -448,11 +448,10 @@ public partial class BehaviorEntity {
         /// Run some code on bullets that pass the condition.
         /// </summary>
         [BDSL2Only]
-        public static cBEHControl Exec<T>(Func<TExArgCtx, TEx<T>> code, Pred cond) {
-            var _code = Compilers.ErasedParametric(code);
+        public static cBEHControl Exec(ErasedParametric code, Pred cond) {
             return new cBEHControl((b, cT) => {
                 if (cond(b.rBPI))
-                    _code(b.bpi);
+                    code(b.bpi);
             }, BulletControl.P_SAVE);
         }
 
