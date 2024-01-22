@@ -102,9 +102,9 @@ public static class CompilerHelpers {
         }
         if (!hasEFArg) {
             if (bpiArg != null)
-                args = args.Append(TExArgCtx.Arg.Make("ef", new TExPI(bpiArg).EnvFrame, false)).ToArray();
+                args = args.Append(TExArgCtx.Arg.MakeFromTEx("ef", new TExPI(bpiArg).EnvFrame, false)).ToArray();
             else if (gcxArg != null)
-                args = args.Append(TExArgCtx.Arg.Make("ef", new TExGCX(gcxArg).EnvFrame, false)).ToArray();
+                args = args.Append(TExArgCtx.Arg.MakeFromTEx("ef", new TExGCX(gcxArg).EnvFrame, false)).ToArray();
         }
         var tac = new TExArgCtx(args);
         return new(exConstructor(tac), tac, args);
@@ -119,7 +119,7 @@ public static class CompilerHelpers {
 
     public static ReadyToCompileExpr<D> PrepareDelegateRSB<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate {
         var arg_sb = TExArgCtx.Arg.Make<BulletManager.SimpleBullet>("sb", true, isRef: true);
-        var arg_bpi = TExArgCtx.Arg.Make("sb_bpi", ((TExSB)arg_sb.expr).bpi, true);
+        var arg_bpi = TExArgCtx.Arg.MakeFromTEx("sb_bpi", ((TExSB)arg_sb.expr).bpi, true);
         return PrepareDelegate<D>(exConstructor, args.Prepend(arg_bpi).Prepend(arg_sb).ToArray());
     }
 
@@ -129,9 +129,16 @@ public static class CompilerHelpers {
     public static ReadyToCompileExpr<D> PrepareDelegate<D>(Func<TExArgCtx, TEx> func, params IDelegateArg[] args) where D : Delegate =>
         PrepareDelegate<D>(func, args.Select((a, i) => a.MakeTExArg(i)).ToArray());
 
+
+    public static D CompileDelegate<D>(Func<TExArgCtx, TEx> func, params IDelegateArg[] args) where D : Delegate =>
+        PrepareDelegate<D>(func, args).Compile();
+
+    public static readonly GenericMethodSignature CompileDelegateMeth = (GenericMethodSignature)
+        MethodSignature.Get(typeof(CompilerHelpers).GetMethod(nameof(CompileDelegate))!);
+
     //Note: while there is a theoretical overhead to deriving the return type at runtime,
     // this function is not called particularly often, so it's not a bottleneck.
-    public static D CompileDelegate<D>(string func, params IDelegateArg[] args) where D : Delegate {
+    public static D CompileDelegateFromString<D>(string func, params IDelegateArg[] args) where D : Delegate {
         var returnType = typeof(D).GetMethod("Invoke")!.ReturnType;
         var exType = Reflector.Func2Type(typeof(TExArgCtx), typeof(TEx<>).MakeGenericType(returnType));
         
@@ -258,20 +265,6 @@ public static class Compilers {
 
     #endregion
 
-    /// <summary>
-    /// Code that has not yet been compiled in a script.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public struct UncompiledCode<T> {
-        public readonly Func<TExArgCtx, TEx<T>> code;
-        public UncompiledCode(Func<TExArgCtx, TEx<T>> code) {
-            this.code = code;
-        }
-
-        public static implicit operator UncompiledCode<T>(Func<TExArgCtx, TEx<T>> code) => new(code);
-
-        public override string ToString() => $"Uncompiled<{typeof(T).RName()}>";
-    }
 
     /// <summary>
     /// Mark that some code should not be compiled in a script.
@@ -279,5 +272,20 @@ public static class Compilers {
     [UsedImplicitly]
     public static UncompiledCode<T> Code<T>(Func<TExArgCtx, TEx<T>> ex) => new(ex);
     
+}
+
+/// <summary>
+/// Code that has not yet been compiled in a script.
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public struct UncompiledCode<T> {
+    public readonly Func<TExArgCtx, TEx<T>> code;
+    public UncompiledCode(Func<TExArgCtx, TEx<T>> code) {
+        this.code = code;
+    }
+
+    public static implicit operator UncompiledCode<T>(Func<TExArgCtx, TEx<T>> code) => new(code);
+
+    public override string ToString() => $"Uncompiled<{typeof(T).RName()}>";
 }
 }

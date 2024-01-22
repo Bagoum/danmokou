@@ -24,7 +24,35 @@ namespace Danmokou.Reflection2 {
 /// Parser for BDSL2.
 /// </summary>
 public static class Parser {
-    public static readonly Parser<Token, Token> IdentOrType = TokenOfTypes(TokenType.Identifier, TokenType.TypeIdentifier);
+    public static readonly Parser<Token, Token> _Ident = TokenOfType(TokenType.Identifier);
+    public static readonly Parser<Token, Maybe<Token>> IdentTypeSuffixStr =
+        op("::").IgThen(TokenOfTypes(TokenType.Identifier, TokenType.TypeIdentifier)).Opt();
+    public static readonly Parser<Token, (PositionRange, Type)?> IdentTypeSuffix = inp => {
+        var rtyp = IdentTypeSuffixStr(inp);
+        if (!rtyp.Result.Try(out var mtypstr))
+            return rtyp.CastFailure<(PositionRange, Type)?>();
+        (PositionRange, Type)? type = null;
+        if (mtypstr.Try(out var typstr)) {
+            var typeParse = TypeFromToken(typstr);
+            if (typeParse.TryR(out var err))
+                return new(err, rtyp.Start, rtyp.End);
+            type = (typstr.Position, typeParse.Left);
+        }
+        return new(type, rtyp.Error, rtyp.Start, rtyp.End);
+    };
+    private static Either<Type, ParserError> TypeFromToken(Token typstr) {
+        var tDef = ParseType(typstr.Content);
+        if (tDef.IsRight)
+            return tDef.Right.Error;
+        var typ = tDef.Left.TryCompile();
+        if (typ.IsRight)
+            return new ParserError.Failure(typ.Right);
+        return typ.Left;
+    }
+
+    public static readonly Parser<Token, (Token id, (PositionRange, Type)? typ)> IdentAndType = 
+        _Ident.Then(IdentTypeSuffix);
+    
     private static readonly Parser<Token, Token> openParen = TokenOfType(TokenType.OpenParen);
     private static readonly Parser<Token, Token> closeParen = TokenOfType(TokenType.CloseParen);
     private static readonly Parser<Token, Token> openBrace = TokenOfType(TokenType.OpenBrace);
@@ -170,18 +198,18 @@ public static class Parser {
         };
     }
     
-    private static Parser<Token, (PositionRange allPosition, List<ST> args)> Paren(Parser<Token, ST> p, bool atleastOne = false) {
+    private static Parser<Token, (PositionRange allPosition, List<T> args)> Paren<T>(Parser<Token, T> p, bool atleastOne = false) {
         var args = p.SepBy(comma, atleastOne);
         return inp => {
             var ropen = openParen(inp);
             if (!ropen.Result.Valid)
-                return ropen.CastFailure<(PositionRange, List<ST>)>();
+                return ropen.CastFailure<(PositionRange, List<T>)>();
             var rval = args(inp);
             if (!rval.Result.Valid)
-                return new(Maybe<(PositionRange, List<ST>)>.None, rval.Error, ropen.Start, rval.End);
+                return new(Maybe<(PositionRange, List<T>)>.None, rval.Error, ropen.Start, rval.End);
             var rclose = closeParen(inp);
             if (!rclose.Result.Valid)
-                return new(Maybe<(PositionRange, List<ST>)>.None, rclose.Error, ropen.Start, rclose.End);
+                return new(Maybe<(PositionRange, List<T>)>.None, rclose.Error, ropen.Start, rclose.End);
             return new((ropen.Result.Value.Position.Merge(rclose.Result.Value.Position), rval.Result.Value), 
                 rval.Error, ropen.Start, rclose.End);
         };
@@ -202,7 +230,7 @@ public static class Parser {
     private static readonly Parser<Token, ST> atom = ChoiceL(
         "atom (identifier, number, array, block, or parenthesized expression)",
         //Identifier
-        IdentOrType.FMap(id => new ST.Ident(id) as ST),
+        IdentAndType.FMap(idtyp => new ST.Ident(idtyp.id, idtyp.typ) as ST),
         //num/string/v2rv2
         Num.FMap(t => new ST.Number(t.Position, t.Content) as ST),
         TokenOfType(TokenType.ValueKeyword).FMap(t => {
@@ -326,45 +354,27 @@ public static class Parser {
     );
     private static ParseResult<ST> Value(InputStream<Token> inp) => value(inp);
 
-    //var is required even with type specified to avoid parsing `type name` as a curried function application
-    private static readonly Parser<Token, (Token, (Token, Maybe<Token>))> varInitLeft = 
-        Kw("var").Or(Kw("hvar")).Then(IdentOrType.Then(Ident.Opt()));
-    private static readonly Parser<Token, ST> varInitRight = op("=").IgThen(value);
-    private static readonly Parser<Token, ST> varInit = inp => {
-        var rleft = varInitLeft(inp);
-        if (!rleft.Result.Try(out var decl))
-            return rleft.CastFailure<ST>();
-        var (kw, (a, b)) = decl;
-        var rright = varInitRight(inp);
-        if (!rright.Result.Try(out var val))
-            return rright.CastFailure<ST>();
-        if (b.Try(out var id)) {
-            //type(a) + id(b) specification
-            var tDef = ParseType(a.Content);
-            if (tDef.IsRight)
-                return new ParseResult<ST>(tDef.Right.Error, rleft.Start, rleft.End);
-            var typ = tDef.Left.TryCompile();
-            if (typ.IsRight)
-                return new ParseResult<ST>(new ParserError.Failure(typ.Right), rleft.Start, rleft.End);
-            return new ParseResult<ST>(new ST.VarDeclAssign(kw.Position,
-                        new VarDecl(id.Position, kw.Content == "hvar", typ.Left, id.Content), val)
-                    { TypeKwPos = a.Position } as ST,
-                rleft.MergeErrors(in rright), rleft.Start, rright.End);
-        } else {
-            //id(a) specification
-            if (a.Type == TokenType.TypeIdentifier)
-                return new ParseResult<ST>(new ParserError.Expected(
-                    "`var VARIABLE` or `var TYPE VARIABLE`"), rleft.Start, rleft.End);
-            return new ParseResult<ST>(new ST.VarDeclAssign(kw.Position,
-                    new VarDecl(a.Position, kw.Content == "hvar", null, a.Content), val) as ST,
-                rleft.MergeErrors(in rright), rleft.Start, rright.End);
-        }
-    };
+    private static readonly Parser<Token, ST> varInit =
+        Sequential(Kw("var").Or(Kw("hvar")), IdentAndType, op("="), value,
+            (kw, idTyp, eq, res) => {
+                var (id, typ) = idTyp;
+                return new ST.VarDeclAssign(kw.Position,
+                        new VarDecl(id.Position, kw.Content == "hvar", typ?.Item2, id.Content), eq.Position, res)
+                    { TypeKwPos = typ?.Item1 } as ST;
+            });
+
+    private static readonly Parser<Token, ST> functionDecl =
+        Sequential(Kw("function"), Ident, Paren(IdentAndType), IdentTypeSuffix, openBrace.IgThen(Statements).ThenIg(closeBrace),
+            (fn, name, args, type, body) => 
+                new ST.FunctionDef(fn.Position, name, args.args, type, new ST.Block(body)) as ST);
+            
     
     //Statement: value, variable declaration, or void-type block (if/else, for, while)
     private static readonly Parser<Token, ST> statement = ChoiceL("statement",
         value,
-        varInit
+        varInit,
+        functionDecl,
+        Sequential(Kw("return"), value, (kw, v) => new ST.Return(kw.Position, v) as ST)
         //todo: if/else, for, while
     );
     private static readonly Parser<Token, List<ST>> statements = 

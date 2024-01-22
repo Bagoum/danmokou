@@ -96,7 +96,7 @@ public class EnvFrame {
     /// </summary>
     public Maybe<T> MaybeGetValue<T>(string varName) {
         for (var envFrame = this; envFrame != null; envFrame = envFrame.Parent) {
-            if (envFrame.Scope.varsAndFns.TryGetValue(varName, out var decl)) {
+            if (envFrame.Scope.variableDecls.TryGetValue(varName, out var decl)) {
                 if (decl.FinalizedType != typeof(T))
                     throw new Exception(
                         $"Types do not align for variable {varName}. Requested: {typeof(T).ExRName()}; found: {decl.FinalizedType?.ExRName()}");
@@ -111,7 +111,7 @@ public class EnvFrame {
     /// </summary>
     public ref T Value<T>(string varName) {
         for (var envFrame = this; envFrame != null; envFrame = envFrame.Parent) {
-            if (envFrame.Scope.varsAndFns.TryGetValue(varName, out var decl)) {
+            if (envFrame.Scope.variableDecls.TryGetValue(varName, out var decl)) {
                 if (decl.FinalizedType != typeof(T))
                     throw new Exception(
                         $"Types do not align for variable {varName}. Requested: {typeof(T).ExRName()}; found: {decl.FinalizedType?.ExRName()}");

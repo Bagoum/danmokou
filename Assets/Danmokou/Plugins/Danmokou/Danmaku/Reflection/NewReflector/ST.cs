@@ -55,6 +55,12 @@ public interface IDebugPrint {
 /// </summary>
 public abstract record ST(PositionRange Position) : IDebugPrint {
     public ReflectDiagnostic[] Diagnostics { get; init; } = System.Array.Empty<ReflectDiagnostic>();
+
+    private static SemanticToken Keyword(PositionRange pos) => new(pos, SemanticTokenTypes.Keyword);
+
+    private static SemanticToken? Type(PositionRange? pos) =>
+        pos.Try(out var p) ? new(p, SemanticTokenTypes.Type) : null;
+    
     /// <summary>
     /// Annotate this syntax tree with types and bindings.
     /// The resulting AST may contain <see cref="AST.Failure"/>.
@@ -87,12 +93,19 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
     /// <param name="Name">Name of the identifier.</param>
     /// <param name="Generic">Whether this identifier is generic, ie. contains &lt;&gt; or array markings []. A generic identifier cannot be a variable.</param>
     public record Ident(PositionRange Position, string Name, bool Generic) : ST(Position) {
-        public Ident(Lexer.Token token) : this(token.Position, token.Content, token.Type == Lexer.TokenType.TypeIdentifier) { }
+        public (PositionRange pos, Type typ)? KnownType { get; }
+        public Ident(Lexer.Token token, (PositionRange pos, Type typ)? type = null) : this(token.Position, token.Content,
+            token.Type == Lexer.TokenType.TypeIdentifier) {
+            this.KnownType = type;
+        }
         protected override IAST _AnnotateInner(LexicalScope scope) {
-            if (Name.StartsWith("&"))
-                return new AST.WeakReference(Position, scope, Name.Substring(1));
+            if (Name.StartsWith("&")) {
+                var ast = new AST.WeakReference(Position, scope, Name.Substring(1), KnownType?.typ);
+                ast.AddTokens(new[]{Type(KnownType?.pos)});
+                return ast;
+            }
             var asEnumTypes = Reflector.bdsl2EnumResolvers.TryGetValue(Name, out var vals) ? vals : null;
-            if (scope.FindDeclaration(Name) is { } decl)
+            if (scope.FindVariable(Name) is { } decl)
                 return new AST.Reference(Position, scope, Name, decl, asEnumTypes);
             if (scope.FindStaticMethodDeclaration(Name) is { } meths)
                 return AST.MethodCall.Make(Position, Position, scope, meths.Select(m => m.Call(Name)).ToArray(), System.Array.Empty<ST>());
@@ -128,30 +141,42 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
         }
     }
 
+    public record Return(PositionRange KwPos, ST Value) : ST(KwPos.Merge(Value.Position)) {
+        protected override IAST _AnnotateInner(LexicalScope scope) {
+            if (scope.NearestReturn is null)
+                return new AST.Failure(
+                    new(Position, "This return statement is not contained within a function definition."), scope);
+            var ast = new AST.Return(Position, scope, Value.Annotate(scope));
+            ast.AddTokens(new[] { Keyword(KwPos) });
+            return ast;
+        }
+
+        public override IEnumerable<PrintToken> DebugPrint() {
+            yield return "return";
+            foreach (var w in Value.DebugPrint())
+                yield return w;
+        }
+    }
+
     /// <summary>
     /// A joint declaration-assignment, such as `var x = 5`.
     /// </summary>
     /// <param name="Declaration">The variable declaration.</param>
     /// <param name="AssignValue">The value to which the variable is assigned, eg. `5`.</param>
-    public record VarDeclAssign(PositionRange VarKwPos, VarDecl Declaration, ST AssignValue) : ST(VarKwPos.Merge(AssignValue.Position)) {
+    public record VarDeclAssign(PositionRange VarKwPos, VarDecl Declaration, PositionRange EqPos, ST AssignValue) : ST(VarKwPos.Merge(AssignValue.Position)) {
         public PositionRange? TypeKwPos { get; init; }
         
         private readonly FunctionCall Assignment =
             new(Declaration.Position.Merge(AssignValue.Position),
-                new FnIdent(new(Declaration.Position.End, AssignValue.Position.Start),
-                    Parser.Lift(typeof(ExMAssign), nameof(ExMAssign.Assign)).Call(null)),
+                new FnIdent(EqPos, Parser.Lift(typeof(ExMAssign), nameof(ExMAssign.Assign)).Call(null)),
                 new Ident(Declaration.Position, Declaration.Name, false),
                 AssignValue);
         protected override IAST _AnnotateInner(LexicalScope scope) {
-            if (scope.DeclareVariable(Declaration) is { IsRight:true} r)
+            if (scope.Declare(Declaration) is { IsRight:true} r)
                 return new AST.Failure(new(Position, 
-                    $"The variable {Declaration.Name} has already been declared at {r.Right.Position}."), scope);
+                    $"The variable {Declaration.Name} has alreadykk been declared at {r.Right.Position}."), scope);
             var ret = Assignment.Annotate(scope);
-            if (ret is AST.MethodCall meth)
-                meth.PrecedingTokens = new[] {
-                    new SemanticToken(VarKwPos, SemanticTokenTypes.Keyword),
-                    TypeKwPos is { } typ ? new SemanticToken(typ, SemanticTokenTypes.Type) : null
-                }.Where(x => x != null).ToArray()!;
+            (ret as AST)!.AddTokens(new[]{Keyword(VarKwPos), Type(TypeKwPos)});
             return ret;
         }
 
@@ -188,7 +213,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
 
         protected override IAST _AnnotateInner(LexicalScope scope) {
             var id = Member;
-            //TODO we allow C# extension-styles calls, but no support for instance methods
+            //TODO we allow C# extension-styles calls, but no support for instance methods yet
             if (scope.FindStaticMethodDeclaration(id.Name.ToLower()) is { } decls) {
                 var argFilter = decls.Where(d => d.Params.Length == AllArgs.Length).ToList();
                 if (argFilter.Count > 0)
@@ -225,8 +250,16 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             //If we're directly calling a *static method*, then we already know the signatures
             if (Fn is FnIdent fn) {
                 return AST.MethodCall.Make(Position, fn.Position, scope, fn.Func, Args,  OverloadsInterchangeable);
-            } else if (Fn is Ident id) {
-                if (scope.FindStaticMethodDeclaration(id.Name.ToLower()) is { } decls) {
+            } else if (Fn is Ident id) { 
+                
+                if (scope.FindScopedFunction(id.Name) is { } sfn) {
+                    if (sfn.CallType.Arguments.Length - 1 != Args.Length)
+                        return new AST.Failure(new(Position, id.Position,
+                            $"The script function `{id.Name}` takes {sfn.CallType.Arguments.Length - 1} arguments," +
+                            $" but {Args.Length} were provided."), scope);
+                    return new AST.ScriptFunctionCall(Position, id.Position, scope, sfn, 
+                        Args.Select(a => a.Annotate(scope)).ToArray());
+                } else if (scope.FindStaticMethodDeclaration(id.Name.ToLower()) is { } decls) {
                     var argFilter = decls.Where(d => d.Params.Length == Args.Length).ToList();
                     if (argFilter.Count > 0)
                         return AST.MethodCall.Make(Position, id.Position, scope,
@@ -252,6 +285,50 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             foreach (var w in IDebugPrint.PrintArgs(Args))
                 yield return w;
             yield return ")";
+        }
+    }
+    
+    public record FunctionDef(PositionRange KwPosition, Lexer.Token Name, List<(Lexer.Token, (PositionRange, Type)?)> Args,
+        (PositionRange, Type)? ReturnType, Block Body) : ST(KwPosition.Merge(Body.Position)) {
+        
+        protected override IAST _AnnotateInner(LexicalScope scope) {
+            var localScope = LexicalScope.Derive(scope);
+            localScope.Return = new ReturnStatementConfig(ReturnType?.Item2);
+            var args = Args.Select(a => 
+                new ImplicitArgDecl(a.Item1.Position, a.Item2?.Item2, a.Item1.Content)).ToArray();
+            var fnCallType =
+                TypeDesignation.Dummy.Method(localScope.Return!.Type, args.Select(a => a.TypeDesignation).ToArray());
+            var decl = new ScriptFnDecl(null!, Name.Content, args, fnCallType);
+            if (scope.Declare(decl).TryR(out var prev))
+                return new AST.Failure(new(Position, 
+                    $"The function {decl.Name} has already been declared at {prev.Position}."), scope);
+            var _block = Body.AnnotateWithParameters(localScope, null, args);
+            if (!_block.TryL(out var block))
+                return _block.Right;
+            var ast = new AST.ScriptFunctionDef(Position, Name.Content, scope, decl, block);
+            decl.Tree = ast;
+            ast.AddTokens(Args.Select(a => Type(a.Item2?.Item1)).Concat(new[] {
+                    Keyword(KwPosition),
+                    new(Name.Position, SemanticTokenTypes.Function),
+                    Type(ReturnType?.Item1)
+                }));
+            return ast;
+        }
+
+        public override IEnumerable<PrintToken> DebugPrint() {
+            yield return "function";
+            yield return Name.Content;
+            yield return "(";
+            foreach (var (a, _) in Args)
+                yield return a.Content;
+            yield return ") {";
+            yield return PrintToken.indent;
+            yield return PrintToken.newline;
+            foreach (var w in Body.DebugPrint())
+                yield return w;
+            yield return PrintToken.dedent;
+            yield return PrintToken.newline;
+            yield return "}";
         }
     }
 
@@ -461,24 +538,6 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
     }
 
     /// <summary>
-    /// An increment or decrement operation (++/--) on a variable.
-    /// </summary>
-    /// <param name="Position">Position of AST.</param>
-    /// <param name="Num">Variable that is being modified.</param>
-    /// <param name="isPost">Whether this is a postfix or prefix increment/decrement.</param>
-    /// <param name="isAdd">Whether this is an increment or a decrement.</param>
-    /*public record BoundIncrement(PositionRange Position, ST Num, bool isPost, bool isAdd) : ST(Position) {
-        public override IEnumerable<PrintToken> DebugPrint() {
-            if (!isPost)
-                yield return isAdd ? "++" : "--";
-            foreach (var w in Num.DebugPrint())
-                yield return w;
-            if (isPost)
-                yield return isAdd ? "++" : "--";
-        }
-    }*/
-
-    /// <summary>
     /// A block of statements.
     /// </summary>
     public record Block(PositionRange Position, ST[] Args) : ST(Position) {
@@ -486,21 +545,27 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
         
         protected override IAST _AnnotateInner(LexicalScope scope) {
             var localScope = LexicalScope.Derive(scope);
-            return new AST.Block(Position, scope, localScope, Args.Select(a => a.Annotate(localScope)).ToArray());
+            return new AST.Block(Position, scope, localScope, null, Args.Select(a => a.Annotate(localScope)).ToArray());
         }
 
-        public AST.Block AnnotateTopLevel(LexicalScope gs, IDelegateArg[] topLevelArgs) {
-            if (gs.Parent is not DMKScope)
-                throw new Exception("Top-level block scope parent should be DMKScope");
-            //top-level args are declared as variables and copied into the top-level envframe
-            var decls = new (VarDecl, ImplicitArgDecl)[topLevelArgs.Length];
-            for (int ii = 0; ii < topLevelArgs.Length; ++ii) {
-                var arg = topLevelArgs[ii];
-                gs.DeclareVariable((decls[ii] = 
-                    (new VarDecl(default, false, arg.Type, arg.Name), arg.MakeImplicitArgDecl())).Item1);
+        //note: these functions requires localScope to be passed in instead of enclosingScope
+        public Either<AST.Block, AST.Failure> AnnotateWithParameters(LexicalScope localScope, IDelegateArg[] arguments) {
+            var decls = new ImplicitArgDecl[arguments.Length];
+            for (int ii = 0; ii < arguments.Length; ++ii) {
+                decls[ii] = arguments[ii].MakeImplicitArgDecl();
             }
-            return new AST.Block(Position, gs.Parent, gs, Args.Select(a => a.Annotate(gs)).ToArray())
-                .WithTopLevelArgs(decls);
+            return AnnotateWithParameters(localScope, null, decls);
+        }
+        
+        public Either<AST.Block, AST.Failure> AnnotateWithParameters(LexicalScope localScope, TypeDesignation? retType, ImplicitArgDecl[] arguments) {
+            for (int ii = 0; ii < arguments.Length; ++ii) {
+                if (localScope.Declare(arguments[ii]) is {IsRight: true} r) {
+                    return new AST.Failure(new(Position, 
+                        $"The variable {arguments[ii].Name} has already been declared at {r.Right.Position}."), localScope);
+                }
+            }
+            return new AST.Block(Position, localScope.Parent!, localScope, retType,
+                Args.Select(a => a.Annotate(localScope)).ToArray());
         }
 
         public override IEnumerable<PrintToken> DebugPrint() {

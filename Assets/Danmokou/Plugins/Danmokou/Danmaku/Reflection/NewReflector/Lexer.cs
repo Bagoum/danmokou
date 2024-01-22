@@ -21,7 +21,7 @@ public static class Lexer {
     private const string num = @"[0-9]";
     private const string numMult = @"pi?|[hfsc]";
     private static readonly string[] specialOps = new[] { "\\", "->", "$" };
-    private static readonly string[] keywords = new[] { "function", "hvar", "var", "block" };
+    private static readonly string[] keywords = new[] { "function", "hvar", "var", "block", "return" };
     private static readonly string[] valueKeywords = new[] { "true", "false", };
     private static readonly HashSet<string> operators = new[] {
         "++", "--",

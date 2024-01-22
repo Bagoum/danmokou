@@ -585,8 +585,8 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             new(Type, Reference, Operator, Rule.Evaluate(data));
         
         public override void AttachLexicalScope(LexicalScope scope) {
-            if (scope.FindDeclaration(Reference.var) == null) {
-                scope.DeclareVariable(new VarDecl(RefPosition, false, Type.AsType(), Reference.var));
+            if (scope.FindVariable(Reference.var) == null) {
+                scope.Declare(new VarDecl(RefPosition, false, Type.AsType(), Reference.var));
             }
             base.AttachLexicalScope(scope);
         }

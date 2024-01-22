@@ -591,7 +591,7 @@ public partial class BulletManager {
         /// </summary>
         /// <param name="targets">Several target, index, value tuples to save</param>
         /// <param name="cond">Filter condition</param>
-        public static exBulletControl SaveV2((ReflectEx.Hoist<Vector2> target, Compilers.UncompiledCode<float> indexer, Compilers.UncompiledCode<Vector2> valuer)[] targets, ExPred cond) => new((st, ct, bpi) => {
+        public static exBulletControl SaveV2((ReflectEx.Hoist<Vector2> target, UncompiledCode<float> indexer, UncompiledCode<Vector2> valuer)[] targets, ExPred cond) => new((st, ct, bpi) => {
             var extbpi = bpi.AppendSB(sbName, st.sb);
             return bpi.When(cond,
                 Ex.Block(targets.Select(t =>
@@ -605,7 +605,7 @@ public partial class BulletManager {
         /// </summary>
         /// <param name="targets">Several target, index, value tuples to save</param>
         /// <param name="cond">Filter condition</param>
-        public static exBulletControl SaveF((ReflectEx.Hoist<float> target, Compilers.UncompiledCode<float> indexer, Compilers.UncompiledCode<float> valuer)[] targets, ExPred cond) => new((st, ct, bpi) => bpi.When(cond,
+        public static exBulletControl SaveF((ReflectEx.Hoist<float> target, UncompiledCode<float> indexer, UncompiledCode<float> valuer)[] targets, ExPred cond) => new((st, ct, bpi) => bpi.When(cond,
             Ex.Block(targets.Select(t =>
                 t.target.Save(((Ex) t.indexer.code(bpi)).Cast<int>(), t.valuer.code(bpi), bpi)))), BulletControl.P_SAVE);
 

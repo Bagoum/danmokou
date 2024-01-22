@@ -447,7 +447,7 @@ public partial class BehaviorEntity {
         /// <summary>
         /// Run some code on bullets that pass the condition.
         /// </summary>
-        [BDSL2Only]
+        [BDSL2Only] //NB: ErasedParametric cannot be reflected by BDSL1
         public static cBEHControl Exec(ErasedParametric code, Pred cond) {
             return new cBEHControl((b, cT) => {
                 if (cond(b.rBPI))

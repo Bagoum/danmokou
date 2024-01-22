@@ -50,7 +50,7 @@ namespace Danmokou.SM {
 public static class SMReflection {
     private static readonly ReflWrap<Func<float, float, float, ParametricInfo, float>> CrosshairOpacity =
         ReflWrap.FromFunc("SMReflection.CrosshairOpacity", () =>
-            CompileDelegate<Func<float, float, float, ParametricInfo, float>>(@"
+            CompileDelegateFromString<Func<float, float, float, ParametricInfo, float>>(@"
 if (> t &fadein,
     if(> t &homesec,
         c(einsine((t - &homesec) / &sticksec)),

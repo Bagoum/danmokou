@@ -50,22 +50,18 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
     public IAST[] Params { get; init; } = Params;
     public IEnumerable<IDebugAST> Children => Params;
     
-    public ReflectDiagnostic[] Diagnostics { get; private set; } = System.Array.Empty<ReflectDiagnostic>();
+    public SemanticToken[] AdditionalTokens { get; set; } = System.Array.Empty<SemanticToken>();
 
-    /// <inheritdoc cref="IAST.CopyTree"/>
-    public abstract IAST CopyTree();
-
-    private IAST[] CopyParams() {
-        var copied = new IAST[Params.Length];
-        for (int ii = 0; ii < Params.Length; ++ii)
-            copied[ii] = Params[ii].CopyTree();
-        return copied;
+    public AST AddTokens(IEnumerable<SemanticToken?> tokens) {
+        AdditionalTokens = AdditionalTokens.Concat(tokens.Where(t => t != null)).ToArray()!;
+        return this;
     }
+    public ReflectDiagnostic[] Diagnostics { get; private set; } = System.Array.Empty<ReflectDiagnostic>();
 
     //TODO envframe this isn't generally sound since it doesn't move declarations, but
     // i think the current usage for implicit cast only is sound.
     /// <inheritdoc cref="IAST.ReplaceScope"/>
-    public void ReplaceScope(LexicalScope prev, LexicalScope inserted) {
+    public virtual void ReplaceScope(LexicalScope prev, LexicalScope inserted) {
         if (LocalScope?.Parent == prev) {
             LocalScope.UpdateParent(inserted);
         }
@@ -148,6 +144,16 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
     public virtual IEnumerable<ReflectDiagnostic> WarnUsage() =>
         Diagnostics.Concat(Params.SelectMany(p => p.WarnUsage()));
 
+    public IEnumerable<SemanticToken> ToSemanticTokens() {
+        var baseTokens = _ToSemanticTokens();
+        if (AdditionalTokens.Length > 0)
+            return baseTokens.Concat(AdditionalTokens);
+        return baseTokens;
+    }
+
+    protected virtual IEnumerable<SemanticToken> _ToSemanticTokens() =>
+        Params.SelectMany(p => p.ToSemanticTokens());
+
     public virtual IEnumerable<(IDebugAST tree, int? childIndex)>? NarrowestASTForPosition(PositionRange p) {
         if (p.Start.Index < Position.Start.Index || p.End.Index > Position.End.Index) return null;
         for (int ii = 0; ii < Params.Length; ++ii) {
@@ -207,8 +213,6 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                     .ToArray();
         }
         
-        public override IAST CopyTree() => this with { };
-        
         /// <inheritdoc cref="IAtomicTypeTree.SelectedOverload"/>
         public TypeDesignation? SelectedOverload { get; set; }
         /// <inheritdoc cref="IAtomicTypeTree.PossibleTypes"/>
@@ -234,7 +238,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             if (Declaration == null)
                 throw new ReflectionException(Position, $"Reference {Name} is not a variable or enum");
             return Declaration.FinalizedType!.MakeTypedLambda(tac => 
-                EnclosingScope.LocalOrParent(tac, tac.EnvFrame, Declaration.Bound, out _));
+                EnclosingScope.LocalOrParentVariable(tac, tac.EnvFrame, Declaration.Bound, out _));
         }
         public string Explain() {
             if (TryGetAsEnum(out var v, out var t))
@@ -254,7 +258,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 symbolType, Position.ToRange());
         }
 
-        public IEnumerable<SemanticToken> ToSemanticTokens() {
+        protected override IEnumerable<SemanticToken> _ToSemanticTokens() {
             var tokenType = SemanticTokenTypes.Variable;
             if (TryGetAsEnum(out _, out _))
                 tokenType = SemanticTokenTypes.EnumMember;
@@ -274,13 +278,17 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
     //Always a tex func type (references are bound to expressions or EnvFrame)
     public record WeakReference : AST, IAST, IAtomicTypeTree {
         private string Name { get; }
+        private Type? KnownType { get; }
         /// <inheritdoc cref="AST.WeakReference"/>
-        public WeakReference(PositionRange Position, LexicalScope EnclosingScope, string Name) : base(Position, EnclosingScope) {
+        public WeakReference(PositionRange Position, LexicalScope EnclosingScope, string Name, Type? knownType = null) : base(Position, EnclosingScope) {
             this.Name = Name;
-            PossibleTypes = new TypeDesignation[1] { new Variable() };
+            this.KnownType = knownType;
+            PossibleTypes = new TypeDesignation[1] {
+                knownType != null ?
+                    new Known(knownType) :
+                    new Variable()
+            };
         }
-        
-        public override IAST CopyTree() => this with { };
         
         /// <inheritdoc cref="IAtomicTypeTree.SelectedOverload"/>
         public TypeDesignation? SelectedOverload { get; set; }
@@ -310,7 +318,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             return new DocumentSymbol($"dynamic {Name}", descr, SymbolKind.Variable, Position.ToRange());
         }
 
-        public IEnumerable<SemanticToken> ToSemanticTokens() {
+        protected override IEnumerable<SemanticToken> _ToSemanticTokens() {
             yield return new(Position, SemanticTokenTypes.Variable, new[]{SemanticTokenModifiers.DynamicVar});
         }
 
@@ -338,9 +346,6 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         public bool OverloadsAreInterchangeable { get; init; } = false;
         /// <summary>Position of the method name alone (ie. just `MethodName`)</summary>
         public PositionRange MethodPosition { get; }
-        public SemanticToken[] PrecedingTokens { get; set; } = System.Array.Empty<SemanticToken>();
-
-        public override IAST CopyTree() => this with { Params = CopyParams() };
         
         private MethodCall(PositionRange Position, PositionRange MethodPosition,
             LexicalScope EnclosingScope, Reflector.InvokedMethod[] Methods, params IAST[] Params) : base(Position, EnclosingScope, Params) {
@@ -384,7 +389,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             return null;
         }
 
-        public Either<IImplicitTypeConverter, bool> ImplicitParameterCast(Reflector.InvokedMethod overload, int index) {
+        Either<IImplicitTypeConverter, bool> IMethodTypeTree<Reflector.InvokedMethod>.ImplicitParameterCast(Reflector.InvokedMethod overload, int index) {
             if (DMKScope.GetConverterForCompiledExpressionType(overload.Mi.Params[index].Type) is { } conv)
                 return new(conv);
             return true;
@@ -467,8 +472,11 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 if (prm is NewArrayExpression ne && prm.NodeType == ExpressionType.NewArrayInit) {
                     return Ex.NewArrayInit(typeof(GenCtxProperty), ne.Expressions.Append(
                         Ex.Constant(GenCtxProperty._AssignLexicalScope(LocalScope, Autovars()))));
+                } else if (prm is ConstantExpression ce) {
+                    return Ex.Constant(
+                        EnvFrameAttacher.ExtendScopeProps((GenCtxProperty[])ce.Value, LocalScope, Autovars()));
                 } else
-                    return EnvFrameAttacher.extendScopeProps.Of(prm, Ex.Constant(LocalScope));
+                    return EnvFrameAttacher.extendScopeProps.Of(prm, Ex.Constant(LocalScope), Ex.Constant(Autovars()));
             }
             if (typ.IsGenericType && typ.GetGenericTypeDefinition() == typeof(GenCtxProperties<>)) {
                 return EnvFrameAttacher.attachScopeProps.Specialize(prm.Type.GetGenericArguments())
@@ -520,11 +528,11 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                     FlattenParams((p, i) => p.ToSymbolTree($"({Methods[0].Params[i].Name})")));
         }
 
-        public IEnumerable<SemanticToken> ToSemanticTokens() =>
-            PrecedingTokens.Concat(Params.SelectMany(p => p.ToSemanticTokens()).Prepend(
-                SelectedOverload?.method is {} m ? 
-                    SemanticToken.FromMethod(m.Mi, MethodPosition) : 
-                    new SemanticToken(MethodPosition, SemanticTokenTypes.Method)));
+        protected override IEnumerable<SemanticToken> _ToSemanticTokens() =>
+            base._ToSemanticTokens().Prepend(
+                SelectedOverload?.method is { } m ?
+                    SemanticToken.FromMethod(m.Mi, MethodPosition) :
+                    new SemanticToken(MethodPosition, SemanticTokenTypes.Method));
 
         public IEnumerable<PrintToken> DebugPrint() {
             yield return $"{CompactPosition} {(SelectedOverload?.method ?? Methods[0]).TypeEnclosedName}(";
@@ -534,40 +542,128 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
     }
 
-    //Always a tex func type
+
+    public record ScriptFunctionCall(PositionRange Position, PositionRange MethodPosition,
+        LexicalScope EnclosingScope, ScriptFnDecl Definition, params IAST[] Params) : AST(Position, EnclosingScope, Params), IMethodAST<Dummy> {
+        public IReadOnlyList<Dummy> Overloads { get; } = new[] { Definition.CallType };
+        public IReadOnlyList<ITypeTree> Arguments => Params;
+        public List<Dummy>? RealizableOverloads { get; set; }
+        public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
+        
+        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() => 
+            ReturnType(SelectedOverload?.simplified!).MakeTypedLambda(tac =>
+                EnclosingScope.LocalOrParentFunction(tac.EnvFrame, Definition, Params.Select(p => (Ex)p.Realize()(tac)))
+            );
+
+        public string Explain() => $"{CompactPosition} {Definition.AsSignature}";
+
+        public DocumentSymbol ToSymbolTree(string? descr = null) {
+            return new DocumentSymbol(Definition.Name, Definition.TypeOnlySignature, SymbolKind.Method, Position.ToRange(),
+                FlattenParams((p, i) => p.ToSymbolTree($"({Definition.Args[i]})")));
+        }
+
+        protected override IEnumerable<SemanticToken> _ToSemanticTokens() =>
+            base._ToSemanticTokens().Prepend(new(MethodPosition, SemanticTokenTypes.Function));
+    }
+    
+    public record ScriptFunctionDef(PositionRange Position, string Name, LexicalScope EnclosingScope, ScriptFnDecl Definition, Block Body) : AST(Position, EnclosingScope, Body), IMethodAST<Dummy> {
+        public IReadOnlyList<Dummy> Overloads { get; } = 
+            new[] { Dummy.Method(new Known(typeof(void)), Body.Overloads[0].Last) };
+        public IReadOnlyList<ITypeTree> Arguments => Params;
+        public List<Dummy>? RealizableOverloads { get; set; }
+        public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
+        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
+            return tac => Ex.Empty();
+        }
+
+        public (MethodInfo invoke, object func) CompileFunc() {
+            var args = Definition.Args;
+            var fTypes = new Type[args.Length + 2];
+            fTypes[0] = typeof(EnvFrame);
+            for (int ii = 0; ii < args.Length; ++ii)
+                fTypes[ii + 1] = args[ii].FinalizedType ?? throw new ReflectionException(Position,
+                    $"Script function argument {args[ii].Name}'s type is not finalized");
+            fTypes[^1] = Body.LocalScope!.Return!.FinalizedType ??
+                         throw new ReflectionException(Position, $"Script function return type is not finalized");
+            var fnType = ReflectionUtils.GetFuncType(fTypes.Length).MakeGenericType(fTypes);
+            Func<TExArgCtx, TEx> body = tac => Ex.Block(
+                Body.Realize()(tac),
+                Ex.Label(Body.LocalScope!.Return!.Label, Ex.Default(fTypes[^1]))
+            );
+            var argsWithEf = args.Prepend(new DelegateArg<EnvFrame>("callerEf") as IDelegateArg).ToArray();
+            var func = CompilerHelpers.CompileDelegateMeth.Specialize(fnType).Invoke(null, body, argsWithEf)!;
+            return (func.GetType().GetMethod("Invoke"), func);
+        }
+
+        public string Explain() => Definition.AsSignature;
+
+        public DocumentSymbol ToSymbolTree(string? descr = null) =>
+            new($"Function {Name}", Definition.TypeOnlySignature, SymbolKind.Function, Position.ToRange(),
+                Params.Select(p => p.ToSymbolTree()));
+
+    }
+
+    /// <summary>
+    /// A return statement in a function definition.
+    /// </summary>
+    public record Return(PositionRange Position, LexicalScope EnclosingScope, IAST Value) : AST(Position,
+        EnclosingScope, Value), IMethodAST<Dummy> {
+        public IReadOnlyList<Dummy> Overloads { get; private set; } = SetOverloads(EnclosingScope);
+        public IReadOnlyList<ITypeTree> Arguments => Params;
+        public List<Dummy>? RealizableOverloads { get; set; }
+        public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
+
+        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() => tac =>
+            Ex.Return(EnclosingScope.NearestReturn!.Label, Value.Realize()(tac));
+
+        public override void ReplaceScope(LexicalScope prev, LexicalScope inserted) {
+            var prevScope = EnclosingScope;
+            base.ReplaceScope(prev, inserted);
+            if (EnclosingScope != prevScope) {
+                if (EnclosingScope.NearestReturn == null)
+                    throw new ReflectionException(Position, "This return statement isn't contained within a function definition.");
+                Overloads = SetOverloads(EnclosingScope);
+            }
+        }
+
+        private static Dummy[] SetOverloads(LexicalScope scope) {
+            var t = scope.NearestReturn?.Type ??
+                    throw new Exception("No return statement found");
+            //Can't return void - this will break cases where return is the last line in a block
+            return new[] { Dummy.Method(t, t) };
+        }
+
+        public string Explain() => Value.Explain();
+
+        public DocumentSymbol ToSymbolTree(string? descr = null) => Value.ToSymbolTree(descr);
+
+    }
+    
+    
     public record Block : AST, IMethodAST<Dummy> {
         public IReadOnlyList<Dummy> Overloads { get; private init; }
         public IReadOnlyList<ITypeTree> Arguments => Params;
         public List<Dummy>? RealizableOverloads { get; set; }
         public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
-        public (VarDecl variable, ImplicitArgDecl fnArg)[]? TopLevelArgs { get; private set; }
-        public Block(PositionRange Position, LexicalScope EnclosingScope, LexicalScope localScope, params IAST[] Params) : base(Position,
+        public Block(PositionRange Position, LexicalScope EnclosingScope, LexicalScope localScope, TypeDesignation? retType, params IAST[] Params) : base(Position,
             EnclosingScope, Params) {
             this.LocalScope = localScope;
-            Overloads = MakeOverloads(Params);
+            Overloads = MakeOverloads(retType, Params);
         }
 
-        private static IReadOnlyList<Dummy> MakeOverloads(IAST[] prms) {
-            var typs = prms.Select(p => new Variable() as TypeDesignation).ToArray();
+        private static IReadOnlyList<Dummy> MakeOverloads(TypeDesignation? retType, IAST[] prms) {
+            var typs = prms.Select((p, i) => {
+                if (i < prms.Length - 1 || retType is null)
+                    return new Variable();
+                else
+                    return retType;
+            }).ToArray();
             return new[] {
                 Dummy.Method(typs[^1], typs), //(T1,T2...,R)->(R)
             };
         }
 
-        public override IAST CopyTree() {
-            var nparams = CopyParams();
-            return this with { Params = nparams, Overloads = MakeOverloads(nparams) };
-        }
-
-        public Block WithTopLevelArgs(params (VarDecl, ImplicitArgDecl)[] args) {
-            foreach (var (v, _) in (TopLevelArgs = args)) {
-                v.Assignments++;
-            }
-            return this;
-        }
-
-        public Either<IImplicitTypeConverter, bool> ImplicitParameterCast(Dummy overload, int index) =>
-            false;
+        Either<IImplicitTypeConverter, bool> IMethodTypeTree<Dummy>.ImplicitParameterCast(Dummy overload, int index) => false;
 
         public void FinalizeUnifiers(Unifier unifier) {
             IMethodTypeTree<Dummy>._FinalizeUnifiers(this, unifier);
@@ -599,7 +695,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
             return ReturnType(SelectedOverload?.simplified!).MakeTypedLambda(tac => {
                 IEnumerable<Ex> Stmts() {
-                    var prmStmts = Params.Select<IAST, Ex>((p, i) => {
+                    return Params.Select<IAST, Ex>((p, i) => {
                         try {
                             return p.Realize()(tac);
                         } catch (Exception e) {
@@ -609,11 +705,6 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                                 throw new ReflectionException(p.Position, "Couldn't invoke this code.", e);
                         }
                     });
-                    if (TopLevelArgs is not { } decls)
-                        return prmStmts;
-                    return decls
-                        .Select(d => d.variable.Value(tac.EnvFrame, tac).Is(d.fnArg.Value(tac.EnvFrame, tac)))
-                        .Concat(prmStmts);
                 }
                 if (LocalScope!.UseEF) {
                     var parentEf = tac.MaybeGetByType<EnvFrame>(out _) ?? Ex.Constant(null, typeof(EnvFrame));
@@ -645,8 +736,6 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             return new("Block", $"({children.Count} statements)", SymbolKind.Object, Position.ToRange(), children);
         }
 
-        public IEnumerable<SemanticToken> ToSemanticTokens() => Params.SelectMany(p => p.ToSemanticTokens());
-
         public IEnumerable<PrintToken> DebugPrint() {
             yield return $"{CompactPosition} block<{GetReturnTypeDescr(this)}>({{";
             foreach (var w in IDebugPrint.PrintArgs(Params, ";"))
@@ -656,7 +745,6 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
 
     }
 
-    //Type dependent on elements
     public record Array : AST, IMethodAST<Dummy> {
         private Variable ElementType { get; init; } = new();
         public IReadOnlyList<Dummy> Overloads { get; private init; }
@@ -674,16 +762,24 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 prms.Select(_ => elementType as TypeDesignation).ToArray()) };
         }
         
-        public override IAST CopyTree() {
-            var neleType = new Variable();
-            var nparams = CopyParams();
-            return this with { ElementType = neleType, Params = nparams, Overloads = MakeOverloads(nparams, neleType) };
-        }
 
         public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
             var typ = ReturnType(SelectedOverload?.simplified!);
-            return typ.MakeTypedLambda(tac => 
-                Ex.NewArrayInit(typ.GetElementType()!, Params.Select(p => (Ex)p.Realize()(tac))));
+            return typ.MakeTypedLambda(tac => {
+                bool allConst = true;
+                var prms = new Ex[Params.Length];
+                for (int ii = 0; ii < Params.Length; ++ii) {
+                    prms[ii] = Params[ii].Realize()(tac);
+                    allConst &= prms[ii] is ConstantExpression;
+                }
+                if (allConst) {
+                    var carr = System.Array.CreateInstance(typ.GetElementType()!, Params.Length);
+                    for (int ii = 0; ii < Params.Length; ++ii)
+                        carr.SetValue(((ConstantExpression)prms[ii]).Value, ii);
+                    return Ex.Constant(carr, typ);
+                }
+                return Ex.NewArrayInit(typ.GetElementType()!, prms);
+            });
         }
 
         public string Explain() {
@@ -700,8 +796,6 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                     $"({Params.Length} {props})", SymbolKind.Array, Position.ToRange(), FlattenParams(null));
             }
         }
-
-        public IEnumerable<SemanticToken> ToSemanticTokens() => Params.SelectMany(p => p.ToSemanticTokens());
         
         public IEnumerable<PrintToken> DebugPrint() {
             yield return $"{CompactPosition} {GetReturnTypeDescr(this)}[{Params.Length}]{{";
@@ -727,14 +821,24 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             Overloads = new[]{ Dummy.Method(Known.MakeTupleType(ElementTypes), ElementTypes) };
         }
 
-        public override IAST CopyTree() {
-            return new Tuple(Position, EnclosingScope, CopyParams());
-        }
-
         public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
             var typ = SelectedOverload!.Value.simplified.Resolve().LeftOrThrow;
-            return typ.MakeTypedLambda(tac =>
-                Ex.New(typ.GetConstructors()[0], Params.Select(p => (Ex)p.Realize()(tac))));
+            return typ.MakeTypedLambda(tac => {
+                bool allConst = true;
+                var prms = new Ex[Params.Length];
+                for (int ii = 0; ii < Params.Length; ++ii) {
+                    prms[ii] = Params[ii].Realize()(tac);
+                    allConst &= prms[ii] is ConstantExpression;
+                }
+                if (allConst) {
+                    var oprms = new object[Params.Length];
+                    for (int ii = 0; ii < Params.Length; ++ii) {
+                        oprms[ii] = ((ConstantExpression)prms[ii]).Value;
+                    }
+                    return Ex.Constant(typ.GetConstructors()[0].Invoke(oprms));
+                }
+                return Ex.New(typ.GetConstructors()[0], prms);
+            });
         }
 
         public string Explain() {
@@ -747,8 +851,6 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         public DocumentSymbol ToSymbolTree(string? descr = null) {
             return new DocumentSymbol("Tuple", descr, SymbolKind.Array, Position.ToRange(), FlattenParams(null));
         }
-
-        public IEnumerable<SemanticToken> ToSemanticTokens() => Params.SelectMany(p => p.ToSemanticTokens());
         
         public IEnumerable<PrintToken> DebugPrint() {
             yield return $"{CompactPosition} (";
@@ -787,10 +889,6 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 new[]{FloatType}
         };
         
-        public override IAST CopyTree() {
-            return new Number(Position, EnclosingScope, content);
-        }
-
         public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
             var typ = ReturnType(SelectedOverload!);
             if (typ == typeof(float))
@@ -819,7 +917,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         public DocumentSymbol ToSymbolTree(string? descr = null) =>
             new(content, descr, SymbolKind.Number, Position.ToRange());
 
-        public IEnumerable<SemanticToken> ToSemanticTokens() {
+        protected override IEnumerable<SemanticToken> _ToSemanticTokens() {
             yield return new(Position, SemanticTokenTypes.Number);
         }
 
@@ -835,7 +933,6 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         };
         public TypeDesignation? SelectedOverload { get; set; }
 
-        public override IAST CopyTree() => this with { };
         public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
             return (Func<TExArgCtx, TEx<T>>)(_ => Ex.Constant(Value));
         }
@@ -846,7 +943,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             return new DocumentSymbol(Value?.ToString() ?? "null", descr, Kind, Position.ToRange());
         }
 
-        public IEnumerable<SemanticToken> ToSemanticTokens() {
+        protected override IEnumerable<SemanticToken> _ToSemanticTokens() {
             yield return new(Position, Kind switch {
                 SymbolKind.Boolean => SemanticTokenTypes.Keyword,
                 SymbolKind.Number => SemanticTokenTypes.Number,
@@ -886,7 +983,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
 
         public DocumentSymbol ToSymbolTree(string? descr = null) => throw Exc;
 
-        public IEnumerable<SemanticToken> ToSemanticTokens() => throw Exc;
+        protected override IEnumerable<SemanticToken> _ToSemanticTokens() => throw Exc;
 
         public Failure(ReflectionException exc, IAST basis) : base(basis.Position, basis.EnclosingScope, basis) {
             Exc = exc;
@@ -899,9 +996,6 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             Exc = exc;
             PossibleTypes = new TypeDesignation[] { Var = new Variable() };
         }
-
-        //NB -- deep copy not required here
-        public override IAST CopyTree() => this with { };
         
         public override Func<TExArgCtx, TEx> _RealizeWithoutCast() => throw new StaticException("Cannot realize a Failure");
     }

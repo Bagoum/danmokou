@@ -121,6 +121,7 @@
     <None Include="Assets\Danmokou\MiniProjects\WebGL Demo\120 three dee.txt" />
     <None Include="Assets\SZYU\Fonts\ubuntu-font-family-0.83\LICENCE-FAQ.txt" />
     <None Include="Assets\Danmokou\Rendering\Shaders\Display\DownDistorter.shader" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 lerpmany.bdsl" />
     <None Include="Assets\Danmokou\Patterns\PlayerFire\Flappy Aya DDCB 1234.bdsl" />
     <None Include="Assets\Danmokou\Patterns\Tutorial\DMK Tutorial Setup 00.bdsl" />
     <None Include="Assets\BRuH\Dialogue\en\tokiko.2.txt" />
@@ -298,6 +299,7 @@
     <None Include="Assets\Danmokou\Rendering\Shaders\_ROOT.shader" />
     <None Include="Assets\Danmokou\Patterns\Testing\SummonAlong Test.txt" />
     <None Include="Assets\SZYU\Plugins\DLLs\FluentIL.xml" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 fn defs.bdsl" />
     <None Include="Assets\Danmokou\Patterns\feature testing\cullrad test.bdsl" />
     <None Include="Assets\Danmokou\Patterns\feature testing\sector center.bdsl" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Properties.cginc" />

@@ -41,8 +41,8 @@ public static class Helpers {
         if (parse.IsRight)
             throw parse.Right;
         var scope = LexicalScope.NewTopLevelScope();
-        var ast = parse.Left.AnnotateTopLevel(scope, args);
-        foreach (var exc in (ast as IAST).FirstPassExceptions) {
+        var ast = parse.Left.AnnotateWithParameters(scope, args).LeftOrRight<AST.Block, AST.Failure, IAST>();
+        foreach (var exc in ast.FirstPassExceptions) {
             throw exc;
             //throw new Exception(ITokenWitness.ShowErrorPositionInSource(exc.Position, source), exc);
         }
@@ -78,7 +78,7 @@ public static class Helpers {
     /// (Stage 4) Realize the AST into an expression function, then compile it into a delegate.
     /// </summary>
     public static D Compile<D>(this IAST ast, params IDelegateArg[] args) where D : Delegate {
-        var expr = (Func<TExArgCtx, TEx>)ast.Realize()!;
+        var expr = ast.Realize();
         return CompilerHelpers.PrepareDelegate<D>(expr, args).Compile();
     }
     

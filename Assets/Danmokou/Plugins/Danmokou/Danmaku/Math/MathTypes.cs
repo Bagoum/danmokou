@@ -174,7 +174,7 @@ public class PIData {
     /// Create an expression that retrieves a field with name <see cref="name"/>.
     /// </summary>
     public static Ex GetValue(TExArgCtx tac, Type t, string name) {
-        return tac.Ctx.Scope.TryGetLocalOrParent(tac, t, name, out _, out _) ?? 
+        return tac.Ctx.Scope.TryGetLocalOrParentVariable(tac, t, name, out _, out _) ?? 
                LexicalScope.VariableWithoutLexicalScope(tac, name, t);
     }
 
@@ -185,7 +185,7 @@ public class PIData {
     /// otherwise uses the WriteT jumptable lookup.
     /// </summary>
     public static Ex SetValue(TExArgCtx tac, Type t, string name, Func<TExArgCtx, TEx> val) {
-        return tac.Ctx.Scope.TryGetLocalOrParent(tac, t, name, out _, out _)?.Is(val(tac)) ??
+        return tac.Ctx.Scope.TryGetLocalOrParentVariable(tac, t, name, out _, out _)?.Is(val(tac)) ??
                LexicalScope.VariableWithoutLexicalScope(tac, name, t, opOnValue: l => l.Is(val(tac)));
     }
 

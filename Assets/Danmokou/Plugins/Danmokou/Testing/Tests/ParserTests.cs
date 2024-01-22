@@ -42,7 +42,7 @@ public static class ParserTests {
 
     [Test]
     public static void Errors() {
-        ThrowsRegex("BPY, but then found extra text", () => "+(x, *(x 2))".Into<FXY>());
+        ThrowsRegex("float, but then found extra text", () => "+(x, *(x 2))".Into<FXY>());
         ThrowsRegex("Couldn't convert the text in ≪≫ to type float.*≪}≫", () => StateMachine.CreateFromDump(
             @"
 pattern {}
@@ -77,11 +77,11 @@ phase 0
 
     [Test]
     public static void GroupingErrors() {
-        ThrowsRegex("BPY, but then found extra text", () => "+(x, (2)())".Into<FXY>());
-        ThrowsRegex("BPY, but then found extra text", () => "modwithpause 5 (6 7) 8".Into<BPY>());
+        ThrowsRegex("float, but then found extra text", () => "+(x, (2)())".Into<FXY>());
+        ThrowsRegex("float, but then found extra text", () => "modwithpause 5 (6 7) 8".Into<BPY>());
         ThrowsRegex("Expected 4 explicit arguments.*contains 3", () => "modwithpause(5, (6 7), 8)".Into<BPY>());
         ThrowsRegex("could not parse the second", () => "mod(3 *, 5)".Into<FXY>());
-        ThrowsRegex("BPY, but then found extra text", () => "+(2 * 5 x)".Into<FXY>());
+        ThrowsRegex("float, but then found extra text", () => "+(2 * 5 x)".Into<FXY>());
     }
     
     private static Vector2 V2(float x, float y) => new Vector2(x, y);

@@ -171,7 +171,7 @@ public interface IMethodConv1 : IScopedTypeConverter {
                    throw new StaticException($"Method converter {meth.Name} did not return a TEx func");
         else
             //tex => obj (eg. function compiler)
-            return r.MakeTypedLambda(tac => Ex.Constant(outputRaw));
+            return meth.ReturnType.MakeTypedLambda(tac => Ex.Constant(outputRaw));
     }
 }
 

@@ -94,16 +94,22 @@ public class TExArgCtx {
             this.hasTypePriority = hasTypePriority;
         }
 
-        public static Arg Make(string name, TEx expr, bool hasTypePriority) =>
+        public static Arg MakeFromTEx(string name, TEx expr, bool hasTypePriority) =>
             new(name, expr.GetType(), expr, hasTypePriority);
 
         //t = typeof(float) or similar
         public static Arg Make<T>(string name, bool hasTypePriority, bool isRef = false) {
             var expr = TEx.MakeParameter<T>(isRef, name);
-            return Make(name, expr, hasTypePriority);
+            return MakeFromTEx(name, expr, hasTypePriority);
         }
 
+        public static Arg MakeAny(Type t, string name, bool hasTypePriority, bool isRef = false) =>
+            (Arg)makeArg.Specialize(t).Invoke(null, new object[] { name, hasTypePriority, isRef })!;
         public static Arg MakeBPI => Arg.Make<ParametricInfo>("bpi", true);
+
+        private static readonly GenericMethodSignature makeArg = (GenericMethodSignature)
+            MethodSignature.Get(typeof(Arg).GetMethod(nameof(Make))!);
+        
     }
     
     public class LocalLet : IDisposable {
@@ -185,9 +191,7 @@ public class TExArgCtx {
     public TEx<T> GetByName<T>(string name) {
         if (!argNameToIndexMap.TryGetValue(name, out var idx))
             throw new CompileException($"The variable \"{name}\" is not provided as an argument.");
-        return args[idx].expr is TEx<T> arg ?
-            arg :
-            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).ExRName()}");
+        return args[idx].expr as TEx<T> ?? throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).ExRName()}");
     }
     public TEx<T>? MaybeGetByName<T>(string name) {
         if (!argNameToIndexMap.TryGetValue(name, out var idx))
@@ -197,14 +201,21 @@ public class TExArgCtx {
             //Still throw an error in this case
             throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).ExRName()}");
     }
+    public TEx GetByName(Type typ, string name) {
+        if (!argNameToIndexMap.TryGetValue(name, out var idx))
+            throw new CompileException($"The variable \"{name}\" is not provided as an argument.");
+        return args[idx].expr.GetType().GetGenericArguments()[0] == typ ?
+                args[idx].expr :
+                throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typ.ExRName()}");
+    }
     
-    public TEx? MaybeGetByName(Type t, string name) {
+    public TEx? MaybeGetByName(Type typ, string name) {
         if (!argNameToIndexMap.TryGetValue(name, out var idx))
             return null;
-        return args[idx].expr.GetType().GetGenericArguments()[0] == t ?
+        return args[idx].expr.GetType().GetGenericArguments()[0] == typ ?
             args[idx].expr :
             //Still throw an error in this case
-            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {t.ExRName()}");
+            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typ.ExRName()}");
     }
     
     public TEx GetByType<T>(out int idx) {
@@ -235,11 +246,11 @@ public class TExArgCtx {
     
     public TExArgCtx Rehash() {
         var bpi = GetByExprType<TExPI>(out var bidx);
-        return MakeCopyWith(bidx, Arg.Make(args[bidx].name, new TExPI(bpi.Rehash()), args[bidx].hasTypePriority));
+        return MakeCopyWith(bidx, Arg.MakeFromTEx(args[bidx].name, new TExPI(bpi.Rehash()), args[bidx].hasTypePriority));
     }
     public TExArgCtx CopyWithT(Expression newT) {
         var bpi = GetByExprType<TExPI>(out var bidx);
-        return MakeCopyWith(bidx, Arg.Make(args[bidx].name, new TExPI(bpi.CopyWithT(newT)), args[bidx].hasTypePriority));
+        return MakeCopyWith(bidx, Arg.MakeFromTEx(args[bidx].name, new TExPI(bpi.CopyWithT(newT)), args[bidx].hasTypePriority));
     }
 
     private TExArgCtx MakeCopyWith(int idx, Arg newArg) {
@@ -251,32 +262,32 @@ public class TExArgCtx {
     public TExArgCtx MakeCopyForType<T>(out TEx<T> currEx, out TEx<T> copyEx)  {
         currEx = (Expression)GetByType<T>(out int idx);
         copyEx = new TEx<T>();
-        return MakeCopyWith(idx, Arg.Make(args[idx].name, copyEx, args[idx].hasTypePriority));
+        return MakeCopyWith(idx, Arg.MakeFromTEx(args[idx].name, copyEx, args[idx].hasTypePriority));
     }
     
     public TExArgCtx MakeCopyForType<T>(TEx<T> newEx) {
         _ = GetByType<T>(out int idx);
-        return MakeCopyWith(idx, Arg.Make(args[idx].name, newEx, args[idx].hasTypePriority));
+        return MakeCopyWith(idx, Arg.MakeFromTEx(args[idx].name, newEx, args[idx].hasTypePriority));
     }
     
     public TExArgCtx MakeCopyForExType<T>(out T currEx, out T copyEx) where T: TEx, new() {
         currEx = GetByExprType<T>(out int idx);
         copyEx = new T();
-        return MakeCopyWith(idx, Arg.Make(args[idx].name, copyEx, args[idx].hasTypePriority));
+        return MakeCopyWith(idx, Arg.MakeFromTEx(args[idx].name, copyEx, args[idx].hasTypePriority));
     }
     
     public TExArgCtx MakeCopyForExType<T>(T newEx) where T: TEx {
         _ = GetByExprType<T>(out int idx);
-        return MakeCopyWith(idx, Arg.Make(args[idx].name, newEx, args[idx].hasTypePriority));
+        return MakeCopyWith(idx, Arg.MakeFromTEx(args[idx].name, newEx, args[idx].hasTypePriority));
     }
 
     public TExArgCtx Append(string name, TEx ex, bool hasPriority=true) {
-        var newArgs = args.Append(Arg.Make(name, ex, hasPriority)).ToArray();
+        var newArgs = args.Append(Arg.MakeFromTEx(name, ex, hasPriority)).ToArray();
         return new TExArgCtx(this, newArgs);
     }
     public TExArgCtx AppendSB(string name, TExSB ex, bool hasPriority=true) {
-        var nargs = args.Append(Arg.Make(name, ex, hasPriority));
-        if (MaybeGetByExprType<TExPI>(out _) == null) nargs = nargs.Append(Arg.Make(name + "_bpi", ex.bpi, true));
+        var nargs = args.Append(Arg.MakeFromTEx(name, ex, hasPriority));
+        if (MaybeGetByExprType<TExPI>(out _) == null) nargs = nargs.Append(Arg.MakeFromTEx(name + "_bpi", ex.bpi, true));
         return new TExArgCtx(this, nargs.ToArray());
     }
     
@@ -318,6 +329,9 @@ public class TEx {
         var t = typeof(T);
         var rt = (isRef) ? t.MakeByRefType() : t;
         var ex = Expression.Parameter(rt, name);
+        return _MakeSpecialParameter(t, ex) ?? new TEx<T>(ex);
+    }
+    private static TEx? _MakeSpecialParameter(Type t, ParameterExpression ex) {
         if (t == tv2)
             return new TExV2(ex);
         else if (t == tv3)
@@ -339,8 +353,9 @@ public class TEx {
         else if (t == typeof(GenCtx))
             return new TExGCX(ex);
         else
-            return new TEx<T>(ex);
+            return null;
     }
+    
 
     protected TEx(ExMode mode, Type t, string? name) {
         if (mode == ExMode.RefParameter) {

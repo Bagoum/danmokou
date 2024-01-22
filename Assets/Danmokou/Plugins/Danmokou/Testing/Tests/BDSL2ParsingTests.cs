@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BagoumLib.Functional;
 using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.Danmaku.Patterns;
@@ -20,7 +21,9 @@ using UnityEngine.Profiling;
 using static NUnit.Framework.Assert;
 using static Danmokou.Testing.TAssert;
 using static Danmokou.Reflection2.Lexer;
+using AST = Danmokou.Reflection2.AST;
 using Ex = System.Linq.Expressions.Expression;
+using Helpers = Danmokou.Reflection2.Helpers;
 using IAST = Danmokou.Reflection2.IAST;
 
 namespace Danmokou.Testing {
@@ -32,7 +35,7 @@ public static class BDSL2ParsingTests {
         if (res.IsRight)
             Assert.Fail(stream.ShowAllFailures(res.Right));
         var gs = LexicalScope.NewTopLevelScope();
-        return (res.Left.AnnotateTopLevel(gs, args), gs);
+        return (res.Left.AnnotateWithParameters(gs, args).LeftOrRight<AST.Block, AST.Failure, IAST>(), gs);
     }
     private static void AssertASTFail(string source, string pattern, IDelegateArg[] args) {
         var (ast, gs) = MakeAST(ref source, args);
@@ -75,7 +78,7 @@ public static class BDSL2ParsingTests {
     [Test]
     public static void GroupingFailure() {
         AssertTypecheckOK(@"s tprot(px block {
-    vtp_dt
+    t
 } + rotate 4 rotate 3 rotate 2 rotate 1 pxy 1 2)");
         AssertTypecheckFail("s tprot px 4 + pxy 4 3", "Typechecking failed for method T Add");
         AssertTypecheckOK("s tprot(px 4 + pxy 4 3)");
@@ -83,14 +86,9 @@ public static class BDSL2ParsingTests {
     }
 
     [Test]
-    public static void MulMulRev() {
-        AssertTypecheckFail("var1 * var2 * var3 * var4", "The type of variable var4 could not be determined");
-    }
-
-    [Test]
     public static void AssignCount() {
-        var source = @"var float x = 7.5
-var float y = 5
+        var source = @"var x::float = 7.5
+var y::float = 5
 x++ + block {
     x += y;
     y + block {
@@ -101,7 +99,7 @@ x++ + block {
 }";
         var args = new IDelegateArg[] { new DelegateArg<float>("myArg") };
         var ast = AssertVerified(source, args);
-        var vars = (ast as Reflection2.AST)!.LocalScope!.varsAndFns.Values.OrderBy(x => x.Name).ToArray();
+        var vars = (ast as Reflection2.AST)!.LocalScope!.variableDecls.Values.OrderBy(x => x.Name).ToArray();
         ListEq(vars.Select(v => (v.Assignments, v.Name)).ToArray(), new[] {
             (2, "myArg"),
             (3, "x"),
@@ -112,12 +110,27 @@ x++ + block {
         Assert.AreEqual(f(100), 131);
     }
 
+    public delegate float RefFunc(ref float y);
+
+    [Test]
+    public static void Add1() {
+        var source = @"x += 1";
+        var args = new IDelegateArg[] { new DelegateArg<float>("x") };
+        var f = Helpers.ParseAndCompile<Func<float, float>>(source, args);
+        Assert.AreEqual(f(12.4f), 13.4f);
+        var x = 20.1f;
+        var rargs = new IDelegateArg[] { new DelegateArg<float>("x", isRef: true) };
+        var rf = Helpers.ParseAndCompile<RefFunc>(source, rargs);
+        Assert.AreEqual(rf(ref x), 21.1f);
+        Assert.AreEqual(x, 21.1f);
+    }
+
     [Test]
     public static void NotWriteable() {
-        var source = @"var float x = 5
+        var source = @"var x::float = 5
 4 + x = 3";
         var ast = AssertVerified(source);
-        var result = ast.Realize() as Func<TExArgCtx, TEx>;
+        var result = ast.Realize();
         try {
             var f = CompilerHelpers.PrepareDelegate<Func<float, float>>(result!, Array.Empty<IDelegateArg>());
             Assert.Fail();
@@ -125,44 +138,6 @@ x++ + block {
             StringContains("is not writeable", exc.Message);
         }
     }
-
-    //[Test]
-    public static void wip_controls() {
-        var source = @"
-var d = define-control persist restyle 'circle-red/w' (xyz = 1 && x > 2);
-sync 'circle-blue/w' <> gsr2c 10 {
-    scoped(b{ //ab
-        var itr = 1
-    })
-    with-control d
-} {
-    erase(b{ var xyz = pm1(itr) })
-    s tprot px(1.8)
-    erase(b{ itr += 1 })
-};
-async 'circle-green/w' <1;:> gcr {
-    wait 60
-    times 10
-    circle
-    scoped(b{
-        var xyz = 1
-    })
-    with-control d
-} gsr {
-    times 3
-    rpp <3>
-} s tprot px(2)
-";
-        var args = new IDelegateArg[] { };
-        var ast = AssertVerified(source, args);
-
-        var exResult = ast.Realize() as Func<TExArgCtx, TEx>;
-        var result = CompilerHelpers.PrepareDelegate<Func<SyncPattern>>(exResult!, args);
-        //var f = CompilerHelpers.PrepareDelegate<Func<float, float>>(result!, args);
-        //var sp = f.Compile()(1000);
-        Debug.Log(5);
-    }
-    
     
     [Test]
     public static void tmp2() {

@@ -119,7 +119,7 @@ public static class ReflectEx {
         if (tac.MaybeGetByName<T>(alias).Try(out var prm))
             return prm;
         //variables in EnvFrame (GCXU or GCXF)
-        if (tac.Ctx.Scope.TryGetLocalOrParent(tac, typeof(T), alias, out var decl, out var p) is { } aex) {
+        if (tac.Ctx.Scope.TryGetLocalOrParentVariable(tac, typeof(T), alias, out var decl, out var p) is { } aex) {
             return aex;
         }
         //In functions not scoped by the GCX (eg. bullet controls)

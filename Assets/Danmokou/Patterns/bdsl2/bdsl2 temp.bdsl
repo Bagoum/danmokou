@@ -1,6 +1,6 @@
 <#> bdsl2
 //var w = pxyz(dsine(9, 40, t), dsine(9p, 40, t), lerpback(10, 14, 20, 24, mod(24, t), 90, -150));
-var float si = 8.0;
+var si::float = 8.0;
 var sm = pattern({
 		boss 'simp.kasen'
 	}, {
@@ -23,7 +23,7 @@ var sm = pattern({
 				&size = &size + 1f
 			}, t > 0.2 &  t < 1.2)
 			behcontrol true "pather-purple/w" exec(b{
-				&opacity = &opacity - 0.4f //try -1, may need type specific
+				&opacity::float = &opacity - 0.4f //try -1, may need type specific
 			}, t > 0.4 & t < 1.7)
 
 			gtr {

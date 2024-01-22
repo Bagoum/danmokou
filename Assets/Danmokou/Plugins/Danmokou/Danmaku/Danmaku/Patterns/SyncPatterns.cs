@@ -7,6 +7,7 @@ using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
+using Danmokou.Reflection;
 using JetBrains.Annotations;
 using UnityEngine;
 using static Danmokou.DMath.Functions.ExM;

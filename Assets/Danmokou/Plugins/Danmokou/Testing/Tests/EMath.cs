@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Ex = System.Linq.Expressions.Expression;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Danmokou.Reflection;
 using static Danmokou.Expressions.ExUtils;
 using static Danmokou.Expressions.ExMHelpers;
 using static NUnit.Framework.Assert;
@@ -98,16 +99,18 @@ public static class EMath {
             }
         }
 
+        private static UncompiledCode<float> c(float x) => new(_ => Ex.Constant(x));
+        
         [Test]
         public static void TestLerp() {
             var x = VFloat();
-            var ex = LerpMany(new (TEx<float>, TEx<float>)[] {
-                (1, 10),
-                (2, 20),
-                (3, 30),
-                (4, x.Mul(2))
-            }, x);
-            var f = Ex.Lambda<FXY>(ex, x).Compile();
+            var ex = LerpMany(new[] {
+                (c(1), c(10)),
+                (c(2), c(20)),
+                (c(3), c(30)),
+                (c(4), new(_ => x.Mul(2)))
+            }, _ => x);
+            var f = Ex.Lambda<FXY>(ex(new TExArgCtx()), x).Compile();
             AreEqual(f(0.5f), 10);
             AreEqual(f(1.5f), 15);
             AreEqual(f(2.3f), 23);
@@ -118,12 +121,12 @@ public static class EMath {
         [Test]
         public static void TestSelect() {
             var x = VFloat();
-            var ex = Select(x, new TEx<float>[] {
-                10,
-                20,
-                30
+            var ex = Select(_ => x, new[] {
+                c(10),
+                c(20),
+                c(30)
             });
-            var f = Ex.Lambda<FXY>(ex, x).Compile();
+            var f = Ex.Lambda<FXY>(ex(new TExArgCtx()), x).Compile();
             AreEqual(f(0), 10);
             AreEqual(f(0.5f), 10);
             AreEqual(f(1), 20);

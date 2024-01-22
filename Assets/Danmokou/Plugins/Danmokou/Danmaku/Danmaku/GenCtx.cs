@@ -196,7 +196,7 @@ public class GenCtx : IDisposable {
     }
 
     private bool TryGetType(ReferenceMember refr, out Type ext) {
-        if (EnvFrame.Scope.FindDeclaration(refr.var) is { } decl) {
+        if (EnvFrame.Scope.FindVariable(refr.var) is { } decl) {
             ext = decl.FinalizedType!;
             return true;
         }

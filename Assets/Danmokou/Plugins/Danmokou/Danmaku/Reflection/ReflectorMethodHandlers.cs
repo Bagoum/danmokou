@@ -30,14 +30,14 @@ using MethodCall = Danmokou.Reflection2.AST.MethodCall;
 namespace Danmokou.Reflection {
 public static partial class Reflector {
     private static readonly Dictionary<Type, (string descr, Type compiled)> exTypeRemap = new() {
-        { typeof(ExTP), ("ExTP/TP/GCXF<Vector2>", typeof(TP)) },
-        { typeof(ExTP3), ("ExTP3/TP3/GCXF<Vector3>", typeof(TP3)) },
-        { typeof(ExTP4), ("ExTP4/TP4/GCXF<Vector4>", typeof(TP4)) },
-        { typeof(ExBPY), ("ExBPY/BPY/GCXF<float>", typeof(BPY)) },
-        { typeof(ExBPRV2), ("ExBPRV2/BPRV2/GCXF<V2RV2>", typeof(BPRV2)) },
-        { typeof(Func<TExArgCtx, TEx<bool>>), ("ExPred/Pred/GCXF<bool>", typeof(Pred)) },
-        { typeof(Func<ITexMovement, TEx<float>, TExArgCtx, TExV3, TEx>), ("ExVTP/VTP", typeof(VTP)) },
-        { typeof(Func<ITexMovement, TEx<float>, TEx<float>, TExArgCtx, TExV2, TEx>), ("ExLVTP/LVTP", typeof(LVTP)) },
+        { typeof(ExTP), ("TP/GCXF<Vector2>", typeof(TP)) },
+        { typeof(ExTP3), ("TP3/GCXF<Vector3>", typeof(TP3)) },
+        { typeof(ExTP4), ("TP4/GCXF<Vector4>", typeof(TP4)) },
+        { typeof(ExBPY), ("BPY/GCXF<float>", typeof(BPY)) },
+        { typeof(ExBPRV2), ("BPRV2/GCXF<V2RV2>", typeof(BPRV2)) },
+        { typeof(Func<TExArgCtx, TEx<bool>>), ("Pred/GCXF<bool>", typeof(Pred)) },
+        { typeof(Func<TExArgCtx, TEx<VTPExpr>>), ("VTP", typeof(VTP)) },
+        { typeof(Func<TExArgCtx, TEx<LVTPExpr>>), ("LVTP", typeof(LVTP)) },
         { typeof(Func<TExSBC, TEx<int>, TEx<BagoumLib.Cancellation.ICancellee>, TExArgCtx, TEx>), ("ExSBCF/SBCF", typeof(SBCF)) }
     };
     private static readonly Type[] BypassTypes = {
@@ -92,7 +92,8 @@ public static partial class Reflector {
             return t.ToString();
     }
     private class SimplifiedExprPrinter : CSharpTypePrinter {
-        public new static readonly ITypePrinter Default = new SimplifiedExprPrinter();
+        public new static readonly ITypePrinter Default = new SimplifiedExprPrinter()
+            { PrintTypeNamespace = _ => false };
         public override string Print(Type t) {
             if (t.IsConstructedGenericType) {
                 if (t.GetGenericTypeDefinition() == typeof(Func<,>) && t.GenericTypeArguments[0] == typeof(TExArgCtx)) {
@@ -203,7 +204,7 @@ public static partial class Reflector {
         /// Return the invocation of this method as an expression node,
         /// but if all arguments are constant, then instead call the method and wrap it in Ex.Constant.
         /// </summary>
-        public Expression InvokeExIfNotConstant(Reflection2.AST.MethodCall? ast, params Expression[] args) {
+        public Expression InvokeExIfNotConstant(MethodCall? ast, params Expression[] args) {
             for (int ii = 0; ii < args.Length; ++ii)
                 if (args[ii] is not ConstantExpression)
                     return InvokeEx(ast, args);

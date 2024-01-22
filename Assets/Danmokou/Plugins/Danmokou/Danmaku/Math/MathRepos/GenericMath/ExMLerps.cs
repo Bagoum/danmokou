@@ -3,6 +3,7 @@ using System.Linq.Expressions;
 using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
+using Danmokou.Reflection;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
 using static Danmokou.Expressions.ExMHelpers;
@@ -16,6 +17,7 @@ using static Danmokou.DMath.Functions.ExMConditionals;
 using static Danmokou.DMath.Functions.ExMConversions;
 using static Danmokou.DMath.Functions.ExMMod;
 using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
+using static Danmokou.Reflection.Compilers;
 
 namespace Danmokou.DMath.Functions {
 /// <summary>
@@ -164,14 +166,15 @@ public static class ExMLerps {
     /// <summary>
     /// Lerp between many functions.
     /// </summary>
-    public static TEx<T> LerpMany<T>((tfloat bd, TEx<T> val)[] points, tfloat controller) => TEx.Resolve(controller,
-        x => {
-            Ex ifLt = points[0].val;
+    public static Func<TExArgCtx, TEx<T>> LerpMany<T>((UncompiledCode<float> bd, UncompiledCode<T> val)[] points, 
+        Func<TExArgCtx, TEx<float>> controller) => tac => 
+        TEx.Resolve(controller(tac), x => {
+            Ex ifLt = points[0].val.code(tac);
             for (int ii = 0; ii < points.Length - 1; ++ii) {
-                ifLt = Ex.Condition(x.LT(points[ii].bd), ifLt,
-                    LerpU(points[ii].bd, points[ii + 1].bd, x, points[ii].val, points[ii + 1].val));
+                ifLt = Ex.Condition(x.LT(points[ii].bd.code(tac)), ifLt,
+                    LerpU(points[ii].bd.code(tac), points[ii + 1].bd.code(tac), x, points[ii].val.code(tac), points[ii + 1].val.code(tac)));
             }
-            return Ex.Condition(x.LT(points[^1].bd), ifLt, points[^1].val);
+            return Ex.Condition(x.LT(points[^1].bd.code(tac)), ifLt, points[^1].val.code(tac));
         });
 
     /// <summary>
@@ -179,11 +182,11 @@ public static class ExMLerps {
     /// Note: this expands to (if i = 0) arr[0] (if i = 1) arr[1] ....
     /// This may sound stupid, but since each value is a function, there's no way to actually store it in an array.
     /// </summary>
-    public static TEx<T> Select<T>(tfloat index, TEx<T>[] points) => TEx.Resolve((TEx<int>) ((Ex) index).Cast<int>(),
-        i => {
-            Ex ifNeq = points[^1];
+    public static Func<TExArgCtx, TEx<T>> Select<T>(Func<TExArgCtx, TEx<float>> index, UncompiledCode<T>[] points) => 
+        tac => TEx.Resolve((TEx<int>) ((Ex) index(tac)).Cast<int>(), i => {
+            Ex ifNeq = points[^1].code(tac);
             for (int ii = points.Length - 2; ii >= 0; --ii) {
-                ifNeq = Ex.Condition(Ex.Equal(i, ExC(ii)), points[ii], ifNeq);
+                ifNeq = Ex.Condition(Ex.Equal(i, ExC(ii)), points[ii].code(tac), ifNeq);
             }
             return ifNeq;
         });

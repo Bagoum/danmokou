@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reactive;
+using System.Reflection;
 using BagoumLib.Expressions;
 using BagoumLib.Functional;
 using BagoumLib.Reflection;
@@ -14,25 +16,30 @@ using Mizuhashi;
 
 namespace Danmokou.Reflection2 {
 
-
-public interface IUsedVariable {
-    string Name { get; }
-    TypeDesignation TypeDesignation { get; }
-    bool IsBound => true;
-    VarDecl Bound { get; }
-}
-
 public record UntypedVariable(VarDecl Declaration) : TypeUnifyErr;
+
+public interface IDeclaration {
+    PositionRange Position { get; }
+    string Name { get; }
+
+    /// <summary>
+    /// True if this variable should be hoisted into the parent scope of the location where its declaration occured.
+    /// </summary>
+    bool Hoisted => false;
+    
+    /// <summary>
+    /// The scope in which this variable is declared. Assigned by <see cref="LexicalScope.Declare"/>
+    /// </summary>
+    LexicalScope DeclarationScope { get; set; }
+    Either<Unit, TypeUnifyErr> FinalizeType(Unifier u);
+}
 
 /// <summary>
 /// A declaration of a variable.
 /// </summary>
-public class VarDecl : IUsedVariable {
+public class VarDecl : IDeclaration {
     public PositionRange Position { get; }
     
-    /// <summary>
-    /// True if this variable should be hoisted into the parent scope of the location where its declaration occured.
-    /// </summary>
     public bool Hoisted { get; }
     
     /// <summary>
@@ -43,9 +50,6 @@ public class VarDecl : IUsedVariable {
     public TypeDesignation TypeDesignation { get; }
     public VarDecl Bound => this;
 
-    /// <summary>
-    /// The scope in which this variable is declared. Assigned by <see cref="LexicalScope.DeclareVariable"/>
-    /// </summary>
     public LexicalScope DeclarationScope { get; set; } = null!;
 
     /// <summary>
@@ -116,7 +120,7 @@ public class VarDecl : IUsedVariable {
             _parameter ?? throw new StaticException($"{nameof(Value)} called before {nameof(DeclaredParameter)}");
 
 
-    public virtual Either<Unit, TypeUnifyErr> FinalizeType(Unifier u) {
+    public Either<Unit, TypeUnifyErr> FinalizeType(Unifier u) {
         FinalizedTypeDesignation = TypeDesignation.Simplify(u);
         var td = FinalizedTypeDesignation.Resolve(u);
         if (td.IsRight)
@@ -133,28 +137,55 @@ public class VarDecl : IUsedVariable {
     }
 }
 
-public class ImplicitArgDecl : VarDecl {
-    public ImplicitArgDecl(PositionRange Position, Type? knownType, string Name) : base(Position, false, knownType, Name) { }
-}
-
 /// <summary>
 /// A declaration implicitly provided through TExArgCtx.
 /// </summary>
-public class ImplicitArgDecl<T> : ImplicitArgDecl {
+public class ImplicitArgDecl : VarDecl, IDelegateArg {
+    Type IDelegateArg.Type => FinalizedType!;
     public override ParameterExpression? DeclaredParameter(TExArgCtx tac) => null;
     public override Expression Value(Expression envFrame, TExArgCtx tac) =>
-            tac.GetByName<T>(Name);
-    
-    public ImplicitArgDecl(PositionRange Position, string Name) : base(Position, typeof(T), Name) {
-        FinalizedTypeDesignation = TypeDesignation;
-        FinalizedType = typeof(T);
-    }
-    public override Either<Unit, TypeUnifyErr> FinalizeType(Unifier u) {
-        return Unit.Default;
+        tac.GetByName(FinalizedType ?? 
+                      throw new CompileException("Cannot retrieve ImplicitArgDecl before type is finalized"), Name);
+
+    public ImplicitArgDecl(PositionRange Position, Type? knownType, string Name) : base(Position, false, knownType,
+        Name) {
+        ++Assignments;
     }
 
-    public override string ToString() => $"{Name}<{typeof(T).ExRName()}>";
+    public virtual TExArgCtx.Arg MakeTExArg(int index) => TExArgCtx.Arg.MakeAny(
+        FinalizedType ?? throw new Exception("Implicit arg declaration type not yet finalized"), Name, false, false);
+    public ImplicitArgDecl MakeImplicitArgDecl() => this;
+    public override string ToString() => $"{Name}<{FinalizedType?.ExRName()}>";
+    public string AsParam => $"{FinalizedType?.ExRName()} {Name}";
+
 }
+
+/// <inheritdoc cref="ImplicitArgDecl"/>
+public class ImplicitArgDecl<T> : ImplicitArgDecl {
+    public ImplicitArgDecl(PositionRange Position, string Name) : base(Position, typeof(T), Name) { }
+    public override TExArgCtx.Arg MakeTExArg(int index) => TExArgCtx.Arg.Make<T>(Name, false, false);
+}
+
+public record ScriptFnDecl(AST.ScriptFunctionDef Tree, string Name, ImplicitArgDecl[] Args, TypeDesignation.Dummy CallType) : IDeclaration {
+    public AST.ScriptFunctionDef Tree { get; set; } = Tree;
+    public PositionRange Position => Tree.Position;
+    public LexicalScope DeclarationScope { get; set; } = null!;
+    private (MethodInfo, object)? _compiled = null;
+    public (MethodInfo invoker, object func) Compile() => _compiled ??= Tree.CompileFunc();
+
+    public Type? ReturnType => Tree.Body.LocalScope!.Return!.FinalizedType;
+
+    public string AsSignature => $"{ReturnType?.SimpRName()} {Name}({string.Join(", ", Args.Select(a => a.AsParam))})";
+    public string TypeOnlySignature =>
+        $"({string.Join(", ", Args.Select(a => a.FinalizedType?.SimpRName()))}): {ReturnType?.SimpRName()}";
+
+    public Either<Unit, TypeUnifyErr> FinalizeType(Unifier u) {
+        //For now we don't need any particular resolution here since the implicit args
+        // and block should resolve all variables
+        return Unit.Default;
+    }
+}
+
 
 public record AutoVars {
     public record None : AutoVars;

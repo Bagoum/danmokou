@@ -24,11 +24,6 @@ public interface IAST : ITypeTree, IDebugAST {
     public LexicalScope EnclosingScope { get; }
 
     /// <summary>
-    /// Return a deep copy of this tree.
-    /// </summary>
-    public IAST CopyTree();
-
-    /// <summary>
     /// Get all nodes in this tree, enumerated in preorder.
     /// </summary>
     IEnumerable<IAST> EnumeratePreorder() => 
@@ -113,6 +108,7 @@ public interface IAST : ITypeTree, IDebugAST {
             sb.Append($"The type of the variable `{decl.Name}` could not be determined.");
             if (decl.FinalizedTypeDesignation is TypeDesignation.Variable { RestrictedTypes: { } rt })
                 sb.Append($"\nIt might be any of the following: {string.Join(", ", rt.Select(r => r.ExRName()))}");
+            sb.Append($"You can specify the type as eg. `var x: float = 5`.");
         }
         if (e is TypeUnifyErr.NotEqual ne)
             sb.Append($"Type {ne.LReq} and {ne.RReq} could not be unified, " +

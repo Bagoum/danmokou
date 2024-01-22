@@ -25,136 +25,36 @@ async  %color <-2;:> gcr3 0.3 4s <> {
 $lazor(lstar-teal/w, Lplayer)
 !}
 
-#{
-	!!{ co0 cxy -2.7 -2.1
-		!!{ co1 cxy -1.3 0.5
-		!!{ co2 cxy 0.9 0.9
-		!!{ co3 cxy 1 2.7
-		!!{ co4 cxy -0.1 4
-		!!{ co5 cxy -2.6 2.5
-		!!{ co6 cxy -4.6 3.7
-		!!{ co7 cxy -2 5.5
-		!!{ co8 cxy 2.3 -1.4
-		!!{ co9 cxy 2 4.5
-		!!{ coa cxy 3 3.1
-		!!{ cob cxy 3.2 1.8
-		!!{ coc cxy 3 0.4
-		!!{ cod cxy 2.8 -0.9
-		!!{ cb0 cxy 3.1 -1.3
-		!!{ cb1 cxy 1.4 -0.9
-		!!{ cb2 cxy 0.1 0.3
-		!!{ cb3 cxy 0 2
-		!!{ cb4 cxy -3 2.5
-		!!{ cb5 cxy -3.7 0.6
-		#}
-		##10
+
 <!> type non `Pathers Example`
 <!> hp 10000
 phase 42
-!!{ slow lerpd(0.7, 1)
 	paction 0
-	dangerright
+	sync arrow-red/w <> gsr {
+		times(4)
+		center
+		rv2incr(<10>)
+	} s tprot px select(dc, {
+		code(0 + t)
+		code(2 + t)
+		code(4 + t)
+	})
 ///
-		bullet-control persist {{ sun-* }} cull < scale 0
-		gtr {
-			wt	1 _
-			wait-child
-		} saction 0
-			~ dangerleft
-			dangerright
-			wait 1.3
-			wait 1.5
-			async gpather-teal/w <> gcr {
-				delay 1.5s
-				root cxy 0 -1
-			} gsr2 2 <> { p this } pather 7 7 nroffset 
-				if (= p 0, #{
-					lerpmany  {
-						0 $co0
-						1 $co1
-						2 $co2
-						3 $co3
-						4 $co4
-						5 $co5
-						6 $co6
-						7 $co7
-						7.1 + $co7 py (- t 7)
-					} t,
-					lerpmany  {
-						0 $co8
-						1 $co2
-						2 $co3
-						3 $co9
-						4 $coa
-						5 $cob
-						6 $coc
-						7 $cod
-						7.1 + $cod * (- t 7, cxy 0.2 -1.3)
-					} t) { #}
-				sm async _ <0.5;:> gir2 120 8 <> {
-					color { blue green teal }
-				} { #{
-					gsr { 
-						start	rv2 =rv2 zero
-				sfx	x-metal
-				color	sun-red/b
-					} simple null { scale * 0.6 (- 1 * 0.4 t) }
-					icacheloc gir2 0 5 <72> . gcr2d dl 2 24 angle /i dl 12 { 
-						bank <0.5;:-144>
-						p this 
-						colorr star-*/w
-					} simple tprot  rotate - 160 * (/i dl + 5 * 1.7 t, mod 4 p)
-						px * $slow lerp3c 1 3 4 (+ t * /i dl 40f // p 4) 0 2 3.5
-						{ dir starrot2 }
-				} #}
-			}
-			wait-for 10
-			wait 1.5
-			async gpather-pink/w <> gcr {
-				delay 1.5s
-				root cxy 0.3 0.8
-			} pather 5 5 nroffset 
-					lerpmany  {
-						0 $cb0
-						1 $cb1
-						2 $cb2
-						3 $cb3
-						4 $cb4
-						5 $cb5
-						5.1 + $cb5 * (- t 5, cxy -0.3 -2)
-					} t { #}
-				sm async _ <0.5;:> gir2 120 6 <> {
-					color { blue green teal }
-				} { #{
-					gsr { 
-						start	rv2 =rv2 zero
-				sfx	x-metal
-				color	sun-red/b
-					} simple null { scale * 0.6 (- 1 * 0.4 t) }
-					icacheloc gir . {
-## r = 0.5, c = 0.5
-						gir2 0 5 <72> . gcr2d dl 1 48 angle /i dl 6 { 
-							bank <0.5;:-144>
-							p this 
-							colorr star-*/w
-						} simple tprot  rotate - 160 * (/i dl + 2 * 0.8 t, mod 4 p)
-							px * $slow lerp3c 1 3 4 (+ t * /i dl 16f // p 4) 0 2 3.5
-							{ dir starrotb2 }
-						gir2 0 5 <72> {
-## r' = (r+c)cos 36, c' = (r+c)sin 36,  where 36 = 180 / 5
-							start rv2 =rv2 <.809;:180>
-						} gcr2d dl 2 44 angle /i dl 4 { 
-							bank <.5878;:-90>
-							p this 
-							colorr star-*/
-						} simple tprot  rotate - 160 * (/i dl + 1 * 0.2 t, mod 4 p)
-							px * $slow lerp 4 5 (+ t * /i dl 40f // p 4) 0 2.5
-							{ dir starrotb1 }
-					} 
-				} #}
-			}
-			wait-for 8.7
-			break
+	async gpather-teal/w <> gcr {
+		root cxy 0 -1
+	} pather 7 7 nroffset 
+		lerpmany  {
+			0 cxy -2.7 -2.1
+			1 cxy -1.3 0.5
+			2 cxy 0.9 0.9
+			3 cxy 1 2.7
+			4 cxy -0.1 4
+			5 cxy -2.6 2.5
+			6  cxy -4.6 3.7
+			7 cxy -2 5.5
+			7.1 code(cxy(-2, 5.5) + py(t - 7))
+		} t { }
+		
 #}
 		
 

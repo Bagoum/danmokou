@@ -215,6 +215,7 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\ExMPred.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\EdgeTracker.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\PlayerController.cs" />
+    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\NewReflector\Declaration.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\KaguyaMimic.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Utilities\BulletSpriteToTex.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\DebugStateMachines.cs" />
@@ -251,7 +252,6 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\Classes\CommentatorAxisColumn.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\SBFunctions.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\YoumuMimic.cs" />
-    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\NewReflector\VarDecl.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Pooling\Pooled.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\GameInstance\Features\ScoreExtendFeature.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\NewReflector\Lexer.cs" />

@@ -78,7 +78,7 @@ public static partial class ExM {
     /// </summary>
     /// <param name="hoist">Hoisted variable name</param>
     [Alias("@0")]
-    [Alias("rh0")]
+    [Alias("load0")]
     public static Func<TExArgCtx, TEx<T>> RetrieveHoisted0<T>(ReflectEx.Hoist<T> hoist) => 
         tac => hoist.Retrieve(E0, tac);
 
@@ -88,7 +88,7 @@ public static partial class ExM {
     /// </summary>
     /// <param name="aliases">List of each variable and its assigned vector value</param>
     /// <param name="inner">Code to execute within the scope of the variables</param>
-    [Alias("::")]
+    [Alias("::")] [BDSL1Only]
     public static Func<TExArgCtx, TEx<T>> LetFloats<T>((string, ExBPY)[] aliases, Func<TExArgCtx, TEx<T>> inner) => bpi => 
         ReflectEx.Let(aliases, () => inner(bpi), bpi);
     
@@ -98,7 +98,7 @@ public static partial class ExM {
     /// </summary>
     /// <param name="aliases">List of each variable and its assigned vector value</param>
     /// <param name="inner">Code to execute within the scope of the variables</param>
-    [Alias("::v2")]
+    [Alias("::v2")] [BDSL1Only]
     public static Func<TExArgCtx, TEx<T>> LetV2s<T>((string, ExTP)[] aliases, Func<TExArgCtx, TEx<T>> inner) => bpi => 
         ReflectEx.Let(aliases, () => inner(bpi), bpi);
     
@@ -107,6 +107,7 @@ public static partial class ExM {
     /// </summary>
     /// <param name="aliases">List of each variable's type, name, and assigned value (eg. f myFloat 5 + t)</param>
     /// <param name="inner">Code to execute within the scope of the variables</param>
+    [BDSL1Only]
     public static Func<TExArgCtx, TEx<T>> Let<T>(ReflectEx.Alias[] aliases, Func<TExArgCtx, TEx<T>> inner) => bpi => 
         ReflectEx.LetAlias(aliases, () => inner(bpi), bpi);
 
