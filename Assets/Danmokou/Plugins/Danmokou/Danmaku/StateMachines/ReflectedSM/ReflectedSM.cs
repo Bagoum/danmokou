@@ -217,6 +217,21 @@ if (> t &fadein,
             return beh.RunBehaviorSM(SMRunner.CullRoot(StateMachineManager.FromText(bossCfg.stateMachine)!, smh.cT));
         });
     }
+    
+    /// <summary>
+    /// Run arbitrary code as a StateMachine.
+    /// </summary>
+    [BDSL2Only]
+    public static ReflectableLASM Exec(ErasedGCXF code) => new(smh => {
+        code(smh.GCX);
+        return Task.CompletedTask;
+    });
+
+    /// <summary>
+    /// Run some code that returns a StateMachine, and then execute that StateMachine.
+    /// </summary>
+    [BDSL2Only]
+    public static ReflectableLASM Wrap(GCXF<StateMachine> code) => new(smh => code(smh.GCX).Start(smh));
 
     /// <summary>
     /// Wait for a synchronization event.

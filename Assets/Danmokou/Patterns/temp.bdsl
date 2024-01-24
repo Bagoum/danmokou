@@ -39,7 +39,6 @@ phase 42
 		code(2 + t)
 		code(4 + t)
 	})
-///
 	async gpather-teal/w <> gcr {
 		root cxy 0 -1
 	} pather 7 7 nroffset 

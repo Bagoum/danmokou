@@ -60,7 +60,7 @@ public struct CommonHandoff : IDisposable {
 
     /// <summary>
     /// Copies the GCX with a new EnvFrame, ignoring the previous EnvFrame.
-    /// <br/>The provided envframe is copied. (If the envframe is null, then the existing GCX is mirrored instead.)
+    /// <br/>The provided envframe is mirrored. (If the envframe is null, then the existing GCX is mirrored.)
     /// </summary>
     public readonly CommonHandoff OverrideFrame(EnvFrame? newFrame) {
         var ngcx = newFrame is null ? gcx.Mirror() : gcx.Copy(newFrame);

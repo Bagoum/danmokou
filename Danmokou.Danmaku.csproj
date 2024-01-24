@@ -125,6 +125,7 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\AttractMode.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\NewReflector\Intrinsics.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\BulletCreation.cs" />
+    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\NewReflector\PartialFn.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\SupportAbility\Metered\WitchTime.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\XML\XMLPracticeSuccessMenu.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\ReflWrap.cs" />

@@ -105,8 +105,7 @@ x++ + block {
             (3, "x"),
             (1, "y")
         });
-        var result = ast.Realize() as Func<TExArgCtx, TEx>;
-        var f = CompilerHelpers.PrepareDelegate<Func<float, float>>(result!, args).Compile();
+        var f = CompilerHelpers.PrepareDelegate<Func<float, float>>(ast.Realize, args).Compile();
         Assert.AreEqual(f(100), 131);
     }
 
@@ -130,9 +129,8 @@ x++ + block {
         var source = @"var x::float = 5
 4 + x = 3";
         var ast = AssertVerified(source);
-        var result = ast.Realize();
         try {
-            var f = CompilerHelpers.PrepareDelegate<Func<float, float>>(result!, Array.Empty<IDelegateArg>());
+            var f = CompilerHelpers.PrepareDelegate<Func<float, float>>(ast.Realize, Array.Empty<IDelegateArg>());
             Assert.Fail();
         } catch (ReflectionException exc) {
             StringContains("is not writeable", exc.Message);
@@ -143,8 +141,7 @@ x++ + block {
     public static void tmp2() {
         var args = new IDelegateArg[] { };
         var ast = AssertVerified("gsr2c 10 { bindLR() } { s tprot rotate(lr * 20, block{ var aa = 4; px(aa + aa) }) }");
-        var exResult = ast.Realize() as Func<TExArgCtx, TEx>;
-        var result = CompilerHelpers.PrepareDelegate<Func<SyncPattern>>(exResult!, args);
+        var result = CompilerHelpers.PrepareDelegate<Func<SyncPattern>>(ast.Realize, args);
         int k = 5;
     }
 }

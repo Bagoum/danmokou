@@ -97,20 +97,24 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         return u;
     }
 
-    public Func<TExArgCtx, TEx> Realize() {
-        var withoutCast = _RealizeWithoutCast();
+    /// <inheritdoc cref="IAST.Realize"/>
+    public TEx Realize(TExArgCtx tac) {
         if (ImplicitCast == null)
-            return withoutCast;
+            return _RealizeWithoutCast(tac);
         var conv = ImplicitCast.Converter.Converter;
         if (conv is FixedImplicitTypeConv fixedConv) {
-            return fixedConv.Convert(withoutCast);
+            return fixedConv.Convert((IAST)this, _RealizeWithoutCast, tac);
         } else if (conv is GenericTypeConv1 gtConv) {
-            return gtConv.ConvertForType(ImplicitCast.Variables[0].Resolve(Unifier.Empty).LeftOrThrow, withoutCast);
+            return gtConv.ConvertForType(ImplicitCast.Variables[0].Resolve(Unifier.Empty).LeftOrThrow, (IAST)this,
+                _RealizeWithoutCast, tac);
         } else
             throw new NotImplementedException();
     }
 
-    public abstract Func<TExArgCtx, TEx> _RealizeWithoutCast();
+    /// <summary>
+    /// Create a TEx&lt;T&gt; representing the contents of this AST.
+    /// </summary>
+    public abstract TEx _RealizeWithoutCast(TExArgCtx tac);
 
         /*
         Params.Select(p => p.Verify()).AccFailToR().Map<Either<AST, List<ReflectionException>>>(
@@ -232,12 +236,12 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             val = default!;
             return false;
         }
-        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
             if (TryGetAsEnum(out var eVal, out var t))
-                return t.MakeTypedLambda(_ => Ex.Constant(eVal));
+                return t.MakeTypedTEx(Ex.Constant(eVal));
             if (Declaration == null)
                 throw new ReflectionException(Position, $"Reference {Name} is not a variable or enum");
-            return Declaration.FinalizedType!.MakeTypedLambda(tac => 
+            return Declaration.FinalizedType!.MakeTypedTEx(
                 EnclosingScope.LocalOrParentVariable(tac, tac.EnvFrame, Declaration.Bound, out _));
         }
         public string Explain() {
@@ -295,9 +299,9 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         /// <inheritdoc cref="IAtomicTypeTree.PossibleTypes"/>
         public TypeDesignation[] PossibleTypes { get; }
 
-        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
             var t = ReturnType(SelectedOverload!);
-            return t.MakeTypedLambda(tac => LexicalScope.VariableWithoutLexicalScope(tac, Name, t));
+            return t.MakeTypedTEx(LexicalScope.VariableWithoutLexicalScope(tac, Name, t));
         }
 
         /// <summary>
@@ -305,7 +309,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         /// </summary>
         public TEx RealizeAsWeakWriteable(TExArgCtx tac, Func<Ex, Ex> opOnValue) {
             var t = ReturnType(SelectedOverload!);
-            return t.MakeTypedLambda(tac => LexicalScope.VariableWithoutLexicalScope(tac, Name, t, null, opOnValue))(tac);
+            return t.MakeTypedTEx(LexicalScope.VariableWithoutLexicalScope(tac, Name, t, null, opOnValue));
         }
         
         public string Explain() {
@@ -380,6 +384,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 var sc = cfg.dynamic ?
                     new DynamicLexicalScope(enclosing) :
                     LexicalScope.Derive(enclosing);
+                sc.Type = LexicalScopeType.MethodScope;
                 sc.AutoDeclareVariables(methodPos, cfg.type);
                 return sc;
             } else if (methods.All(m => m.Mi.GetAttribute<ExtendsInternalScopeAttribute>() != null)) {
@@ -406,7 +411,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             }
         }
 
-        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
             var (inv, typ) = SelectedOverload!.Value;
             var mi = inv.Mi;
             using var __ = LocalScope == null || mi.GetAttribute<CreatesInternalScopeAttribute>() == null ?
@@ -427,41 +432,93 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                     throw new ReflectionException(Position, 
                         $"SelectedOverload has unsound types for generic method {mi.AsSignature}");
             }
-            if (mi.ReturnType.IsTExFuncType(out _)) {
-                var prms = new object?[Params.Length];
-                for (int ii = 0; ii < prms.Length; ++ii) {
-                    var raw = Params[ii].Realize();
-                    if (mi.Params[ii].Type.IsTExFuncType(out _))
-                        prms[ii] = raw;
-                    else {
-                        var exc = (Ex)raw(new TExArgCtx());
-                        if (exc is ConstantExpression ce) {
-                            prms[ii] = ce.Value;
-                        } else
-                            throw new ReflectionException(Position, Params[ii].Position,
-                                $"Argument #{ii + 1} to method {mi.Name} must be constant");
-                    }
-                }
-                return (Func<TExArgCtx, TEx>?)mi.Invoke(this, prms) ??
-                       throw new StaticException($"Incorrect return from function {mi.Name}");
-            } else {
-                return ReturnType(typ).MakeTypedLambda(tac => {
-                    var prms = new Ex[Params.Length];
-                    for (int ii = 0; ii < prms.Length; ++ii) {
-                        var raw = Params[ii].Realize();
-                        //If a parameter requires TAC->TEx<T> and the function does not return such a func type,
-                        // then it's some kind of compilation function, so we use the parameter as is.
-                        if (mi.Params[ii].Type.IsTExFuncType(out _))
-                            prms[ii] = Ex.Constant(raw);
-                        else
-                            prms[ii] = AttachScope(raw(tac), mi.Params[ii].Type);
-                    }
-                    return mi.InvokeExIfNotConstant(this, prms);
-                });
-            }
-            
+            return RealizeMethod(this, mi, tac, (ii, tac) => Params[ii].Realize(tac), doScopeAttach: true);
         }
 
+
+        public static TEx RealizeMethod(IAST ast, Reflector.IMethodSignature mi, TExArgCtx tac, Func<int, TExArgCtx, TEx> prmGetter, bool doScopeAttach = false) {
+            //During method typechecking, the types T, TEx<T>, and Func<TExArgCtx,TEx<T>> in parameters
+            // and in return types will all be treated as T.
+            // This helper method deals with converting all possible combinations of these types
+            // universally to a method invocation returning TEx<T>.
+            
+            if (mi.ReturnType.IsTExOrTExFuncType(out var dataTyp)) {
+                //If the method is a tex-func method or a tex-method, we invoke it in place.
+                var prms = new object?[mi.Params.Length];
+                Ex? ParseArg(int ii) {
+                    if (mi.Params[ii].Type.IsTExFuncType(out var inner)) {
+                        prms[ii] = inner.MakeTypedLambda(tac => prmGetter(ii, tac));
+                        return null;
+                    } else if (mi.Params[ii].Type.IsTExType(out inner)) {
+                        prms[ii] = inner.MakeTypedTEx(prmGetter(ii, tac));
+                        return (TEx)prms[ii]!;
+                    } else if(doScopeAttach && (Ex)prmGetter(ii, tac) is ConstantExpression ce) {
+                        prms[ii] = ce.Value;
+                        return ce;
+                    } else throw new ReflectionException(ast.Position,
+                        $"Argument #{ii + 1} to method {mi.Name} must be constant");
+                }
+                void ParseArgs(int? except) {
+                    for (int ii = 0; ii < prms.Length; ++ii)
+                        if (ii != except)
+                            ParseArg(ii);
+                }
+                TEx Finalize() {
+                    var raw = mi.Invoke(ast as MethodCall, prms);
+                    if (raw is Func<TExArgCtx, TEx> f)
+                        return f(tac);
+                    else
+                        return dataTyp.MakeTypedTEx(
+                            raw as TEx ?? throw new StaticException($"Incorrect return from function {mi.Name}"));
+                }
+                //Handle the exceptional case where we assign to a dynamically scoped variable
+                var writesTo = mi.GetAttribute<AssignsAttribute>()?.Indices ?? System.Array.Empty<int>();
+                foreach (var writeable in writesTo) {
+                    ParseArg(writeable);
+                    if (ParseArg(writeable) is {} ex && Helpers.AssertWriteable(writeable, ex) is { } exc) {
+                        if (writesTo.Length == 1 && ast.Params[writeable] is WeakReference wr) {
+                            //Dynamic scoped references don't return a writeable expression from the get method,
+                            // so we need special handling to write to them
+                            return wr.RealizeAsWeakWriteable(tac, setter => {
+                                //setter is Ex, the function requires TEx<T>
+                                prms[writeable] = Activator.CreateInstance(prms[writeable]!.GetType(), setter);
+                                //Execute the rest of the base args inside this lambda so we can get caching
+                                // on the lexical scope lookup
+                                ParseArgs(except: writeable);
+                                return Finalize();
+                            });
+                        }
+                        throw (ast as MethodCall)?.Raise(exc) as Exception ?? exc;
+                    }
+                }
+                ParseArgs(null);
+                return Finalize();
+            } else {
+                //If the method is a "normal" method in the engine, we use Ex.Call.
+                var prms = new Ex[mi.Params.Length];
+                for (int ii = 0; ii < prms.Length; ++ii) {
+                    //If a parameter requires TAC->TEx<T> or TEx<T> and the function does not return such a func type,
+                    // then it's some kind of compilation function, so we use the parameter as is.
+                    if (mi.Params[ii].Type.IsTExFuncType(out var inner)) {
+                        var index = ii;
+                        prms[ii] = Ex.Constant(inner.MakeTypedLambda(tac => prmGetter(index, tac)));
+                    } else if (mi.Params[ii].Type.IsTExType(out inner))
+                        prms[ii] = Ex.Constant(inner.MakeTypedTEx(prmGetter(ii, tac)));
+                    else if (ast is MethodCall meth)
+                        prms[ii] = meth.AttachScope(prmGetter(ii, tac), mi.Params[ii].Type);
+                    else
+                        prms[ii] = prmGetter(ii, tac);
+                }
+                var invoked = mi.InvokeExIfNotConstant(ast as MethodCall, prms);
+                if (mi.ReturnType.IsSubclassOf(typeof(StateMachine))) {
+                    if (invoked is ConstantExpression ce)
+                        invoked = Ex.Constant(ce.Value, typeof(StateMachine));
+                    return (TEx<StateMachine>)invoked;
+                }
+                return mi.ReturnType.MakeTypedTEx(invoked);
+            }
+        }
+        
         private Ex AttachScope(Ex prm, Type typ) {
             if (LocalScope == null) return prm;
             if (typ == typeof(StateMachine))
@@ -511,7 +568,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             if (SelectedOverload?.method is { } m) {
                 try {
                     if (m.Mi.IsCtor && m.Mi.ReturnType == typeof(PhaseSM) &&
-                        (Ex)Params[1].Realize()(new TExArgCtx()) is ConstantExpression { Value: PhaseProperties props }) {
+                        (Ex)Params[1].Realize(new TExArgCtx()) is ConstantExpression { Value: PhaseProperties props }) {
                         return new($"{props.phaseType?.ToString() ?? "Phase"}", props.cardTitle?.Value ?? "",
                             SymbolKind.Method, Position.ToRange(), 
                             FlattenParams((p, i) => p.ToSymbolTree($"({m.Params[i].Name})")));
@@ -550,9 +607,9 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         public List<Dummy>? RealizableOverloads { get; set; }
         public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
         
-        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() => 
-            ReturnType(SelectedOverload?.simplified!).MakeTypedLambda(tac =>
-                EnclosingScope.LocalOrParentFunction(tac.EnvFrame, Definition, Params.Select(p => (Ex)p.Realize()(tac)))
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) => 
+            ReturnType(SelectedOverload?.simplified!).MakeTypedTEx(
+                EnclosingScope.LocalOrParentFunction(tac.EnvFrame, Definition, Params.Select(p => (Ex)p.Realize(tac)))
             );
 
         public string Explain() => $"{CompactPosition} {Definition.AsSignature}";
@@ -572,8 +629,8 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         public IReadOnlyList<ITypeTree> Arguments => Params;
         public List<Dummy>? RealizableOverloads { get; set; }
         public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
-        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
-            return tac => Ex.Empty();
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
+            return Ex.Empty();
         }
 
         public (MethodInfo invoke, object func) CompileFunc() {
@@ -587,7 +644,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                          throw new ReflectionException(Position, $"Script function return type is not finalized");
             var fnType = ReflectionUtils.GetFuncType(fTypes.Length).MakeGenericType(fTypes);
             Func<TExArgCtx, TEx> body = tac => Ex.Block(
-                Body.Realize()(tac),
+                Body.Realize(tac),
                 Ex.Label(Body.LocalScope!.Return!.Label, Ex.Default(fTypes[^1]))
             );
             var argsWithEf = args.Prepend(new DelegateArg<EnvFrame>("callerEf") as IDelegateArg).ToArray();
@@ -603,18 +660,24 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
 
     }
 
+    
+    
     /// <summary>
     /// A return statement in a function definition.
     /// </summary>
-    public record Return(PositionRange Position, LexicalScope EnclosingScope, IAST Value) : AST(Position,
-        EnclosingScope, Value), IMethodAST<Dummy> {
-        public IReadOnlyList<Dummy> Overloads { get; private set; } = SetOverloads(EnclosingScope);
+    public record Return(PositionRange Position, LexicalScope EnclosingScope, IAST? Value) : AST(Position,
+        EnclosingScope, Value == null ? System.Array.Empty<IAST>() : new[]{Value}), IMethodAST<Dummy> {
+        public IReadOnlyList<Dummy> Overloads { get; private set; } = SetOverloads(EnclosingScope, Value);
         public IReadOnlyList<ITypeTree> Arguments => Params;
         public List<Dummy>? RealizableOverloads { get; set; }
         public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
 
-        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() => tac =>
-            Ex.Return(EnclosingScope.NearestReturn!.Label, Value.Realize()(tac));
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
+            if (Value is null)
+                return Ex.Return(EnclosingScope.NearestReturn!.Label);
+            return ReturnType(SelectedOverload?.simplified!).MakeTypedTEx(
+                Ex.Return(EnclosingScope.NearestReturn!.Label, Value.Realize(tac)));
+        }
 
         public override void ReplaceScope(LexicalScope prev, LexicalScope inserted) {
             var prevScope = EnclosingScope;
@@ -622,21 +685,145 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             if (EnclosingScope != prevScope) {
                 if (EnclosingScope.NearestReturn == null)
                     throw new ReflectionException(Position, "This return statement isn't contained within a function definition.");
-                Overloads = SetOverloads(EnclosingScope);
+                Overloads = SetOverloads(EnclosingScope, Value);
             }
         }
 
-        private static Dummy[] SetOverloads(LexicalScope scope) {
+        private static Dummy[] SetOverloads(LexicalScope scope, IAST? Value) {
             var t = scope.NearestReturn?.Type ??
                     throw new Exception("No return statement found");
-            //Can't return void - this will break cases where return is the last line in a block
-            return new[] { Dummy.Method(t, t) };
+            return new[] {
+                Value == null ?
+                    Dummy.Method(t) :
+                    Dummy.Method(t, t)
+            };
         }
 
-        public string Explain() => Value.Explain();
+        public string Explain() => Value == null ? "return" : Value.Explain();
 
-        public DocumentSymbol ToSymbolTree(string? descr = null) => Value.ToSymbolTree(descr);
+        public DocumentSymbol ToSymbolTree(string? descr = null) =>
+            Value?.ToSymbolTree(descr) ?? new("return", "(void)", SymbolKind.Null, Position.ToRange());
 
+    }
+    
+    
+    
+    public record Conditional : AST, IMethodAST<Dummy> {
+        public IReadOnlyList<Dummy> Overloads { get; private init; }
+        public IReadOnlyList<ITypeTree> Arguments => Params;
+        public List<Dummy>? RealizableOverloads { get; set; }
+        public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
+        private readonly bool asConditional;
+        public Conditional(PositionRange Position, LexicalScope EnclosingScope, bool asConditional, IAST condition, IAST ifTrue, IAST? ifFalse) : base(Position,
+            EnclosingScope, ifFalse == null ? new[]{condition, ifTrue} : new[]{condition, ifTrue, ifFalse}) {
+            this.asConditional = asConditional;
+            if (asConditional) {
+                var t = new Variable();
+                Overloads = new[] {
+                    Dummy.Method(t, new Known(typeof(bool)), t, t),
+                };
+            } else
+                Overloads = new[] {
+                    Dummy.Method(new Known(typeof(void)), Params.Select((_, i) => 
+                        i == 0 ? new Known(typeof(bool)) : new Variable() as TypeDesignation).ToArray()),
+                };
+        }
+
+        Either<IImplicitTypeConverter, bool> IMethodTypeTree<Dummy>.ImplicitParameterCast(Dummy overload, int index) => false;
+
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
+            if (asConditional) {
+                return Ex.Condition(Params[0].Realize(tac), Params[1].Realize(tac), Params[2].Realize(tac));
+            } else if (Params.Length == 2) {
+                return Ex.IfThen(Params[0].Realize(tac), Params[1].Realize(tac));
+            } else {
+                return Ex.IfThenElse(Params[0].Realize(tac), Params[1].Realize(tac), Params[2].Realize(tac));
+            }
+        }
+        
+        public string Explain() {
+            return $"{CompactPosition} if/then";
+        }
+
+        public DocumentSymbol ToSymbolTree(string? descr = null) {
+            return new("If/Then", descr, SymbolKind.Object, Position.ToRange(), 
+                Params.Select(p => p.ToSymbolTree()));
+        }
+
+        public IEnumerable<PrintToken> DebugPrint() {
+            yield return $"{CompactPosition} (";
+            foreach (var w in Params[0].DebugPrint())
+                yield return w;
+            yield return ") ?";
+            yield return PrintToken.indent;
+            yield return PrintToken.newline;
+            foreach (var w in Params[1].DebugPrint())
+                yield return w;
+            yield return ":";
+            yield return PrintToken.newline;
+            foreach (var w in Params[2].DebugPrint())
+                yield return w;
+            yield return PrintToken.dedent;
+            yield return PrintToken.newline;
+        }
+
+    }
+    
+    
+    /// <summary>
+    /// A continue statement in a for/while loop.
+    /// </summary>
+    public record Continue(PositionRange Position, LexicalScope EnclosingScope) : AST(Position,
+        EnclosingScope), IAST, IAtomicTypeTree {
+        public TypeDesignation[] PossibleTypes { get; } = { new Known(typeof(void)) };
+        public TypeDesignation? SelectedOverload { get; set; }
+
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
+            return Ex.Continue(EnclosingScope.NearestContinue!);
+        }
+
+        public override void ReplaceScope(LexicalScope prev, LexicalScope inserted) {
+            base.ReplaceScope(prev, inserted);
+            if (EnclosingScope.NearestContinue == null)
+                throw new ReflectionException(Position, "This continue statement isn't contained within a loop.");
+        }
+
+        public string Explain() => "continue";
+
+        public DocumentSymbol ToSymbolTree(string? descr = null) =>
+            new("continue", null, SymbolKind.Null, Position.ToRange());
+        
+        protected override IEnumerable<SemanticToken> _ToSemanticTokens() {
+            yield return new(Position, SemanticTokenTypes.Keyword);
+        }
+    }
+    
+    /// <summary>
+    /// A break statement in a for/while loop.
+    /// </summary>
+    public record Break(PositionRange Position, LexicalScope EnclosingScope) : AST(Position,
+        EnclosingScope), IAST, IAtomicTypeTree {
+        public TypeDesignation[] PossibleTypes { get; } = { new Known(typeof(void)) };
+        public TypeDesignation? SelectedOverload { get; set; }
+
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
+            return Ex.Continue(EnclosingScope.NearestBreak!);
+        }
+
+        public override void ReplaceScope(LexicalScope prev, LexicalScope inserted) {
+            base.ReplaceScope(prev, inserted);
+            if (EnclosingScope.NearestBreak == null)
+                throw new ReflectionException(Position, "This break statement isn't contained within a loop.");
+        }
+
+        public string Explain() => "continue";
+
+        public DocumentSymbol ToSymbolTree(string? descr = null) =>
+            new("continue", null, SymbolKind.Null, Position.ToRange());
+        
+        protected override IEnumerable<SemanticToken> _ToSemanticTokens() {
+            yield return new(Position, SemanticTokenTypes.Keyword);
+        }
     }
     
     
@@ -692,37 +879,36 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 AttachEnvFrame(prm);
         }
 
-        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
-            return ReturnType(SelectedOverload?.simplified!).MakeTypedLambda(tac => {
-                IEnumerable<Ex> Stmts() {
-                    return Params.Select<IAST, Ex>((p, i) => {
-                        try {
-                            return p.Realize()(tac);
-                        } catch (Exception e) {
-                            if (e is ReflectionException)
-                                throw;
-                            else
-                                throw new ReflectionException(p.Position, "Couldn't invoke this code.", e);
-                        }
-                    });
-                }
-                if (LocalScope!.UseEF) {
-                    var parentEf = tac.MaybeGetByType<EnvFrame>(out _) ?? Ex.Constant(null, typeof(EnvFrame));
-                    var ef = Ex.Parameter(typeof(EnvFrame), "ef");
-                    tac = tac.MaybeGetByType<EnvFrame>(out _) is { } ?  
-                        tac.MakeCopyForType<EnvFrame>(ef) :
-                        tac.Append("rootEnvFrame", ef);
-                    var makeEf = ef.Is(EnvFrame.exCreate.Of(Ex.Constant(LocalScope), parentEf));
-                    
-                    return Ex.Block(new[] { ef }, Stmts().Prepend(makeEf));
-                } else if (LocalScope.VariableDecls.Length > 0) {
-                    return Ex.Block(
-                        LocalScope.VariableDecls.SelectMany(v => v.decls)
-                            .SelectNotNull(v => v.DeclaredParameter(tac)).ToArray(),
-                        Stmts());
-                } else 
-                    return Ex.Block(Stmts());
-            });
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
+            var typ = ReturnType(SelectedOverload?.simplified!);
+            IEnumerable<Ex> Stmts() {
+                return Params.Select<IAST, Ex>((p, i) => {
+                    try {
+                        return p.Realize(tac);
+                    } catch (Exception e) {
+                        if (e is ReflectionException)
+                            throw;
+                        else
+                            throw new ReflectionException(p.Position, "Couldn't invoke this code.", e);
+                    }
+                });
+            }
+            if (LocalScope!.UseEF) {
+                var parentEf = tac.MaybeGetByType<EnvFrame>(out _) ?? Ex.Constant(null, typeof(EnvFrame));
+                var ef = Ex.Parameter(typeof(EnvFrame), "ef");
+                tac = tac.MaybeGetByType<EnvFrame>(out _) is { } ?  
+                    tac.MakeCopyForType<EnvFrame>(ef) :
+                    tac.Append("rootEnvFrame", ef);
+                var makeEf = ef.Is(EnvFrame.exCreate.Of(Ex.Constant(LocalScope), parentEf));
+                
+                return typ.MakeTypedTEx(Ex.Block(new[] { ef }, Stmts().Prepend(makeEf)));
+            } else if (LocalScope.VariableDecls.Length > 0) {
+                return typ.MakeTypedTEx(Ex.Block(
+                    LocalScope.VariableDecls.SelectMany(v => v.decls)
+                        .SelectNotNull(v => v.DeclaredParameter(tac)).ToArray(),
+                    Stmts()));
+            } else 
+                return typ.MakeTypedTEx(Ex.Block(Stmts()));
         }
         
         public string Explain() {
@@ -763,23 +949,21 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
         
 
-        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
             var typ = ReturnType(SelectedOverload?.simplified!);
-            return typ.MakeTypedLambda(tac => {
-                bool allConst = true;
-                var prms = new Ex[Params.Length];
-                for (int ii = 0; ii < Params.Length; ++ii) {
-                    prms[ii] = Params[ii].Realize()(tac);
-                    allConst &= prms[ii] is ConstantExpression;
-                }
-                if (allConst) {
-                    var carr = System.Array.CreateInstance(typ.GetElementType()!, Params.Length);
-                    for (int ii = 0; ii < Params.Length; ++ii)
-                        carr.SetValue(((ConstantExpression)prms[ii]).Value, ii);
-                    return Ex.Constant(carr, typ);
-                }
-                return Ex.NewArrayInit(typ.GetElementType()!, prms);
-            });
+            bool allConst = true;
+            var prms = new Ex[Params.Length];
+            for (int ii = 0; ii < Params.Length; ++ii) {
+                prms[ii] = Params[ii].Realize(tac);
+                allConst &= prms[ii] is ConstantExpression;
+            }
+            if (allConst) {
+                var carr = System.Array.CreateInstance(typ.GetElementType()!, Params.Length);
+                for (int ii = 0; ii < Params.Length; ++ii)
+                    carr.SetValue(((ConstantExpression)prms[ii]).Value, ii);
+                return typ.MakeTypedTEx(Ex.Constant(carr, typ));
+            }
+            return typ.MakeTypedTEx(Ex.NewArrayInit(typ.GetElementType()!, prms));
         }
 
         public string Explain() {
@@ -821,24 +1005,22 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             Overloads = new[]{ Dummy.Method(Known.MakeTupleType(ElementTypes), ElementTypes) };
         }
 
-        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
             var typ = SelectedOverload!.Value.simplified.Resolve().LeftOrThrow;
-            return typ.MakeTypedLambda(tac => {
-                bool allConst = true;
-                var prms = new Ex[Params.Length];
+            bool allConst = true;
+            var prms = new Ex[Params.Length];
+            for (int ii = 0; ii < Params.Length; ++ii) {
+                prms[ii] = Params[ii].Realize(tac);
+                allConst &= prms[ii] is ConstantExpression;
+            }
+            if (allConst) {
+                var oprms = new object[Params.Length];
                 for (int ii = 0; ii < Params.Length; ++ii) {
-                    prms[ii] = Params[ii].Realize()(tac);
-                    allConst &= prms[ii] is ConstantExpression;
+                    oprms[ii] = ((ConstantExpression)prms[ii]).Value;
                 }
-                if (allConst) {
-                    var oprms = new object[Params.Length];
-                    for (int ii = 0; ii < Params.Length; ++ii) {
-                        oprms[ii] = ((ConstantExpression)prms[ii]).Value;
-                    }
-                    return Ex.Constant(typ.GetConstructors()[0].Invoke(oprms));
-                }
-                return Ex.New(typ.GetConstructors()[0], prms);
-            });
+                return typ.MakeTypedTEx(Ex.Constant(typ.GetConstructors()[0].Invoke(oprms)));
+            }
+            return typ.MakeTypedTEx(Ex.New(typ.GetConstructors()[0], prms));
         }
 
         public string Explain() {
@@ -889,12 +1071,12 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 new[]{FloatType}
         };
         
-        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
             var typ = ReturnType(SelectedOverload!);
             if (typ == typeof(float))
-                return AtomicBPYRepo.Const(Value);
+                return (TEx<float>)Ex.Constant(Value);
             if (typ == typeof(int))
-                return (Func<TExArgCtx, TEx<int>>)(_ => Ex.Constant(Mathf.RoundToInt(Value)));
+                return (TEx<int>)Ex.Constant(Mathf.RoundToInt(Value));
             throw new Exception($"Undetermined numeric type {typ.RName()}");
         }
         
@@ -925,7 +1107,33 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             yield return content;
         }
     }
-    
+
+    public record DefaultValue(PositionRange Position, LexicalScope EnclosingScope, Type? Typ = null) : AST(Position,
+        EnclosingScope), IAST, IAtomicTypeTree {
+        public TypeDesignation[] PossibleTypes { get; } = {
+            Typ != null ? new Known(Typ) : new Variable(),
+        };
+        public TypeDesignation? SelectedOverload { get; set; }
+
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
+            var t = ReturnType(SelectedOverload!);
+            if (t == typeof(void))
+                return Ex.Empty();
+            return t.MakeTypedTEx(Ex.Default(t));
+        }
+
+        public string Explain() => $"{CompactPosition} `null`";
+
+        public DocumentSymbol ToSymbolTree(string? descr = null) {
+            return new DocumentSymbol("null", descr, SymbolKind.Constant, Position.ToRange());
+        }
+
+        protected override IEnumerable<SemanticToken> _ToSemanticTokens() {
+            yield return new(Position, SemanticTokenTypes.Keyword);
+        }
+        
+    }
+
     public record TypedValue<T>(PositionRange Position, LexicalScope EnclosingScope, T Value, SymbolKind Kind) : AST(Position,
         EnclosingScope), IAST, IAtomicTypeTree {
         public TypeDesignation[] PossibleTypes { get; } = {
@@ -933,8 +1141,8 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         };
         public TypeDesignation? SelectedOverload { get; set; }
 
-        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() {
-            return (Func<TExArgCtx, TEx<T>>)(_ => Ex.Constant(Value));
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) {
+            return (TEx<T>)Ex.Constant(Value);
         }
 
         public string Explain() => $"{CompactPosition} {typeof(T).SimpRName()} `{Value?.ToString()}`";
@@ -997,7 +1205,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             PossibleTypes = new TypeDesignation[] { Var = new Variable() };
         }
         
-        public override Func<TExArgCtx, TEx> _RealizeWithoutCast() => throw new StaticException("Cannot realize a Failure");
+        public override TEx _RealizeWithoutCast(TExArgCtx tac) => throw new StaticException("Cannot realize a Failure");
     }
     
     public record NestedFailure(Failure Head, List<NestedFailure> Children) {

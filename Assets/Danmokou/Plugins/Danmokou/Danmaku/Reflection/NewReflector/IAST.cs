@@ -207,10 +207,10 @@ public interface IAST : ITypeTree, IDebugAST {
     
     /// <summary>
     /// (Stage 4) Create an executable script out of this AST. Specifically, if the return type provided to
-    ///  <see cref="ITypeTree.ResolveUnifiers"/> is T, then this function returns a Func&lt;TExArgCtx,TEx&lt;T&gt;&gt;,
+    ///  <see cref="ITypeTree.ResolveUnifiers"/> is T, then this function returns a TEx&lt;T&gt;,
     ///  which the caller can be compile into a delegate with any top-level arguments.
     /// </summary>
-    Func<TExArgCtx, TEx> Realize();
+    TEx Realize(TExArgCtx tac);
     
     IEnumerable<PrintToken> IDebugPrint.DebugPrint() => new PrintToken[] { Explain() };
 

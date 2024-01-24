@@ -35,10 +35,9 @@ public enum LexicalScopeType {
     Standard,
     
     /// <summary>
-    /// A scope resulting from <see cref="CreatesInternalScopeAttribute"/>, which is only visible
-    ///  to GCXF and other compiled expressions at *SM execution time* and not at *script execution time*.
+    /// A scope resulting from <see cref="CreatesInternalScopeAttribute"/>; ie. a scope on a method call.
     /// </summary>
-    CompiledExpressionScope,
+    MethodScope,
     
     /// <summary>
     /// A scope within a compiled expression tree, whose variables are realized as Ex.Block parameters.
@@ -97,10 +96,19 @@ public class LexicalScope {
     public AutoVars? AutoVars { get; private set; }
     private List<LexicalScope> Children { get; } = new();
     public ReturnStatementConfig? Return { get; set; }
+    public LabelTarget? Continue { get; set; }
+    public LabelTarget? Break { get; set; }
     public ReturnStatementConfig? NearestReturn =>
         Return ??
-        //Return statements can't "escape" out of an expression
-        ((Type != LexicalScopeType.ExpressionInternal) ? Parent?.NearestReturn : null);
+        //Return statements can't "escape" out of an expression or method scope, only out of block scope
+        ((Type == LexicalScopeType.Standard) ? Parent?.NearestReturn : null);
+    public LabelTarget? NearestContinue => 
+        Continue ??
+        ((Type == LexicalScopeType.Standard) ? Parent?.NearestContinue : null);
+    public LabelTarget? NearestBreak => 
+        Break ??
+        ((Type == LexicalScopeType.Standard) ? Parent?.NearestBreak : null);
+    
     public IScopedTypeConverter? Converter { get; private set; }
 
     public LexicalScope UseConverter(IScopedTypeConverter? conv) {
@@ -111,14 +119,15 @@ public class LexicalScope {
     }
     
     /// <inheritdoc cref="LexicalScopeType"/>
-    public LexicalScopeType Type { get; private set; }
+    public LexicalScopeType Type { get; set; }
 
     /// <summary>
     /// True iff this scope is or is contained within a compiled expression.
     /// <br/>Any such scopes use Ex.Block instead of environment frames (see <see cref="UseEF"/>).
     /// </summary>
     public bool WithinExpressionInternalScope => Type is LexicalScopeType.ExpressionInternal ||
-                                                 (Parent?.WithinExpressionInternalScope ?? false);
+                                                 Type == LexicalScopeType.Standard &&
+                                                 Parent?.WithinExpressionInternalScope is true;
 
     /// <summary>
     /// True iff this scope is instantiated by an environment frame

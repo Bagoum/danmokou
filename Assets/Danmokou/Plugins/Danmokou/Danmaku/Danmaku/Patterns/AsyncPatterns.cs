@@ -477,6 +477,31 @@ public static partial class AsyncPatterns {
         }
         return Inner;
     }
+    
+    /// <summary>
+    /// Run arbitrary code as an AsyncPattern.
+    /// </summary>
+    [BDSL2Only]
+    public static AsyncPattern Exec(ErasedGCXF code) {
+        IEnumerator Inner(AsyncHandoff abh) {
+            if (abh.Cancelled) { abh.Done(); yield break; }
+            code(abh.ch.gcx);
+            abh.Done();
+        }
+        return Inner;
+    }
+
+    /// <summary>
+    /// Run some code that returns an AsyncPattern, and then execute that AsyncPattern.
+    /// </summary>
+    [BDSL2Only]
+    public static AsyncPattern Wrap(GCXF<AsyncPattern> code) {
+        IEnumerator Inner(AsyncHandoff abh) {
+            if (abh.Cancelled) { abh.Done(); yield break; }
+            yield return code(abh.ch.gcx)(abh);
+        }
+        return Inner;
+    }
 
 
     /// <summary>

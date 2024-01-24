@@ -143,9 +143,10 @@ public class GenCtx : IDisposable {
     }
 
     /// <summary>
-    /// Copy a GCX, possibly with a new scope or environment frame.
+    /// Copy a GCX.
+    /// <br/>If provided a lexical scope, then will copy or derive a new frame from this GCX's frame.
+    /// <br/>If provided a frame, then will mirror that frame.
     /// </summary>
-    /// <param name="newScope"></param>
     public GenCtx Copy(Either<(LexicalScope scope, AutoVars.GenCtx autoVars), EnvFrame>? newScope) {
         var cp = NewUnscoped(exec);
         cp.index = this.index;
@@ -165,7 +166,8 @@ public class GenCtx : IDisposable {
                 }
             } else {
                 //overriden scope
-                cp.EnvFrame = ns.Right;
+                cp.EnvFrame = ns.Right.Mirror();
+                cp.AutoVars = ns.Right.Scope.AutoVars;
             }
         } else {
             cp.EnvFrame = EnvFrame.Clone();

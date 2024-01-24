@@ -21,7 +21,7 @@ phase 0 {} {
 				s tprot rotatelerprate 90 cx 1 cr 1 90
 				loc0c "gem-red/b" gsr2 10 <30> {} s offset 
 					zero
-					rh "myloc" p
+					load "myloc" p
 			} { }
     }
 }
@@ -34,7 +34,7 @@ phase 0 {} {
 			{
 				gsr2c 20 { } s doffset "pl" "pd" p
 					regpoly 0.4 5 angle
-				color "ellipse-yellow/w" s nroffset rh("pl", p)
+				color "ellipse-yellow/w" s nroffset load("pl", p)
 				color "ellipse-orange/w" s dtpoffset "pl" "pd" p
 					pxy -0.15 -0.15
 			}
@@ -50,15 +50,15 @@ phase 0 {} {
 		
         async "empty" <1;:180> gcr2 24 inf <;:15> { p this } s rvelocity rotatelerppercent 0.3 cx 1 cy 1
 		async "ellipse-red/w" <> gcr2 24 inf <> { p this } world s offset(zero,
-			rh "myloc" p)
+			load "myloc" p)
 		async "ellipse-purple/w" <> gcr2 24 inf <> { p this } world s offset(zero,
-			rh "myloc" p +
-			rotatev rh "mydir" p cxy -0.15 -0.15)
+			load "myloc" p +
+			rotatev load "mydir" p cxy -0.15 -0.15)
 		async "strip-green/w" <> gcr2 24 inf <> { p this } gsr2c 20 { p add } world s offset(zero,
-			rh "myloc" p1 +
+			load "myloc" p1 +
 			polartoxy(
 				regpolyr 0.4 5 degrad(18 * p2),
-				18 * p2 + rh "mydir" p1
+				18 * p2 + load "mydir" p1
 			))
 		
     }

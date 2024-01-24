@@ -249,6 +249,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             if (BaseMethod.Mi.GetAttribute<CreatesInternalScopeAttribute>() is { } cis) {
                 scope = cis.dynamic ? new DynamicLexicalScope(scope) : LexicalScope.Derive(scope);
                 scope.AutoDeclareVariables(MethodPosition, cis.type);
+                scope.Type = LexicalScopeType.MethodScope;
             } else if (BaseMethod.Mi.GetAttribute<ExtendsInternalScopeAttribute>() is { } eis) {
                 scope.AutoDeclareExtendedVariables(MethodPosition, eis.type, 
                     //bindItr support- BDSL1 only

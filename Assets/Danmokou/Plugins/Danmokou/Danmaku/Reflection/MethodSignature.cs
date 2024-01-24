@@ -48,8 +48,8 @@ namespace Danmokou.Reflection {
                     .ToArray();
             }
             SharedType =
-                TypeDesignation.FromMethod(ReturnType.MaybeUnwrapTExFuncType(), 
-                    Params.Select(p => p.Type.MaybeUnwrapTExFuncType()), GenericTypeMap);
+                TypeDesignation.FromMethod(ReturnType.MaybeUnwrapTExOrTExFuncType(), 
+                    Params.Select(p => p.Type.MaybeUnwrapTExOrTExFuncType()), GenericTypeMap);
         }
         public bool IsFallthrough { get; init; } = false;
         public string TypeName => Member.TypeName;
@@ -373,44 +373,14 @@ namespace Danmokou.Reflection {
             //Note: this lambda capture generally prevents using ArrayCache
             bpi => {
                 var baseArgs = new object?[PartialArgs ?? BaseParams.Length];
-                var writesTo = Member.GetAttribute<AssignsAttribute>()?.Indices ?? Array.Empty<int>();
-                foreach (var writeable in writesTo) {
-                    DefuncArg(writeable);
-                    if (writeable < baseArgs.Length &&
-                        Reflection2.Helpers.AssertWriteable(writeable, baseArgs[writeable]!) is { } exc) {
-                        if (writesTo.Length == 1 && ast?.Params[writeable] is Reflection2.AST.WeakReference wr && bpi is TExArgCtx tac) {
-                            //Dynamic scoped references don't return a writeable expression from the get method,
-                            // so we need special handling to write to them
-                            return wr.RealizeAsWeakWriteable(tac, setter => {
-                                //setter is Ex, the function requires TEx<T>
-                                baseArgs[writeable] = Activator.CreateInstance(BaseParams[writeable].Type, setter);
-                                //Execute the rest of the base args inside this lambda so we can get caching
-                                // on the lexical scope lookup
-                                DefuncBaseArgs(except: writeable);
-                                return FinalizeCall() as TEx ?? 
-                                       throw new StaticException("Couldn't convert writeable workaround internal");
-                            }) is R result ? 
-                                result : throw new StaticException("Couldn't convert writeable workaround external");
-                        }
-                        throw ast?.Raise(exc) as Exception ?? exc;
-                    }
-                }
-                DefuncBaseArgs(null);
-                return (R)FinalizeCall();
-                void DefuncArg(int ii) {
+                for (int ii = 0; ii < baseArgs.Length; ++ii)
                     //Convert from funced object to base object (eg. TExArgCtx->TEx<float> to TEx<float>)
                     baseArgs[ii] = Reflector.ReflectionData.Defuncify(
                         BaseParams[ii].Type, FuncedParams[ii].Type, fprms[ii]!, bpi!);
-                }
-                void DefuncBaseArgs(int? except) {
-                    for (int ii = 0; ii < baseArgs.Length; ++ii)
-                        if (ii != except)
-                            DefuncArg(ii);
-                            
-                }
-                object FinalizeCall() => PartialArgs is {} pargs ?
+                
+                return (R)(PartialArgs is {} pargs ?
                     LambdaHelpers.MakePartialFunc(Params.Length - pargs, ast, Original, typeof(R).GetGenericArguments(), baseArgs) :
-                    Member.Invoke(baseArgs)!;
+                    Member.Invoke(baseArgs)!);
             };
 
         public override Reflector.InvokedMethod Call(string? calledAs) => new Reflector.LiftedInvokedMethod<T,R>(this, calledAs);

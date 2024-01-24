@@ -16,6 +16,7 @@ using LanguageServer.VsCode.Contracts;
 using MathNet.Numerics;
 using Mizuhashi;
 using Ex = System.Linq.Expressions.Expression;
+using Position = Mizuhashi.Position;
 using SemanticTokenTypes = Danmokou.Reflection.SemanticTokenTypes;
 
 namespace Danmokou.Reflection2 {
@@ -141,20 +142,55 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
         }
     }
 
-    public record Return(PositionRange KwPos, ST Value) : ST(KwPos.Merge(Value.Position)) {
+    /// <summary>
+    /// A return statement.
+    /// </summary>
+    public record Return(PositionRange KwPos, ST? Value) : ST(Value == null ? KwPos : KwPos.Merge(Value.Position)) {
         protected override IAST _AnnotateInner(LexicalScope scope) {
             if (scope.NearestReturn is null)
                 return new AST.Failure(
                     new(Position, "This return statement is not contained within a function definition."), scope);
-            var ast = new AST.Return(Position, scope, Value.Annotate(scope));
+            var ast = new AST.Return(Position, scope, Value?.Annotate(scope));
             ast.AddTokens(new[] { Keyword(KwPos) });
             return ast;
         }
 
         public override IEnumerable<PrintToken> DebugPrint() {
             yield return "return";
-            foreach (var w in Value.DebugPrint())
-                yield return w;
+            if (Value != null)
+                foreach (var w in Value.DebugPrint())
+                    yield return w;
+        }
+    }
+    
+    /// <summary>
+    /// A continue statement.
+    /// </summary>
+    public record Continue(PositionRange Position) : ST(Position) {
+        protected override IAST _AnnotateInner(LexicalScope scope) {
+            if (scope.NearestContinue is null)
+                return new AST.Failure(
+                    new(Position, "This continue statement is not contained within a loop."), scope);
+            return new AST.Continue(Position, scope);
+        }
+
+        public override IEnumerable<PrintToken> DebugPrint() {
+            yield return "continue";
+        }
+    }
+    /// <summary>
+    /// A break statement.
+    /// </summary>
+    public record Break(PositionRange Position) : ST(Position) {
+        protected override IAST _AnnotateInner(LexicalScope scope) {
+            if (scope.NearestContinue is null)
+                return new AST.Failure(
+                    new(Position, "This break statement is not contained within a loop."), scope);
+            return new AST.Break(Position, scope);
+        }
+
+        public override IEnumerable<PrintToken> DebugPrint() {
+            yield return "continue";
         }
     }
 
@@ -168,7 +204,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
         
         private readonly FunctionCall Assignment =
             new(Declaration.Position.Merge(AssignValue.Position),
-                new FnIdent(EqPos, Parser.Lift(typeof(ExMAssign), nameof(ExMAssign.Assign)).Call(null)),
+                new FnIdent(EqPos, Parser.Meth(typeof(ExMAssign), nameof(ExMAssign.Assign)).Call(null)),
                 new Ident(Declaration.Position, Declaration.Name, false),
                 AssignValue);
         protected override IAST _AnnotateInner(LexicalScope scope) {
@@ -540,10 +576,14 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
     /// <summary>
     /// A block of statements.
     /// </summary>
-    public record Block(PositionRange Position, ST[] Args) : ST(Position) {
-        public Block(IReadOnlyList<ST> args) : this(args[0].Position.Merge(args[^1].Position), args.ToArray()) { }
+    public record Block(PositionRange Position, IReadOnlyList<ST> Args) : ST(Position) {
+        public Block(IReadOnlyList<ST> args) : this(args.Count > 0 ? 
+            args[0].Position.Merge(args[^1].Position) : 
+            new Position(0, 1, 0).CreateEmptyRange(), args) { }
         
         protected override IAST _AnnotateInner(LexicalScope scope) {
+            if (Args.Count == 0)
+                return new AST.DefaultValue(Position, scope, typeof(void));
             var localScope = LexicalScope.Derive(scope);
             return new AST.Block(Position, scope, localScope, null, Args.Select(a => a.Annotate(localScope)).ToArray());
         }
@@ -575,9 +615,77 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             yield return "})";
         }
     }
+    
+    
+    
+    /// <summary>
+    /// An if expression (x ? y : z) that returns one of two values.
+    /// </summary>
+    public record IfExpression(ST Condition, ST TrueBody, ST FalseBody)
+        : ST(Condition.Position.Merge(FalseBody.Position)) {
+        protected override IAST _AnnotateInner(LexicalScope scope) {
+            var ast = new AST.Conditional(Position, scope, true, Condition.Annotate(scope), TrueBody.Annotate(scope),
+                FalseBody.Annotate(scope));
+            return ast;
+        }
+
+        public override IEnumerable<PrintToken> DebugPrint() {
+            yield return "(";
+            foreach (var w in Condition.DebugPrint())
+                yield return w;
+            yield return ") ?";
+            yield return PrintToken.indent;
+            yield return PrintToken.newline;
+            foreach (var w in TrueBody.DebugPrint())
+                yield return w;
+            yield return ":";
+            yield return PrintToken.newline;
+            foreach (var w in TrueBody.DebugPrint())
+                yield return w;
+            yield return PrintToken.dedent;
+        }
+    }
+
+    
+    /// <summary>
+    /// An if statement (if (x) { y; } else { z; }) with an optional else.
+    /// </summary>
+    public record IfStatement(PositionRange ifKw, PositionRange? elseKw, ST Condition, Block TrueBody, Block? FalseBody)
+        : ST(ifKw.Merge(FalseBody?.Position ?? TrueBody.Position)) {
+        protected override IAST _AnnotateInner(LexicalScope scope) {
+            var ast = new AST.Conditional(Position, scope, false, Condition.Annotate(scope), TrueBody.Annotate(scope),
+                FalseBody?.Annotate(scope));
+            ast.AddTokens(new[] { Keyword(ifKw), elseKw is { } ekp ? Keyword(ekp) : null });
+            return ast;
+        }
+
+        public override IEnumerable<PrintToken> DebugPrint() {
+            yield return "if (";
+            foreach (var w in Condition.DebugPrint())
+                yield return w;
+            yield return ") {";
+            yield return PrintToken.indent;
+            yield return PrintToken.newline;
+            foreach (var w in TrueBody.DebugPrint())
+                yield return w;
+            yield return PrintToken.dedent;
+            yield return PrintToken.newline;
+            yield return "}";
+            if (FalseBody != null) {
+                yield return " else {";
+                yield return PrintToken.indent;
+                yield return PrintToken.newline;
+                foreach (var w in TrueBody.DebugPrint())
+                    yield return w;
+                yield return PrintToken.dedent;
+                yield return PrintToken.newline;
+                yield return "}";
+            }
+        }
+    }
 
     /// <summary>
-    /// An array. Uniform typing is not guaranteed.
+    /// An array of items with the same type.
     /// </summary>
     public record Array(PositionRange Position, ST[] Args) : ST(Position) {
         protected override IAST _AnnotateInner(LexicalScope scope) {
@@ -602,6 +710,15 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
 
         public override IEnumerable<PrintToken> DebugPrint() {
             yield return Value;
+        }
+    }
+
+    public record DefaultValue(PositionRange Position) : ST(Position) {
+
+        protected override IAST _AnnotateInner(LexicalScope scope) =>
+            new AST.DefaultValue(Position, scope);
+        public override IEnumerable<PrintToken> DebugPrint() {
+            yield return "null";
         }
     }
     

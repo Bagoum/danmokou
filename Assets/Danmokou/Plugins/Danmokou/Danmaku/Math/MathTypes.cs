@@ -170,14 +170,6 @@ public class PIData {
         return LexicalScope.VariableWithoutLexicalScope(tac, name, typeof(T), deflt);
     }
 
-    /// <summary>
-    /// Create an expression that retrieves a field with name <see cref="name"/>.
-    /// </summary>
-    public static Ex GetValue(TExArgCtx tac, Type t, string name) {
-        return tac.Ctx.Scope.TryGetLocalOrParentVariable(tac, t, name, out _, out _) ?? 
-               LexicalScope.VariableWithoutLexicalScope(tac, name, t);
-    }
-
 
     /// <summary>
     /// Create an expression that sets the value of a field with name <see cref="name"/>.

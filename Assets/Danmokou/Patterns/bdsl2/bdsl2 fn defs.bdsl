@@ -2,7 +2,7 @@
 var si::float = 8.0;
 
 function myFn1(x::float, y):: float {
-	return y * si + x
+	return y * si + x * 2
 }
 
 var sm = pattern({
@@ -14,7 +14,7 @@ var sm = pattern({
 		}
 	}
 	phase 30 { 
-		type non :simp.boss.mima.keine1
+		type non "Wrap/If Example"
 		hp 10000
 	} {
 		paction 0 {
@@ -31,10 +31,79 @@ var sm = pattern({
 					preloop b{
 						hvar loop = i + 1
 					}
-				} s rvelocity(px(myFn1(itr, loop) / 10))
+				} wrap(b{
+					var sp = s rvelocity(pxy(1, 1));
+					if (itr % 2 == 0) {
+						sp = s rvelocity(px(myFn1(itr, loop) / 10));
+					} else {
+						//empty blocks are ok, the else can also be removed
+					}
+					sp;
+				})
+			}
+				
+		}
+	}
+	phase 30 { 
+		type non "Async Wrap/If Example"
+		hp 10000
+	} {
+		paction 0 {
+			gtr {
+				wait(120)
+				times(10)
+				preloop b{
+					hvar itr = i
+				}
+			} {
+				debugf(myFn1(5, 6))
+				position 0 0
+				async "sakura-*/b" <> wrap(b{
+					var ap = null;
+					if (itr % 2 == 0) {
+						ap = gcr {
+							wt(6, 10)
+							circle
+							color({ "blue" })
+							preloop b{
+								hvar loop = i + 1
+							}
+						} s rvelocity(px(myFn1(itr, loop) / 10));
+					} else {
+						ap = gcr {
+							wt(6, 20)
+							circle
+							color({ "red" })
+							preloop b{
+								hvar loop = i + 1
+							}
+						} s rvelocity(pxy(1, 1));
+					}
+					ap;
+				})
+			}
+				
+		}
+	}
+	phase 30 { 
+		type non "SM Wrap/Conditional Example"
+		hp 10000
+	} {
+		paction 0 {
+			gtr {
+				wait(60)
+				times(20)
+				preloop b{
+					hvar itr = i
+				}
+			} {
+				debug("loop")
+				wrap(b{
+					itr % 2 == 0 ? debug("even!") : debugf(itr)
+				})
 			}
 				
 		}
 	}
 })
-sm
+sm;

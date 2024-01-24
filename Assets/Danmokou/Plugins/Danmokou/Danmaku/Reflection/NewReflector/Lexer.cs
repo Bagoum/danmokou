@@ -21,8 +21,9 @@ public static class Lexer {
     private const string num = @"[0-9]";
     private const string numMult = @"pi?|[hfsc]";
     private static readonly string[] specialOps = new[] { "\\", "->", "$" };
-    private static readonly string[] keywords = new[] { "function", "hvar", "var", "block", "return" };
-    private static readonly string[] valueKeywords = new[] { "true", "false", };
+    private static readonly string[] keywords = { "function", "hvar", "var", "block", "return", "if", "else", 
+        "while", "for", "continue", "break" };
+    private static readonly string[] valueKeywords = new[] { "true", "false", "null" };
     private static readonly HashSet<string> operators = new[] {
         "++", "--",
         "!", 
@@ -33,10 +34,11 @@ public static class Lexer {
         "&&", "||", "&", "|",
         "=", "+=", "-=", "*=", "/=", "%=", "|=", "&=",
         
-        ".", "?", "::",
+        ".", //member
+        "::", //type
+        "?", ":", //conditional, though :text is used for LString
         //no use planned for these yet, but they are occasionally important in parsing
         "@", "#", "~"
-        //":" removed because it's unused and it interferes with LString
     }.ToHashSet();
     private static readonly Trie operatorTrie = new(operators.Concat(specialOps));
 
@@ -81,6 +83,8 @@ public static class Lexer {
             //Treating parsing properties as comments for now
             T("<#>[^\n]*", TokenType.Comment),
             
+            //LStrings are :like.this
+            T(@":[a-zA-Z0-9]+[a-zA-Z0-9.]*", TokenType.LString),
             T(@"[!@#$%^&*+\-.<=>?/\\|~:]+", (p, s) => {
                 if (s.Value.StartsWith("//")) //this is a comment, not an operator
                     return Maybe<(Token, int)>.None;
@@ -93,10 +97,7 @@ public static class Lexer {
             T(@"""([^""\\]+|\\([a-zA-Z0-9\\""'&]))*""",
                 (p, s) => new Token(TokenType.String, p.CreateRange(s.Value, s.Length), s.Value[1..^1])),
             T(@"'([^'\\]+|\\([a-zA-Z0-9\\""'&]))*'",
-                (p, s) => new Token(TokenType.String, p.CreateRange(s.Value, s.Length), s.Value[1..^1])),
-            //LStrings are :like.this
-            T(@":[a-zA-Z0-9.]+", TokenType.LString)
-
+                (p, s) => new Token(TokenType.String, p.CreateRange(s.Value, s.Length), s.Value[1..^1]))
         );
     }
 
@@ -436,11 +437,17 @@ public static class Lexer {
             return Stream.Source[i + step].Position.Start;
         }
 
-        public PositionRange ToPosition(int start, int end) =>
-            new(Stream.Source[start].Position.Start, Stream.Source[end].Position.Start);
+        public PositionRange ToPosition(int start, int end) {
+            if (start >= Stream.Source.Length)
+                return Stream.Source[^1].Position.End.CreateEmptyRange();
+            return new PositionRange(Stream.Source[start].Position.Start, Stream.Source[end].Position.Start);
+        }
 
-        public string ShowConsumed(int start, int end) =>
-            new(Source.AsSpan()[Stream.Source[start].Index..Stream.Source[end].Index]);
+        public string ShowConsumed(int start, int end) {
+            if (start >= Stream.Source.Length)
+                return "<End of file>";
+            return new string(Source.AsSpan()[Stream.Source[start].Index..Stream.Source[end].Index]);
+        }
     }
 
     public record TokenWitnessCreator(string Source) : ITokenWitnessCreator<Token> {

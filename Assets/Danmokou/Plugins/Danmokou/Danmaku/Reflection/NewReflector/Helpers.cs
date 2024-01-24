@@ -78,8 +78,7 @@ public static class Helpers {
     /// (Stage 4) Realize the AST into an expression function, then compile it into a delegate.
     /// </summary>
     public static D Compile<D>(this IAST ast, params IDelegateArg[] args) where D : Delegate {
-        var expr = ast.Realize();
-        return CompilerHelpers.PrepareDelegate<D>(expr, args).Compile();
+        return CompilerHelpers.PrepareDelegate<D>(ast.Realize, args).Compile();
     }
     
     /// <summary>
@@ -94,11 +93,36 @@ public static class Helpers {
     }
 
     /// <summary>
-    /// If this type is of the form TExArgCtx->TEx&lt;R&gt;, then return R, otherwise return this type.
+    /// If this type is of the form TEx&lt;R&gt; or TExArgCtx->TEx&lt;R&gt;, then return R, otherwise return this type.
     /// </summary>
-    public static Type MaybeUnwrapTExFuncType(this Type t) {
-        IsTExFuncType(t, out var inner);
-        return inner;
+    public static Type MaybeUnwrapTExOrTExFuncType(this Type t) {
+        if (t.IsTExOrTExFuncType(out var inner))
+            return inner;
+        return t;
+    }
+
+    /// <summary>
+    /// If this type is of the form TEx&lt;R&gt; or TExArgCtx->TEx&lt;R&gt;, then return true and set inner to R.
+    /// </summary>
+    public static bool IsTExOrTExFuncType(this Type t, out Type inner) {
+        if (t.IsTExType(out inner))
+            return true;
+        if (t.IsTExFuncType(out inner))
+            return true;
+        inner = t;
+        return false;
+    }
+
+    /// <summary>
+    /// If this type is of the form TEx&lt;R&gt;, then return true and set inner to R.
+    /// </summary>
+    public static bool IsTExType(this Type t, out Type inner) {
+        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(TEx<>)) {
+            inner = t.GetGenericArguments()[0];
+            return true;
+        }
+        inner = t;
+        return false;
     }
     
     /// <summary>
@@ -107,9 +131,7 @@ public static class Helpers {
     public static bool IsTExFuncType(this Type t, out Type inner) {
         if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Func<,>)) {
             var gargs = t.GetGenericArguments();
-            if (gargs[0] == typeof(TExArgCtx) && gargs[1].IsGenericType &&
-                gargs[1].GetGenericTypeDefinition() == typeof(TEx<>)) {
-                inner = gargs[1].GetGenericArguments()[0];
+            if (gargs[0] == typeof(TExArgCtx) && gargs[1].IsTExType(out inner)) {
                 return true;
             }
         }
@@ -118,13 +140,22 @@ public static class Helpers {
     }
 
     private static readonly Dictionary<Type, (Type, ConstructorInfo)> texTypeCache = new();
-    public static (Type type, ConstructorInfo exConstructor) GetTExType(this TypeDesignation simpleType) {
-        if (simpleType is not Known kt)
-            throw new Exception($"Type not known: {simpleType}");
-        if (texTypeCache.TryGetValue(kt.Typ, out var texTyp))
+    /// <summary>
+    /// For a type T, get the type TEx&lt;T&gt; and its constructor.
+    /// </summary>
+    public static (Type type, ConstructorInfo exConstructor) GetTExType(this Type simpleType) {
+        if (texTypeCache.TryGetValue(simpleType, out var texTyp))
             return texTyp;
-        var tt = typeof(TEx<>).MakeGenericType(kt.Typ);
-        return texTypeCache[kt.Typ] = (tt, tt.GetConstructor(new[] { typeof(Expression) }));
+        var tt = typeof(TEx<>).MakeGenericType(simpleType);
+        return texTypeCache[simpleType] = (tt, tt.GetConstructor(new[] { typeof(Expression) }));
+    }
+
+    /// <summary>
+    /// Cast an expression to the type TEx&lt;T&gt;.
+    /// </summary>
+    public static TEx MakeTypedTEx(this Type t, Ex ex) {
+        var (v, cons) = t.GetTExType();
+        return (cons.Invoke(new object[] { ex }) as TEx)!;
     }
     
 /*
@@ -139,12 +170,6 @@ public static class Helpers {
             throw new Exception(te.ToString()); //todo make this an exception
         return te.Left;
     }
-
-    /// <summary>
-    /// Make the type TExArgCtx->TEx&lt;T&gt;.
-    /// </summary>
-    public static Type MakeTExType(this Type t) => 
-        Reflector.Func2Type(typeof(TExArgCtx), typeof(TEx<>).MakeGenericType(t));
 
     /// <summary>
     /// Retype the provided function as TExArgCtx -> TEx{T}.

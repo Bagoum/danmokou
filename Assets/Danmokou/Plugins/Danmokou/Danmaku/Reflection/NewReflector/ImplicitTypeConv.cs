@@ -58,7 +58,7 @@ public abstract class FixedImplicitTypeConv : IScopedTypeConverter, IImplicitTyp
 
     public IRealizedImplicitCast Realize(Unifier u) => new RealizedImplicitCast(this, u);
 
-    public abstract Func<TExArgCtx, TEx> Convert(Func<TExArgCtx, TEx> castee);
+    public abstract TEx Convert(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac);
     public void MarkUsed() { }
 }
 /// <summary>
@@ -86,12 +86,11 @@ public class FixedImplicitTypeConv<T, R> : FixedImplicitTypeConv {
     public static FixedImplicitTypeConv<T,R> FromEx(Func<Func<TExArgCtx, TEx>, Func<TExArgCtx, TEx<R>>> converter) =>
         new(converter);
 
-    public override Func<TExArgCtx, TEx> Convert(Func<TExArgCtx, TEx> castee) {
+    public override TEx Convert(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac) {
         if (converter.TryL(out var cl))
-            return tac => (TEx<R>)
-                new ReplaceParameterVisitor(cl.Parameters[0], castee(tac)).Visit(cl.Body);
+            return (TEx<R>)new ReplaceParameterVisitor(cl.Parameters[0], castee(tac)).Visit(cl.Body);
         else
-            return converter.Right(castee);
+            return converter.Right(castee)(tac);
     }
 }
 
@@ -107,11 +106,11 @@ public abstract record GenericTypeConv1 : IScopedTypeConverter {
         this.NextInstance = new Instance(this);
     }
 
-    public abstract Func<TExArgCtx, TEx<T>> Convert<T>(Func<TExArgCtx, TEx> castee);
+    public abstract TEx<T> Convert<T>(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac);
 
-    public virtual Func<TExArgCtx, TEx> ConvertForType(Type t, Func<TExArgCtx, TEx> castee) {
+    public virtual TEx ConvertForType(Type t, IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac) {
         var conv = converters.TryGetValue(t, out var c) ? c : converters[t] = mi.MakeGenericMethod(t);
-        return (Func<TExArgCtx, TEx>)conv.Invoke(this, new object[] { castee });
+        return (TEx)conv.Invoke(this, new object[] { ast, castee, tac });
     }
 
     private class Instance : IImplicitTypeConverterInstance {
@@ -143,77 +142,39 @@ public record SingletonToArrayConv() : GenericTypeConv1(SharedType) {
     }
     private static readonly TypeDesignation.Dummy SharedType = MakeSharedTypeSingleton();
 
-    public override Func<TExArgCtx, TEx<T>> Convert<T>(Func<TExArgCtx, TEx> castee) => tac =>
+    public override TEx<T> Convert<T>(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac) =>
         Ex.NewArrayInit(typeof(T), castee(tac));
-}
-
-public interface IMethodConv1 : IScopedTypeConverter {
-    bool inputTex { get; }
-    bool outputTex { get; }
-    
-    public static TypeDesignation.Dummy UnwrapMethodConv(MethodSignature mi, out bool inputIsTEx, out bool outputIsTEx) {
-        inputIsTEx = mi.Params[0].Type.IsTExFuncType(out var inp);
-        outputIsTEx = mi.ReturnType.IsTExFuncType(out var outp);
-        if (!inputIsTEx && outputIsTEx)
-            throw new Exception(
-                "Cannot register an implicit converter method that transforms a non-expression into an expression");
-        return TypeDesignation.FromMethod(outp, new[] { inp }, mi.GenericTypeMap);
-    }
-
-    public Func<TExArgCtx, TEx> ConvertForType(Reflector.IMethodSignature meth, Type r, Func<TExArgCtx, TEx> castee) {
-        //obj => obj
-        if (!inputTex)
-            return tac => meth.InvokeExIfNotConstant(null, castee(tac));
-        var outputRaw = meth.Invoke(null, new object[]{castee});
-        //tex => tex
-        if (outputTex)
-            return (Func<TExArgCtx, TEx>?)outputRaw ??
-                   throw new StaticException($"Method converter {meth.Name} did not return a TEx func");
-        else
-            //tex => obj (eg. function compiler)
-            return meth.ReturnType.MakeTypedLambda(tac => Ex.Constant(outputRaw));
-    }
 }
 
 /// <summary>
 /// Implicit converter that uses a method to convert an input into an output.
 /// </summary>
-public class MethodConv1 : FixedImplicitTypeConv, IMethodConv1 {
+public class MethodConv1 : FixedImplicitTypeConv {
     public override TypeDesignation.Dummy MethodType { get; }
-    private Type outputTypeUnwrapped;
     public MethodSignature Mi { get; }
-    public bool inputTex { get; }
-    public bool outputTex { get; }
     public MethodConv1(MethodSignature Mi) {
         this.Mi = Mi;
         this.Kind = Mi.ImplicitTypeConvKind;
-        var m = MethodType = IMethodConv1.UnwrapMethodConv(Mi, out bool inputIsTEx, out bool outputIsTEx);
-        outputTypeUnwrapped = m.Last.Resolve().LeftOrThrow;
-        this.inputTex = inputIsTEx;
-        this.outputTex = outputIsTEx;
+        MethodType = Mi.SharedType;
     }
 
-    public override Func<TExArgCtx, TEx> Convert(Func<TExArgCtx, TEx> castee) =>
-        (this as IMethodConv1).ConvertForType(Mi, outputTypeUnwrapped, castee);
+    public override TEx Convert(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac) =>
+        AST.MethodCall.RealizeMethod(ast, Mi, tac, (_, tac) => castee(tac));
 }
 
 /// <summary>
 /// Implicit converter that uses a generic method to convert an input into an output.
 /// </summary>
-public record GenericMethodConv1 : GenericTypeConv1, IMethodConv1 {
+public record GenericMethodConv1 : GenericTypeConv1 {
     public GenericMethodSignature GMi { get; }
-    public bool inputTex { get; }
-    public bool outputTex { get; }
-    public GenericMethodConv1(GenericMethodSignature GMi) : base(IMethodConv1.UnwrapMethodConv(GMi, out bool inputIsTEx, out bool outputIsTEx)) {
+    public GenericMethodConv1(GenericMethodSignature GMi) : base(GMi.SharedType) {
         this.GMi = GMi;
         this.Kind = GMi.ImplicitTypeConvKind;
-        this.inputTex = inputIsTEx;
-        this.outputTex = outputIsTEx;
     }
-    public override Func<TExArgCtx, TEx<T>> Convert<T>(Func<TExArgCtx, TEx> castee) => throw new NotImplementedException();
+    public override TEx<T> Convert<T>(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac) => throw new NotImplementedException();
 
-    public override Func<TExArgCtx, TEx> ConvertForType(Type t, Func<TExArgCtx, TEx> castee) =>
-        (this as IMethodConv1).ConvertForType(GMi.Specialize(t), t, castee);
+    public override TEx ConvertForType(Type t, IAST ast,  Func<TExArgCtx, TEx> castee, TExArgCtx tac) =>
+        AST.MethodCall.RealizeMethod(ast, GMi.Specialize(t), tac, (_, tac) => castee(tac));
 }
 
 

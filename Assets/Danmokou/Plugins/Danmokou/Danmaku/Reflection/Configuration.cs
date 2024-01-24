@@ -87,8 +87,8 @@ public static partial class Reflector {
             }
             void AddBDSL2_Sig(string name, MethodSignature sig) {
                 var rt = sig.ReturnType;
-                if (rt.IsGenericType && rt.GetGenericTypeDefinition() == typeof(TEx<>))
-                    sig = sig.Lift<TExArgCtx>();
+                //if (rt.IsGenericType && rt.GetGenericTypeDefinition() == typeof(TEx<>))
+                //    sig = sig.Lift<TExArgCtx>();
                 AllBDSL2Methods.AddToList(name.ToLower(), sig);
             }
             void AddMI(string name, MethodInfo method) {
