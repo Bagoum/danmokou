@@ -25,7 +25,7 @@ I've upgraded the project's Unity version to 2023.2.3f1. Unity 2023 has a critic
 
 #### Language Changes
 
-This build introduces a beta version of the new scripting language, BDSL2 (details and guide pending). Existing scripts will function as-is, though there have been some internal data model changes to support BDSL2. Critically, dynamic type construction (introduced in v9.2.0) and the GCXU type abstraction have been removed and replaced with a more "standard" data model based on [environment frames](https://www.composingprograms.com/pages/16-higher-order-functions.html). For the most part, this shouldn't affect script code, except for one major change to language functionality: variables are now **shared** by all consumers. Consider the following code:
+This build introduces a beta version of the new scripting language, BDSL2 (details and guide pending). Existing scripts will function more-or-less as-is, though there have been some internal data model changes to support BDSL2. Critically, dynamic type construction (introduced in v9.2.0) and the GCXU type abstraction have been removed and replaced with a more "standard" data model based on [environment frames](https://www.composingprograms.com/pages/16-higher-order-functions.html). For the most part, this shouldn't affect script code, except for one major change to language functionality: variables are now **shared** by all consumers. Consider the following code:
 
 ```
 gtr {
@@ -54,6 +54,8 @@ gtr {
 
 Each bullet would have its own `&speed` since each bullet occurs in a separate loop iteration of GTR, where `&speed` is declared. On the other hand, if instead of firing one bullet we fired multiple (eg. `async fireball-red/w <-90> gcr2 10 10 <2> { } s rvelocity(px(&speed))`), then each group of 10 bullets would share the same `&speed`, since they occur in the same loop iteration of GTR.
 
+As part of this change, the backend handling for `string.Into<T>`, which used BDSL1 reflection, now uses BDSL2 reflection instead. This may cause some minor errors— for example, if you had a field reflected into `FXY` that was previously filled as `^ x 0.8`, you will need to rewrite it as `x ^ 0.8`. You can use `string.IntoBDSL1<T>` if you absolutely need BDSL1 reflection in code.
+
 
 
 There are also a few less impactful changes:
@@ -61,7 +63,8 @@ There are also a few less impactful changes:
 - The automatically-bound variable `&bulletTime` has been removed (it was unused in the engine as provided).
 - `EventLASM.Listen` has been removed. I plan to replace it in the next version.
 - SyncPatterns `oArrowI`, `FArrow`, and `TreeArrow` have been removed. I plan to replace them in the next version.
-- `FinishPSM` (the `finish` StateMachine) has been removed. It was unused in the engine as provided and it was also buggy. 
+- `FinishPSM` (the `finish` StateMachine) has been removed. It was mostly unused in the engine as provided and it was also buggy. Note that using `EndPSM` (the `end` StateMachine under a phase) does basically the same thing: it runs code when the phase times out or the executing entity runs out of HP (but not if the executing entity is autoculled or cancelled).
+- `Compilers.CompileDelegateFromString` (BDSL1) has been removed. Please use `Reflection2.Helpers.ParseAndCompileDelegate` (BDSL2) instead.
 
 #### Features
 
@@ -73,6 +76,7 @@ There are also a few less impactful changes:
 #### Breaking Changes
 
 - The method `GameManagement.Restart` has been moved to `GameManagement.Instance.Restart`.
+- The GenCtx property `Expose` has been deprecated. It no longer does anything with the implementation of envframes.
 - Instead of being derived automatically, the bounds on player movement are now determined via the `m_playerMovementBounds` fields on GameDef. By default, this is set to the values that would be derived automatically.
   <img src="..\images\Unity_xVjFiR1eGx.jpg" alt="Unity_xVjFiR1eGx" style="zoom: 33%;" />
 - Replay data storage can now be configured per GameDef via overriding `RecordReplayFrame` and `CreateReplayInputSource`. By default, danmaku games use StandardDanmakuInputExtractor (which supports horizontal/vertical movement and the controls fire, focus, bomb, meter, swap, dialogue confirm, dialogue skip), and non-danmaku games do not support replays.

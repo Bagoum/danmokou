@@ -28,6 +28,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using static BagoumLib.Tasks.WaitingUtils;
 using AST = Danmokou.Reflection.AST;
+using Helpers = Danmokou.Reflection2.Helpers;
 using IAST = Danmokou.Reflection.IAST;
 using Parser = Danmokou.DMath.Parser;
 
@@ -258,7 +259,7 @@ public abstract class StateMachine {
         var childMapper = myType;
         while (!SMChildMap.ContainsKey(childMapper)) {
             if (childMapper.BaseType is not {} bt)
-                throw new StaticException($"Could not verify base type for {myType.ExRName()}");
+                throw new StaticException($"Could not verify base type for {myType.SimpRName()}");
             childMapper = bt;
         }
         Type[] allowedTypes = SMChildMap[childMapper];
@@ -481,16 +482,15 @@ public abstract class StateMachine {
     }
 
     public const string bdsl2Prefix = "<#> bdsl2";
-    public static StateMachine CreateFromDump(string dump) {
+    public static StateMachine CreateFromDump(string dump) => CreateFromDump(dump, out _);
+    public static StateMachine CreateFromDump(string dump, out EnvFrame scriptFrame) {
         using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
         if (dump.StartsWith(bdsl2Prefix)) {
             Profiler.BeginSample("SM AST (BDSL2) Parsing/Compilation");
-            var b2ret = Reflection2.Helpers.ParseAndCompile<Func<StateMachine>>(dump);
+            var (sm, ef) = Helpers.ParseAndCompileValue<StateMachine>(dump);
             Profiler.EndSample();
-            Profiler.BeginSample("SM AST (BDSL2) Execution");
-            var b2result = b2ret();
-            Profiler.EndSample();
-            return b2result;
+            scriptFrame = ef;
+            return sm;
         }
         var p = IParseQueue.Lex(dump);
         Profiler.BeginSample("SM AST construction");
@@ -506,8 +506,8 @@ public abstract class StateMachine {
         if (rootScope.FinalizeVariableTypes(Unifier.Empty).TryR(out var err))
             throw Reflection2.IAST.EnrichError(err);
         Profiler.BeginSample("SM AST realization");
-        var result = ast.Evaluate(new());
-        EnvFrameAttacher.AttachSM(result, EnvFrame.Create(rootScope, null));
+        var result = ast.Evaluate();
+        result = EnvFrameAttacher.AttachSM(result, scriptFrame = EnvFrame.Create(rootScope, null));
         Profiler.EndSample();
         return result;
     }
@@ -519,7 +519,7 @@ public abstract class StateMachine {
         while (!p.Empty) {
             MaybeQueueProperties(p);
             if (p.Ctx.QueuedProps.Count > 0) {
-                ps.Add(new PhaseProperties(p.Ctx.QueuedProps.Select(pp => pp.Evaluate(new())).ToList()));
+                ps.Add(new PhaseProperties(p.Ctx.QueuedProps.Select(pp => pp.Evaluate()).ToList()));
                 p.Ctx.QueuedProps.Clear();
             }
             while (!p.Empty && p.MaybeScan() != SMParser.PROP_KW)

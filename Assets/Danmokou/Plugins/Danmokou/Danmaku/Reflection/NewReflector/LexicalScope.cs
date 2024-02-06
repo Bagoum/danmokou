@@ -19,7 +19,9 @@ using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
 using Danmokou.SM;
+using JetBrains.Annotations;
 using Mizuhashi;
+using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using ExVTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.Expressions.VTPExpr>>;
 
@@ -42,19 +44,26 @@ public enum LexicalScopeType {
     /// <summary>
     /// A scope within a compiled expression tree, whose variables are realized as Ex.Block parameters.
     /// </summary>
-    ExpressionInternal,
+    ExpressionBlock,
+    
+    /// <summary>
+    /// A scope within a compiled expression tree that uses EnvFrames to realize parameters.
+    /// </summary>
+    ExpressionEF,
 }
 
 
 public class ReturnStatementConfig {
+    public LexicalScope Scope { get; }
     public TypeDesignation Type { get; }
     public Type? FinalizedType { get; private set; }
     private LabelTarget? label;
     public LabelTarget Label =>
         label ?? throw new Exception("Cannot retrieve return label before type finalization");
 
-    public ReturnStatementConfig(Type? t) {
-        Type = t != null ? new TypeDesignation.Known(t) : new TypeDesignation.Variable();
+    public ReturnStatementConfig(LexicalScope scope, Type? t) {
+        Scope = scope;
+        Type = t != null ? TypeDesignation.FromType(t) : new TypeDesignation.Variable();
     }
 
     public TypeUnifyErr? FinalizeType(Unifier u) {
@@ -70,7 +79,12 @@ public class ReturnStatementConfig {
 /// A lexical scope in script code.
 /// </summary>
 public class LexicalScope {
-    public static readonly Stack<LexicalScope> OpenLexicalScopes = new ();
+    private static readonly Stack<LexicalScope> OpenLexicalScopes = new ();
+    public static LexicalScope CurrentOpenParsingScope =>
+        OpenLexicalScopes.Count > 0 ? OpenLexicalScopes.Peek() : DMKScope.Singleton;
+    /// <summary>
+    /// Proxy to allow TExArgCtx to access scoped variables (mainly for compatibility with BDSL1 logic).
+    /// </summary>
     public class ParsingScope : IDisposable {
         public ParsingScope(LexicalScope Scope) {
             OpenLexicalScopes.Push(Scope);
@@ -87,47 +101,71 @@ public class LexicalScope {
     public LexicalScope? Parent { get; protected set; }
     public readonly Dictionary<string, VarDecl> variableDecls = new();
     public readonly Dictionary<string, ScriptFnDecl> functionDecls = new();
-    public IEnumerable<VarDecl> AllVarsInAllScopes => 
-        variableDecls.Values.Concat(Children.SelectMany(c => c.AllVarsInAllScopes));
+    private readonly Dictionary<string, ScriptImport> _importDecls = new();
+    public Dictionary<string, ScriptImport> ImportDecls => ScriptRoot._importDecls;
+    public IEnumerable<VarDecl> AllVarsInDescendantScopes => 
+        variableDecls.Values.Concat(Children.SelectMany(c => c.AllVarsInDescendantScopes));
+    public IEnumerable<ScriptFnDecl> AllFnsInDescendantScopes => 
+        functionDecls.Values.Concat(Children.SelectMany(c => c.AllFnsInDescendantScopes));
+
+    [PublicAPI]
+    public IEnumerable<VarDecl> AllVisibleVars =>
+        variableDecls.Values.Concat(Parent?.AllVisibleVars ?? Array.Empty<VarDecl>());
+    [PublicAPI]
+    public IEnumerable<ScriptFnDecl> AllVisibleScriptFns =>
+        functionDecls.Values.Concat(Parent?.AllVisibleScriptFns ?? Array.Empty<ScriptFnDecl>());
     
     /// <summary>
     /// A list of variables automatically declared in this scope.
     /// </summary>
     public AutoVars? AutoVars { get; private set; }
+    public AutoVars? NearestAutoVars => AutoVars ?? Parent?.AutoVars;
     private List<LexicalScope> Children { get; } = new();
     public ReturnStatementConfig? Return { get; set; }
-    public LabelTarget? Continue { get; set; }
-    public LabelTarget? Break { get; set; }
+    public (LabelTarget c, LabelTarget b, LexicalScope loopScope)? ContinueBreak { get; set; }
     public ReturnStatementConfig? NearestReturn =>
         Return ??
-        //Return statements can't "escape" out of an expression or method scope, only out of block scope
+        //Return statements can't "escape" out of an expression or method scope, only out of standard block scope
         ((Type == LexicalScopeType.Standard) ? Parent?.NearestReturn : null);
-    public LabelTarget? NearestContinue => 
-        Continue ??
-        ((Type == LexicalScopeType.Standard) ? Parent?.NearestContinue : null);
-    public LabelTarget? NearestBreak => 
-        Break ??
-        ((Type == LexicalScopeType.Standard) ? Parent?.NearestBreak : null);
+    public (LabelTarget c, LabelTarget b, LexicalScope loopScope)? NearestContinueBreak => 
+        ContinueBreak ??
+        ((Type == LexicalScopeType.Standard) ? Parent?.NearestContinueBreak : null);
     
     public IScopedTypeConverter? Converter { get; private set; }
 
     public LexicalScope UseConverter(IScopedTypeConverter? conv) {
         Converter = conv;
-        if (conv is { Kind : ScopedConversionKind.ScopedExpression })
-            Type = LexicalScopeType.ExpressionInternal;
+        Type = conv?.Kind switch {
+            ScopedConversionKind.BlockScopedExpression => LexicalScopeType.ExpressionBlock,
+            ScopedConversionKind.EFScopedExpression => LexicalScopeType.ExpressionEF,
+            _ => LexicalScopeType.Standard
+        };
         return this;
     }
-    
+
     /// <inheritdoc cref="LexicalScopeType"/>
-    public LexicalScopeType Type { get; set; }
+    public LexicalScopeType Type { get; set; } = LexicalScopeType.Standard;
+    
+    /// <summary>
+    /// If true, then content within this scope can only see constant declarations outside this scope.
+    /// </summary>
+    public bool IsConstScope { get; set; }
 
     /// <summary>
-    /// True iff this scope is or is contained within a compiled expression.
-    /// <br/>Any such scopes use Ex.Block instead of environment frames (see <see cref="UseEF"/>).
+    /// True iff this scope is or is contained within a compiled expression that uses Ex.Block in place of
+    ///  environment frames.
     /// </summary>
-    public bool WithinExpressionInternalScope => Type is LexicalScopeType.ExpressionInternal ||
+    public bool WithinExpressionBlockScope => Type is LexicalScopeType.ExpressionBlock ||
                                                  Type == LexicalScopeType.Standard &&
-                                                 Parent?.WithinExpressionInternalScope is true;
+                                                 Parent?.WithinExpressionBlockScope is true;
+    
+    /// <summary>
+    /// True iff this scope is or is contained within any compiled expression scope.
+    /// <br/>If this is false (ie. there are only standard and method scopes until the root),
+    ///  then references in this scope cannot see declarations made in <see cref="LexicalScopeType.MethodScope"/>.
+    /// </summary>
+    public bool WithinAnyExpressionScope => Type is LexicalScopeType.ExpressionBlock or LexicalScopeType.ExpressionEF ||
+                                            Parent?.WithinAnyExpressionScope is true;
 
     /// <summary>
     /// True iff this scope is instantiated by an environment frame
@@ -162,6 +200,7 @@ public class LexicalScope {
         } else {
             ScriptRoot = this;
         }
+        IsConstScope = copyFrom.IsConstScope;
         variableDecls = copyFrom.variableDecls;
         AutoVars = copyFrom.AutoVars;
         //don't copy children
@@ -182,6 +221,7 @@ public class LexicalScope {
     protected LexicalScope(LexicalScope parent) {
         this.Parent = parent;
         this.GlobalRoot = parent.GlobalRoot;
+        IsConstScope = parent.IsConstScope;
         if (parent is not DMKScope) {
             parent.Children.Add(this);
             ScriptRoot = parent.ScriptRoot;
@@ -235,10 +275,14 @@ public class LexicalScope {
             return prev;
         if (functionDecls.TryGetValue(decl.Name, out var prevf))
             return prevf;
+        if (ImportDecls.TryGetValue(decl.Name, out var previmp))
+            return previmp;
         if (decl is VarDecl v) {
             variableDecls[v.Name] = v;
         } else if (decl is ScriptFnDecl fn) {
             functionDecls[fn.Name] = fn;
+        } else if (decl is ScriptImport si) {
+            ImportDecls[si.Name] = si;
         } else
             throw new StaticException($"Unhandled declaration type: {decl.GetType()}");
         decl.DeclarationScope = this;
@@ -260,34 +304,45 @@ public class LexicalScope {
     public AutoVars AutoDeclareVariables(PositionRange p, AutoVarMethod method) {
         if (AutoVars != null)
             throw new StaticException("AutoVars already declared in this scope");
-        VarDecl Declare<T>(string name) => DeclareOrThrow(new VarDecl(p, false, typeof(T), name));
+        VarDecl Declare<T>(string name, string comment) => DeclareOrThrow(new VarDecl(p, false, typeof(T), name) {
+            DocComment = comment
+        });
         return AutoVars = method switch {
             AutoVarMethod.GenCtx => new AutoVars.GenCtx(
-                Declare<float>("i"), Declare<float>("pi"), Declare<V2RV2>("rv2"), 
-                Declare<V2RV2>("brv2"), Declare<float>("st"), Declare<float>("times")),
+                Declare<float>("i", "Iteration index (starting at 0) of this repeater"), 
+                Declare<float>("pi", "Iteration index (starting at 0) of the parent repeater"), 
+                Declare<V2RV2>("rv2", "Rotational coordinates"), 
+                Declare<V2RV2>("brv2", "Rotational coordinates provided by parent function"), 
+                Declare<float>("st", "Summon Time - the time in all repeaters that has passed since the last TimeReset GCXProp"), 
+                Declare<float>("times", "Number of times this repeater will execute for")),
             _ => new AutoVars.None()
         };
     }
     public void AutoDeclareExtendedVariables(PositionRange p, AutoVarExtend method, string? key = null) {
         if (AutoVars == null)
             throw new StaticException("AutoVars not yet declared in this scope");
-        VarDecl Declare<T>(string name) => DeclareOrThrow(new VarDecl(p, false, typeof(T), name));
+        VarDecl Declare<T>(string name, string comment) => DeclareOrThrow(new VarDecl(p, false, typeof(T), name) {
+            DocComment = comment
+        });
         var gcxAV = (AutoVars.GenCtx)AutoVars;
         switch (method) {
             case AutoVarExtend.BindAngle:
-                gcxAV.bindAngle = Declare<float>("angle");
+                gcxAV.bindAngle = Declare<float>("angle", "The value copied from rv2.a");
                 break;
             case AutoVarExtend.BindItr:
-                gcxAV.bindItr = Declare<float>(key ?? throw new StaticException("Target not provided for bindItr"));
+                gcxAV.bindItr = Declare<float>(key ?? throw new StaticException("Target not provided for bindItr"), "The value copied from i (iteration index)");
                 break;
             case AutoVarExtend.BindLR:
-                gcxAV.bindLR = (Declare<float>("lr"), Declare<float>("rl"));
+                gcxAV.bindLR = (Declare<float>("lr", "1 if the iteration index is even, -1 if it is odd"), 
+                    Declare<float>("rl", "-1 if the iteration index is even, 1 if it is odd"));
                 break;
             case AutoVarExtend.BindUD:
-                gcxAV.bindUD = (Declare<float>("ud"), Declare<float>("du"));
+                gcxAV.bindUD = (Declare<float>("ud", "1 if the iteration index is even, -1 if it is odd"), 
+                    Declare<float>("du", "-1 if the iteration index is even, 1 if it is odd"));
                 break;
             case AutoVarExtend.BindArrow:
-                gcxAV.bindArrow = (Declare<float>("axd"), Declare<float>("ayd"), Declare<float>("aixd"), Declare<float>("aiyd"));
+                gcxAV.bindArrow = (Declare<float>("axd", "BindArrow axd"), Declare<float>("ayd", "BindArrow ayd"), 
+                    Declare<float>("aixd", "BindArrow aixd"), Declare<float>("aiyd", "BindArrow aiyd"));
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(method), method, null);
@@ -296,39 +351,76 @@ public class LexicalScope {
     }
 
     /// <summary>
-    /// Find a declared variable in this scope or any parent scope.
+    /// Get a list of expressions representing freeing environment frames
+    ///  for each scope, going upwards, until (and not including) the scope that does not satisfy the condition.
     /// </summary>
-    public VarDecl? FindVariable(string name) => FindScopedVariable(name)?.Item2;
+    public List<Ex> FreeEfs(Ex ef, Func<LexicalScope, bool> cond) {
+        var frees = new List<Ex>();
+        for (var scope = this; cond(scope!); scope = scope.Parent)
+            if (scope!.UseEF) {
+                frees.Add(EnvFrame.exFree.InstanceOf(ef));
+                ef = Ex.PropertyOrField(ef, nameof(EnvFrame.Parent));
+            }
+        //Need to free top-down because .Parent is not visible after freeing
+        frees.Reverse();
+        return frees;
+    }
+
+    public bool IsIssueOf(LexicalScope ancestor) {
+        return this == ancestor || (Parent != null && Parent.IsIssueOf(ancestor));
+    }
 
     /// <summary>
     /// Find a declared variable in this scope or any parent scope.
     /// </summary>
-    public virtual (LexicalScope, VarDecl)? FindScopedVariable(string name) {
-        if (variableDecls.TryGetValue(name, out var d))
-            return (this, d);
-        return Parent?.FindScopedVariable(name);
+    public VarDecl? FindVariable(string name, DeclarationLookup flags = DeclarationLookup.Standard) => 
+        FindScopedVariable(name, flags)?.Item2;
+
+    /// <summary>
+    /// Find a declared variable in this scope or any parent scope.
+    /// </summary>
+    //Note that we don't use WithinAnyExpressionScope here to filter; this is because
+    // scope types aren't finalized until after ResolveUnifiers, while this code is called at AST creation time.
+    public (LexicalScope, VarDecl)? FindScopedVariable(string name, DeclarationLookup flags) {
+        if (variableDecls.TryGetValue(name, out var d)) {
+            if (d.Constant && flags.HasFlag(DeclarationLookup.CONSTANT) || 
+                !d.Constant && flags.HasFlag(DeclarationLookup.LEXICAL_SCOPE))
+                return (this, d);
+        }
+        if (Parent is DMKScope)
+            return null;
+        if (!flags.HasFlag(DeclarationLookup.DYNAMIC_SCOPE) && this is DynamicLexicalScope && Parent is not DynamicLexicalScope)
+            return Parent!.FindScopedVariable(name, DeclarationLookup.ConstOnly);
+        if (IsConstScope && !Parent!.IsConstScope)
+            return Parent!.FindScopedVariable(name, DeclarationLookup.ConstOnly);
+        return Parent!.FindScopedVariable(name, flags);
     }
 
     /// <summary>
     /// Find a declared script function in this scope or any parent scope.
     /// </summary>
-    public virtual ScriptFnDecl? FindScopedFunction(string name) {
-        return functionDecls.TryGetValue(name, out var fn) ? 
-            fn : 
-            Parent?.FindScopedFunction(name);
+    public ScriptFnDecl? FindScopedFunction(string name, DeclarationLookup flags) {
+        if (functionDecls.TryGetValue(name, out var fn)) {
+            if (fn.IsConstant && flags.HasFlag(DeclarationLookup.CONSTANT) || 
+                !fn.IsConstant && flags.HasFlag(DeclarationLookup.LEXICAL_SCOPE))
+                return fn;
+        }
+        if (Parent is DMKScope)
+            return null;
+        if (!flags.HasFlag(DeclarationLookup.DYNAMIC_SCOPE) && this is DynamicLexicalScope && Parent is not DynamicLexicalScope)
+            return Parent!.FindScopedFunction(name, DeclarationLookup.ConstOnly);
+        if (IsConstScope && !Parent!.IsConstScope)
+            return Parent!.FindScopedFunction(name, DeclarationLookup.ConstOnly);
+        return Parent!.FindScopedFunction(name, flags);
     }
 
-    public virtual List<MethodSignature>? FindStaticMethodDeclaration(string name) {
-        return Parent?.FindStaticMethodDeclaration(name);
-    }
+    public List<MethodSignature>? FindStaticMethodDeclaration(string name) => GlobalRoot.StaticMethodDeclaration(name);
 
     public virtual Either<Unit, TypeUnifyErr> FinalizeVariableTypes(Unifier u) {
         if (Return?.FinalizeType(u) is { } err)
             return err;
         return variableDecls.Values
             .SequenceL(v => v.FinalizeType(u))
-            .BindL(_ => Children
-                .SequenceL(c => c.FinalizeVariableTypes(u)))
             .FMapL(_ => {
                 //note that Identifier is not necessarily ordered
                 // since dict.Values as well as GroupBy may not be stable.
@@ -347,23 +439,30 @@ public class LexicalScope {
                     .ToArray();
                 //TODO: (optimization) if all variables are unchanging AND
                 // none are referenced by function declarations or compiled functions (hard part), use Ex.Block
-                UseEF = !WithinExpressionInternalScope && (variableDecls.Count > 0 || Parent is DMKScope);
+                UseEF = !WithinExpressionBlockScope && (variableDecls.Count > 0 || Parent is DMKScope);
                 return Unit.Default;
-            });
+            })
+            .BindL(_ => functionDecls.Values.SequenceL(f => f.FinalizeType(u)))
+            .BindL(_ => Children
+                .SequenceL(c => c.FinalizeVariableTypes(u))
+                .FMapL(_ => Unit.Default));
     }
 
     /// <summary>
     /// Get an expression representing calling a script function declared locally in this scope,
     ///  or declared in any parent scope.
     /// </summary>
-    public Ex LocalOrParentFunction(Ex envFrame, ScriptFnDecl sfn, IEnumerable<Ex> arguments) {
-        if (functionDecls.TryGetValue(sfn.Name, out var f) && f == sfn) {
+    public Ex LocalOrParentFunction(Ex envFrame, ScriptFnDecl sfn, IEnumerable<Ex> arguments)
+        => _LocalOrParentFunction(envFrame, sfn, arguments, WithinAnyExpressionScope);
+    private Ex _LocalOrParentFunction(Ex envFrame, ScriptFnDecl sfn, IEnumerable<Ex> arguments, bool methodScopeVisible) {
+        var visible = (methodScopeVisible || Type != LexicalScopeType.MethodScope);
+        if (visible && functionDecls.TryGetValue(sfn.Name, out var f) && f == sfn) {
             var (inv, func) = sfn.Compile();
             return Ex.Call(Ex.Constant(func), inv, arguments.Prepend(envFrame));
         }
-        if (Parent is null || this is DynamicLexicalScope)
+        if (Parent is DMKScope || this is DynamicLexicalScope && Parent is not DynamicLexicalScope)
             throw new Exception($"Could not find a scope containing function {sfn.Name}");
-        return Parent.LocalOrParentFunction(UseEF ? envFrame.Field(nameof(EnvFrame.Parent)) : envFrame, sfn, arguments);
+        return Parent!._LocalOrParentFunction(UseEF && visible ? envFrame.Field(nameof(EnvFrame.Parent)) : envFrame, sfn, arguments, methodScopeVisible);
     }
 
     /// <summary>
@@ -374,28 +473,41 @@ public class LexicalScope {
     ///  `(envFrame.Parent.Parent....FrameVars[i] as FrameVars{T}).Values[j]`.
     /// <br/>Note that MSIL will optimize out the common frameVars access if many variables are referenced.
     /// </summary>
-    public Ex LocalOrParentVariable(TExArgCtx tac, Ex envFrame, VarDecl variable, out int parentage) {
-        if (variableDecls.TryGetValue(variable.Name, out var v) && v == variable) {
-            parentage = 0;
+    public Ex LocalOrParentVariable(TExArgCtx tac, Ex? envFrame, VarDecl variable) {
+        if (variable.Constant && variable.ConstantValue.Try(out var val))
+            return Ex.Constant(val, variable.FinalizedType!);
+        return _LocalOrParentVariable(tac, envFrame, variable, WithinAnyExpressionScope);
+    }
+
+    private Ex _LocalOrParentVariable(TExArgCtx tac, Ex? envFrame, VarDecl variable, bool methodScopeVisible) {
+        var visible = (methodScopeVisible || Type != LexicalScopeType.MethodScope);
+        if (visible && variableDecls.TryGetValue(variable.Name, out var v) && v == variable) {
             return variable.Value(envFrame, tac);
         }
-        if (Parent is null || this is DynamicLexicalScope)
-            throw new Exception($"Could not find a scope containing variable {variable}");
+        if (this is DynamicLexicalScope && Parent is not DynamicLexicalScope) {
+            throw new CompileException(
+                $"The variable `{variable.AsParam}` (declared at {variable.Position}) is not actually visible here." +
+                $" This is because the usage is within a dynamic scope, and the variable is outside that scope.");
+        }
+        if (Parent is DMKScope) {
+            throw new CompileException(
+                $"The variable `{variable.AsParam}` (declared at {variable.Position}) is not actually visible here." +
+                $" This is probably because the variable was declared in a method scope (such as GCR or GSR)" +
+                $" and was used outside an expression function." +
+                $"\nIf you are using this variable to construct a SyncPattern, AsyncPattern, or StateMachine, then you" +
+                $" can wrap that SyncPattern/AsyncPattern/StateMachine using `Wrap` to make it an expression function.");
+        }
         //todo skip-parent handling
-        var ret = Parent.LocalOrParentVariable(tac, UseEF ? envFrame.Field(nameof(EnvFrame.Parent)) : envFrame, variable, out parentage);
-        if (UseEF)
-            ++parentage;
-        return ret;
+        return Parent!._LocalOrParentVariable(tac, UseEF && visible ? envFrame?.Field(nameof(EnvFrame.Parent)) : envFrame, variable, methodScopeVisible);
     }
 
     /// <inheritdoc cref="LocalOrParentVariable"/>
-    public Ex? TryGetLocalOrParentVariable(TExArgCtx tac, Type t, string varName, out VarDecl? decl, out int parentage) {
+    public Ex? TryGetLocalOrParentVariable(TExArgCtx tac, Type t, string varName, out VarDecl? decl) {
         decl = FindVariable(varName);
         if (decl == null || decl.FinalizedType != t) {
-            parentage = 0;
             return null;
         }
-        return LocalOrParentVariable(tac, tac.EnvFrame, decl, out parentage);
+        return LocalOrParentVariable(tac, tac.EnvFrame, decl);
     }
 
     
@@ -423,12 +535,21 @@ public class LexicalScope {
                     (opOnValue ?? noOpOnValue)(EnvFrame.Value(ef.DictGet(parentage), typeIdx, valueIdx, typ)),
                     deflt ??
                     Ex.Throw(Ex.Constant(new Exception(
-                        $"The variable {varName}<{typ.ExRName()}> was referenced in an unscoped context " +
+                        $"The variable {varName}<{typ.SimpRName()}> was referenced in an unscoped context " +
                         $"(eg. a bullet control), but some bullets do not have this variable defined")), typ))
             );
             tac.Ctx.UnscopedEnvframeAcess.Remove((varName, typ));
             return ret;
         }
+    }
+
+    public static Ex FunctionWithoutLexicalScope(TExArgCtx tac, ScriptFnDecl sfn, IEnumerable<Ex> arguments) {
+        var (inv, func) = sfn.Compile();
+        return Ex.Call(Ex.Constant(func), inv, arguments.Prepend(
+            ((Ex)tac.EnvFrame).DictGet(
+                getFnParentage.InstanceOf(
+                    Ex.PropertyOrField(tac.EnvFrame, nameof(EnvFrame.Scope)),
+                    Ex.Constant(sfn)))));
     }
 
     private static readonly Func<Ex, Ex> noOpOnValue = x => x;
@@ -437,6 +558,8 @@ public class LexicalScope {
     private static readonly List<LexicalScope> unwinder = new();
     private static readonly ExFunction getInstructions = 
         ExFunction.WrapAny(typeof(LexicalScope), nameof(GetLocalOrParentInstructions));
+    private static readonly ExFunction getFnParentage = 
+        ExFunction.WrapAny(typeof(LexicalScope), nameof(GetParentageToScriptFn));
     
     /// <summary>
     /// Get instructions on where the given variable is stored in an envframe with this scope.
@@ -476,6 +599,36 @@ public class LexicalScope {
         return ret;
     }
 
+    private readonly Dictionary<ScriptFnDecl, int> fnParentageCache = new();
+    public int GetParentageToScriptFn(ScriptFnDecl defn) {
+        if (fnParentageCache.TryGetValue(defn, out var parentage))
+            return parentage;
+        unwinder.Clear();
+        for (var scope = this;; scope = scope.Parent) {
+            unwinder.Add(scope);
+            if (scope.fnParentageCache.TryGetValue(defn, out parentage))
+                break;
+            if (scope.functionDecls.TryGetValue(defn.Name, out var fn) && fn == defn) {
+                parentage = 0;
+                break;
+            }
+            if (scope.Parent == null)
+                throw new Exception(
+                    $"The script function {defn.Name} was referenced is an unscoped contrext (eg. a bullet control), but is not accessible in all callers' lexical scopes.");
+        }
+        for (int ii = unwinder.Count - 1; ii >= 0; --ii) {
+            unwinder[ii].fnParentageCache[defn] = parentage;
+            if (ii > 0 && unwinder[ii - 1].UseEF)
+                ++parentage;
+        }
+        unwinder.Clear();
+        return parentage;
+    }
+    
+    public void SetDocComments(LexerMetadata metadata) {
+        foreach (var decl in AllVarsInDescendantScopes.Concat<IDeclaration>(AllFnsInDescendantScopes).Concat(ImportDecls.Values))
+            decl.TrySetDocComment(metadata);
+    }
 }
 
 
@@ -506,13 +659,18 @@ public class DMKScope : LexicalScope {
     };
 
     private static readonly Dictionary<Type, IImplicitTypeConverter> compilerConverters;
-    private static readonly IImplicitTypeConverter gcxfConverter = 
-        new GenericMethodConv1(GetCompilerMethod(nameof(Compilers.GCXF)));
+    private static readonly GenericMethodConv1 gcxfConverter = 
+        new(GetGenericCompilerMethod(nameof(Compilers.GCXF)));
+    private static readonly GenericMethodConv1 efScopeGcxfConverter =
+        //don't use `gcxfConverter with {...}` as that will break NextInstance handling
+        //EFScopedExpression is required so EF can be attached to the SM/ASync/Sync "lambda"
+        new(GetGenericCompilerMethod(nameof(Compilers.GCXF))) { Kind = ScopedConversionKind.EFScopedExpression };
+    private static readonly Dictionary<Type, IImplicitTypeConverter> lowPriConverters;
     
     static DMKScope() {
         compilerConverters = new() {
-            [typeof(ErasedGCXF)] = new GenericMethodConv1(GetCompilerMethod(nameof(Compilers.ErasedGCXF))),
-            [typeof(ErasedParametric)] = new GenericMethodConv1(GetCompilerMethod(nameof(Compilers.ErasedParametric)))
+            [typeof(ErasedGCXF)] = new MethodConv1(GetCompilerMethod(nameof(Compilers.ErasedGCXF))),
+            [typeof(ErasedParametric)] = new MethodConv1(GetCompilerMethod(nameof(Compilers.ErasedParametric)))
         };
         //Simple expression compilers such as ExVTP -> VTP
         foreach (var m in typeof(Compilers).GetMethods(BindingFlags.Public | BindingFlags.Static)
@@ -521,13 +679,41 @@ public class DMKScope : LexicalScope {
                                  !m.IsGenericMethodDefinition)) {
             compilerConverters[m.ReturnType] = new MethodConv1(MethodSignature.Get(m));
         }
+        lowPriConverters = new() {
+            [typeof(TP3)] = new MethodConv1(GetCompilerMethod(nameof(Compilers.TP3FromVec2)))
+        };
     }
 
     public static IImplicitTypeConverter? GetConverterForCompiledExpressionType(Type compiledType) {
         if (compilerConverters.TryGetValue(compiledType, out var conv))
             return conv;
         else if (compiledType.IsGenericType && compiledType.GetGenericTypeDefinition() == typeof(GCXF<>))
-            return gcxfConverter;
+            return useEfWrapperTypes.Contains(compiledType.GetGenericArguments()[0]) 
+                ? efScopeGcxfConverter : gcxfConverter;
+        return null;
+    }
+
+    public static IImplicitTypeConverter? TryFindConversion(TypeDesignation to, TypeDesignation from) {
+        var invoke = TypeDesignation.Dummy.Method(to, from);
+        if (to.Resolve().LeftOrNull is { } toT && GetConverterForCompiledExpressionType(toT) is { } exCompiler)
+            return exCompiler.NextInstance.MethodType.Unify(invoke, Unifier.Empty).IsLeft ? exCompiler : null;
+        if (BaseResolver.GetImplicitSources(to, out var convs))
+            foreach (var c in convs)
+                if (c.NextInstance.MethodType.Unify(invoke, Unifier.Empty).IsLeft)
+                    return c;
+        
+        if (BaseResolver.GetImplicitCasts(from, out convs))
+            foreach (var c in convs)
+                if (c.NextInstance.MethodType.Unify(invoke, Unifier.Empty).IsLeft)
+                    return c;
+        return null;
+    }
+
+    public static IImplicitTypeConverter? TryFindLowPriorityConversion(TypeDesignation to, TypeDesignation from) {
+        var invoke = TypeDesignation.Dummy.Method(to, from);
+        if (to.Resolve().LeftOrNull is { } toT && lowPriConverters.TryGetValue(toT, out var conv) &&
+            conv.NextInstance.MethodType.Unify(invoke, Unifier.Empty).IsLeft)
+            return conv;
         return null;
     }
 
@@ -537,11 +723,12 @@ public class DMKScope : LexicalScope {
     private static Func<TExArgCtx, TEx<(EnvFrame, T)>> ConstToEFExpr<T>(T val) => 
         tac => ExUtils.Tuple<EnvFrame, T>(tac.EnvFrame, Ex.Constant(val));
 
-    private static GenericMethodSignature GetCompilerMethod(string name) =>
+    private static MethodSignature GetCompilerMethod(string name) =>
         MethodSignature.Get(
             typeof(Compilers).GetMethod(name, BindingFlags.Public | BindingFlags.Static) ??
-            throw new StaticException($"Compiler method `{name}` not found")) 
-            as GenericMethodSignature ?? 
+            throw new StaticException($"Compiler method `{name}` not found"));
+    private static GenericMethodSignature GetGenericCompilerMethod(string name) =>
+        GetCompilerMethod(name) as GenericMethodSignature ?? 
         throw new StaticException($"Compiler method `{name}` is not generic");
 
     public static readonly AttachEFSMConv AttachEFtoSMImplicit = new();
@@ -560,7 +747,11 @@ public class DMKScope : LexicalScope {
             new GenericMethodConv1((GenericMethodSignature)MethodSignature.Get(typeof(Compilers)
                 .GetMethod(nameof(Compilers.Code), BindingFlags.Public | BindingFlags.Static)!)),
             
-            
+            FixedImplicitTypeConv<Vector2,Vector3>.FromFn(v2 => v2),
+            new FixedImplicitTypeConv<float, Synchronizer>(
+                exf => tac => Ex.Constant(Synchronization.Time(
+                    Compilers.GCXF<float>(Helpers.TExLambdaTyper.Convert<float>(exf))))) 
+                { Kind = ScopedConversionKind.BlockScopedExpression },
             //these are from Reflector.autoConstructorTypes
             FixedImplicitTypeConv<GenCtxProperty[],GenCtxProperties<SyncPattern>>.FromFn(props => new(props)),
             FixedImplicitTypeConv<GenCtxProperty[],GenCtxProperties<AsyncPattern>>.FromFn(props => new(props)),
@@ -572,6 +763,7 @@ public class DMKScope : LexicalScope {
             FixedImplicitTypeConv<PhaseProperty[],PhaseProperties>.FromFn(props => new(props)),
             FixedImplicitTypeConv<PatternProperty[],PatternProperties>.FromFn(props => new(props)),
             FixedImplicitTypeConv<string,BulletManager.StyleSelector>.FromFn(sel => new(sel)),
+            FixedImplicitTypeConv<string[],BulletManager.StyleSelector>.FromFn(sel => new(new[]{sel})),
             FixedImplicitTypeConv<string[][],BulletManager.StyleSelector>.FromFn(sel => new(sel)),
             //Value-typed auto constructors
             FixedImplicitTypeConv<BulletManager.exBulletControl,BulletManager.cBulletControl>.FromFn(c => new(c))
@@ -581,16 +773,9 @@ public class DMKScope : LexicalScope {
     private DMKScope() : base() {
         GlobalRoot = this;
     }
-    public override (LexicalScope, VarDecl)? FindScopedVariable(string name) {
-        return null;
-    }
-
-    public override ScriptFnDecl? FindScopedFunction(string name) {
-        return null;
-    }
 
     private readonly Dictionary<string, List<MethodSignature>> smInitMultiDecls = new();
-    public override List<MethodSignature>? FindStaticMethodDeclaration(string name) {
+    public List<MethodSignature>? StaticMethodDeclaration(string name) {
         if (smInitMultiDecls.TryGetValue(name, out var results))
             return results;
         if (Reflector.ReflectionData.AllBDSL2Methods.TryGetValue(name, out results)) {

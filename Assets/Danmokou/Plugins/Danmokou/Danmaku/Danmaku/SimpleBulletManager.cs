@@ -1064,11 +1064,12 @@ public partial class BulletManager {
     [ContextMenu("Debug FCTX usage")]
     public void DebugFCTX() {
         void LogFV<T>() {
-            //Logs.Log($"FV<{typeof(T).ExRName()} rent {FrameVars<T>.rented} return {FrameVars<T>.returned}");
+            //Logs.Log($"FV<{typeof(T).SimpRName()} rent {FrameVars<T>.rented} return {FrameVars<T>.returned}");
         }
         LogFV<float>();
         LogFV<Vector2>();
-            Logs.Log($"PICustomData: Alloc {PIData.Allocated} / Popped {PIData.Popped} / Cached {PIData.Recached} / Copied {PIData.Copied} / Cleared {PIData.Cleared}");
+        Logs.Log($"EnvFrame: Created {EnvFrame.Created} / Cloned {EnvFrame.Cloned} / Disposed {EnvFrame.Disposed}");
+        Logs.Log($"PICustomData: Alloc {PIData.Allocated} / Popped {PIData.Popped} / Cached {PIData.Recached} / Copied {PIData.Copied} / Cleared {PIData.Cleared}");
     }
     [ContextMenu("Debug bullet numbers")]
     public void DebugBulletNums() {

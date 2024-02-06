@@ -29,4 +29,4 @@ MonoBehaviour:
     type: 3}
   spellColor1: {r: 0.7830189, g: 0.13665895, b: 0.15988123, a: 1}
   spellColor2: {r: 0.5176471, g: 0.38431373, b: 0.43529412, a: 1}
-  sm: {fileID: 4900000, guid: 5b851f48587400845affd6be528a0b81, type: 3}
+  sm: {fileID: 2811297602134710623, guid: 5b851f48587400845affd6be528a0b81, type: 3}

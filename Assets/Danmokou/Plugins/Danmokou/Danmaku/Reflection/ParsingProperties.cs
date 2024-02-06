@@ -15,6 +15,11 @@ public class ParsingProperty {
     /// </summary>
     public static ParsingProperty BDSL2() => new NoOp();
 
+    /// <summary>
+    /// If using BDLS1, make this the first property.
+    /// </summary>
+    public static ParsingProperty BDSL1() => new NoOp();
+
     #region impl
 
     public class ValueProp<T> : ParsingProperty {

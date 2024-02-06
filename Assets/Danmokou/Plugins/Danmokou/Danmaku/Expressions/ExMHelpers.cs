@@ -11,6 +11,7 @@ using Danmokou.DataHoist;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Reflection;
+using Danmokou.Reflection2;
 using Ex = System.Linq.Expressions.Expression;
 using tfloat = Danmokou.Expressions.TEx<float>;
 using static Danmokou.Expressions.ExUtils;
@@ -18,6 +19,7 @@ using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.DMath.Functions.ExMConversions;
 using static BagoumLib.Mathematics.BMath;
 using Parser = Danmokou.DMath.Parser;
+using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 
 namespace Danmokou.Expressions {
 /// <summary>
@@ -138,12 +140,12 @@ public static class ExMHelpers {
     }
 
     //See Design/Engine Math Tips for details on these two functions. They are not raw easing.
-    public static Func<T, TEx<R>> Ease<T, R>(Func<tfloat, tfloat> easer, float maxTime, 
+    public static Func<T, TEx<R>> Ease<T, R>(Func<T, TEx<Func<float, float>>> easer, float maxTime, 
             Func<T, TEx<R>> f, Func<T, Ex> t, Func<T, Ex, T> withT)
         // x = f(g(t)), where g(t) = T e(t/T)
         => bpi => Ex.Condition(Ex.GreaterThan(t(bpi), ExC(maxTime)), f(bpi),
             f(withT(bpi, ExC(maxTime).Mul(
-                    easer(t(bpi).Mul(1f/maxTime))
+                    PartialFn.Execute(easer(bpi), t(bpi).Mul(1f/maxTime))
                 ))
             ));
 
@@ -164,7 +166,7 @@ public static class ExMHelpers {
     public static Func<TExArgCtx, TEx<float>> SoftmaxShift<Sx>(Func<TExArgCtx,TEx<float>> sharpness, Func<TExArgCtx,TEx<float>> pivot, Func<TExArgCtx,TEx<float>> f1, Func<TExArgCtx,TEx<float>> f2, string pivotVar) where Sx: TEx, new()  =>
         PivotShift<Sx>(ExM.Softmax, sharpness, pivot, f1, f2, pivotVar);
     
-    public static Func<TExArgCtx, TEx<float>> PivotShift<Sx>(Func<TEx<float>, TEx<float>[], TEx<float>> shifter, 
+    public static Func<TExArgCtx, TEx<float>> PivotShift<Sx>(Func<ExBPY, UncompiledCode<float>[], ExBPY> shifter, 
         Func<TExArgCtx,TEx<float>> sharpness, Func<TExArgCtx,TEx<float>> pivot, 
         Func<TExArgCtx,TEx<float>> f1, Func<TExArgCtx,TEx<float>> f2, string pivotVar) where Sx: TEx, new() {
         if (pivotVar == "t" || pivotVar == "p" || pivotVar == "x") {
@@ -172,16 +174,21 @@ public static class ExMHelpers {
                 var pivotT = t.MakeCopyForExType<Sx>(out var currEx, out var pivotEx);
                 return Ex.Block(new ParameterExpression[] {pivotEx},
                     Ex.Assign(pivotEx, currEx),
-                    Ex.Assign(pivotVar.Into<Func<TExArgCtx, TEx<float>>>()(pivotT), pivot(t)),
-                    shifter(sharpness(t), new TEx<float>[] {f1(t), f1(pivotT).Add(f2(t).Sub(f2(pivotT)))})
+                    Ex.Assign((pivotVar switch {
+                            "t" => AtomicBPYRepo.T(),
+                            "p" => AtomicBPYRepo.P(),
+                            "x" => AtomicBPYRepo.X(),
+                            _ => tac => tac.GetByName<float>(pivotVar)
+                        })(pivotT), pivot(t)),
+                    shifter(sharpness, new UncompiledCode<float>[] {f1, new(tac => f1(pivotT).Add(f2(tac).Sub(f2(pivotT))))})(t)
                 );
             };
         } else if (pivotVar[0] == Parser.SM_REF_KEY_C) {
             var let = pivotVar.Substring(1);
-            return t => shifter(sharpness(t), new TEx<float>[] {
-                f1(t), f2(t).Add(
-                    ReflectEx.Let1<float, float>(let, pivot, () => f1(t).Sub(f2(t)), t)
-                )
+            return shifter(sharpness, new UncompiledCode<float>[] {
+                f1, new(tac => f2(tac).Add(
+                    ReflectEx.Let1<float, float>(let, pivot, () => f1(tac).Sub(f2(tac)), tac)
+                ))
             });
         } else throw new Exception($"{pivotVar} is not a valid pivoting target.");
     }

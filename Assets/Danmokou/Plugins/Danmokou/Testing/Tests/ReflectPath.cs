@@ -14,8 +14,8 @@ namespace Danmokou.Testing {
         private const float err1 = 0.00001f;
         [Test]
         public static void TPolar() {
-            var pivoter = "polar * 2 t * 60 t".Into<VTP>();
-            var pivoter2 = "polar2 pxy * 2 t * 60 t".Into<VTP>();
+            var pivoter = "polar(2 * t, 60 * t)".Into<VTP>();
+            var pivoter2 = "polar2 pxy(2 * t, 60 * t)".Into<VTP>();
             var bpi = new ParametricInfo(Vector2.zero, 1, 0, 0f);
             var bpi2 = new ParametricInfo(Vector2.zero, 1, 0, 0f);
             Movement v = new Movement(pivoter, Vector2.right, V2RV2.Angle(25));
@@ -33,19 +33,19 @@ namespace Danmokou.Testing {
         }
         [Test]
         public static void TCartesian() {
-            var pivoter = "offset px * 2 p py * 2 t".Into<VTP>();
+            var pivoter = "offset px(2 *p) py(2* t)".Into<VTP>();
             var bpi = new ParametricInfo(Vector2.down, 3, 0, 0f);
             Movement v = new Movement(pivoter, Vector2.zero, V2RV2.Angle(25));
             v.UpdateDeltaAssignDelta(ref bpi, ref _d, 1f);
             VecEq(bpi.loc, new V2RV2(0, 2, 6, 0, 25).TrueLocation, "", err1);
             
-            pivoter = "tp px * 2 p py * 2 t".Into<VTP>();
+            pivoter = "tp px(2 * p) py(2 *t)".Into<VTP>();
             bpi = new ParametricInfo(Vector2.down, 3, 0, 0f);
             v = new Movement(pivoter, Vector2.zero, V2RV2.Angle(25));
             v.UpdateDeltaAssignDelta(ref bpi, ref _d, 2f);
             VecEq(bpi.loc, Vector2.down + new V2RV2(0, 4, 6, 0, 25).TrueLocation * 2f, "", err1);
             
-            pivoter = "tp px * 2 p px * 2 t".Into<VTP>();
+            pivoter = "tp px(2 *p) px(2 * t)".Into<VTP>();
             bpi = new ParametricInfo(Vector2.down, 3, 0, 0f);
             v = new Movement(pivoter, Vector2.zero, V2RV2.Angle(25));
             v.FlipX();
@@ -55,14 +55,14 @@ namespace Danmokou.Testing {
 
         [Test]
         public static void TCartesianRotNRot() {
-            var p = "roffset px * 2 t".Into<VTP>();
+            var p = "roffset px(2 * t)".Into<VTP>();
             var bpi = new ParametricInfo(Vector2.down, 3, 0, 0f);
             Movement v = new Movement(p, Vector2.zero, V2RV2.Angle(25));
             v.UpdateDeltaAssignDelta(ref bpi, ref _d, 1f);
             VecEq(bpi.loc, V2RV2.Rot(2, 0, 25).TrueLocation, "", err1);
             
             
-            p = "nroffset px * 2 t".Into<VTP>();
+            p = "nroffset px(2 * t)".Into<VTP>();
             bpi = new ParametricInfo(Vector2.down, 3, 0, 0f);
             v = new Movement(p, Vector2.zero, V2RV2.Angle(25));
             v.UpdateDeltaAssignDelta(ref bpi, ref _d, 1f);

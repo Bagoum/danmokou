@@ -276,7 +276,7 @@ PrefabInstance:
     - target: {fileID: 6328024069235940164, guid: 9d69d791cf4111747bbcc747d6a513ec,
         type: 3}
       propertyPath: affectedStyles
-      value: '{ */b }'
+      value: '{ "*/b" }'
       objectReference: {fileID: 0}
     - target: {fileID: 6442151106489733971, guid: 9d69d791cf4111747bbcc747d6a513ec,
         type: 3}

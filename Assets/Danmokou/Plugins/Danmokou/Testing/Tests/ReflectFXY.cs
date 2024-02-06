@@ -44,7 +44,7 @@ namespace Danmokou.Testing {
 
         [Test]
         public static void Softmax() {
-            FXY fsoftmax1 = "softmax 1 { (+ 2 t) (8) }".Into<FXY>();
+            FXY fsoftmax1 = "softmax 1 { code(2 + t), code(8) }".Into<FXY>();
             Assert.AreEqual(softmax(1f, new[] {5f, 8f}), 7.85772238f, err);
             Assert.AreEqual(softmax(1f, new[] {5f, 8f}), fsoftmax1(3f), err);
             Assert.AreEqual(softmax(1f, new[] {9f, 8f}), fsoftmax1(7f), err);
@@ -77,7 +77,7 @@ namespace Danmokou.Testing {
             Test010(smES, new[] { (0.1f, 0.2f ), (0.7f, 0.6f)});
             Test010(quadES, new (float, float)[] {}, 0.3f);
             FXY smthin = FXY(x => ExMEasers.EInSine(x.FloatVal));
-            FXY sc = FXY(x => SmoothIO(ExMEasers.EInSine, ExMEasers.EOutSine, 
+            FXY sc = FXY(x => SmoothIO(ExC((Func<float,float>)M.EInSine),ExC((Func<float,float>)M.EOutSine), 
                 ExC(6.0f), ExC(2.0f), ExC(3.0f), x.FloatVal));
             TestTPoints(sc, new[] {
                 (-1f, 0f),
@@ -88,7 +88,7 @@ namespace Danmokou.Testing {
                 (3.3f, smthin(0.9f)),
                 (6.5f, 0f)
             });
-            FXY sc2 = FXY(x => SmoothIOe(ExMEasers.EInSine, ExC(6.0f), ExC(2.0f), x.FloatVal));
+            FXY sc2 = FXY(x => SmoothIOe(ExC((Func<float,float>)M.EInSine), ExC(6.0f), ExC(2.0f), x.FloatVal));
             TestTPoints(sc2, new[] {
                 (-1f, 0f),
                 (0.2f, smthin(0.1f)),
@@ -98,7 +98,7 @@ namespace Danmokou.Testing {
                 (6.5f, 0f)
             });
             FXY smthio = FXY(x => ExMEasers.EIOSine(x.FloatVal));
-            sc = "smoothioe io-sine 4 0.5 x".Into<FXY>();
+            sc = "smoothioe $(eiosine) 4 0.5 x".Into<FXY>();
             TestTPoints(sc, 
                 (-1f, 0f), 
                 (0.2f, smthio(0.4f)), 
@@ -157,22 +157,14 @@ namespace Danmokou.Testing {
             Assert.AreEqual(cd(9.75f), cdc(9.75f), err);
             Assert.AreEqual(cd(13.75f), cd(17.75f), 0.0001f);
             Func<float, float> sc = x => 2f * Mathf.Sin(BMath.PI / 4 * x);
-            FXY s = FXY(EaseF(ExMEasers.EOutSine, 2, AtomicBPYRepo.X()));
+            FXY s = FXY(EaseF(_ => ExC((Func<float,float>)M.EOutSine), 2, AtomicBPYRepo.X()));
             AreEqual(s(0.2f), sc(0.2f), err);
             AreEqual(s(0.6f), sc(0.6f), err);
         }
 
         [Test]
-        public static void Basics() {
-            FXY f = "++ * 2 x".Into<FXY>();
-            Assert.AreEqual(f(6), 13);
-            f = "--- * 2 x 5".Into<FXY>();
-            Assert.AreEqual(f(7), 8);
-        }
-
-        [Test]
         public static void TSmooth() {
-            FXY ios = FXY(EaseF(ExMEasers.EIOSine, 100, AtomicBPYRepo.X()));
+            FXY ios = FXY(EaseF(_ => ExC((Func<float,float>)M.EIOSine), 100, AtomicBPYRepo.X()));
             Assert.AreEqual(ios(10), 4.89434837f/2f, err);
             Assert.AreEqual(ios(50), 50, err);
         }
@@ -198,8 +190,8 @@ namespace Danmokou.Testing {
 
         [Test]
         public static void Utils() {
-            FXY f1 = "superpose 0.6 x 0.4 * 2 x".Into<FXY>();
-            FXY f2 = "superposec 0.6 x * 2 x".Into<FXY>();
+            FXY f1 = "superpose(0.6, x, 0.4, 2 * x)".Into<FXY>();
+            FXY f2 = "superposec(0.6, x, 2 * x)".Into<FXY>();
             AreEqual(0.28f, f1(0.2f));
             AreEqual(0.28f, f2(0.2f));
             AreEqual(0.56f, f1(0.4f));

@@ -1,0 +1,34 @@
+<#> bdsl2
+// mrf comment
+import myRefFile at "./bdsl2 reference file.bdsl" as mrf
+
+///
+This is a comment about abc.
+There are multiple lines here.
+///
+var abc = 4.34;
+
+pattern({
+	boss 'simp.kasen'
+}, {
+	phase 0 { } {
+		paction 0 {
+			shiftphaseto 1
+		}
+	}
+	phase 30 { 
+		type non "Use Reference Example"
+		hp 10000
+	} {
+		paction 0 {
+			print(abc)
+			print(mrf.myFloat)
+			exec(b{ 
+				mrf.myFloat = 0.1 * mrf.myFloat
+			})
+			print(mrf.myFloat)
+			print(mrf.myV2.x)
+			print(mrf.doMath(mrf.myFloat))
+		}
+	}
+})

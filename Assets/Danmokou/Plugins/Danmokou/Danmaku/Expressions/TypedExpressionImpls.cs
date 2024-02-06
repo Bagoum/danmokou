@@ -144,15 +144,10 @@ public class TExRV2 : TEx<V2RV2> {
     }
 }
 public class TExGCX : TEx<GenCtx> {
-    public readonly MemberExpression index;
-    public readonly MemberExpression beh_loc;
-    public readonly MemberExpression bpi;
+    public MemberExpression bpi => Ex.Property(ex, nameof(GenCtx.AsBPI));
     public MemberExpression exec => Ex.Field(ex, "exec");
     public Expression EnvFrame => ex.Field(nameof(GenCtx.EnvFrame));
     public TExGCX(Expression ex_) : base(ex_) {
-        index = Ex.Field(ex, "index");
-        beh_loc = Ex.Property(ex, "Loc");
-        bpi = Ex.Property(ex, "AsBPI");
     }
 }
 

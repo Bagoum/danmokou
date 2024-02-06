@@ -27,15 +27,23 @@ namespace Danmokou.Danmaku.Patterns {
 public static partial class SyncPatterns {
     /// <summary>
     /// Run arbitrary code as a SyncPattern.
+    /// <br/>Note: This is reflected via <see cref="SM.SMReflection.Exec"/>.
     /// </summary>
-    [BDSL2Only]
-    public static SyncPattern Exec(ErasedGCXF code) => sbh => code(sbh.GCX);
+    [DontReflect]
+    public static SyncPattern Exec(ErasedGCXF code) => new(sbh => code(sbh.GCX));
     
     /// <summary>
     /// Run some code that returns a SyncPattern, and then execute that SyncPattern.
     /// </summary>
     [BDSL2Only]
-    public static SyncPattern Wrap(GCXF<SyncPattern> code) => sbh => code(sbh.GCX)(sbh);
+    public static SyncPattern Wrap(GCXF<SyncPattern> code) => new(sbh => {
+        var inner = code(sbh.GCX);
+        inner.Run(sbh);
+        //The created SP has a mirrored envframe on it; since we are no longer using the SP, we should free the EF.
+        //If we were to assign or return the SP, then we'd have to keep the EF alive.
+        inner.EnvFrame?.Free();
+        inner.EnvFrame = null;
+    });
     
     /*
      * PASS-ALONG SYNCPATTERNS
@@ -80,21 +88,22 @@ public static partial class SyncPatterns {
     /// <param name="sp"></param>
     /// <returns></returns>
     public static SyncPattern AddTime(GCXF<float> frames, SyncPattern sp) {
-        return sbh => {
+        return new(sbh => {
             sbh.timeOffset += frames(sbh.GCX) * ETime.FRAME_TIME;
-            sp(sbh);
-        };
+            sp.Run(sbh);
+        });
     }
 
     /// <summary>
     /// Run only one of the provided patterns, using the indexer function to determine which.
     /// </summary>
-    public static SyncPattern Alternate(GCXF<float> indexer, SyncPattern[] sps) => sbh =>
-        sps[(int)indexer(sbh.GCX) % sps.Length](sbh);
+    public static SyncPattern Alternate(GCXF<float> indexer, SyncPattern[] sps) => new(sbh =>
+        sps[(int)indexer(sbh.GCX) % sps.Length].Run(sbh));
 
     /// <summary>
     /// Equal to `gsr { start rv2.rx +=f rand from to } sp`
     /// </summary>
+    [ExpressionBoundary]
     public static SyncPattern RandomX(ExBPY from, ExBPY to, SyncPattern sp) => _AsGSR(sp,
         GenCtxProperty.Start(new GCRule[] {
             new GCRule<float>(ExType.Float, "rv2.rx", GCOperator.AddAssign,
@@ -104,6 +113,7 @@ public static partial class SyncPatterns {
     /// <summary>
     /// Equal to `gsr { start rv2.ry +=f rand from to } sp`
     /// </summary>
+    [ExpressionBoundary]
     public static SyncPattern RandomY(ExBPY from, ExBPY to, SyncPattern sp) => _AsGSR(sp,
         GenCtxProperty.Start(new GCRule[] {
             new GCRule<float>(ExType.Float, "rv2.ry", GCOperator.AddAssign,
@@ -137,9 +147,10 @@ public static partial class SyncPatterns {
     /// <returns></returns>
     public static SyncPattern DoubleFlipY(SyncPattern sp) => _AsGSR(sp, GCP.Times(_ => 2),
         GCP.PostLoop(new GCRule[] {
-            new GCRule<float>(ExType.Float, "rv2.a", GCOperator.Assign,
-                GCXF(x => Mul(EN1, RV2A(Reference<V2RV2>("rv2")(x)))))
+            new GCRule<float>(ExType.Float, "rv2.a", GCOperator.ComplementAssign,
+                GCXF<float>(_ => ExC(0f)))
         }));
+    
     /// <summary>
     /// Run the child SyncPattern twice, once without modification
     /// and once flipping the angle over the Y-axis.
@@ -148,9 +159,10 @@ public static partial class SyncPatterns {
     /// <returns></returns>
     public static SyncPattern DoubleFlipX(SyncPattern sp) => _AsGSR(sp, GCP.Times(_ => 2),
         GCP.PostLoop(new GCRule[] {
-            new GCRule<float>(ExType.Float, "rv2.a", GCOperator.Assign,
-                GCXF(x => Sub(ExC(180f), RV2A(Reference<V2RV2>("rv2")(x)))))
+            new GCRule<float>(ExType.Float, "rv2.a", GCOperator.ComplementAssign,
+                GCXF<float>(_ => ExC(180f)))
         }));
+    
     /// <summary>
     /// Run the child SyncPattern twice, once without modification
     /// and once flipping the angle over the line Y=X.
@@ -159,8 +171,8 @@ public static partial class SyncPatterns {
     /// <returns></returns>
     public static SyncPattern DoubleFlipXY(SyncPattern sp) => _AsGSR(sp, GCP.Times(_ => 2),
         GCP.PostLoop(new GCRule[] {
-            new GCRule<float>(ExType.Float, "rv2.a", GCOperator.Assign,
-                GCXF(x => Sub(ExC(90f), RV2A(Reference<V2RV2>("rv2")(x)))))
+            new GCRule<float>(ExType.Float, "rv2.a", GCOperator.ComplementAssign,
+                GCXF<float>(_ => ExC(90f)))
         }));
 
     public static SyncPattern SetP(GCXF<float> p, SyncPattern sp) => _AsGSR(sp, GCP.SetP(p));
@@ -257,7 +269,7 @@ public static partial class SyncPatterns {
                 BulletManager.SimpleBulletControls.SaveF(data, _ => ExMPred.True())));
         }
         guided = guided.Select(Loc0).ToArray();
-        return sbh => {
+        return new(sbh => {
             var controls = new List<BulletManager.BulletControl>();
             for (int ii = 0; ii < controlsL.Count; ++ii)
                 //See ParticleControl for explanation of why .Root is used here
@@ -265,11 +277,11 @@ public static partial class SyncPatterns {
             BulletManager.AssertControls(isPlayer ? BulletManager.GetOrMakePlayerCopy(estyle) : estyle, controls);
             var emptySbh = sbh;
             emptySbh.ch.bc.style = estyle;
-            emptySP(emptySbh);
+            emptySP.Run(emptySbh);
             for (int ii = 0; ii < guided.Length; ++ii) {
-                guided[ii](sbh);
+                guided[ii].Run(sbh);
             }
-        };
+        });
     }
     
     #endregion
@@ -292,7 +304,7 @@ public static partial class SyncPatterns {
         public void DoIteration(SyncPattern[] target) {
             sbh.ch = looper.Handoff.Copy();
             for (int ii = 0; ii < target.Length; ++ii) {
-                target[ii](sbh);
+                target[ii].Run(sbh);
             }
             sbh.ch.Dispose();
         }
@@ -313,7 +325,7 @@ public static partial class SyncPatterns {
     [Alias("GSR")]
     [CreatesInternalScope(AutoVarMethod.GenCtx)]
     public static SyncPattern GSRepeat(GenCtxProperties<SyncPattern> props, SyncPattern[] target) {
-        return sbh => {
+        return new(sbh => {
             SPExecutionTracker exec = new SPExecutionTracker(props, sbh, out bool isClipped);
             if (isClipped) {
                 exec.AllDone(false);
@@ -324,7 +336,7 @@ public static partial class SyncPatterns {
                 }
                 exec.AllDone(true);
             }
-        };
+        });
     }
 
     /// <summary>

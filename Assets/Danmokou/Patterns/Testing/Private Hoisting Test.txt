@@ -7,7 +7,6 @@ phase 0
 			preloop {
 				var =f t
 			}
-			expose { f var }
 		} s roffset px &var
 		bullet-control persist strip-red/w cull > &.var 1
 		_ 1f

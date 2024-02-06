@@ -9,9 +9,9 @@ using Ex = System.Linq.Expressions.Expression;
 namespace Danmokou.DMath.Functions {
 public static class GCXFRepo {
 
-    public static Func<TExArgCtx, TEx<T>> _Fake<T>(Func<TExArgCtx, TEx<T>> target) => args => {
+    public static Func<TExArgCtx, TEx> _Fake(Func<TExArgCtx, TEx> target) => args => {
         var fake = new TExPI();
-        var inner = target(args.Append("gcx_bpi", fake, true));
+        var inner = target(args.Append("gcx_bpi", args.GetByExprType<TExGCX>().bpi, true));
         if ((Expression) inner is ConstantExpression) return inner;
         
         return Ex.Block(new ParameterExpression[] {fake},

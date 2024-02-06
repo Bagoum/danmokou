@@ -8,6 +8,7 @@ using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
+using Danmokou.Reflection2;
 using Ex = System.Linq.Expressions.Expression;
 using tfloat = Danmokou.Expressions.TEx<float>;
 using static Danmokou.Expressions.ExMHelpers;
@@ -242,18 +243,19 @@ public static partial class Parametrics {
     /// <returns></returns>
     public static ExTP SSVHomeT(ExBPY time, ExTP location) => ExMSamplers.SS0(VHomeTime(time, location));
 
+    
     /// <summary>
     /// Short for `eased EASE TIME ss0 vhometime TIME LOCATION`.
     /// <br/>Note: EaseToTarget with NROFFSET is preferred. It has the same signature and avoids Riemann errors.
     /// </summary>
-    public static ExTP EaseDVHomeT([LookupMethod] Func<TEx<float>, TEx<float>> smoother, float time, ExTP location) 
+    public static ExTP EaseDVHomeT(string smoother, float time, ExTP location) 
         => EaseD(smoother, time, ExMSamplers.SS0(VHomeTime(_ => ExC(time), location)));
 
     /// <summary>
     /// Short for `* smooth / t TIME ss0 - LOCATION loc`. Use with NROFFSET.
     /// </summary>
-    public static ExTP EaseToTarget([LookupMethod] Func<tfloat, tfloat> ease, ExBPY time, ExTP location) => bpi =>
-        ExM.Mul(ease(Clamp01(Div(new TEx<float>(bpi.t), time(bpi)))), ExMSamplers.SS0(x => Sub(location(x), x.LocV2))(bpi));
+    public static ExTP EaseToTarget([LookupMethod] Func<TExArgCtx, TEx<Func<float,float>>> ease, ExBPY time, ExTP location) => bpi =>
+        ExM.Mul(PartialFn.Execute(ease(bpi), Clamp01(Div(new TEx<float>(bpi.t), time(bpi)))), ExMSamplers.SS0(x => Sub(location(x), x.LocV2))(bpi));
         
     
     #endregion

@@ -21,9 +21,9 @@ public class ScaleAnimator : TimeBoundAnimator {
     private float time2;
     private float holdtime = 0f;
     [ReflectInto(typeof(FXY))]
-    public string ease1 = "out-sine t";
+    public string ease1 = "eoutsine t";
     [ReflectInto(typeof(FXY))]
-    public string ease2 = "in-sine t";
+    public string ease2 = "einsine t";
 
     private Transform tr = null!;
 

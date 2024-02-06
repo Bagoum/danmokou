@@ -6,6 +6,7 @@ using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Expressions;
 using BagoumLib.Functional;
+using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
@@ -60,19 +61,24 @@ public static class Parser {
     private static readonly Parser<Token, Token> comma = TokenOfType(TokenType.Comma);
     private static readonly Parser<Token, Token> semicolon = TokenOfType(TokenType.Semicolon);
 
-    private static Parser<Token, Token> ImplicitBreak(TokenType breaker) {
+    private static Parser<Token, Unit> ImplicitBreak(TokenType breaker, bool allowEoF = false) {
         var err = new ParserError.Expected($"{breaker.ToString().ToLower()} or uniform newline indentation after previous line");
         return input => {
-            if (!input.Empty) {
+            if (input.Empty) {
+                if (allowEoF)
+                    return new(new(Unit.Default), null, input.Index, input.Index);
+            } else {
                 if (input.Next.Type == breaker)
-                    return new(new(input.Next), null, input.Index, input.Step(1));
+                    return new(new(Unit.Default), null, input.Index, input.Step(1));
                 else if ((input.Next.Flags & TokenFlags.ImplicitBreak) > 0)
-                    return new(new(input.Next), null, input.Index, input.Index);
+                    return new(new(Unit.Default), null, input.Index, input.Index);
             }
             return new(err, input.Index);
         };
     }
     public static Parser<Token, Token> Kw(string keyword) => TokenOfTypeValue(TokenType.Keyword, keyword);
+    public static Parser<Token, PositionRange> Kwp(string keyword) => 
+        TokenOfTypeValue(TokenType.Keyword, keyword).FMap(t => t.Position);
 
     public static Parser<Token, Token> Flags(TokenFlags flags, string? expected = null) =>
         Satisfy((Token inp) => (inp.Flags & flags) > 0, expected).IsPresent();
@@ -198,8 +204,8 @@ public static class Parser {
         };
     }
     
-    private static Parser<Token, (PositionRange allPosition, List<T> args)> Paren<T>(Parser<Token, T> p, bool atleastOne = false) {
-        var args = p.SepBy(comma, atleastOne);
+    private static Parser<Token, (PositionRange allPosition, List<T> args)> Paren<T>(Parser<Token, T> p, Parser<Token, T>? first = null) {
+        var args = p.SepBy(comma, first: first);
         return inp => {
             var ropen = openParen(inp);
             if (!ropen.Result.Valid)
@@ -266,7 +272,7 @@ public static class Parser {
         TokenOfType(TokenType.V2RV2).FMap(t => new ST.TypedValue<V2RV2>(t.Position, DMath.Parser.ParseV2RV2(t.Content)) 
                 { Kind = SymbolKind.Number } as ST),
         //Parenthesized value/tuple
-        Paren(Value).FMap(vs => vs.args.Count == 1 ? vs.args[0] : new ST.Tuple(vs.allPosition, vs.args)).LabelV("tuple"),
+        Paren(ValueOrFailure, Value).FMap(vs => vs.args.Count == 1 ? vs.args[0] : new ST.Tuple(vs.allPosition, vs.args)).LabelV("tuple"),
         //Block
         Sequential(blockKW, BracedBlock,
             (o, b) => b with { Position = o.Position.Merge(b.Position) } as ST).LabelV("block"),
@@ -277,8 +283,22 @@ public static class Parser {
 
     private static readonly ParserError termMemberFollowErr =
         new ParserError.Expected("member access x.y and/or function application f(x, y)");
+    private static readonly Parser<Token, Token> period = op(".");
+    private static readonly Parser<Token, Token> termMember = inp => {
+        var rp = period(inp);
+        if (!rp.Result.Try(out var p))
+            return rp;
+        var rid = Ident(inp);
+        //Allow empty identifier here-- it will fail during annotation, but it permits better errors
+        if (rid.Status == ResultStatus.ERROR)
+            return new(new Token(TokenType.Identifier, p.Position.End.CreateEmptyRange(), ""), rp.MergeErrors(in rid), rp.Start,
+                rp.End);
+        else
+            return rid.WithPreceding(in rp);
+    };
+    
     private static readonly Parser<Token, (Maybe<Token>, Maybe<(PositionRange, List<ST>)>)> termMemberFn =
-        op(".").IgThen(Ident).Opt().Then(NoWhitespace.IgThen(Paren(Value)).Opt());
+        termMember.Opt().Then(NoWhitespace.IgThen(Paren(ValueOrFailure, Value)).Opt());
     private static readonly Parser<Token, (Maybe<Token>, Maybe<(PositionRange, List<ST>)>)> termMemberFnFollow = inp => {
             var follow = termMemberFn(inp);
             if (follow.Result.Try(out var lr)) {
@@ -310,11 +330,11 @@ public static class Parser {
                 }
             ),
             sop("$").IgThen(NoWhitespace).IgThen(
-                Paren1(Combinators.SepBy(Value, comma, true, Ident.FMap(id => new ST.Ident(id) as ST)))).FMap(
+                Paren1(Combinators.SepBy(ValueOrFailure, comma, true, first:Value)).FMap(
                     args => new ST.PartialFunctionCall(
                         PositionRange.Merge(args.Select(a => a.Position)), 
-                        (ST.Ident)args[0], args.Skip(1).ToArray()) as ST
-                )
+                        args[0], args.Skip(1).ToArray()) as ST
+                ))
         );
 
     //Term + tight operators
@@ -364,26 +384,49 @@ public static class Parser {
     );
     
     private static ParseResult<ST> Value(InputStream<Token> inp) => value(inp);
+    private static readonly ParserError noValueExpr = new ParserError.Expected("value expression");
+    private static ParseResult<ST> ValueOrFailure(InputStream<Token> inp) {
+        var rv = value(inp);
+        if (rv.Status != ResultStatus.ERROR)
+            return rv;
+        var pos = inp.Remaining > 0 ? inp.Next.Position : inp.Source[^1].Position;
+        return new ParseResult<ST>(Maybe<ST>.Of(new ST.Failure(pos, "No value expression provided")), 
+            new LocatedParserError(inp.Index, noValueExpr), inp.Index, inp.Index);
+    }
 
-    private static readonly Parser<Token, ST> varInit =
+    private static readonly Parser<Token, ST.VarDeclAssign> varInit =
         Sequential(Kw("var").Or(Kw("hvar")), IdentAndType, op("="), value,
             (kw, idTyp, eq, res) => {
                 var (id, typ) = idTyp;
                 return new ST.VarDeclAssign(kw.Position,
                         new VarDecl(id.Position, kw.Content == "hvar", typ?.Item2, id.Content), eq.Position, res)
-                    { TypeKwPos = typ?.Item1 } as ST;
+                    { TypeKwPos = typ?.Item1 };
             });
 
-    private static readonly Parser<Token, ST> functionDecl =
+    private static readonly Parser<Token, ST.FunctionDef> functionDecl =
         Sequential(Kw("function"), Ident, Paren(IdentAndType), IdentTypeSuffix, BracedBlock,
-            (fn, name, args, type, body) => new ST.FunctionDef(fn.Position, name, args.args, type, body) as ST);
+            (fn, name, args, type, body) => new ST.FunctionDef(fn.Position, name, args.args, type, body));
             
     
-    //Statement: value, variable declaration, or void-type block (if/else, for, while)
+    //Statement: value, variable declaration, special statement, or void-type block (func decl, if/else, for, while)
     private static readonly Parser<Token, ST> statement = ChoiceL("statement",
         value,
-        varInit,
-        functionDecl,
+        Sequential(Kw("const").Opt(), Combinators.Either(varInit, functionDecl), (cnst, succ) => {
+            if (succ.IsLeft) {
+                var st = succ.Left;
+                if (cnst.Try(out var kw)) {
+                    st.Declaration.Constant = true;
+                    st.ConstKwPos = kw.Position;
+                }
+                return st as ST;
+            } else {
+                var st = succ.Right;
+                if (cnst.Try(out var kw)) {
+                    st.ConstKwPos = kw.Position;
+                }
+                return st;
+            }
+        }),
         Sequential(Kw("return"), value, (kw, v) => new ST.Return(kw.Position, v) as ST),
         Kw("continue").FMap(t => new ST.Continue(t.Position) as ST),
         Kw("break").FMap(t => new ST.Break(t.Position) as ST),
@@ -391,20 +434,40 @@ public static class Parser {
             , (kwif, cond, iftrue, iffalse) => {
                 var els = iffalse.ValueOrSNull();
                 return new ST.IfStatement(kwif.Position, els?.a.Position, cond, iftrue, els?.b) as ST;
-            })
-        //todo: if/else, for, while
+            }),
+        Sequential(Kw("for"), Paren1(Sequential(
+                Combinators.Opt<Token, ST>(Statement),
+                TokenOfType(TokenType.Semicolon),
+                value.Opt(),
+                TokenOfType(TokenType.Semicolon),
+                Combinators.Opt<Token, ST>(Statement),
+                (initial, _, cond, _, final) => (initial.ValueOrNull(), cond.ValueOrNull(), final.ValueOrNull())
+            )), BracedBlock,
+            (kw, checks, body) => new ST.Loop(kw.Position, checks.Item1, checks.Item2, checks.Item3, body) as ST
+        ),
+        Sequential(Kw("while"), Paren1(value), BracedBlock, 
+            (kw, check, body) => new ST.Loop(kw.Position, null, check, null, body) as ST)
     );
+    private static ParseResult<ST> Statement(InputStream<Token> inp) => statement(inp);
     private static readonly Parser<Token, List<ST>> statements = 
-        statement.ThenIg(ImplicitBreak(TokenType.Semicolon)).Many()
+        statement.ThenIg(ImplicitBreak(TokenType.Semicolon, allowEoF: true)).Many()
             .Label("statement block");
     private static readonly Parser<Token, ST.Block> bracedBlock =
         Sequential(openBrace, statements, closeBrace,
             (o, stmts, c) => new ST.Block(o.Position.Merge(c.Position), stmts));
     private static ParseResult<ST.Block> BracedBlock(InputStream<Token> inp) => bracedBlock(inp);
-
+    private static readonly Parser<Token, List<ST>> imports =
+        Sequential(
+            Kw("import"), 
+            Ident,
+            Kwp("at").Then(TokenOfType(TokenType.String)).Opt(),
+            Kwp("as").Then(Ident).Opt(),
+            (kw, id, loc, alias) => new ST.Import(kw.Position, id, loc.ValueOrSNull(), alias.ValueOrSNull()) as ST).
+                ThenIg(ImplicitBreak(TokenType.Semicolon, allowEoF: true)).Many()
+                    .Label("imports");
 
     private static readonly Parser<Token, ST.Block> fullScript = 
-        statements.ThenIg(EOF<Token>()).FMap(x => new ST.Block(x));
+        imports.Then(statements).ThenIg(EOF<Token>()).FMap(x => new ST.Block(x.a.Concat(x.b).ToList()));
 
     public static Either<ST.Block, LocatedParserError> Parse(string source, Token[] tokens, out InputStream<Token> stream) {
         var result = fullScript(stream = new InputStream<Token>(
@@ -444,7 +507,7 @@ public static class Parser {
         public record Generic(string Type, List<TypeDef> Args) : TypeDef {
             private static readonly Dictionary<string, Type> genericTypes = new() {
                 { "List", typeof(List<>) },
-                //todo: fn type
+                { "GCXF", typeof(GCXF<>) },
             };
 
             public override Either<Type, string> TryCompile() {
@@ -453,9 +516,13 @@ public static class Parser {
                         return $"Incorrect number of type parameters for {Type}: " +
                                $"{Args.Count} required, {t.GetGenericArguments().Length} provided";
                     return Args
-                        .Select(a => a.TryCompile())
-                        .SequenceL()
+                        .SequenceL(a => a.TryCompile())
                         .FMapL(args => t.MakeGenericType(args.ToArray()));
+                }
+                if (Type == "Func") {
+                    return Args
+                        .SequenceL(a => a.TryCompile())
+                        .FMapL(typs => ReflectionUtils.MakeFuncType(typs.ToArray()));
                 }
                 return $"Couldn't recognize type {Type}";
             }

@@ -56,7 +56,7 @@ namespace Danmokou.Testing {
             }
             BPY s = BPY(x => ExMEasers.EIOSine(x.t));
             TestE01(s, new []{ (0.1f, 0.02447f) });
-            s = BPY(x => SmoothLoop(ExMEasers.EIOSine, x.t));
+            s = BPY(x => SmoothLoop(ExC((Func<float,float>)M.EIOSine), x.t));
             TestE01(s, new []{ (1.1f, 1.02447f) });
             TestE01(s, new []{ (3.1f, 3.02447f) });
         }
@@ -75,7 +75,7 @@ namespace Danmokou.Testing {
         }
         [Test]
         public static void TLogsum() {
-            BPY fsoftmax1 = "logsum 1 { (+ t 2) 8 }".Into<BPY>();
+            BPY fsoftmax1 = "logsum 1 { code(t + 2), code(8) }".Into<BPY>();
             var pi = new ParametricInfo();
             Assert.AreEqual(logsum(1f, new[] {5f, 8f}), fsoftmax1(pi.CopyWithT(3f)), err);
             Assert.AreEqual(logsum(1f, new[] {9f, 8f}), fsoftmax1(pi.CopyWithT(7f)), err);
@@ -105,8 +105,13 @@ namespace Danmokou.Testing {
 
         [Test]
         public static void PredLinks() {
-            BPY p10 = "* t pred10(> t 5)".Into<BPY>();
+            BPY p10 = "t * pred10(t > 5)".Into<BPY>();
             TestTPoints(p10, new []{ (4f, 0f), (6, 6) });
+        }
+
+        [Test]
+        public static void TestTP3Refl() {
+            var tp3 = "qrotate(px(t), rx(0.8, t))".Into<TP3>();
         }
         
     }

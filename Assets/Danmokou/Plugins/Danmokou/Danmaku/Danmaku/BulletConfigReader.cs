@@ -618,8 +618,10 @@ public partial class BulletManager : RegularUpdater {
 
     public const string BulletFlakeName = "$flakeBulletClear";
     private static readonly ReflWrap<VTP> FlakeMovement = new(
-        ":: { mt ss0(lerp(2, 12, distto(lplayertrue), 0.5, 1.4)) } " +
-        "nrvelocity(switchH(t, &mt, py(lerpt(0, &mt, 0.4, 0)), vhome(lerpt(0, 0.2, 4, 14), lplayertrue)))");
+        "nrvelocity(b{\n" +
+            "var mt = ss0(lerp(2, 12, distto(lplayertrue), 0.5, 1.4));\n" +
+            "switchH(t, mt, py(lerpt(0, mt, 0.4, 0)), vhome(lerpt(0, 0.2, 4, 14), lplayertrue));" +
+        "})");
     private static readonly ReflWrap<SBV2> FlakeRot = new("cx(1)");
 }
 }

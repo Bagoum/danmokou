@@ -22,10 +22,10 @@ public static class FXYRepo {
     /// <param name="maxTime">Time over which to perform easing</param>
     /// <param name="f">Target function</param>
     /// <returns></returns>
-    public static ExBPY EaseF([LookupMethod] Func<TEx<float>, TEx<float>> smoother, float maxTime, ExBPY f) 
+    public static ExBPY EaseF([LookupMethod] Func<TExArgCtx, TEx<Func<float, float>>> smoother, float maxTime, ExBPY f) 
     => ExMHelpers.Ease(smoother, maxTime, f, x => x.FloatVal, (x, y) => x.MakeCopyForType<float>(y));
 
-
+    /*
     /// <summary>
     /// Apply a ease function on top of a target derivative function that uses time as a controller.
     /// </summary>
@@ -33,8 +33,8 @@ public static class FXYRepo {
     /// <param name="maxTime">Time over which to perform easing</param>
     /// <param name="fd">Target function</param>
     /// <returns></returns>
-    public static ExBPY EaseFD([LookupMethod] Func<TEx<float>, TEx<float>> smoother, float maxTime, ExBPY fd) 
-        => ExMHelpers.EaseD(smoother, maxTime, fd, x => x.FloatVal, (x, y) => x.MakeCopyForType<float>(y));
+    public static ExBPY EaseFD([LookupMethod] Func<TExArgCtx, TEx<Func<float, float>>> smoother, float maxTime, ExBPY fd) 
+        => ExMHelpers.EaseD(smoother, maxTime, fd, x => x.FloatVal, (x, y) => x.MakeCopyForType<float>(y));*/
 
     /// <summary>
     /// See <see cref="BPYRepo.SoftmaxShift"/>.

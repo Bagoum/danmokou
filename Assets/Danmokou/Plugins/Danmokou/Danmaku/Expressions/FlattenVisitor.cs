@@ -159,8 +159,9 @@ class FlattenVisitor : ExpressionVisitor {
         }
         if (node.NodeType == ExpressionType.Convert) {
             //Null typecasts don't work correctly with nullable types
+            //Object boxing doesn't always work with value types
 #if !EXBAKE_SAVE && !EXBAKE_LOAD
-            if (o.TryAsAnyConst(out var notNull) && notNull != null) {
+            if (o.TryAsAnyConst(out var notNull) && notNull != null && node.Type != typeof(object)) {
                 //Nested compile causes issues with baking
                 return ExC(Ex.Lambda(Ex.Convert(o, node.Type)).Compile().DynamicInvoke());
             }
@@ -250,7 +251,7 @@ class FlattenVisitor : ExpressionVisitor {
     }
 
     protected override Expression VisitParameter(ParameterExpression node) {
-        if (ConstValPrmsMap.TryGetValue(node, out var v)) return v;
+        if (ConstValPrmsMap.TryGetValue(node, out var v) && VariableReductionAllowed.Count == 0) return v;
         return node;
     }
 

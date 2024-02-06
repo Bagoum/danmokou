@@ -144,8 +144,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   checkEveryFrames: 10
   method: 0
-  VolumeScaler: min(5, 1 + 0.7 * sqrt (-m x 2))
-  SpeedScaler: max(1, 1.6 / 90 * atan2((-m x 2), 1))
+  VolumeScaler: min(5, 1 + 0.7 * sqrt (submax0 x 2))
+  SpeedScaler: max(1, 1.6 / 90 * atan2((submax0 x 2), 1))
 --- !u!1 &915687382
 GameObject:
   m_ObjectHideFlags: 0

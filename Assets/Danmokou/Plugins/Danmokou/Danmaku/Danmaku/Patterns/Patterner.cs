@@ -20,14 +20,50 @@ using Danmokou.Reflection2;
 using Danmokou.Services;
 using Danmokou.SM;
 using JetBrains.Annotations;
+using NUnit;
 using UnityEngine;
 using GCP = Danmokou.Danmaku.Options.GenCtxProperty;
 using static Danmokou.Reflection.Compilers;
 
 namespace Danmokou.Danmaku.Patterns {
-public delegate void SyncPattern(SyncHandoff sbh);
+public record SyncPattern(SyncPatterner Exec, EnvFrame? EnvFrame = null) : EnvFrameAttacher {
+    private SyncPatterner Exec { get; } = Exec;
+    public EnvFrame? EnvFrame { get; set; } = EnvFrame;
 
-public delegate IEnumerator AsyncPattern(AsyncHandoff abh);
+    public void Run(SyncHandoff sbh) {
+        if (EnvFrame == null) {
+            Exec(sbh);
+            return;
+        }
+        sbh.ch = sbh.ch.OverrideFrame(EnvFrame);
+        Exec(sbh);
+        sbh.ch.Dispose();
+    }
+
+    public static implicit operator SyncPattern(SyncPatterner sp) => new(sp);
+
+}
+public delegate void SyncPatterner(SyncHandoff sbh);
+
+public record AsyncPattern(AsyncPatterner Exec, EnvFrame? EnvFrame = null) : EnvFrameAttacher {
+    private AsyncPatterner Exec { get; } = Exec;
+    public EnvFrame? EnvFrame { get; set; } = EnvFrame;
+    
+    public IEnumerator Run(AsyncHandoff abh) {
+        return EnvFrame == null ? 
+            Exec(abh) : 
+            RunWithEf(abh);
+    }
+
+    private IEnumerator RunWithEf(AsyncHandoff abh) {
+        abh.ch = abh.ch.OverrideFrame(EnvFrame);
+        yield return Exec(abh);
+        abh.ch.Dispose();
+    }
+
+    public static implicit operator AsyncPattern(AsyncPatterner ap) => new(ap);
+}
+public delegate IEnumerator AsyncPatterner(AsyncHandoff abh);
 
 
 public struct CommonHandoff : IDisposable {
@@ -49,8 +85,8 @@ public struct CommonHandoff : IDisposable {
     /// <summary>
     /// Copies the GCX, possibly deriving a new environment frame if a scope is provided.
     /// </summary>
-    public readonly CommonHandoff TryDerive((LexicalScope, AutoVars.GenCtx)? scope) {
-        var ngcx = gcx.Copy(scope);
+    public readonly CommonHandoff TryDerive(LexicalScope? scope) {
+        var ngcx = gcx.Derive(scope);
         if (scope != null && ngcx.AutoVars is AutoVars.GenCtx && rv2Override is { } overr) {
             ngcx.BaseRV2 = ngcx.RV2 = overr;
             return new(cT, bc, ngcx, null);
@@ -59,12 +95,16 @@ public struct CommonHandoff : IDisposable {
     }
 
     /// <summary>
-    /// Copies the GCX with a new EnvFrame, ignoring the previous EnvFrame.
-    /// <br/>The provided envframe is mirrored. (If the envframe is null, then the existing GCX is mirrored.)
+    /// Copies the GCX with a new EnvFrame. The provided envframe is mirrored, and the current GCX's RV2/ST
+    ///  are stored as rv2Override.
+    /// <br/>(If the envframe is null, then the existing GCX is copied with a cloned envframe.)
     /// </summary>
     public readonly CommonHandoff OverrideFrame(EnvFrame? newFrame) {
-        var ngcx = newFrame is null ? gcx.Mirror() : gcx.Copy(newFrame);
-        return new(cT, bc, ngcx, rv2Override);
+        var ngcx = newFrame is null ? gcx.Copy(null) : gcx.Copy(newFrame);
+        V2RV2? nrv2Override = null;
+        if (gcx.Scope.NearestAutoVars is AutoVars.GenCtx)
+            nrv2Override = gcx.RV2;
+        return new(cT, bc, ngcx, rv2Override ?? nrv2Override);
     }
 
     /// <summary>
@@ -182,7 +222,7 @@ public struct AsyncHandoff {
 public static partial class AtomicPatterns {
     #region Erasers
 
-    public static SyncPattern Erase<T>(GCXF<T> meth) => sbh => meth(sbh.GCX);
+    public static SyncPattern Erase<T>(GCXF<T> meth) => new(sbh => meth(sbh.GCX));
     
     #endregion
     
@@ -190,20 +230,20 @@ public static partial class AtomicPatterns {
     /// Do nothing.
     /// </summary>
     /// <returns></returns>
-    public static SyncPattern Noop() => sbh => {  };
+    public static SyncPattern Noop() => new(sbh => {  });
     /// <summary>
     /// Play the audio clip defined by the style.
     /// </summary>
     /// <returns></returns>
-    public static SyncPattern SFX() => sbh => sbh.bc.SFX();
+    public static SyncPattern SFX() => new(sbh => sbh.bc.SFX());
 
     
     /// <summary>
     /// Invoke the provided event with the provided value.
     /// </summary>
     [GAlias("eventf", typeof(float))]
-    public static SyncPattern Event<T>(string evName,  GCXF<T> value) => sbh => 
-        Events.ProcRuntimeEvent(evName, value(sbh.GCX));
+    public static SyncPattern Event<T>(string evName,  GCXF<T> value) => new(sbh => 
+        Events.ProcRuntimeEvent(evName, value(sbh.GCX)));
 
     /// <summary>
     /// Invoke one of the provided unit events according to the firing index.
@@ -212,27 +252,27 @@ public static partial class AtomicPatterns {
 
     #region Items
 
-    public static SyncPattern LifeItem() => sbh => 
-        ItemPooler.RequestLife(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
+    public static SyncPattern LifeItem() => new(sbh =>
+        ItemPooler.RequestLife(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
     
-    public static SyncPattern ValueItem() => sbh => 
-        ItemPooler.RequestValue(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
+    public static SyncPattern ValueItem() =>new(sbh =>
+        ItemPooler.RequestValue(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
     
-    public static SyncPattern SmallValueItem() => sbh => 
-        ItemPooler.RequestSmallValue(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
+    public static SyncPattern SmallValueItem() => new(sbh => 
+        ItemPooler.RequestSmallValue(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
     
-    public static SyncPattern PointPPItem() => sbh => 
-        ItemPooler.RequestPointPP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
+    public static SyncPattern PointPPItem() => new(sbh => 
+        ItemPooler.RequestPointPP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
     
-    public static SyncPattern GemItem() => sbh => 
-        ItemPooler.RequestGem(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
+    public static SyncPattern GemItem() => new(sbh => 
+        ItemPooler.RequestGem(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
     
     [Alias("1UpItem")]
-    public static SyncPattern OneUpItem() => sbh => 
-        ItemPooler.Request1UP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
+    public static SyncPattern OneUpItem() => new(sbh => 
+        ItemPooler.Request1UP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
     
-    public static SyncPattern PowerupShiftItem() => sbh => 
-        ItemPooler.RequestPowerupShift(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation));
+    public static SyncPattern PowerupShiftItem() => new(sbh => 
+        ItemPooler.RequestPowerupShift(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
     
     #endregion
     
@@ -253,13 +293,13 @@ public static partial class AtomicPatterns {
     /// <param name="path"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    public static SyncPattern Simple(VTP path, SBOptions options) => sbh => {
+    public static SyncPattern Simple(VTP path, SBOptions options) => new(sbh => {
         uint id = sbh.GCX.NextID();
         if (options.player.HasValue) {
             sbh.ch.bc.style = BulletManager.GetOrMakePlayerCopy(sbh.bc.style);
         }
         sbh.bc.Simple(sbh, options, path, id);
-    };
+    });
 
     #endregion
 
@@ -270,10 +310,10 @@ public static partial class AtomicPatterns {
     /// <param name="path">Movement descriptor</param>
     /// <param name="options">Bullet constructor options</param>
     /// <returns></returns>
-    public static SyncPattern Complex(VTP path, BehOptions options) => sbh => {
+    public static SyncPattern Complex(VTP path, BehOptions options) => new(sbh => {
         uint id = sbh.GCX.NextID();
         sbh.bc.Complex(sbh, path, id, options);
-    };
+    });
 
     /// <summary>
     /// Fires a Pather/Tracker projectile, which "remembers" the points it has gone through and draws a path through them.
@@ -283,10 +323,10 @@ public static partial class AtomicPatterns {
     /// <param name="path">Movement descriptor</param>
     /// <param name="options">Bullet constructor options</param>
     /// <returns></returns>
-    public static SyncPattern Pather(float maxTime, BPY remember, VTP path, BehOptions options) => sbh => {
+    public static SyncPattern Pather(float maxTime, BPY remember, VTP path, BehOptions options) => new(sbh => {
         uint id = sbh.GCX.NextID();
         sbh.bc.Pather(sbh, maxTime > 0 ? maxTime : (float?)null, remember, path, id, options);
-    };
+    });
 
     /// <summary>
     /// Create a laser.
@@ -296,10 +336,10 @@ public static partial class AtomicPatterns {
     /// <param name="hot">Time that the laser is in a damaging state</param>
     /// <param name="options">Laser constructor options</param>
     /// <returns></returns>
-    public static SyncPattern Laser(VTP path, GCXF<float> cold, GCXF<float> hot, LaserOptions options) => sbh => {
+    public static SyncPattern Laser(VTP path, GCXF<float> cold, GCXF<float> hot, LaserOptions options) => new(sbh => {
         uint id = sbh.GCX.NextID();
         sbh.bc.Laser(sbh, path, cold(sbh.GCX), hot(sbh.GCX), id, options);
-    };
+    });
 
     public static SyncPattern SafeLaser(GCXF<float> cold, LaserOptions options) =>
         Laser("null".Into<VTP>(), cold, _ => 0f, options); 
@@ -313,10 +353,10 @@ public static partial class AtomicPatterns {
         SummonUP(path, sm, new BehOptions());
     public static SyncPattern Inode(VTP path, StateMachine? sm) {
         var f = SummonS(path, sm);
-        return sbh => {
+        return new(sbh => {
             sbh.ch.bc.style = "inode";
-            f(sbh);
-        };
+            f.Run(sbh);
+        });
     }
 
     private static SyncHandoff _Summon(SyncHandoff sbh, bool pool, VTP path, StateMachine? sm, BehOptions options) {
@@ -325,21 +365,21 @@ public static partial class AtomicPatterns {
         return sbh;
     }
 
-    public static SyncPattern Summon(VTP path, StateMachine? sm, BehOptions options) => sbh =>
-        _Summon(sbh, true, path, sm, options);
+    public static SyncPattern Summon(VTP path, StateMachine? sm, BehOptions options) => new(sbh =>
+        _Summon(sbh, true, path, sm, options));
 
-    public static SyncPattern SummonUP(VTP path, StateMachine? sm, BehOptions options) => sbh =>
-        _Summon(sbh, false, path, sm, options);
+    public static SyncPattern SummonUP(VTP path, StateMachine? sm, BehOptions options) => new(sbh =>
+        _Summon(sbh, false, path, sm, options));
 
-    public static SyncPattern SummonR(RootedVTP path, StateMachine? sm, BehOptions options) => sbh => {
+    public static SyncPattern SummonR(RootedVTP path, StateMachine? sm, BehOptions options) => new(sbh => {
         sbh.ch.bc.Root(path.root(sbh.GCX));
         _Summon(sbh, true, path.path, sm, options);
-    };
+    });
 
-    public static SyncPattern SummonRUP(RootedVTP path, StateMachine? sm, BehOptions options) => sbh => {
+    public static SyncPattern SummonRUP(RootedVTP path, StateMachine? sm, BehOptions options) => new(sbh => {
         sbh.ch.bc.Root(path.root(sbh.GCX));
         _Summon(sbh, false, path.path, sm, options);
-    };
+    });
 
     public static SyncPattern SummonRZ(StateMachine? sm, BehOptions options) =>
         SummonR(new RootedVTP(0, 0, VTPRepo.Null()), sm, options);
@@ -359,37 +399,37 @@ public static partial class AtomicPatterns {
 
     private static SMRunner WaitForPhase(ICancellee cT) => SMRunner.Cull(Reflector.WaitForPhaseSM, cT)!.Value;
 
-    public static SyncPattern Circ(TP4 color, BPRV2 locScaleAngle) => sbh => {
+    public static SyncPattern Circ(TP4 color, BPRV2 locScaleAngle) => new(sbh => {
         uint id = sbh.GCX.NextID();
         sbh.bc.SummonCirc(sbh, "_", color, DrawerLoc(sbh, locScaleAngle), WaitForPhase(sbh.ch.cT), id);
-    };
-    public static SyncPattern gRelCirc(string behId, TP loc, BPRV2 locScaleAngle, TP4 color) => sbh => {
+    });
+    public static SyncPattern gRelCirc(string behId, TP loc, BPRV2 locScaleAngle, TP4 color) => new(sbh => {
         uint id = sbh.GCX.NextID();
         sbh.bc.SummonCirc(sbh, behId, color, DrawerLoc(sbh, locScaleAngle, loc), WaitForPhase(sbh.ch.cT), id);
-    };
+    });
 
     public static SyncPattern RelCirc(string behId, Func<TExArgCtx, TEx<BehaviorEntity>> beh, BPRV2 locScaleAngle, TP4 color) =>
         gRelCirc(behId, TP(tac => beh(tac).Field(nameof(BehaviorEntity.Location))), locScaleAngle, color);
-    public static SyncPattern Rect(TP4 color, BPRV2 locScaleAngle) => sbh => {
+    public static SyncPattern Rect(TP4 color, BPRV2 locScaleAngle) => new(sbh => {
         uint id = sbh.GCX.NextID();
         sbh.bc.SummonRect(sbh, "_", color, DrawerLoc(sbh, locScaleAngle), WaitForPhase(sbh.ch.cT), id);
-    };
-    public static SyncPattern gRelRect(string behId, TP loc, BPRV2 locScaleAngle, TP4 color) => sbh => {
+    });
+    public static SyncPattern gRelRect(string behId, TP loc, BPRV2 locScaleAngle, TP4 color) => new(sbh => {
         uint id = sbh.GCX.NextID();
         sbh.bc.SummonRect(sbh, behId, color, DrawerLoc(sbh, locScaleAngle, loc), WaitForPhase(sbh.ch.cT), id);
-    };
+    });
 
     public static SyncPattern RelRect(string behId, Func<TExArgCtx, TEx<BehaviorEntity>> beh, BPRV2 locScaleAngle, TP4 color) =>
         gRelRect(behId, TP(tac => beh(tac).Field(nameof(BehaviorEntity.Location))), locScaleAngle, color);
 
     
-    public static SyncPattern Darkness(TP loc, BPY radius, TP4 color) => sbh => {
+    public static SyncPattern Darkness(TP loc, BPY radius, TP4 color) => new(sbh => {
         uint id = sbh.GCX.NextID();
         sbh.bc.SummonDarkness(sbh, "_", loc, radius, color, WaitForPhase(sbh.ch.cT), id);
-    };
+    });
 
     public static SyncPattern PowerAura(PowerAuraOptions options) =>
-        sbh => sbh.bc.SummonPowerAura(sbh, options, sbh.GCX.NextID());
+        new(sbh => sbh.bc.SummonPowerAura(sbh, options, sbh.GCX.NextID()));
     
     /// <summary>
     /// 
@@ -410,7 +450,7 @@ public static partial class AtomicPatterns {
             PowerAuraOption.SFX(sfx),
 
         });
-        return sbh => sbh.bc.SummonPowerAura(sbh, props, sbh.GCX.NextID());
+        return new(sbh => sbh.bc.SummonPowerAura(sbh, props, sbh.GCX.NextID()));
     }
 
     /// <summary>
@@ -431,7 +471,7 @@ public static partial class AtomicPatterns {
             PowerAuraOption.Static(), 
 
         });
-        return sbh => sbh.bc.SummonPowerAura(sbh, props, sbh.GCX.NextID());
+        return new(sbh => sbh.bc.SummonPowerAura(sbh, props, sbh.GCX.NextID()));
     }
 }
 public struct LoopControl<T> {
@@ -447,15 +487,15 @@ public struct LoopControl<T> {
         isClipped = false;
         this.props = props;
         p = props.p;
-        ch = baseCh.TryDerive(props.ScopeAndVars);
+        ch = baseCh.TryDerive(props.Scope);
         parent_index = (props.p_mutater == null) ? ch.gcx.index : (int)props.p_mutater(ch.gcx);
         if (props.resetColor) ch.bc.style = "_";
         if (props.rv2Overrider != null) {
             var orv2 = props.rv2Overrider(ch.gcx);
-            if (ch.gcx.HasGCXVars)
-                ch.gcx.RV2 = orv2;
-            else
+            if (ch.rv2Override != null || !ch.gcx.HasGCXVars)
                 ch.rv2Override = orv2;
+            else
+                ch.gcx.RV2 = orv2;
         }
         if (props.bank != null) {
             var (toZero, banker) = props.bank.Value;
@@ -553,7 +593,7 @@ public struct LoopControl<T> {
         props.timer?.Restart();
         GCX.index = GetFiringIndex(p, parent_index, GCX.i, props.maxTimes);
         //Automatic bindings
-        if (GCX.AutoVars is AutoVars.GenCtx gcxv) {
+        if (GCX.AutoVars is AutoVars.GenCtx gcxv && !GCX.AutovarsAreInherited) {
             if (gcxv.bindArrow is { } bav) {
                 GCX.EnvFrame.Value<float>(bav.axd) = M.HMod(times, GCX.i);
                 GCX.EnvFrame.Value<float>(bav.ayd) = M.HNMod(times, GCX.i);

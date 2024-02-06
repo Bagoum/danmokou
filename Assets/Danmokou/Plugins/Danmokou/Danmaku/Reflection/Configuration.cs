@@ -32,7 +32,7 @@ public static partial class Reflector {
         /// <summary>
         /// Contains all reflectable methods, generic and non-generic, except those tagged as BDSL2Operator.
         /// <br/>Methods are keyed by lowercase method name and may be overloaded.
-        /// <br/>Liftable methods (specifically those returning TEx{TYPE}) are lifted,
+        /// <br/>Liftable methods are *not* lifted,
         ///   and generic methods are non-specialized except when specializations
         ///   are specified via <see cref="GAliasAttribute"/>.
         /// </summary>
@@ -77,7 +77,8 @@ public static partial class Reflector {
         private static void Record(Type repo, Type? returnType, BindingFlags flags) {
             foreach (var m in repo
                          .GetMethods(flags)
-                         .Where(mi => returnType == null || mi.ReturnType == returnType))
+                         .Where(mi => (returnType == null || mi.ReturnType == returnType) 
+                                      && !mi.Attributes.HasFlag(MethodAttributes.SpecialName)))
                 RecordMethod(m);
         }
 
@@ -135,7 +136,7 @@ public static partial class Reflector {
                     var gsig = MethodSignature.Get(mi) as GenericMethodSignature;
                     var rsig = gsig!.Specialize(ga.type);
                     if (addBDSL1 && rsig.Member is TypeMember.Method m) AddMI(ga.alias, m.Mi);
-                    if (addBDSL2) AddBDSL2_Sig(ga.alias, gsig);
+                    if (addBDSL2) AddBDSL2_Sig(ga.alias, rsig);
                     addNormal = false;
                 }
             }
@@ -300,7 +301,7 @@ public static partial class Reflector {
             
             if (!funcInvokeCache.TryGetValue(funcType, out var mi)) {
                 mi = funcInvokeCache[funcType] = funcType.GetMethod("Invoke") ??
-                                            throw new Exception($"No invoke method found for {funcType.ExRName()}");
+                                            throw new Exception($"No invoke method found for {funcType.SimpRName()}");
             }
             return mi.Invoke(func, new[] {arg});
         }

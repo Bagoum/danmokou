@@ -23,13 +23,16 @@ public abstract class TypeMember {
     public abstract string TypeOnlySignature();
     public string AsSignature() => AsSignature((t, _) => t.AsParameter);
     public abstract string AsSignature(Func<Reflector.NamedParam, int, string> paramMod);
+
+    public static TypeMember Make(MemberInfo mi) =>
+        MaybeMake(mi) ?? throw new ArgumentOutOfRangeException(mi.GetType().ToString());
     
-    public static TypeMember Make(MemberInfo mi) => mi switch {
+    public static TypeMember? MaybeMake(MemberInfo mi) => mi switch {
         MethodInfo meth => new Method(meth),
         ConstructorInfo cons => new Constructor(cons),
         PropertyInfo pr => new Property(pr),
         FieldInfo f => new Field(f),
-        _ => throw new ArgumentOutOfRangeException(mi.GetType().ToString())
+        _ => null
     };
 
     public T? MaybeSplitInstance<T>(ref T[] args) where T:class {

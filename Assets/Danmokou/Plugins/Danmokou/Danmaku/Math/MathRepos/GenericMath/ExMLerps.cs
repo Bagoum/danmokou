@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.Linq.Expressions;
 using BagoumLib.Expressions;
+using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
+using Danmokou.Reflection2;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
 using static Danmokou.Expressions.ExMHelpers;
@@ -34,12 +37,6 @@ public static class ExMLerps {
     /// <param name="x">Resulting lerp value</param>
     /// <returns></returns>
     public static tfloat Ratio(tfloat a, tfloat b, tfloat x) => TEx.Resolve(a, _a => x.Sub(a).Div(b.Sub(a)));
-
-    public static TEx<T> TestLookup2<T>(Func<TEx<T>, TEx<T>, TEx<T>> generic, TEx<T> subject1, TEx<T> subject2) 
-        => generic(subject1, subject2);
-    public static TEx<T> TestLookup1<T>(Func<TEx<T>,  TEx<T>> generic, TEx<T> subject1) 
-        => generic(subject1);
-    public static TEx<T> AddTest<T>(TEx<T> x, TEx<T> y) => x.Add(y);
     
     /// <summary>
     /// Lerp between two functions.
@@ -76,15 +73,16 @@ public static class ExMLerps {
     /// </summary>
     public static TEx<T> Lerp01<T>(tfloat controller, TEx<T> f1, TEx<T> f2) =>
         TEx.Resolve<float>(Clamp01(controller), c => c.Mul(f2).Add(((Ex)c).Complement().Mul(f1)));
+    
     /// <summary>
     /// Lerp between two functions with smoothing applied to the controller.
     /// </summary>
-    public static TEx<T> LerpSmooth<T>([LookupMethod] Func<tfloat, tfloat> smoother, 
+    public static TEx<T> LerpSmooth<T>([LookupMethod] TEx<Func<float, float>> smoother, 
         tfloat zeroBound, tfloat oneBound, tfloat controller, TEx<T> f1, TEx<T> f2) 
         => TEx.Resolve(zeroBound, oneBound, controller, (z, o, c) => {
             var rc = VFloat();
             return Ex.Block(new[] {rc},
-                rc.Is(smoother(Clamp(z, o, c).Sub(z).Div(o.Sub(z)))),
+                rc.Is(PartialFn.Execute(smoother, Clamp(z, o, c).Sub(z).Div(o.Sub(z)))),
                 rc.Mul(f2).Add(rc.Complement().Mul(f1))
             );
         });
@@ -247,13 +245,22 @@ public static class ExMLerps {
     /// Apply a ease function on top of a target derivative function that uses time as a controller.
     /// Primarily used for velocity parametrics.
     /// </summary>
-    /// <param name="smoother">Smoothing function (<see cref="ExMEasers"/>)</param>
+    /// <param name="smoother">Name of a float->float smoothing function (<see cref="ExMEasers"/>)</param>
     /// <param name="maxTime">Time over which to perform easing</param>
     /// <param name="f">Target parametric (describing velocity)</param>
     /// <returns></returns>
-    public static Func<TExArgCtx, TEx<T>> EaseD<T>([LookupMethod] Func<tfloat, tfloat> smoother, float maxTime, 
-        Func<TExArgCtx, TEx<T>> f) 
-        => ExMHelpers.EaseD(smoother, maxTime, f, bpi => bpi.t, (bpi, t) => bpi.CopyWithT(t));
+    public static Func<TExArgCtx, TEx<T>> EaseD<T>(string smoother, float maxTime, 
+        Func<TExArgCtx, TEx<T>> f) {
+        var td = TypeDesignation.Dummy.Method(new TypeDesignation.Known(typeof(float)),
+            new TypeDesignation.Known(typeof(float)));
+        var methods = DMKScope.Singleton.FindStaticMethodDeclaration(smoother)?
+            .Where(m => m.SharedType.Unify(td, Unifier.Empty).IsLeft 
+                        && m.ReturnType.IsTExType(out _) && m.Params[0].Type.IsTExType(out _))
+            .ToList();
+        if (methods == null || methods.Count == 0)
+            throw new CompileException($"No smoothing function exists by name '{smoother}'");
+        return ExMHelpers.EaseD(x => methods[0].Invoke(null, x) as TEx<float>, maxTime, f, bpi => bpi.t, (bpi, t) => bpi.CopyWithT(t));
+    }
 
     /// <summary>
     /// Apply a ease function on top of a target function that uses time as a controller.
@@ -262,7 +269,7 @@ public static class ExMLerps {
     /// <param name="maxTime">Time over which to perform easing</param>
     /// <param name="f">Target parametric (describing offset)</param>
     /// <returns></returns>
-    public static Func<TExArgCtx, TEx<T>> Ease<T>([LookupMethod] Func<tfloat, tfloat> smoother, float maxTime, 
+    public static Func<TExArgCtx, TEx<T>> Ease<T>([LookupMethod] Func<TExArgCtx, TEx<Func<float, float>>> smoother, float maxTime, 
         Func<TExArgCtx, TEx<T>> f) 
         => ExMHelpers.Ease(smoother, maxTime, f, bpi => bpi.t, (bpi, t) => bpi.CopyWithT(t));
 
@@ -293,7 +300,8 @@ public static class ExMLerps {
     /// <param name="controller">0-1 value</param>
     /// <returns></returns>
     [Obsolete("Instead of running 'smooth(eiosine, t)', you may simply run 'eiosine(t)'.")]
-    public static tfloat Smooth([LookupMethod] Func<tfloat, tfloat> smoother, tfloat controller) => smoother(controller);
+    public static tfloat Smooth([LookupMethod] TEx<Func<float, float>> smoother, tfloat controller) => 
+        PartialFn.Execute(smoother, controller);
 
     /// <summary>
     /// Apply a contortion to a clamped 0-1 range.
@@ -302,8 +310,8 @@ public static class ExMLerps {
     /// <param name="smoother">Smoothing function (<see cref="ExMEasers"/>)</param>
     /// <param name="controller">0-1 value (clamped if outside)</param>
     /// <returns></returns>
-    public static tfloat SmoothC([LookupMethod] Func<tfloat, tfloat> smoother, tfloat controller) 
-        => smoother(Clamp01(controller));
+    public static tfloat SmoothC([LookupMethod] TEx<Func<float, float>> smoother, tfloat controller) 
+        => PartialFn.Execute(smoother, Clamp01(controller));
 
     /// <summary>
     /// Apply a contortion to a 0-x range, returning:
@@ -319,8 +327,8 @@ public static class ExMLerps {
     /// <param name="controller">0-x value</param>
     /// <returns></returns>
     public static tfloat SmoothIO(
-        [LookupMethod] Func<tfloat, tfloat> smoother1, 
-        [LookupMethod] Func<tfloat, tfloat> smoother2, 
+        [LookupMethod] TEx<Func<float, float>> smoother1, 
+        [LookupMethod] TEx<Func<float, float>> smoother2, 
         tfloat total, tfloat smth1, tfloat smth2, tfloat controller) 
         => TEx.Resolve(total, smth1, smth2, controller,
             (T, s1, s2, t) => Ex.Condition(t.LT(T.Sub(smth2)), 
@@ -331,7 +339,7 @@ public static class ExMLerps {
     /// <summary>
     /// Apply SmoothIO where name=name1=name2 and smth=smth1=smth2.
     /// </summary>
-    public static tfloat SmoothIOe([LookupMethod] Func<tfloat, tfloat> smoother,
+    public static tfloat SmoothIOe([LookupMethod] TEx<Func<float, float>> smoother,
         tfloat total, tfloat smth, tfloat controller) 
         => TEx.Resolve(smth, s => SmoothIO(smoother, smoother, total, s, s, controller));
 
@@ -342,12 +350,12 @@ public static class ExMLerps {
     /// <param name="smoother">Smoothing function (<see cref="ExMEasers"/>)</param>
     /// <param name="controller"></param>
     /// <returns></returns>
-    public static tfloat SmoothLoop([LookupMethod] Func<tfloat, tfloat> smoother, tfloat controller) 
+    public static tfloat SmoothLoop([LookupMethod] TEx<Func<float, float>> smoother, tfloat controller) 
         => TEx.Resolve(controller, x => {
             var per = VFloat();
             return Ex.Block(new[] {per},
                 per.Is(Floor(x)),
-                per.Add(smoother(x.Sub(per)))
+                per.Add(PartialFn.Execute(smoother, x.Sub(per)))
             );
         });
 
@@ -359,13 +367,13 @@ public static class ExMLerps {
     /// <param name="range">Range</param>
     /// <param name="controller">0-R value</param>
     /// <returns></returns>
-    public static tfloat SmoothR([LookupMethod] Func<tfloat, tfloat> smoother, tfloat range, tfloat controller) =>
-        TEx.Resolve(range, r => r.Mul(smoother(controller.Div(r))));
+    public static tfloat SmoothR([LookupMethod] TEx<Func<float, float>> smoother, tfloat range, tfloat controller) =>
+        TEx.Resolve(range, r => r.Mul(PartialFn.Execute(smoother, controller.Div(r))));
     
     /// <summary>
     /// Returns R * SmoothLoop(name, controller/R).
     /// </summary>
-    public static tfloat SmoothLoopR([LookupMethod] Func<tfloat, tfloat> smoother, tfloat range, tfloat controller) =>
+    public static tfloat SmoothLoopR([LookupMethod] TEx<Func<float, float>> smoother, tfloat range, tfloat controller) =>
         TEx.Resolve(range, r => r.Mul(SmoothLoop(smoother, controller.Div(r))));
     
     

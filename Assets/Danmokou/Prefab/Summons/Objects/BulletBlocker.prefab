@@ -99,7 +99,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationMethod: 0
+  rotationMethod:
+    type: 0
+    InVelocityDirection:
+      offset: 0
+    LeanByVelocity:
+      xAxis: 1
+      multiplier: 8
+      rotationOffset: 0
+      rotationLimit: {x: -30, y: 30}
   yPosBopPeriod:
     useConstant: 1
     constVal: 2
@@ -188,7 +196,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   unityCollider: {fileID: 8770508131429639453}
-  affectedStyles: '{ */w }'
+  affectedStyles: '{ "*/w" }'
 --- !u!61 &8770508131429639453
 BoxCollider2D:
   m_ObjectHideFlags: 0

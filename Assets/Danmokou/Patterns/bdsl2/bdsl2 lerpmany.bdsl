@@ -15,9 +15,8 @@ var sm = pattern({
 		paction 0 {
 			sync "arrow-red/w" <> gsr {
 				times(4)
-				center
 				rv2incr(<10>)
-			} s tprot px select(dc, {
+			} doubleflipx doubleflipy s tprot px select(dc, {
 				code(0 + t)
 				2 + t
 				4 + t
@@ -41,4 +40,4 @@ var sm = pattern({
 		}
 	}
 })
-sm
+sm;

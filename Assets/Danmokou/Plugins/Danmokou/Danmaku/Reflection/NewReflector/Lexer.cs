@@ -13,6 +13,21 @@ using UnityEngine;
 using static Mizuhashi.Combinators;
 
 namespace Danmokou.Reflection2 {
+public record LexerMetadata {
+    public readonly List<(PositionRange pos, string text)> Comments = new();
+
+    public void AddComment(Lexer.Token comment) {
+        var c = comment.Content;
+        if (c.StartsWith("///") && c.EndsWith("///"))
+            c = c.Substring(3, c.Length - 6);
+        else if (c.StartsWith("//"))
+            c = c.Substring(2);
+        else //special comment such as <#>
+            return;
+        Comments.Add((comment.Position, c.Trim()));
+    }
+}
+
 /// <summary>
 /// Lexer for BDSL2.
 /// </summary>
@@ -21,8 +36,8 @@ public static class Lexer {
     private const string num = @"[0-9]";
     private const string numMult = @"pi?|[hfsc]";
     private static readonly string[] specialOps = new[] { "\\", "->", "$" };
-    private static readonly string[] keywords = { "function", "hvar", "var", "block", "return", "if", "else", 
-        "while", "for", "continue", "break" };
+    private static readonly string[] keywords = { "function", "const", "hvar", "var", "block", "return", "if", "else", 
+        "while", "for", "continue", "break", "import", "at", "as" };
     private static readonly string[] valueKeywords = new[] { "true", "false", "null" };
     private static readonly HashSet<string> operators = new[] {
         "++", "--",
@@ -77,8 +92,8 @@ public static class Lexer {
             //V2RV2 can have negatives inside num literals, but normal num literals have negatives parsed as operators
             T($@"<((-?{numLiteral})?;(-?{numLiteral})?:){{0,2}}(-?{numLiteral})?>", TokenType.V2RV2),
             
-            //A block comment "fragment" is either a sequence of *s followed by a not-/ character, or a sequence of not-*s.
-            T(@"/\*((\*+[^/])|([^*]+))*\*/", TokenType.Comment),
+            //Block comment: /// comment ///
+            T(@"///([^/]|(/{1,2}[^/]))+///", TokenType.Comment),
             T(@"//[^\n]*", TokenType.Comment),
             //Treating parsing properties as comments for now
             T("<#>[^\n]*", TokenType.Comment),
@@ -278,14 +293,14 @@ public static class Lexer {
     ///  and throwing exceptions if parentheses are unbalanced.
     /// </summary>
     /// <param name="source">Source string</param>
-    /// <returns></returns>
-    public static Token[] Lex(ref string source) => Lex(ref source, out _);
+    /// <param name="metadata">Metadata produced by lexing that is not critical to parsing (eg. comments)</param>
+    public static Token[] Lex(ref string source, out LexerMetadata metadata) => Lex(ref source, out _, out metadata);
     
-    /// <inheritdoc cref="Lex(ref string)"/>
-    public static Token[] Lex(string source) => Lex(ref source, out _);
+    /// <inheritdoc cref="Lex(ref string, out LexerMetadata)"/>
+    public static Token[] Lex(string source) => Lex(ref source, out _, out _);
     
-    /// <inheritdoc cref="Lex(ref string)"/>
-    public static Token[] Lex(ref string source, out InputStream<Token> initialPostProcess) {
+    /// <inheritdoc cref="Lex(ref string, out LexerMetadata)"/>
+    public static Token[] Lex(ref string source, out InputStream<Token> initialPostProcess, out LexerMetadata metadata) {
         source = source.Replace("\r\n", "\n").Replace("\r", "\n");
         var tokens = lexer.Tokenize(source);
         //Combinator postprocessing: consolidate structures such as TypeIdentifier and V2RV2
@@ -295,6 +310,7 @@ public static class Lexer {
         if (result.Status != ResultStatus.OK)
             throw new Exception(stream.ShowAllFailures(result.ErrorOrThrow));
         tokens = result.Result.Value;
+        metadata = new();
         
         //Manual postprocessing: strip whitespace/NLs, balance parens, and add flags
         var processed = new List<Token>();
@@ -323,10 +339,7 @@ public static class Lexer {
                 continue;
             }
             if (t.Type == TokenType.Comment) {
-                //Triple slash on newline ends parsing
-                if (firstNonWSTokenOnLine && t.Content.StartsWith("///"))
-                    break;
-                //Otherwise, skip comments
+                metadata.AddComment(t);
                 continue;
             }
             if (ii > 0 && RequiresWhitespaceSep(t.Type) && RequiresWhitespaceSep(tokens[ii - 1].Type)) {
@@ -398,7 +411,7 @@ public static class Lexer {
                 var rest = openGroupsIndices.Reverse().ToArray();
                 var pos = new Position(Source, open);
                 var sb = new StringBuilder();
-                sb.Append($"{TypePlural.FirstToUpper()}s are not matched correctly:\n");
+                sb.Append($"{TypePlural.FirstToUpper()} are not matched correctly:\n");
                 sb.Append(pos.PrettyPrintLocation(Source));
                 sb.Append($"\nThis opening {Type} is not matched to a closing {Type}.");
                 if (lastClosedGroupIndex.Try(out var g)) {

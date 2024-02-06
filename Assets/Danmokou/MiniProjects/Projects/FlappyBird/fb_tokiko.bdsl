@@ -44,7 +44,6 @@ phase 30
             sync book <> gsr2c (8 + d3d2) {
                 sfx x-fire-burst-1
                 preloop mv =f 1
-                expose { f mv }
             } summon(tprot lerpout 0.5 1 cx 3, stall, { hp 1200 drops3(0,0,0) })
             beh-control persist book batch (> t 1.2 & = s&(mv, 0) 1) {
                 sm _ async star-** <150> gcr2 8 36 <> {

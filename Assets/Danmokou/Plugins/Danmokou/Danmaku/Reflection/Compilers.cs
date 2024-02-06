@@ -42,6 +42,21 @@ public interface IDelegateArg {
     /// </summary>
     public Type Type { get; }
 }
+
+public readonly struct DelegateArg : IDelegateArg {
+    public string Name { get; }
+    public Type Type { get; }
+    private readonly bool isRef;
+    private readonly bool priority;
+    public DelegateArg(string name, Type t, bool isRef=false, bool priority=false) {
+        this.Name = name;
+        this.Type = t;
+        this.isRef = isRef;
+        this.priority = priority;
+    }
+    public TExArgCtx.Arg MakeTExArg(int index) => TExArgCtx.Arg.MakeAny(Type, Name ?? $"$_arg{index+1}", priority, isRef);
+    public ImplicitArgDecl MakeImplicitArgDecl() => new ImplicitArgDecl(default, Type, Name!);
+}
 public readonly struct DelegateArg<T> : IDelegateArg {
 
     public string Name { get; }
@@ -92,6 +107,7 @@ public static class CompilerHelpers {
 
     public static ReadyToCompileExpr<D> PrepareDelegate<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate {
         //Implicitly add an EnvFrame argument if ParametricInfo or GCX is present
+        //Implicitly add a ParametricInfo argument if GCX is present
         Ex? bpiArg = null;
         Ex? gcxArg = null;
         var hasEFArg = false;
@@ -106,6 +122,8 @@ public static class CompilerHelpers {
             else if (gcxArg != null)
                 args = args.Append(TExArgCtx.Arg.MakeFromTEx("ef", new TExGCX(gcxArg).EnvFrame, false)).ToArray();
         }
+        if (bpiArg is null && gcxArg != null)
+            args = args.Append(TExArgCtx.Arg.MakeFromTEx("gcx_bpi", new TExPI(new TExGCX(gcxArg).bpi), true)).ToArray();
         var tac = new TExArgCtx(args);
         return new(exConstructor(tac), tac, args);
     }
@@ -136,15 +154,6 @@ public static class CompilerHelpers {
     public static readonly GenericMethodSignature CompileDelegateMeth = (GenericMethodSignature)
         MethodSignature.Get(typeof(CompilerHelpers).GetMethod(nameof(CompileDelegate))!);
 
-    //Note: while there is a theoretical overhead to deriving the return type at runtime,
-    // this function is not called particularly often, so it's not a bottleneck.
-    public static D CompileDelegateFromString<D>(string func, params IDelegateArg[] args) where D : Delegate {
-        var returnType = typeof(D).GetMethod("Invoke")!.ReturnType;
-        var exType = Reflector.Func2Type(typeof(TExArgCtx), typeof(TEx<>).MakeGenericType(returnType));
-        
-        return PrepareDelegate<D>((func.Into(exType) as Func<TExArgCtx, TEx>)!, args).Compile();
-    }
-    
     #endregion
 
 }
@@ -163,6 +172,10 @@ public static class Compilers {
     [Fallthrough]
     [ExpressionBoundary]
     public static TP3 TP3(ExTP3 ex) => PrepareDelegateBPI<TP3>(ex).Compile();
+
+    [DontReflect]
+    [ExpressionBoundary]
+    public static TP3 TP3FromVec2(ExTP ex) => PrepareDelegateBPI<TP3>(tac => ExMV3.TP3(ex(tac))).Compile();
 
     [Fallthrough]
     [ExpressionBoundary]
@@ -245,23 +258,18 @@ public static class Compilers {
     [Fallthrough]
     [ExpressionBoundary]
     public static GCXF<T> GCXF<T>(Func<TExArgCtx, TEx<T>> ex) {
-        //We don't make a BPI variable, instead it is assigned in the _Fake method.
-        // This is because gcx.BPI is a property that creates a random ID every time it is called, which we don't want.
-        return PrepareDelegate<GCXF<T>>(tac => GCXFRepo._Fake(ex)(tac), GCXFArgs).Compile();
+        return PrepareDelegate<GCXF<T>>(ex, GCXFArgs).Compile();
     }
     
     [ExpressionBoundary]
-    public static ErasedGCXF ErasedGCXF<T>(Func<TExArgCtx, TEx<T>> ex) {
-        //We don't make a BPI variable, instead it is assigned in the _Fake method.
-        // This is because gcx.BPI is a property that creates a random ID every time it is called, which we don't want.
-        return PrepareDelegate<ErasedGCXF>(tac => Ex.Block(GCXFRepo._Fake(ex)(tac), Ex.Empty()), 
-            GCXFArgs).Compile();
+    public static ErasedGCXF ErasedGCXF(Func<TExArgCtx, TEx> ex) {
+        return PrepareDelegate<ErasedGCXF>(ex, GCXFArgs).Compile();
     }
     
     
     [ExpressionBoundary]
-    public static ErasedParametric ErasedParametric<T>(Func<TExArgCtx, TEx<T>> ex) => 
-        PrepareDelegateBPI<ErasedParametric>(tac => Ex.Block(ex(tac), Ex.Empty())).Compile();
+    public static ErasedParametric ErasedParametric(Func<TExArgCtx, TEx> ex) => 
+        PrepareDelegateBPI<ErasedParametric>(ex).Compile();
 
     #endregion
 

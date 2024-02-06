@@ -35,6 +35,8 @@ public class GameUniqueReferences : ScriptableObject {
     public SOPrefabs[] summonables = null!;
     public SOTextAssets[] fileStateMachines = null!;
     public NamedTextAsset[] licenses = null!;
+    [Tooltip("List of BDSL2 scripts that can be imported by other scripts.")]
+    public NamedTextAsset[] importableScripts = {};
 #if UNITY_EDITOR
     [Tooltip("List of folders containing .bdsl script files. Used for IL2CPP compilation.")]
     public string[] scriptFolders = null!;

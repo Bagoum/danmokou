@@ -25,25 +25,20 @@ public class ExCodeGenTests {
     [Test]
     public void TestPrivateHoist() {
         GameManagement.NewInstance(InstanceMode.NULL, InstanceFeatures.InactiveFeatures);
-        var ex = "sine 13h 0.4 + * 13 pi / p ^ dl 1.2".Into<Func<TExArgCtx, TEx<float>>>();
-        var exc = GCXFRepo._Fake(ex);
-        var _gcx = TExArgCtx.Arg.Make<GenCtx>("gcx", true);
-        var tac = new TExArgCtx(_gcx);
-        exc(tac).BakeAndCompile<GCXF<float>>(tac, _gcx.expr);
-            
-        var ex2 = @"sync sun-red/w <2;:> gsr {
-	start gcxVar =v2 pxy(1, 2)
-} s offset
-	:: {
-		letVar1 0
-		letVar2 (-1 + &letVar1)
-	} px &letVar2
-	:: {
-		letVar1 [&gcxVar].x
-		letVar2 (1 + &letVar1)
-	} pxy
-		@0 publicVar
-		ss0 &letVar2".Into<StateMachine>();
+        var ex = "sine(13h, 0.4, 13 * pi + p / dl ^ 1.2)".Into<GCXF<float>>();
+        var ex2 = @"sync 'sun-red/w' <2;:> gsr {
+	start b{ 
+        hvar gcxVar = pxy(1, 2)
+    }
+} s offset b{
+    var letVar1 = 0
+	var letVar2 = (-1 + letVar1)
+    px(letVar2)
+} b{
+	var letVar1 = gcxVar.x
+	var letVar2 = (1 + letVar1)
+    pxy load0('publicVar') ss0(letVar2)
+}".Into<StateMachine>();
         //var s = BakeCodeGenerator.Generated;
 
     }

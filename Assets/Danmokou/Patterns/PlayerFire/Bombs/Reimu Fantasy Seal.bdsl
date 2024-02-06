@@ -1,0 +1,102 @@
+<#> bdsl2
+const var id = "reimu_bomb_fantasy_seal";
+const var did = "." + id;
+const var savet1 = "temp1" + did;
+
+const function join(a::string, b::string) {
+	return a + b;
+}
+const function idify(name)::string {
+	return join(name, did);
+}
+const var colors::string[] = { "red", "green", "yellow", "blue" };
+const var tOffset = 4.0;
+
+gtr {
+	//start $id =f 1
+} {
+	sfx "mokou-thousandsuns"
+	_ time(0.4) sfx "mima-blackhole"
+	draiko 1 4
+	gtr {
+		delay 3.7s
+	} {
+		screenclear
+		sfx "x-boom-2"
+		draiko 1.7 3
+	}
+	wait(time(7))
+	async "gdlaser2c-red;black/b" <> gcr2 12 12 <> {
+		circle
+		root zero
+		p this
+	} laser nroffset Lplayer (3.7 - 12f * p) 3 {
+		dsfx
+		s 1
+		stagger 0.24
+		dynamic polar(
+			2 * t,
+			(40 * (lt + st)) + sine(2.1, 15, 3 * lt - t))
+		player(6, 30, 20, "oh1-red")
+		tint(rgba(1, 1, 1, 2))
+		varlength(6, 3 * t)
+	}
+	poolcontrol  idify("p-gglcircle-black/w") tint rgba(1, 1, 1, 0)
+	poolcontrol({ { idify("p-gglcircle-*/w") },  colors }, tint rgba(1, 1, 1, 2))
+	bulletcontrol persist idify("p-empty") exec(b{
+		&ldelta::v2 = accdelta
+	}, t < &tOffset)
+	bulletcontrol persist idify("p-gglcircle-black/w") oncollide _
+		gtr {
+		} {
+			// i don't like this but there isn't a good way to compare a GCX value to a bullet-control pred internal
+			savef savet1 &group 1
+			bulletcontrol persist { { idify("p-gglcircle-*/w") }, &colors } softcull("cwheel-black/b", (&group > -1) & load(savet1, &group) == 1)
+			sfx "reimu-fantasyseal-onhit"
+			draiko 1.6 2.2
+			sync idify("gglcircle-*/w") <0.2;:> gsr2c 20 {
+				start b{
+					hvar group::float = -1
+				}
+				color &colors
+				offset angle(rand(0, 360))
+			} simple tprot px lerpt(0.2, 0.5, 4.5, 3) {
+				player 0 0 "null"
+				scale(lerpt(0, 0.7, 2, 1.2))
+			}
+		}
+	async idify("gglcircle-*/w") <> gcr {
+		 root zero
+		 p this
+		 preloop b{
+			hvar group = i
+			hvar ldelta::v2 = px(0)
+		 }
+		 bindLR
+		 wait(24)
+		 times(6)
+		 savef({ (h(savet1), gcxf(&group), gcxf(0)) })
+	} playerguideempty(did, p, { (join(id, "loc"), code(loc)),  (join(id, "dir"), code(dir)) }, { }, 
+	switch(t < tOffset, 
+		roffset(
+			Lplayer + tp(qrotate(pxy(lerp3(0, 1.2, 2.4, 4, t + st, 20, 60, 0), lerp(1.8, 4.3, t + st, 50, 0)), 
+									rx(lerpsmooth($(eoutsine), 0, 1, t, 0.5, 2.2), 90 + 350 * (t + st) + 60 * p)))),
+		nrvelocity(truerotatelerprate(lerp(0.4, 0.6, t - tOffset, 400, 30), &ldelta::v2 * 1s, LNearestEnemy - loc) * lerp3(0, 0.1, 0.2, 0.4, t - tOffset, 1, 0.2, 0.8))),
+	{
+		gsr {
+			color { "black" }
+		} simple dtpoffset join(id, "loc") join(id, "dir") p zero {
+			player 900 700 "null"
+			scale 2
+		}
+		gsr2c 4 {
+			p add
+			color colors
+		} simple dtpoffset join(id, "loc") join(id, "dir") p1
+			rotate(0, pxy(sine(1, .3, t / (0.5 + 0.04 * p2) + 1h * p2), cosine(1, .3, t / (0.5p - 0.06 * p2) + 1h * p2 - 2))) {
+				player 0 0 "null"
+				scale 1.6
+		}
+	})
+
+}

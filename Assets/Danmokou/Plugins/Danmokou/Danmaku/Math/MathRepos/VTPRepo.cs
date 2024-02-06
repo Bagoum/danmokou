@@ -221,6 +221,7 @@ public static class VTPRepo {
     /// <br/>You can use this to smoothly switch from offset to velocity equations,
     /// but switching from velocity to offset will give you strange results. 
     /// </summary>
+    [Alias("switch")]
     public static ExVTP If(ExPred cond, ExVTP ifTrue, ExVTP ifFalse) => tac =>
         Ex.Condition(cond(tac), ifTrue(tac), ifFalse(tac));
 

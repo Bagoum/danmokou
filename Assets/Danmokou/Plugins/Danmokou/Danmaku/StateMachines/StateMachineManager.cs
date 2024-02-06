@@ -1,17 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Danmokou.Core;
 using Danmokou.Reflection2;
 using Danmokou.Services;
 using JetBrains.Annotations;
 using UnityEngine;
+using Helpers = Danmokou.Reflection2.Helpers;
 
 namespace Danmokou.SM {
 
 public class LoadedStateMachine {
     public StateMachine? SM { get; set; } = null;
+    public EnvFrame? ScriptEF { get; set; } = null;
     //As of DMK v10.1 it is possible to preserve state machines and reflected objects between scenes.
     // However, it is generally good hygeine to destroy them in order to prevent hanging allocations.
     public bool Preserve { get; set; } = false;
@@ -29,7 +33,8 @@ public static class StateMachineManager  {
     static StateMachineManager() {
         if (!Application.isPlaying) return;
         foreach (var sm in GameManagement.References.fileStateMachines.SelectMany(x => x.assetGroups)
-            .SelectMany(x => x.assets)) {
+            .SelectMany(x => x.assets)
+            .Concat(GameManagement.References.importableScripts)) {
             SMFileByName[sm.name] = sm.file;
             //Don't load SMs on init
         }
@@ -60,8 +65,9 @@ public static class StateMachineManager  {
     public static void ClearCachedSMs() {
         foreach (var lsm in SMMapByFile.Values)
             if (!lsm.Preserve) {
-                (lsm.SM as EnvFrameAttacher)?.EnvFrame?.Free();
                 lsm.SM = null;
+                lsm.ScriptEF?.Free();
+                lsm.ScriptEF = null;
             }
     }
     
@@ -103,17 +109,51 @@ public static class StateMachineManager  {
     private static readonly string topLevelLock = "";
     public static StateMachine FromText(int id, string text, string name) {
         lock (topLevelLock) {
-        var lsm = GetLSM(id);
+            var lsm = GetLSM(id);
             if (lsm.SM == null) {
                 try {
-                    lsm.SM = StateMachine.CreateFromDump(text);
+                    lsm.SM = StateMachine.CreateFromDump(text, out var ef);
+                    lsm.ScriptEF = ef;
                 } catch (Exception e) {
                     Logs.DMKLogs.Error(e, $"Failed to parse StateMachine from text file `{name}`.");
                     throw;
                 }
             }
-            return lsm.SM;
+            return lsm.SM ?? throw new Exception($"Couldn't load StateMachine from text file `{name}`");
         }
     }
+
+    private static readonly Stack<string> importStack = new();
+
+    public static EnvFrame LoadImport(string name) {
+        if (!SMFileByName.TryGetValue(name, out var txt) || txt == null)
+            throw new Exception($"No SM is loaded with the name `{name}`.");
+        var lsm = GetLSM(txt.GetInstanceID());
+        //Imported files don't actually have to compile to StateMachine. We only need the EnvFrame and its scope.
+        if (lsm.ScriptEF == null) {
+            if (importStack.Contains(name)) {
+                var sb = new StringBuilder();
+                sb.Append(
+                    $"There is a circular import for `{name}`. Circular imports are not permitted. The import stack is as follows:\n{name}");
+                foreach (var x in importStack) {
+                    sb.Append($"\nis imported by {x}");
+                    if (x == name) break;
+                }
+                throw new Exception(sb.ToString());
+            }
+            importStack.Push(name);
+            try {
+                lsm.ScriptEF = Helpers.ParseAndCompileErased(txt.text);
+            } catch (Exception e) {
+                Logs.DMKLogs.Error(e, $"Failed to parse import from text file `{name}`.");
+                throw;
+            } finally {
+                importStack.Pop();
+            }
+        }
+        return lsm.ScriptEF;
+    }
+    
+    
 }
 }

@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using BagoumLib.Expressions;
 using BagoumLib.Functional;
+using BagoumLib.Reflection;
 using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.Danmaku.Patterns;
@@ -23,7 +24,16 @@ public enum ScopedConversionKind {
     /// A conversion method that compiles an expression and thus creates a local scope, and which
     ///  should treat any local declarations (var) as within Ex.Block scope.
     /// </summary>
-    ScopedExpression,
+    BlockScopedExpression,
+    
+    /// <summary>
+    /// A conversion method that compiles an expression and thus creates a local scope, and which
+    ///  should use environment frames to instantiate scopes.
+    /// <br/>Because this incurs high garbage/computational overhead in repeated invocations of compiled expressions,
+    ///  this is only used for GCXF of StateMachine, AsyncPattern, and SyncPattern, where it is necessary.
+    /// </summary>
+    EFScopedExpression,
+    
     /// <summary>
     /// A conversion method not interfacing with expressions, such as GenCtxProperty[] to GenCtxProperties{X}.
     /// </summary>
@@ -43,23 +53,48 @@ public interface IScopedTypeConverter : IImplicitTypeConverter {
     ScopedConversionKind Kind { get; }
 }
 
+public interface ITypeConvWithInstance : IImplicitTypeConverter {
+    TypeDesignation.Dummy SharedMethodType { get; }
+    void UpdateNextInstance(IImplicitTypeConverterInstance next);
+    public class Instance : IImplicitTypeConverterInstance {
+        public ITypeConvWithInstance Converter { get; }
+        public TypeDesignation.Dummy MethodType { get; }
+        /// <inheritdoc/>
+        public TypeDesignation.Variable[] Generic { get; }
+        IImplicitTypeConverter IImplicitTypeConverterInstance.Converter => Converter;
+
+        public Instance(ITypeConvWithInstance conv) {
+            Converter = conv;
+            MethodType = conv.SharedMethodType.RecreateVariablesD();
+            Generic = MethodType.GetVariables().Distinct().ToArray();
+        }
+
+        public void MarkUsed() {
+            if (Generic.Length > 0)
+                Converter.UpdateNextInstance(new Instance(Converter));
+        }
+
+        public IRealizedImplicitCast Realize(Unifier u) => new RealizedImplicitCast(this, u);
+    }
+}
+
 /// <summary>
 /// Implicit type conversion for non-generic types.
 /// </summary>
-public abstract class FixedImplicitTypeConv : IScopedTypeConverter, IImplicitTypeConverterInstance {
+/// Note: even if the type is non-generic, usage of "implicitly generic" tex types, such as
+///  Func&lt;TExArgCtx, TEx&gt;, can result in the method type having variables.
+public abstract class FixedImplicitTypeConv : IScopedTypeConverter, ITypeConvWithInstance {
     /// <inheritdoc/>
     public abstract TypeDesignation.Dummy MethodType { get; }
-    //since we are not using generics, we don't need to handle instances
-    public TypeDesignation.Variable[] Generic { get; } = Array.Empty<TypeDesignation.Variable>();
+    TypeDesignation.Dummy ITypeConvWithInstance.SharedMethodType => MethodType;
     public IDelegateArg[]? ScopeArgs { get; init; }
     public ScopedConversionKind Kind { get; init; } = ScopedConversionKind.Trivial;
     public IImplicitTypeConverter Converter => this;
-    public IImplicitTypeConverterInstance NextInstance => this;
-
-    public IRealizedImplicitCast Realize(Unifier u) => new RealizedImplicitCast(this, u);
+    //todo: this must be constructed in inheriting type constructors so they have their instances ready
+    public IImplicitTypeConverterInstance NextInstance { get; protected set; } = null!;
+    public void UpdateNextInstance(IImplicitTypeConverterInstance next) => NextInstance = next;
 
     public abstract TEx Convert(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac);
-    public void MarkUsed() { }
 }
 /// <summary>
 /// Implicit type conversion from type T to type R.
@@ -69,41 +104,52 @@ public class FixedImplicitTypeConv<T, R> : FixedImplicitTypeConv {
         TypeDesignation.Dummy.Method(
             TypeDesignation.FromType(typeof(R)),
             TypeDesignation.FromType(typeof(T)));
-    
-    private readonly Either<Expression<Func<T, R>>, Func<Func<TExArgCtx, TEx>, Func<TExArgCtx, TEx<R>>>> converter;
+
+    private record ConvMethod {
+        public record DirectFunc(Expression<Func<T, R>> Conv) : ConvMethod {
+            public Func<T, R> ConstConv { get; } = Conv.Compile();
+        }
+
+        public record TacGeneratedFunc(Func<Func<TExArgCtx, TEx>, Func<TExArgCtx, TEx<R>>> Conv) : ConvMethod;
+    }
+    private readonly ConvMethod convMethod;
 
     protected FixedImplicitTypeConv(Expression<Func<T, R>> converter) {
-        this.converter = converter;
+        this.convMethod = new ConvMethod.DirectFunc(converter);
+        NextInstance = new ITypeConvWithInstance.Instance(this);
     }
-    protected FixedImplicitTypeConv(Func<Func<TExArgCtx, TEx>, Func<TExArgCtx, TEx<R>>> converter) {
-        this.converter = converter;
+    public FixedImplicitTypeConv(Func<Func<TExArgCtx, TEx>, Func<TExArgCtx, TEx<R>>> converter) {
+        this.convMethod = new ConvMethod.TacGeneratedFunc(converter);
+        NextInstance = new ITypeConvWithInstance.Instance(this);
     }
 
     public static FixedImplicitTypeConv<T,R> FromFn(Expression<Func<T, R>> converter) =>
         new(converter);
-    
-    
-    public static FixedImplicitTypeConv<T,R> FromEx(Func<Func<TExArgCtx, TEx>, Func<TExArgCtx, TEx<R>>> converter) =>
-        new(converter);
-
     public override TEx Convert(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac) {
-        if (converter.TryL(out var cl))
-            return (TEx<R>)new ReplaceParameterVisitor(cl.Parameters[0], castee(tac)).Visit(cl.Body);
-        else
-            return converter.Right(castee)(tac);
+        if (convMethod is ConvMethod.DirectFunc dc) {
+            var content = castee(tac);
+            if ((Ex)content is ConstantExpression { Value: T obj })
+                return (TEx<R>)Ex.Constant(dc.ConstConv(obj), typeof(R));
+            else
+                return (TEx<R>)new ReplaceParameterVisitor(dc.Conv.Parameters[0], castee(tac)).Visit(dc.Conv.Body);
+        } else if (convMethod is ConvMethod.TacGeneratedFunc tgf) {
+            return tgf.Conv(castee)(tac);
+        } else
+            throw new ArgumentOutOfRangeException(convMethod.GetType().RName());
     }
 }
 
-public abstract record GenericTypeConv1 : IScopedTypeConverter {
-    public IImplicitTypeConverterInstance NextInstance { get; private set; }
-    private TypeDesignation.Dummy SharedMethodType { get; }
+public abstract record GenericTypeConv1 : IScopedTypeConverter, ITypeConvWithInstance {
+    public TypeDesignation.Dummy SharedMethodType { get; }
     public IDelegateArg[]? ScopeArgs { get; init; }
     public ScopedConversionKind Kind { get; init; } = ScopedConversionKind.Trivial;
     private static readonly Dictionary<Type, MethodInfo> converters = new();
     private static readonly MethodInfo mi = typeof(GenericTypeConv1).GetMethod(nameof(Convert))!;
+    public IImplicitTypeConverterInstance NextInstance { get; private set; }
+    public void UpdateNextInstance(IImplicitTypeConverterInstance next) => NextInstance = next;
     protected GenericTypeConv1(TypeDesignation.Dummy SharedMethodType) {
         this.SharedMethodType = SharedMethodType;
-        this.NextInstance = new Instance(this);
+        NextInstance = new ITypeConvWithInstance.Instance(this);
     }
 
     public abstract TEx<T> Convert<T>(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac);
@@ -113,23 +159,6 @@ public abstract record GenericTypeConv1 : IScopedTypeConverter {
         return (TEx)conv.Invoke(this, new object[] { ast, castee, tac });
     }
 
-    private class Instance : IImplicitTypeConverterInstance {
-        public GenericTypeConv1 Converter { get; }
-        public TypeDesignation.Dummy MethodType { get; }
-        /// <inheritdoc/>
-        public TypeDesignation.Variable[] Generic { get; }
-        IImplicitTypeConverter IImplicitTypeConverterInstance.Converter => Converter;
-
-        public Instance(GenericTypeConv1 conv) {
-            Converter = conv;
-            MethodType = conv.SharedMethodType.RecreateVariablesD();
-            Generic = MethodType.GetVariables().Distinct().ToArray();
-        }
-
-        public void MarkUsed() => Converter.NextInstance = new Instance(Converter);
-
-        public IRealizedImplicitCast Realize(Unifier u) => new RealizedImplicitCast(this, u);
-    }
 }
 
 /// <summary>
@@ -142,20 +171,25 @@ public record SingletonToArrayConv() : GenericTypeConv1(SharedType) {
     }
     private static readonly TypeDesignation.Dummy SharedType = MakeSharedTypeSingleton();
 
-    public override TEx<T> Convert<T>(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac) =>
-        Ex.NewArrayInit(typeof(T), castee(tac));
+    public override TEx<T> Convert<T>(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac) {
+        var content = castee(tac);
+        if ((Ex)content is ConstantExpression { Value: T obj })
+            return Ex.Constant(new[] { obj });
+        else
+            return Ex.NewArrayInit(typeof(T), castee(tac));
+    }
 }
 
 /// <summary>
 /// Implicit converter that uses a method to convert an input into an output.
 /// </summary>
 public class MethodConv1 : FixedImplicitTypeConv {
-    public override TypeDesignation.Dummy MethodType { get; }
+    public override TypeDesignation.Dummy MethodType => Mi.SharedType;
     public MethodSignature Mi { get; }
     public MethodConv1(MethodSignature Mi) {
         this.Mi = Mi;
         this.Kind = Mi.ImplicitTypeConvKind;
-        MethodType = Mi.SharedType;
+        NextInstance = new ITypeConvWithInstance.Instance(this);
     }
 
     public override TEx Convert(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac) =>
@@ -178,15 +212,15 @@ public record GenericMethodConv1 : GenericTypeConv1 {
 }
 
 
-// TODO envframe when removing constanttoexprconv, this should continue, but not use ex.constant
+
 public class AttachEFSMConv : FixedImplicitTypeConv<StateMachine, StateMachine> {
     public AttachEFSMConv() : base(sm => tac => EnvFrameAttacher.attachSM.Of(sm(tac), tac.EnvFrame)) { }
 }
 
-public class AttachEFAPConv : FixedImplicitTypeConv<AsyncPattern, Func<TExArgCtx, TEx<AsyncPattern>>> {
+public class AttachEFAPConv : FixedImplicitTypeConv<AsyncPattern, AsyncPattern> {
     public AttachEFAPConv() : base(ap => tac => EnvFrameAttacher.attachAP.Of(ap(tac), tac.EnvFrame)) { }
 }
-public class AttachEFSPConv : FixedImplicitTypeConv<SyncPattern, Func<TExArgCtx, TEx<SyncPattern>>> {
+public class AttachEFSPConv : FixedImplicitTypeConv<SyncPattern, SyncPattern> {
     public AttachEFSPConv() : base(sp => tac => EnvFrameAttacher.attachSP.Of(sp(tac), tac.EnvFrame)) { }
 }
 

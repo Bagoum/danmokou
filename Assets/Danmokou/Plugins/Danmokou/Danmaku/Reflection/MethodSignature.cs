@@ -9,12 +9,118 @@ using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Reflection2;
 using Ex = System.Linq.Expressions.Expression;
+using MethodCall = Danmokou.Reflection2.AST.MethodCall;
 
 namespace Danmokou.Reflection {
+
+
+    //this doesn't implement IMethodDesignation because we don't want it to report TypeDesignation at this level,
+    // as that would result in all invocations of the same method sharing the same type variables
+    //instead, TypeDesignation is copied at the InvokedMethod level, preventing cross-contamination
+    public interface IMethodSignature {
+        /// <summary>
+        /// Get a representation of this method's type. This should not directly be used for unification, as
+        ///  its variable types should not be shared between all invocations.
+        ///  Call <see cref="TypeDesignation.RecreateVariables"/> before using for unification.
+        /// <br/>Note that lifted methods do NOT return a lifted type here. The types here are *unlifted*
+        ///  over the TExArgCtx->TEx&lt;&gt; functor.
+        /// <br/>Note that instance methods should prepend the instance type at the beginning of the argument array.
+        /// </summary>
+        TypeDesignation.Dummy SharedType { get; }
+        
+        /// <summary>
+        /// The parameters of the method signature.
+        /// </summary>
+        Reflector.NamedParam[] Params { get; }
+
+        /// <summary>
+        /// True if this is a fallthrough method (BDSL1 only).
+        /// </summary>
+        bool IsFallthrough => false;
+
+        /// <summary>
+        /// True if this method is a constructor.
+        /// </summary>
+        bool IsCtor => false;
+        
+        /// <summary>
+        /// True if this is a static method.
+        /// </summary>
+        bool IsStatic { get; }
+        
+        /// <summary>
+        /// The return type of this method.
+        /// <br/>Lifted methods return a lifted return type.
+        /// </summary>
+        Type ReturnType { get; }
+        
+        /// <summary>
+        /// The type declaring this method.
+        /// </summary>
+        Type? DeclaringType { get; }
+        
+        /// <summary>
+        /// Show the signature of this method.
+        /// </summary>
+        string AsSignature { get; }
+        string AsSignatureWithParamMod(Func<Reflector.NamedParam, int, string> paramMod);
+        
+        /// <summary>
+        /// Show the signature of this method, only including types and not names.
+        /// </summary>
+        string TypeOnlySignature { get; }
+
+        Reflector.InvokedMethod Call(string? calledAs);
+
+        /// <summary>
+        /// Get an attribute defined on the method.
+        /// </summary>
+        T? GetAttribute<T>() where T : Attribute;
+
+        /// <summary>
+        /// Invoke this method. If this is an instance method, the instance should be the first argument of `args`.
+        /// </summary>
+        object? Invoke(MethodCall? ast, object?[] args);
+        
+        /// <summary>
+        /// Invoke this method. If this is an instance method, the instance should be the first argument of `args`.
+        /// </summary>
+        Expression InvokeEx(MethodCall? ast, params Expression[] args);
+        
+        /// <summary>
+        /// Return the invocation of this method as an expression node,
+        /// but if all arguments are constant, then instead call the method and wrap it in Ex.Constant.
+        /// </summary>
+        public Expression InvokeExIfNotConstant(MethodCall? ast, params Expression[] args) {
+            for (int ii = 0; ii < args.Length; ++ii)
+                if (args[ii] is not ConstantExpression)
+                    return InvokeEx(ast, args);
+            return Expression.Constant(Invoke(ast, args.Select(a => ((ConstantExpression)a).Value).ToArray()));
+        }
+
+        /// <summary>
+        /// If this method is defined in a file, make a link to the file.
+        /// </summary>
+        string? MakeFileLink(string typName);
+
+        /// <summary>
+        /// (Informational) The name of the type declaring this method.
+        /// </summary>
+        string TypeName { get; }
+        
+        /// <summary>
+        /// (Informational) The name of this method.
+        /// </summary>
+        /// <returns></returns>
+        string Name { get; }
+    }
+
+
+
     /// <summary>
     /// An annotated method signature. This may be for a static/instance function, constructor, field, or property.
     /// </summary>
-    public record MethodSignature : Reflector.IMethodSignature {
+    public record MethodSignature : IMethodSignature {
         private static readonly Dictionary<MemberInfo, MethodSignature> globals = new();
         /// <summary>Executable information for the method/constructor/field/property.</summary>
         public TypeMember Member { get; init; }
@@ -27,11 +133,6 @@ namespace Danmokou.Reflection {
         public Dictionary<Type, TypeDesignation.Variable> GenericTypeMap { get; private set; }
         /// <inheritdoc cref="IGenericMethodSignature.SharedGenericTypes"/>
         public TypeDesignation.Variable[] SharedGenericTypes { get; init; } = Array.Empty<TypeDesignation.Variable>();
-
-        /// <summary>
-        /// If this is a partially applied method, then this contains the number of arguments provided.
-        /// </summary>
-        public int? PartialArgs { get; protected init; } = null;
 
         protected MethodSignature(TypeMember Member, Reflector.NamedParam[] Params) {
             this.Member = Member;
@@ -47,9 +148,22 @@ namespace Danmokou.Reflection {
                         { RestrictedTypes = typeRestrs.TryGetValue(i, out var v) ? v : null })
                     .ToArray();
             }
-            SharedType =
-                TypeDesignation.FromMethod(ReturnType.MaybeUnwrapTExOrTExFuncType(), 
-                    Params.Select(p => p.Type.MaybeUnwrapTExOrTExFuncType()), GenericTypeMap);
+            TypeDesignation DesignationForWrappedType(Type t) {
+                if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Func<,>)) {
+                    var gargs = t.GetGenericArguments();
+                    if (gargs[0] == typeof(TExArgCtx))
+                        return DesignationForWrappedType(gargs[1]);
+                } else if (t == typeof(TEx))
+                    //"void-typed" tex- use a variable
+                    return new TypeDesignation.Variable();
+                else if (t.IsTExType(out var inner))
+                    //typed tex- use the type
+                    return TypeDesignation.FromType(inner, GenericTypeMap);
+                return TypeDesignation.FromType(t, GenericTypeMap);
+            }
+            
+            SharedType = TypeDesignation.Dummy.Method(DesignationForWrappedType(ReturnType), 
+                    Params.Select(p => DesignationForWrappedType(p.Type)).ToArray());
         }
         public bool IsFallthrough { get; init; } = false;
         public string TypeName => Member.TypeName;
@@ -81,30 +195,16 @@ namespace Danmokou.Reflection {
         public T? GetAttribute<T>() where T : Attribute => Member.GetAttribute<T>();
 
         /// <summary>
-        /// Make a function of N arguments take only `args` arguments, by storing the remaining arguments in a lambda.
-        /// <br/>eg. for a function (a,b,c,d,e)->f, calling PartiallyApply(2) would return a function
-        /// of form (a,b)->Func&lt;c,d,e,f&gt;.
-        /// </summary>
-        public virtual MethodSignature PartiallyApply(int args) => this with {
-                PartialArgs = args,
-                SharedType = SharedType.PartialApplyToFunc(args)
-            };
-
-        /// <summary>
         /// Invoke the method with the provided arguments.
         /// </summary>
-        public virtual object? Invoke(Reflection2.AST.MethodCall? ast, params object?[] args) =>
-            PartialArgs is { } pargs ?
-                LambdaHelpers.MakePartialFunc(Params.Length - pargs, ast, this, PartiallyAppliedFnTypeArgs(pargs, Params, ReturnType), args) :
-                Member.Invoke(args);
+        public virtual object? Invoke(MethodCall? ast, params object?[] args) =>
+            Member.Invoke(args);
         
         /// <summary>
         /// Return the invocation of this method as an expression node.
         /// </summary>
-        public virtual Ex InvokeEx(Reflection2.AST.MethodCall? ast, params Ex[] args) =>
-            PartialArgs is { } pargs ?
-                throw new NotImplementedException("invoke ex partial") :
-                Member.InvokeEx(args);
+        public virtual Ex InvokeEx(MethodCall? ast, params Ex[] args) =>
+            Member.InvokeEx(args);
 
         public string? MakeFileLink(string typName) =>
             Member.BaseMi.DeclaringType!.GetCustomAttribute<ReflectAttribute>(false)?.FileLink(typName);
@@ -114,10 +214,18 @@ namespace Danmokou.Reflection {
         /// <summary>
         /// Returns a <see cref="MethodSignature"/> or <see cref="GenericMethodSignature"/> for this method.
         /// </summary>
-        public static MethodSignature Get(MemberInfo mi) {
+        public static MethodSignature Get(MemberInfo mi) => 
+            MaybeGet(mi) ?? throw new Exception($"Member {mi} cannot be handled by reflection.");
+        
+        /// <summary>
+        /// Returns a <see cref="MethodSignature"/> or <see cref="GenericMethodSignature"/> for this method.
+        /// </summary>
+        public static MethodSignature? MaybeGet(MemberInfo mi) {
             if (globals.TryGetValue(mi, out var sig))
                 return sig;
-            var member = TypeMember.Make(mi);
+            var member = TypeMember.MaybeMake(mi);
+            if (member == null)
+                return null;
             var fallthrough = mi.GetCustomAttribute<FallthroughAttribute>() != null;
             if (member is TypeMember.Method { Mi : {IsGenericMethodDefinition : true} } inf)
                 return globals[mi] = new GenericMethodSignature(inf, member.Params) { IsFallthrough = fallthrough };
@@ -126,55 +234,30 @@ namespace Danmokou.Reflection {
 
         public ScopedConversionKind ImplicitTypeConvKind =>
             GetAttribute<ExpressionBoundaryAttribute>() != null ?
-                ScopedConversionKind.ScopedExpression :
+                ScopedConversionKind.BlockScopedExpression :
                 ScopedConversionKind.Trivial;
     
 
         public virtual LiftedMethodSignature<T> Lift<T>() => LiftedMethodSignature<T>.Lift(this);
 
-        protected static Type[] PartiallyAppliedFnTypeArgs(int applied, Reflector.NamedParam[] prms, Type retType) =>
-            prms.TakeLast(prms.Length - applied).Select(p => p.Type).Append(retType).ToArray();
-        
-        public static class LambdaHelpers {
-            public static Func<R> PartialMissing0<R>(Reflection2.AST.MethodCall? ast, MethodSignature mi, object?[] prms) =>
-                () => (R)mi.Invoke(ast, prms)!;
-    
-            public static Func<T1,R> PartialMissing1<T1,R>(Reflection2.AST.MethodCall? ast, MethodSignature mi, object?[] prms) =>
-                t1 => (R)mi.Invoke(ast, prms.Append(t1).ToArray())!;
-    
-            public static Func<T1,T2,R> PartialMissing2<T1,T2,R>(Reflection2.AST.MethodCall? ast, MethodSignature mi, object?[] prms) =>
-                (t1, t2) => (R)mi.Invoke(ast, prms.Concat(new object?[]{t1, t2}).ToArray())!;
-    
-            public static Func<T1,T2,T3,R> PartialMissing3<T1,T2,T3,R>(Reflection2.AST.MethodCall? ast, MethodSignature mi, object?[] prms) =>
-                (t1, t2, t3) => (R)mi.Invoke(ast, prms.Concat(new object?[]{t1, t2, t3}).ToArray())!;
-
-            private static readonly MethodInfo?[] methods = new MethodInfo[4];
- 
-            /// <summary>
-            /// Create a Func representing the partial application of `prms` to `mi`.
-            /// </summary>
-            /// <example>
-            /// mi = (A a,B b,C c,D d,E e)->X
-            /// <br/>prms = [a,b,c]
-            /// <br/>missing = 2
-            /// <br/>fnTypeArgs = [typeof(D), typeof(E), typeof(X)]
-            /// <br/>returns (Func&lt;D,E,X&gt;)((D d,E e)->mi.Invoke(a,b,c,d,e))
-            /// </example>
-            public static object MakePartialFunc(int missing, Reflection2.AST.MethodCall? ast, MethodSignature mi,
-                Type[] fnTypeArgs, object?[] prms) {
-                if (missing >= methods.Length)
-                    throw new StaticException($"Partial function application missing {missing} arguments are not supported");
-                var makeFn = methods[missing] ??= typeof(LambdaHelpers)
-                                                      .GetMethod($"PartialMissing{missing}",
-                                                          BindingFlags.Static | BindingFlags.Public)
-                                                  ?? throw new Exception($"Couldn't find partial method for count {missing}");
-                return makeFn.MakeGenericMethod(fnTypeArgs).Invoke(null, new object?[] { ast, mi, prms });
-            }
+        private object? _asFunc;
+        public object AsFunc() {
+            if (_asFunc != null) return _asFunc;
+            if (SharedGenericTypes.Length > 0)
+                throw new Exception("Cannot convert a generic method to a partial function");
+            var fTypes = SharedType.Arguments.Select(t => t.Resolve().LeftOrThrow).ToArray();
+            var args = new IDelegateArg[Params.Length];
+            for (int ii = 0; ii < Params.Length; ++ii)
+                args[ii] = new DelegateArg($"$parg{ii}", fTypes[ii]);
+            var fnType = ReflectionUtils.MakeFuncType(fTypes);
+            Func<TExArgCtx, TEx> body = tac => MethodCall.RealizeMethod(null, this, tac, 
+                (i, tac) => tac.GetByName(fTypes[i], $"$parg{i}"));
+            return _asFunc = CompilerHelpers.CompileDelegateMeth.Specialize(fnType).Invoke(null, body, args)!;
         }
     }
     
 
-    public interface IGenericMethodSignature : Reflector.IMethodSignature {
+    public interface IGenericMethodSignature : IMethodSignature {
         /// <summary>
         /// Make a concrete method out of a generic one using the provided type parameter.
         /// </summary>
@@ -191,11 +274,11 @@ namespace Danmokou.Reflection {
     public record GenericMethodSignature(TypeMember.Method Minf, Reflector.NamedParam[] Params) : MethodSignature(Minf, Params), IGenericMethodSignature {
         public static readonly Dictionary<(FreezableArray<Type>, MethodSignature), MethodSignature> specializeCache = new();
         
-        public override object? Invoke(Reflection2.AST.MethodCall? ast, params object?[] prms) {
+        public override object Invoke(MethodCall? ast, params object?[] prms) {
             throw new Exception("A generic method signature cannot be invoked");
         }
 
-        public override Ex InvokeEx(Reflection2.AST.MethodCall? ast, params Ex[] args) {
+        public override Ex InvokeEx(MethodCall? ast, params Ex[] args) {
             throw new Exception("A generic method signature cannot be invoked");
         }
 
@@ -204,9 +287,7 @@ namespace Danmokou.Reflection {
             var specialized = specializeCache.TryGetValue((typDef, this), out var m) ?
                 m :
                 specializeCache[(typDef, this)] = MethodSignature.Get(Minf.Mi.MakeGenericMethod(t));
-            return PartialArgs is { } pargs ? 
-                specialized.PartiallyApply(pargs) : 
-                specialized;
+            return specialized;
         }
 
         public override LiftedMethodSignature<T> Lift<T>() => LiftGeneric<T>();
@@ -234,12 +315,12 @@ namespace Danmokou.Reflection {
 
         public override Reflector.InvokedMethod Call(string? calledAs) => new Reflector.LiftedInvokedMethod(this, calledAs);
         
-        public override object? Invoke(Reflection2.AST.MethodCall? ast, params object?[] prms) {
+        public override object? Invoke(MethodCall? ast, params object?[] prms) {
             throw new Exception(
                 "This lifted method signature does not have a specified return type and therefore cannot be invoked");
         }
 
-        public override Ex InvokeEx(Reflection2.AST.MethodCall? ast, params Ex[] args) {
+        public override Ex InvokeEx(MethodCall? ast, params Ex[] args) {
             throw new Exception("Lifted methods cannot be invoked as expressions");
         }
 
@@ -258,21 +339,6 @@ namespace Danmokou.Reflection {
                 };
             }
             return fTypes;
-        }
-        
-        public static (TypeDesignation.Dummy sig, Type retType) PartiallyApplyAndLiftParams(int applied, Type t, MethodSignature baseMeth, Dictionary<Type, TypeDesignation.Variable> genericTypeMap) {
-            var baseTypes = baseMeth.Params;
-            var pTypes = new TypeDesignation[applied + 1];
-            for (int ii = 0; ii < applied; ++ii) {
-                var bt = baseTypes[ii].Type;
-                pTypes[ii] = TypeDesignation.FromType(Reflector.ReflectionData.LiftType(t, bt, out var result) ? result : bt, genericTypeMap);
-            }
-            
-            var retType = ReflectionUtils.GetFuncType(baseMeth.Params.Length - applied + 1)
-                .MakeGenericType(PartiallyAppliedFnTypeArgs(applied, baseMeth.Params, baseMeth.ReturnType));
-            Reflector.ReflectionData.LiftType(t, retType, out var liftedReturnType);
-            pTypes[^1] = TypeDesignation.FromType(liftedReturnType, genericTypeMap);
-            return (new TypeDesignation.Dummy(TypeDesignation.Dummy.METHOD_KEY, pTypes), retType);
         }
     }
 
@@ -304,15 +370,7 @@ namespace Danmokou.Reflection {
             }
             return liftCache[method.Member.BaseMi] = info.constr!.Invoke(new object[] { method, LiftParams(t, method), method.Params })
                 as LiftedMethodSignature<T> ?? throw new StaticException(
-                $"Dynamic instantiation of LiftedMethodSignature<{t.ExRName()},{r.ExRName()}> failed");
-        }
-
-        public override MethodSignature PartiallyApply(int args) {
-            var (sig, retType) = PartiallyApplyAndLiftParams(args, typeof(T), Original, GenericTypeMap);
-            return MakeForReturnType(retType, Original) with {
-                PartialArgs = args,
-                SharedType = sig
-            };
+                $"Dynamic instantiation of LiftedMethodSignature<{t.SimpRName()},{r.SimpRName()}> failed");
         }
     }
     
@@ -320,10 +378,10 @@ namespace Danmokou.Reflection {
     public record GenericLiftedMethodSignature<T>(MethodSignature Original, TypeMember.Method Minf, Reflector.NamedParam[] FuncedParams, Reflector.NamedParam[] BaseParams) : LiftedMethodSignature<T>(Original, FuncedParams, BaseParams), IGenericMethodSignature  {
         public override Type ReturnType => Reflector.Func2Type(typeof(T), base.ReturnType);
 
-        public override object? Invoke(Reflection2.AST.MethodCall? ast, params object?[] prms)
+        public override object Invoke(MethodCall? ast, params object?[] prms)
             => throw new Exception("A generic lifted method cannot be invoked");
         
-        public override Ex InvokeEx(Reflection2.AST.MethodCall? ast, params Ex[] args) {
+        public override Ex InvokeEx(MethodCall? ast, params Ex[] args) {
             throw new Exception("Lifted methods cannot be invoked as expressions");
         }
         
@@ -337,20 +395,10 @@ namespace Danmokou.Reflection {
                 GenericMethodSignature.specializeCache[(typDef, this)] = method = 
                     MethodSignature.Get(Minf.Mi.MakeGenericMethod(t)).Lift<T>();
             }
-            return PartialArgs is { } pargs ? 
-                (LiftedMethodSignature<T>)method.PartiallyApply(pargs) : 
-                method;
+            return method;
         }
 
         MethodSignature IGenericMethodSignature.Specialize(Type[] t) => Specialize(t);
-
-        public override MethodSignature PartiallyApply(int args) {
-            var (sig, _) = PartiallyApplyAndLiftParams(args, typeof(T), Original, GenericTypeMap);
-            return this with {
-                PartialArgs = args,
-                SharedType = sig
-            };
-        }
     }
     
     //Note that we must eventually specify the R in LiftedMethodSignature in order to ensure that
@@ -361,26 +409,24 @@ namespace Danmokou.Reflection {
         private static readonly Dictionary<MemberInfo, LiftedMethodSignature<T, R>> liftCache = new();
         public override Type ReturnType => typeof(Func<T, R>);
 
-        public override object? Invoke(Reflection2.AST.MethodCall? ast, params object?[] prms) {
+        public override object Invoke(MethodCall? ast, params object?[] prms) {
             return InvokeMiFunced(ast, prms);
         }
         
-        public override Ex InvokeEx(Reflection2.AST.MethodCall? ast, params Ex[] args) {
+        public override Ex InvokeEx(MethodCall? ast, params Ex[] args) {
             throw new Exception("Lifted methods cannot be invoked as expressions");
         }
 
-        public Func<T,R> InvokeMiFunced(Reflection2.AST.MethodCall? ast, object?[] fprms) => 
+        public Func<T,R> InvokeMiFunced(MethodCall? ast, object?[] fprms) => 
             //Note: this lambda capture generally prevents using ArrayCache
             bpi => {
-                var baseArgs = new object?[PartialArgs ?? BaseParams.Length];
+                var baseArgs = new object?[BaseParams.Length];
                 for (int ii = 0; ii < baseArgs.Length; ++ii)
                     //Convert from funced object to base object (eg. TExArgCtx->TEx<float> to TEx<float>)
                     baseArgs[ii] = Reflector.ReflectionData.Defuncify(
                         BaseParams[ii].Type, FuncedParams[ii].Type, fprms[ii]!, bpi!);
                 
-                return (R)(PartialArgs is {} pargs ?
-                    LambdaHelpers.MakePartialFunc(Params.Length - pargs, ast, Original, typeof(R).GetGenericArguments(), baseArgs) :
-                    Member.Invoke(baseArgs)!);
+                return (R)Member.Invoke(baseArgs)!;
             };
 
         public override Reflector.InvokedMethod Call(string? calledAs) => new Reflector.LiftedInvokedMethod<T,R>(this, calledAs);

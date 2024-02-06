@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -7,7 +8,9 @@ using Danmokou.Danmaku;
 using Danmokou.Danmaku.Options;
 using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
+using Danmokou.Expressions;
 using Danmokou.Graphics;
+using Danmokou.Reflection2;
 using Danmokou.SM;
 using JetBrains.Annotations;
 using Mizuhashi;
@@ -36,6 +39,7 @@ public class SemanticTokenModifiers {
     public const string Static = "static";
     public const string Deprecated = "deprecated";
     public const string Atomic = "dmkatomic";
+    public const string Const = "const";
     
     //Method modifiers
     public const string SM = "dmksm";
@@ -54,24 +58,23 @@ public class SemanticTokenModifiers {
     public const string DynamicVar = "dmkdynamicvar";
 
     public static readonly string[] Values = {
-        Static, Deprecated, Atomic, SM, AsyncP, SyncP, VTP, Control,
+        Static, Deprecated, Atomic, Const, SM, AsyncP, SyncP, VTP, Control,
         Properties, TP4, TP3, TP, BPY, BPRV2, Pred, DynamicVar
     };
 
     public static readonly Dictionary<string, Type[]> MethodModToTypes = new() {
-        { SM, new[] { typeof(StateMachine), typeof(TaskPattern), typeof(TTaskPattern) } },
+        { SM, new[] { typeof(StateMachine), typeof(TaskPattern), typeof(TTaskPattern), typeof(ReflectableLASM) } },
         { AsyncP, new[] { typeof(AsyncPattern)} },
         { SyncP, new[] { typeof(SyncPattern)} },
-        { VTP, new[] { typeof(VTP), typeof(LVTP) } },
+        { VTP, new[] { typeof(VTP), typeof(LVTP), typeof(VTPExpr), typeof(LVTPExpr) } },
         { Control, new[] { typeof(BulletManager.exBulletControl), typeof(BulletManager.cBulletControl), typeof(BehaviorEntity.cBEHControl), typeof(CurvedTileRenderLaser.cLaserControl)} },
         { Properties, new[] { typeof(PatternProperty), typeof(PhaseProperty), typeof(GenCtxProperty), typeof(LaserOption), typeof(SBOption), typeof(BehOption) } },
-        { TP4, new[] {typeof(TP4), typeof(GCXF<Vector4>)} },
-        { TP3, new[] { typeof(TP3), typeof(GCXF<Vector3>)} },
-        { TP, new[] { typeof(TP), typeof(GCXF<Vector2>)} },
-        { BPY, new[] { typeof(BPY), typeof(FXY), typeof(GCXF<float>) } },
-        { BPRV2, new[] { typeof(BPRV2), typeof(GCXF<V2RV2>)} },
-        { Pred, new[] { typeof(Pred), typeof(GCXF<bool>)} },
-        
+        { TP4, new[] {typeof(TP4), typeof(GCXF<Vector4>), typeof(Vector4) } },
+        { TP3, new[] { typeof(TP3), typeof(GCXF<Vector3>), typeof(Vector3) } },
+        { TP, new[] {  typeof(TP), typeof(GCXF<Vector2>), typeof(Vector2) } },
+        { BPY, new[] { typeof(BPY), typeof(FXY), typeof(GCXF<float>), typeof(float) } },
+        { BPRV2, new[] { typeof(BPRV2), typeof(GCXF<V2RV2>), typeof(V2RV2) } },
+        { Pred, new[] { typeof(Pred), typeof(GCXF<bool>), typeof(bool) } },
     };
     public static readonly Dictionary<Type, string> TypeToMethodMod = new();
 
@@ -92,7 +95,10 @@ public class SemanticTokenModifiers {
 /// <param name="TokenMods">Token modifiers, from <see cref="SemanticTokenModifiers"/></param>
 [PublicAPI]
 public record SemanticToken(PositionRange Position, string TokenType, IList<string>? TokenMods = null) {
-    public static SemanticToken FromMethod(Reflector.IMethodSignature mi, PositionRange p, string? tokenType = null) {
+    public SemanticToken WithConst(bool isConst) => isConst ?
+        this with { TokenMods = (TokenMods ?? new string[0]).Append(SemanticTokenModifiers.Const).ToArray() } :
+        this;
+    public static SemanticToken FromMethod(IMethodSignature mi, PositionRange p, string? tokenType = null, Type? retType = null) {
         List<string>? mods = null;
         void AddMod(string? mod) {
             if (mod != null)
@@ -101,18 +107,20 @@ public record SemanticToken(PositionRange Position, string TokenType, IList<stri
         void AddModIf(bool guard, string mod) {
             if (guard) AddMod(mod);
         }
+        
+        if (mi.GetAttribute<OperatorAttribute>() != null || mi.GetAttribute<BDSL2OperatorAttribute>() != null)
+            return new(p, tokenType ?? SemanticTokenTypes.Operator);
+        
         AddModIf(mi.IsStatic, SemanticTokenModifiers.Static);
         AddModIf(mi.GetAttribute<ObsoleteAttribute>() != null, SemanticTokenModifiers.Deprecated);
-        if (SemanticTokenModifiers.TypeToMethodMod.TryGetValue(Reflector.RemapExType(mi.ReturnType), out var v))
+        (retType ?? mi.ReturnType).IsTExOrTExFuncType(out var retTyp);
+        if (SemanticTokenModifiers.TypeToMethodMod.TryGetValue(retTyp, out var v))
             AddMod(v);
         else if (mi.ReturnType.IsSubclassOf(typeof(StateMachine)))
             AddMod(SemanticTokenModifiers.SM);
         if (mi.GetAttribute<AtomicAttribute>() != null || mi.DeclaringType?.GetCustomAttribute<AtomicAttribute>() != null)
             AddMod(SemanticTokenModifiers.Atomic);
-        var defaultTokenType = mi.GetAttribute<OperatorAttribute>() != null ?
-                SemanticTokenTypes.Operator :
-                SemanticTokenTypes.Method;
-        return new(p, tokenType ?? defaultTokenType, mods);
+        return new(p, tokenType ?? SemanticTokenTypes.Method, mods);
     }
 }
 }

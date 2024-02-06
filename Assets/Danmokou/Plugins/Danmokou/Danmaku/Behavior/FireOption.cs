@@ -22,7 +22,7 @@ public class FireOption : BehaviorEntity {
     [ReflectInto(typeof(TP3))] public string[] powerOffsetFree = null!;
     [ReflectInto(typeof(TP3))] public string[] powerOffsetFocus = null!;
     public float freeOffsetMul = 1f;
-    public float focusOffsetMul = 1f;
+    public float focusOffsetMul = 1f; 
     [ReflectInto(typeof(BPY))] [TextArea(3, 8)] public string opacityFree = null!;
     [ReflectInto(typeof(BPY))] [TextArea(3, 8)] public string opacityFocus = null!;
     /// <summary>

@@ -26,39 +26,6 @@ $lazor(lstar-teal/w, Lplayer)
 !}
 
 
-<!> type non `Pathers Example`
-<!> hp 10000
-phase 42
-	paction 0
-	sync arrow-red/w <> gsr {
-		times(4)
-		center
-		rv2incr(<10>)
-	} s tprot px select(dc, {
-		code(0 + t)
-		code(2 + t)
-		code(4 + t)
-	})
-	async gpather-teal/w <> gcr {
-		root cxy 0 -1
-	} pather 7 7 nroffset 
-		lerpmany  {
-			0 cxy -2.7 -2.1
-			1 cxy -1.3 0.5
-			2 cxy 0.9 0.9
-			3 cxy 1 2.7
-			4 cxy -0.1 4
-			5 cxy -2.6 2.5
-			6  cxy -4.6 3.7
-			7 cxy -2 5.5
-			7.1 code(cxy(-2, 5.5) + py(t - 7))
-		} t { }
-		
-#}
-		
-
-///
-
 <!> type non abc
 <!> hp 10000
 phase 0
@@ -236,7 +203,6 @@ phase(40)
 			circle
 			color({ red pink purple blue teal green yellow orange })
             bindItr(colorIndex)
-            expose({ f colorIndex })
 		} s(rvelocity(cx(3)))
 		bullet-control(persist, lellipse-*/w, batch(> t 0.7, {
 			sm(_, async ellipse-*/w <> gcrepeat {
@@ -244,7 +210,7 @@ phase(40)
 				times(6)
 				rv2incr(<0.4;:>)
 				sfx(x-transform-1)
-				colorf({ red pink purple blue teal green yellow orange }, &colorIndex)
+				colorf({ red pink purple blue teal green yellow orange }, &.colorIndex)
 			} gsrepeat {
 				times(29)
 				circle
@@ -252,10 +218,7 @@ phase(40)
 			cull(_)
 		}))
 		
-phase 0
-	paction 0
-		position(0, 1)
-		sync(fireball-green/w, <0;0:2;0:0>, simp(rvelocity(cxy(0, -2))))
+
 
 <!> hp 4000
 phase 0

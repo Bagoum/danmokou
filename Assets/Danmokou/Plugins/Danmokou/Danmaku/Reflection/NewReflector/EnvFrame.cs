@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using BagoumLib;
 using BagoumLib.DataStructures;
 using BagoumLib.Expressions;
 using BagoumLib.Functional;
@@ -20,6 +21,9 @@ namespace Danmokou.Reflection2 {
 /// in script code execution.
 /// </summary>
 public class EnvFrame {
+    public static int Created = 0;
+    public static int Cloned = 0;
+    public static int Disposed = 0;
     private static readonly Stack<EnvFrame> cache = new();
     public static readonly EnvFrame Empty = new();
     private static uint counter;
@@ -70,13 +74,17 @@ public class EnvFrame {
             return parent.Mirror();
         var np = scope.Parent;
         for (; np is { UseEF: false }; np = np.Parent) { }
-        if ((parent?.Scope ?? DMKScope.Singleton) != np)
-            throw new Exception("Incorrect envframe instantiation: parent scope is not the same as scope parent");
+        if ((parent?.Scope ?? DMKScope.Singleton) != np) {
+            //Allow const scopes to have null parentage
+            if (!(scope.IsConstScope && parent is null))
+                throw new Exception("Incorrect envframe instantiation: parent scope is not the same as scope parent");
+        }
         if (!scope.UseEF) 
             return (parent ?? throw new StaticException("Parent EF must be provided for non-EF scopes")).Mirror();
         var ef = cache.Count > 0 ? cache.Pop() : new();
         ef.TakeParent(parent);
         //Logs.Log($"CREATE {ef.Ctr} ({ef.Parent?.Ctr})", stackTrace: true);
+        ++Created;
         ef.Scope = scope;
         ef.owners = 1;
         ef.Variables = EFArrayPool<FrameVars>.Rent(scope.VariableDecls.Length);
@@ -99,7 +107,7 @@ public class EnvFrame {
             if (envFrame.Scope.variableDecls.TryGetValue(varName, out var decl)) {
                 if (decl.FinalizedType != typeof(T))
                     throw new Exception(
-                        $"Types do not align for variable {varName}. Requested: {typeof(T).ExRName()}; found: {decl.FinalizedType?.ExRName()}");
+                        $"Types do not align for variable {varName}. Requested: {typeof(T).SimpRName()}; found: {decl.FinalizedType?.SimpRName()}");
                 return ((FrameVars<T>)envFrame.Variables[decl.TypeIndex]).Values[decl.Index];
             }
         }
@@ -114,7 +122,7 @@ public class EnvFrame {
             if (envFrame.Scope.variableDecls.TryGetValue(varName, out var decl)) {
                 if (decl.FinalizedType != typeof(T))
                     throw new Exception(
-                        $"Types do not align for variable {varName}. Requested: {typeof(T).ExRName()}; found: {decl.FinalizedType?.ExRName()}");
+                        $"Types do not align for variable {varName}. Requested: {typeof(T).SimpRName()}; found: {decl.FinalizedType?.SimpRName()}");
                 return ref ((FrameVars<T>)envFrame.Variables[decl.TypeIndex]).Values[decl.Index];
             }
         }
@@ -130,7 +138,7 @@ public class EnvFrame {
             if (decl.DeclarationScope == envFrame.Scope || decl.DeclarationScope == envFrame.Scope.DynRealizeSource)
                 return ref ((FrameVars<T>)envFrame.Variables[decl.TypeIndex]).Values[decl.Index];
         }
-        throw new Exception($"Variable {decl.Name}<{decl.FinalizedType!.ExRName()}> not found in environment frame");
+        throw new Exception($"Variable {decl.Name}<{decl.FinalizedType!.SimpRName()}> not found in environment frame");
     }
 
     public static Ex FrameVarValues(LexicalScope scope, Ex envFrame, int parentage, Type typ) {
@@ -156,9 +164,12 @@ public class EnvFrame {
 
     public void Free() {
         if (this == Empty) return;
+        //Logs.Log($"free {Ctr} ({owners - 1} rem)", stackTrace: true);
         if (--owners == 0 && dependents == 0)
             Dispose();
     }
+    
+    public static readonly ExFunction exFree = ExFunction.WrapAny(typeof(EnvFrame), nameof(Free));
 
 
     private void FreeDependent() {
@@ -171,6 +182,7 @@ public class EnvFrame {
     private void Dispose() {
         if (this == Empty) return;
         //Logs.Log($"DISPOSED {Ctr} ({Parent?.Ctr})", stackTrace: true);
+        ++Disposed;
         for (int ii = 0; ii < Scope.VariableDecls.Length; ++ii)
             Variables[ii].Cache();
         EFArrayPool<FrameVars>.Return(Variables);
@@ -186,6 +198,7 @@ public class EnvFrame {
     public EnvFrame Mirror() {
         if (this == Empty) return Empty;
         ++owners;
+        //Logs.Log($"dup {Ctr} ({owners} rem)", stackTrace: true);
         return this;
     }
     
@@ -200,6 +213,7 @@ public class EnvFrame {
         nxt.Scope = Scope;
         nxt.owners = 1;
         //Logs.Log($"CLONE {nxt.Ctr} <- {Ctr} ({Parent?.Ctr})", stackTrace: true);
+        ++Cloned;
         nxt.Variables = EFArrayPool<FrameVars>.Rent(Scope.VariableDecls.Length);
         for (int ii = 0; ii < Scope.VariableDecls.Length; ++ii)
             nxt.Variables[ii] = Variables[ii].Clone();
@@ -224,7 +238,7 @@ public abstract class FrameVars {
         if (!creators.TryGetValue(t, out var c))
             creators[t] = c = Activator.CreateInstance(typeof(VariableStoreCreator<>).MakeGenericType(t)) 
                                   as IVariableStoreCreator ?? 
-                              throw new Exception($"Failed to generate VariableStoreCreator for type {t.ExRName()}");
+                              throw new Exception($"Failed to generate VariableStoreCreator for type {t.SimpRName()}");
         return c.Create();
     }
     

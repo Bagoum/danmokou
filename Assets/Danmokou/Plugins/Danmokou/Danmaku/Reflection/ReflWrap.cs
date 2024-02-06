@@ -34,7 +34,7 @@ public abstract class ReflWrap {
         ReflWrap<T>.FromFunc(uniqueKey, constructor);
     
     public static ReflWrap<T> FromString<T>(string text, Func<string, T> constructor) where T : class =>
-        ReflWrap<T>.FromFunc(text + typeof(T).ExRName(), () => constructor(text));
+        ReflWrap<T>.FromFunc(text + typeof(T).SimpRName(), () => constructor(text));
 
 }
 

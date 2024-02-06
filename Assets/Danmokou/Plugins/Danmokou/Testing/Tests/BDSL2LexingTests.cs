@@ -61,7 +61,7 @@ public static class BDSL2LexingTests {
     public static void TestV2RV2() {
         ListEq(Lexer.Lex("<12;24:;:>"), MakeFromSequence((TokenType.V2RV2, "<12;24:;:>")));
         var w = "<;23:4>";
-        ListEq(Lexer.Lex(ref w, out var s), MakeFromSequence((TokenType.V2RV2, "<;23:4>")));
+        ListEq(Lexer.Lex(ref w, out var s, out _), MakeFromSequence((TokenType.V2RV2, "<;23:4>")));
         Debug.Log(string.Join("\n", s.Rollbacks.Select(r => r.Show(s)).ToArray()));
         ListEq(Lexer.Lex("<40h>"), MakeFromSequence((TokenType.V2RV2, "<40h>")));
         ListEq(Lexer.Lex("<>"), MakeFromSequence((TokenType.V2RV2, "<>")));

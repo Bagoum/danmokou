@@ -168,7 +168,6 @@ recolor(
 			center
 			spread(<330>)
 			bindItr(loop2)
-			expose { f loop f loop2 }
 		} s(rvelocity(px(lerpt(0.2, 0.4, 0.2, 2))))
 #}
 

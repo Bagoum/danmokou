@@ -12,6 +12,13 @@ phase(0)
 phase 0
 	paction 0
         position 3 0
+        sync blocker <> gsr2 2 <4;:> {
+            root zero
+            center
+        } summon tpnrot(py(sine(2, 0.5, t))) stall {
+            rotate(60 * t)
+        }
+
         async pipe-* <8;:> gcr2 360 3 <> { 
             root zero 
             center
@@ -24,7 +31,7 @@ phase 0
         } summon tpnrot px(-2) stall {
             rotate(180 * p)
         }
-///
+        
         sync gdlaser-red* <180> gsr2c 30 {
             color { /w /b }
         } laser(nroffset(pxy(cosine(12, 5.3, t) - 5.3, sine(12, 3.8, t))), 0.2, 20, {
@@ -39,7 +46,6 @@ phase 0
         } summon nrvelocity(px(-1)) stall {
 
         }
-///
         async ellipse-red/w <> gcr2 12 _ <3h> {
         } gsr2c 49 {
 

@@ -201,6 +201,7 @@ public partial class BehaviorEntity {
         /// <param name="time">Time to set</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl Time(float time, Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) b.SetTime(time);
@@ -213,6 +214,7 @@ public partial class BehaviorEntity {
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl Restyle(string target, Pred cond) {
             var style = GetPool(target);
             FrameAnimBullet.Recolor r = style.recolor?.GetOrLoadRecolor() ?? 
@@ -224,12 +226,14 @@ public partial class BehaviorEntity {
                 }
             }, BulletControl.P_CULL);
         }
+        
         /// <summary>
         /// Change the bullets into a softcull-type bullet rather than destroying them directly.
         /// </summary>
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl Softcull(string? target, Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) {
@@ -245,6 +249,7 @@ public partial class BehaviorEntity {
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl Effect(string target, Pred cond) => new((b, cT) => {
             if (cond(b.rBPI)) b.SpawnSimple(target);
         }, BulletControl.P_RUN);
@@ -254,6 +259,7 @@ public partial class BehaviorEntity {
         /// </summary>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl Cull(Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) b.InvokeCull();
@@ -265,6 +271,7 @@ public partial class BehaviorEntity {
         /// </summary>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl Poof(Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) b.Poof();
@@ -277,6 +284,7 @@ public partial class BehaviorEntity {
         /// </summary>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl FlipX(Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) b.FlipVelX();
@@ -289,6 +297,7 @@ public partial class BehaviorEntity {
         /// </summary>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl FlipY(Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) b.FlipVelY();
@@ -302,6 +311,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipx>")]
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl FlipXGT(BPY wall, Pred cond) {
             return new((b, cT) => {
                 var bpi = b.rBPI;
@@ -319,6 +329,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipx<")]
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl FlipXLT(BPY wall, Pred cond) {
             return new((b, cT) => {
                 var bpi = b.rBPI;
@@ -328,6 +339,7 @@ public partial class BehaviorEntity {
                 }
             }, BulletControl.P_MOVE_3);
         }
+        
         /// <summary>
         /// Flip the y-velocity and y-position of bullets around a wall on the top.
         /// </summary>
@@ -335,6 +347,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipy>")]
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl FlipYGT(BPY wall, Pred cond) {
             return new((b, cT) => {
                 var bpi = b.rBPI;
@@ -352,6 +365,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipy<")]
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl FlipYLT(BPY wall, Pred cond) {
             return new((b, cT) => {
                 var bpi = b.rBPI;
@@ -361,12 +375,14 @@ public partial class BehaviorEntity {
                 }
             }, BulletControl.P_MOVE_3);
         }
+        
         /// <summary>
         /// Add to the x-position of bullets. Useful for teleporting around the sides.
         /// </summary>
         /// <param name="by">Delta position</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl DX(float by, Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) {
@@ -374,12 +390,14 @@ public partial class BehaviorEntity {
                 }
             }, BulletControl.P_MOVE_2);
         }
+        
         /// <summary>
         /// Add to the y-position of bullets. Useful for teleporting around the sides.
         /// </summary>
         /// <param name="by">Delta position</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl DY(float by, Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) {
@@ -393,6 +411,7 @@ public partial class BehaviorEntity {
         /// <param name="by">Delta time</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl DT(float by, Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) {
@@ -406,6 +425,7 @@ public partial class BehaviorEntity {
         /// <param name="sfx">Sound effect</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl SFX(string sfx, Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) ISFXService.SFXService.Request(sfx);
@@ -415,6 +435,7 @@ public partial class BehaviorEntity {
         /// <summary>
         /// Freeze an object. It will still collide but it will not move.
         /// </summary>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl Freeze(Pred cond) => new((b, cT) => {
             if (cond(b.rBPI)) b.nextUpdateAllowed = false;
         }, BulletControl.P_TIMECONTROL);
@@ -448,6 +469,7 @@ public partial class BehaviorEntity {
         /// Run some code on bullets that pass the condition.
         /// </summary>
         [BDSL2Only] //NB: ErasedParametric cannot be reflected by BDSL1
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl Exec(ErasedParametric code, Pred cond) {
             return new cBEHControl((b, cT) => {
                 if (cond(b.rBPI))
@@ -458,6 +480,7 @@ public partial class BehaviorEntity {
         /// <summary>
         /// Batch several commands together under one predicate.
         /// </summary>
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl Batch(Pred cond, cBEHControl[] over) {
             var priority = over.Max(o => o.priority);
             var funcs = over.Select(o => o.action).ToArray();

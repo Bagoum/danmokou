@@ -118,8 +118,8 @@ public static class ReflectEx {
             return ex;
         if (tac.MaybeGetByName<T>(alias).Try(out var prm))
             return prm;
-        //variables in EnvFrame (GCXU or GCXF)
-        if (tac.Ctx.Scope.TryGetLocalOrParentVariable(tac, typeof(T), alias, out var decl, out var p) is { } aex) {
+        //variables in EnvFrame
+        if (!isExplicit && deflt == null && tac.Ctx.Scope.TryGetLocalOrParentVariable(tac, typeof(T), alias, out var decl) is { } aex) {
             return aex;
         }
         //In functions not scoped by the GCX (eg. bullet controls)
@@ -224,6 +224,7 @@ public readonly struct ReferenceMember {
         else if (op == GCOperator.SubAssign) src -= other;
         else if (op == GCOperator.DivAssign) src /= other;
         else if (op == GCOperator.FDivAssign) src = Mathf.Floor(src / other);
+        else if (op == GCOperator.ComplementAssign) src = other - src;
         else src = other;
     }
 

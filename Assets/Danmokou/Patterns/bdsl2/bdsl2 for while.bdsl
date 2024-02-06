@@ -1,0 +1,82 @@
+<#> bdsl2
+
+var si::float = 8.0;
+
+function myFn1(x::float, y):: float {
+	return y * si + x * 2
+}
+
+var sm = pattern({
+		boss 'simp.kasen'
+	}, {
+	phase 0 { } {
+		paction 0 {
+			shiftphaseto 1
+		}
+	}
+	phase 30 { 
+		type non "For Loop Example"
+		hp 10000
+	} {
+		paction 0 {
+			gtr {
+				wait(60)
+				times(6)
+				preloop b{
+					hvar itr = i
+				}
+				rv2incr(<5>)
+				waitchild
+			} {
+				wrap(b{
+					var total = 0;
+					for (var x = 0; x <= itr; ++x) {
+						var y = x + 1;
+						if (y == 3) {
+							var z = y + 2;
+							continue;
+						}
+						total += y;
+					}
+					//Each group of fired bullets shares the same speed,
+					// which is updated as they are fired
+					var spd = 0.5;
+					async "ellipse-green/" <> gcr {
+						wt 30 total
+						circle
+						postloop b{
+							spd += 0.5
+						}
+					} s tprot px(spd)
+				})
+			}
+		}
+	}
+	phase 30 { 
+		type non "While Loop Example"
+		hp 10000
+	} {
+		paction 0 {
+			gtr {
+				wait(120)
+				times(6)
+				preloop b{
+					hvar itr = i
+				}
+				rv2incr(<5>)
+			} {
+				wrap(b{
+					var total = 0;
+					var x = 0;
+					while (x <= itr) {
+						total += x++;
+					}
+					sync "ellipse-green/" <> gsr2c total {
+
+					} s tprot cx 2
+				})
+			}
+		}
+	}
+})
+sm;

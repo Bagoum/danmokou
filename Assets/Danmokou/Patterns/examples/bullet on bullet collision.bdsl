@@ -54,7 +54,6 @@ phase 0
 			center
 			p this
 			start { localt =f 0 }
-			expose { f localt }
 		} gsr2 40 <;0.2:> {
 			center
 			p mod

@@ -1,0 +1,18 @@
+<#> bdsl2
+
+// This is a script variable.
+var myFloat = 9.0;
+var myV2::v2 = pxy(5, 6.4);
+var mySp = gsr {
+	preloop b{
+		hvar itr = i
+	}
+} s rvelocity px(1 + sqrt(1 + itr))
+
+// This is a custom comment applied to a script function!
+function doMath(xdd) {
+	return xdd + myV2.magnitude + myFloat;
+}
+
+
+

@@ -188,7 +188,8 @@ public static class XMLUtils {
             throw new Exception($"Clone tree operation resulted in {ve.childCount} children; expected 1");
         var f = ve.Children().First();
         try {
-            foreach (var ss in ve._Field<List<StyleSheet>>("styleSheetList")) {
+            for (int ii = 0; ii < ve.styleSheets.count; ++ii) {
+                var ss = ve.styleSheets[ii];
                 if (!f.styleSheets.Contains(ss))
                     f.styleSheets.Add(ss);
             }

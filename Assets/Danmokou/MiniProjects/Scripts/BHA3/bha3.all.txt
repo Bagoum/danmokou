@@ -153,9 +153,6 @@ phase 42
 				elapsed =f 0
 				dofast =f 0
 			}
-			expose {
-				f dofast
-			}
 		} s roffset(px(1.2 * &elapsed))
 
 		sync ellyscythe <> gsr {
@@ -237,10 +234,6 @@ pxy(0.3 * (0.2 + 0.8 * sqrt(%pr)) * sin(1.2 * $pt + 6 * %pr + tau * 1h * %itr), 
 			preloop {
 				stalkr =f (t / &times)
 				stalkir =f ((--- &times t) / &times)
-			}
-			expose {
-				f stalkr
-				f stalkir
 			}
 		} {
 			laser null $delay 1 {
@@ -328,7 +321,6 @@ pxy(0.3 * (0.2 + 0.8 * sqrt(%pr)) * sin(1.2 * $pt + 6 * %pr + tau * 1h * %itr), 
 		sync sun-orange/ <> gsr {
 			root zero
 			start lastSummonRd =f 0
-			expose f lastSummonRd
 		} simple nroffset(lerpsmooth(out-sine, 0, 1, t, Lbeh $me, pxy(sine($sunper, 5, t), 3.2))) {
 			scale(1)
 		}
@@ -386,9 +378,6 @@ phase 42
 			preloop {
 				vel =v2 pxy(-2 * pm1(p), -0.4)
 				loc =v2 loc
-			}
-			expose {
-				v2 vel
 			}
 			root zero
 			sfx x-metal

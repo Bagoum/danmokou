@@ -131,7 +131,8 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
     }
 
     public void Scale(BPY scaler, float over, ICancellee cT, Action done) {
-        var tbpi = ParametricInfo.WithRandomId(beh.rBPI.loc, beh.rBPI.index);
+        var tbpi = beh.rBPI;
+        tbpi.t = 0;
         lastScalerValue = scaler(tbpi);
         beh.RunRIEnumerator(_Scale(scaler, tbpi, over, cT, done));
     }

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Reflection;
 using BagoumLib.Tasks;
 using Danmokou.Behavior;
 using Danmokou.Behavior.Functions;
@@ -50,12 +51,12 @@ namespace Danmokou.SM {
 public static class SMReflection {
     private static readonly ReflWrap<Func<float, float, float, ParametricInfo, float>> CrosshairOpacity =
         ReflWrap.FromFunc("SMReflection.CrosshairOpacity", () =>
-            CompileDelegateFromString<Func<float, float, float, ParametricInfo, float>>(@"
-if (> t &fadein,
-    if(> t &homesec,
-        c(einsine((t - &homesec) / &sticksec)),
-        1),
-    eoutsine(t / &fadein))",
+            Reflection2.Helpers.ParseAndCompileDelegate<Func<float, float, float, ParametricInfo, float>>(@"
+t > fadein ?
+    (t > homesec ?
+        c(einsine((t - homesec) / sticksec)) :
+        1) :
+    eoutsine(t / fadein)",
                 new DelegateArg<float>("fadein"),
                 new DelegateArg<float>("homesec"),
                 new DelegateArg<float>("sticksec"),
@@ -221,17 +222,43 @@ if (> t &fadein,
     /// <summary>
     /// Run arbitrary code as a StateMachine.
     /// </summary>
-    [BDSL2Only]
+    [DontReflect]
     public static ReflectableLASM Exec(ErasedGCXF code) => new(smh => {
         code(smh.GCX);
         return Task.CompletedTask;
     });
 
     /// <summary>
+    /// Run arbitrary code as a StateMachine, SyncPattern, or AsyncPattern.
+    /// </summary>
+    [BDSL2Only]
+    public static T Exec<T>(ErasedGCXF code) where T : class {
+        if (typeof(T) == typeof(StateMachine))
+            return (Exec(code) as T)!;
+        if (typeof(T) == typeof(SyncPattern))
+            return (SyncPatterns.Exec(code) as T)!;
+        if (typeof(T) == typeof(AsyncPattern))
+            return (AsyncPatterns.Exec(code) as T)!;
+        throw new Exception($"Incorrect type provided to {nameof(Exec)}: {typeof(T).RName()}");
+    }
+
+    /// <summary>
     /// Run some code that returns a StateMachine, and then execute that StateMachine.
     /// </summary>
     [BDSL2Only]
-    public static ReflectableLASM Wrap(GCXF<StateMachine> code) => new(smh => code(smh.GCX).Start(smh));
+    public static ReflectableLASM Wrap(GCXF<StateMachine> code) => new(async smh => {
+        var inner = code(smh.GCX);
+        await inner.Start(smh);
+        //The created SM has a mirrored envframe on it; since we are no longer using the SM, we should free the EF.
+        //If we were to assign or return the SM, then we'd have to keep the EF alive.
+        if (inner is EnvFrameAttacher efa) {
+            efa.EnvFrame?.Free();
+            efa.EnvFrame = null;
+        } else if (inner is EFStateMachine efsm) {
+            efsm.EnvFrame?.Free();
+            efsm.EnvFrame = null;
+        }
+    });
 
     /// <summary>
     /// Wait for a synchronization event.
@@ -308,7 +335,7 @@ if (> t &fadein,
                 rv2(smh.GCX) + (smh.ch.rv2Override.Try(out var o) ? o : 
                     (smh.GCX.AutoVars is AutoVars.GenCtx ? smh.GCX.RV2 : V2RV2.Zero))
                 );
-        smh.RunTryPrependRIEnumerator(ap(abh));
+        smh.RunTryPrependRIEnumerator(ap.Run(abh));
         //don't dispose ABH since we didn't copy GCX
         return t;
     });
@@ -322,7 +349,7 @@ if (> t &fadein,
             rv2(smh.GCX) + (smh.ch.rv2Override.Try(out var o) ? o : 
                 (smh.GCX.AutoVars is AutoVars.GenCtx ? smh.GCX.RV2 : V2RV2.Zero))
             );
-        sp(sbh);
+        sp.Run(sbh);
         //don't dispose SBH since we didn't copy GCX
         return Task.CompletedTask;
     });
@@ -468,16 +495,18 @@ if (> t &fadein,
     /// <summary>
     /// Move the executing entity to a target position over time. This has zero error.
     /// </summary>
-    public static ReflectableLASM MoveTarget(ExBPY time, [LookupMethod] Func<tfloat, tfloat> ease, ExTP target) 
+    [ExpressionBoundary]
+    public static ReflectableLASM MoveTarget(ExBPY time, [LookupMethod] Func<TExArgCtx, TEx<Func<float,float>>> ease, ExTP target) 
         => Move(GCXF(time), Compilers.VTP(
             VTPRepo.NROffset(Parametrics.EaseToTarget(ease, time, target))));
 
     /// <summary>
     /// Move to a target position, run a state machine, and then move to another target position.
     /// </summary>
+    [ExpressionBoundary]
     public static ReflectableLASM MoveWrap(ExBPY t1, ExTP target1, ExBPY t2, ExTP target2, StateMachine wrapped) {
-        var w1 = MoveTarget(t1, ExMEasers.EOutSine, target1);
-        var w2 = MoveTarget(t2, ExMEasers.EInSine, target2);
+        var w1 = MoveTarget(t1, _ => Expression.Constant((Func<float,float>)M.EOutSine), target1);
+        var w2 = MoveTarget(t2, _ => Expression.Constant((Func<float,float>)M.EInSine), target2);
         return new(async smh => {
             await w1.Start(smh);
             smh.ThrowIfCancelled();
@@ -492,6 +521,7 @@ if (> t &fadein,
     /// and then move to another target position.
     /// </summary>
     [Alias("MoveWrap~")]
+    [ExpressionBoundary]
     public static ReflectableLASM MoveWrapFixedDelay(Synchronizer s, ExBPY t1, ExTP target1, ExBPY t2, 
         ExTP target2, StateMachine wrapped) 
         => MoveWrap(t1, target1, t2, target2, RunDelay(s, wrapped));
@@ -501,6 +531,7 @@ if (> t &fadein,
     /// and then move to another target position.
     /// </summary>
     [Alias("MoveWrap~~")]
+    [ExpressionBoundary]
     public static ReflectableLASM MoveWrapFixedDelayNB(Synchronizer s, ExBPY t1, ExTP target1, ExBPY t2, 
         ExTP target2, StateMachine wrapped) {
         var mover = MoveWrapFixedDelay(s, t1, target1, t2, target2, noop);
@@ -516,9 +547,10 @@ if (> t &fadein,
     /// <summary>
     /// Move-wrap, but the enemy is set invincible until the wrapped SM starts.
     /// </summary>
+    [ExpressionBoundary]
     public static ReflectableLASM IMoveWrap(ExBPY t1, ExTP target1, ExBPY t2, ExTP target2, StateMachine wrapped) {
-        var w1 = MoveTarget(t1, ExMEasers.EOutSine, target1);
-        var w2 = MoveTarget(t2, ExMEasers.EInSine, target2);
+        var w1 = MoveTarget(t1, _ => Expression.Constant((Func<float,float>)M.EOutSine), target1);
+        var w2 = MoveTarget(t2, _ => Expression.Constant((Func<float,float>)M.EInSine), target2);
         return new(async smh => {
             if (smh.Exec.isEnemy) smh.Exec.Enemy.SetVulnerable(Vulnerability.NO_DAMAGE);
             await w1.Start(smh);
@@ -687,6 +719,15 @@ if (> t &fadein,
     /// </summary>
     public static ReflectableLASM Debug(string debug) => new(smh => {
         Logs.Log(debug, false, LogLevel.INFO);
+        return Task.CompletedTask;
+    });
+    
+    
+    /// <summary>
+    /// Print a value to the console.
+    /// </summary>
+    public static ReflectableLASM Print<T>(GCXF<T> val) => new(smh => {
+        Logs.Log(val(smh.GCX)?.ToString() ?? "<null>", false, LogLevel.INFO);
         return Task.CompletedTask;
     });
     

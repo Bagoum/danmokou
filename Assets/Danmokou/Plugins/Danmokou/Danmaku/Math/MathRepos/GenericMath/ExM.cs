@@ -14,6 +14,7 @@ using Danmokou.Expressions;
 using Danmokou.GameInstance;
 using Danmokou.Graphics;
 using Danmokou.Player;
+using Danmokou.Reflection;
 using Danmokou.Services;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
@@ -53,6 +54,7 @@ public static partial class ExM {
     /// </summary>
     /// <returns></returns>
     [Alias(Parser.SM_REF_KEY)]
+    [BDSL1Only]
     public static Func<TExArgCtx, TEx<T>> Reference<T>(string alias) => ReflectEx.ReferenceExpr<T>(alias);
     
     /// <summary>
@@ -60,6 +62,7 @@ public static partial class ExM {
     /// <br/>You only need to use this for bullet controls, as scoped variable usage (within movement functions) will ensure that the variable exists.
     /// </summary>
     [Alias("s" + Parser.SM_REF_KEY)]
+    [BDSL1Only]
     public static Func<TExArgCtx, TEx<T>> ReferenceSafe<T>(string alias, Func<TExArgCtx, TEx<T>> deflt) => b => 
         ReflectEx.ReferenceExpr(alias, b, deflt(b));
     
@@ -310,14 +313,14 @@ public static partial class ExM {
     /// Set negative for softmin.</param>
     /// <param name="against">Values</param>
     /// <returns></returns>
-    public static tfloat Softmax(tfloat sharpness, tfloat[] against) => TEx.Resolve(sharpness, sharp => {
+    public static ExBPY Softmax(ExBPY sharpness, UncompiledCode<float>[] against) => bpi => TEx.Resolve(sharpness(bpi), sharp => {
         var num = V<double>();
         var denom = V<double>();
         var x = VFloat();
         var exp = V<double>();
         List<Ex> stmts = new() { num.Is(denom.Is(ExC(0.0))) };
         for (int ii = 0; ii < against.Length; ++ii) {
-            stmts.Add(x.Is(against[ii]));
+            stmts.Add(x.Is(against[ii].code(bpi)));
             stmts.Add(exp.Is(ExpDb(x.Mul(sharp))));
             stmts.Add(ExUtils.AddAssign(num, x.Cast<double>().Mul(exp)));
             stmts.Add(ExUtils.AddAssign(denom, exp));
@@ -332,11 +335,11 @@ public static partial class ExM {
     /// <param name="sharpness">The higher the absolute value of this, the more quickly the result will converge.</param>
     /// <param name="against">Values</param>
     /// <returns></returns>
-    public static tfloat Logsum(tfloat sharpness, tfloat[] against)  => TEx.Resolve(sharpness, sharp => {
+    public static ExBPY Logsum(ExBPY sharpness, UncompiledCode<float>[] against) => bpi => TEx.Resolve(sharpness(bpi), sharp => {
         var num = V<double>();
         List<Ex> stmts = new() { num.Is(ExC(0.0)) };
         for (int ii = 0; ii < against.Length; ++ii) {
-            stmts.Add(ExUtils.AddAssign(num, ExpDb(sharp.Mul(against[ii]))));
+            stmts.Add(ExUtils.AddAssign(num, ExpDb(sharp.Mul(against[ii].code(bpi)))));
         }
         stmts.Add(((Ex)LnDb(num)).Cast<float>().Div(sharp));
         return Ex.Block(new[] {num}, stmts);
@@ -715,7 +718,7 @@ public static partial class ExM {
         } else if (t == typeof(PlayerInput)) {
             return fctx.Field("playerController");
         }
-        throw new Exception($"FCTX has no handling for `Mine?` constructor of type {t.ExRName()}");
+        throw new Exception($"FCTX has no handling for `Mine?` constructor of type {t.SimpRName()}");
     };*/
 
     #endregion

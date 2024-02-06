@@ -96,7 +96,7 @@ public record GenCtxProperty {
     /// <summary>
     /// Wait and times properties combined, where Wait is divided by difficulty and Times is multiplied by difficulty.
     /// </summary>
-    /// <returns></returns>
+    [ExpressionBoundary]
     public static GenCtxProperty WTd(ExBPY difficulty, ExBPY frames, ExBPY  times) => new CompositeProp(
         Wait(GCXF<float>(b => frames(b).Div(difficulty(b)))), 
         Times(GCXF<float>(b => times(b).Mul(difficulty(b)))));
@@ -115,6 +115,7 @@ public record GenCtxProperty {
     /// Wait, times, rpp properties combined, where Wait is divided by difficulty and Times is multiplied by difficulty.
     /// </summary>
     /// <returns></returns>
+    [ExpressionBoundary]
     public static GenCtxProperty AsyncD(ExBPY difficulty, ExBPY frames, ExBPY  times, GCXF<V2RV2> incr) => 
         new CompositeProp(WTd(difficulty, frames, times), RV2Incr(incr));
     
@@ -122,6 +123,7 @@ public record GenCtxProperty {
     /// Wait, times, rpp properties combined, where Wait is divided by, Times is multiplied by, and rpp is divided by difficulty.
     /// </summary>
     /// <returns></returns>
+    [ExpressionBoundary]
     public static GenCtxProperty AsyncDR(ExBPY difficulty, ExBPY frames, ExBPY  times, ExBPRV2 incr) => 
         new CompositeProp(WTd(difficulty, frames, times), RV2Incr(GCXF<V2RV2>(b => incr(b).Div(difficulty(b)))));
     
@@ -138,6 +140,7 @@ public record GenCtxProperty {
     /// <summary>
     /// Times, rpp properties combined, where Times is multiplied by and rpp is divided by difficulty.
     /// </summary>
+    [ExpressionBoundary]
     public static GenCtxProperty SyncDR(ExBPY difficulty, ExBPY times, ExBPRV2 incr) => new CompositeProp(
         Times(GCXF<float>(b => times(b).Mul(difficulty(b)))), 
         RV2Incr(GCXF<V2RV2>(b => incr(b).Div(difficulty(b)))));
@@ -286,6 +289,12 @@ public record GenCtxProperty {
     /// <param name="facing"></param>
     /// <returns></returns>
     public static GenCtxProperty Face(Facing facing) => new ValueProp<Facing>(facing);
+    
+    /// <summary>
+    /// Play an SFX on every loop iteration. This is run right before the invocation.
+    /// </summary>
+    [BDSL2Only]
+    public static GenCtxProperty SFX(string sfx) => new SFXProp(new[]{sfx}, null, null);
     /// <summary>
     /// Play an SFX on every loop iteration, looping through the given array. This is run right before the invocation.
     /// </summary>
@@ -390,7 +399,6 @@ public record GenCtxProperty {
     /// Save some values into public hoisting for each fire. Resolved after PreLoop, right before invocation.
     /// </summary>
     /// <param name="targets"></param>
-    /// <returns></returns>
     public static GenCtxProperty SaveF(params (ReflectEx.Hoist<float> target, GCXF<float> indexer, GCXF<float> valuer)[] targets) =>
         new SaveFProp(targets);
     /// <summary>
@@ -414,20 +422,10 @@ public record GenCtxProperty {
     public static GenCtxProperty Cancel(GCXF<bool> cancelIf) => new CancelProp(cancelIf);
 
     /// <summary>
-    /// Make a GCX variable available for use via private hoisting.
-    /// You only need to use this when making variables available to external functions like bullet controls.
-    /// If functions within the scope of GCX use a variable, it will be automatically exposed.
-    /// <br/>Note: this only works in script code. If you are constructing stuff directly in C#, then
-    ///  use <see cref="VTPRepo.Expose"/> or <see cref="Compilers.Expose{T}"/> instead to provide information at the GCXU level.
-    /// </summary>
-    public static GenCtxProperty Expose((Reflector.ExType, string)[] variables) => new ExposeProp(variables);
-
-    /// <summary>
     /// (Internal BDSL2 usage) Specify the lexical scope for a GenCtxProperties that is not yet created.
     /// </summary>
     [DontReflect]
-    public static GenCtxProperty _AssignLexicalScope(LexicalScope scope, AutoVars.GenCtx autoVars) => 
-        new _LexicalScopeProp(scope, autoVars);
+    public static GenCtxProperty _AssignLexicalScope(LexicalScope scope) => new _LexicalScopeProp(scope);
 
     /// <summary>
     /// Reset the summonTime variable (&amp;st) provided in GCX every iteration.
@@ -608,9 +606,7 @@ public record GenCtxProperty {
 
     public record SaveV2Prop((ReflectEx.Hoist<Vector2>, GCXF<float>, GCXF<Vector2>)[] targets) : GenCtxProperty;
 
-    public record ExposeProp((Reflector.ExType, string)[] value) : ValueProp<(Reflector.ExType, string)[]>(value);
-
-    public record _LexicalScopeProp(LexicalScope scope, AutoVars.GenCtx autoVars) : GenCtxProperty {
+    public record _LexicalScopeProp(LexicalScope scope) : GenCtxProperty {
         public override string ToString() => "-Scope Metadata-";
     }
 
@@ -655,17 +651,15 @@ public static class GenCtxUtils {
 /// A set of properties modifying the behavior of a generic repeater (GIRepeat/GCRepeat/GSRepeat).
 /// </summary>
 public abstract class GenCtxProperties {
-    public (Reflector.ExType, string)[]? Expose { get; protected init; }
-
     /// <summary>
     /// The lexical scope of this repeater.
     /// <br/>Commands like <see cref="GenCtxProperty.BindItr"/> bind to variables in this scope.
     /// </summary>
-    public (LexicalScope, AutoVars.GenCtx)? ScopeAndVars { get; protected set; } = null;
+    public LexicalScope? Scope { get; protected set; } = null;
 
 
-    public void Assign(LexicalScope scope, AutoVars.GenCtx autoVars) {
-        ScopeAndVars = (scope, autoVars);
+    public void Assign(LexicalScope scope) {
+        Scope = scope;
     }
 }
 
@@ -771,7 +765,7 @@ public class GenCtxProperties<T> : GenCtxProperties {
         } else if (t == tTP) {
             allowWait = true;
             allowWaitChild = true;
-        } else throw new StaticException($"Cannot call GenCtxProperties with class {t.ExRName()}");
+        } else throw new StaticException($"Cannot call GenCtxProperties with class {t.SimpRName()}");
         foreach (var prop in props.Unroll().OrderBy(x => x.Priority)) {
             if (prop is TimesProp gt) {
                 maxTimes = gt.max ?? maxTimes;
@@ -832,10 +826,9 @@ public class GenCtxProperties<T> : GenCtxProperties {
             else if (prop is BindAngleTag) bindAngle = true;
             else if (prop is BindItrTag bit) bindItr = bit.value;
             else if (prop is ResetColorTag) resetColor = true;
-            else if (prop is ExposeProp exp) Expose = exp.value;
             else if (prop is _LexicalScopeProp scope) {
-                ScopeAndVars = (scope.scope, scope.autoVars);
-            } else throw new Exception($"{t.ExRName()} is not allowed to have properties of type {prop.GetType()}.");
+                Scope = scope.scope;
+            } else throw new Exception($"{t.SimpRName()} is not allowed to have properties of type {prop.GetType()}.");
         }
         if (sah != null) {
             if (frv2 != null) throw new Exception("A summon-along handler cannot be declared with an RV2 function handler.");

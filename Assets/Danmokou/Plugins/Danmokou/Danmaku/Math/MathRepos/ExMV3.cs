@@ -29,6 +29,7 @@ public static partial class ExMV3 {
     /// Derive a Vector3 from an XY (Vector2) and a Z-component.
     /// </summary>
     public static tv3 WithZ(tv2 xy, tfloat z) => TEx.ResolveV2(xy, v => ExUtils.V3(v.x, v.y, z));
+    
     /// <summary>
     /// Derive a Vector3 from three floats.
     /// </summary>
@@ -37,37 +38,43 @@ public static partial class ExMV3 {
     /// <param name="z">Float assigned to Z-component</param>
     /// <returns></returns>
     public static tv3 PXYZ(tfloat x, tfloat y, tfloat z) => ExUtils.V3(x, y, z);
+    
     /// <summary>
     /// Derive a Vector3 from two floats.
     /// </summary>
     /// <param name="x">Float assigned to X-component</param>
     /// <param name="y">Float assigned to Y-component</param>
     /// <returns></returns>
-    public static tv3 PXY(tfloat x, tfloat y) => ExUtils.V3(x, y, E0);
+    public static tv3 PXY0(tfloat x, tfloat y) => ExUtils.V3(x, y, E0);
+    
     /// <summary>
     /// Derive a Vector3 from one floats.
     /// </summary>
     /// <param name="x">Float assigned to X-component</param>
     /// <returns></returns>
     public static tv3 PX(tfloat x) => ExUtils.V3(x, E0, E0);
+    
     /// <summary>
     /// Derive a Vector3 from one float.
     /// </summary>
     /// <param name="y">Float assigned to Y-component</param>
     /// <returns></returns>
     public static tv3 PY(tfloat y) => ExUtils.V3(E0, y, E0);
+    
     /// <summary>
     /// Derive a Vector3 from one float.
     /// </summary>
     /// <param name="z">Float assigned to Z-component</param>
     /// <returns></returns>
     public static tv3 PZ(tfloat z) => ExUtils.V3(E0, E0, z);
+    
     /// <summary>
     /// Derive a Vector3 from a Vector2 (Z is set to zero)
     /// </summary>
     /// <param name="tp">Parametric function to assign to x,y components</param>
     /// <returns></returns>
     public static tv3 TP3(tv2 tp) => ((Ex) tp).Cast<Vector3>();
+    
     /// <summary>
     /// The zero vector.
     /// </summary>

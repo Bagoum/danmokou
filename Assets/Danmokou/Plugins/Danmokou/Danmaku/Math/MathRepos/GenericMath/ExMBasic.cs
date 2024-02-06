@@ -108,18 +108,20 @@ public static partial class ExM {
     /// <summary>
     /// Divide two numbers and returns the floor.
     /// </summary>
-    [Alias("//")] [WarnOnStrict] [Operator] [BDSL2Operator]
+    [Alias("//")] [WarnOnStrict] [Operator]
     public static tfloat FDiv(tfloat x, tfloat y) => Floor(x.Div(y));
     /// <summary>
     /// (1-x)
     /// </summary>
     [Alias("c")] [Operator]
     public static tfloat Complement(tfloat x) => E1.Sub(x);
+    
     /// <summary>
     /// x*(1-y)
     /// </summary>
     [Alias("*c")] [Operator]
     public static tfloat MulComplement(tfloat x, tfloat y) => x.Mul(E1.Sub(y));
+    
     /// <summary>
     /// max(0, x-by).
     /// </summary>

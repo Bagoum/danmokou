@@ -15,7 +15,16 @@ using Danmokou.Reflection;
 using Mizuhashi;
 
 namespace Danmokou.Reflection2 {
-
+[Flags]
+public enum DeclarationLookup {
+    CONSTANT = 1 << 0,
+    LEXICAL_SCOPE = 1 << 1,
+    DYNAMIC_SCOPE = 1 << 2,
+    
+    ConstOnly = CONSTANT,
+    Standard = CONSTANT | LEXICAL_SCOPE,
+    Dynamic = CONSTANT | LEXICAL_SCOPE | DYNAMIC_SCOPE,
+}
 public record UntypedVariable(VarDecl Declaration) : TypeUnifyErr;
 
 public interface IDeclaration {
@@ -31,7 +40,24 @@ public interface IDeclaration {
     /// The scope in which this variable is declared. Assigned by <see cref="LexicalScope.Declare"/>
     /// </summary>
     LexicalScope DeclarationScope { get; set; }
+    
+    /// <summary>
+    /// An optional comment describing the declaration.
+    /// </summary>
+    string? DocComment { get; set; }
+    
     Either<Unit, TypeUnifyErr> FinalizeType(Unifier u);
+
+    public void TrySetDocComment(LexerMetadata comments) {
+        foreach (var (p, c) in comments.Comments) {
+            if (p.End.Line + 1 == Position.Start.Line) {
+                //Space before newline required for VSCode newlining
+                DocComment = c.Replace("\n", "  \n");
+                return;
+            } else if (p.End.Line >= Position.Start.Line)
+                break;
+        }
+    }
 }
 
 /// <summary>
@@ -43,14 +69,28 @@ public class VarDecl : IDeclaration {
     public bool Hoisted { get; }
     
     /// <summary>
+    /// If true, then this declaration has a constant value.
+    /// </summary>
+    public bool Constant { get; set; }
+    /// <summary>
+    /// If <see cref="Constant"/> is true, then this stores the constant value of the declaration during execution.
+    /// </summary>
+    public Maybe<object?> ConstantValue { get; set; } = Maybe<object?>.None;
+    
+    /// <summary>
     /// The type of this variable as provided in the declaration. May be empty, in which case it will be inferred.
     /// </summary>
     public Type? KnownType { get; }
     public string Name { get; }
     public TypeDesignation TypeDesignation { get; }
-    public VarDecl Bound => this;
+    
+    /// <summary>
+    /// If present, then this VarDecl is copied into an EnvFrame from the arguments of a function.
+    /// </summary>
+    public ImplicitArgDecl? SourceImplicit { get; }
 
     public LexicalScope DeclarationScope { get; set; } = null!;
+    public string? DocComment { get; set; }
 
     /// <summary>
     /// The expression pointing to this variable (null if the scope is an Ex.Block scope).
@@ -92,13 +132,14 @@ public class VarDecl : IDeclaration {
     /// <summary>
     /// A declaration of a variable.
     /// </summary>
-    public VarDecl(PositionRange Position, bool Hoist, Type? knownType, string Name) {
+    public VarDecl(PositionRange Position, bool Hoist, Type? knownType, string Name, ImplicitArgDecl? sourceImplicit = null) {
         this.Position = Position;
         this.Hoisted = Hoist;
         this.KnownType = knownType;
         this.Name = Name;
-        TypeDesignation = knownType == null ?
-            new TypeDesignation.Variable() : TypeDesignation.FromType(knownType);
+        this.SourceImplicit = sourceImplicit;
+        TypeDesignation = sourceImplicit?.TypeDesignation ?? 
+                          (knownType == null ? new TypeDesignation.Variable() : TypeDesignation.FromType(knownType));
     }
 
     /// <summary>
@@ -114,9 +155,12 @@ public class VarDecl : IDeclaration {
     /// Get the read/write expression representing this variable, where `envFrame`'s scope is the scope in which
     ///  this variable was declared (and tac.EnvFrame is the frame of usage).
     /// </summary>
-    public virtual Expression Value(Expression envFrame, TExArgCtx tac) =>
+    public virtual Expression Value(Expression? envFrame, TExArgCtx tac) =>
         DeclarationScope.UseEF ?
-            EnvFrame.Value(envFrame, Expression.Constant(TypeIndex), Expression.Constant(Index), FinalizedType!) :
+            EnvFrame.Value(envFrame ?? throw new CompileException(
+                $"The variable `{Name}` (declared at {Position}) is stored in the environment frame, "+
+                "but is accessed from a callsite that has no environment frame."), 
+                Expression.Constant(TypeIndex), Expression.Constant(Index), FinalizedType!) :
             _parameter ?? throw new StaticException($"{nameof(Value)} called before {nameof(DeclaredParameter)}");
 
 
@@ -126,14 +170,17 @@ public class VarDecl : IDeclaration {
         if (td.IsRight)
             return new UntypedVariable(this);
         FinalizedType = td.Left;
-        return Unit.Default;
+        return SourceImplicit?.FinalizeType(u) ?? Unit.Default;
     }
         
     public IEnumerable<PrintToken> DebugPrint() {
         if (KnownType == null)
             yield return $"var &{Name}";
         else
-            yield return $"var &{Name}::{KnownType.ExRName()}";
+            yield return $"var &{Name}::{KnownType.SimpRName()}";
+    }
+    public string AsParam {
+        get { return $"{FinalizedType?.SimpRName()} {Name}"; }
     }
 }
 
@@ -143,7 +190,7 @@ public class VarDecl : IDeclaration {
 public class ImplicitArgDecl : VarDecl, IDelegateArg {
     Type IDelegateArg.Type => FinalizedType!;
     public override ParameterExpression? DeclaredParameter(TExArgCtx tac) => null;
-    public override Expression Value(Expression envFrame, TExArgCtx tac) =>
+    public override Expression Value(Expression? envFrame, TExArgCtx tac) =>
         tac.GetByName(FinalizedType ?? 
                       throw new CompileException("Cannot retrieve ImplicitArgDecl before type is finalized"), Name);
 
@@ -155,8 +202,7 @@ public class ImplicitArgDecl : VarDecl, IDelegateArg {
     public virtual TExArgCtx.Arg MakeTExArg(int index) => TExArgCtx.Arg.MakeAny(
         FinalizedType ?? throw new Exception("Implicit arg declaration type not yet finalized"), Name, false, false);
     public ImplicitArgDecl MakeImplicitArgDecl() => this;
-    public override string ToString() => $"{Name}<{FinalizedType?.ExRName()}>";
-    public string AsParam => $"{FinalizedType?.ExRName()} {Name}";
+    public override string ToString() => $"{Name}<{FinalizedType?.SimpRName()}>";
 
 }
 
@@ -166,24 +212,56 @@ public class ImplicitArgDecl<T> : ImplicitArgDecl {
     public override TExArgCtx.Arg MakeTExArg(int index) => TExArgCtx.Arg.Make<T>(Name, false, false);
 }
 
-public record ScriptFnDecl(AST.ScriptFunctionDef Tree, string Name, ImplicitArgDecl[] Args, TypeDesignation.Dummy CallType) : IDeclaration {
-    public AST.ScriptFunctionDef Tree { get; set; } = Tree;
+public class ScriptFnDecl : IDeclaration {
+    public string Name { get; init; }
+    public ImplicitArgDecl[] Args { get; init; }
+    public AST.ScriptFunctionDef Tree { get; set; }
+    public TypeDesignation.Dummy CallType { get; private set; }
+    
+    /// <summary>
+    /// If true, then invocations of this function should be extracted as constants.
+    /// </summary>
+    public bool IsConstant { get; init; }
     public PositionRange Position => Tree.Position;
     public LexicalScope DeclarationScope { get; set; } = null!;
+    public string? DocComment { get; set; }
     private (MethodInfo, object)? _compiled = null;
+    public ScriptFnDecl(AST.ScriptFunctionDef Tree, string Name, ImplicitArgDecl[] Args, TypeDesignation.Dummy CallType) {
+        this.Name = Name;
+        this.Args = Args;
+        this.Tree = Tree;
+        this.CallType = CallType;
+    }
     public (MethodInfo invoker, object func) Compile() => _compiled ??= Tree.CompileFunc();
 
     public Type? ReturnType => Tree.Body.LocalScope!.Return!.FinalizedType;
 
-    public string AsSignature => $"{ReturnType?.SimpRName()} {Name}({string.Join(", ", Args.Select(a => a.AsParam))})";
+    public string AsSignature(string? namePrefix = null) {
+        var name = namePrefix is null ? Name : $"{namePrefix}.{Name}";
+        return $"{ReturnType?.SimpRName()} {name}({string.Join(", ", Args.Select(a => a.AsParam))})";
+    }
+
+    
     public string TypeOnlySignature =>
         $"({string.Join(", ", Args.Select(a => a.FinalizedType?.SimpRName()))}): {ReturnType?.SimpRName()}";
 
     public Either<Unit, TypeUnifyErr> FinalizeType(Unifier u) {
+        CallType = CallType.SimplifyDummy(u);
         //For now we don't need any particular resolution here since the implicit args
-        // and block should resolve all variables
+        // and block should resolve all variables. However, we still do need to 
+        // simplify CallType in case this function is referenced in another script.
         return Unit.Default;
     }
+
+    public override string ToString() => $"{Tree.Position} {AsSignature()}";
+}
+
+public record ScriptImport(PositionRange Position, EnvFrame Ef, string FileKey, string? ImportFrom, string? ImportAs) : IDeclaration {
+    public string Name => ImportAs ?? FileKey;
+    public LexicalScope DeclarationScope { get; set; } = null!;
+    public string? DocComment { get; set; }
+    
+    public Either<Unit, TypeUnifyErr> FinalizeType(Unifier u) => Unit.Default;
 }
 
 

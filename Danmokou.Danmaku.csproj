@@ -92,6 +92,7 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\PhoneMimic.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Danmaku\Descriptors\Collider.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\TStateMachine.cs" />
+    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\GenericMath\ExMTesting.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Expressions\TypedExpression.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\GameInstance\Challenges.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\ExtraMovementFuncs.cs" />
@@ -161,6 +162,7 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\Configuration.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\SakuyaMimic.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\AST.cs" />
+    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\HelperStateMachines.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\Logic.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Core\LocatorStrategy.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\BossConfig.cs" />
@@ -267,6 +269,7 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\NewReflector\IAST.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\AudioTrack.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\GameInstance\Features\ConfigurationFeature.cs" />
+    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\NewReflector\IDebugPrint.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Expressions\FlattenVisitor.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\SupportAbility\Bombs\MokouThousandSuns.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\NewReflector\EnvFrameAttacher.cs" />
@@ -350,7 +353,6 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Math\MathRepos\GenericMath\ExMConditionals.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Cutin\PiecewiseAppear.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\UI\LetterboxedInput.cs" />
-    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\ASTEvaluationData.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\ADV\Examples\ExampleADVInstanceRequest.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\DoremyMimic.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\PlayerControllerHelpers.cs" />

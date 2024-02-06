@@ -1,0 +1,31 @@
+<#> bdsl2
+
+var v2::Vector2 = pxy(5, 6);
+
+var sm = pattern({
+		boss 'simp.kasen'
+	}, {
+	phase 0 { } {
+		paction 0 {
+			shiftphaseto 1
+		}
+	}
+	phase 30 { 
+		type non "For Loop Example"
+		hp 10000
+	} {
+		paction 0 {
+			position 0 1
+			print(v2.x + v2.y)
+			print(v2.magnitude)
+			print(v2.SqrMagnitude())
+			print(v2.Equals(pxy(5, 6)))
+			exec(b{
+				v2 = v2 + pxy(y, 0)
+				v2.Scale(pxy(1, 2))
+			})
+			print(v2.Equals(pxy(6, 12)))
+		}
+	}
+})
+sm;

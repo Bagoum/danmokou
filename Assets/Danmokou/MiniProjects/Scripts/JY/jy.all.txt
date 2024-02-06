@@ -27,7 +27,7 @@ phase 0
 			position -15 0
 		@ { $other }
 			diverthp $me
-		shift-phase-to 12
+		shift-phase-to 10
 
 
 !{ power1()
@@ -445,7 +445,7 @@ phase 42
 !!{ condl ($cy | $cl)
 !!{ condd ($cx | $cd)
 !!{ condr ($cy | $cr)
-!!{ cond select @0 cmdloop { $condu $condl $condu $condr $condu }
+!!{ cond select @0 cmdloop {  code($condu)  code($condl)  code($condu)  code($condr) code($condu) }
 
 		@ $other
 			gtr2 0 _ <> {
@@ -461,7 +461,7 @@ phase 42
 				bullet-control < timersec(st) $tctrl empty sm $cond
 					sync lightning-blue/w <> gsr {
 						face d
-						start rv2.a =f  if($cx, 180 - &ang, neg &ang)
+						start rv2.a =f  if($cx, 180 - &.ang, neg &.ang)
 						sfx x-fire-tech-8
 					} pather 1 0.7 tprot cx 3.1 { high s 1.3 }
 				wait $tctrl
@@ -475,7 +475,6 @@ phase 42
 		async empty <> gcr2 180 _ aphi $erpt {
 		} gsr2c $erpt {
 			preloop ang =f [&rv2].a
-			expose { f ang }
 		} s $mov
 		async lstar-yellow/w <> gcr2 /i dl 20 _ <> {
 			frv2	a sine 7p 1100 timersec(pt)
@@ -528,7 +527,6 @@ phase 42
 				tret =f 0
 				lr =f 0
 			}
-			expose { f tret f lr }
 		} gsr2c $crep {
 		} s tprot px lerpt3(0.2, 0.8, 1, 1.3, 1, 4,
 			lerpt 100 100.3 0.7 0)

@@ -195,36 +195,27 @@ public static partial class Reflector {
     /// <br/>May throw an exception if parsing fails.
     /// </summary>
     public static object? Into(this string argstring, Type t) {
-        using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.INTO, argstring);
-        var p = IParseQueue.Lex(argstring);
-        try {
-            Profiler.BeginSample("AST construction");
-            var ast = p.IntoAST(t);
-            Profiler.EndSample();
-            foreach (var d in ast.WarnUsage(p.Ctx))
-                d.Log();
-            if (p.Ctx.ParseEndFailure(p, ast) is { } exc)
-                throw exc;
-            //In-code scopes can get called arbitrarily
-            var rootScope = LexicalScope.NewTopLevelDynamicScope();
-            using var __ = new LexicalScope.ParsingScope(rootScope);
-            ast.AttachLexicalScope(rootScope);
-            if (rootScope.FinalizeVariableTypes(Unifier.Empty).TryR(out var err))
-                throw Reflection2.IAST.EnrichError(err);
-            Profiler.BeginSample("AST realization");
-            var val = ast.EvaluateObject(new());
-            Profiler.EndSample();
-            return val;
-        } catch (Exception e) {
-            throw new Exception($"Failed to parse below string into type {t.ExRName()}:\n{argstring}", e);
-        }
+        return intoMeth.Specialize(t).Invoke(null, argstring);
     }
     
     /// <summary>
     /// Parse a string into an object of type T.
     /// <br/>May throw an exception if parsing fails.
     /// </summary>
-    public static T Into<T>(this string argstring) => ((T) Into(argstring, typeof(T))!);
+    public static T Into<T>(this string argstring) {
+        using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.INTO, argstring);
+        try {
+            Profiler.BeginSample("Generic Into AST (BDSL2) Parsing/Compilation");
+            var (val, ef) = Reflection2.Helpers.ParseAndCompileValue<T>(argstring);
+            Profiler.EndSample();
+            return val;
+        } catch (Exception e) {
+            throw new Exception($"Failed to parse below string into type {typeof(T).RName()}:\n{argstring}", e);
+        }
+    }
+    
+    private static readonly GenericMethodSignature intoMeth = (GenericMethodSignature)
+        MethodSignature.Get(typeof(Reflector).GetMethod(nameof(Into), new[]{typeof(string)})!);
 
     /// <summary>
     /// Parse a string into an object of type T. Returns null if the string is null or whitespace-only.
@@ -244,7 +235,30 @@ public static partial class Reflector {
         return Into(argstring!, t);
     }
 
-    public static T Into<T>(this IParseQueue q) => ((T) q.IntoAST(typeof(T)).EvaluateObject(new())!);
+    public static T Into<T>(this IParseQueue q) => ((T) q.IntoAST(typeof(T)).EvaluateObject()!);
+
+    public static T IntoBDSL1<T>(this string argstring) {
+        using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.INTO, argstring);
+        try {
+            var p = IParseQueue.Lex(argstring);
+            var ast = p.IntoAST(typeof(T));
+            Profiler.EndSample();
+            foreach (var d in ast.WarnUsage(p.Ctx))
+                d.Log();
+            if (p.Ctx.ParseEndFailure(p, ast) is { } exc)
+                throw exc;
+            //In-code scopes can get called arbitrarily
+            var rootScope = LexicalScope.NewTopLevelDynamicScope();
+            using var __ = new LexicalScope.ParsingScope(rootScope);
+            ast.AttachLexicalScope(rootScope);
+            if (rootScope.FinalizeVariableTypes(Unifier.Empty).TryR(out var err))
+                throw Reflection2.IAST.EnrichError(err);
+            Profiler.BeginSample("AST realization");
+            return (T)ast.EvaluateObject()!;
+        } catch (Exception e) {
+            throw new Exception($"Failed to parse below string into type {typeof(T).RName()}:\n{argstring}", e);
+        }
+    }
 /*
     private static object? Into(this IParseQueue q, Type t) {
         var ast = q.IntoAST(t);
@@ -274,7 +288,7 @@ public static partial class Reflector {
             if (p.Items.Length == 1) q = p.NextChild();
             else
                 throw p.WrapThrow(
-                    $"Tried to find an object of type {t.ExRName()}, but there is a parentheses with" +
+                    $"Tried to find an object of type {t.SimpRName()}, but there is a parentheses with" +
                     $" {p.Items.Length} elements. Any parentheses should only have one element.");
         }
     }
@@ -288,10 +302,6 @@ public static partial class Reflector {
         return q;
     }
 
-    [UsedImplicitly]
-    private static Func<T1, R> MakeLambda1<T1, R>(Func<object?[], object> invoker)
-        => arg => (R) invoker(new object?[] {arg});
-
     private static IAST ReflectNonExplicitParam(IParseQueue q, NamedParam p) {
         if (p.Type == tPhaseProperties) {
             var props = q.Ctx.QueuedProps.Count > 0 ?
@@ -304,7 +314,7 @@ public static partial class Reflector {
             q.Ctx.QueuedProps.Clear();
             return props;
         } else
-            throw new StaticException($"No non-explicit reflection handling exists for type {p.Type.ExRName()}");
+            throw new StaticException($"No non-explicit reflection handling exists for type {p.Type.SimpRName()}");
     }
 
     private static IAST ReflectParam(IParseQueue q, NamedParam p) {
@@ -354,8 +364,8 @@ public static partial class Reflector {
             }
             var arg = (pu as SMParser.ParsedUnit.Str) ?? throw new StaticException($"Couldn't result {pu.GetType()}");
             if (q.Empty)
-                throw q.WrapThrow($"Ran out of text when trying to create an object of type {t.ExRName()}.");
-            else if (t == tsm)
+                throw q.WrapThrow($"Ran out of text when trying to create an object of type {t.SimpRName()}.");
+            else if (t == typeof(StateMachine))
                 ast = ReflectSM(q);
             else if (ReflectMethod(arg, t, q) is { } methodAST) {
                 //this advances inside
@@ -373,8 +383,8 @@ public static partial class Reflector {
                 ast = new AST.MethodInvoke(ast, ftmi.mi.Call(null)) { Type = AST.MethodInvoke.InvokeType.Fallthrough };
                 if (ast.IsUnsound)
                     ast = new AST.Failure(q.WrapThrowHighlight(index,
-                        $"Failed to construct an object of type {t.SimpRName()}. Instead, tried to construct a" +
-                        $" similar object of type {ftype.SimpRName()}, but that also failed."), t) { Basis = ast };
+                        $"Failed to construct an object of type {t.RName()}. Instead, tried to construct a" +
+                        $" similar object of type {ftype.RName()}, but that also failed."), t) { Basis = ast };
             } else if (TryCompileOption(t, out var cmp)) {
                 ast = ReflectTargetType(MakeFallthrough(q), cmp.source, postAggregateContinuation);
                 ast = new AST.MethodInvoke(ast, cmp.mi.Call(null)) { Type = AST.MethodInvoke.InvokeType.Compiler };
@@ -388,7 +398,7 @@ public static partial class Reflector {
                 ast = new AST.Preconstructed<object?>(arg.Position, x);
                 q.Advance();
             } else {
-                throw q.WrapThrowHighlight(index, $"Couldn't convert the text in ≪≫ to type {t.SimpRName()}.");
+                throw q.WrapThrowHighlight(index, $"Couldn't convert the text in ≪≫ to type {t.RName()}.");
             }
             if (!ast.IsUnsound) {
                 ast = DoPostAggregation(t, q, ast);

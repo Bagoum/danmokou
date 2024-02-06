@@ -41,10 +41,9 @@ public class SpriteDisplayController: DisplayController {
     }
     
     public override void FadeSpriteOpacity(BPY fader01, float over, ICancellee cT, Action done) {
-        Color c = sprite.color;
-        var tbpi = ParametricInfo.WithRandomId(beh.rBPI.loc, beh.rBPI.index);
-        c.a = fader01(tbpi);
-        sprite.color = c;
+        var tbpi = beh.rBPI;
+        tbpi.t = 0;
+        sprite.color = sprite.color.WithA(fader01(tbpi));
         beh.RunRIEnumerator(_FadeSpriteOpacity(fader01, tbpi, over, cT, done));
     }
     private IEnumerator _FadeSpriteOpacity(BPY fader01, ParametricInfo tbpi, float over, ICancellee cT, Action done) {

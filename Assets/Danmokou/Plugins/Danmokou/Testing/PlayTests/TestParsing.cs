@@ -5,6 +5,7 @@ using BagoumLib.DataStructures;
 using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.DMath;
+using Danmokou.Reflection2;
 using Danmokou.Services;
 using NUnit.Framework;
 using Danmokou.SM;
@@ -89,7 +90,7 @@ async shell-teal/b <2;:> gcr2 60 5 <-0.2;:10> { } gsr2 5 <;:72> { } s tp-rot cxy
 <!> bgt-out shatter4
 phase 0
 paction 0
-noop") as PhaseSM).TField<PhaseProperties>("props");
+noop") as EFStateMachine)!.inner.TField<PhaseProperties>("props");
         AreEqual(PhaseType.Spell, props.phaseType);
         AreEqual("en4", props.cardTitle?.ToString());
         AreEqual(21000, props.hp);
@@ -109,8 +110,8 @@ paction 0
         paction 0 :1
             noop
     noop
-    noop") as PhaseParallelActionSM;
-        AreEqual(4, sm.TField<List<StateMachine>>("states").Count);
+    noop") as EFStateMachine;
+        AreEqual(4, sm!.inner.TField<StateMachine[]>("states").Length);
         sm = StateMachine.CreateFromDump(@"
 paction 0
     noop
@@ -118,8 +119,8 @@ paction 0
         paction 0 :2
             noop
             noop
-    noop") as PhaseParallelActionSM;
-        AreEqual(3, sm.TField<List<StateMachine>>("states").Count);
+    noop") as EFStateMachine;
+        AreEqual(3, sm!.inner.TField<StateMachine[]>("states").Length);
         sm = StateMachine.CreateFromDump(@"
 paction 0
     noop
@@ -127,8 +128,8 @@ paction 0
         paction 0
             noop
             noop
-            noop") as PhaseParallelActionSM;
-        AreEqual(2, sm.TField<List<StateMachine>>("states").Count);
+            noop") as EFStateMachine;
+        AreEqual(2, sm!.inner.TField<StateMachine[]>("states").Length);
 
     }
 

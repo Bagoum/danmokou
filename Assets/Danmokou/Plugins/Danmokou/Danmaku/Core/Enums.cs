@@ -44,24 +44,24 @@ public enum Parametrization {
 /// </summary>
 public enum SAAngle {
     /// <summary>
-    /// (o) The angle from the parent is not modified.
+    /// (o/original) The angle from the parent is not modified.
     /// If you add an angle offset, the entire summon will rotate.
     /// </summary>
     ORIGINAL,
     /// <summary>
-    /// (bo) The angle from the parent is banked.
+    /// (bo/bankoriginal) The angle from the parent is banked.
     /// If you add an angle offset, the summon will not rotate,
     /// but the movement of the summoned pieces will.
     /// </summary>
     ORIGINAL_BANK,
     /// <summary>
-    /// (br) The angle is set to the position of the summon, then banked.
+    /// (br/bankrelative) The angle is set to the position of the summon, then banked.
     /// If you add an angle offset, the summon will not rotate,
     /// but the movement of the summoned pieces will.
     /// </summary>
     REL_ORIGIN_BANK,
     /// <summary>
-    /// (bt) The angle is set to the tangent on the summon curve, then banked.
+    /// (bt/banktangent) The angle is set to the tangent on the summon curve, then banked.
     /// If you add an angle offset, the summon will not rotate,
     /// but the movement of the summoned pieces will.
     /// </summary>

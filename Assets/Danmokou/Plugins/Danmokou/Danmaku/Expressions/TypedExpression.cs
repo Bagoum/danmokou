@@ -32,7 +32,7 @@ public class TExArgCtx {
         /// <summary>
         /// The lexical scope in which this expression is being compiled.
         /// </summary>
-        public LexicalScope Scope { get; set; } = DMKScope.Singleton;
+        public LexicalScope Scope => LexicalScope.CurrentOpenParsingScope;
         
         /// <summary>
         /// When the type of the custom data (<see cref="PIData"/>) is known, this contains
@@ -162,9 +162,7 @@ public class TExArgCtx {
     public TExArgCtx(TExArgCtx? parent, params Arg[] args) {
         this.parent = parent;
         if (parent == null)
-            this.ctx = new RootCtx() {
-                Scope = LexicalScope.OpenLexicalScopes.TryPeek(out var r) ? r : DMKScope.Singleton
-            };
+            this.ctx = new RootCtx();
         this.args = args;
         argNameToIndexMap = new Dictionary<string, int>();
         argTypeToIndexMap = new Dictionary<Type, int>();
@@ -191,7 +189,7 @@ public class TExArgCtx {
     public TEx<T> GetByName<T>(string name) {
         if (!argNameToIndexMap.TryGetValue(name, out var idx))
             throw new CompileException($"The variable \"{name}\" is not provided as an argument.");
-        return args[idx].expr as TEx<T> ?? throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).ExRName()}");
+        return args[idx].expr as TEx<T> ?? throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).SimpRName()}");
     }
     public TEx<T>? MaybeGetByName<T>(string name) {
         if (!argNameToIndexMap.TryGetValue(name, out var idx))
@@ -199,28 +197,28 @@ public class TExArgCtx {
         return args[idx].expr is TEx<T> arg ?
             arg :
             //Still throw an error in this case
-            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).ExRName()}");
+            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typeof(T).SimpRName()}");
     }
     public TEx GetByName(Type typ, string name) {
         if (!argNameToIndexMap.TryGetValue(name, out var idx))
             throw new CompileException($"The variable \"{name}\" is not provided as an argument.");
-        return args[idx].expr.GetType().GetGenericArguments()[0] == typ ?
+        return TEx.TExTypeMatches(typ, args[idx].expr.GetType()) ?
                 args[idx].expr :
-                throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typ.ExRName()}");
+                throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typ.SimpRName()}");
     }
     
     public TEx? MaybeGetByName(Type typ, string name) {
         if (!argNameToIndexMap.TryGetValue(name, out var idx))
             return null;
-        return args[idx].expr.GetType().GetGenericArguments()[0] == typ ?
+        return TEx.TExTypeMatches(typ, args[idx].expr.GetType()) ?
             args[idx].expr :
             //Still throw an error in this case
-            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typ.ExRName()}");
+            throw new BadTypeException($"The variable \"{name}\" (#{idx+1}/{args.Length}) is not of type {typ.SimpRName()}");
     }
     
     public TEx GetByType<T>(out int idx) {
         if (!argTypeToIndexMap.TryGetValue(typeof(T), out idx))
-            throw new CompileException($"No variable of type {typeof(T).ExRName()} is provided as an argument.");
+            throw new CompileException($"No variable of type {typeof(T).SimpRName()} is provided as an argument.");
         return args[idx].expr;
     }
     public TEx GetByType<T>() => GetByType<T>(out _);
@@ -231,7 +229,7 @@ public class TExArgCtx {
     
     public Tx GetByExprType<Tx>(out int idx) where Tx : TEx {
         if (!argExTypeToIndexMap.TryGetValue(typeof(Tx), out idx))
-            throw new CompileException($"No variable of type {typeof(Tx).ExRName()} is provided as an argument.");
+            throw new CompileException($"No variable of type {typeof(Tx).SimpRName()} is provided as an argument.");
         return (Tx)args[idx].expr;
     }
     public Tx GetByExprType<Tx>() where Tx : TEx => GetByExprType<Tx>(out _);
@@ -303,7 +301,7 @@ public class TExArgCtx {
 /// Base class for <see cref="TEx{T}"/> used for type constraints.
 /// </summary>
 public class TEx {
-    protected readonly Expression ex;
+    internal readonly Expression ex;
     public readonly Type type;
     protected TEx(Expression ex) {
         this.ex = ex;
@@ -322,6 +320,14 @@ public class TEx {
         var ext = ex.Type;
         if (!TExBoxMap.TryGetValue(ext, out var tt)) throw new Exception($"Cannot box expression of type {ext}");
         return Activator.CreateInstance(tt, ex) as TEx ?? throw new Exception("Boxing failed");
+    }
+
+    public static bool TExTypeMatches(Type basicType, Type texType) {
+        if (texType.IsGenericType && texType.GetGenericTypeDefinition() == typeof(TEx<>))
+            return texType.GetGenericArguments()[0] == basicType;
+        else if (texType.IsSubclassOf(typeof(TEx)))
+            return TExTypeMatches(basicType, texType.BaseType!);
+        return false;
     }
 
     //t = typeof(float) or similr

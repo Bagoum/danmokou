@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reactive;
 using BagoumLib;
 using BagoumLib.Culture;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.GameInstance;
 using Danmokou.Scriptables;
@@ -513,7 +515,8 @@ public class PhaseProperties {
             else if (prop is RootProp rp) {
                 StateMachine rm = SaveData.Settings.TeleportAtPhaseStart ?
                     SMReflection.Position(_ => rp.x, _ => rp.y) :
-                    SMReflection.MoveTarget(AtomicBPYRepo.Const(rp.t), ExMEasers.EIOSine, Parametrics.CXY(rp.x, rp.y));
+                    SMReflection.MoveTarget(AtomicBPYRepo.Const(rp.t), 
+                        _ => Expression.Constant((Func<float,float>)M.EIOSine), Parametrics.CXY(rp.x, rp.y));
                 rootMoves.Add(rp.who == null ? rm : RetargetUSM.Retarget(rm, rp.who));
             } else if (prop is ChallengeProp clp) 
                 challenges.Add(clp.c);

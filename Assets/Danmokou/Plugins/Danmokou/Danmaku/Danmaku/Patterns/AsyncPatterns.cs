@@ -55,7 +55,7 @@ public static partial class AsyncPatterns {
         public void DoSIteration(SyncPattern[] target) {
             using var itrSBH = new SyncHandoff(looper.Handoff.Copy(), extraFrames * ETime.FRAME_TIME);
             for (int ii = 0; ii < target.Length; ++ii) {
-                target[ii](itrSBH);
+                target[ii].Run(itrSBH);
             }
         }
         public void FinishIteration() => looper.FinishIteration();
@@ -151,7 +151,7 @@ public static partial class AsyncPatterns {
             //RunPrepend steps the coroutine and places it before the current one,
             //so we can continue running on the same frame that the child finishes (if using waitchild). 
             itrABH.callback = done;
-            itrABH.RunPrependRIEnumerator(target(itrABH));
+            itrABH.RunPrependRIEnumerator(target.Run(itrABH));
         }
 
         public void AllADone(bool? runFinishIteration = null, bool? normalEnd = null) {
@@ -239,7 +239,7 @@ public static partial class AsyncPatterns {
             }
             tracker.AllSDone(true);
         }
-        return Inner;
+        return new(Inner);
     }
     
     /// <summary>
@@ -320,8 +320,8 @@ public static partial class AsyncPatterns {
     /// <summary>
     /// Run only one of the provided patterns, using the indexer function to determine which.
     /// </summary>
-    public static AsyncPattern Alternate(GCXF<float> indexer, AsyncPattern[] aps) => abh =>
-        aps[(int)indexer(abh.ch.gcx) % aps.Length](abh);
+    public static AsyncPattern Alternate(GCXF<float> indexer, AsyncPattern[] aps) => new(abh =>
+        aps[(int)indexer(abh.ch.gcx) % aps.Length].Run(abh));
 
     /// <summary>
     /// Execute the child SyncPattern once.
@@ -333,12 +333,12 @@ public static partial class AsyncPatterns {
         IEnumerator Inner(AsyncHandoff abh) {
             if (!abh.Cancelled) {
                 var itrSBH = new SyncHandoff(abh.ch, 0);
-                target(itrSBH);
+                target.Run(itrSBH);
             }
             abh.Done();
             yield break;
         }
-        return Inner;
+        return new(Inner);
     }
 
 
@@ -391,7 +391,7 @@ public static partial class AsyncPatterns {
                 tracker.DoLastAIteration(target);
             } else tracker.AllADone(false, true);
         }
-        return Inner;
+        return new(Inner);
     }
     
     /// <summary>
@@ -473,22 +473,23 @@ public static partial class AsyncPatterns {
         IEnumerator Inner(AsyncHandoff abh) {
             if (abh.Cancelled) { abh.Done(); yield break; }
             abh.ch.bc.transformParent = (behid == "this") ? abh.ch.gcx.exec : BehaviorEntity.GetExecForID(behid);
-            yield return next(abh);
+            yield return next.Run(abh);
         }
-        return Inner;
+        return new(Inner);
     }
     
     /// <summary>
     /// Run arbitrary code as an AsyncPattern.
+    /// <br/>Note: This is reflected via <see cref="SM.SMReflection.Exec"/>.
     /// </summary>
-    [BDSL2Only]
+    [DontReflect]
     public static AsyncPattern Exec(ErasedGCXF code) {
         IEnumerator Inner(AsyncHandoff abh) {
             if (abh.Cancelled) { abh.Done(); yield break; }
             code(abh.ch.gcx);
             abh.Done();
         }
-        return Inner;
+        return new(Inner);
     }
 
     /// <summary>
@@ -498,9 +499,14 @@ public static partial class AsyncPatterns {
     public static AsyncPattern Wrap(GCXF<AsyncPattern> code) {
         IEnumerator Inner(AsyncHandoff abh) {
             if (abh.Cancelled) { abh.Done(); yield break; }
-            yield return code(abh.ch.gcx)(abh);
+            var inner = code(abh.ch.gcx);
+            yield return inner.Run(abh);
+            //The created AP has a mirrored envframe on it; since we are no longer using the AP, we should free the EF.
+            //If we were to assign or return the AP, then we'd have to keep the EF alive.
+            inner.EnvFrame?.Free();
+            inner.EnvFrame = null;
         }
-        return Inner;
+        return new(Inner);
     }
 
 
@@ -511,10 +517,10 @@ public static partial class AsyncPatterns {
     /// <param name="next">Asynchronous invokee to modify</param>
     /// <returns></returns>
     public static AsyncPattern ICacheLoc(AsyncPattern next) {
-        return abh => {
+        return new(abh => {
             abh.ch.bc.CacheLoc();
-            return next(abh);
-        };
+            return next.Run(abh);
+        });
     }
 }
 

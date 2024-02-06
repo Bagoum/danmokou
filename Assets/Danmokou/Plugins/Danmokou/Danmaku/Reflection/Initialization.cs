@@ -214,13 +214,27 @@ public static partial class Reflector {
             ("bt", SAAngle.TANGENT_BANK),
             ("o", SAAngle.ORIGINAL)
         });
-        SEnum(true, new[] {
+        BDSL2Enum(new[] {
+            ("bankoriginal", SAAngle.ORIGINAL_BANK),
+            ("bankrelative", SAAngle.REL_ORIGIN_BANK),
+            ("banktangent", SAAngle.TANGENT_BANK),
+            ("original", SAAngle.ORIGINAL)
+        });
+        SEnum(false, new[] {
             ("nx", RV2ControlMethod.NX),
             ("ny", RV2ControlMethod.NY),
             ("rx", RV2ControlMethod.RX),
             ("ry", RV2ControlMethod.RY),
             ("a", RV2ControlMethod.ANG),
             ("ra", RV2ControlMethod.RANG)
+        });
+        BDSL2Enum(new[] {
+            ("nx", RV2ControlMethod.NX),
+            ("ny", RV2ControlMethod.NY),
+            ("rx", RV2ControlMethod.RX),
+            ("ry", RV2ControlMethod.RY),
+            ("ang", RV2ControlMethod.ANG),
+            ("rang", RV2ControlMethod.RANG)
         });
         SEnum(false, new[] {
             ("l1", TSMReflection.StandLocation.LEFT1),

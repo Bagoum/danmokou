@@ -23,9 +23,12 @@ namespace Danmokou.Danmaku {
 public class GenCtx : IDisposable {
     public static readonly GenCtx Empty = new();
     public EnvFrame EnvFrame { get; private set; } = EnvFrame.Empty;
-    public AutoVars? AutoVars { get; set; } = null!;
+    public LexicalScope Scope => EnvFrame.Scope;
+    public bool AutovarsAreInherited { get; private set; } = false;
+    public AutoVars? AutoVars => Scope.AutoVars;
     public bool HasGCXVars => AutoVars is AutoVars.GenCtx;
-    public AutoVars.GenCtx GCXVars => (AutoVars.GenCtx?)AutoVars ?? throw new Exception("GXR autovars not provided");
+    public AutoVars.GenCtx GCXVars => 
+        Scope.NearestAutoVars as AutoVars.GenCtx ?? throw new Exception("GXR autovars not provided");
     
     public int _i = 0;
     public int _pi = 0;
@@ -74,7 +77,7 @@ public class GenCtx : IDisposable {
     public Vector2 Loc => exec.GlobalPosition();
     public uint? idOverride = null;
     /// <summary>
-    /// Get a <see cref="ParametricInfo"/> with <see cref="idOverride"/> or a random ID
+    /// Get a <see cref="ParametricInfo"/> with <see cref="idOverride"/> or the executing entity's ID
     ///  to use for <see cref="GCXF{T}"/> functions.
     /// </summary>
     [UsedImplicitly]
@@ -112,7 +115,6 @@ public class GenCtx : IDisposable {
     public static GenCtx New(BehaviorEntity exec, EnvFrame? ef = null) {
         var newgc = NewUnscoped(exec);
         newgc.EnvFrame = ef ?? EnvFrame.Empty;
-        newgc.AutoVars = newgc.EnvFrame.Scope.AutoVars;
         return newgc;
     }
 
@@ -135,7 +137,7 @@ public class GenCtx : IDisposable {
         idOverride = null;
         EnvFrame.Free();
         EnvFrame = EnvFrame.Empty;
-        AutoVars = null!;
+        AutovarsAreInherited = false;
         i = 0;
         pi = 0;
         cache.Push(this);
@@ -143,20 +145,18 @@ public class GenCtx : IDisposable {
     }
 
     /// <summary>
-    /// Copy a GCX.
-    /// <br/>If provided a lexical scope, then will copy or derive a new frame from this GCX's frame.
-    /// <br/>If provided a frame, then will mirror that frame.
+    /// Derive a child GCX in a new lexical scope.
+    /// <br/>If the scope is null, then will clone this GCX, and disable automatic autovar writes.
     /// </summary>
-    public GenCtx Copy(Either<(LexicalScope scope, AutoVars.GenCtx autoVars), EnvFrame>? newScope) {
+    public GenCtx Derive(LexicalScope? newScope) {
         var cp = NewUnscoped(exec);
         cp.index = this.index;
         cp.idOverride = this.idOverride;
         cp.playerController = playerController;
-        if (newScope.Try(out var ns)) {
-            if (ns.IsLeft) {
-                cp.EnvFrame = EnvFrame.Create(ns.Left.scope, EnvFrame);
-                cp.AutoVars = ns.Left.autoVars;
-                if (AutoVars is AutoVars.GenCtx) {
+        if (newScope != null) {
+            cp.EnvFrame = EnvFrame.Create(newScope, EnvFrame);
+            if (cp.HasGCXVars) {
+                if (Scope.NearestAutoVars is AutoVars.GenCtx) {
                     cp.RV2 = RV2;
                     cp.BaseRV2 = BaseRV2;
                     cp.SummonTime = SummonTime;
@@ -164,14 +164,30 @@ public class GenCtx : IDisposable {
                     cp.RV2 = cp.BaseRV2 = V2RV2.Zero;
                     cp.SummonTime = 0;
                 }
-            } else {
-                //overriden scope
-                cp.EnvFrame = ns.Right.Mirror();
-                cp.AutoVars = ns.Right.Scope.AutoVars;
             }
         } else {
             cp.EnvFrame = EnvFrame.Clone();
-            cp.AutoVars = AutoVars;
+            cp.AutovarsAreInherited = true;
+        }
+        cp.i = this.i;
+        cp.pi = this.pi;
+        return cp;
+    }
+
+    /// <summary>
+    /// Copy a GCX. If provided a frame, then will mirror that frame.
+    /// </summary>
+    public GenCtx Copy(EnvFrame? newScope) {
+        var cp = NewUnscoped(exec);
+        cp.index = this.index;
+        cp.idOverride = this.idOverride;
+        cp.playerController = playerController;
+        if (newScope != null) {
+            //overriden scope
+            cp.EnvFrame = newScope.Mirror();
+            //Since we're mirroring, don't copy RV2 vars- store them in CH rv2Override
+        } else {
+            cp.EnvFrame = EnvFrame.Clone();
         }
         cp.i = this.i;
         cp.pi = this.pi;
@@ -186,7 +202,6 @@ public class GenCtx : IDisposable {
         cp.i = this.i;
         cp.pi = this.pi;
         cp.EnvFrame = EnvFrame.Mirror();
-        cp.AutoVars = AutoVars;
         return cp;
     }
 
@@ -280,7 +295,11 @@ public enum GCOperator {
     /// <summary>
     /// //=
     /// </summary>
-    FDivAssign
+    FDivAssign,
+    /// <summary>
+    /// x = k - x
+    /// </summary>
+    ComplementAssign
 }
 
 public abstract class GCRule {

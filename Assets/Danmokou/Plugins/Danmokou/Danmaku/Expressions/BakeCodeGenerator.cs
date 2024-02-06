@@ -275,7 +275,7 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
                     if (obj is D del) 
                         return del;
                     throw new Exception($"Baked expression #{index}/{compiled.Count} for file {FileIdentifier} " +
-                                        $"is of type {obj.GetType().ExRName()}, requested {typeof(D).ExRName()}");
+                                        $"is of type {obj.GetType().SimpRName()}, requested {typeof(D).SimpRName()}");
                 }
             
                 public override void Dispose() {
@@ -332,7 +332,7 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
         var f = FlattenVisitor.Flatten(ex, true, true);
 #if UNITY_EDITOR
         //if (typeof(D) == typeof(VTP) || typeof(D) == typeof(SBCF) || typeof(D) == typeof(GCXF<float>))
-            Debug.Log($"Ex:{typeof(D).ExRName()} " +
+            Debug.Log($"Ex:{typeof(D).SimpRName()} " +
                       $"{new ExpressionPrinter{ObjectPrinter = new DMKObjectPrinter {FallbackToToString = true}}.LinearizePrint(ex)}");
 #endif
         var result = Ex.Lambda<D>(f, prms).Compile();
@@ -397,8 +397,8 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
                         //generally caused by unfilled field, can be ignored.
                     } else
                         throw new Exception("ReflectInto has resultType set on an invalid property type: " +
-                                            $"{typ.ExRName()}.{m.Name}<{val.GetType().ExRName()}/" +
-                                            $"{ra.resultType.ExRName()}>");
+                                            $"{typ.SimpRName()}.{m.Name}<{val.GetType().SimpRName()}/" +
+                                            $"{ra.resultType.SimpRName()}>");
                 }
             }
         }

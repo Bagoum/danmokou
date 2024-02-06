@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using BagoumLib;
@@ -9,6 +10,7 @@ using BagoumLib.Expressions;
 using BagoumLib.Functional;
 using BagoumLib.Reflection;
 using BagoumLib.Tasks;
+using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.Danmaku.Options;
@@ -60,7 +62,7 @@ public interface IAST : IDebugAST {
     /// <summary>
     /// Generate the object.
     /// </summary>
-    object? EvaluateObject(ASTEvaluationData data) => throw new NotImplementedException();
+    object? EvaluateObject() => throw new NotImplementedException();
 
     IEnumerable<ReflectDiagnostic> WarnUsage(ReflCtx ctx);
 }
@@ -69,8 +71,8 @@ public interface IAST : IDebugAST {
 /// <see cref="IAST"/> restricted by the return type of the object.
 /// </summary>
 public interface IAST<out T> : IAST {
-    T Evaluate(ASTEvaluationData data);
-    object? IAST.EvaluateObject(ASTEvaluationData data) => Evaluate(data);
+    T Evaluate();
+    object? IAST.EvaluateObject() => Evaluate();
     Type IAST.ResultType => typeof(T);
 }
 
@@ -84,7 +86,7 @@ public record ASTRuntimeCast<T>(IAST Source) : IAST<T> {
 
     public LexicalScope LexicalScope => Source.LexicalScope;
 
-    public T Evaluate(ASTEvaluationData data) => Source.EvaluateObject(data) is T result ?
+    public T Evaluate() => Source.EvaluateObject() is T result ?
         result :
         throw new StaticException("Runtime AST cast failed");
     public void AttachLexicalScope(LexicalScope scope) => Source.AttachLexicalScope(scope);
@@ -111,7 +113,7 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
     public bool IsUnsound => Source.IsUnsound;
 
     public LexicalScope LexicalScope => Source.LexicalScope;
-    public U Evaluate(ASTEvaluationData data) => Map(Source.Evaluate(data));
+    public U Evaluate() => Map(Source.Evaluate());
     
     public void AttachLexicalScope(LexicalScope scope) => Source.AttachLexicalScope(scope);
     
@@ -121,7 +123,7 @@ public record ASTFmap<T, U>(Func<T, U> Map, IAST<T> Source) : IAST<U> {
         => Source.NarrowestASTForPosition(p);
 
     public string Explain() => $"{Position.Print(true)} " +
-                               $"Map from type {typeof(T).SimpRName()} to type {typeof(U).SimpRName()}";
+                               $"Map from type {typeof(T).RName()} to type {typeof(U).RName()}";
 
     public DocumentSymbol ToSymbolTree(string? descr = null) => Source.ToSymbolTree(descr);
     public IEnumerable<SemanticToken> ToSemanticTokens() => Source.ToSemanticTokens();
@@ -244,23 +246,27 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         /// Whether the argument list is provided in parentheses (ie. as `func(arg1, arg2)` as opposed to `func arg1 arg2`).
         /// </summary>
         public bool Parenthesized { get; init; } = false;
+        protected LexicalScope? LocalScope { get; private set; }
 
         public override void AttachLexicalScope(LexicalScope scope) {
             if (BaseMethod.Mi.GetAttribute<CreatesInternalScopeAttribute>() is { } cis) {
-                scope = cis.dynamic ? new DynamicLexicalScope(scope) : LexicalScope.Derive(scope);
+                LocalScope = scope = cis.dynamic ? new DynamicLexicalScope(scope) : LexicalScope.Derive(scope);
                 scope.AutoDeclareVariables(MethodPosition, cis.type);
                 scope.Type = LexicalScopeType.MethodScope;
             } else if (BaseMethod.Mi.GetAttribute<ExtendsInternalScopeAttribute>() is { } eis) {
                 scope.AutoDeclareExtendedVariables(MethodPosition, eis.type, 
                     //bindItr support- BDSL1 only
                     (Params.Try(0) as Preconstructed<object>)?.Value as string);
+            } else if (BaseMethod.Mi.GetAttribute<ExpressionBoundaryAttribute>() is { }) {
+                LocalScope = scope = LexicalScope.Derive(scope);
+                scope.Type = LexicalScopeType.ExpressionBlock; //expressionEF is BDSL2 only
             }
             base.AttachLexicalScope(scope);
         }
         
         public override string Explain() => $"{CompactPosition} {BaseMethod.Mi.AsSignature}";
         public override DocumentSymbol ToSymbolTree(string? descr = null) {
-            if (BaseMethod.Mi.IsCtor && BaseMethod.Mi.ReturnType == typeof(PhaseSM) && !Params[1].IsUnsound && Params[1].EvaluateObject(new()) is PhaseProperties props) {
+            if (BaseMethod.Mi.IsCtor && BaseMethod.Mi.ReturnType == typeof(PhaseSM) && !Params[1].IsUnsound && Params[1].EvaluateObject() is PhaseProperties props) {
                 return new($"{props.phaseType?.ToString() ?? "Phase"}", props.cardTitle?.Value ?? "",
                     SymbolKind.Method, Position.ToRange(), FlattenParams((p, i) => p.ToSymbolTree($"({BaseMethod.Params[i].Name})")));
             }
@@ -310,40 +316,17 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
 
         private static readonly Type gcxPropsType = typeof(GenCtxProperties);
         private static readonly Type gcxPropArrType = typeof(GenCtxProperty[]);
-        public object? EvaluateObject(ASTEvaluationData data) {
+        public object? EvaluateObject() {
             var prms = new object?[Params.Length];
-            using var _ = Method.Mi.GetAttribute<CreatesInternalScopeAttribute>() == null ?
+            using var _ = LocalScope == null ?
                 null :
-                new LexicalScope.ParsingScope(LexicalScope);
+                new LexicalScope.ParsingScope(LocalScope);
             for (int ii = 0; ii < prms.Length; ++ii) {
-                //If we have a GCX Expose property, add it into EvaluationData before constructing the other children
-                if (Params[ii].ResultType.IsWeakSubclassOf(gcxPropsType)) {
-                    var props = (Params[ii].EvaluateObject(data) as GenCtxProperties) ?? throw new StaticException("Failed to get GCXProperties");
-                    if (props.Expose?.Length > 0)
-                        data = data.AddExposed(props.Expose);
-                    prms[ii] = props;
-                    for (int jj = 0; jj < prms.Length; ++jj)
-                        if (jj != ii)
-                            prms[jj] = Params[jj].EvaluateObject(data);
-                    goto construct;
-                } else if (Params[ii].ResultType == gcxPropArrType) {
-                    var props = (Params[ii].EvaluateObject(data) as GenCtxProperty[]) ?? throw new StaticException("Failed to get GCXProperty[]");
-                    foreach (var p in props)
-                        if (p is GenCtxProperty.ExposeProp ep)
-                            data = data.AddExposed(ep.value);
-                    prms[ii] = props;
-                    for (int jj = 0; jj < prms.Length; ++jj)
-                        if (jj != ii)
-                            prms[jj] = Params[jj].EvaluateObject(data);
-                    goto construct;
-                }
+                prms[ii] = Params[ii].EvaluateObject();
             }
-            for (int ii = 0; ii < prms.Length; ++ii) {
-                prms[ii] = Params[ii].EvaluateObject(data);
-            }
-            construct:
-            if (Method.Mi.GetAttribute<CreatesInternalScopeAttribute>() != null)
-                Reflection2.AST.MethodCall.AttachScope(prms, LexicalScope, LexicalScope.AutoVars);
+            if (LocalScope != null)
+                for (int ii = 0; ii < prms.Length; ++ii)
+                    prms[ii] = Reflection2.AST.MethodCall.AttachScope(prms[ii], LocalScope);
             try {
                 return Method.Mi.Invoke(null, prms);
             } catch (Exception e) {
@@ -358,7 +341,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// </summary>
     public record MethodInvoke<T>(PositionRange Position, PositionRange MethodPosition, InvokedMethod Method, params IAST[] Params) : MethodInvoke(
         Position, MethodPosition, Method, Params), IAST<T> {
-        public T Evaluate(ASTEvaluationData data) => EvaluateObject(data) switch {
+        public T Evaluate() => EvaluateObject() switch {
             T t => t,
             var x => throw new StaticException(
                 $"AST method invocation for {BaseMethod.TypeEnclosedName} returned object of type {x?.GetType()} (expected {typeof(T)}")
@@ -373,10 +356,10 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     public record FuncedMethodInvoke<T, R>
         (PositionRange Position, PositionRange MethodPosition, LiftedInvokedMethod<T, R> Method, IAST[] Params) : BaseMethodInvoke(Position, MethodPosition, Method, Params),
             IAST<Func<T, R>> {
-        public Func<T, R> Evaluate(ASTEvaluationData data) {
+        public Func<T, R> Evaluate() {
             var fprms = new object?[Params.Length];
             for (int ii = 0; ii < fprms.Length; ++ii)
-                fprms[ii] = Params[ii].EvaluateObject(data);
+                fprms[ii] = Params[ii].EvaluateObject();
             return Method.TypedFMi.InvokeMiFunced(null, fprms);
         }
     }
@@ -385,7 +368,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// An AST with a precomputed value.
     /// </summary>
     public record Preconstructed<T>(PositionRange Position, T Value, string? Display = null) : AST(Position), IAST<T> {
-        public T Evaluate(ASTEvaluationData data) => Value;
+        public T Evaluate() => Value;
         private Type MyType => Value?.GetType() ?? typeof(T);
         public string Description => Display ?? Value?.ToString() ?? "null";
         private SymbolKind SymbolType {
@@ -455,47 +438,36 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         public MethodSignature Method { get; }
 
         public MethodLookup(PositionRange p, Type funcType, string methodName) : base(p) {
-            if (funcType.GenericTypeArguments[0] == typeof(TExArgCtx)) {
-                lifted = true;
-                funcType = funcType.GenericTypeArguments[1];
-            }
             this.FuncType = funcType;
-            //The type should be Func<A,...R>, where A...R are types like TEx<float>
-            FuncAllTypes = funcType.GenericTypeArguments;
+            funcType.IsTExOrTExFuncType(out var simpType);
+            //The type should be Func<A,...R>, where A...R are types like float (not TEx<float>)
+            FuncAllTypes = simpType.GenericTypeArguments;
             FuncRetType = FuncAllTypes[^1];
+            var typeDesig = new TypeDesignation.Dummy(TypeDesignation.Dummy.METHOD_KEY,
+                FuncAllTypes.Select(TypeDesignation.FromType).ToArray());
             //Look for methods returning type R
-            if (ReflectionData.TryGetMember(FuncRetType, methodName) is not { } meth)
+
+            var methods = DMKScope.Singleton.FindStaticMethodDeclaration(methodName)?
+                .Where(m => m.SharedType.Unify(typeDesig, Unifier.Empty).IsLeft)
+                .ToList();
+            if (methods == null || methods.Count == 0)
                 throw new ReflectionException(p,
                     $"Method lookup for type {FuncType.SimpRName()} failed because no there is no function named " +
-                    $"\"{methodName}\" with a return type of {FuncRetType.SimpRName()}.");
-            Method = meth;
-            if (FuncAllTypes.Length - 1 != Method.Params.Length)
+                    $"\"{methodName}\" matching this type signature.");
+            if (methods.Count > 1)
                 throw new ReflectionException(p,
-                    $"Provided method {methodName} has {FuncAllTypes.Length - 1} parameters " +
-                    $"(required {Method.Params.Length})");
-            for (int ii = 0; ii < FuncAllTypes.Length - 1; ++ii) {
-                if (FuncAllTypes[ii] != Method.Params[ii].Type)
-                    throw new ReflectionException(p,
-                        $"Provided method {methodName} has parameter #{ii + 1} as type" +
-                        $" {Method.Params[ii].Type.ExRName()} (required {FuncAllTypes[ii].ExRName()})");
-            }
+                    $"Method lookup for type {FuncType.SimpRName()} failed because no there is more than one method named " +
+                    $"\"{methodName}\" matching this type signature.");
+            Method = methods[0];
         }
 
-        public object? EvaluateObject(ASTEvaluationData data) {
-            var lambdaer = typeof(Reflector)
-                               .GetMethod($"MakeLambda{Method.Params.Length}",
-                                   BindingFlags.Static | BindingFlags.NonPublic)
-                               ?.MakeGenericMethod(FuncAllTypes) ??
-                           throw new StaticException($"Couldn't find lambda constructor method for " +
-                                                     $"count {Method.Params.Length}");
-            var lambda = lambdaer.Invoke(null, new object[] {
-                (Func<object?[], object?>)(prms => (Method as IMethodSignature).Invoke(null, prms))
-            });
-            if (lifted) {
-                return (Func<TExArgCtx, object>)(_ => lambda);
-            } else {
-                return lambda;
-            }
+        public object? EvaluateObject() {
+            var fn = Method.AsFunc();
+            if (ResultType.IsTExType(out var inner))
+                return inner.MakeTypedTEx(Expression.Constant(fn));
+            else if (ResultType.IsTExFuncType(out inner))
+                return inner.MakeTypedLambda(_ => Expression.Constant(fn));
+            return fn;
         }
 
         public override string Explain() => $"{CompactPosition} {Method.Name}";
@@ -513,7 +485,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// An AST that generates a state machine by reading a file.
     /// </summary>
     public record SMFromFile(PositionRange CallPosition, PositionRange FilePosition, string Filename) : AST(CallPosition.Merge(FilePosition)), IAST<StateMachine?> {
-        public StateMachine? Evaluate(ASTEvaluationData data) => StateMachineManager.FromName(Filename);
+        public StateMachine? Evaluate() => StateMachineManager.FromName(Filename);
 
         public override string Explain() => $"{CompactPosition} StateMachine from file: {Filename}";
 
@@ -534,10 +506,10 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// </summary>
     public record SequenceList<T>(PositionRange Position, IList<IAST<T>> Parts) : BaseSequence(Position,
         Parts.Cast<IAST>().ToArray()), IAST<List<T>> {
-        public List<T> Evaluate(ASTEvaluationData data) {
+        public List<T> Evaluate() {
             var l = new List<T>(Parts.Count);
             for (int ii = 0; ii < Parts.Count; ++ii)
-                l.Add(Parts[ii].Evaluate(data));
+                l.Add(Parts[ii].Evaluate());
             return l;
         }
 
@@ -557,10 +529,10 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// An AST that generates an array of objects.
     /// </summary>
     public record SequenceArray(PositionRange Position, Type ElementType, IAST[] Params) : BaseSequence(Position, Params), IAST<Array> {
-        public Array Evaluate(ASTEvaluationData data) {
+        public Array Evaluate() {
             var array = Array.CreateInstance(ElementType, Params.Length);
             for (int ii = 0; ii < Params.Length; ++ii)
-                array.SetValue(Params[ii].EvaluateObject(data), ii);
+                array.SetValue(Params[ii].EvaluateObject(), ii);
             return array;
         }
 
@@ -582,8 +554,8 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     public record GCRule<T>(PositionRange RefPosition, PositionRange OpPosition, ExType Type, 
         ReferenceMember Reference, GCOperator Operator,
         IAST<GCXF<T>> Rule) : AST(RefPosition.Merge(OpPosition).Merge(Rule.Position), Rule), IAST<Danmokou.Danmaku.GCRule<T>> {
-        public Danmokou.Danmaku.GCRule<T> Evaluate(ASTEvaluationData data) => 
-            new(Type, Reference, Operator, Rule.Evaluate(data));
+        public Danmokou.Danmaku.GCRule<T> Evaluate() => 
+            new(Type, Reference, Operator, Rule.Evaluate());
         
         public override void AttachLexicalScope(LexicalScope scope) {
             if (scope.FindVariable(Reference.var) == null) {
@@ -611,15 +583,15 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     /// </summary>
     public record Alias(PositionRange DeclPos, PositionRange AliasPos, Type Type, string Name, IAST Content) : AST(DeclPos.Merge(AliasPos).Merge(Content.Position), Content),
         IAST<ReflectEx.Alias> {
-        public ReflectEx.Alias Evaluate(ASTEvaluationData data) => new(Type, Name,
-            Content.EvaluateObject(data) as Func<TExArgCtx, TEx> ?? throw new StaticException("Alias failed cast"));
+        public ReflectEx.Alias Evaluate() => new(Type, Name,
+            Content.EvaluateObject() as Func<TExArgCtx, TEx> ?? throw new StaticException("Alias failed cast"));
 
         public override IEnumerable<SemanticToken> ToSemanticTokens() => new[] {
             new SemanticToken(DeclPos, SemanticTokenTypes.Type),
             new SemanticToken(AliasPos, SemanticTokenTypes.Parameter)
         }.Concat(Content.ToSemanticTokens());
 
-        public override string Explain() => $"{CompactPosition} Variable '{Name}' (type {Type.ExRName()})";
+        public override string Explain() => $"{CompactPosition} Variable '{Name}' (type {Type.SimpRName()})";
         public override DocumentSymbol ToSymbolTree(string? descr = null)
             => new(Name, $"Alias", SymbolKind.Variable, 
                 Position.ToRange(), FlattenParams((p, i) => p.ToSymbolTree()));
@@ -659,11 +631,12 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             return new (IDebugAST, int?)[] { (this, null) };
         }
 
-        public object? EvaluateObject(ASTEvaluationData data) => throw FirstException;
+        public object? EvaluateObject() => throw FirstException;
 
-        public override DocumentSymbol ToSymbolTree(string? descr = null) => throw FirstException;
+        public override DocumentSymbol ToSymbolTree(string? descr = null) =>
+            new("(Error)", null, SymbolKind.Null, Position.ToRange());
 
-        public override IEnumerable<SemanticToken> ToSemanticTokens() => throw FirstException;
+        public override IEnumerable<SemanticToken> ToSemanticTokens() => Array.Empty<SemanticToken>();
 
         public Failure(ReflectionException exc, NamedParam prm) : this(exc, prm.Type) { }
 
@@ -681,7 +654,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
     }
 
     public record Failure<T>(ReflectionException Exc) : Failure(Exc, typeof(T)), IAST<T> {
-        public T Evaluate(ASTEvaluationData data) => throw FirstException;
+        public T Evaluate() => throw FirstException;
     }
 
     public record NestedFailure(Failure Head, List<NestedFailure> Children) {

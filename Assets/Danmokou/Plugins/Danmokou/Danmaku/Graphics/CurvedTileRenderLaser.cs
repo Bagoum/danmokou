@@ -628,6 +628,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipx>")]
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cLaserControl FlipXGT(float wall, Pred cond) {
             return new((b, cT) => {
                 if (b.bpi.loc.x > wall && cond(b.bpi)) {
@@ -637,6 +638,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                 }
             }, BulletManager.BulletControl.P_MOVE_3);
         }
+        
         /// <summary>
         /// Flip the x-velocity and x-position of laser paths around a wall on the left.
         /// </summary>
@@ -644,6 +646,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipx<")]
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cLaserControl FlipXLT(float wall, Pred cond) {
             return new((b, cT) => {
                 if (b.bpi.loc.x < wall && cond(b.bpi)) {
@@ -653,6 +656,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                 }
             }, BulletManager.BulletControl.P_MOVE_3);
         }
+        
         /// <summary>
         /// Flip the y-velocity and y-position of laser paths around a wall on the top.
         /// </summary>
@@ -660,6 +664,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipy>")]
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cLaserControl FlipYGT(float wall, Pred cond) {
             return new((b, cT) => {
                 if (b.bpi.loc.y > wall && cond(b.bpi)) {
@@ -669,6 +674,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                 }
             }, BulletManager.BulletControl.P_MOVE_3);
         }
+        
         /// <summary>
         /// Flip the y-velocity and y-position of laser paths around a wall on the bottom.
         /// </summary>
@@ -676,6 +682,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipy<")]
+        [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cLaserControl FlipYLT(float wall, Pred cond) {
             return new((b, cT) => {
                 if (b.bpi.loc.y < wall && cond(b.bpi)) {

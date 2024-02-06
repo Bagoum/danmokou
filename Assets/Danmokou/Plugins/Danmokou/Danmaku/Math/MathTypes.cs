@@ -177,15 +177,14 @@ public class PIData {
     /// otherwise uses the WriteT jumptable lookup.
     /// </summary>
     public static Ex SetValue(TExArgCtx tac, Type t, string name, Func<TExArgCtx, TEx> val) {
-        return tac.Ctx.Scope.TryGetLocalOrParentVariable(tac, t, name, out _, out _)?.Is(val(tac)) ??
-               LexicalScope.VariableWithoutLexicalScope(tac, name, t, opOnValue: l => l.Is(val(tac)));
+        var decl = tac.Ctx.Scope.FindVariable(name) ?? throw new Exception($"Couldn't locate variable {name}");
+        return tac.Ctx.Scope.LocalOrParentVariable(tac, tac.EnvFrame, decl).Is(val(tac));
     }
 
-    /// <summary>
-    /// <inheritdoc cref="SetValue"/>
-    /// </summary>
-    public static Ex SetValue<T>(TExArgCtx tac, string name, Func<TExArgCtx, TEx<T>> val) =>
-        SetValue(tac, typeof(T), name, val);
+    public static Ex SetValueDynamic(TExArgCtx tac, Type t, string name, Func<TExArgCtx, TEx> val) {
+        return LexicalScope.VariableWithoutLexicalScope(tac, name, t, opOnValue: l => l.Is(val(tac)));
+    }
+
     
     //Late-bound (dictionary-typed) variable handling
 
@@ -287,9 +286,6 @@ public struct ParametricInfo {
     /// </summary>
     [UsedImplicitly]
     public Vector2 LocV2 => loc;
-
-    public static ParametricInfo WithRandomId(Vector3 position, int findex, float t) => new(position, findex, RNG.GetUInt(), t);
-    public static ParametricInfo WithRandomId(Vector3 position, int findex) => WithRandomId(position, findex, 0f);
 
     public ParametricInfo(in Movement mov, int findex = 0, uint? id = null, float t = 0, GenCtx? firer = null) : 
         this(mov.rootPos, findex, id, t, firer) { }

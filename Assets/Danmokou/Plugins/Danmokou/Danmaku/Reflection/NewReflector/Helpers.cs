@@ -13,14 +13,18 @@ using Ex = System.Linq.Expressions.Expression;
 using static BagoumLib.Unification.TypeDesignation;
 
 namespace Danmokou.Reflection2 {
+
+public delegate T ScriptFn<T>(out EnvFrame rootEf);
+
+public delegate void ErasedScriptFn(out EnvFrame rootEf);
 public static class Helpers {
+    public static IDelegateArg OutEnvFrameArg => new DelegateArg<EnvFrame>("$scriptEf", true);
+    
     /// <summary>
     /// (Stage 0) Convert the provided script into an ST.
     /// </summary>
-    /// <param name="source"></param>
-    /// <returns></returns>
-    public static Either<ST.Block, ReflectionException> Parse(ref string source) {
-        var tokens = Lexer.Lex(ref source);
+    public static Either<ST.Block, ReflectionException> Parse(ref string source, out LexerMetadata metadata) {
+        var tokens = Lexer.Lex(ref source, out metadata);
         var parse = Parser.Parse(source, tokens, out var stream);
         if (parse.IsRight) 
             return new ReflectionException(stream.TokenWitness.ToPosition(parse.Right.Index, parse.Right.End), 
@@ -31,37 +35,39 @@ public static class Helpers {
     /// <summary>
     /// (Stage 1) Convert the provided script into an ST, then annotate it into an AST.
     /// <br/>This does not perform typechecking (<see cref="Typecheck"/>).
+    /// <br/>The AST may have errors (<see cref="IAST.FirstPassExceptions"/>). However, these can be thrown *after*
+    ///  initial typechecking.
     /// </summary>
     /// <param name="source">Script code</param>
     /// <param name="args">Top-level script arguments</param>
     /// <returns></returns>
     /// <exception cref="ReflectionException">Thrown when the script could not be parsed or there are basic errors in the AST.</exception>
     public static (IAST, LexicalScope) ParseAnnotate(ref string source, params IDelegateArg[] args) {
-        var parse = Parse(ref source);
+        var parse = Parse(ref source, out var metadata);
         if (parse.IsRight)
             throw parse.Right;
         var scope = LexicalScope.NewTopLevelScope();
         var ast = parse.Left.AnnotateWithParameters(scope, args).LeftOrRight<AST.Block, AST.Failure, IAST>();
-        foreach (var exc in ast.FirstPassExceptions) {
-            throw exc;
-            //throw new Exception(ITokenWitness.ShowErrorPositionInSource(exc.Position, source), exc);
-        }
+        scope.SetDocComments(metadata);
         return (ast, scope);
     }
 
     /// <summary>
-    /// (Stage 2) Typecheck the provided AST.
+    /// (Stage 2) Typecheck the provided AST. 
     /// </summary>
     /// <param name="ast">The AST to typecheck (as returned by <see cref="ParseAnnotate"/>).</param>
     /// <param name="rootScope">The top-level scope of the AST (as returned by <see cref="ParseAnnotate"/>).</param>
-    /// <param name="type">The output type of the AST, which is generally in the form Func&lt;TExArgCtx, &lt;TEx&gt;&gt;.</param>
+    /// <param name="finalType">The required output type of the AST (eg. Vector3 or TP or StateMachine).</param>
+    /// <param name="resultType">The actual output type of the AST (eg. Vector3 or TP or StateMachine).</param>
     /// <returns>The typechecked AST.</returns>
-    /// <exception cref="Exception">Thrown when there are typechecking errors.</exception>
-    public static IAST Typecheck(this IAST ast, LexicalScope rootScope, out Type type) {
-        var typ = IAST.Typecheck(ast, rootScope.GlobalRoot.Resolver, rootScope);
+    /// <exception cref="Exception">Thrown when there are typechecking errors or if there are <see cref="IAST.FirstPassExceptions"/> errors.</exception>
+    public static IAST Typecheck(this IAST ast, LexicalScope rootScope, Type? finalType, out Type resultType) {
+        var typ = IAST.Typecheck(ast, rootScope.GlobalRoot.Resolver, rootScope, finalType);
+        foreach (var exc in ast.FirstPassExceptions()) 
+            throw exc;
         if (typ.IsRight)
             throw IAST.EnrichError(typ.Right);
-        type = typ.Left;
+        resultType = typ.Left;
         foreach (var d in ast.WarnUsage())
             d.Log();
         return ast;
@@ -85,24 +91,28 @@ public static class Helpers {
     /// Runs all four stages of script parsing (<see cref="ParseAnnotate"/>, <see cref="Typecheck"/>,
     /// <see cref="Finalize"/>, <see cref="Compile{D}"/>) on a script.
     /// </summary>
-    public static D ParseAndCompile<D>(string source, params IDelegateArg[] args) where D : Delegate {
+    public static D ParseAndCompileDelegate<D>(string source, params IDelegateArg[] args) where D : Delegate {
         var (ast, gs) = ParseAnnotate(ref source, args);
-        var typechecked = ast.Typecheck(gs, out _);
+        var typechecked = ast.Typecheck(gs, typeof(D).GetMethod("Invoke")!.ReturnType, out _);
         var verified = typechecked.Finalize();
         return verified.Compile<D>(args);
     }
 
-    /// <summary>
-    /// If this type is of the form TEx&lt;R&gt; or TExArgCtx->TEx&lt;R&gt;, then return R, otherwise return this type.
-    /// </summary>
-    public static Type MaybeUnwrapTExOrTExFuncType(this Type t) {
-        if (t.IsTExOrTExFuncType(out var inner))
-            return inner;
-        return t;
+    public static (T, EnvFrame) ParseAndCompileValue<T>(string source) {
+        var fn = ParseAndCompileDelegate<ScriptFn<T>>(source, OutEnvFrameArg);
+        var ret = fn(out var ef);
+        return (ret, ef);
+    }
+
+    public static EnvFrame ParseAndCompileErased(string source) {
+        var fn = ParseAndCompileDelegate<ErasedScriptFn>(source,OutEnvFrameArg);
+        fn(out var ef);
+        return ef;
     }
 
     /// <summary>
     /// If this type is of the form TEx&lt;R&gt; or TExArgCtx->TEx&lt;R&gt;, then return true and set inner to R.
+    /// <br/>If this type is TEx or TExArgCtx->TEx, then return true and set inner to void.
     /// </summary>
     public static bool IsTExOrTExFuncType(this Type t, out Type inner) {
         if (t.IsTExType(out inner))
@@ -115,9 +125,13 @@ public static class Helpers {
 
     /// <summary>
     /// If this type is of the form TEx&lt;R&gt;, then return true and set inner to R.
+    /// <br/>If this type is TEx, then return true and set inner to void.
     /// </summary>
     public static bool IsTExType(this Type t, out Type inner) {
-        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(TEx<>)) {
+        if (t == typeof(TEx)) {
+            inner = typeof(void);
+            return true;
+        } else if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(TEx<>)) {
             inner = t.GetGenericArguments()[0];
             return true;
         }
@@ -127,6 +141,7 @@ public static class Helpers {
     
     /// <summary>
     /// If this type is of the form TExArgCtx->TEx&lt;R&gt;, then return true and set inner to R.
+    /// <br/>If this type is TExArgCtx->TEx, then return true and set inner to void.
     /// </summary>
     public static bool IsTExFuncType(this Type t, out Type inner) {
         if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Func<,>)) {
@@ -151,38 +166,27 @@ public static class Helpers {
     }
 
     /// <summary>
-    /// Cast an expression to the type TEx&lt;T&gt;.
+    /// Cast an expression to the type TEx&lt;T&gt;. (If t is void, then cast the expression to type TEx.)
     /// </summary>
     public static TEx MakeTypedTEx(this Type t, Ex ex) {
+        if (t == typeof(void)) return ex;
         var (v, cons) = t.GetTExType();
         return (cons.Invoke(new object[] { ex }) as TEx)!;
     }
-    
-/*
-    public static ConstructorInfo GetTExConstructor(this TypeDesignation texFuncType) =>
-        texFuncType.UnwrapTExFunc().GetTExType().exConstructor;*/
-
-    public static Type AssertKnown(this TypeDesignation t) {
-        if (!t.IsResolved)
-            throw new Exception($"Type is not resolved: {t}");
-        var te = t.Resolve();
-        if (te.IsRight)
-            throw new Exception(te.ToString()); //todo make this an exception
-        return te.Left;
-    }
 
     /// <summary>
-    /// Retype the provided function as TExArgCtx -> TEx{T}.
+    /// Retype the provided function as TExArgCtx -> TEx{T}. (If t is void, don't retype it.)
     /// </summary>
     public static Func<TExArgCtx, TEx> MakeTypedLambda(this Type t, Func<TExArgCtx, TEx> f) =>
         TExLambdaTyper.ConvertForType(t, f);
 
-    private static class TExLambdaTyper {
+    public static class TExLambdaTyper {
         private static readonly Dictionary<Type, MethodInfo> converters = new();
         private static readonly MethodInfo mi = typeof(TExLambdaTyper).GetMethod(nameof(Convert))!;
 
         public static Func<TExArgCtx, TEx<T>> Convert<T>(Func<TExArgCtx, TEx> f) => tac => (Ex)f(tac);
         public static Func<TExArgCtx, TEx> ConvertForType(Type t, Func<TExArgCtx, TEx> f) {
+            if (t == typeof(void)) return f;
             var conv = converters.TryGetValue(t, out var c) ? c : converters[t] = mi.MakeGenericMethod(t);
             return (conv.Invoke(null, new object[] { f }) as Func<TExArgCtx, TEx>)!;
         }
@@ -228,12 +232,12 @@ public static class Helpers {
                     FieldInfo f => !(f.IsInitOnly || f.IsLiteral) ?
                         null :
                         Err($"The field {f.Name} is not writeable."),
-                    { } m => Err($"Member {m.Name} is of an unhandled type {m.GetType().ExRName()}")
+                    { } m => Err($"Member {m.Name} is of an unhandled type {m.GetType().SimpRName()}")
                 };
             case ParameterExpression:
                 return null;
             default:
-                return Err($"This expression has type {ex.GetType().ExRName()}:{ex.NodeType}, which is not writeable." +
+                return Err($"This expression has type {ex.GetType().SimpRName()}:{ex.NodeType}, which is not writeable." +
                            " A writeable expression is an array indexer, property, field, or variable.");
             
         }

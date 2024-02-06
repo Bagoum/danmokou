@@ -10,6 +10,9 @@ namespace Danmokou.DMath.Functions {
 /// </summary>
 [DontReflect]
 public static class ExMAssign {
+    [Assigns(0)] [BDSL2Operator] [DontReflect]
+    public static TEx<T> VariableInitialize<T>(TEx<T> x, TEx<T> y) => Ex.Assign(x, y);
+    
     [Assigns(0)] [BDSL2Operator]
     public static TEx<T> Assign<T>(TEx<T> x, TEx<T> y) => Ex.Assign(x, y);
     

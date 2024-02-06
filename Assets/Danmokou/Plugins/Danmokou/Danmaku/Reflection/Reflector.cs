@@ -34,7 +34,6 @@ public static partial class Reflector {
     //Used by language server to avoid failure on lstring parsing
     public static bool SOFT_FAIL_ON_UNMATCHED_LSTRING = false;
     
-    private static readonly Type tsm = typeof(StateMachine);
     public static readonly StateMachine WaitForPhaseSM;
 
     private static IAST<StateMachine?> ReflectSM(IParseQueue q) {
@@ -98,7 +97,7 @@ public static partial class Reflector {
     /// </summary>
     /// <exception cref="StaticException">Thrown if the type has no public constructors.</exception>
     public static MethodSignature GetConstructorSignature(Type t) {
-        return TryGetConstructorSignature(t) ?? throw new StaticException($"Type {t.ExRName()} has no applicable constructors.");
+        return TryGetConstructorSignature(t) ?? throw new StaticException($"Type {t.SimpRName()} has no applicable constructors.");
     }
 
     /// <summary>

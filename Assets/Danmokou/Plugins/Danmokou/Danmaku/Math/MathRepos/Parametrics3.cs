@@ -74,7 +74,7 @@ public static partial class Parametrics3 {
 @"                     *c 73 &pxr
 			            * 0.06 * &xs &py " +
     //Feathers rotate inwards (^-(&pyr, ...) < 0 when &pyr < 1) and then back into normal position, more so at farther feathers
-			            "* 1.5 ^-(&pyr, + 1.1 * 0.5 &pxr)", wx, wy, per)).Into<ExTP3>();
+			            "* 1.5 ^-(&pyr, + 1.1 * 0.5 &pxr)", wx, wy, per)).IntoBDSL1<ExTP3>();
 
     /// <summary>
     /// Generate an offset for a wing pattern. Requires the following bindings:
@@ -100,7 +100,7 @@ public static partial class Parametrics3 {
 			&swa
 			+ 0.2 * &sws * opacity 0.4 &pyr * 0.1 &px 
 			* 0.3 * opacity 0.9 &pxr &py
-").Into<ExTP3>();
+").IntoBDSL1<ExTP3>();
 
 }
 

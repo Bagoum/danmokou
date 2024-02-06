@@ -149,8 +149,6 @@ public class PatternSM : SequentialSM, EnvFrameAttacher {
 /// <br/>Phases also generally share some state due to data hoisting, events, etc. If you use the `type` property to declare a card type, or you use the `clear` property, then this state and all its bullets will be cleared on phase end.
 /// </summary>
 public class PhaseSM : SequentialSM {
-    //Note that this is only for planned cancellation (eg. phase shift/ synchronization),
-    //and is primary used for bosses/multiphase enemies.
     private readonly EndPSM? endPhase = null;
     private readonly float _timeout = 0;
     private float Timeout(BossConfig? boss) => 
@@ -167,16 +165,21 @@ public class PhaseSM : SequentialSM {
     /// <param name="states">Substates, run sequentially</param>
     /// <param name="timeout">Timeout in seconds before the phase automatically ends. Set to zero for no timeout</param>
     /// <param name="props">Properties describing miscellaneous features of this phase</param>
-    public PhaseSM(float timeout, [NonExplicitParameter] PhaseProperties props, [BDSL1ImplicitChildren] params StateMachine[] states) : base(states) {
+    public PhaseSM(float timeout, [NonExplicitParameter] PhaseProperties props, [BDSL1ImplicitChildren] params StateMachine[] states) : base(PullOutEndPSM(states, out var ep)) {
         this._timeout = timeout;
         this.props = props;
+        this.endPhase = ep;
+    }
+
+    private static StateMachine[] PullOutEndPSM(StateMachine[] states, out EndPSM? ep) {
         for (int ii = 0; ii < states.Length; ++ii) {
             if (states[ii] is EndPSM) {
-                endPhase = states[ii] as EndPSM;
-                states = states.Where((x, i) => i != ii).ToArray();
-                break;
+                ep = states[ii] as EndPSM;
+                return states.Where((x, i) => i != ii).ToArray();
             }
         }
+        ep = null;
+        return states;
     }
 
     private void _PrepareBackgroundGraphics(PhaseContext ctx, IBackgroundOrchestrator? bgo) {

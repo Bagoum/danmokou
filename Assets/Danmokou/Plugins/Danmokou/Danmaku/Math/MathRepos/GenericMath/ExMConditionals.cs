@@ -22,6 +22,7 @@ public static class ExMConditionals {
     /// <summary>
     /// If the predicate is true, return the true branch, otherwise the false branch.
     /// </summary>
+    [BDSL1Only]
     public static TEx<T> If<T>(tbool pred, TEx<T> iftrue, TEx<T> iffalse) => Ex.Condition(pred, iftrue, iffalse);
 
     /// <summary>

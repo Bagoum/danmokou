@@ -29,63 +29,23 @@ using MethodCall = Danmokou.Reflection2.AST.MethodCall;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
-    private static readonly Dictionary<Type, (string descr, Type compiled)> exTypeRemap = new() {
-        { typeof(ExTP), ("TP/GCXF<Vector2>", typeof(TP)) },
-        { typeof(ExTP3), ("TP3/GCXF<Vector3>", typeof(TP3)) },
-        { typeof(ExTP4), ("TP4/GCXF<Vector4>", typeof(TP4)) },
-        { typeof(ExBPY), ("BPY/GCXF<float>", typeof(BPY)) },
-        { typeof(ExBPRV2), ("BPRV2/GCXF<V2RV2>", typeof(BPRV2)) },
-        { typeof(Func<TExArgCtx, TEx<bool>>), ("Pred/GCXF<bool>", typeof(Pred)) },
-        { typeof(Func<TExArgCtx, TEx<VTPExpr>>), ("VTP", typeof(VTP)) },
-        { typeof(Func<TExArgCtx, TEx<LVTPExpr>>), ("LVTP", typeof(LVTP)) },
-        { typeof(Func<TExSBC, TEx<int>, TEx<BagoumLib.Cancellation.ICancellee>, TExArgCtx, TEx>), ("ExSBCF/SBCF", typeof(SBCF)) }
-    };
-    private static readonly Type[] BypassTypes = {
-        typeof(TEx<>),
-    };
-    public static Type RemapExType(Type t) => exTypeRemap.TryGetValue(t, out var v) ? v.compiled : t;
-
-    public static string ExRName(this Type t) {
-        return exTypeRemap.TryGetValue(t, out var v) ? v.descr : t.RName();
-    }
-    public static string ExRName(this TypeDesignation t) {
-        if (t.IsResolved)
-            return t.Resolve(Unifier.Empty).LeftOrThrow.ExRName();
-        if (t is TypeDesignation.Known kt) {
-            if (kt.IsArrayTypeConstructor)
-                return ExRName(kt.Arguments[0]) + "[]";
-            if (kt.Arguments.Length == 0)
-                return kt.Typ.ExRName();
-            if (ReflectionUtils.TupleTypesByArity.Contains(kt.Typ))
-                return $"({string.Join(", ", kt.Arguments.Select(ExRName))})";
-            return kt.Typ.ExRName() + $"<{string.Join(",", kt.Arguments.Select(ExRName))}>";
-        } else if (t is TypeDesignation.Dummy d) {
-            return $"({string.Join(",", d.Arguments.Take(d.Arguments.Length - 1).Select(ExRName))})->{ExRName(d.Last)}";
-        } else if (t is TypeDesignation.Variable { RestrictedTypes: { } rt })
-            return $"{string.Join(" or ", rt.Select(ExRName).Distinct())}";
-        else
-            return t.ToString();
-    }
-
     public static string SimpRName(this Type t) => SimplifiedExprPrinter.Default.Print(t);
     
     public static string SimpRName(this TypeDesignation t) {
-        if (t.IsResolved)
-            return t.Resolve(Unifier.Empty).LeftOrThrow.SimpRName();
         if (t is TypeDesignation.Known kt) {
             if (kt.Typ == typeof(Func<,>) && (kt.Arguments[0] as TypeDesignation.Known)?.Typ == typeof(TExArgCtx)) {
                 return SimpRName(kt.Arguments[1]);
-            } else if (BypassTypes.Contains(kt.Typ))
+            } else if (kt.Typ == typeof(TEx<>))
                 return SimpRName(kt.Arguments[0]);
             if (kt.IsArrayTypeConstructor)
                 return SimpRName(kt.Arguments[0]) + "[]";
             if (kt.Arguments.Length == 0)
-                return kt.Typ.ExRName();
+                return kt.Typ.SimpRName();
             if (ReflectionUtils.TupleTypesByArity.Contains(kt.Typ))
                 return $"({string.Join(", ", kt.Arguments.Select(SimpRName))})";
-            return kt.Typ.ExRName() + $"<{string.Join(",", kt.Arguments.Select(SimpRName))}>";
+            return kt.Typ.SimpRName() + $"<{string.Join(",", kt.Arguments.Select(SimpRName))}>";
         } else if (t is TypeDesignation.Dummy d) {
-            return $"({string.Join(",", d.Arguments[..^1].Select(SimpRName))})->{SimpRName(d.Last)}";
+            return $"({string.Join(",", d.Arguments.Take(d.Arguments.Length - 1).Select(SimpRName))})->{SimpRName(d.Last)}";
         } else if (t is TypeDesignation.Variable { RestrictedTypes: { } rt })
             return $"{string.Join(" or ", rt.Select(SimpRName).Distinct())}";
         else
@@ -95,15 +55,8 @@ public static partial class Reflector {
         public new static readonly ITypePrinter Default = new SimplifiedExprPrinter()
             { PrintTypeNamespace = _ => false };
         public override string Print(Type t) {
-            if (t.IsConstructedGenericType) {
-                if (t.GetGenericTypeDefinition() == typeof(Func<,>) && t.GenericTypeArguments[0] == typeof(TExArgCtx)) {
-                    return Print(t.GenericTypeArguments[1]);
-                }
-                if (BypassTypes.Contains(t.GetGenericTypeDefinition()))
-                    return Print(t.GenericTypeArguments[0]);
-            }
-            if (exTypeRemap.TryGetValue(t, out var v))
-                return Print(v.compiled);
+            if (t.IsTExOrTExFuncType(out var inner))
+                t = inner;
             return base.Print(t);
         }
     }
@@ -126,108 +79,6 @@ public static partial class Reflector {
         public string AsParameter => $"{Type.SimpRName()} {Name}";
         public string SimplifiedDescription => $"\"{Name}\" (type: {SimplifiedExprPrinter.Default.Print(Type)})";
     }
-
-    //this doesn't implement IMethodDesignation because we don't want it to report TypeDesignation at this level,
-    // as that would result in all invocations of the same method sharing the same type variables
-    //instead, TypeDesignation is copied at the InvokedMethod level, preventing cross-contamination
-    public interface IMethodSignature {
-        /// <summary>
-        /// Get a representation of this method's type. This should not directly be used for unification, as
-        ///  its variable types should not be shared between all invocations.
-        ///  Call <see cref="TypeDesignation.RecreateVariables"/> before using for unification.
-        /// <br/>Note that lifted methods do NOT return a lifted type here. The types here are *unlifted*
-        ///  over the TExArgCtx->TEx&lt;&gt; functor.
-        /// <br/>Note that instance methods should prepend the instance type at the beginning of the argument array.
-        /// </summary>
-        TypeDesignation.Dummy SharedType { get; }
-        
-        /// <summary>
-        /// The parameters of the method signature.
-        /// </summary>
-        NamedParam[] Params { get; }
-
-        /// <summary>
-        /// True if this is a fallthrough method (BDSL1 only).
-        /// </summary>
-        bool IsFallthrough => false;
-
-        /// <summary>
-        /// True if this method is a constructor.
-        /// </summary>
-        bool IsCtor => false;
-        
-        /// <summary>
-        /// True if this is a static method.
-        /// </summary>
-        bool IsStatic { get; }
-        
-        /// <summary>
-        /// The return type of this method.
-        /// <br/>Lifted methods return a lifted return type.
-        /// </summary>
-        Type ReturnType { get; }
-        
-        /// <summary>
-        /// The type declaring this method.
-        /// </summary>
-        Type? DeclaringType { get; }
-        
-        /// <summary>
-        /// Show the signature of this method.
-        /// </summary>
-        string AsSignature { get; }
-        string AsSignatureWithParamMod(Func<NamedParam, int, string> paramMod);
-        
-        /// <summary>
-        /// Show the signature of this method, only including types and not names.
-        /// </summary>
-        string TypeOnlySignature { get; }
-
-        InvokedMethod Call(string? calledAs);
-
-        /// <summary>
-        /// Get an attribute defined on the method.
-        /// </summary>
-        T? GetAttribute<T>() where T : Attribute;
-
-        /// <summary>
-        /// Invoke this method. If this is an instance method, the instance should be the first argument of `args`.
-        /// </summary>
-        object? Invoke(MethodCall? ast, object?[] args);
-        
-        /// <summary>
-        /// Invoke this method. If this is an instance method, the instance should be the first argument of `args`.
-        /// </summary>
-        Expression InvokeEx(MethodCall? ast, params Expression[] args);
-        
-        /// <summary>
-        /// Return the invocation of this method as an expression node,
-        /// but if all arguments are constant, then instead call the method and wrap it in Ex.Constant.
-        /// </summary>
-        public Expression InvokeExIfNotConstant(MethodCall? ast, params Expression[] args) {
-            for (int ii = 0; ii < args.Length; ++ii)
-                if (args[ii] is not ConstantExpression)
-                    return InvokeEx(ast, args);
-            return Expression.Constant(Invoke(ast, args.Select(a => ((ConstantExpression)a).Value).ToArray()));
-        }
-
-        /// <summary>
-        /// If this method is defined in a file, make a link to the file.
-        /// </summary>
-        string? MakeFileLink(string typName);
-
-        /// <summary>
-        /// (Informational) The name of the type declaring this method.
-        /// </summary>
-        string TypeName { get; }
-        
-        /// <summary>
-        /// (Informational) The name of this method.
-        /// </summary>
-        /// <returns></returns>
-        string Name { get; }
-    }
-
     public static MethodSignature Signature(this MethodBase mi) => MethodSignature.Get(mi);
     
     /// <summary>
@@ -250,14 +101,14 @@ public static partial class Reflector {
         public string SimpleName {
             get {
                 var prefix = Mi.IsCtor ? Mi.TypeName : Mi.Name;
-                return (CalledAs == null || CalledAs == Mi.Name.ToLower()) ?
+                return (CalledAs == null || CalledAs.ToLower() == Mi.Name.ToLower()) ?
                     prefix : $"{prefix}/{CalledAs}";
             }
         }
         public string Name => 
             Mi.IsCtor ? 
                 $"new {Mi.TypeName}" :
-                (CalledAs == null || CalledAs == Mi.Name.ToLower()) ? 
+                (CalledAs == null || CalledAs.ToLower() == Mi.Name.ToLower()) ? 
                     Mi.Name : 
                     $"{Mi.Name}/{CalledAs}";
         public string TypeEnclosedName => 
@@ -357,7 +208,7 @@ public static partial class Reflector {
         if (TryCompileOption(t, out var compiler)) {
             return compiler.mi.Invoke(null, new[]{ExtInvokeMethod(compiler.source, member, prms)});
         } else if (t == typeof(StateMachine)) {
-            return StateMachine.Create(member, prms).Evaluate(new());
+            return StateMachine.Create(member, prms).Evaluate();
         }
         if (ASTTryLookForMethod(t, member) is { } result)
             return result.Invoke(null, prms);
@@ -366,7 +217,7 @@ public static partial class Reflector {
             if ((result = ASTTryLookForMethod(ftmi.mi.Params[0].Type, member)) != null)
                 return ftmi.mi.Invoke(null, new[]{result.Invoke(null, prms)});
         }
-        throw new Exception($"External method invocation failed for type {t.ExRName()}, method {member}. " +
+        throw new Exception($"External method invocation failed for type {t.SimpRName()}, method {member}. " +
                             "This is probably an error in static code.");
     }
 

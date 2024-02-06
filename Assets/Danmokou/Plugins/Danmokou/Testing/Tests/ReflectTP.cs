@@ -24,7 +24,7 @@ namespace Danmokou.Testing {
         public static void TPivot() {
             var pivoter = TP(Pivot(AtomicBPYRepo.T(), _ => 3f, bp => PolarToXY(1f, bp.t.Mul(90f)), 
                 PX(bp => Mul<float>(bp.t, 2f))));
-            var bpi = ParametricInfo.WithRandomId(Vector2.down * 100f, 0);
+            var bpi = new ParametricInfo(Vector2.down * 100f, 0);
             bpi.t = 0f;
             TAssert.VecEq(pivoter(bpi), Vector2.right);
             bpi.t = 2f;

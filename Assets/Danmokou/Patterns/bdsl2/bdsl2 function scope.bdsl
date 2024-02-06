@@ -1,0 +1,46 @@
+<#> bdsl2
+function createSyncPattern(x::float) {
+	var spd = 0.5;
+	return gsr2c 4 {
+		end b{
+			spd += 0.4
+		}
+	} s rvelocity(px(spd));
+}
+var arr = { 
+	1, 2
+	3.0
+ }
+var sm = pattern({
+		boss 'simp.kasen'
+	}, {
+	phase 0 { } {
+		paction 0 {
+			shiftphaseto 1
+		}
+	}
+	phase 30 { 
+		type non "Wrap/If Example"
+		hp 10000
+	} {
+		paction 0 {
+			position 0 1
+			gtr {
+				delay(60)
+				wait(30)
+				times(10)
+				preloop b{
+					hvar itr = i
+				}
+			} {
+				sync "sakura-blue/w" <> gsr {
+					preloop b{
+						hvar loop = i + 1
+					}
+				} createSyncPattern(4)
+			}
+				
+		}
+	}
+})
+sm;

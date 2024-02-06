@@ -55,6 +55,7 @@
     <None Include="Assets\Danmokou\Patterns\examples\bullet on bullet collision.bdsl" />
     <None Include="Assets\Danmokou\Patterns\Phase Bounding Test.bdsl" />
     <None Include="Assets\Danmokou\Patterns\feature testing\movement references.bdsl" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 partials.bdsl" />
     <None Include="Assets\Danmokou\Patterns\examples\time control ex.bdsl" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.ex.e.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
@@ -138,7 +139,6 @@
     <None Include="Assets\SiMP\Scripts\simp.mokouEx.bdsl" />
     <None Include="Assets\Danmokou\MiniProjects\Scripts\BHA3\bha3.dialogue.1.txt" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.1.3.txt" />
-    <None Include="Assets\LuA\Scripts\kurokoma - photo.txt" />
     <None Include="Assets\BRuH\Dialogue\jp\jp.sagume.1.txt" />
     <None Include="Assets\BRuH\Scripts\sagume.txt" />
     <None Include="Assets\SiMP\Scripts\simp.seija.bdsl" />
@@ -224,6 +224,7 @@
     <None Include="Assets\BRuH\Scripts\tokiko.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\SDFFunctions.hlsl" />
     <None Include="Assets\BRuH\Dialogue\en\sagume.1.txt" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 for while.bdsl" />
     <None Include="Assets\Danmokou\Patterns\feature testing\new lerps.bdsl" />
     <None Include="Assets\SZYU\Plugins\DLLs\Mizuhashi.xml" />
     <None Include="Assets\Danmokou\Patterns\Tutorial\DMK Tutorial Example Boss Script.bdsl" />
@@ -238,7 +239,6 @@
     <None Include="Assets\Danmokou\MiniProjects\Scripts\JY\jy.dialogue.4.txt" />
     <None Include="Assets\Danmokou\Patterns\cutin slides\GhostSpellCutins\slide u to d (left).bdsl" />
     <None Include="Assets\Danmokou\Patterns\Seija Test.bdsl" />
-    <None Include="Assets\Danmokou\Patterns\PlayerFire\Bombs\Mokou Thousand Suns.txt" />
     <None Include="Assets\Danmokou\CG\Hash.cginc" />
     <None Include="Assets\Danmokou\Patterns\examples\super basic circles.bdsl" />
     <None Include="Assets\Danmokou\Patterns\feature testing\runwhile.bdsl" />
@@ -250,6 +250,7 @@
     <None Include="Assets\Danmokou\Patterns\cutin slides\PlayerSpellCutins\opacity d to u (right).bdsl" />
     <None Include="Assets\Danmokou\MiniProjects\WebGL Demo\100 squidward.txt" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.4.2.txt" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 summonalong.bdsl" />
     <None Include="Assets\Danmokou\MiniProjects\Scripts\JY\jy.dialogue.2.txt" />
     <None Include="Assets\Danmokou\UXML\structures\Markdown\MkHeader.uxml" />
     <None Include="Assets\Danmokou\Patterns\Testing\Sampling Test.txt" />
@@ -281,6 +282,7 @@
     <None Include="Assets\Danmokou\Patterns\Testing\Control Ephemerality Test.txt" />
     <None Include="Assets\Danmokou\Rendering\Shaders\Display\UI\Sidebar.shader" />
     <None Include="Assets\Danmokou\Rendering\Shaders\Display\BG\Background.shader" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 members.bdsl" />
     <None Include="Assets\Danmokou\Patterns\Testing\OnlyOnce Test.txt" />
     <None Include="Assets\Danmokou\Patterns\PlayerFire\Mokou Lazors 0.bdsl" />
     <None Include="Assets\Danmokou\UXML\nodes\UINode.uxml" />
@@ -299,7 +301,7 @@
     <None Include="Assets\Danmokou\Rendering\Shaders\_ROOT.shader" />
     <None Include="Assets\Danmokou\Patterns\Testing\SummonAlong Test.txt" />
     <None Include="Assets\SZYU\Plugins\DLLs\FluentIL.xml" />
-    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 fn defs.bdsl" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 if else.bdsl" />
     <None Include="Assets\Danmokou\Patterns\feature testing\cullrad test.bdsl" />
     <None Include="Assets\Danmokou\Patterns\feature testing\sector center.bdsl" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Properties.cginc" />
@@ -313,6 +315,7 @@
     <None Include="Assets\Danmokou\MiniProjects\WebGL Demo\080 aimed.txt" />
     <None Include="Assets\Danmokou\Patterns\examples\radius-based 3d.bdsl" />
     <None Include="Assets\Danmokou\Rendering\Shaders\Display\MultiplyColor.shader" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 function scope.bdsl" />
     <None Include="Assets\SZYU\Plugins\DLLs\Suzunoya.deps.json" />
     <None Include="Assets\Danmokou\Rendering\Shaders\Display\BG\FireTransition.shader" />
     <None Include="Assets\Danmokou\Patterns\examples\seija screen flip.bdsl" />
@@ -334,6 +337,8 @@
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.2.4.txt" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.2.3.txt" />
     <None Include="Assets\Danmokou\Patterns\feature testing\laser displace.bdsl" />
+    <None Include="Assets\Danmokou\Patterns\PlayerFire\Bombs\Mokou Thousand Suns.bdsl" />
+    <None Include="Assets\LuA\Scripts\kurokoma - photo.bdsl" />
     <None Include="Assets\Danmokou\Rendering\Shaders\Display\SeijaCamera.shader" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.ex.5.txt" />
     <None Include="Assets\Danmokou\Patterns\examples\circley nons.bdsl" />
@@ -342,6 +347,7 @@
     <None Include="Assets\Danmokou\UXML\nodes\CompletionStar.uxml" />
     <None Include="Assets\Danmokou\MiniProjects\Scripts\JY\jy.stage.txt" />
     <None Include="Assets\Danmokou\MiniProjects\Scripts\BHA3\bha3.all.txt" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 use reference file.bdsl" />
     <None Include="Assets\Danmokou\Patterns\PlayerFire\Mokou Sun 3.bdsl" />
     <None Include="Assets\Danmokou\Patterns\examples\display-.bdsl" />
     <None Include="Assets\Danmokou\Patterns\cutin slides\GhostSpellCutins\slide rd to lu.bdsl" />
@@ -356,7 +362,7 @@
     <None Include="Assets\SiMP\Scripts\simp.kasen1.bdsl" />
     <None Include="Assets\Danmokou\Patterns\PlayerFire\Mokou Lazors 12.bdsl" />
     <None Include="Assets\Danmokou\Patterns\examples\boss death.bdsl" />
-    <None Include="Assets\Danmokou\Patterns\PlayerFire\Bombs\Reimu Fantasy Seal.txt" />
+    <None Include="Assets\Danmokou\Patterns\PlayerFire\Bombs\Reimu Fantasy Seal.bdsl" />
     <None Include="Assets\SiMP\Scripts\simp.yukariEx.bdsl" />
     <None Include="Assets\Danmokou\CG\BagoumShaders.cginc" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.ex.1.txt" />
@@ -380,6 +386,7 @@
     <None Include="Assets\Danmokou\UXML\nodes\UINode Achievement.uxml" />
     <None Include="Assets\Danmokou\Patterns\examples\hp based pattern.bdsl" />
     <None Include="Assets\Danmokou\Rendering\Shaders\Core Firing\Bullet Indirect.shader" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 reference file.bdsl" />
     <None Include="Assets\Danmokou\Patterns\examples\moon test.bdsl" />
     <None Include="Assets\SiMP\Scripts\simp.stage5_v3.bdsl" />
     <None Include="Assets\Danmokou\UXML\structures\Markdown\MkLineFragmentText.uxml" />

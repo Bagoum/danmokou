@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using BagoumLib.Expressions;
+using Danmokou.Core;
 using GCP = Danmokou.Danmaku.Options.GenCtxProperty;
 using Danmokou.Danmaku.Options;
 using Danmokou.DataHoist;
@@ -39,6 +40,7 @@ public static partial class AtomicPatterns {
     /// Empty-guided fire that points in the same direction as the empty bullet.
     /// <br/>Note: when following polar bullets, you should use this.
     /// </summary>
+    [ExpressionBoundary]
     public static SyncPattern DS(ReflectEx.Hoist<Vector2> hoistLoc, ReflectEx.Hoist<Vector2> hoistDir, ExBPY indexer,
         ExTP offset) =>
         Simple(VTP(VTPRepo.DTPOffset(hoistLoc, hoistDir, indexer, offset)), new SBOptions(new[] {
@@ -49,6 +51,7 @@ public static partial class AtomicPatterns {
         "tprot px lerpt3 0 0.2 0.5 1 6 2 9".Into<VTP>(), new BehOptions());
 }
 public static partial class SyncPatterns {
+    [ExpressionBoundary]
     public static SyncPattern Aim1(ExBPY speed) => Target(GCXF(_ => LPlayer()), new[] {S(VTP(VTPRepo.RVelocity(TPr.PX(speed))))});
     
     /*
@@ -119,8 +122,11 @@ public static partial class SyncPatterns {
 }
 
 public static partial class AsyncPatterns {
+    [ExpressionBoundary]
     public static AsyncPattern gEruption(GCXF<float> wait, GCXF<float> times, ExBPY angleOffset,
         ExBPY speed, ExBPY gravity) => Eruption(wait, times, angleOffset, speed, gravity, new GenCtxProperty[] { });
+    
+    [ExpressionBoundary]
     public static AsyncPattern Eruption(GCXF<float> wait, GCXF<float> times, ExBPY angleOffset,
         ExBPY speed, ExBPY gravity, GenCtxProperty[] props) => _AsGCR(S(VTP(VTPRepo.Velocity(
         TPr.PX(speed),

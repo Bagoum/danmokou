@@ -5,12 +5,25 @@ function myFn1(x::float, y):: float {
 	return y * si + x * 2
 }
 
+if (si > 5) {
+	var w = 4.0;
+}
+
+function createSyncPattern(x) {
+	if (x < 4) {
+		var y = x + 1;
+		return s rvelocity(px(1 + sqrt(y / 4)));
+	} else {
+		return s rvelocity(pxy(1 + sqrt(x / 4), sine(2, 2, t)));
+	}
+}
+
 var sm = pattern({
 		boss 'simp.kasen'
 	}, {
 	phase 0 { } {
 		paction 0 {
-			shiftphaseto 1
+			shiftphaseto 2
 		}
 	}
 	phase 30 { 
@@ -19,7 +32,7 @@ var sm = pattern({
 	} {
 		paction 0 {
 			gtr {
-				wait(120)
+				wait(30)
 				times(10)
 				preloop b{
 					hvar itr = i
@@ -27,16 +40,19 @@ var sm = pattern({
 			} {
 				debugf(myFn1(5, 6))
 				position 0 0
-				sync "sakura-blue/b" <> gsr2c 10 {
+				sync "sakura-blue/w" <> gsr2c 10 {
 					preloop b{
 						hvar loop = i + 1
 					}
 				} wrap(b{
-					var sp = s rvelocity(pxy(1, 1));
+					var sp = null;
 					if (itr % 2 == 0) {
-						sp = s rvelocity(px(myFn1(itr, loop) / 10));
+						sp = createSyncPattern(itr);
 					} else {
+						sp = color "sakura-red/b" s rvelocity(px(1 + sine(2, 0.5, t)));
 						//empty blocks are ok, the else can also be removed
+						//but note that double assignment to SyncPattern will
+						// result in leaking EnvFrames
 					}
 					sp;
 				})

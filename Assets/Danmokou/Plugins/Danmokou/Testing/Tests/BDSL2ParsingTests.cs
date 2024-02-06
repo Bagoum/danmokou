@@ -30,7 +30,7 @@ namespace Danmokou.Testing {
 
 public static class BDSL2ParsingTests {
     private static (IAST, LexicalScope) MakeAST(ref string source, IDelegateArg[] args) {
-        var tokens = Lexer.Lex(ref source);
+        var tokens = Lexer.Lex(ref source, out _);
         var res = Reflection2.Parser.Parse(source, tokens, out var stream);
         if (res.IsRight)
             Assert.Fail(stream.ShowAllFailures(res.Right));
@@ -39,15 +39,15 @@ public static class BDSL2ParsingTests {
     }
     private static void AssertASTFail(string source, string pattern, IDelegateArg[] args) {
         var (ast, gs) = MakeAST(ref source, args);
-        var excs = ast.FirstPassExceptions.ToList();
+        var excs = ast.FirstPassExceptions().ToList();
         Assert.IsTrue(excs.Count > 0);
         Assert.IsTrue(excs.Any(exc => _RegexMatches(pattern, exc.Message)));
     }
     private static (IAST, LexicalScope) AssertASTOK(string source, IDelegateArg[] args) {
         var (ast, gs) = MakeAST(ref source, args);
-        foreach (var exc in ast.FirstPassExceptions)
+        foreach (var exc in ast.FirstPassExceptions())
             Assert.Fail(exc.Message);
-        Assert.IsTrue(!ast.FirstPassExceptions.Any());
+        Assert.IsTrue(!ast.FirstPassExceptions().Any());
         return (ast, gs);
     }
     private static void AssertTypecheckFail(string source, string pattern, params IDelegateArg[] args) {
@@ -115,11 +115,11 @@ x++ + block {
     public static void Add1() {
         var source = @"x += 1";
         var args = new IDelegateArg[] { new DelegateArg<float>("x") };
-        var f = Helpers.ParseAndCompile<Func<float, float>>(source, args);
+        var f = Helpers.ParseAndCompileDelegate<Func<float, float>>(source, args);
         Assert.AreEqual(f(12.4f), 13.4f);
         var x = 20.1f;
         var rargs = new IDelegateArg[] { new DelegateArg<float>("x", isRef: true) };
-        var rf = Helpers.ParseAndCompile<RefFunc>(source, rargs);
+        var rf = Helpers.ParseAndCompileDelegate<RefFunc>(source, rargs);
         Assert.AreEqual(rf(ref x), 21.1f);
         Assert.AreEqual(x, 21.1f);
     }
@@ -140,7 +140,7 @@ x++ + block {
     [Test]
     public static void tmp2() {
         var args = new IDelegateArg[] { };
-        var ast = AssertVerified("gsr2c 10 { bindLR() } { s tprot rotate(lr * 20, block{ var aa = 4; px(aa + aa) }) }");
+        var ast = AssertVerified("gsr2c 10 { bindLR() } { s tprot rotate(lr * 20, block{ var aa = 4; px(aa + aa); }) }");
         var result = CompilerHelpers.PrepareDelegate<Func<SyncPattern>>(ast.Realize, args);
         int k = 5;
     }

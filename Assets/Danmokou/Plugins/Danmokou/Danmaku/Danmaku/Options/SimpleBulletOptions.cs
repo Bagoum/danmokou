@@ -20,10 +20,13 @@ public class SBOption {
     /// Give the bullet a custom scale.
     /// </summary>
     public static SBOption Scale(BPY scale) => new ScaleProp(scale);
+    
     /// <summary>
     /// Give the bullet a custom rotation function, in degrees.
     /// </summary>
+    [ExpressionBoundary]
     public static SBOption Dir(Func<TExArgCtx, TEx<float>> dir) => new DirProp(Compilers.SBV2(x => CosSinDeg(dir(x))));
+    
     /// <summary>
     /// Give the bullet a custom rotation function, in cos/sin coordinates.
     /// </summary>
