@@ -273,7 +273,7 @@ public static partial class SyncPatterns {
             var controls = new List<BulletManager.BulletControl>();
             for (int ii = 0; ii < controlsL.Count; ++ii)
                 //See ParticleControl for explanation of why .Root is used here
-                controls.Add(new BulletManager.BulletControl(controlsL[ii], BulletManager.Consts.PERSISTENT, sbh.ch.cT.Root));
+                controls.Add(new BulletManager.BulletControl(GenCtx.Empty, controlsL[ii], BulletManager.Consts.PERSISTENT, sbh.ch.cT.Root));
             BulletManager.AssertControls(isPlayer ? BulletManager.GetOrMakePlayerCopy(estyle) : estyle, controls);
             var emptySbh = sbh;
             emptySbh.ch.bc.style = estyle;

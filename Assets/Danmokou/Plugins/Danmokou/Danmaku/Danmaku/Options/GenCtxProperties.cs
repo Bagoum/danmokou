@@ -84,10 +84,13 @@ public record GenCtxProperty {
     /// <returns></returns>
     [Alias("w")]
     public static GenCtxProperty Wait(GCXF<float> frames) => new WaitProp(frames);
+    
     /// <summary>
     /// Set the max amount of time this function will execute for, in frames.
     /// </summary>
-    public static GenCtxProperty For(GCXF<float> frames) => new ForTimeProp(frames);
+    [Alias("for")]
+    public static GenCtxProperty ForTime(GCXF<float> frames) => new ForTimeProp(frames);
+    
     /// <summary>
     /// Wait and times properties combined.
     /// </summary>
@@ -131,7 +134,7 @@ public record GenCtxProperty {
     /// Wait, FOR, rpp properties combined. Times is set to infinity.
     /// </summary>
     /// <returns></returns>
-    public static GenCtxProperty AsyncFor(GCXF<float> frames, GCXF<float> runFor, GCXF<V2RV2> incr) => new CompositeProp(Wait(frames), Times(GCXFRepo.Max), For(runFor), RV2Incr(incr));
+    public static GenCtxProperty AsyncFor(GCXF<float> frames, GCXF<float> runFor, GCXF<V2RV2> incr) => new CompositeProp(Wait(frames), Times(GCXFRepo.Max), ForTime(runFor), RV2Incr(incr));
     /// <summary>
     /// Times, rpp properties combined.
     /// </summary>
@@ -380,6 +383,7 @@ public record GenCtxProperty {
     /// = Target Angle LPlayer
     /// </summary>
     public static GenCtxProperty Aimed() => Target(RV2ControlMethod.ANG, GCXF(_ => ExM.LPlayer()));
+    
     /// <summary>
     /// Run the invocations only while a predicate is true. As long as the predicate is false,
     /// the function will wait indefinitely. If an `Unpause` command is used, then the unpause function
@@ -388,13 +392,16 @@ public record GenCtxProperty {
     /// </summary>
     /// <param name="pred"></param>
     /// <returns></returns>
-    public static GenCtxProperty While(GCXF<bool> pred) => new WhileProp(pred);
+    [Alias("while")]
+    public static GenCtxProperty WhileTrue(GCXF<bool> pred) => new WhileProp(pred);
+    
     /// <summary>
     /// If using a While property, this causes code to be run when the function is paused and then unpaused.
     /// </summary>
     /// <param name="sm"></param>
     /// <returns></returns>
     public static GenCtxProperty Unpause(StateMachine sm) => new UnpauseProp(sm);
+    
     /// <summary>
     /// Save some values into public hoisting for each fire. Resolved after PreLoop, right before invocation.
     /// </summary>
@@ -435,7 +442,7 @@ public record GenCtxProperty {
     /// <summary>
     /// Restarts the given timer for every iteration of the looper. Resolved before preloop rules.
     /// </summary>
-    public static GenCtxProperty Timer(ETime.Timer timer) => new TimerProp(timer);
+    public static GenCtxProperty Timer(GCXF<ETime.Timer> timer) => new TimerProp(timer);
     
     /// <summary>
     /// Adds the location of the laser at the specified draw-time to the RV2 of the summoned entity.
@@ -610,7 +617,7 @@ public record GenCtxProperty {
         public override string ToString() => "-Scope Metadata-";
     }
 
-    public record TimerProp(ETime.Timer value) : ValueProp<ETime.Timer>(value);
+    public record TimerProp(GCXF<ETime.Timer> value) : ValueProp<GCXF<ETime.Timer>>(value);
 
     public record OnLaserProp(GCXF<float> value) : ValueProp<GCXF<float>>(value);
 
@@ -700,7 +707,7 @@ public class GenCtxProperties<T> : GenCtxProperties {
     public readonly IReadOnlyList<(ReflectEx.Hoist<Vector2>, GCXF<float>, GCXF<Vector2>)>? saveV2;
     public readonly GCXF<bool>? clipIf;
     public readonly GCXF<bool>? cancelIf;
-    public readonly ETime.Timer? timer;
+    public readonly GCXF<ETime.Timer>? timer;
     public readonly bool resetTime;
     public readonly bool centered;
     public readonly bool bindArrow;

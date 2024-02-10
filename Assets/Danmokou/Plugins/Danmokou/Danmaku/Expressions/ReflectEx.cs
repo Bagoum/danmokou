@@ -284,35 +284,30 @@ public readonly struct ReferenceMember {
         return variable;
     }
 
-    public V2RV2 ResolveMembers(ref V2RV2 variable, V2RV2 assigned, GCOperator op) {
+    public void ResolveMembers(ref V2RV2 rv2, V2RV2 assigned, GCOperator op) {
         Precheck(op);
         if (members.Count > 0) throw new Exception($"Can't assign RV2 to RV2 member {this}");
-        MutV2RV2 rv2 = variable;
         ResolveFloat(ref rv2.nx, assigned.nx, op);
         ResolveFloat(ref rv2.ny, assigned.ny, op);
         ResolveFloat(ref rv2.rx, assigned.rx, op);
         ResolveFloat(ref rv2.ry, assigned.ry, op);
         ResolveFloat(ref rv2.angle, assigned.angle, op);
-        return variable = rv2;
     }
 
-    public V2RV2 ResolveMembers(ref V2RV2 variable, float assigned, GCOperator op) {
+    public void ResolveMembers(ref V2RV2 rv2, float assigned, GCOperator op) {
         Precheck(op);
         if (members.Count == 0) throw new Exception($"Can't assign float to V2RV2 {this}");
-        MutV2RV2 rv2 = variable;
         if (members[0] == "nx") ResolveFloat(ref rv2.nx, assigned, op);
         else if (members[0] == "ny") ResolveFloat(ref rv2.ny, assigned, op);
         else if (members[0] == "rx") ResolveFloat(ref rv2.rx, assigned, op);
         else if (members[0] == "ry") ResolveFloat(ref rv2.ry, assigned, op);
         else if (members[0].StartsWith("a")) ResolveFloat(ref rv2.angle, assigned, op);
         else throw new Exception($"Can't get RV2.f member {members[0]}");
-        return variable = rv2;
     }
 
-    public V2RV2 ResolveMembers(ref V2RV2 variable, Vector2 assigned, GCOperator op) {
+    public void ResolveMembers(ref V2RV2 rv2, Vector2 assigned, GCOperator op) {
         Precheck(op);
         if (members.Count == 0) throw new Exception($"Can't assign V2 to V2RV2 {this}");
-        MutV2RV2 rv2 = variable;
         if (members[0] == "rxy") {
             ResolveFloat(ref rv2.rx, assigned.x, op);
             ResolveFloat(ref rv2.ry, assigned.y, op);
@@ -320,7 +315,6 @@ public readonly struct ReferenceMember {
             ResolveFloat(ref rv2.nx, assigned.x, op);
             ResolveFloat(ref rv2.ny, assigned.y, op);
         } else throw new Exception($"Can't get RV2.V2 member {members[0]}");
-        return variable = rv2;
     }
 
     public static implicit operator ReferenceMember(string s) => new(s);

@@ -27,6 +27,12 @@ public class FallthroughAttribute : Attribute {
 /// </summary>
 public class ExpressionBoundaryAttribute : Attribute { }
 
+/// <summary>
+/// Mark that this function should not be converted into a constant expression in BDSL2 reflection.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public class NonConstableAttribute : Attribute { }
+
 [AttributeUsage(AttributeTargets.All)]
 public class DontReflectAttribute : Attribute { }
 /// <summary>

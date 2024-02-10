@@ -535,7 +535,7 @@ public class LexicalScope {
                     (opOnValue ?? noOpOnValue)(EnvFrame.Value(ef.DictGet(parentage), typeIdx, valueIdx, typ)),
                     deflt ??
                     Ex.Throw(Ex.Constant(new Exception(
-                        $"The variable {varName}<{typ.SimpRName()}> was referenced in an unscoped context " +
+                        $"The variable {varName}<{typ.SimpRName()}> was referenced in a dynamic context " +
                         $"(eg. a bullet control), but some bullets do not have this variable defined")), typ))
             );
             tac.Ctx.UnscopedEnvframeAcess.Remove((varName, typ));
@@ -741,8 +741,8 @@ public class DMKScope : LexicalScope {
             FixedImplicitTypeConv<string, LString>.FromFn(x => x),
             
             //hoist constructor (can't directly use generic class constructor)
-            new GenericMethodConv1((GenericMethodSignature)MethodSignature.Get(typeof(ExM)
-                .GetMethod(nameof(ExM.H), BindingFlags.Public | BindingFlags.Static)!)),
+            new GenericMethodConv1((GenericMethodSignature)MethodSignature.Get(typeof(ReflectConstructors)
+                .GetMethod(nameof(ReflectConstructors.H), BindingFlags.Public | BindingFlags.Static)!)),
             //uncompiledCode helper
             new GenericMethodConv1((GenericMethodSignature)MethodSignature.Get(typeof(Compilers)
                 .GetMethod(nameof(Compilers.Code), BindingFlags.Public | BindingFlags.Static)!)),

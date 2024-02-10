@@ -18,8 +18,8 @@ var sm = pattern({
 				rv2incr(<10>)
 			} doubleflipx doubleflipy s tprot px select(dc, {
 				code(0 + t)
-				2 + t
-				4 + t
+				code(2 + t)
+				code(4 + t)
 			})
 			
 			async "gpather-teal/w" <> gcr {

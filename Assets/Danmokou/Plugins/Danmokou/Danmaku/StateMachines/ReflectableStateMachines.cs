@@ -152,6 +152,7 @@ public class TimerControllerLASM : ReflectableLASM {
     /// </summary>
     /// <param name="timer"></param>
     /// <returns></returns>
+    [BDSL1Only]
     public static TimerControl Start(ETime.Timer timer) => smh => {
         ETime.Timer.Start(timer);
         return Task.CompletedTask;
@@ -162,6 +163,7 @@ public class TimerControllerLASM : ReflectableLASM {
     /// </summary>
     /// <param name="timer"></param>
     /// <returns></returns>
+    [BDSL1Only]
     public static TimerControl Restart(ETime.Timer timer) => smh => {
         ETime.Timer.Restart(timer);
         return Task.CompletedTask;
@@ -172,6 +174,7 @@ public class TimerControllerLASM : ReflectableLASM {
     /// <param name="timer"></param>
     /// <param name="m"></param>
     /// <returns></returns>
+    [BDSL1Only]
     public static TimerControl StartM(ETime.Timer timer, float m) => smh => {
         ETime.Timer.Start(timer, m);
         return Task.CompletedTask;
@@ -181,6 +184,7 @@ public class TimerControllerLASM : ReflectableLASM {
     /// </summary>
     /// <param name="timer"></param>
     /// <returns></returns>
+    [BDSL1Only]
     public static TimerControl Stop(ETime.Timer timer) => smh => {
         ETime.Timer.Stop(timer);
         return Task.CompletedTask;

@@ -17,7 +17,7 @@ var sm = pattern({
 	}, {
 	phase 0 { } {
 		paction 0 {
-			shiftphaseto 2
+			shiftphaseto 1
 		}
 	}
 
@@ -27,13 +27,21 @@ var sm = pattern({
 	} {
 		paction 0 {
 			position 0 0
-			sync "arrow-red/w" <> gsr2 10 <4> {
-				preloop b{
-					hvar itr = i
+			async "amulet-red/w" <> gcrepeat {
+				times inf
+				wait 120
+				p this
+			} guideempty2 p { ("eloc", code(loc)), ("edir", code(dir)) }
+				rvelocity(lerp(1, 2, t, px(2), py(-2))) {
+					gsrepeat {
+						bindArrow
+						times(11)
+					} simple(
+						dtpoffset("eloc", "edir", p, pxy(
+								0.6 + -0.2 * aixd,
+								0.1 * aiyd)),
+						{ dir2(@("edir", p)) })
 				}
-			} doubleflipx gsr {
-				offset(rx(0.1 * itr))
-			} randomx -0.1 0.1 s(rvelocity(tp(pxyz(3,3,4))))
 		}
 	}
 

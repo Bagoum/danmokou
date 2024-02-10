@@ -31,8 +31,8 @@ namespace Danmokou.Danmaku {
 
 public partial class BulletManager {
     public static class Consts {
-        public static readonly Pred PERSISTENT = _ => true;
-        public static readonly Pred NOTPERSISTENT = _ => false;
+        public static readonly GCXF<bool> PERSISTENT = _ => true;
+        public static readonly GCXF<bool> NOTPERSISTENT = _ => false;
     }
     /// <summary>
     /// A description of a bullet control as an expression that has not yet been compiled to an executable lambda.
@@ -70,19 +70,24 @@ public partial class BulletManager {
     /// </summary>
     public readonly struct BulletControl {
         public readonly SBCF action;
-        public readonly Pred persist;
+        public readonly GenCtx caller;
+        public readonly GCXF<bool> persist;
         public readonly int priority;
         public readonly ICancellee cT;
 
-        public BulletControl(cBulletControl act, Pred persistent, ICancellee? cT) {
+        public BulletControl(GenCtx caller, cBulletControl act, GCXF<bool> persistent, ICancellee? cT) {
+            this.caller = caller;
             this.cT = cT ?? Cancellable.Null;
             action = act.func;
             persist = persistent;
             this.priority = act.priority;
         }
 
+        public BulletControl Mirror() => new(caller.Mirror(), new(action, priority), persist, cT);
+
         public static bool operator ==(BulletControl b1, BulletControl b2) =>
-            b1.action == b2.action && b1.persist == b2.persist && b1.priority == b2.priority && 
+            //b1.caller == b2.caller && //don't check this as it may be mirrored
+            b1.action == b2.action &&  b1.persist == b2.persist && b1.priority == b2.priority && 
             ReferenceEquals(b1.cT, b2.cT);
 
         public static bool operator !=(BulletControl b1, BulletControl b2) => !(b1 == b2);
@@ -724,13 +729,14 @@ public partial class BulletManager {
     
     /// <summary>
     /// Execute a bullet control on a simple bullet pool.
+    /// <br/>This function will internally mirror the `caller` GCX.
     /// </summary>
-    public static void ControlBullets(Pred persist, StyleSelector styles, cBulletControl control, ICancellee cT) {
-        BulletControl pc = new BulletControl(control, persist, cT);
+    public static void ControlBullets(GenCtx caller, GCXF<bool> persist, StyleSelector styles, cBulletControl control, ICancellee cT) {
+        BulletControl pc = new BulletControl(caller, control, persist, cT);
         //Since sb controls are cleared immediately after velocity update,
         //it does not matter when in the frame they are added.
         for (int ii = 0; ii < styles.Simple.Length; ++ii) {
-            GetMaybeCopyPool(styles.Simple[ii]).AddBulletControl(pc);
+            GetMaybeCopyPool(styles.Simple[ii]).AddBulletControl(pc.Mirror());
         }
     }
 
@@ -784,8 +790,8 @@ public partial class BulletManager {
         /// <returns></returns>
         public static SPCF SoftCullAll(string targetFormat) =>
             (pool, cT) => {
-                GetMaybeCopyPool(pool).AddBulletControl(new BulletControl(SimpleBulletControls.Softcull_noexpr(
-                    new SoftcullProperties(null, null),
+                GetMaybeCopyPool(pool).AddBulletControl(new BulletControl(GenCtx.Empty, 
+                    SimpleBulletControls.Softcull_noexpr(new SoftcullProperties(null, null),
                     PortColorFormat(pool, new SoftcullProperties(targetFormat, null)),
                     _ => true), Consts.NOTPERSISTENT, cT));
                 return NullDisposable.Default;
@@ -865,7 +871,7 @@ public partial class BulletManager {
         void CullPool(SimpleBulletCollection pool) {
             if (!pool.SubjectToAutocull) return;
             var targetPool = PortColorFormat(pool.Style, props);
-            pool.AddBulletControl(new BulletControl(
+            pool.AddBulletControl(new BulletControl(GenCtx.Empty, 
                     SimpleBulletControls.Softcull_noexpr(props, targetPool, _ => true), Consts.NOTPERSISTENT, null));
             //Logs.Log($"Autoculled {pool.Style} to {targetPool ?? "None"}");
         }
@@ -881,8 +887,8 @@ public partial class BulletManager {
         void DeletePool(SimpleBulletCollection pool) {
             if (!pool.BC.Deletable.Value || !pool.SubjectToAutocull) return;
             var targetPool = PortColorFormat(pool.Style, props);
-            pool.AddBulletControl(new BulletControl(SimpleBulletControls.Softcull_noexpr(props, targetPool, cond)
-                , Consts.NOTPERSISTENT, null));
+            pool.AddBulletControl(new BulletControl(GenCtx.Empty, 
+                SimpleBulletControls.Softcull_noexpr(props, targetPool, cond), Consts.NOTPERSISTENT, null));
         }
         for (int ii = 0; ii < activeNpc.Count; ++ii) DeletePool(activeNpc[ii]);
     }
@@ -899,7 +905,7 @@ public partial class BulletManager {
         timer.Restart();
         //Don't have any mixups on the last frame...
         var effectiveAdvance = props.advance - 4 * ETime.FRAME_TIME;
-        Pred survive = _ => timer.Seconds < effectiveAdvance;
+        GCXF<bool> survive = _ => timer.Seconds < effectiveAdvance;
         Pred deleteCond = bpi => {
             var dx = bpi.loc.x - props.center.x;
             var dy = bpi.loc.y - props.center.y;
@@ -911,7 +917,7 @@ public partial class BulletManager {
         void CullPool(SimpleBulletCollection pool) {
             if (!pool.SubjectToAutocull) return;
             var targetPool = PortColorFormat(pool.Style, lprops);
-            pool.AddBulletControl(new BulletControl(
+            pool.AddBulletControl(new BulletControl(GenCtx.Empty, 
                 SimpleBulletControls.Softcull_noexpr(lprops, targetPool, deleteCond), survive, null));
             //Logs.Log($"DoT-Autoculling {pool.Style} to {targetPool}");
         }
@@ -926,7 +932,7 @@ public partial class BulletManager {
     public static void AutodeleteCircleOverTime(SoftcullProperties props) {
         var timer = ETime.Timer.GetTimer(RNG.RandString());
         timer.Restart();
-        Pred survive = _ => timer.Seconds < props.advance;
+        GCXF<bool> survive = _ => timer.Seconds < props.advance;
         Pred deleteCond = bpi => {
             var dx = bpi.loc.x - props.center.x;
             var dy = bpi.loc.y - props.center.y;
@@ -937,7 +943,7 @@ public partial class BulletManager {
         void DeletePool(SimpleBulletCollection pool) {
             if (!pool.BC.Deletable.Value || !pool.SubjectToAutocull) return;
             var targetPool = PortColorFormat(pool.Style, lprops);
-            pool.AddBulletControl(new BulletControl(
+            pool.AddBulletControl(new BulletControl(GenCtx.Empty, 
                 SimpleBulletControls.Softcull_noexpr(lprops, targetPool, deleteCond)
                 , survive, null));
         }

@@ -590,7 +590,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                             $"When resolving the partial method invocation for `{overloads[0].CalledAs ?? overloads[0].Name}`," +
                             $" {argsl.Count} parameters were provided, but overloads were only found with " +
                             $"{string.Join(", ", overloads.Select(o => o.Params.Length).Distinct().OrderBy(x => x))} parameters." +
-                            $"\nAttempted to automatically group functions, but multiple combinations of the following functions" +
+                            $"\nAttempted to automatically group functions, but multiple combinations of the following functions " +
                             $"combined to {argsl.Count} parameters, and none of them appear to pass type-checking." +
                             $" Please try using parentheses.\n\t{argsErr}"), scope);
                     }

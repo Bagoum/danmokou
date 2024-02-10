@@ -510,27 +510,27 @@ public readonly struct CRect {
 /// A position description composed of a nonrotational offset
 /// and a rotational offset.
 /// </summary>
-public readonly struct V2RV2 {
+public struct V2RV2 {
     /// <summary>
     /// X-component of nonrotational offset
     /// </summary>
-    public readonly float nx;
+    public float nx;
     /// <summary>
     /// Y-component of nonrotational offset
     /// </summary>
-    public readonly float ny;
+    public float ny;
     /// <summary>
     /// X-component of rotational offset
     /// </summary>
-    public readonly float rx;
+    public float rx;
     /// <summary>
     /// Y-component of rotational offset
     /// </summary>
-    public readonly float ry;
+    public float ry;
     /// <summary>
     /// Rotation (degrees) of rotational offset
     /// </summary>
-    public readonly float angle;
+    public float angle;
     public Vector2 NV => new Vector2(nx, ny);
     public Vector2 RV => new Vector2(rx, ry);
     
@@ -603,28 +603,6 @@ public readonly struct V2RV2 {
     public override string ToString() {
         return $"<{(decimal) nx},{(decimal) ny}:{(decimal) rx},{(decimal) ry}:{(decimal) angle}>";
     }
-}
-
-/// <summary>
-/// For cleanliness, V2RV2 is immutable. If you need V2RV2s in the inspector,
-/// use this struct instead, as the inspector cannot work with immutability.
-/// </summary>
-[Serializable]
-public struct MutV2RV2 {
-    public float nx;
-    public float ny;
-    public float rx;
-    public float ry;
-    public float angle;
-    public MutV2RV2(float nx, float ny, float rx, float ry, float angle_deg) {
-        this.nx = nx;
-        this.ny = ny;
-        this.rx = rx;
-        this.ry = ry;
-        this.angle = angle_deg;
-    }
-    public static implicit operator MutV2RV2(V2RV2 rv) => new MutV2RV2(rv.nx, rv.ny, rv.rx, rv.ry, rv.angle);
-    public static implicit operator V2RV2(MutV2RV2 rv) => new V2RV2(rv.nx, rv.ny, rv.rx, rv.ry, rv.angle);
 }
 
 public static class Parser {

@@ -383,6 +383,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         public (Reflector.InvokedMethod method, Dummy simplified)? SelectedOverload { get; set; }
         /// <inheritdoc/>
         public bool OverloadsAreInterchangeable { get; init; } = false;
+        protected bool AllowInvokeAsConst { get; set; } = false;
 
         /// <param name="Position">Position of the entire method call, including all arguments (ie. all of `MethodName(arg1, arg2)`)</param>
         /// <param name="MethodPosition">Position of the method name alone (ie. just `MethodName`)</param>
@@ -428,6 +429,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
 
         public override Either<Unifier, TypeUnifyErr> WillSelectOverload(Reflector.InvokedMethod mi, IImplicitTypeConverterInstance? cast, Unifier u) {
+            AllowInvokeAsConst = mi.Mi.IsStatic && mi.Mi.GetAttribute<NonConstableAttribute>() == null;
             return base.WillSelectOverload(mi, cast, u).FMapL(u => {
                 //Handles cases where compilation is done inside functions (eg. MoveTarget)
                 if (mi.Mi.GetAttribute<ExpressionBoundaryAttribute>() != null && LocalScope == null) {
@@ -440,7 +442,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             });
         }
 
-        IEnumerable<ReflectionException> IAST.Verify() {
+        public virtual IEnumerable<ReflectionException> Verify() {
             if (ThisIsConstantVarInitialize(out _)) {
                 foreach (var refr in Params[1].EnumeratePreorder().OfType<Reference>())
                     if (refr.Value.TryL(out var d) && !d.Constant && !d.DeclarationScope.IsIssueOf((Params[1] as AST)!.Scope)) {
@@ -495,7 +497,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             
             //shouldn't need ParsingScope, that's bdsl1 only
             var mi = SpecializeMethod(this, MethodPosition, inv.Mi, typ);
-            return RealizeMethod(this, mi, tac, (ii, tac) => Params[ii].Realize(tac));
+            return RealizeMethod(this, mi, tac, (ii, tac) => Params[ii].Realize(tac), AllowInvokeAsConst);
         }
 
         public static IMethodSignature SpecializeMethod(IAST ast, PositionRange methodPosition, IMethodSignature mi,
@@ -517,7 +519,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 return mi;
         }
 
-        public static TEx RealizeMethod(IAST? ast, IMethodSignature mi, TExArgCtx tac, Func<int, TExArgCtx, TEx> prmGetter) {
+        public static TEx RealizeMethod(IAST? ast, IMethodSignature mi, TExArgCtx tac, Func<int, TExArgCtx, TEx> prmGetter, bool allowInvokeAsConst=false) {
             //During method typechecking, the types T, TEx<T>, and Func<TExArgCtx,TEx<T>> in parameters
             // and in return types will all be treated as T.
             // This helper method deals with converting all possible combinations of these types
@@ -593,7 +595,9 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                     else
                         prms[ii] = prmGetter(ii, tac);
                 }
-                var invoked = mi.InvokeExIfNotConstant(ast as MethodCall, prms);
+                var invoked = allowInvokeAsConst ?
+                    mi.InvokeExIfNotConstant(ast as MethodCall, prms) :
+                    mi.InvokeEx(ast as MethodCall, prms);
                 if (mi.ReturnType.IsSubclassOf(typeof(StateMachine))) {
                     if (invoked is ConstantExpression ce)
                         invoked = Ex.Constant(ce.Value, typeof(StateMachine));
@@ -687,9 +691,10 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
     /// </summary>
     //no local scope handling for instance methods
     public record InstanceMethodCall(PositionRange Position, PositionRange MethodPosition, LexicalScope EnclosingScope, string Name, params IAST[] Params) : MethodCall(Position, MethodPosition, EnclosingScope, System.Array.Empty<Reflector.InvokedMethod>(), Params), IMethodTypeTree<Reflector.InvokedMethod> {
+        public List<(TypeDesignation, Unifier)>? Arg0PossibleTypes { get; private set; }
 
         void IMethodTypeTree<Reflector.InvokedMethod>.GenerateOverloads(List<(TypeDesignation, Unifier)>[] arguments) {
-            Methods = arguments[0].SelectMany(tu => {
+            Methods = (Arg0PossibleTypes = arguments[0]).SelectMany(tu => {
                 var td = tu.Item1;
                 Type t;
                 if (td.IsResolved) {
@@ -699,13 +704,18 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 } else
                     return System.Array.Empty<MethodSignature>();
                 return t.GetMember(Name).SelectNotNull(MethodSignature.MaybeGet);
-            }).Where(sig => !sig.Member.Static).Select(x => x.Call(Name)).ToArray();
+            }).Where(sig => !sig.Member.Static && sig.Params.Length == Params.Length)
+                .Select(x => x.Call(Name)).ToArray();
         }
         
         public override Either<IImplicitTypeConverter, bool> ImplicitParameterCast(Reflector.InvokedMethod overload, int index) {
             if (index == 0)
                 return false;
             return base.ImplicitParameterCast(overload, index);
+        }
+
+        public override IEnumerable<ReflectionException> Verify() {
+            return base.Verify();
         }
     }
     public record PartialInvokedMethod(Reflector.InvokedMethod Meth, int Curry) : IMethodDesignation {

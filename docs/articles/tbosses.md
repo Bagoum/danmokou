@@ -9,54 +9,68 @@ Now that we've covered how to write patterns on a basic level, we'll discuss how
 Open up `BasicSceneOPENME`. Attach `DMK Tutorial Example Boss Script` to the `mokou-boss` object. If you open the script, you should see the following:
 
 ```python
-<#> warnprefix
-## Go to https://dmk.bagoum.com/docs/articles/tbosses.html for the tutorial. 
-pattern({ 
-	##boss(mynewboss)
-})
-phase(0)
-	paction(0)
-		shift-phase-to(1)
+<#> bdsl2
+// Go to https://dmk.bagoum.com/docs/articles/tbosses.html for the tutorial. 
+pattern { 
+	bosses({ "mynewboss" }, {
+		(0, 0),
+		(2, 1)
+	}) } {
+	phase 0 {} {
+		paction 0 {
+			shiftphaseto(1)
+		}
+	}
 		
-<!> type(non, `This is a nonspell`)
-<!> hp(4000)
-<!> root(0, 1)
-phase(0)
-	paction(0)
-		async sakura-pink/w <> gcrepeat {
-			wait(14)
-			times(_)
-			frv2(angle(cosine(8p, 800, timersec(phaset))))
-		} gsr2c 3 {
-		} s(rvelocity(cx(3)))
-
-<!> type(spell, `This is a spell`)
-<!> hp(4000)
-<!> root(0, 2)
-phase(0)
-	paction(0)
-		async fireball-red/w <> gcrepeat {
-			wait(10)
-			times(_)
-			frv2(angle(cosine(9p, 800, timersec(phaset))))
-		} gsr2c 5 {
-		} s(rvelocity(cx(5)))
-        
-		
-<!> type(non, `This is a nonspell`)
-<!> hp(4000)
-<!> root(0, 1)
-phase(0)
-	paction(0)
-		async sakura-pink/w <> gcrepeat {
-			wait(14)
-			times(_)
-			frv2(angle(cosine(8p, 800, timersec(phaset))))
-		} gsr2c 3 {
-		} s(rvelocity(cx(3)))
+	phase 0 {
+		spellcutin(0)
+		type(non, 'This is a nonspell')
+		hp(4000)
+		root(0, 1)
+	} {
+		paction 0 {
+			async "sakura-pink/w" <> gcrepeat {
+				wait(14)
+				times(inf)
+				frv2(angle(cosine(8p, 800, namedtimer("phaset").Seconds)))
+			} gsr2c 3 {
+			} s(rvelocity(cx(3)))
+		}
+	}
+			
+	phase 0 {
+		type(spell, 'This is a spell')
+		hp(4000)
+		root(0, 2)
+	} {
+		paction 0 {
+			async "fireball-red/w" <> gcrepeat {
+				wait(10)
+				times(inf)
+				frv2(angle(cosine(9p, 800, namedtimer("phaset").Seconds)))
+			} gsr2c 5 {
+			} s(rvelocity(cx(5)))
+		}
+	}
+			
+	phase 0 {
+		type(non, 'This is a nonspell')
+		hp(4000)
+		root(0, 1)
+	} {
+		paction 0 {
+			async "sakura-teal/w" <> gcrepeat {
+				wait(14)
+				times(inf)
+				frv2(angle(cosine(8p, 800, namedtimer("phaset").Seconds)))
+			} gsr2c 3 {
+			} s(rvelocity(cx(3)))
+		}
+	}
+}
 ```
 
-Both phases are running the basic code for Border of Wave and Particle. However, note that they use the timer `phaset`, which we never restarted. `phaset` is a special timer which is restarted automatically when using a phase that is a card type or a stage type. If you try using a different timer, the bullets will not change their angle.
+All three phases are running the basic code for Border of Wave and Particle. However, note that they use the timer `phaset`, which we never restarted. `phaset` is a special timer which is restarted automatically when using a phase that is a card type or a stage type. If you try using a different timer, the bullets will not change their angle.
 
 Now, we want to add the following:
 
@@ -70,9 +84,9 @@ Now, we want to add the following:
 - The background should automatically switch between a nonspell and spell background specific to the boss.
 - The boss should create a cutin before each of its spellcards (but not its nonspells).
 
-We are going to do all of this **with one line of code**-- specifically, the line commented out at the top `boss(mynewboss)`.
+We are going to do all of this **with one line of code**-- specifically, the line commented out at the top `boss("mynewboss")`.
 
-Go to any folder under Assets in the Unity Project window. Right click an empty space, click "Create", then mouse over "Data" (second from the top), and click "Boss Color Scheme" (first from the top). Do it again, clicking "Boss Configuration" (second from the top). You can rename these two objects as you like, but make sure you know which is the color scheme and which is the boss configuration.
+Go to any folder under Assets in the Unity Project window. Right click an empty space, click "Create", then mouse over "Data", and click "Boss Color Scheme". Do it again, clicking "Boss Configuration". You can rename these two objects as you like, but make sure you know which is the color scheme and which is the boss configuration.
 
 We have just created two **ScriptableObjects**. For our purposes, a ScriptableObject is just a bundle of unchanging data that we want to keep around permanently. DMK makes ample use of scriptable objects to store metadata about various engine constructs like players, shots, bosses, stages, and even games.
 
@@ -103,19 +117,24 @@ Now click on the boss configuration, In the inspector window, you should see a l
 - Default Non BG and Default Spell BG are the backgrounds that the boss will automatically use when in a nonspell-type card or a spell-type card. If you have the SiMP repository downloaded, you can set these to backgrounds from there, such as `stage ex scroll` and `space.sun`. Otherwise, you can set them to `black` and `white`. 
 - Default Into Spell Transition and Default Into Non Transition are the background transitions that the boss will automatically use when moving into a spell-type card or a nonspell-type card. I recommend `WipeTex1` and `Shatter4.Normal`. 
 - Boss Cutin is a special type of cutin that you should use once at the start of a boss script via the `<!> bosscutin` phase property. It is 4.8 seconds long (configurable) and is usually used to announce the boss name and some kind of character title. If you have the SiMP repository downloaded, set this to `v2mokou`. Otherwise, set it to `Cutin Junko` (note that this will produce some artifacting due to how the background is handled in the real boss cutins).
-- Spell Cutins is an array of cutins to be used before each spell. By default, the zeroeth element in this array will be spawned before each spell. However, if you want to vary your spell cutins, you can add multiple objects to the array and then use the `<!> spellcutin(INDEX)` phase property to manually select the one you want to spawn before each card. Add one object and set it to `Cutin Junko`. 
+- Spell Cutins is an array of cutins to be used before each spell. By default, the zeroeth element in this array will be spawned before each spell. However, if you want to vary your spell cutins, you can add multiple objects to the array and then use the `spellcutin(INDEX)` phase property to manually select the one you want to spawn before each card. Add one object and set it to `Cutin Junko`. 
 
 You may notice that the color of the healthbar is oddly absent from this discussion. This is because the color of the healthbar is stored on the `Enemy` component, not in the boss configuration, since any Enemy can have a healthbar. The variables in question are `Nonspell Color`, `Spell Color`, and `Unfilled Color`. When fighting a boss, the white line at the bottom of the playable area will become a healthbar, and it will automatically copy the current color of the boss healthbar.
 
 Okay, now we're ready to get all the boss data in. Uncomment the line `boss(mynewboss)` from the script and run it. 
 
-What happens? You should get two errors in the console. The first should say `Failed to load attached SM on startup`. Click on the second and look at the stack trace. You should see the following:
+What happens? You should get a few errors in the console. Click on the first, and the stacktrace should show:
 
 ```
-Frame 0: Line 3: Tried to construct PatternSM.pattern, but failed to create argument #2/2 "props" (type PatternProperties).
-Line 3: Tried to construct PatternProperties, but failed to create argument #1/1 "props" (type [PatternProperty]).
-Exception has been thrown by the target of an invocation.
+Frame 0: Failed to parse StateMachine from text file `DMK Tutorial Example Boss Script`.
 No boss configuration exists for key mynewboss.
+
+Exception has been thrown by the target of an invocation.
+Line 3, Col 1 to Line 56, Col 2: Couldn't invoke this code.
+
+  at Danmokou.Services.ResourceManager.GetBoss (System.String key) [0x00042] in E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\Danmokou\Danmaku\Services\ResourceManager.cs:57 
+  at Danmokou.SM.PatternProperty+BossProp..ctor (System.String key) [0x00000] in E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\SMProperties.cs:54 
+  at Danmokou.SM.PatternProperty.Boss (System.String key) [0x00000] in E:\Workspace\unity\Danmokou\Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\SMProperties.cs:34 
 ```
 
 Basically, we haven't told the engine about our boss configuration yet! If you get errors like this, it probably means that you created some metadata but forgot to link it in the appropriate place. 
@@ -128,7 +147,7 @@ Now, restart the game. You should see all the changes! There should be one star 
 
 If you clear Mokou's nonspell, then you can see the background quickly transition, and the Junko cutin will fly across the screen. (Cutins will not appear if you set `TeleportAtPhaseStart` to true.) If you clear Mokou's spell, the background will transition back, but no cutin will appear, since the next card is a nonspell. Also, once you clear the spell, the number of stars will drop to 0. 
 
-If we want to add a boss cutin, we must invoke it manually. Add the property `<!> bosscutin` to the first phase and run the script again. If you had set the boss cutin to `mokou3d`, then you'll see a fancy Mokou cutin. Otherwise, you'll see the same Junko cutin, but with a lot more waiting time. 
+If we want to add a boss cutin, we must invoke it manually. Add the property `bosscutin` to the first phase and run the script again. If you had set the boss cutin to `mokou3d`, then you'll see a fancy Mokou cutin. Otherwise, you'll see the same Junko cutin, but with a lot more waiting time. 
 
 ## Part 2: On Multiple Bosses
 
@@ -155,6 +174,8 @@ phase 0
 		@ { kaguya keine } ## BehaviorEntity IDs of the spawned support bosses
 			position -15 0
 ```
+
+Note that this script is using an older version of BDSL which has different formatting requirements. 
 
 (Note: when bosses are more than 5 units off screen, the trackers will not display. This code is in BottomTracker.cs.)
 

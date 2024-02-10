@@ -68,7 +68,7 @@ public static class Lexer {
             //This is to make basic cases like 5-6 vs 5+ -6 easier to handle
             //Must be above keyword/ident to handle 'inf' case
             T(numLiteral, TokenType.Number),
-            T($@"&?({uLetter}|_)({uLetter}|{num}|[_'])*", (p, s) => {
+            T($"&?({uLetter}|_)({uLetter}|{num}|[_'])*", (p, s) => {
                 var typ = TokenType.Identifier;
                 if (keywords.Contains(s.Value))
                     typ = TokenType.Keyword;
@@ -76,6 +76,9 @@ public static class Lexer {
                     typ = TokenType.ValueKeyword;
                 return new Token(typ, p, s);
             }),
+            //@,@0,~ are special functions.
+            T("@0?", TokenType.Identifier),
+            T("~", TokenType.Identifier),
             //Preprocess out other newlines
             T(@"\n", TokenType.Newline),
             T(@"[\(\)\[\]\{\},;]", (p, s) => new Token(s.Value switch {

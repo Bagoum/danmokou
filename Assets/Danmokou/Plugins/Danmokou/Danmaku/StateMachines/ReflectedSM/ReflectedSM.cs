@@ -391,27 +391,27 @@ t > fadein ?
     /// <summary>
     /// Apply bullet controls to simple bullet pools.
     /// </summary>
-    public static ReflectableLASM BulletControl(Pred persist, BulletManager.StyleSelector style,
+    public static ReflectableLASM BulletControl(GCXF<bool> persist, BulletManager.StyleSelector style,
         BulletManager.cBulletControl control) => new(smh => {
-        BulletManager.ControlBullets(persist, style, control, smh.cT.Root);
+        BulletManager.ControlBullets(smh.GCX, persist, style, control, smh.cT.Root);
         return Task.CompletedTask;
     });
     
     /// <summary>
     /// Apply bullet controls to BEH bullet pools.
     /// </summary>
-    public static ReflectableLASM BEHControl(Pred persist, BulletManager.StyleSelector style,
+    public static ReflectableLASM BEHControl(GCXF<bool> persist, BulletManager.StyleSelector style,
         BehaviorEntity.cBEHControl control) => new(smh => {
-        BehaviorEntity.ControlBullets(persist, style, control, smh.cT.Root);
+        BehaviorEntity.ControlBullets(smh.GCX, persist, style, control, smh.cT.Root);
         return Task.CompletedTask;
     });
     
     /// <summary>
     /// Apply laser-specific bullet controls to lasers.
     /// </summary>
-    public static ReflectableLASM LaserControl(Pred persist, BulletManager.StyleSelector style,
+    public static ReflectableLASM LaserControl(GCXF<bool> persist, BulletManager.StyleSelector style,
         CurvedTileRenderLaser.cLaserControl control) => new(smh => {
-        CurvedTileRenderLaser.ControlLasers(persist, style, control, smh.cT.Root);
+        CurvedTileRenderLaser.ControlLasers(smh.GCX, persist, style, control, smh.cT.Root);
         return Task.CompletedTask;
     });
 

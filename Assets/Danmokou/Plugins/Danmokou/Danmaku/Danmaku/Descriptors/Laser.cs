@@ -1,4 +1,5 @@
-﻿using Danmokou.Behavior;
+﻿using System;
+using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
@@ -82,7 +83,8 @@ public class Laser : FrameAnimBullet {
 
     public static void Request(BEHStyleMetadata style, BehaviorEntity? parent, Movement vel, ParametricInfo pi, 
         float cold, float hot, ref RealizedLaserOptions options) {
-        Laser created = (Laser) BEHPooler.RequestUninitialized(style.RecolorOrThrow.prefab, out bool isNew);
+        Laser created = BEHPooler.RequestUninitialized(style.RecolorOrThrow.prefab, out bool isNew)
+            as Laser ?? throw new Exception($"The object {style.style} is not a laser!");
         created.Initialize(isNew, parent, vel, pi, cold, hot, style, ref options);
     }
     

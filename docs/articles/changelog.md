@@ -56,6 +56,25 @@ Each bullet would have its own `&speed` since each bullet occurs in a separate l
 
 As part of this change, the backend handling for `string.Into<T>`, which used BDSL1 reflection, now uses BDSL2 reflection instead. This may cause some minor errors— for example, if you had a field reflected into `FXY` that was previously filled as `^ x 0.8`, you will need to rewrite it as `x ^ 0.8`. You can use `string.IntoBDSL1<T>` if you absolutely need BDSL1 reflection in code.
 
+Also, cases where expressions were provided in an array to a function (such as the expression function `Func<TExArgCtx,TEx<T>> Select<T>(Func<TExArgCtx,TEx<float>> index, Func<TExArgCtx,TEx<T>>[] points)`, which used `index` to get a value from `points`) now use the `UncompiledCode` abstraction. In these cases, the signature becomes `Func<TExArgCtx,TEx<T>> Select<T>(Func<TExArgCtx,TEx<float>> index, UncompiledCode<T>[] points)`. In many cases, you will need to wrap expressions in the `points` array with the `code` function. For example:
+
+```C#
+//Select a value based on the difficulty counter dc
+//Before
+select(dc, {
+	(0 + t)
+	(2 + t)
+	(4 + t)
+})
+
+//After
+select(dc, {
+	code(0 + t)
+	code(2 + t)
+	code(4 + t)
+})
+```
+
 
 
 There are also a few less impactful changes:
@@ -76,7 +95,7 @@ There are also a few less impactful changes:
 #### Breaking Changes
 
 - The method `GameManagement.Restart` has been moved to `GameManagement.Instance.Restart`.
-- The GenCtx property `Expose` has been deprecated. It no longer does anything with the implementation of envframes.
+- The GenCtx property `Expose` has been removed. It no longer did anything with the implementation of envframes.
 - Instead of being derived automatically, the bounds on player movement are now determined via the `m_playerMovementBounds` fields on GameDef. By default, this is set to the values that would be derived automatically.
   <img src="..\images\Unity_xVjFiR1eGx.jpg" alt="Unity_xVjFiR1eGx" style="zoom: 33%;" />
 - Replay data storage can now be configured per GameDef via overriding `RecordReplayFrame` and `CreateReplayInputSource`. By default, danmaku games use StandardDanmakuInputExtractor (which supports horizontal/vertical movement and the controls fire, focus, bomb, meter, swap, dialogue confirm, dialogue skip), and non-danmaku games do not support replays.

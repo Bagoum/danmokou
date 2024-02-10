@@ -66,7 +66,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/SiMP/Scenes/MiniTutorial.unity
     guid: cb5ec701c023b754ca7dc2b3dee6454c
-  - enabled: 0
+  - enabled: 1
     path: Assets/SiMP/Scenes/SiMP.Stage1.unity
     guid: 511cf8e2ba0cc0c4eac7a1f104f0347b
   - enabled: 0

@@ -234,7 +234,7 @@ public static partial class Reflector {
             ("rx", RV2ControlMethod.RX),
             ("ry", RV2ControlMethod.RY),
             ("ang", RV2ControlMethod.ANG),
-            ("rang", RV2ControlMethod.RANG)
+            ("rang", RV2ControlMethod.RANG),
         });
         SEnum(false, new[] {
             ("l1", TSMReflection.StandLocation.LEFT1),

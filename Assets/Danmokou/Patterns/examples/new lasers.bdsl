@@ -1,157 +1,178 @@
-pattern { }
-phase 0
-	paction 0
+<#> bdsl2
+pattern { } {
+phase 0 {} {
+	paction 0 {
 		position 0 0
-		shift-phase-to 11
-
-##1. Straight lasers, size control
-phase 0 #{
-	paction 0
-		sync glaser-blue/b <1;:30> gsr2 4 <40> p this
+		shiftphaseto 11
+	}
+}
+//1. Straight lasers, size control
+phase 0 {} {
+	paction 0 {
+		sync "glaser-blue/b" <1;:30> gsr2 4 <40> p this
 			laser roffset px sine 3 0.5 t
 				1 1 {
 					dsfx
-					s + 0.3 * 0.8 p
+					s(0.3 + 0.8 * p)
 					length 5
 					repeat
 					straight -40
 				}
-#} 
+	}
+}
 
-##2. Rotated lasers
-phase 0 #{
-	paction 0
-		sync laser-green/w <1;:30> gsr2 4 <40> . 
+//2. Rotated lasers
+phase 0 {} {
+	paction 0 {
+		sync "laser-green/w" <1;:30> gsr2 4 <40> {}
 			laser roffset px sine 3 0.5 t
 				10 10 {
-					rotate -50 (* 10 t)
+					rotate(-50, 10 * t)
 				}	
-#}
-	
-##3. Static lasers
-phase 0 #{
-	paction 0
-		sync laser-green/w <1;:30> gsr2 4 <40> . 
+	}
+}	
+
+//3. Static lasers
+phase 0 {} {
+	paction 0 {
+		sync "laser-green/w" <1;:30> gsr2 4 <40> {}
 			laser roffset px sine 3 0.5 t
 				1 10 {
-					##Note: &lt here creates slightly buggy behavior where the laser jumps on frame change,
-					##this is intended.
-					static 	roffset pxy * 0.5 t  sine 2 0.5 (+ t &lt)
-					##This raises an error.
-					##rotate -50 (* 10 t)
+					//Note: &lt here creates slightly buggy behavior where the laser jumps on frame change,
+					//this is intended.
+					static roffset pxy(0.5 * t, sine(2, 0.5, t + lt))
+					//This raises an error.
+					//rotate(-50, 10 * t)
 				}
-#}
+	}
+}
 
-##4. Dynamic lasers
-phase 0 #{
-	paction 0
-		sync laser-green/w <1;:30> gsr2 4 <40> . 
+//4. Dynamic lasers
+phase 0 {} {
+	paction 0 {
+		sync "laser-green/w" <1;:30> gsr2 4 <40> {}
 			laser roffset px sine 3 0.5 t
 				1 10 {
 					stagger	 0.4
-					dynamic 	roffset pxy * 0.5 t  sine 2 (+ 0.5 sine 2h 0.1 &lt) (+ t &lt)
+					dynamic 	roffset pxy(0.5 * t,
+									sine(2, 0.5 + sine 2h 0.1 lt, t+ lt))
 				}
-#}
+	}
+}
 
-##5. Subfiring
-phase 0 #{
-	paction 0
+//5. Subfiring
+phase 0 {} {
+	paction 0 {
 		position -1 -2
-			sync laser-red/ <1.5;:90> gsr { face d } laser null 2 2 {
-				sm	async gem-green/w <90> gcr2 6 _ <> . gsr { onlaser * 0.1 &pi } s tprot cx 1
-				rotate	-50 * -40 t
-			}
-#}
-				
-##6. Subfiring
-phase 0 #{
-	paction 0
+		sync "laser-red/" <1.5;:90> gsr { face derot } laser null 2 2 {
+			sm	async "gem-green/w" <90> gcr2 6 inf <> {
+			} gsr { onlaser(0.1 * i) } s tprot cx 1
+			rotate(-50, -40 * t)
+		}
+	}
+}	
+
+//6. Subfiring
+phase 0 {} {
+	paction 0 {
 		position -1 0
-		sync laser-green/w <1;:10> gsr2 2 <180> .
+		sync "laser-green/w" <1;:10> gsr2 2 <180> {}
 			laser roffset px  sine 4 0.5 t
 				1 10 {
 					length	10
-					dynamic 	roffset pxy * 0.8 t sine 2 (+ 0.5 sine 2p 0.1 &lt) (+ t 0)
-					sm	async gem-red/w <> gcr2 12 _ <> { p this } gsr2 2 <10> { onlaser * 0.2 p } s tprot lerpin 0.5 1 cy -1
+					dynamic roffset pxy(0.8 *t, sine(2, 0.5 + sine 2p 0.1 lt, t))
+					sm	async "gem-red/w" <> gcr2 12 inf <> { 
+						p this 
+					} gsr2 2 <10> { 
+						onlaser(0.2 * p)
+					} s tprot lerpin 0.5 1 cy -1
 				}
-#}
-				
-##7. Double upload
-phase 0 #{
-	paction 0
+	}
+}	
+
+//7. Double upload
+phase 0 {} {
+	paction 0 {
 		position -1 0
-		sync laser-green/w <1;:10> gsr2 2 <180> {
-			preloop i =f t
+		sync "laser-green/w" <1;:10> gsr2 2 <180> {
+			preloop b{
+				hvar loop = i;
+			}
 			p this
-		} laser nroffset px * pm1 &i * t 0.5
+		} laser nroffset px(pm1(loop) * t * 0.5)
 				1 1 {
 					length	10
-					rotate	-30 * * pm1 &i 30 t
+					rotate(-30, pm1(loop) * 30 * t)
 					repeat
 				}
-#}
-				
-##8. Safe lasers
-phase 0 #{
-	paction 0
-		position 0 0
-		sync mulaser-green* <1;:> gsr2c 3 {
-			color { /b / /w }
-		} safelaser 10 { }
-		sync zonelaser-blue* <1;:20> gsr2c 3 {
-			color { /b / /w }
-		} safelaser 10 { rotate 0 * 20 t }
-#}
+	}
+}	
 
-##9. stagger control
-phase 0 #{
-	paction 0
+//8. Safe lasers
+phase 0 {} {
+	paction 0 {
+		position 0 0
+		sync "mulaser-green*" <1;:> gsr2c 3 {
+			color { "/b", "/", "/w" }
+		} safelaser 10 { }
+		sync "zonelaser-blue*" <1;:20> gsr2c 3 {
+			color { "/b", "/", "/w" }
+		} safelaser 10 { rotate(0, 20 * t) }
+	}
+}
+
+//9. stagger control
+phase 0 {} {
+	paction 0 {
 		position -3 0
-		sync gdlaser-green/b <1;:> gsr  {
+		sync "gdlaser-green/b" <1;:> gsr  {
 		} laser null 1 1 {
 			stagger 0.4
-			dynamic polar 
-				* 2 t
-				sine 2.1 44 + * 1.1 &lt  t
+			dynamic polar(
+				2 * t,
+				sine(2.1, 44, 1.1 * lt + t))
 		}
-	paction 3
-		sync gdlaser-green/b <1;:> gsr  {
+	}
+	paction 3 {
+		sync "gdlaser-green/b" <1;:> gsr  {
 		} laser null 2 2 {
-			dynamic polar 
-				* 2 t
-				sine 2.1 44 + * 1.1 &lt  t
+			dynamic polar(
+				2 * t,
+				sine(2.1, 44, 1.1 * lt + t))
 		}
-#}
+	}
+}
 
-##10. Variable laser end
-phase 0 #{
-	paction 0
+//10. Variable laser end
+phase 0 {} {
+	paction 0 {
 		position 0 3
-		sync gdlaser-green/w <1;:210> gsr2 4 <40> . 
+		sync "gdlaser-green/w" <1;:210> gsr2 4 <40> {}
 			laser roffset px sine 3 0.5 t
 				1 300 {
 					stagger 0.4
-					varlength 10 + 8 sine 3 4 t
-					start + 2 sine 3h 2 t
+					varlength(10, 8 + sine 3 4 t)
+					start(2 + sine 3h 2 t)
 					s 2
-					dynamic 	roffset pxy * 0.5 t  sine 5 0.2 (+ t * 8 &lt)
-					delete > t 10
+					dynamic roffset pxy(0.5 * t, sine(5, 0.2, t + 8 * lt))
+					delete(t > 10)
 				}
-#}
+	}
+}
 
-##11. Nonpiercing
-phase 0 #{
-	paction 0
+//11. Nonpiercing
+phase 0 {} {
+	paction 0 {
 		position 0 2
-		sync laser-green/w <0;:> gsr2c 12 . 
+		sync "laser-green/w" <0;:> gsr2c 12 {}
 			laser roffset zero
 				1 10 {
 					stagger	 0.4
-					dynamic 	roffset pxy t  sine 2 lerp(2, 12, t, 0, 0.5) (t - 4 * &lt)
+					dynamic 	roffset pxy t sine 2 lerp(2, 12, t, 0, 0.5) (t - 4 * lt)
 					nonpiercing
 				}
-#}
-
-
+	}
+}
+}
 
 

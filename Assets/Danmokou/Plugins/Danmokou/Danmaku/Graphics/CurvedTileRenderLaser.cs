@@ -540,16 +540,20 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     /// </summary>
     public readonly struct LaserControl {
         public readonly LCF action;
-        public readonly Pred persist;
+        public readonly GenCtx caller;
+        public readonly GCXF<bool> persist;
         public readonly int priority;
         public readonly ICancellee cT;
 
-        public LaserControl(cLaserControl lc, Pred persistent, ICancellee cT) {
+        public LaserControl(GenCtx caller, cLaserControl lc, GCXF<bool> persistent, ICancellee cT) {
+            this.caller = caller;
             action = lc.action;
             priority = lc.priority;
             persist = persistent;
             this.cT = cT;
         }
+
+        public LaserControl Mirror() => new(caller.Mirror(), new(action, priority), persist, cT);
     }
 
     private class LaserMetadata {
@@ -568,7 +572,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         
         public void PruneControls() {
             for (int ii = 0; ii < controls.Count; ++ii) {
-                if (controls[ii].cT.Cancelled || !controls[ii].persist(ParametricInfo.Zero)) {
+                if (controls[ii].cT.Cancelled || !controls[ii].persist(controls[ii].caller)) {
+                    controls[ii].caller.Dispose();
                     controls.Delete(ii);
                 }
             }
@@ -706,10 +711,10 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             }
         }, BulletManager.BulletControl.P_RUN);
     }
-    public static void ControlLasers(Pred persist, BulletManager.StyleSelector styles, cLaserControl control, ICancellee cT) {
-        LaserControl lc = new LaserControl(control, persist, cT);
+    public static void ControlLasers(GenCtx caller, GCXF<bool> persist, BulletManager.StyleSelector styles, cLaserControl control, ICancellee cT) {
+        LaserControl lc = new LaserControl(caller, control, persist, cT);
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            CollectionForStyle(styles.Complex[ii]).AddLaserControlEOF(lc);
+            CollectionForStyle(styles.Complex[ii]).AddLaserControlEOF(lc.Mirror());
         }
     }
     

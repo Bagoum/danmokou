@@ -159,7 +159,7 @@ public static class Parser {
             ), Associativity.Left, 14),
         infix("/", Associativity.Left, 14, Meth(typeof(ExM), nameof(ExM.Div))),
         //infix("//", Associativity.Left, 14, Lift(typeof(ExM), nameof(ExM.FDiv))),
-        infix("^", Associativity.Left, 14, Meth(typeof(ExM), nameof(ExM.Pow))),
+        infix("^", Associativity.Left, 16, Meth(typeof(ExM), nameof(ExM.Pow))),
 
         infix("+", Associativity.Left, 12, Meth(typeof(ExM), nameof(ExM.Add))),
         infix("-", Associativity.Left, 12, Meth(typeof(ExM), nameof(ExM.Sub))),
@@ -494,7 +494,8 @@ public static class Parser {
                 { "v4", typeof(Vector4) },
                 { "V2RV2", typeof(V2RV2) },
                 { "rv2", typeof(V2RV2) },
-                { "SM", typeof(StateMachine) }
+                { "SM", typeof(StateMachine) },
+                { "Timer", typeof(ETime.Timer) }
             };
 
             public override Either<Type, string> TryCompile() {

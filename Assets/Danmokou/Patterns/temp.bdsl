@@ -26,7 +26,7 @@ $lazor(lstar-teal/w, Lplayer)
 !}
 
 
-<!> type non abc
+<!> type spell abc
 <!> hp 10000
 phase 0
 	paction 0

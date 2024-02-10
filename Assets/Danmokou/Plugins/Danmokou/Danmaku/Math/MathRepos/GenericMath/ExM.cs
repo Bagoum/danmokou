@@ -37,10 +37,6 @@ namespace Danmokou.DMath.Functions {
 /// </summary>
 [Reflect]
 public static partial class ExM {
-    /// <summary>
-    /// Access a variable in public (shared) data.
-    /// </summary>
-    public static ReflectEx.Hoist<T> H<T>(string name) => new(name);
     
     #region Aliasing
     //I have type-generalized the code for Reference/Lets but it's not possible to turn them into math expressions.
@@ -415,15 +411,22 @@ public static partial class ExM {
     #endregion
     
     #region ExtLinkers
+
+    [Fallthrough]
+    public static Func<TExArgCtx, TEx<ETime.Timer>> _constNamedTimer(string name) =>
+        tac => Ex.Constant(ETime.Timer.GetTimer(name));
     
     /// <summary>
     /// Get the time (in frames) of the given timer.
     /// </summary>
-    public static tfloat Timer(ETime.Timer timer) => timer.exFrames;
+    public static tfloat Timer(TEx<ETime.Timer> timer) =>
+        Expression.PropertyOrField(timer, nameof(ETime.Timer.Frames));
+    
     /// <summary>
     /// Get the time (in seconds) of the given timer.
     /// </summary>
-    public static tfloat TimerSec(ETime.Timer timer) => timer.exSeconds;
+    public static tfloat TimerSec(TEx<ETime.Timer> timer) =>
+        Expression.PropertyOrField(timer, nameof(ETime.Timer.Seconds));
     
     #endregion
     

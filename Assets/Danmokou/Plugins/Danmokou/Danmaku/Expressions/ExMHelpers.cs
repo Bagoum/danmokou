@@ -6,6 +6,7 @@ using UnityEngine;
 using System.Linq.Expressions;
 using BagoumLib.Expressions;
 using BagoumLib.Mathematics;
+using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.DataHoist;
 using Danmokou.DMath;
@@ -149,6 +150,18 @@ public static class ExMHelpers {
                 ))
             ));
 
+    public static Func<T, TEx<R>> EaseD<T, R>(string easer, float maxTime, 
+        Func<T, TEx<R>> fd, Func<T, Ex> t, Func<T, Ex, T> withT) {
+        var td = TypeDesignation.Dummy.Method(new TypeDesignation.Known(typeof(float)),
+            new TypeDesignation.Known(typeof(float)));
+        var methods = DMKScope.Singleton.FindStaticMethodDeclaration(easer)?
+            .Where(m => m.SharedType.Unify(td, Unifier.Empty).IsLeft 
+                        && m.ReturnType.IsTExType(out _) && m.Params[0].Type.IsTExType(out _))
+            .ToList();
+        if (methods == null || methods.Count == 0)
+            throw new CompileException($"No smoothing function exists by name '{easer}'");
+        return EaseD(x => (methods[0].Invoke(null, x) as tfloat)!, maxTime, fd, t, withT);
+    }
     public static Func<T, TEx<R>> EaseD<T, R>(Func<tfloat, tfloat> easer, float maxTime, 
         Func<T, TEx<R>> fd, Func<T, Ex> t, Func<T, Ex, T> withT) {
         var ratTime = ExUtils.VFloat();
@@ -226,6 +239,7 @@ public static class MoreExExtensions {
     public static Ex Sub<T>(this TEx<T> tex, Ex other) => ((Ex) tex).Sub(other);
     public static Ex Div<T>(this TEx<T> tex, Ex other) => ((Ex) tex).Div(other);
     public static Ex LT<T>(this TEx<T> tex, Ex than) => ((Ex) tex).LT(than);
+    public static Ex Leq<T>(this TEx<T> tex, Ex than) => Ex.LessThanOrEqual(tex, than);
     public static Ex LT0<T>(this TEx<T> tex) => ((Ex) tex).LT0();
     public static Ex GT<T>(this TEx<T> tex, Ex than) => ((Ex) tex).GT(than);
     public static Ex GT0<T>(this TEx<T> tex) => ((Ex) tex).GT0();

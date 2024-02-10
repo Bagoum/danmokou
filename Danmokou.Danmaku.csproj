@@ -160,6 +160,7 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\GameInstance\Features\ScoreFeature.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Achievements\MetaRequirements.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\Configuration.cs" />
+    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\ReflectConstructors.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\SakuyaMimic.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Reflection\AST.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\StateMachines\HelperStateMachines.cs" />

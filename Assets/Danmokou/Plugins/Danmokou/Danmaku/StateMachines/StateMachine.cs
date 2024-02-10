@@ -223,6 +223,7 @@ public abstract class StateMachine {
         {"collide", typeof(BxBCollideLASM)},
         {"@", typeof(RetargetUSM)},
         {"~", typeof(NoBlockUSM)},
+        {"nb", typeof(NoBlockUSM)},
         {"break", typeof(BreakSM)},
         {"timer", typeof(TimerControllerLASM)},
         {"gtr", typeof(GTRepeat)},

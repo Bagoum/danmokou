@@ -193,7 +193,7 @@ public class MethodConv1 : FixedImplicitTypeConv {
     }
 
     public override TEx Convert(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac) =>
-        AST.MethodCall.RealizeMethod(ast, Mi, tac, (_, tac) => castee(tac));
+        AST.MethodCall.RealizeMethod(ast, Mi, tac, (_, tac) => castee(tac), true);
 }
 
 /// <summary>
@@ -208,7 +208,7 @@ public record GenericMethodConv1 : GenericTypeConv1 {
     public override TEx<T> Convert<T>(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac) => throw new NotImplementedException();
 
     public override TEx ConvertForType(Type t, IAST ast,  Func<TExArgCtx, TEx> castee, TExArgCtx tac) =>
-        AST.MethodCall.RealizeMethod(ast, GMi.Specialize(t), tac, (_, tac) => castee(tac));
+        AST.MethodCall.RealizeMethod(ast, GMi.Specialize(t), tac, (_, tac) => castee(tac), true);
 }
 
 

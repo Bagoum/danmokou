@@ -54,7 +54,7 @@ public abstract class FivePropertyDrawer : PropertyDrawer {
     }
 }
 
-[CustomPropertyDrawer(typeof(Danmokou.DMath.MutV2RV2))]
+[CustomPropertyDrawer(typeof(Danmokou.DMath.V2RV2))]
 public class V2RV2Drawer : FivePropertyDrawer { }
 
 

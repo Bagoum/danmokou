@@ -51,16 +51,19 @@ public partial class BehaviorEntity {
     /// </summary>
     public readonly struct BEHControl {
         public readonly BehCF action;
-        public readonly Pred persist;
+        public readonly GenCtx caller;
+        public readonly GCXF<bool> persist;
         public readonly int priority;
         public readonly ICancellee cT;
 
-        public BEHControl(cBEHControl act, Pred persistent, ICancellee? cT) {
+        public BEHControl(GenCtx caller, cBEHControl act, GCXF<bool> persistent, ICancellee? cT) {
             this.cT = cT ?? Cancellable.Null;
+            this.caller = caller;
             action = act.action;
             persist = persistent;
             priority = act.priority;
         }
+        public BEHControl Mirror() => new(caller.Mirror(), new(action, priority), persist, cT);
     }
 
     
@@ -118,7 +121,8 @@ public partial class BehaviorEntity {
         public void PruneControls() {
             void Prune(DMCompactingArray<BEHControl> carr) {
                 for (int ii = 0; ii < carr.Count; ++ii) {
-                    if (carr[ii].cT.Cancelled || !carr[ii].persist(ParametricInfo.Zero)) {
+                    if (carr[ii].cT.Cancelled || !carr[ii].persist(carr[ii].caller)) {
+                        carr[ii].caller.Dispose();
                         carr.Delete(ii);
                     }
                 }
@@ -531,10 +535,10 @@ public partial class BehaviorEntity {
         }, BulletControl.P_ON_DESTROY);
     }
     
-    public static void ControlBullets(Pred persist, StyleSelector styles, cBEHControl control, ICancellee cT) {
-        BEHControl pc = new BEHControl(control, persist, cT);
+    public static void ControlBullets(GenCtx caller, GCXF<bool> persist, StyleSelector styles, cBEHControl control, ICancellee cT) {
+        BEHControl pc = new BEHControl(caller, control, persist, cT);
         for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            GetPool(styles.Complex[ii]).AddBulletControlEOF(pc);
+            GetPool(styles.Complex[ii]).AddBulletControlEOF(pc.Mirror());
         }
     }
 
@@ -571,7 +575,7 @@ public partial class BehaviorEntity {
         /// <returns></returns>
         public static BehPF SoftCullAll(string targetFormat) =>
             (pool, cT) => {
-                GetPool(pool).AddBulletControlEOF(new BEHControl(
+                GetPool(pool).AddBulletControlEOF(new BEHControl(GenCtx.Empty,
                     BulletControls.Softcull(
                         BulletManager.PortColorFormat(pool, new SoftcullProperties(targetFormat, null)),
                         _ => true), Consts.NOTPERSISTENT, cT));
@@ -599,7 +603,7 @@ public partial class BehaviorEntity {
                 return;
             if (!BulletManager.PortColorFormat(poolStr, props, out string? target)) 
                 return;
-            pool.AddBulletControlEOF(new BEHControl(
+            pool.AddBulletControlEOF(new BEHControl(GenCtx.Empty, 
                 BulletControls.Softcull(target, _ => true), Consts.NOTPERSISTENT, null));
         }
         foreach (var pool in (cullPools ?? activePools.Select(x => x.style))) CullPool(pool);

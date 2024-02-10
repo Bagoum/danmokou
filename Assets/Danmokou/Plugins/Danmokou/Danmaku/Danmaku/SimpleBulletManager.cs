@@ -672,8 +672,10 @@ public partial class BulletManager {
             // As such, we prune for cancellation before execution, and then cancellation/persistence after execution.
             void Prune(DMCompactingArray<BulletControl> carr) {
                 for (int ii = 0; ii < carr.Count; ++ii)
-                    if (carr[ii].cT.Cancelled)
+                    if (carr[ii].cT.Cancelled) {
+                        carr[ii].caller.Dispose();
                         carr.Delete(ii);
+                    }
                 carr.Compact();
             }
             Prune(controls);
@@ -682,8 +684,10 @@ public partial class BulletManager {
         public void PruneControls() {
             void Prune(DMCompactingArray<BulletControl> carr) {
                 for (int ii = 0; ii < carr.Count; ++ii)
-                    if (carr[ii].cT.Cancelled || !carr[ii].persist(ParametricInfo.Zero))
+                    if (carr[ii].cT.Cancelled || !carr[ii].persist(carr[ii].caller)) {
+                        carr[ii].caller.Dispose();
                         carr.Delete(ii);
+                    }
                 carr.Compact();
             }
             Prune(controls);

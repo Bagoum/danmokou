@@ -132,7 +132,6 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         message.text = centerMessage.text = "";
         multishotIndicator.text = Instance.MultishotString;
         challengeHeader.text = challengeText.text = "";
-        UpdateTags();
         ShowBossLives(0);
         stackedProfiles.Push(defaultProfile);
         SetProfile(defaultProfile, defaultProfile);
@@ -216,20 +215,22 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
             }
         }
         UpdateRankText();
+
+        void UpdateDifficultyText() {
+            difficulty.text = GameManagement.Difficulty.Describe().ToLower();
+        }
+        UpdateDifficultyText();
         
         Listen(EvInstance, i => i.LifeItemF.LifeItems, _ => UpdateLifeText());
         Listen(EvInstance, i => i.TeamUpdated, UpdateTeamText);
         Listen(EvInstance, i => i.RankF.RankLevelChanged, _ => UpdateRankText());
         if (scoreExtend_parent != null)
             Listen(EvInstance, i => i.ScoreExtendF.NextScoreLife, _ => UpdateScoreExtendText());
+        Listen(EvInstance, _ => UpdateDifficultyText());
     }
 
     private void Start() {
         UpdatePB();
-    }
-
-    public void UpdateTags() {
-        difficulty.text = GameManagement.Difficulty.Describe().ToLower();
     }
 
     private Enemy? bossHP;

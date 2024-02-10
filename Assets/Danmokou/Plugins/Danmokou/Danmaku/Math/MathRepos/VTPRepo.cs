@@ -214,6 +214,7 @@ public static class VTPRepo {
     /// <summary>
     /// No movement.
     /// </summary>
+    [Alias("none")]
     public static ExVTP Null() => ExNoVTP;
 
     /// <summary>

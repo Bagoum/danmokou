@@ -1,45 +1,59 @@
-<#> warnprefix
-## Go to https://dmk.bagoum.com/docs/articles/tbosses.html for the tutorial. 
-pattern({ 
-	##boss(mynewboss)
-})
-phase(0)
-	paction(0)
-		shift-phase-to(1)
+<#> bdsl2
+// Go to https://dmk.bagoum.com/docs/articles/tbosses.html for the tutorial. 
+pattern { 
+	bosses({ "mynewboss" }, {
+		(0, 0),
+		(2, 1)
+	}) } {
+	phase 0 {} {
+		paction 0 {
+			shiftphaseto(1)
+		}
+	}
 		
-<!> type(non, `This is a nonspell`)
-<!> hp(4000)
-<!> root(0, 1)
-phase(0)
-	paction(0)
-		async sakura-pink/w <> gcrepeat {
-			wait(14)
-			times(_)
-			frv2(angle(cosine(8p, 800, timersec(phaset))))
-		} gsr2c 3 {
-		} s(rvelocity(cx(3)))
-		
-
-<!> type(spell, `This is a spell`)
-<!> hp(4000)
-<!> root(0, 2)
-phase(0)
-	paction(0)
-		async fireball-red/w <> gcrepeat {
-			wait(10)
-			times(_)
-			frv2(angle(cosine(9p, 800, timersec(phaset))))
-		} gsr2c 5 {
-		} s(rvelocity(cx(5)))
-		
-<!> type(non, `This is a nonspell`)
-<!> hp(4000)
-<!> root(0, 1)
-phase(0)
-	paction(0)
-		async sakura-teal/w <> gcrepeat {
-			wait(14)
-			times(_)
-			frv2(angle(cosine(8p, 800, timersec(phaset))))
-		} gsr2c 3 {
-		} s(rvelocity(cx(3)))
+	phase 0 {
+		spellcutin(0)
+		type(non, 'This is a nonspell')
+		hp(4000)
+		root(0, 1)
+	} {
+		paction 0 {
+			async "sakura-pink/w" <> gcrepeat {
+				wait(14)
+				times(inf)
+				frv2(angle(cosine(8p, 800, namedtimer("phaset").Seconds)))
+			} gsr2c 3 {
+			} s(rvelocity(cx(3)))
+		}
+	}
+			
+	phase 0 {
+		type(spell, 'This is a spell')
+		hp(4000)
+		root(0, 2)
+	} {
+		paction 0 {
+			async "fireball-red/w" <> gcrepeat {
+				wait(10)
+				times(inf)
+				frv2(angle(cosine(9p, 800, namedtimer("phaset").Seconds)))
+			} gsr2c 5 {
+			} s(rvelocity(cx(5)))
+		}
+	}
+			
+	phase 0 {
+		type(non, 'This is a nonspell')
+		hp(4000)
+		root(0, 1)
+	} {
+		paction 0 {
+			async "sakura-teal/w" <> gcrepeat {
+				wait(14)
+				times(inf)
+				frv2(angle(cosine(8p, 800, namedtimer("phaset").Seconds)))
+			} gsr2c 3 {
+			} s(rvelocity(cx(3)))
+		}
+	}
+}

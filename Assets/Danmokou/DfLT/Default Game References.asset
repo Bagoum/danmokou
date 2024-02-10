@@ -31,5 +31,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
   fileStateMachines: []
   licenses: []
+  importableScripts: []
   scriptFolders: []
   fastParsing: 0

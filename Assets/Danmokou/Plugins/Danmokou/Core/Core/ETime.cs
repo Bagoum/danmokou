@@ -12,6 +12,7 @@ using System.Threading;
 using BagoumLib;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
+using BagoumLib.Expressions;
 using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using BagoumLib.Tasks;
@@ -419,14 +420,15 @@ public class ETime : MonoBehaviour {
     /// Script and FF-viewable stopwatches that move with game time.
     /// </summary>
     public class Timer : IRegularUpdater {
-        private static readonly Dictionary<string, Timer> timerMap = new Dictionary<string, Timer>();
+        private static readonly Dictionary<string, Timer> timerMap = new();
+        private static readonly List<Timer> unnamedTimers = new();
         public static Timer PhaseTimer => GetTimer("phaset");
         private DeletionMarker<IRegularUpdater>? token;
-        public string name;
+        public readonly string? name;
         /// <summary>
         /// Frame counter, with multiplier built-in.
         /// </summary>
-        public float Frames = 0f;
+        public float Frames { get; private set; } = 0f;
         public float Seconds => Frames * FRAME_TIME;
         /// <summary>
         /// Speed multiplier.
@@ -436,21 +438,26 @@ public class ETime : MonoBehaviour {
         public int UpdatePriority => UpdatePriorities.SYSTEM;
         public EngineState UpdateDuring => EngineState.RUN;
         
-        private Timer(string name) {
+        private Timer(string? name) {
             this.name = name;
         }
 
-        private void Start(float mult) {
+        public void Start() => Start(1f);
+        public void Start(float mult) {
             multiplier = mult;
             token ??= RegisterRegularUpdater(this);
         }
 
-        public void Restart(float mult = 1f) {
+        public void Restart() {
+            Frames = 0;
+            Start();
+        }
+        public void Restart(float mult) {
             Frames = 0;
             Start(mult);
         }
 
-        private void Stop() {
+        public void Stop() {
             token?.MarkForDeletion();
             token = null;
         }
@@ -483,6 +490,12 @@ public class ETime : MonoBehaviour {
             }
             return t;
         }
+
+        public static Timer GetUnnamedTimer() {
+            var t = new Timer(null);
+            unnamedTimers.Add(t);
+            return t;
+        }
         
         /// <summary>
         /// Stop all executing timers.
@@ -490,10 +503,10 @@ public class ETime : MonoBehaviour {
         public static void StopAll() {
             foreach (var v in timerMap.Values)
                 v.Stop();
+            foreach (var v in unnamedTimers)
+                v.Stop();
         }
 
-        public Expression exFrames => Expression.PropertyOrField(Expression.Constant(this), nameof(Frames));
-        public Expression exSeconds => Expression.PropertyOrField(Expression.Constant(this), nameof(Seconds));
 
         public override string ToString() => $"Timer {name}";
     }

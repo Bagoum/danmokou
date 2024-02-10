@@ -23,6 +23,7 @@ using Danmokou.SM;
 using JetBrains.Annotations;
 using LanguageServer.VsCode.Contracts;
 using Mizuhashi;
+using UnityEngine;
 using static Danmokou.Reflection.Reflector;
 using Parser = Danmokou.DMath.Parser;
 
@@ -462,6 +463,11 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         }
 
         public object? EvaluateObject() {
+            var w = new Vector2[4];
+            var o = new object[] { w };
+            (o[0] as Vector2[])![0].x += 5;
+            
+            
             var fn = Method.AsFunc();
             if (ResultType.IsTExType(out var inner))
                 return inner.MakeTypedTEx(Expression.Constant(fn));

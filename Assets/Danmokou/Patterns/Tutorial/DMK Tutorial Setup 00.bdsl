@@ -1,16 +1,19 @@
-<#> warnprefix
-## Go to https://dmk.bagoum.com/docs/articles/t01.html for the tutorial. 
-pattern({ })
-phase(0)
-	paction(0)
-		shift-phase-to(1)
-		
-## This is phase #1. 
-<!> type(non, `Hello World`)
-<!> hp(4000)
-phase(0)
-	paction(0)
-		position(0, 1)
-		
-		
-
+<#> bdsl2
+// Go to https://dmk.bagoum.com/docs/articles/t01.html for the tutorial. 
+pattern { } {
+	phase 0 {} {
+		paction 0 {
+			shiftphaseto(1)
+		}
+	}
+			
+	// This is phase #1. 
+	phase 0 {
+		type(non, 'Hello World')
+		hp(4000)
+	} {
+		paction 0 {
+			position(0, 1)
+		}
+	}
+}

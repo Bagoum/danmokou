@@ -195,6 +195,7 @@ public class GenCtx : IDisposable {
     }
 
     public GenCtx Mirror() {
+        if (this == Empty) return Empty;
         var cp = NewUnscoped(exec);
         cp.index = this.index;
         cp.idOverride = this.idOverride;

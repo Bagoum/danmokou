@@ -7,6 +7,7 @@ using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
 using Danmokou.Reflection2;
+using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
 using static Danmokou.Expressions.ExMHelpers;
@@ -189,6 +190,22 @@ public static class ExMLerps {
             return ifNeq;
         });
 
+    public static float MyScript() {
+        var myFloat = 6.4f;
+        var myVector = new Vector2(4, 5);
+        myVector.Set(myFloat + myVector.y, myVector.sqrMagnitude);
+        return myVector.magnitude;
+    }
+
+    /// <summary>
+    /// Select a value according to the current difficulty counter.
+    /// </summary>
+    public static TEx<T> SelectDC<T>(TEx<T> easy, TEx<T> normal, TEx<T> hard, TEx<T> lunatic) =>
+        Ex.Condition(ExMDifficulty.Dc().Leq(ExC(FixedDifficulty.Normal.Counter())),
+            Ex.Condition(ExMDifficulty.Dc().Leq(ExC(FixedDifficulty.Easy.Counter())), easy, normal),
+            Ex.Condition(ExMDifficulty.Dc().Leq(ExC(FixedDifficulty.Hard.Counter())), hard, lunatic)
+        );
+
     /// <summary>
     /// Return 0 if the controller is leq the lower bound, 1 if the controller is geq the lower bound, and
     /// a linear interpolation in between.
@@ -250,17 +267,8 @@ public static class ExMLerps {
     /// <param name="f">Target parametric (describing velocity)</param>
     /// <returns></returns>
     public static Func<TExArgCtx, TEx<T>> EaseD<T>(string smoother, float maxTime, 
-        Func<TExArgCtx, TEx<T>> f) {
-        var td = TypeDesignation.Dummy.Method(new TypeDesignation.Known(typeof(float)),
-            new TypeDesignation.Known(typeof(float)));
-        var methods = DMKScope.Singleton.FindStaticMethodDeclaration(smoother)?
-            .Where(m => m.SharedType.Unify(td, Unifier.Empty).IsLeft 
-                        && m.ReturnType.IsTExType(out _) && m.Params[0].Type.IsTExType(out _))
-            .ToList();
-        if (methods == null || methods.Count == 0)
-            throw new CompileException($"No smoothing function exists by name '{smoother}'");
-        return ExMHelpers.EaseD(x => methods[0].Invoke(null, x) as TEx<float>, maxTime, f, bpi => bpi.t, (bpi, t) => bpi.CopyWithT(t));
-    }
+        Func<TExArgCtx, TEx<T>> f) =>
+        ExMHelpers.EaseD(smoother, maxTime, f, bpi => bpi.t, (bpi, t) => bpi.CopyWithT(t));
 
     /// <summary>
     /// Apply a ease function on top of a target function that uses time as a controller.

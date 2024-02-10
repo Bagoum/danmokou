@@ -342,7 +342,7 @@ public static partial class AtomicPatterns {
     });
 
     public static SyncPattern SafeLaser(GCXF<float> cold, LaserOptions options) =>
-        Laser("null".Into<VTP>(), cold, _ => 0f, options); 
+        Laser(VTPRepo.NoVTP, cold, _ => 0f, options); 
     
     public static SyncPattern SafeLaserM(VTP path, GCXF<float> cold, LaserOptions options) =>
         Laser(path, cold, _ => 0f, options); 
@@ -590,7 +590,7 @@ public struct LoopControl<T> {
                                                     || (elapsed_frames >= allowed_frames);
     public bool PrepareIteration() {
         if (props.resetTime) GCX.SummonTime = 0;
-        props.timer?.Restart();
+        props.timer?.Invoke(GCX).Restart();
         GCX.index = GetFiringIndex(p, parent_index, GCX.i, props.maxTimes);
         //Automatic bindings
         if (GCX.AutoVars is AutoVars.GenCtx gcxv && !GCX.AutovarsAreInherited) {

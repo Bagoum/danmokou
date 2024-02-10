@@ -69,8 +69,9 @@ public class GameManagement : CoroutineRegularUpdater {
 
     public static void NewInstance(InstanceMode mode, InstanceFeatures features, InstanceRequest? req = null, ReplayActor? replay = null) {
         DeactivateInstance();
-        Logs.Log($"Creating new game instance with mode {mode} on difficulty {req?.metadata.difficulty.Describe() ?? "NULL"}.", true);
-        EvInstance.OnNext(new InstanceData(mode, features, req, replay));
+        var inst = new InstanceData(mode, features, req, replay);
+        Logs.Log($"Creating new game instance with mode {mode} on difficulty {inst.Difficulty.Describe()}.", true);
+        EvInstance.OnNext(inst);
     }
 
     public static IEnumerable<FixedDifficulty> VisibleDifficulties => new[] {
