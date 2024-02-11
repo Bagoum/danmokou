@@ -43,7 +43,8 @@ public static partial class Parametrics {
 [Reflect] [Atomic]
 public static class MovementPatterns {
     private static ExBPY f(float f) => _ => ExC(f);
-    [Alias("none")]
+    public static RootedVTP None(GCXF<Vector2> root) => new(root, VTPRepo.Null());
+    [BDSL1Only]
     public static RootedVTP Null(GCXF<Vector2> root) => new(root, VTPRepo.Null());
     public static RootedVTP RVTP(GCXF<Vector2> root, VTP path) => new(root, path);
 

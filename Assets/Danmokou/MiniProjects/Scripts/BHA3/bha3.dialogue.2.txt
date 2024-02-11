@@ -1,3 +1,4 @@
+<#> bdsl1
 script
 place l2 reimu
 place l1 elly

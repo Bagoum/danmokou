@@ -4,7 +4,7 @@ pattern { bgm {
 } }
 phase 0
 	paction 0
-		shift-phase-to 6
+		shift-phase-to 5
 		
 
 ##1
@@ -32,7 +32,7 @@ phase 0
             async gcircle-teal/w <> gcr3 (120 / dl) 6s <> {
                 delay(lerpd(60, 0))
                 sfx x-bubble
-            } target Lplayer s tprot px 3),
+            } gsr { target a Lplayer } s tprot px 3),
         { hp 100 })
 !}
 
@@ -42,7 +42,7 @@ phase 0
             async %c <> gcr2 240 (2 + d3d1) <> {
                 delay(lerpd(240, 170))
                 sfx x-fire-burst-2
-            } target Lplayer gsr2 (5 + d3d2) <1> {
+            } gsr { target a Lplayer } gsr2 (5 + d3d2) <1> {
                 center
             } s tprot px 2),
         { hp 100 })
@@ -134,7 +134,7 @@ phase 0
                     yellow
                 >> 3 async gdlaser-yellow/ <> gcr {
                     delay(180)
-            } target Lplayer laser(null, 1, 1 + 0.2 * dc, {
+            } gsr { target a Lplayer } laser(null, 1, 1 + 0.2 * dc, {
                 dsfx
                 s 1.4
 				stagger 0.24

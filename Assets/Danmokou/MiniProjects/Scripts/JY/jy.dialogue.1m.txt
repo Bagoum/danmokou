@@ -1,3 +1,4 @@
+<#> bdsl1
 script
 place l1 mima
 place r1 yukari

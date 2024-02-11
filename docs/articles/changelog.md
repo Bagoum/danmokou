@@ -19,13 +19,19 @@ The following features are planned for future releases.
 
 
 
-# v11.0.0b (2024/01/20)
+# v11.0.0 (2024/01/20)
 
 I've upgraded the project's Unity version to 2023.2.3f1. Unity 2023 has a critical change where the TextMeshPro package has now been merged into Unity internals, so it is not clear that the project will still run on Unity 2022. As such, please upgrade to Unity 2023 along with updating DMK.
 
 #### Language Changes
 
-This build introduces a beta version of the new scripting language, BDSL2 (details and guide pending). Existing scripts will function more-or-less as-is, though there have been some internal data model changes to support BDSL2. Critically, dynamic type construction (introduced in v9.2.0) and the GCXU type abstraction have been removed and replaced with a more "standard" data model based on [environment frames](https://www.composingprograms.com/pages/16-higher-order-functions.html). For the most part, this shouldn't affect script code, except for one major change to language functionality: variables are now **shared** by all consumers. Consider the following code:
+This build introduces a new scripting language, BDSL2, which is **now the default scripting language for all script files**. Any script files that start with `<#>` (the marker for a ParsingProperty, such as `<#> warnprefix` or `<#> strict(comma)`) will be parsed according to BDSL1 rules. You can add the line `<#> bdsl1` to the top of any of your existing scripts. If a script does not start with `<#>`, then it will be parsed according to BDSL2 rules. 
+
+Likewise, the backend handling for `string.Into<T>`, which used BDSL1 reflection, now uses BDSL2 reflection instead. This may cause some minor errors— for example, if you had a field reflected into `FXY` that was previously filled as `^ x 0.8`, you will need to rewrite it as `x ^ 0.8`. You can use `string.IntoBDSL1<T>` if you absolutely need BDSL1 reflection in code (`<#>` only works for script files).
+
+The tutorials have been updated to use BDSL2.
+
+Existing BDSL1 scripts will function more-or-less as-is, though there have been some internal data model changes to support BDSL2. Critically, dynamic type construction (introduced in v9.2.0) and the GCXU type abstraction have been removed and replaced with a more "standard" data model based on [environment frames](https://www.composingprograms.com/pages/16-higher-order-functions.html). For the most part, this shouldn't affect scripts, except for one major change to language functionality: variables are now **shared** by all consumers. Consider the following code:
 
 ```
 gtr {
@@ -54,8 +60,6 @@ gtr {
 
 Each bullet would have its own `&speed` since each bullet occurs in a separate loop iteration of GTR, where `&speed` is declared. On the other hand, if instead of firing one bullet we fired multiple (eg. `async fireball-red/w <-90> gcr2 10 10 <2> { } s rvelocity(px(&speed))`), then each group of 10 bullets would share the same `&speed`, since they occur in the same loop iteration of GTR.
 
-As part of this change, the backend handling for `string.Into<T>`, which used BDSL1 reflection, now uses BDSL2 reflection instead. This may cause some minor errors— for example, if you had a field reflected into `FXY` that was previously filled as `^ x 0.8`, you will need to rewrite it as `x ^ 0.8`. You can use `string.IntoBDSL1<T>` if you absolutely need BDSL1 reflection in code.
-
 Also, cases where expressions were provided in an array to a function (such as the expression function `Func<TExArgCtx,TEx<T>> Select<T>(Func<TExArgCtx,TEx<float>> index, Func<TExArgCtx,TEx<T>>[] points)`, which used `index` to get a value from `points`) now use the `UncompiledCode` abstraction. In these cases, the signature becomes `Func<TExArgCtx,TEx<T>> Select<T>(Func<TExArgCtx,TEx<float>> index, UncompiledCode<T>[] points)`. In many cases, you will need to wrap expressions in the `points` array with the `code` function. For example:
 
 ```C#
@@ -75,11 +79,11 @@ select(dc, {
 })
 ```
 
-
-
 There are also a few less impactful changes:
 
 - The automatically-bound variable `&bulletTime` has been removed (it was unused in the engine as provided).
+- The AsyncPattern `idelay` was removed (you can use `gir { delay FRAMES }` instead).
+- The SyncPatterns `target`, `targetx`, `targety` have been removed (you can use `gsr { target a/rx/ry TARGET }` instead).
 - `EventLASM.Listen` has been removed. I plan to replace it in the next version.
 - SyncPatterns `oArrowI`, `FArrow`, and `TreeArrow` have been removed. I plan to replace them in the next version.
 - `FinishPSM` (the `finish` StateMachine) has been removed. It was mostly unused in the engine as provided and it was also buggy. Note that using `EndPSM` (the `end` StateMachine under a phase) does basically the same thing: it runs code when the phase times out or the executing entity runs out of HP (but not if the executing entity is autoculled or cancelled).

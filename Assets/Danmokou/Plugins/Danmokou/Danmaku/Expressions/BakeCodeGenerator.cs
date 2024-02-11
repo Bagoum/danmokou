@@ -332,8 +332,8 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
         var f = FlattenVisitor.Flatten(ex, true, true);
 #if UNITY_EDITOR
         //if (typeof(D) == typeof(VTP) || typeof(D) == typeof(SBCF) || typeof(D) == typeof(GCXF<float>))
-            Debug.Log($"Ex:{typeof(D).SimpRName()} " +
-                      $"{new ExpressionPrinter{ObjectPrinter = new DMKObjectPrinter {FallbackToToString = true}}.LinearizePrint(ex)}");
+            //Debug.Log($"Ex:{typeof(D).SimpRName()} " +
+           //           $"{new ExpressionPrinter{ObjectPrinter = new DMKObjectPrinter {FallbackToToString = true}}.LinearizePrint(ex)}");
 #endif
         var result = Ex.Lambda<D>(f, prms).Compile();
 #if EXBAKE_SAVE

@@ -1,3 +1,4 @@
+<#> bdsl1
 ## Basic script for a stage that only plays a visual novel scene. 
 pattern { }
 phase 0

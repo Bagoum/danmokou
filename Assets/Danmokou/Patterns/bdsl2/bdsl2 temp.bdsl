@@ -1,4 +1,3 @@
-<#> bdsl2
 //var w = pxyz(dsine(9, 40, t), dsine(9p, 40, t), lerpback(10, 14, 20, 24, mod(24, t), 90, -150));
 var si::float = 8.0;
 const var myZero = 0.0 + b{
@@ -18,30 +17,6 @@ var sm = pattern({
 	phase 0 { } {
 		paction 0 {
 			shiftphaseto 1
-		}
-	}
-
-	phase 30 {
-		type non "Test expression boundaries"
-		hp 12000
-	} {
-		paction 0 {
-			position 0 0
-			async "amulet-red/w" <> gcrepeat {
-				times inf
-				wait 120
-				p this
-			} guideempty2 p { ("eloc", code(loc)), ("edir", code(dir)) }
-				rvelocity(lerp(1, 2, t, px(2), py(-2))) {
-					gsrepeat {
-						bindArrow
-						times(11)
-					} simple(
-						dtpoffset("eloc", "edir", p, pxy(
-								0.6 + -0.2 * aixd,
-								0.1 * aiyd)),
-						{ dir2(@("edir", p)) })
-				}
 		}
 	}
 

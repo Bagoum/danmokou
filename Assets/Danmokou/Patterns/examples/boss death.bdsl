@@ -1,8 +1,12 @@
-pattern { }
-phase 0
-	paction 0.1
+pattern { } {
+phase 0 {} {
+	paction 0.1 {
 		position 0 1
 		dbossexplode (lerp 0 1 t red purple) red
-	paction 0
+	}
+	paction 0 {
 		position 0 20
+	}
+}
+}
 		

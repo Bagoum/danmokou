@@ -1,5 +1,3 @@
-<#> bdsl2
-
 const var id = "mokou_bomb_thousand_suns_inner_id";
 const var did = "." + id;
 const var h = 12.0;
@@ -26,7 +24,7 @@ gtr {
 	} {
 		gcr {
 			root zero
-			color "sun-red/w"
+			color idify("sun-red/w")
 			delay 120
 			sfx "x-metal"
 		} simple nroffset pxy(d * (p2 + 0.5 - w / 2), -4 + d * p1) {

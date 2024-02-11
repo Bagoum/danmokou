@@ -482,36 +482,37 @@ public abstract class StateMachine {
         }
     }
 
-    public const string bdsl2Prefix = "<#> bdsl2";
     public static StateMachine CreateFromDump(string dump) => CreateFromDump(dump, out _);
     public static StateMachine CreateFromDump(string dump, out EnvFrame scriptFrame) {
         using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
-        if (dump.StartsWith(bdsl2Prefix)) {
+        if (!dump.TrimStart().StartsWith("<#>")) {
             Profiler.BeginSample("SM AST (BDSL2) Parsing/Compilation");
             var (sm, ef) = Helpers.ParseAndCompileValue<StateMachine>(dump);
             Profiler.EndSample();
             scriptFrame = ef;
             return sm;
+        } else {
+            var p = IParseQueue.Lex(dump);
+            Profiler.BeginSample("SM AST construction");
+            var ast = Create(p);
+            Profiler.EndSample();
+            foreach (var d in ast.WarnUsage(p.Ctx))
+                d.Log();
+            if (p.Ctx.ParseEndFailure(p, ast) is { } exc)
+                throw exc;
+            var rootScope = LexicalScope.NewTopLevelScope();
+            using var __ = new LexicalScope.ParsingScope(rootScope);
+            ast.AttachLexicalScope(rootScope);
+            if (rootScope.FinalizeVariableTypes(Unifier.Empty).TryR(out var err))
+                throw Reflection2.IAST.EnrichError(err);
+            Profiler.BeginSample("SM AST realization");
+            var result = ast.Evaluate();
+            result = EnvFrameAttacher.AttachSM(result, scriptFrame = EnvFrame.Create(rootScope, null));
+            Profiler.EndSample();
+            return result;
         }
-        var p = IParseQueue.Lex(dump);
-        Profiler.BeginSample("SM AST construction");
-        var ast = Create(p);
-        Profiler.EndSample();
-        foreach (var d in ast.WarnUsage(p.Ctx))
-            d.Log();
-        if (p.Ctx.ParseEndFailure(p, ast) is { } exc)
-            throw exc;
-        var rootScope = LexicalScope.NewTopLevelScope();
-        using var __ = new LexicalScope.ParsingScope(rootScope);
-        ast.AttachLexicalScope(rootScope);
-        if (rootScope.FinalizeVariableTypes(Unifier.Empty).TryR(out var err))
-            throw Reflection2.IAST.EnrichError(err);
-        Profiler.BeginSample("SM AST realization");
-        var result = ast.Evaluate();
-        result = EnvFrameAttacher.AttachSM(result, scriptFrame = EnvFrame.Create(rootScope, null));
-        Profiler.EndSample();
-        return result;
     }
+    
 
     public static List<PhaseProperties> ParsePhases(string dump) {
         using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, "phase_" + dump);

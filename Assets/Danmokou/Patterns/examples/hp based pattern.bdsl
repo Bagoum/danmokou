@@ -20,5 +20,4 @@ phase 0
 			circle
 			times if(< hpratio mine 0.9, 12, 4)
 			bindItr(colorIndex)
-			expose({ f colorIndex })
 		} s tprot cx 4

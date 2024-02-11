@@ -51,9 +51,6 @@ public static partial class AtomicPatterns {
         "tprot px lerpt3 0 0.2 0.5 1 6 2 9".Into<VTP>(), new BehOptions());
 }
 public static partial class SyncPatterns {
-    [ExpressionBoundary]
-    public static SyncPattern Aim1(ExBPY speed) => Target(GCXF(_ => LPlayer()), new[] {S(VTP(VTPRepo.RVelocity(TPr.PX(speed))))});
-    
     /*
     public static SyncPattern oArrowI(ExBPY times, ExBPY xstep, ExBPY ystep, GenCtxProperty[] props,
         SyncPattern[] inner) =>

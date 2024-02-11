@@ -253,26 +253,26 @@ public static partial class AtomicPatterns {
     #region Items
 
     public static SyncPattern LifeItem() => new(sbh =>
-        ItemPooler.RequestLife(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
+        ItemPooler.RequestLife(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
     
     public static SyncPattern ValueItem() =>new(sbh =>
-        ItemPooler.RequestValue(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
+        ItemPooler.RequestValue(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
     
     public static SyncPattern SmallValueItem() => new(sbh => 
-        ItemPooler.RequestSmallValue(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
+        ItemPooler.RequestSmallValue(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
     
     public static SyncPattern PointPPItem() => new(sbh => 
-        ItemPooler.RequestPointPP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
+        ItemPooler.RequestPointPP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
     
     public static SyncPattern GemItem() => new(sbh => 
-        ItemPooler.RequestGem(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
+        ItemPooler.RequestGem(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
     
     [Alias("1UpItem")]
     public static SyncPattern OneUpItem() => new(sbh => 
-        ItemPooler.Request1UP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
+        ItemPooler.Request1UP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
     
     public static SyncPattern PowerupShiftItem() => new(sbh => 
-        ItemPooler.RequestPowerupShift(new ItemRequestContext(sbh.bc.ParentOffset, sbh.GCX.RV2.TrueLocation)));
+        ItemPooler.RequestPowerupShift(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
     
     #endregion
     

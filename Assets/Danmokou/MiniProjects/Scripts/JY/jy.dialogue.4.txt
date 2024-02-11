@@ -1,3 +1,4 @@
+<#> bdsl1
 script
 place l1 reimu
 place l2 kasen

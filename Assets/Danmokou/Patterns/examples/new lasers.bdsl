@@ -1,4 +1,3 @@
-<#> bdsl2
 pattern { } {
 phase 0 {} {
 	paction 0 {

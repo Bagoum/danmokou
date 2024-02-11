@@ -25,6 +25,27 @@ async  %color <-2;:> gcr3 0.3 4s <> {
 $lazor(lstar-teal/w, Lplayer)
 !}
 
+phase 0
+	paction 0
+		bullet-control persist ellipse-* batch (>(t, 0.8) & =(&.refire, 1)) {
+			 sfx x-transform-2 _
+			 restyleeffect arrow-black/w cwheel-black/w _
+		}
+		sync tlfairy <> summonr null(cy(5)) movewrap 1.5 cy(2) 2 cy(5)
+			async ellipse-*/b <1;:> gcrf /i dl 25 _ (angle sine 80 200 tdl) {
+					for	14s
+					sfx x-fire-burst-2
+					preloop refirea =f if (divby 8 t) 1 0
+				} gsr2c 6 {
+				} gsr2 4 <10> {
+					p this
+					color { red orange pink purple }
+				} gsr {
+					start refire =f ((if < p 3 1 0) * &refirea)
+				} s tprot px(1 + &refire)
+			{ hp 11000 }
+
+///
 
 <!> type spell abc
 <!> hp 10000

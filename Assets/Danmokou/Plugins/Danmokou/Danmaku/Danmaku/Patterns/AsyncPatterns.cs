@@ -441,14 +441,6 @@ public static partial class AsyncPatterns {
         _AsGIR(new[] {target}, props);
     private static AsyncPattern _AsGIR(AsyncPattern[] target, params GenCtxProperty[] props) =>
         GIRepeat(new GenCtxProperties<AsyncPattern>(props), target);
-
-    /// <summary>
-    /// Delay an asynchronous invokee by a given number of frames.
-    /// </summary>
-    /// <param name="delay">Frame delay</param>
-    /// <param name="next">Asynchronous invokee to delay</param>
-    /// <returns></returns>
-    public static AsyncPattern IDelay(GCXF<float> delay, AsyncPattern next) => _AsGIR(next, GenCtxProperty.Delay(delay));
     
     public static AsyncPattern IColor(string color, AsyncPattern ap) => _AsGIR(ap, GCP.Color(new[] {color}));
     

@@ -214,8 +214,13 @@ public static class VTPRepo {
     /// <summary>
     /// No movement.
     /// </summary>
-    [Alias("none")]
+    [BDSL1Only]
     public static ExVTP Null() => ExNoVTP;
+    
+    /// <summary>
+    /// No movement.
+    /// </summary>
+    public static ExVTP None() => ExNoVTP;
 
     /// <summary>
     /// Switch between path functions based on a condition.

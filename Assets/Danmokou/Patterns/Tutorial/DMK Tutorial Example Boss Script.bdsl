@@ -1,4 +1,3 @@
-<#> bdsl2
 // Go to https://dmk.bagoum.com/docs/articles/tbosses.html for the tutorial. 
 pattern { 
 	bosses({ "mynewboss" }, {

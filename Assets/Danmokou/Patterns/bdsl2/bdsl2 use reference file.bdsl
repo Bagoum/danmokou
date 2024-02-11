@@ -1,4 +1,3 @@
-<#> bdsl2
 // mrf comment
 import myRefFile at "./bdsl2 reference file.bdsl" as mrf
 

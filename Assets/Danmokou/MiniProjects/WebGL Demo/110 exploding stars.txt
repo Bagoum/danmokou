@@ -7,7 +7,6 @@ phase(0)
 			times(8)
 			circle
 			bindItr(nStar)
-			expose({ f nStar })
 		} simple(
 			rvelocity(px(lerp(0.2, 1, t, 3, 0))), { 
 			dir2(cossindeg(200 * t))

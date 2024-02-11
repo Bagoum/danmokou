@@ -1,3 +1,4 @@
+<#> bdsl1
 gtr {
 	wt 1 _
 	wait-child

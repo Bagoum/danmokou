@@ -1,3 +1,4 @@
+<#> bdsl1
 paction 0 :3
 	assertcomplex sunnylaser
 	beh-control persist p-sunnylaser updatev2(target LNearestEnemy, _)

@@ -414,8 +414,10 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                     }
                     return new AST.Failure(new(Position, err), scope);
                 }
-            } else
+            } else if (Fn is not DefaultValue)
                 return new AST.LambdaCall(Position, scope, Args.Prepend(Fn).Select(a => a.Annotate(scope)).ToArray());
+            else
+                return new AST.Failure(new(Position, "Cannot call `null`."), scope);
         }
 
         public override IEnumerable<PrintToken> DebugPrint() {

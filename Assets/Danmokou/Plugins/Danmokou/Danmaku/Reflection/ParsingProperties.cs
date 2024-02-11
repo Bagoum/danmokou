@@ -6,17 +6,16 @@ using static Danmokou.Reflection.Reflector;
 using static Danmokou.SM.ParsingProperty;
 
 namespace Danmokou.SM {
+/// <summary>
+/// Properties starting with &lt;#&gt; for BDSL1 parsing.
+/// </summary>
 [Reflect]
 public class ParsingProperty {
     public static ParsingProperty Strict(ReflCtx.Strictness strict) => new StrictProp(strict);
     public static ParsingProperty WarnPrefix() => new WarnPrefixFlag();
-    /// <summary>
-    /// If using BDSL2, make this the first property.
-    /// </summary>
-    public static ParsingProperty BDSL2() => new NoOp();
 
     /// <summary>
-    /// If using BDLS1, make this the first property.
+    /// Empty property that indicates that BDSL1 parsing should be used (instead of BDSL2).
     /// </summary>
     public static ParsingProperty BDSL1() => new NoOp();
 

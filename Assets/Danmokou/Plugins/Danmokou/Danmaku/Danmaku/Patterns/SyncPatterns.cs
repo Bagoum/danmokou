@@ -176,35 +176,6 @@ public static partial class SyncPatterns {
         }));
 
     public static SyncPattern SetP(GCXF<float> p, SyncPattern sp) => _AsGSR(sp, GCP.SetP(p));
-
-    #region TargetSync
-
-    /// <summary>
-    /// Add the angle from the executing BehaviorEntity to the target to the child SyncPattern.
-    /// </summary>
-    /// <param name="target">Target</param>
-    /// <param name="syncPattern">Child SyncPattern to modify</param>
-    /// <returns></returns>
-    public static SyncPattern Target(GCXF<Vector2> target, SyncPattern[] syncPattern) => _AsGSR(syncPattern, GenCtxProperty.Target(RV2ControlMethod.ANG, target));
-
-
-    /// <summary>
-    /// Add the X-difference from the executing BehaviorEntity to the target to the child SyncPattern.
-    /// </summary>
-    /// <param name="target">Target</param>
-    /// <param name="syncPattern">Child SyncPattern to modify</param>
-    /// <returns></returns>
-    public static SyncPattern TargetX(GCXF<Vector2> target, SyncPattern[] syncPattern)  => _AsGSR(syncPattern, GenCtxProperty.Target(RV2ControlMethod.RX, target));
-
-    /// <summary>
-    /// Add the Y-difference from the executing BehaviorEntity to the target to the child SyncPattern.
-    /// </summary>
-    /// <param name="target">Target</param>
-    /// <param name="syncPattern">Child SyncPattern to modify</param>
-    /// <returns></returns>
-    public static SyncPattern TargetY(GCXF<Vector2> target, SyncPattern[] syncPattern)  => _AsGSR(syncPattern, GenCtxProperty.Target(RV2ControlMethod.RY, target));
-
-    #endregion
     
     #region SimplifiedSP
 

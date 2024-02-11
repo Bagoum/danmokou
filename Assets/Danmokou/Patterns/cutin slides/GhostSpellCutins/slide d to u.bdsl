@@ -1,3 +1,4 @@
+<#> bdsl1
 saction 0
 	position 0 -10
 	move _ :: {
