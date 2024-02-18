@@ -48,7 +48,7 @@ All stage scripts are StateMachines.
 
 All player shot scripts are StateMachines.
 
-Dialogue scripts used to be StateMachines, but as of v8, 
+Dialogue scripts used to be StateMachines, but as of v8, the preferred method to write dialogue scripts is to use C# with [Suzunoya](szy/intro.md).
 
 Boss and stage scripts use the PatternSM abstraction. A PatternSM is broken up into multiple phases that support arbitrary selection and switching. See the [tutorial on phases](t07.md) for details on PatternSM.
 

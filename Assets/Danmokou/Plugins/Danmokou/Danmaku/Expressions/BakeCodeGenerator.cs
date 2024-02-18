@@ -24,6 +24,8 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Profiling;
 using Ex = System.Linq.Expressions.Expression;
+using Helpers = Danmokou.Reflection2.Helpers;
+
 // ReSharper disable HeuristicUnreachableCode
 #pragma warning disable 162
 
@@ -331,9 +333,10 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
 #endif
         var f = FlattenVisitor.Flatten(ex, true, true);
 #if UNITY_EDITOR
-        //if (typeof(D) == typeof(VTP) || typeof(D) == typeof(SBCF) || typeof(D) == typeof(GCXF<float>))
-            //Debug.Log($"Ex:{typeof(D).SimpRName()} " +
-           //           $"{new ExpressionPrinter{ObjectPrinter = new DMKObjectPrinter {FallbackToToString = true}}.LinearizePrint(ex)}");
+        //if (typeof(D) == typeof(VTP) || typeof(D) == typeof(SBCF) || typeof(D) == typeof(GCXF<bool>)) {
+        //    Debug.Log($"Ex:{typeof(D).SimpRName()} " +
+        //              $"{new ExpressionPrinter { ObjectPrinter = new DMKObjectPrinter { FallbackToToString = true } }.LinearizePrint(ex)}");
+        //}
 #endif
         var result = Ex.Lambda<D>(f, prms).Compile();
 #if EXBAKE_SAVE
@@ -366,7 +369,7 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
     }
     
 #if UNITY_EDITOR
-    public static void BakeExpressions() {
+    public static void BakeExpressions(bool dryRun) {
         //These calls ensure that static reflections are correctly initialized
         _ = new Challenge.WithinC(0);
         _ = new Challenge.WithoutC(0);
@@ -403,35 +406,51 @@ private static {TypePrinter.Print(f.returnType)} {f.fnName}({string.Join(", ",
             }
         }
         Logs.Log("Loading GameObject reflection properties...");
-        foreach (var o in AssetDatabase.FindAssets("t:GameObject")
-                    .Select(AssetDatabase.GUIDToAssetPath)
-                    .Select(AssetDatabase.LoadAssetAtPath<GameObject>)
-                    .SelectMany(go => go.GetComponentsInChildren(typeof(Component))))
-            LoadReflected(o);
+        foreach (var path in AssetDatabase.FindAssets("t:GameObject")
+                     .Select(AssetDatabase.GUIDToAssetPath)) {
+            try {
+                foreach (var cmp in AssetDatabase.LoadAssetAtPath<GameObject>(path)
+                             .GetComponentsInChildren(typeof(Component)))
+                    LoadReflected(cmp);
+            } catch (Exception e) {
+                Logs.LogException(new Exception($"Failed to reflect GameObject at {path}", e));
+            }
+        }
         Logs.Log("Loading ScriptableObject reflection properties...");
-        foreach (var so in AssetDatabase.FindAssets("t:ScriptableObject")
-                    .Select(AssetDatabase.GUIDToAssetPath)
-                    .Select(AssetDatabase.LoadAssetAtPath<ScriptableObject>))
-            LoadReflected(so);
+        foreach (var path in AssetDatabase.FindAssets("t:ScriptableObject")
+                     .Select(AssetDatabase.GUIDToAssetPath)) {
+            try {
+                LoadReflected(AssetDatabase.LoadAssetAtPath<ScriptableObject>(path));
+            } catch (Exception e) {
+                Logs.LogException(new Exception($"Failed to reflect GameObject at {path}", e));
+            }
+        }
         Logs.Log("Loading TextAssets for reflection...");
         var textAssets = AssetDatabase.FindAssets("t:TextAsset", 
             GameManagement.References.scriptFolders.Prepend("Assets/Danmokou/Patterns").ToArray())
             .Select(AssetDatabase.GUIDToAssetPath);
         foreach (var path in textAssets) {
-            try {
-                if (path.EndsWith(".txt") || path.EndsWith(".bdsl")) {
-                    Logs.Log($"Loading script from file {path}");
-                    var textAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
-                    StateMachineManager.FromText(textAsset);
+            if (path.EndsWith(".txt") || path.EndsWith(".bdsl")) {
+                Logs.Log($"Loading script from file {path}");
+                var textAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
+                try {
+                    StateMachine.CreateFromDump(textAsset.text, out _);
+                } catch (Exception e1) {
+                    try {
+                        Helpers.ParseAndCompileErased(textAsset.text);
+                    } catch (Exception e2) {
+                        Logs.UnityError($"Failed to parse {path}:\n" + Exceptions.PrintNestedException(
+                            new AggregateException(e1, e2)));
+                    }
                 }
-            } catch (Exception e) {
-                Logs.UnityError($"Failed to parse {path}:\n" + Exceptions.PrintNestedException(e));
             }
         }
         Logs.Log("Invoking ReflWrap wrappers...");
         ReflWrap.InvokeAllWrappers();
-        Logs.Log("Exporting reflected code...");
-        BakeCodeGenerator.Cook.Export();
+        if (!dryRun) {
+            Logs.Log("Exporting reflected code...");
+            BakeCodeGenerator.Cook.Export();
+        }
         Logs.Log("Expression baking complete.");
     }
 #endif

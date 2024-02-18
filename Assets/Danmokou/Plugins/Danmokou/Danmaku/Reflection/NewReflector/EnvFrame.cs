@@ -141,6 +141,11 @@ public class EnvFrame {
         throw new Exception($"Variable {decl.Name}<{decl.FinalizedType!.SimpRName()}> not found in environment frame");
     }
 
+    /// <summary>
+    /// Get a value stored in this envframe or a parent envframe.
+    /// </summary>
+    public T NonRefValue<T>(VarDecl decl) => Value<T>(decl);
+
     public static Ex FrameVarValues(LexicalScope scope, Ex envFrame, int parentage, Type typ) {
         while (true) {
             if (scope.UseEF) {
@@ -222,10 +227,10 @@ public class EnvFrame {
 }
 
 public abstract class FrameVars {
-    public abstract Type Type { get; }
     private static readonly Dictionary<Type, IVariableStoreCreator> creators = new();
     //maps T to VariableStore<T>
     private static readonly Dictionary<Type, Type> varStoreTypes = new();
+    public abstract Type Type { get; }
 
     public abstract void AssertLength(int numVars);
     public abstract void Cache();

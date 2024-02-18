@@ -10,7 +10,7 @@ phase 0
 		position 0 2
 		bullet-control persist circle-blue/w sm onlyonce > t 1
 			sync ellipse-*/w <> gsr2c 10 {
-				colorf({ red green }, &colorIndex)
+				colorf({ red green }, &.colorIndex)
 			} s tprot cx 1
 		async circle-blue/w <> gcr {
 			wait if(< hpratio mine 0.7, 40, 120)

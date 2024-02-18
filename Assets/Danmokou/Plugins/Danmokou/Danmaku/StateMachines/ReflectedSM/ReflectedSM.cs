@@ -231,7 +231,7 @@ t > fadein ?
     /// <summary>
     /// Run arbitrary code as a StateMachine, SyncPattern, or AsyncPattern.
     /// </summary>
-    [BDSL2Only]
+    [BDSL2Only] [RestrictTypes(0, typeof(StateMachine), typeof(SyncPattern), typeof(AsyncPattern))]
     public static T Exec<T>(ErasedGCXF code) where T : class {
         if (typeof(T) == typeof(StateMachine))
             return (Exec(code) as T)!;
@@ -418,9 +418,9 @@ t > fadein ?
     /// <summary>
     /// Apply a controller function to a pool of entities.
     /// </summary>
-    [GAlias("PoolControl", typeof(SPCF))]
-    [GAlias("BEHPoolControl", typeof(BehPF))]
-    [GAlias("LaserPoolControl", typeof(LPCF))]
+    [GAlias("PoolControl", typeof(SPCF), reflectOriginal:false)]
+    [GAlias("BEHPoolControl", typeof(BehPF), reflectOriginal:false)]
+    [GAlias("LaserPoolControl", typeof(LPCF), reflectOriginal:false)]
     public static ReflectableLASM PoolControl<CF>(BulletManager.StyleSelector style, CF control) => new(smh => {
         if      (control is BehPF bc) 
             smh.Context.PhaseObjects.Add(BehaviorEntity.ControlPool(style, bc, smh.cT.Root));

@@ -51,6 +51,10 @@ public static partial class Reflector {
                 ReflectionData.RecordPublic(type, ra.returnType);
         }
 
+        foreach (var mi in typeof(System.Linq.Enumerable).GetMethods()) {
+            ReflectionData.MaybeRecordExtensionMethod(MethodSignature.Get(mi));
+        }
+
         InitializeEnumResolvers();
 
         void CreatePostAggregates(string method, string shortcut) {
@@ -260,6 +264,10 @@ public static partial class Reflector {
             ('t', Events.RuntimeEventType.Trigger),
             ('n', Events.RuntimeEventType.Normal),
             ('_', Events.RuntimeEventType.Normal)
+        });
+        BDSL2Enum(new[] {
+            ("trigger", Events.RuntimeEventType.Trigger),
+            ("normal", Events.RuntimeEventType.Normal),
         });
     }
 }

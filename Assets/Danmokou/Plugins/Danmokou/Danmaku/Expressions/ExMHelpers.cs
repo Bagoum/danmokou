@@ -28,7 +28,7 @@ namespace Danmokou.Expressions {
 /// </summary>
 public static class ExMHelpers {
     private const int LookupCt = 1 << 21;
-    private const int LookupMask = (1 << 21) - 1;
+    private const int LookupMask = LookupCt - 1;
     private const double dTAU = Math.PI * 2;
     private const double radRatio = LookupCt / dTAU;
     private const double degRatio = LookupCt / 360.0;
@@ -47,12 +47,18 @@ public static class ExMHelpers {
     /// <br/>This is what most Unity Mathf functions do internally.
     /// </summary>
     public static Ex OfDFD(ExFunction f, Ex arg) => f.Of(arg.Cast<double>()).Cast<float>();
-    
+
     /// <summary>
     /// For a function f of type (double,double...)->double, call it with any numeric arguments
     /// and cast the result back to type float.
     /// </summary>
-    public static Ex OfDFD(ExFunction f, params Ex[] args) => f.Of(args.Select(x => x.Cast<double>()).ToArray()).Cast<float>();
+    public static Ex OfDFD(ExFunction f, params Ex[] args) => OfDTD<float>(f, args);
+    
+    /// <summary>
+    /// For a function f of type (double,double...)->double, call it with any numeric arguments
+    /// and cast the result back to type T.
+    /// </summary>
+    public static Ex OfDTD<T>(ExFunction f, params Ex[] args) => f.Of(args.Select(x => x.Cast<double>()).ToArray()).Cast<T>();
 
     private static Ex dGetRadIndex(TEx<double> angleRad) => Ex.And(angleRad.Mul(ExC(radRatio)).Cast<int>(), ExC(LookupMask));
     private static Ex dGetDegIndex(TEx<double> angleDeg) => Ex.And(angleDeg.Mul(ExC(degRatio)).Cast<int>(), ExC(LookupMask));
@@ -79,7 +85,7 @@ public static class ExMHelpers {
     public static readonly Ex E05 = Ex.Constant(0.5f);
     public static readonly Ex E025 = Ex.Constant(0.25f);
     public static readonly Ex E1 = Ex.Constant(1.0f);
-    public static readonly Ex E2 = Ex.Constant(2.0f);
+    public static readonly TEx<float> E2 = Ex.Constant(2.0f);
     public static readonly Ex EN1 = Ex.Constant(-1f);
     public static readonly Ex EN2 = Ex.Constant(-2f);
     public static readonly Ex EN05 = Ex.Constant(-0.5f);
@@ -196,14 +202,19 @@ public static class ExMHelpers {
                     shifter(sharpness, new UncompiledCode<float>[] {f1, new(tac => f1(pivotT).Add(f2(tac).Sub(f2(pivotT))))})(t)
                 );
             };
-        } else if (pivotVar[0] == Parser.SM_REF_KEY_C) {
-            var let = pivotVar.Substring(1);
+        } else {
+            string let;
+            if (pivotVar[0] == Parser.SM_REF_KEY_C) {
+                let = pivotVar.Substring(1);
+            } else if (pivotVar.StartsWith("let:")) {
+                let = pivotVar.Substring(4);
+            } else throw new Exception($"{pivotVar} is not a valid pivoting target.");
             return shifter(sharpness, new UncompiledCode<float>[] {
                 f1, new(tac => f2(tac).Add(
                     ReflectEx.Let1<float, float>(let, pivot, () => f1(tac).Sub(f2(tac)), tac)
                 ))
             });
-        } else throw new Exception($"{pivotVar} is not a valid pivoting target.");
+        }
     }
     public static Func<TExArgCtx, TEx<float>> LogSumShift<Sx>(Func<TExArgCtx, TEx<float>> sharpness, 
         Func<TExArgCtx, TEx<float>> pivot, Func<TExArgCtx, TEx<float>> f1, Func<TExArgCtx, TEx<float>> f2, 

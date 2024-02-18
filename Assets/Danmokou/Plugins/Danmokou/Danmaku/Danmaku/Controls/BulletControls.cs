@@ -667,9 +667,9 @@ public partial class BulletManager {
         /// <summary>
         /// Execute an event if the condition is satisfied.
         /// </summary>
-        [GAlias("eventf", typeof(float))]
+        [GAlias("proceventf", typeof(float))]
         [CreatesInternalScope(AutoVarMethod.None, true)]
-        public static exBulletControl Event<T>(string ev, Func<TExArgCtx, TEx<T>> val, ExPred cond) => 
+        public static exBulletControl ProcEvent<T>(string ev, Func<TExArgCtx, TEx<T>> val, ExPred cond) => 
             new((st, ct, bpi) => bpi.When(cond, 
                 Events.exProcRuntimeEvent<T>().Of(Ex.Constant(ev), val(bpi))), BulletControl.P_RUN);
 
@@ -677,8 +677,8 @@ public partial class BulletManager {
         /// Execute a unit event if the condition is satisfied.
         /// </summary>
         [CreatesInternalScope(AutoVarMethod.None, true)]
-        public static exBulletControl Event0<T>(string ev, ExPred cond) =>
-            Event(ev, _ => new TEx<T>(Ex.Default(typeof(Unit))), cond);
+        public static exBulletControl ProcEvent0<T>(string ev, ExPred cond) =>
+            ProcEvent(ev, _ => new TEx<T>(Ex.Default(typeof(Unit))), cond);
 
         /// <summary>
         /// Batch several controls together under a single condition.

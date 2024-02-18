@@ -123,8 +123,9 @@ public class FixedImplicitTypeConv<T, R> : FixedImplicitTypeConv {
         NextInstance = new ITypeConvWithInstance.Instance(this);
     }
 
-    public static FixedImplicitTypeConv<T,R> FromFn(Expression<Func<T, R>> converter) =>
-        new(converter);
+    public static FixedImplicitTypeConv<T,R> FromFn(Expression<Func<T, R>> converter, 
+        ScopedConversionKind kind = ScopedConversionKind.Trivial) =>
+        new(converter) { Kind = kind };
     public override TEx Convert(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac) {
         if (convMethod is ConvMethod.DirectFunc dc) {
             var content = castee(tac);

@@ -82,7 +82,6 @@ public static class ExMDifficulty {
     /// <summary>
     /// Get the dynamic difficulty rank, which varies between MinRank and MaxRank.
     /// </summary>
-    [Alias("r")]
     public static tfloat Rank() => RankFeature.Field(nameof(IRankFeature.RankLevel)).Cast<float>();
 
     public static tfloat RankRatio() => RankFeature.Field(nameof(IRankFeature.RankRatio)).Cast<float>();

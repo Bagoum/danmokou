@@ -1,9 +1,7 @@
 // Go to https://dmk.bagoum.com/docs/articles/tbosses.html for the tutorial. 
 pattern { 
-	bosses({ "mynewboss" }, {
-		(0, 0),
-		(2, 1)
-	}) } {
+	//boss("mynewboss") 
+} {
 	phase 0 {} {
 		paction 0 {
 			shiftphaseto(1)
@@ -12,7 +10,7 @@ pattern {
 		
 	phase 0 {
 		spellcutin(0)
-		type(non, 'This is a nonspell')
+		type(non, "This is a nonspell")
 		hp(4000)
 		root(0, 1)
 	} {
@@ -27,7 +25,7 @@ pattern {
 	}
 			
 	phase 0 {
-		type(spell, 'This is a spell')
+		type(spell, "This is a spell")
 		hp(4000)
 		root(0, 2)
 	} {
@@ -42,7 +40,7 @@ pattern {
 	}
 			
 	phase 0 {
-		type(non, 'This is a nonspell')
+		type(non, "This is a nonspell")
 		hp(4000)
 		root(0, 1)
 	} {

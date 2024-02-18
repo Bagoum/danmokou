@@ -1,0 +1,35 @@
+
+
+
+var sm = new PatternSM({
+		boss "simp.kasen"
+	}, {
+	phase 0 { } {
+		paction 0 {
+			shiftphaseto 2
+		}
+	}
+	phase 30 { } {
+		paction 0 {
+			position -4.6 1
+			//Simple form
+			move inf nroffset(pxy(
+				logsumshift("t", -1, 1.7, 3 * t, 0),
+				lssht(2, 1.6, 0, 2.7 * t)
+			))
+		}
+	}
+	phase 30 { } {
+		paction 0 {
+			position -4.6 1
+			//General form with let variable (may be deprecated soon)
+			move inf nroffset(letbdsl2 {
+				("t", code(t * 2.0))
+			} pxy(
+				logsumshift("let:t", -1, 1.7, 3 * rflet("t"), 0),
+				lsshat(2, 1.6, 0, 2.7 * rflet("t"))
+			))
+		}
+	}
+})
+sm;

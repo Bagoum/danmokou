@@ -2,15 +2,13 @@
 
 ### Float values
 
-Float values look like normal decimals, but have a few extra features:
+Float values look like normal decimals, but you can use the letters `f,s,p,h,π` at the end of the string to multiply the float value by a constant:
 
-- You can use two signs at the beginning of a float. `--5`, `-+5.1`, `++5.0h`, etc. Double negatives cancel and plus signs are ignored.
-- You can use the letters `f,s,p,h,π` at the end of the string to multiply the float value by a constant:
-  - `f` = 1/120 (Note: this is the time per frame of the engine)
-  - `s` = 120 (Note: this is the framerate of the engine)
-  - `p` = phi
-  - `h` = 1/phi
-  - `π` = pi
+- `f` = 1/120 (Note: this is the time per frame of the engine)
+- `s` = 120 (Note: this is the framerate of the engine)
+- `p` = phi
+- `h` = 1/phi
+- `π` = pi
 
 ### V2RV2
 
@@ -18,7 +16,9 @@ Format: `<NX,NY:RX,RY:ANGLE>` or `<RX,RY:ANGLE>` or `<ANGLE>`
 
 Note that in any of these variants, leaving a value blank (eg. `<3,:>`) results in that value being set to zero.
 
-### Arrays
+### Arrays (BDSL1-specific)
+
+For details on BDSL2 parsing, see the [language doc](language/guide1.md).
 
 An array `T[]` is parsed as follows:
 
@@ -53,6 +53,8 @@ OR
 ```
 
 ### State Machines
+
+For details on BDSL2 parsing, see the [language doc](language/guide1.md).
 
 State machines have some unique parsing rules:
 
@@ -96,6 +98,8 @@ gtrepeat {
 ```
 
 ### GCRule
+
+For details on BDSL2 parsing, see the [language doc](language/guide1.md).
 
 GCRules are used to update GenCtx values in GCXProps like `Start, Preloop, End`. 
 

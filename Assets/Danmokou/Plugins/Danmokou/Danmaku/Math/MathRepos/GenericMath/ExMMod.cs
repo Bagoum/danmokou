@@ -17,8 +17,8 @@ namespace Danmokou.DMath.Functions {
 /// </summary>
 [Reflect]
 public static class ExMMod {
-    [BDSL2Operator]
-    public static tfloat Modulo(tfloat x, tfloat by) => Ex.Modulo(x, by);
+    [BDSL2Operator] [RestrictTypes(0, typeof(float), typeof(int))]
+    public static TEx<T> Modulo<T>(TEx<T> x, TEx<T> by) => Ex.Modulo(x, by);
     
     /// <summary>
     /// Get the modulo (nonnegative) of one number by another. 

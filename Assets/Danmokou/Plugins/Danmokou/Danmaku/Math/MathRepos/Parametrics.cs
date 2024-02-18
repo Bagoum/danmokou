@@ -90,7 +90,7 @@ public static partial class Parametrics {
     /// <param name="by">Float equation multiplier</param>
     /// <param name="tp">Base vector equation</param>
     /// <returns></returns>
-    [Alias("/")]
+    [Alias("/")] [BDSL1Only]
     public static ExTP Divide(ExBPY by, ExTP tp) {
         return bpi => Ex.Divide(tp(bpi), by(bpi));
     }

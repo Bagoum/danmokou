@@ -64,7 +64,7 @@ public static class ExUtils {
         Expression.Property(null, t.GetProperty(property) ?? throw new Exception(
             $"STATIC EXCEPTION: Couldn't find property {property} on type {t}"));
 
-    public static ParameterExpression VFloat() => Ex.Variable(tfloat);
+    public static ParameterExpression VFloat(string? name = null) => Ex.Variable(tfloat, name);
     public static ParameterExpression V<T>(string? name = null) => V(typeof(T), name);
     public static ParameterExpression V(Type t, string? name = null) => 
         name == null ? Ex.Variable(t) : Ex.Variable(t, name);

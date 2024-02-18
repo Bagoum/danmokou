@@ -1,24 +1,35 @@
-<#> bdsl1
-pattern { }
-phase 0
-	paction 0
-		shift-phase-to 1
-phase 0
-    paction 0
+
+pattern { } {
+phase 0 {} {
+	paction 0 {
+		shiftphaseto 1
+	}
+}
+phase 0 {} {
+    paction 0 {
         position -1 0
-		sync lightning-blue/w <1;:> pather 3 3 tprot cx 2 {
-			sm
-				async gem-red/b <0.9;:90> idelay 90 gcr {
-					rootadjust	lbeh aya
-					start {
-						rt =v2 rv2topolar &rv2
-						rv2 =rv zero
-					}
-				} s polar
-					[&rt].x
-					+ [&rt].y * 70 t
+		exec b{
+			//"mine" refers to the executor of the script here
+			hvar boss = mine
 		}
-		bullet-control persist gem-red/b restyle gem-blue/b > (+ * 70 t [&.rt].y)  90
+		sync "lightning-blue/w" <1;:> pather 3 3 tprot cx 2 {
+			sm
+				async "gem-red/b" <0.9;:> gcr {
+					delay 180
+					//"lbeh mine" would select the root position of the *pather*
+					rootadjust	lbeh boss
+					start b{
+						hvar rt = rv2topolar rv2
+						rv2 = zero
+					}
+				} s polar(
+					rt.x,
+					rt.y + 70 * t)
+		}
+		bulletcontrol persist "gem-red/b" restyle "gem-blue/b" (80 * t + (&rt::Vector2).y > 90)
+	}
+}
         
+}
             
             

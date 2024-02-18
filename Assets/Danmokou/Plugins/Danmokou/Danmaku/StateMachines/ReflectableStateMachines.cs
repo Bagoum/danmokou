@@ -49,25 +49,21 @@ public class EventLASM : ReflectableLASM {
     
     public EventLASM(EventTask rs) : base(new TaskPattern(rs)) { }
     
-    //TODO envframe replace in v11
-    /*
     /// <summary>
     /// Subscribe to a runtime event and run a StateMachine when a value is provided.
     /// </summary>
     /// <param name="evName">Runtime event name</param>
-    /// <param name="bindVar">Key to bind value of event on trigger</param>
     /// <param name="exec">StateMachine to execute with event</param>
     [GAlias("listenf", typeof(float))]
     [GAlias("listen0", typeof(Unit))]
-    public static EventTask Listen<T>(string evName, string bindVar, StateMachine exec) => async smh => {
+    public static EventTask Listen<T>(string evName, Func<T, StateMachine> exec) => async smh => {
         using var _ = Events.FindRuntimeEvent<T>(evName).Ev.Subscribe(val => {
-            var smh2 = new SMHandoff(smh, smh.ch, null);
-            smh2.GCX.SetValue(bindVar, val);
-            exec.Start(smh2).ContinueWithSync(smh2.Dispose);
+            var smh2 = new SMHandoff(smh, smh.ch.Mirror(), null);
+            exec(val).Start(smh).ContinueWithSync(smh2.Dispose);
         });
         await RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, 0f, true);
         smh.ThrowIfCancelled();
-    };*/
+    };
 
     /// <summary>
     /// Set a trigger event to reset when a given reset event is dispatched.

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using BagoumLib;
+using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
@@ -38,6 +39,30 @@ public static partial class Reflector {
         /// </summary>
         public static readonly Dictionary<string, List<MethodSignature>> AllBDSL2Methods =
             SanitizedKeyDict<List<MethodSignature>>();
+        public static readonly Dictionary<Type, Dictionary<string, List<MethodSignature>>> BDSL2ExtensionMethods =
+            new();
+
+        public static void MaybeRecordExtensionMethod(MethodSignature sig) {
+            if (sig.Member is TypeMember.Method { IsExtension: true }) {
+                var thisTd = sig.SharedType.Arguments[0];
+                if ((thisTd.Resolve().LeftOrNull ?? (thisTd as TypeDesignation.Known)?.Typ) is { } thisTyp) {
+                    BDSL2ExtensionMethods.AddToList2(thisTyp, sig.Name, sig);
+                }
+            }
+        }
+
+        public static IEnumerable<MethodSignature> ExtensionMethods(Type instTyp, string? name) {
+            IEnumerable<MethodSignature> _extForResolvedOrConstr(Type t) =>
+                BDSL2ExtensionMethods.TryGetValue(t, out var map) ?
+                    (name is null ? map.Values.SelectMany(x => x) :
+                        map.TryGetValue(name, out var named) ? named : Array.Empty<MethodSignature>()) :
+                    Array.Empty<MethodSignature>();
+            foreach (var ms in _extForResolvedOrConstr(instTyp))
+                yield return ms;
+            if (instTyp.IsConstructedGenericType)
+                foreach (var ms in _extForResolvedOrConstr(instTyp.GetGenericTypeDefinition()))
+                    yield return ms;
+        }
         
         /// <summary>
         /// Contains non-generic methods keyed by return type.
@@ -87,9 +112,6 @@ public static partial class Reflector {
                 AddBDSL2_Sig(name, MethodSignature.Get(method));
             }
             void AddBDSL2_Sig(string name, MethodSignature sig) {
-                var rt = sig.ReturnType;
-                //if (rt.IsGenericType && rt.GetGenericTypeDefinition() == typeof(TEx<>))
-                //    sig = sig.Lift<TExArgCtx>();
                 AllBDSL2Methods.AddToList(name.ToLower(), sig);
             }
             void AddMI(string name, MethodInfo method) {
@@ -104,7 +126,8 @@ public static partial class Reflector {
                     d[name] = method;
                 }
             }
-            bool addNormal = true;
+            bool addNormalBDSL1 = true;
+            bool addNormalBDSL2 = true;
             var addBDSL1 = true;
             var addBDSL2 = true;
             bool isExBoundary = false;
@@ -137,7 +160,8 @@ public static partial class Reflector {
                     var rsig = gsig!.Specialize(ga.type);
                     if (addBDSL1 && rsig.Member is TypeMember.Method m) AddMI(ga.alias, m.Mi);
                     if (addBDSL2) AddBDSL2_Sig(ga.alias, rsig);
-                    addNormal = false;
+                    addNormalBDSL1 = false;
+                    addNormalBDSL2 &= ga.reflectOriginal;
                 }
             }
             if (fallthrough != null) {
@@ -151,10 +175,8 @@ public static partial class Reflector {
                 else 
                     FallThroughOptions[mi.ReturnType] = (fallthrough, sig);
             }
-            if (addNormal) {
-                if (addBDSL1) AddMI(mi.Name, mi);
-                if (addBDSL2) AddBDSL2(mi.Name, mi);
-            }
+            if (addNormalBDSL1 && addBDSL1) AddMI(mi.Name, mi);
+            if (addNormalBDSL2 && addBDSL2) AddBDSL2(mi.Name, mi);
         }
 
         /// <inheritdoc cref="TryGetMember"/>
@@ -173,9 +195,17 @@ public static partial class Reflector {
             else if (genericMethods.TryGetValue(member, out var gmi)) {
                 if (ConstructedGenericTypeMatch(rt, gmi.ReturnType, out var mapper)) {
                     var sig = (MethodSignature.Get(gmi) as GenericMethodSignature)!;
-                    return getArgTypesCache[(member, rt)] = sig.Specialize(
-                        gmi.GetGenericArguments().Select(p => mapper.TryGetValue(p, out var mt) ? mt :
-                            throw new StaticException($"{sig.AsSignature} cannot be thoroughly specialized in BDSL1")).ToArray());
+                    var specTypes = gmi.GetGenericArguments().ToArray();
+                    for (int ii = 0; ii < specTypes.Length; ++ii) {
+                        if (mapper.TryGetValue(specTypes[ii], out var mt))
+                            specTypes[ii] = mt;
+                        else if (sig.Member.BaseMi.GetCustomAttributes<BDSL1AutoSpecializeAttribute>()
+                                     .FirstOrDefault(x => x.typeIndex == ii) is { } attr)
+                            specTypes[ii] = attr.specializeAs;
+                        else
+                            throw new StaticException($"{sig.AsSignature} cannot be thoroughly specialized in BDSL1");
+                    }
+                    return getArgTypesCache[(member, rt)] = sig.Specialize(specTypes);
                 //Memo the null result in this case since we don't want to recompute ConstructedGenTypeMatch
                 } else return getArgTypesCache[(member, rt)] = null;
             }

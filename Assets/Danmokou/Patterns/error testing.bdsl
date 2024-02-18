@@ -33,7 +33,7 @@ phase 0
 
 ##2 -- non with rotating ellipse
 <!> bosscutin
-<!> type non :simp.boss.shifnki.uc1 #{
+<!> type non :simp.boss.shinki.uc1 #{
 <!> root 0 2
 <!> hp 13000
 phase 26

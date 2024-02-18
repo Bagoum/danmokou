@@ -26,7 +26,7 @@ public class ExCodeGenTests {
     public void TestPrivateHoist() {
         GameManagement.NewInstance(InstanceMode.NULL, InstanceFeatures.InactiveFeatures);
         var ex = "sine(13h, 0.4, 13 * pi + p / dl ^ 1.2)".Into<GCXF<float>>();
-        var ex2 = @"sync 'sun-red/w' <2;:> gsr {
+        var ex2 = @"sync ""sun-red/w"" <2;:> gsr {
 	start b{ 
         hvar gcxVar = pxy(1, 2)
     }
@@ -37,7 +37,7 @@ public class ExCodeGenTests {
 } b{
 	var letVar1 = gcxVar.x
 	var letVar2 = (1 + letVar1)
-    pxy load0('publicVar') ss0(letVar2)
+    pxy load0(""publicVar"") ss0(letVar2)
 }".Into<StateMachine>();
         //var s = BakeCodeGenerator.Generated;
 

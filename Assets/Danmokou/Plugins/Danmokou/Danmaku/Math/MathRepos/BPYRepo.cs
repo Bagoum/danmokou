@@ -235,10 +235,10 @@ public static partial class BPYRepo {
     public static ExBPY LogsumShiftT3(ExBPY sharp, ExBPY pivot, ExBPY sharp2, ExBPY pivot2, ExBPY f1, ExBPY f2, ExBPY f3) => 
         LogsumShiftT(sharp, pivot, f1, LogsumShiftT(sharp2, pivot2, f2, f3));
     /// <summary>
-    /// Logsumshift using &amp;t as a pivot variable. Make sure this is defined in a higher-level let statement.
+    /// Logsumshift using "t" from a let statement as a pivot variable.
     /// </summary>
     [Alias("lsshat")]
-    public static ExBPY LogsumShiftAT(ExBPY sharpness, ExBPY pivot, ExBPY f1, ExBPY f2) => LogsumShift("&t", sharpness, pivot, f1, f2);
+    public static ExBPY LogsumShiftAT(ExBPY sharpness, ExBPY pivot, ExBPY f1, ExBPY f2) => LogsumShift("let:t", sharpness, pivot, f1, f2);
 
     /// <summary>
     /// Default randomized star rotation (slow) in one direction.

@@ -43,7 +43,7 @@ public static class ParserTests {
     public static void Errors() {
         ThrowsRegex("no method by name `mulTest` that takes 1 argument", () => "addTest(x, mulTest(x 2))".Into<FXY>());
         ThrowsRegex("Couldn't convert the text in ≪≫ to type float.*≪}≫", () => StateMachine.CreateFromDump(
-            @"
+            @"<#> bdsl1
 pattern {}
 phase 0
 	saction 0
@@ -56,7 +56,7 @@ phase 0
 		move-target(5, io-sine, py(addTest(mod 3 4, mod 6 7)))
 "));
         ThrowsRegex("Couldn't convert the text in ≪≫ to type float.*≪blargh≫", () => StateMachine.CreateFromDump(
-            @"
+            @"<#> bdsl1
 pattern {}
 phase 0
 	saction 0

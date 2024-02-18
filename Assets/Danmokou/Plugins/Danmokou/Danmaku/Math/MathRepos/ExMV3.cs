@@ -28,7 +28,7 @@ public static partial class ExMV3 {
     /// <summary>
     /// Derive a Vector3 from an XY (Vector2) and a Z-component.
     /// </summary>
-    public static tv3 WithZ(tv2 xy, tfloat z) => TEx.ResolveV2(xy, v => ExUtils.V3(v.x, v.y, z));
+    public static tv3 WithZ(tv2 xy, tfloat z) => TEx.ResolveV2AsXY(xy, (x, y) => ExUtils.V3(x, y, z), singleUse: true);
     
     /// <summary>
     /// Derive a Vector3 from three floats.
@@ -95,8 +95,8 @@ public static partial class ExMV3 {
     /// <param name="rotateBy">Direction vector (Normalization not required)</param>
     /// <param name="target">Target v3</param>
     /// <returns></returns>
-    public static tv3 V3Rotate(tv3 rotateBy, tv3 target) => TEx.ResolveV2(ToSphere(rotateBy), r =>
-        QRotate(PZ(r.x), QRotate(PY(r.y), target)));
+    public static tv3 V3Rotate(tv3 rotateBy, tv3 target) => TEx.ResolveV2AsXY(ToSphere(rotateBy), (x, y) =>
+        QRotate(PZ(x), QRotate(PY(y), target)), singleUse: true);
 
     /// <summary>
     /// Create a cylindrical equation along the Y-axis. 

@@ -1,7 +1,7 @@
 
 //Type annotations may be required for overloaded functions
 
-var rotateByBase::Func<float,v2,v2> = $(rotate);
+var rotateByBase::Func<float,Vector2,Vector2> = $(rotate);
 var addtester = $(addtest, 15.0);
 var lookup = testlookup1(addtester, 5);
 
@@ -9,9 +9,8 @@ function makeRotator(itr)::Func<Vector2,Vector2> {
 	return $(rotateByBase, itr * lookup);
 }
 
-
 var sm = pattern({
-		boss 'simp.kasen'
+		boss "simp.kasen"
 	}, {
 	phase 0 { } {
 		paction 0 {
@@ -30,9 +29,9 @@ var sm = pattern({
 			} {
 				position 0 0
 				movetarget(b{ 
-					var myt = lr + 1
+					var myt::float = lr + 1
 					myt + 0.1
-				}, $(eiosine), pxy(0, lr))
+				}, $(sin), pxy(0, lr))
 				async "sakura-blue/w" <> gcr {
 					wtd(dl, 60, 10)
 					preloop b{ 

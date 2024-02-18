@@ -10,6 +10,7 @@ using BagoumLib.Expressions;
 using BagoumLib.Functional;
 using BagoumLib.Reflection;
 using BagoumLib.Unification;
+using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.Danmaku.Options;
@@ -264,11 +265,17 @@ public class LexicalScope {
     /// </summary>
     /// <returns>Left if declaration succeeded; Right if a variable or function already exists with the same name local to this scope.</returns>
     public Either<Unit, IDeclaration> Declare(IDeclaration decl) {
-        if (decl.Hoisted && Parent is { } p and not DMKScope) {
-            return p._Declare(decl);
+        if (decl.Hoisted) {
+            return HoistedScope._Declare(decl);
         } else
             return _Declare(decl);
     }
+
+    /// <summary>
+    /// The scope used for hoisted declarations. Generally just the parent scope, unless this
+    ///  is already a top-level scope, in which case it is this scope.
+    /// </summary>
+    public LexicalScope HoistedScope => Parent is { } p and not DMKScope ? p : this;
 
     protected virtual Either<Unit, IDeclaration> _Declare(IDeclaration decl) {
         if (variableDecls.TryGetValue(decl.Name, out var prev))
@@ -417,8 +424,6 @@ public class LexicalScope {
     public List<MethodSignature>? FindStaticMethodDeclaration(string name) => GlobalRoot.StaticMethodDeclaration(name);
 
     public virtual Either<Unit, TypeUnifyErr> FinalizeVariableTypes(Unifier u) {
-        if (Return?.FinalizeType(u) is { } err)
-            return err;
         return variableDecls.Values
             .SequenceL(v => v.FinalizeType(u))
             .FMapL(_ => {
@@ -444,25 +449,26 @@ public class LexicalScope {
             })
             .BindL(_ => functionDecls.Values.SequenceL(f => f.FinalizeType(u)))
             .BindL(_ => Children
-                .SequenceL(c => c.FinalizeVariableTypes(u))
-                .FMapL(_ => Unit.Default));
+                .SequenceL(c => c.FinalizeVariableTypes(u)))
+            .BindL(_ => Return?.FinalizeType(u) is { } err ? new Either<Unit,TypeUnifyErr>(err) : Unit.Default);
     }
 
     /// <summary>
     /// Get an expression representing calling a script function declared locally in this scope,
     ///  or declared in any parent scope.
     /// </summary>
-    public Ex LocalOrParentFunction(Ex envFrame, ScriptFnDecl sfn, IEnumerable<Ex> arguments)
-        => _LocalOrParentFunction(envFrame, sfn, arguments, WithinAnyExpressionScope);
-    private Ex _LocalOrParentFunction(Ex envFrame, ScriptFnDecl sfn, IEnumerable<Ex> arguments, bool methodScopeVisible) {
+    public Ex LocalOrParentFunction(Ex envFrame, ScriptFnDecl sfn, IEnumerable<Ex> arguments, bool isPartial = false)
+        => _LocalOrParentFunction(envFrame, sfn, arguments, WithinAnyExpressionScope, isPartial);
+    private Ex _LocalOrParentFunction(Ex envFrame, ScriptFnDecl sfn, IEnumerable<Ex> arguments, bool methodScopeVisible, bool isPartial) {
         var visible = (methodScopeVisible || Type != LexicalScopeType.MethodScope);
         if (visible && functionDecls.TryGetValue(sfn.Name, out var f) && f == sfn) {
-            var (inv, func) = sfn.Compile();
-            return Ex.Call(Ex.Constant(func), inv, arguments.Prepend(envFrame));
+            return isPartial ?
+                PartialFn.PartiallyApply(sfn.Compile(), arguments.Prepend(envFrame)) :
+                PartialFn.Execute(sfn.Compile(), arguments.Prepend(envFrame));
         }
         if (Parent is DMKScope || this is DynamicLexicalScope && Parent is not DynamicLexicalScope)
             throw new Exception($"Could not find a scope containing function {sfn.Name}");
-        return Parent!._LocalOrParentFunction(UseEF && visible ? envFrame.Field(nameof(EnvFrame.Parent)) : envFrame, sfn, arguments, methodScopeVisible);
+        return Parent!._LocalOrParentFunction(UseEF && visible ? envFrame.Field(nameof(EnvFrame.Parent)) : envFrame, sfn, arguments, methodScopeVisible, isPartial);
     }
 
     /// <summary>
@@ -536,7 +542,7 @@ public class LexicalScope {
                     deflt ??
                     Ex.Throw(Ex.Constant(new Exception(
                         $"The variable {varName}<{typ.SimpRName()}> was referenced in a dynamic context " +
-                        $"(eg. a bullet control), but some bullets do not have this variable defined")), typ))
+                        $"(eg. a bullet control), but some callers do not have this variable defined")), typ))
             );
             tac.Ctx.UnscopedEnvframeAcess.Remove((varName, typ));
             return ret;
@@ -544,8 +550,7 @@ public class LexicalScope {
     }
 
     public static Ex FunctionWithoutLexicalScope(TExArgCtx tac, ScriptFnDecl sfn, IEnumerable<Ex> arguments) {
-        var (inv, func) = sfn.Compile();
-        return Ex.Call(Ex.Constant(func), inv, arguments.Prepend(
+        return PartialFn.Execute(sfn.Compile(), arguments.Prepend(
             ((Ex)tac.EnvFrame).DictGet(
                 getFnParentage.InstanceOf(
                     Ex.PropertyOrField(tac.EnvFrame, nameof(EnvFrame.Scope)),
@@ -614,7 +619,7 @@ public class LexicalScope {
             }
             if (scope.Parent == null)
                 throw new Exception(
-                    $"The script function {defn.Name} was referenced is an unscoped contrext (eg. a bullet control), but is not accessible in all callers' lexical scopes.");
+                    $"The script function {defn.Name} was referenced is an unscoped context (eg. a bullet control), but is not accessible in all callers' lexical scopes.");
         }
         for (int ii = unwinder.Count - 1; ii >= 0; --ii) {
             unwinder[ii].fnParentageCache[defn] = parentage;
@@ -747,7 +752,9 @@ public class DMKScope : LexicalScope {
             new GenericMethodConv1((GenericMethodSignature)MethodSignature.Get(typeof(Compilers)
                 .GetMethod(nameof(Compilers.Code), BindingFlags.Public | BindingFlags.Static)!)),
             
+            FixedImplicitTypeConv<int,float>.FromFn(x => x),
             FixedImplicitTypeConv<Vector2,Vector3>.FromFn(v2 => v2),
+            
             new FixedImplicitTypeConv<float, Synchronizer>(
                 exf => tac => Ex.Constant(Synchronization.Time(
                     Compilers.GCXF<float>(Helpers.TExLambdaTyper.Convert<float>(exf))))) 
@@ -766,7 +773,8 @@ public class DMKScope : LexicalScope {
             FixedImplicitTypeConv<string[],BulletManager.StyleSelector>.FromFn(sel => new(new[]{sel})),
             FixedImplicitTypeConv<string[][],BulletManager.StyleSelector>.FromFn(sel => new(sel)),
             //Value-typed auto constructors
-            FixedImplicitTypeConv<BulletManager.exBulletControl,BulletManager.cBulletControl>.FromFn(c => new(c))
+            FixedImplicitTypeConv<BulletManager.exBulletControl,BulletManager.cBulletControl>.FromFn(c => new(c), 
+                ScopedConversionKind.BlockScopedExpression)
     );
     public TypeResolver Resolver => BaseResolver;
 

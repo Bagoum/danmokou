@@ -64,15 +64,13 @@ public static class TestSMAnalysis {
     [Test]
     public static void TestAnalyzer() {
         var sm = StateMachine.CreateFromDump(@"
-pattern { }
-phase 0
-<!> dialogue
-phase 0
-<!> type non `My First Non`
-phase 0
-phase 0
-<!> type spell `My First Spell`
-phase 0
+pattern {} {
+phase 0 {} { }
+phase 0 { dialogue } { }
+phase 0 { type non ""My First Non"" } { }
+phase 0 {} {}
+phase 0 { type spell ""My First Spell"" } { }
+}
 ") as PatternSM;
         AssertListEq(new List<SMAnalysis.Phase>() {
                 //phase 0,3 are ignored since they don't have type

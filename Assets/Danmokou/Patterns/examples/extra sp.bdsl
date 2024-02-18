@@ -1,68 +1,98 @@
-<#> bdsl1
-pattern { }
-phase 0
-	paction 0
-		shift-phase-to 1
-		
-!!{ me yukari
-!!{ allc { black purple teal green orange yellow red pink blue }	
-##funny trees
-phase 0
-    paction 0
+
+var allc = { "black", "purple", "teal", "green", "orange", "yellow", "red", "pink", "blue" };
+const var w = 30.;
+const var n = 5.;
+/// this doesn't work (yet)
+function farrow(p::float, n, xStep, yStep, props::GenCtxProperty[], path::VTPExpr, suffix::string, locSave::string, dirSave, extraSp::SyncPattern[]) {
+	return guideempty(suffix, p.code, {
+		(locSave, code(loc)), (dirSave, code(dir))
+	}, {}, path.code, (extraSp as IEnumerable<SyncPattern>)
+		.Append(gsr2 (n*(n+1)/2.0) <> ({
+			preloop b{
+				hvar xi = floor(-0.5 + sqrt(0.25 + 2 * i))
+				hvar yi = i - 0.5 * (sqr(xi) + 2 * xi)
+			}
+		} as IEnumerable<GenCtxProperty>).Concat(props as IEnumerable<GenCtxProperty>).ToArray() {
+			ds(h(locSave), h(dirSave), p.code, pxy(-1 * xStep * xi, yStep * yi) )
+		})
+		.ToArray() );
+}
+
+function treearrow(p::UncompiledCode<float>, n, xStep, yStep, props, path, treeColor, treeXLen, treeYLen, treeXStep, treeYStep) {
+	var loc = "l123";
+	var dir = "d123";
+	return farrow(p, n, xStep, yStep, props, path, null, loc, dir, { gsr {
+		color(treeColor)
+		times(treeYLen)
+		preloop b{
+			hvar yi = treeYStep * hnmod(treeYLen, i)
+		}
+	} gsr {
+		times(treeXLen)
+		preloop b{
+			hvar xi = -1 * (xStep * (n - 1) + treeXStep * i)
+		}
+	} ds(h(loc), h(dir), p.code, pxy(xi, yi)) })
+}///
+
+pattern { } {
+phase 0 {} {
+	paction 0 {
+		shiftphaseto 1
+	}
+}
+///
+//funny trees
+phase 0 {} {
+    paction 0 {
 		position -2 0
-		async _ <1;:> gcr2 600 _ <360h> {
+		async "" <1;:> gcr2 600 inf <360h> {
 			p this
 		} {
-			color sakura-green* treearrow p 7  0.3 0.35 {
-				color  { /w / }
-			} roffset pxy * 1 t sine 4 1 t
-				_circle-orange/b 6 3 0.2 0.2
+			color "sakura-green*" treearrow(p, 7, 0.3, 0.35, {
+				color  { "/w", "/" }
+			}, roffset pxy(t, sine 4 1 t),
+				"circle-orange/b", 6, 3, 0.2, 0.2)
 		}
+	} 
+}
 
-##Arrow structure with head on top
-phase 0
-    paction 0
+
+//Arrow structure with head on top
+phase 0 {} { 
+    paction 0 { 
 		position 0 0
-		async lcircle-blue/w <2;1:180> gir2 160 _ <360h> . oarrowi 9 0.4 0.2 {} s tprot cx 2
-		async lcircle-red/w <2;1:> gir2 160 _ <360h> . gsrf 8 rxy * -0.4 &aixd * 0.3 &aiyd {
+		async "lcircle-blue/w" <2;1:180> gir2 160 _ <360h> {
+		} oarrowi 9 0.4 0.2 {} s tprot cx 2
+		async "lcircle-red/w" <2;1:> gir2 160 _ <360h> {
+		} gsrf 8 rxy(-0.4 * aixd, 0.3 * aiyd) {
 			bindArrow
 		} s tprot cx 2
+	}
+}
+///
 		
 
-##2d wings
-phase 0
-	paction 0
+//2d wings
+phase 0 {} { 
+	paction 0 {
 		position 0 0
-!!{ w 30
-!!{ n 5
-		move _ roffset px sine 4 2 t
-		sync circle-*/ <> loc0 gsr {
-			tmmod $n
+		move inf roffset px sine 4 2 t
+		sync "circle-*/" <> loc0 gsr {
+			tmmod(n as float)
 		} gsr {
-			tmimod $w
-			colorf	{ pink } t
+			tmimod(w as float)
+			colorf	{ "pink" } t
 		} gsr {
 			tmmod 2
-		} s roffset :: {
-			px	pma $w { 2 }
-			py	pma $n { $w 2 }
-			plr	pm1 pma 2 { 1 } 
-		}  + lbeh $me
-		tp wings2 $w $n 1.8
-///
-		:: {
-			pxr	/ &px $w
-			pyr	/ &py $n
-			per	1.8
-			hper	/ &per 2
-			swa	 * (linear 0.9 0.4 &pxr) * (linear 0.9 0.3 &pyr) swing2 0.35 &per -80 35 50 (+ t * -0.2 &pxr)
-			sws	 swing2 0.55 &per 1.03 1 0.85 ( + &hper - t * 0.2 &pxr)
-		} multiplyx &plr +
-				cxy 0.3 0.2
-				rxy
-					&swa
-					+ 0.2 * &sws * opacity 0.4 &pyr * 0.1 &px 
-					* 0.3 * opacity 0.9 &pxr &py
-        
+		} s roffset letbdsl2({
+			("px",	code(pma w { 2 }))
+			("py",	code(pma n { w, 2 }))
+			("plr",	code(pm1 pma 2 { 1 }))
+		}, lbeh mine + tp wings2 w n 1.8)
+	}
+}
+
+}
             
             

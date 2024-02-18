@@ -222,6 +222,7 @@ public record GenCtxProperty {
     /// <summary>
     /// Rules that are run before any invocations.
     /// </summary>
+    [BDSL1Only]
     public static GenCtxProperty Start(GCRule[] rules) => new StartProp(rules);
     
     /// <summary>
@@ -232,6 +233,7 @@ public record GenCtxProperty {
     /// <summary>
     /// Rules that are run every loop, after `i` is set for the loop, and before the invocation.
     /// </summary>
+    [BDSL1Only]
     public static GenCtxProperty PreLoop(GCRule[] rules) => new PreLoopProp(rules);
     
     /// <summary>
@@ -242,6 +244,7 @@ public record GenCtxProperty {
     /// <summary>
     /// Rules that are run every loop, after the invocation and after waiting is complete.
     /// </summary>
+    [BDSL1Only]
     public static GenCtxProperty PostLoop(GCRule[] rules) => new PostLoopProp(rules);
     
     /// <summary>
@@ -252,7 +255,9 @@ public record GenCtxProperty {
     /// <summary>
     /// Rules that are run when the repeater is done.
     /// </summary>
+    [BDSL1Only]
     public static GenCtxProperty End(GCRule[] rules) => new EndProp(rules);
+    
     /// <summary>
     /// Increment the RV2 by a certain amount every loop. Resolved after PostLoop.
     /// </summary>

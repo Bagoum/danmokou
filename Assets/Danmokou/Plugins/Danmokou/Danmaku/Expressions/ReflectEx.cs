@@ -113,7 +113,7 @@ public static class ReflectEx {
         bool isExplicit = alias.StartsWith(".");
         if (isExplicit)
             alias = alias.Substring(1);
-        //Standard method, used by Let and GCXPath.expose (which internally compiles to Let) 
+        //Standard method, used by Let
         if (GetAliasFromStack(alias, tac) is { } ex)
             return ex;
         if (tac.MaybeGetByName<T>(alias).Try(out var prm))

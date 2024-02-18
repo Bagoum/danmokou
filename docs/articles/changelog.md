@@ -19,7 +19,9 @@ The following features are planned for future releases.
 
 
 
-# v11.0.0 (2024/01/20)
+# v11.0.0 (2024/02/17)
+
+**The engine has changed significantly in v11**- make sure to read the Language Changes section before upgrading.
 
 I've upgraded the project's Unity version to 2023.2.3f1. Unity 2023 has a critical change where the TextMeshPro package has now been merged into Unity internals, so it is not clear that the project will still run on Unity 2022. As such, please upgrade to Unity 2023 along with updating DMK.
 
@@ -27,7 +29,9 @@ I've upgraded the project's Unity version to 2023.2.3f1. Unity 2023 has a critic
 
 This build introduces a new scripting language, BDSL2, which is **now the default scripting language for all script files**. Any script files that start with `<#>` (the marker for a ParsingProperty, such as `<#> warnprefix` or `<#> strict(comma)`) will be parsed according to BDSL1 rules. You can add the line `<#> bdsl1` to the top of any of your existing scripts. If a script does not start with `<#>`, then it will be parsed according to BDSL2 rules. 
 
-Likewise, the backend handling for `string.Into<T>`, which used BDSL1 reflection, now uses BDSL2 reflection instead. This may cause some minor errors— for example, if you had a field reflected into `FXY` that was previously filled as `^ x 0.8`, you will need to rewrite it as `x ^ 0.8`. You can use `string.IntoBDSL1<T>` if you absolutely need BDSL1 reflection in code (`<#>` only works for script files).
+Likewise, the backend handling for `string.Into<T>`, which previously used BDSL1 reflection, now uses BDSL2 reflection instead. This may cause some minor errors— for example, if you had a field reflected into `FXY` that was previously filled as `^ x 0.8`, you will need to rewrite it as `x ^ 0.8`. You can use `string.IntoBDSL1<T>` if you absolutely need BDSL1 reflection in code (`<#>` only works for script files).
+
+To verify the correctness of your scripts after upgrading, you can run any scene, click the GameManagement object, right click the `Game Management (Script)` MonoBehavior, and select "Verify Expressions" from the context menu. This *will* freeze Unity for several seconds, and then should raise exceptions in the Console for any scripts or fields that could not be reflected. (All .txt and .bdsl files in the directory Assets/Danmokou/Patterns, as well as any directories configured in GameUniqueReferences/ScriptFolders, will be reflected.)
 
 The tutorials have been updated to use BDSL2.
 
@@ -84,13 +88,16 @@ There are also a few less impactful changes:
 - The automatically-bound variable `&bulletTime` has been removed (it was unused in the engine as provided).
 - The AsyncPattern `idelay` was removed (you can use `gir { delay FRAMES }` instead).
 - The SyncPatterns `target`, `targetx`, `targety` have been removed (you can use `gsr { target a/rx/ry TARGET }` instead).
-- `EventLASM.Listen` has been removed. I plan to replace it in the next version.
-- SyncPatterns `oArrowI`, `FArrow`, and `TreeArrow` have been removed. I plan to replace them in the next version.
+- `EventLASM.Listen` has been modified so it now takes a function as an argument. It is generally not feasible to use this method in BDSL1. See `Patterns/FeatureTesting/event based firing.bdsl` for examples on how to use this in BDSL2. Note that this method will likely be changed in the near future.
+- The BulletControls `Event` and `Event0` have been renamed to `ProcEvent` and `ProcEvent0`.
+- SyncPatterns `oArrowI`, `FArrow`, and `TreeArrow` have been removed. I plan to replace them in the next version (at least for BDSL2).
 - `FinishPSM` (the `finish` StateMachine) has been removed. It was mostly unused in the engine as provided and it was also buggy. Note that using `EndPSM` (the `end` StateMachine under a phase) does basically the same thing: it runs code when the phase times out or the executing entity runs out of HP (but not if the executing entity is autoculled or cancelled).
 - `Compilers.CompileDelegateFromString` (BDSL1) has been removed. Please use `Reflection2.Helpers.ParseAndCompileDelegate` (BDSL2) instead.
+- The alias "r" for the `rank` function was removed. You can re-add it if you need it.
 
 #### Features
 
+- Significantly improved the speed of the engine's handling of movement functions in many common use cases by removing `new Vector2()` calls in generated code where possible.
 - Enemies can now use nonpiercing lasers. As with players shots, simply add the `nonpiercing()` option to the laser options. Note that nonpiercing only works with `dynamic` lasers.
 - The engine now supports restarting from checkpoints in stage or boss scripts. Add a `<!> checkpoint` flag to any stage phase and/or boss phase where you would like to set up a checkpoint. (If using it on a boss phase, make sure the stage phase that creates the boss also has a checkpoint flag.) The player can then select "Restart from Checkpoint" from the pause menu or the death menu. This will result in their score and other features being reset, as if they had used a Continue. It is supported for the checkpoint to be on a previous stage (ie. if the last checkpoint was on stage 1 and the player dies on stage 2, they will get sent back to stage 1). Since Continues are generally stronger than checkpoints, it may be best (but it is not required) to disable Continues in your GameDef if using this feature.
   <img src="..\images\rider64_WjEUkgqqUZ.jpg" alt="rider64_WjEUkgqqUZ" style="zoom:33%;" />

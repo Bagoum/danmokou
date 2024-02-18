@@ -38,8 +38,8 @@ public class TExArgCtx {
         /// When the type of the custom data (<see cref="PIData"/>) is known, this contains
         ///  the type, as well as a function to get the custom data downcast to that type.
         /// </summary>
-        public (Type type, Func<TExArgCtx, Expression> bpiAsType)? CustomDataType { get; set; }
-        public Dictionary<string, Stack<Expression>> AliasStack { get; } =
+        public (Type type, Func<TExArgCtx, Ex> bpiAsType)? CustomDataType { get; set; }
+        public Dictionary<string, Stack<Ex>> AliasStack { get; } =
             new();
         public readonly Dictionary<(string, Type), (ParameterExpression, ParameterExpression, ParameterExpression)>
             UnscopedEnvframeAcess = new();
@@ -116,7 +116,7 @@ public class TExArgCtx {
         private readonly string alias;
         private readonly TExArgCtx ctx;
 
-        public LocalLet(TExArgCtx ctx, string alias, Expression val) {
+        public LocalLet(TExArgCtx ctx, string alias, Ex val) {
             this.alias = alias;
             (this.ctx = ctx).Ctx.AliasStack.Push(alias, val);
         }
@@ -126,10 +126,10 @@ public class TExArgCtx {
         }
     }
 
-    public LocalLet Let(string alias, Expression val) => new(this, alias, val);
+    public LocalLet Let(string alias, Ex val) => new(this, alias, val);
     
     private readonly Arg[] args;
-    public IEnumerable<Expression> Expressions => args.Select(a => (Expression)a.expr);
+    public IEnumerable<Ex> Expressions => args.Select(a => (Ex)a.expr);
     private readonly Dictionary<string, int> argNameToIndexMap;
     //Maps typeof(TExPI) to index
     private readonly Dictionary<Type, int> argExTypeToIndexMap;
@@ -142,7 +142,7 @@ public class TExArgCtx {
     private TExPI? _bpi;
     public TExPI BPI => _bpi ??= GetByExprType<TExPI>();
     public TExPI? MaybeBPI => _bpi ??= MaybeGetByExprType<TExPI>(out _);
-    public Expression FCTX => BPI.FiringCtx;
+    public Ex FCTX => BPI.FiringCtx;
 
     public UnaryExpression findex => BPI.findex;
     public MemberExpression id => BPI.id;
@@ -152,7 +152,7 @@ public class TExArgCtx {
     public MemberExpression locx => BPI.locx;
     public MemberExpression locy => BPI.locy;
     public MemberExpression locz => BPI.locz;
-    public Expression t => BPI.t;
+    public Ex t => BPI.t;
     public TEx<float> FloatVal => GetByExprType<TEx<float>>();
     public TExSB SB => GetByExprType<TExSB>();
     public TExGCX GCX => GetByExprType<TExGCX>();
@@ -246,7 +246,7 @@ public class TExArgCtx {
         var bpi = GetByExprType<TExPI>(out var bidx);
         return MakeCopyWith(bidx, Arg.MakeFromTEx(args[bidx].name, new TExPI(bpi.Rehash()), args[bidx].hasTypePriority));
     }
-    public TExArgCtx CopyWithT(Expression newT) {
+    public TExArgCtx CopyWithT(Ex newT) {
         var bpi = GetByExprType<TExPI>(out var bidx);
         return MakeCopyWith(bidx, Arg.MakeFromTEx(args[bidx].name, new TExPI(bpi.CopyWithT(newT)), args[bidx].hasTypePriority));
     }
@@ -258,7 +258,7 @@ public class TExArgCtx {
     }
 
     public TExArgCtx MakeCopyForType<T>(out TEx<T> currEx, out TEx<T> copyEx)  {
-        currEx = (Expression)GetByType<T>(out int idx);
+        currEx = (Ex)GetByType<T>(out int idx);
         copyEx = new TEx<T>();
         return MakeCopyWith(idx, Arg.MakeFromTEx(args[idx].name, copyEx, args[idx].hasTypePriority));
     }
@@ -289,12 +289,12 @@ public class TExArgCtx {
         return new TExArgCtx(this, nargs.ToArray());
     }
     
-    public Expression When(Func<TExArgCtx, TEx<bool>> pred, Expression then) => Expression.IfThen(pred(this), then);
+    public Ex When(Func<TExArgCtx, TEx<bool>> pred, Ex then) => Ex.IfThen(pred(this), then);
 
     //Methods for dynamic (dict-based) data lookup
-    public Expression DynamicHas<T>(string key) => PIData.ContainsDynamic<T>(this, key);
-    public Expression DynamicGet<T>(string key) => PIData.GetValueDynamic<T>(this, key);
-    public Expression DynamicSet<T>(string key, Expression val) => PIData.SetValueDynamic<T>(this, key, val);
+    public Ex DynamicHas<T>(string key) => PIData.ContainsDynamic<T>(this, key);
+    public Ex DynamicGet<T>(string key) => PIData.GetValueDynamic<T>(this, key);
+    public Ex DynamicSet<T>(string key, Ex val) => PIData.SetValueDynamic<T>(this, key, val);
 }
 
 /// <summary>
@@ -379,29 +379,88 @@ public class TEx {
     public static implicit operator ParameterExpression(TEx me) {
         return (ParameterExpression)me.ex;
     }
+
+    public struct ResolveArg {
+        public readonly Ex ex;
+        public readonly bool reqCopy;
+        public readonly string? name;
+        
+        public ResolveArg(Ex ex, bool reqCopy, string? name = null) {
+            this.ex = ex;
+            this.reqCopy = reqCopy;
+            this.name = name;
+        }
     
-    private static Ex ResolveCopy(Func<Ex[], Ex> func, params (Ex ex, bool reqCopy)[] args) {
+        public static implicit operator ResolveArg(TEx exx) => new(exx.ex, RequiresCopyOnRepeat(exx.ex));
+        public static implicit operator ResolveArg(Ex exx) => new(exx, RequiresCopyOnRepeat(exx));
+    }
+    
+    private static Ex ResolveCopy(Func<Ex[], Ex> func, params ResolveArg[] args) {
         var newvars = ListCache<ParameterExpression>.Get();
         var setters = ListCache<Expression>.Get();
         var usevars = new Expression[args.Length];
         for (int ii = 0; ii < args.Length; ++ii) {
-            var (ex, reqCopy) = args[ii];
-            if (reqCopy) {
+            if (args[ii].reqCopy) {
                 //Don't name this, as nested TEx should not overlap
-                var copy = V(ex.Type);
+                var copy = V(args[ii].ex.Type, args[ii].name);
                 usevars[ii] = copy;
                 newvars.Add(copy);
-                setters.Add(copy.Is(ex));
+                setters.Add(copy.Is(args[ii].ex));
             } else {
-                usevars[ii] = ex;
+                usevars[ii] = args[ii].ex;
             }
         }
         setters.Add(func(usevars));
         var block = Ex.Block(newvars, setters);
         ListCache<ParameterExpression>.Consign(newvars);
         ListCache<Expression>.Consign(setters);
-        return setters.Count > 1 ? func(usevars) : block;
+        return block;
     }
+
+    private static Ex ResolveFieldsMaybeDeconstructNew(Func<Ex[], Ex> func, ResolveArg arg, bool singleUse, params string[] fields) {
+        if (!arg.reqCopy)
+            return func(fields.Select(f => arg.ex.Field(f)).ToArray());
+        if (arg.ex is NewExpression newe)
+            return singleUse ?
+                func(newe.Arguments.ToArray()) :
+                ResolveCopy(func, newe.Arguments.Select((x, i) => new ResolveArg(x, RequiresCopyOnRepeat(x), 
+                    $"{(x as ParameterExpression)?.Name ?? "anon"}_{fields[i]}")).ToArray());
+        if (IsBlockWithLastNew(arg.ex)) {
+            var bex = FlattenNestedBlock((BlockExpression)arg.ex);
+            return Ex.Block(bex.Variables, bex.Expressions.Take(bex.Expressions.Count - 1).Append(
+                ResolveFieldsMaybeDeconstructNew(func, new(bex.Expressions[^1], true), singleUse, fields)));
+        }
+
+        var let = V(arg.ex.Type);
+        return Ex.Block(new[] { let }, let.Is(arg.ex), func(fields.Select(f => let.Field(f)).ToArray()));
+    }
+
+    private static bool IsBlockWithLastNew(Ex ex) {
+        while (ex is BlockExpression bex) {
+            ex = bex.Expressions[^1];
+            if (ex is NewExpression) return true;
+        }
+        return false;
+    }
+
+    private static BlockExpression FlattenNestedBlock(BlockExpression bex) {
+        if (bex.Expressions[^1] is not BlockExpression rbex)
+            return bex;
+        rbex = FlattenNestedBlock(rbex);
+        return Ex.Block(bex.Variables.Concat(rbex.Variables),
+            bex.Expressions.Take(bex.Expressions.Count - 1).Concat(rbex.Expressions));
+    }
+
+    /// <summary>
+    /// Feed the X,Y components of a V2 into a resolver.
+    /// <br/>If the V2 is a `new Vector2` expression,
+    ///  then skips the constructor and resolves its arguments directly.
+    /// <br/>If singleUse is set to true and the V2 is a `new Vector2` expression,
+    ///  then provide the constructor arguments directly to the resolver without copying.
+    /// </summary>
+    public static Ex ResolveV2AsXY(TEx<Vector2> v2, Func<TEx<float>, TEx<float>, Ex> resolver, bool singleUse = false) =>
+        ResolveFieldsMaybeDeconstructNew(x => resolver(x[0], x[1]), v2, singleUse, "x", "y");
+    
     public static Ex ResolveF(TEx<float> t1, Func<TEx<float>, Ex> resolver) =>
         ResolveCopy(x => resolver(x[0]), t1);
     public static Ex Resolve<T1>(TEx<T1> t1, Func<TEx<T1>, Ex> resolver) =>
@@ -415,9 +474,7 @@ public class TEx {
     public static Ex ResolveV2(TEx<Vector2> t1, TEx<Vector2> t2, 
         Func<TExV2, TExV2, Ex> resolver) =>
         ResolveCopy(x => resolver(new TExV2(x[0]), new TExV2(x[1])), t1, t2);
-    public static Ex ResolveV2(TEx<Vector2> t1, TEx<float> t2, 
-        Func<TExV2, TEx<float>, Ex> resolver) =>
-        ResolveCopy(x => resolver(new TExV2(x[0]), x[1]), t1, t2);
+    
     /// <inheritdoc cref="Resolve{T1,T2,T3}"/>
     public static Ex ResolveV3(TEx<Vector3> t1, TEx<Vector3> t2, 
         Func<TExV3, TExV3, Ex> resolver) =>
@@ -451,8 +508,6 @@ public class TEx {
         e.NodeType == ExpressionType.MemberAccess ||
         (e.NodeType == ExpressionType.Convert && !RequiresCopyOnRepeat((e as UnaryExpression)!.Operand)));
     
-    
-    public static implicit operator (Ex, bool)(TEx exx) => (exx.ex, RequiresCopyOnRepeat(exx.ex));
 }
 /// <summary>
 /// A typed expression.

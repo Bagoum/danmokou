@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using UnityEngine;
 using System.Linq.Expressions;
 using BagoumLib;
@@ -52,6 +53,14 @@ public static partial class ExM {
     [Alias(Parser.SM_REF_KEY)]
     [BDSL1Only]
     public static Func<TExArgCtx, TEx<T>> Reference<T>(string alias) => ReflectEx.ReferenceExpr<T>(alias);
+
+    /// <summary>
+    /// Reference a value defined in a let function.
+    /// </summary>
+    [Alias("rflet")]
+    public static Func<TExArgCtx, TEx<T>> ReferenceLet<T>(string alias) =>
+        tac => ReflectEx.GetAliasFromStack(alias, tac) ??
+               throw new CompileException($"The reference {alias} is not defined in a let function.");
     
     /// <summary>
     /// Reference a value saved within bullet data, or return a default value if it does not exist.
@@ -81,6 +90,16 @@ public static partial class ExM {
     public static Func<TExArgCtx, TEx<T>> RetrieveHoisted0<T>(ReflectEx.Hoist<T> hoist) => 
         tac => hoist.Retrieve(E0, tac);
 
+    /// <summary>
+    /// Assign local variables that can be repeatedly used without reexecution via the ReferenceLet (rflet) function.
+    /// <br/>Note: this is only for backwards compatibility and is superseded by block variable assignment.
+    /// </summary>
+    /// <param name="aliases">List of each variable and its assigned vector value</param>
+    /// <param name="inner">Code to execute within the scope of the variables</param>
+    [BDSL2Only]
+    public static Func<TExArgCtx, TEx<T>> LetBDSL2<T,V>((string, UncompiledCode<V>)[] aliases, Func<TExArgCtx, TEx<T>> inner) => bpi => 
+        ReflectEx.Let(aliases.Select(a => (a.Item1, a.Item2.code)).ToArray(), () => inner(bpi), bpi);
+    
     /// <summary>
     /// Assign local variables that can be repeatedly used without reexecution via the Reference (&amp;) function.
     /// Shortcut: ::
@@ -365,7 +384,7 @@ public static partial class ExM {
                 Ex.Condition(pt.LT(per.Div(E2)),
                     h.Mul(Cos(pt.Mul(tau.Div(per)))).Neg(),
                     Ex.Negate(h).Add(h.Mul(ExC(-2f)).Mul(
-                            Pow(pt.Mul(E2).Div(per).Sub(E2), ExC(3f))
+                            Pow<float>(pt.Mul(E2).Div(per).Sub(E2), ExC(3f))
                         ))
             ));
         });
@@ -391,7 +410,7 @@ public static partial class ExM {
                 pt.Is(Mod(per, time)),
                 hm.Is(E05.Mul(h1.Add(h3))),
                 Ex.Condition(pt.LT(t1),
-                    h3.Add(h2.Sub(h3).Mul(Pow(pt.Div(t1).Complement(), ExC(3)))),
+                    h3.Add(h2.Sub(h3).Mul(Pow<float>(pt.Div(t1).Complement(), ExC(3)))),
                     hm.Sub(h1.Sub(h3).Div(E2).Mul(Cos(
                         pi.Add(ACosR(h2.Sub(hm).Div(h1.Sub(hm)))).Div(per.Sub(t1)).Mul(pt.Sub(t1)))))
                 )

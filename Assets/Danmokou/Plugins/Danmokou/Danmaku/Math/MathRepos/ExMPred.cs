@@ -59,14 +59,14 @@ public static partial class ExMPred {
     /// <summary>
     /// Return true iff the first argument is equal to the second.
     /// </summary>
-    [Alias("=")] [Operator] [BDSL2Operator]
-    public static tbool Eq(tfloat b1, tfloat b2) => Ex.Equal(b1, b2);
+    [Alias("=")] [Operator] [BDSL2Operator] [BDSL1AutoSpecialize(0, typeof(float))]
+    public static tbool Eq<T>(TEx<T> b1, TEx<T> b2) => Ex.Equal(b1, b2);
     
     /// <summary>
     /// Return true iff the first argument is not equal to the second.
     /// </summary>
-    [Alias("=/=")] [Operator] [BDSL2Operator]
-    public static tbool Neq(tfloat b1, tfloat b2) => Ex.NotEqual(b1, b2);
+    [Alias("=/=")] [Operator] [BDSL2Operator] [BDSL1AutoSpecialize(0, typeof(float))]
+    public static tbool Neq<T>(TEx<T> b1, TEx<T> b2) => Ex.NotEqual(b1, b2);
 
 
     /// <summary>
@@ -75,8 +75,8 @@ public static partial class ExMPred {
     /// <param name="b1">First BPY function</param>
     /// <param name="b2">Second BPY function</param>
     /// <returns></returns>
-    [Alias(">")] [Operator] [BDSL2Operator]
-    public static tbool Gt(tfloat b1, tfloat b2) {
+    [Alias(">")] [Operator] [BDSL2Operator] [RestrictTypes(0, typeof(float), typeof(int))] [BDSL1AutoSpecialize(0, typeof(float))]
+    public static tbool Gt<T>(TEx<T> b1, TEx<T> b2) {
         return Ex.GreaterThan(b1, b2);
     }
     /// <summary>
@@ -85,8 +85,8 @@ public static partial class ExMPred {
     /// <param name="b1">First BPY function</param>
     /// <param name="b2">Second BPY function</param>
     /// <returns></returns>
-    [Alias(">=")] [Operator] [BDSL2Operator]
-    public static tbool Geq(tfloat b1, tfloat b2) {
+    [Alias(">=")] [Operator] [BDSL2Operator] [RestrictTypes(0, typeof(float), typeof(int))] [BDSL1AutoSpecialize(0, typeof(float))]
+    public static tbool Geq<T>(TEx<T> b1, TEx<T> b2)  {
         return Ex.GreaterThanOrEqual(b1, b2);
     }
     /// <summary>
@@ -95,8 +95,8 @@ public static partial class ExMPred {
     /// <param name="b1">First BPY function</param>
     /// <param name="b2">Second BPY function</param>
     /// <returns></returns>
-    [Alias("<")] [Operator] [BDSL2Operator]
-    public static tbool Lt(tfloat b1, tfloat b2) {
+    [Alias("<")] [Operator] [BDSL2Operator] [RestrictTypes(0, typeof(float), typeof(int))] [BDSL1AutoSpecialize(0, typeof(float))]
+    public static tbool Lt<T>(TEx<T> b1, TEx<T> b2) {
         return Ex.LessThan(b1, b2);
     }
     /// <summary>
@@ -105,8 +105,8 @@ public static partial class ExMPred {
     /// <param name="b1">First BPY function</param>
     /// <param name="b2">Second BPY function</param>
     /// <returns></returns>
-    [Alias("<=")] [Operator] [BDSL2Operator]
-    public static tbool Leq(tfloat b1, tfloat b2) {
+    [Alias("<=")] [Operator] [BDSL2Operator] [RestrictTypes(0, typeof(float), typeof(int))] [BDSL1AutoSpecialize(0, typeof(float))]
+    public static tbool Leq<T>(TEx<T> b1, TEx<T> b2) {
         return Ex.LessThanOrEqual(b1, b2);
     }
     /// <summary>

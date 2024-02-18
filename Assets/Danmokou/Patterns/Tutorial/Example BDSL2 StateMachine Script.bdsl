@@ -1,0 +1,20 @@
+
+var speed = 2;
+paction 0 {
+    position 0 0
+    async "circle-*/w" <> gir2 200 inf <> {
+        start b{
+            hvar angl = 0
+        }
+        postloop b{
+            angl += 90;
+        }
+        color({ "red", "green", "blue", "yellow" })
+    } gcr {
+        wait 50
+        times 4
+        postloop b{
+            angl += 14;
+        }
+    } s rvelocity(rotate(angl, px(speed)))
+}

@@ -19,7 +19,8 @@ public static class PartialFn {
 
     public static Ex Execute(Ex func, params Ex[] args) => Execute(func, args as IEnumerable<Ex>);
 
-    public static Ex PartiallyApply(Ex func, params Ex[] applied) {
+    public static Ex PartiallyApply(Ex func, IEnumerable<Ex> _applied) {
+        var applied = _applied.ToArray();
         if (applied.Length == 0)
             return func;
         //given Func<A,B,C,D...R> and args [A, B],

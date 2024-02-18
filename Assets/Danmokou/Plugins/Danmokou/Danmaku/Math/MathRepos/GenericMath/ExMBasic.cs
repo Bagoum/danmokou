@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using BagoumLib.Expressions;
 using Danmokou.Core;
@@ -79,6 +80,9 @@ public static partial class ExM {
     /// </summary>
     [BDSL2Operator]
     public static TEx<T> MulRev<T>(TEx<T> y, tfloat x) => x.Mul(y);
+    
+    [BDSL2Operator]
+    public static TEx<int> MulInt(TEx<int> x, TEx<int> y) => x.Mul(y);
 
     /// <summary>
     /// Convert a number from degrees to radians.
@@ -210,32 +214,32 @@ public static partial class ExM {
         _x.Mul(_x).Add(_y.Mul(_y).Add(_z.Mul(_z))));
 
     /// <summary>
-    /// Get the magnitude of a vector.
+    /// Get the magnitude of a vector2.
     /// </summary>
     public static tfloat Mag(tv2 v2) => Sqrt(SqrMag(v2));
+    
     /// <summary>
-    /// Get the magnitude of a vector.
+    /// Get the magnitude of a vector3.
     /// </summary>
     public static tfloat v3Mag(tv3 v3) => Sqrt(v3SqrMag(v3));
 
     /// <summary>
-    /// Normalize a vector.
+    /// Normalize a vector2.
     /// </summary>
-    public static tv2 Norm(tv2 v2) => TEx.ResolveV2(v2, xy => {
-        var mag = VFloat();
+    public static tv2 Norm(tv2 v2) => TEx.ResolveV2AsXY(v2, (x, y) => {
+        var mag = VFloat("mag");
         return Ex.Block(new[] {mag},
-            mag.Is(Mag(xy)),
-            Ex.Condition(mag.GT(ExC(M.MAG_ERR)),
-                xy.Mul(E1.Div(mag)),
-                xy
-            )
+            mag.Is(Mag2(x, y)),
+            Ex.IfThen(mag.LT(ExC(M.MAG_ERR)), mag.Is(E1)),
+            V2(x.Div(mag), y.Div(mag))
         );
     });
+    
     /// <summary>
-    /// Normalize a vector.
+    /// Normalize a vector3.
     /// </summary>
     public static tv3 Norm3(tv3 v3) => TEx.ResolveV3(v3, xyz => {
-        var mag = VFloat();
+        var mag = VFloat("mag");
         return Ex.Block(new[] {mag},
             mag.Is(v3Mag(xyz)),
             Ex.Condition(mag.GT(ExC(M.MAG_ERR)),
@@ -246,11 +250,12 @@ public static partial class ExM {
     });
 
     /// <summary>
-    /// Get the square magnitude of a vector.
+    /// Get the square magnitude of a vector2.
     /// </summary>
-    public static tfloat SqrMag(tv2 v2) => TEx.ResolveV2(v2, xy => SqrMag2(xy.x, xy.y));
+    public static tfloat SqrMag(tv2 v2) => TEx.ResolveV2AsXY(v2, (x, y) => SqrMag2(x, y), singleUse: true);
+    
     /// <summary>
-    /// Get the square magnitude of a vector.
+    /// Get the square magnitude of a vector3.
     /// </summary>
     public static tfloat v3SqrMag(tv3 v3) => TEx.ResolveV3(v3, xyz => SqrMag3(xyz.x, xyz.y, xyz.z));
     
@@ -260,13 +265,13 @@ public static partial class ExM {
     /// Returns (bas)^(exp).
     /// </summary>
     [Alias("^")] [WarnOnStrict] [Operator] [BDSL2Operator]
-    public static tfloat Pow(tfloat bas, tfloat exp) => OfDFD(_Pow, bas, exp);
+    public static TEx<T> Pow<T>(TEx<T> bas, TEx<T> exp) => OfDTD<T>(_Pow, bas, exp);
     /// <summary>
     /// Returns one function raised to the power of the other, subtracted by the first function. (Alias: ^- bas exp)
     /// Useful for getting polynomial curves that start at zero, eg. ^- t 1.1
     /// </summary>
     /// <returns></returns>
-    [Alias("^-")] [Operator]
+    [Alias("^-")] [Operator] [BDSL2Operator]
     public static tfloat PowSub(tfloat bas, tfloat exp) {
         var val = VFloat();
         return Ex.Block(new[] {val},
@@ -283,11 +288,11 @@ public static partial class ExM {
     /// <param name="bas">Base</param>
     /// <param name="exp">Exponent</param>
     /// <returns></returns>
-    [Alias("^^")] [Operator]
-    public static tfloat NPow(tfloat bas, tfloat exp) => TEx.Resolve(bas, exp, (x, y) =>
+    [Alias("^^")] [Operator] [BDSL2Operator]
+    public static tfloat NPow(tfloat bas, tfloat exp) => TEx.Resolve(bas, x =>
         Ex.Condition(Ex.LessThan(x, E0),
-            Ex.Negate(Pow(Ex.Negate(x), y)),
-            Pow(x, y)));
+            Ex.Negate(Pow(Ex.Negate(x), exp)),
+            Pow(x, exp)));
 
     private static readonly ExFunction _Round = ExFunction.Wrap<double>(typeof(Math), "Round");
     private static readonly ExFunction _Floor = ExFunction.Wrap<double>(typeof(Math), "Floor");
@@ -574,10 +579,7 @@ public static partial class ExM {
     /// <summary>
     /// Return the angle in radians whose tangent is v2.y/v2.x.
     /// </summary>
-    public static tfloat ATanR(tv2 f) => TEx.Resolve(f, v2 => {
-        var tv2 = new TExV2(v2);
-        return _AtanYX.Of(tv2.y, tv2.x);
-    });
+    public static tfloat ATanR(tv2 f) => TEx.ResolveV2AsXY(f, (x, y) => _AtanYX.Of(y, x), singleUse: true);
     /// <summary>
     /// Return the angle in degrees whose tangent is y/x.
     /// </summary>
@@ -587,8 +589,11 @@ public static partial class ExM {
     /// </summary>
     public static tfloat ATan(tv2 f) => ATanR(f).Mul(radDeg);
     #endregion
-    
-    
-    
+
+    /// <summary>
+    /// Array indexing operator arr[index].
+    /// </summary>
+    [BDSL2Operator]
+    public static TEx<T> ArrayIndex<T>(TEx<T[]> arr, TEx<int> index) => arr.ex.Index(index);
 }
 }

@@ -51,7 +51,7 @@ public static class ExMLerps {
     /// <returns></returns>
     public static TEx<T> Lerp<T>(tfloat zeroBound, tfloat oneBound, tfloat controller, TEx<T> f1, TEx<T> f2) => 
         TEx.Resolve(zeroBound, oneBound, controller, (z, o, c) => {
-            var rc = VFloat();
+            var rc = VFloat("ratio");
             return Ex.Block(new[] {rc},
                 rc.Is(Clamp(z, o, c).Sub(z).Div(o.Sub(z))),
                 rc.Mul(f2).Add(rc.Complement().Mul(f1))
@@ -81,7 +81,7 @@ public static class ExMLerps {
     public static TEx<T> LerpSmooth<T>([LookupMethod] TEx<Func<float, float>> smoother, 
         tfloat zeroBound, tfloat oneBound, tfloat controller, TEx<T> f1, TEx<T> f2) 
         => TEx.Resolve(zeroBound, oneBound, controller, (z, o, c) => {
-            var rc = VFloat();
+            var rc = VFloat("ratio");
             return Ex.Block(new[] {rc},
                 rc.Is(PartialFn.Execute(smoother, Clamp(z, o, c).Sub(z).Div(o.Sub(z)))),
                 rc.Mul(f2).Add(rc.Complement().Mul(f1))
@@ -99,7 +99,7 @@ public static class ExMLerps {
     /// <returns></returns>
     public static TEx<T> LerpU<T>(tfloat zeroBound, tfloat oneBound, tfloat controller, TEx<T> f1, TEx<T> f2) => 
         TEx.Resolve(zeroBound, oneBound, controller, (z, o, c) => {
-            var rc = VFloat();
+            var rc = VFloat("uratio");
             return Ex.Block(new[] {rc},
                 rc.Is(c.Sub(z).Div(o.Sub(z))),
                 rc.Mul(f2).Add(rc.Complement().Mul(f1))
@@ -189,13 +189,6 @@ public static class ExMLerps {
             }
             return ifNeq;
         });
-
-    public static float MyScript() {
-        var myFloat = 6.4f;
-        var myVector = new Vector2(4, 5);
-        myVector.Set(myFloat + myVector.y, myVector.sqrMagnitude);
-        return myVector.magnitude;
-    }
 
     /// <summary>
     /// Select a value according to the current difficulty counter.

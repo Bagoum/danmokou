@@ -32,6 +32,12 @@
       href: ResolutionRendering.md
     - name: Math Documentation
       href: MathDocumentation.md
+- name: BDSL2 Language Guide
+  items:
+    - name: 01 - Language Introduction
+      href: language/guide1.md
+    - name: 02 - StateMachine Handling
+      href: language/guide2.md
 - name: Basic Tutorials
   items:
     - name: 01 - The First Bullet

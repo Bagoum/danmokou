@@ -1,3 +1,4 @@
+<#> bdsl1
 pattern { }
 <!> type non `hello`
 phase 0

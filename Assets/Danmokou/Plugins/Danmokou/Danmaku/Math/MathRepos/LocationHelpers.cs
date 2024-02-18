@@ -21,20 +21,21 @@ public static partial class ExMPred {
     /// </summary>
     /// <param name="loc"></param>
     /// <returns></returns>
-    public static TEx<bool> OnScreen(TEx<Vector2> loc) => TEx.ResolveV2(loc, l =>
-            l.x.GT(LocationHelpers.left)
-            .And(l.x.LT(LocationHelpers.right))
-            .And(l.y.GT(LocationHelpers.bot))
-            .And(l.y.LT(LocationHelpers.top)));
+    public static TEx<bool> OnScreen(TEx<Vector2> loc) => TEx.ResolveV2AsXY(loc, (x, y) =>
+            x.GT(LocationHelpers.left)
+            .And(x.LT(LocationHelpers.right))
+            .And(y.GT(LocationHelpers.bot))
+            .And(y.LT(LocationHelpers.top)));
     
     /// <summary>
     /// Return true if the location is within BY units (square expansion) of the edge of the playing field.
     /// </summary>
-    public static TEx<bool> OnScreenBy(TEx<float> by, TEx<Vector2> loc) => TEx.ResolveV2(loc, by, (l, f) =>
-            l.x.GT(LocationHelpers.left.Sub(f))
-            .And(l.x.LT(LocationHelpers.right.Add(f)))
-            .And(l.y.GT(LocationHelpers.bot.Sub(f)))
-            .And(l.y.LT(LocationHelpers.top.Add(f))));
+    public static TEx<bool> OnScreenBy(TEx<float> by, TEx<Vector2> loc) => 
+        TEx.ResolveF(by, f => TEx.ResolveV2AsXY(loc, (x, y) =>
+            x.GT(LocationHelpers.left.Sub(f))
+            .And(x.LT(LocationHelpers.right.Add(f)))
+            .And(y.GT(LocationHelpers.bot.Sub(f)))
+            .And(y.LT(LocationHelpers.top.Add(f)))));
 
     /// <summary>
     /// Return true if the location not within the playing field.
@@ -197,9 +198,9 @@ public static partial class Parametrics {
     /// </summary>
     public static ExTP LSaveNearestEnemyDefault(ExTP deflt) => b => {
         var key = b.Ctx.NameWithSuffix("_LSaveNearestEnemyKey");
-        var eid_in = ExUtils.V<int?>();
-        var eid = ExUtils.V<int>();
-        var loc = new TExV2();
+        var eid_in = ExUtils.V<int?>("preferred_enemy");
+        var eid = ExUtils.V<int>("enemy");
+        var loc = new TExV2("position");
         return Ex.Block(new[] { eid_in, eid, loc },
             eid_in.Is(Ex.Condition(b.DynamicHas<int>(key),
                 b.DynamicGet<int>(key).Cast<int?>(),

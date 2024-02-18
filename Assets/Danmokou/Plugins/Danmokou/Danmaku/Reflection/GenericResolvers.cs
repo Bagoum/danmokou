@@ -17,6 +17,7 @@ using Danmokou.SM.Parsing;
 using JetBrains.Annotations;
 using Mizuhashi;
 using UnityEngine.Profiling;
+using Helpers = Danmokou.Reflection2.Helpers;
 using Parser = Danmokou.DMath.Parser;
 
 namespace Danmokou.Reflection {
@@ -212,6 +213,24 @@ public static partial class Reflector {
         } catch (Exception e) {
             throw new Exception($"Failed to parse below string into type {typeof(T).RName()}:\n{argstring}", e);
         }
+    }
+
+    public static Func<TExArgCtx, TEx<T>> IntoDelayed<T>(this string argstring) {
+        var bake = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.INTO, argstring);
+        try {
+            var (ast, gs) = Helpers.ParseAnnotate(ref argstring);
+            var typechecked = ast.Typecheck(gs, typeof(T), out _);
+            var verified = typechecked.Finalize();
+            return tac => {
+                var ex = verified.Realize(tac);
+                bake?.Dispose();
+                bake = null;
+                return (TEx<T>)ex;
+            };
+        } catch (Exception e) {
+            throw new Exception($"Failed to parse below string into type {typeof(T).RName()}:\n{argstring}", e);
+        }
+        
     }
     
     private static readonly GenericMethodSignature intoMeth = (GenericMethodSignature)

@@ -150,6 +150,18 @@ class FlattenVisitor : ExpressionVisitor {
         (typeof(float), typeof(double)),
         (typeof(int), typeof(double))
     };
+
+    public static Ex? TryFlattenConversion(Ex body, Type toTyp) {
+        //Nested compile causes issues with baking
+#if !EXBAKE_SAVE && !EXBAKE_LOAD
+        //Null typecasts don't work correctly with nullable types (including nullable struct type)
+        //Object boxing doesn't always work with value types
+        if (body.TryAsAnyConst(out var obj) && obj != null && toTyp != typeof(object) && !toTyp.Name.StartsWith("Nullable")) {
+            return ExC(Ex.Lambda(Ex.Convert(ExC(obj), toTyp)).Compile().DynamicInvoke());
+        }
+#endif
+        return null;
+    }
     
     protected override Expression VisitUnary(UnaryExpression node) {
         var o = AssignTypes.Contains(node.NodeType) ? node.Operand : Visit(node.Operand);
@@ -158,14 +170,8 @@ class FlattenVisitor : ExpressionVisitor {
             new DeactivateConstantVisitor(ConstValPrmsMap).Visit(o);
         }
         if (node.NodeType == ExpressionType.Convert) {
-            //Null typecasts don't work correctly with nullable types
-            //Object boxing doesn't always work with value types
-#if !EXBAKE_SAVE && !EXBAKE_LOAD
-            if (o.TryAsAnyConst(out var notNull) && notNull != null && node.Type != typeof(object)) {
-                //Nested compile causes issues with baking
-                return ExC(Ex.Lambda(Ex.Convert(o, node.Type)).Compile().DynamicInvoke());
-            }
-#endif
+            if (TryFlattenConversion(o, node.Type) is { } ex)
+                return ex;
             if (o is UnaryExpression { NodeType: ExpressionType.Convert } ue) {
                 if (node.Type == ue.Type || allowedDoubleCasts.Contains((node.Type, ue.Type)))
                     o = ue.Operand;

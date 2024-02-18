@@ -1,6 +1,6 @@
 
 var sm = pattern({
-		boss 'simp.kasen'
+		boss "simp.kasen"
 	}, {
 	phase 0 { } {
 		paction 0 {

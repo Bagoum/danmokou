@@ -53,10 +53,12 @@ public class AliasAttribute : Attribute {
 public class GAliasAttribute : Attribute {
     public readonly string alias;
     public readonly Type type;
+    public readonly bool reflectOriginal;
 
-    public GAliasAttribute(string alias, Type t) {
+    public GAliasAttribute(string alias, Type t, bool reflectOriginal = true) {
         type = t;
         this.alias = alias;
+        this.reflectOriginal = reflectOriginal;
     }
 }
 
@@ -87,7 +89,7 @@ public class WarnOnStrictAttribute : Attribute {
 /// Attribute marking that the `typeIndex`th generic variable in this method should only be allowed
 ///  to take on one of the provided `possibleTypes`.
 /// </summary>
-[AttributeUsage(AttributeTargets.Method)]
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 public class RestrictTypesAttribute : Attribute {
     public readonly int typeIndex;
     public readonly Type[] possibleTypes;
@@ -95,6 +97,21 @@ public class RestrictTypesAttribute : Attribute {
     public RestrictTypesAttribute(int typeIndex, params Type[] possibleTypes) {
         this.typeIndex = typeIndex;
         this.possibleTypes = possibleTypes;
+    }
+}
+
+/// <summary>
+/// For methods that cannot be specialized by their return type in BDSL1 (eg. equality has type (T,T)->bool),
+///  automatically specialize the generic type at the provided index with the provided type.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+public class BDSL1AutoSpecializeAttribute : Attribute {
+    public readonly int typeIndex;
+    public readonly Type specializeAs;
+
+    public BDSL1AutoSpecializeAttribute(int typeIndex, Type specializeAs) {
+        this.typeIndex = typeIndex;
+        this.specializeAs = specializeAs;
     }
 }
 
@@ -218,19 +235,6 @@ public enum AutoVarExtend {
     BindLR,
     BindUD,
     BindArrow
-}
-
-/// <summary>
-/// (BDSL2) The marked method is a callsite for bullet code that executes atomic actions such as "fire a simple bullet".
-/// The provided index is an argument of type PatternerCallsite?.
-/// </summary>
-[AttributeUsage(AttributeTargets.Method)]
-public class PatternerCallsiteAttribute : Attribute {
-    public int Index { get; }
-    public PatternerCallsiteAttribute(int i) {
-        this.Index = i;
-    }
-    
 }
 
 /// <summary>

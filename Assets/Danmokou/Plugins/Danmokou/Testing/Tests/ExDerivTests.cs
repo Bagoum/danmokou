@@ -30,10 +30,10 @@ public class ExDerivTests {
 
     [Test]
     public void TestPow() {
-        var x = VF("x");
+        TEx<float> x = VF("x");
         //x^c is special cased
-        AreEqual("0", DerivDebug(x, Pow(x, ExC(0f))));
-        AreEqual("1", DerivDebug(x, Pow(x, ExC(1f))));
+        AreEqual("0", DerivDebug(x, Pow(x, E0)));
+        AreEqual("1", DerivDebug(x, Pow(x, E1)));
         AreEqual("(2*x)", DerivDebug(x, Pow(x, ExC(2f))));
         AreEqual("(3*(x:>Double*x:>Double):>Single)", DerivDebug(x, Pow(x, ExC(3f))));
         AreEqual("(3.5*Math.Pow(Null,x:>Double,2.5):>Single)", DerivDebug(x, Pow(x, ExC(3.5f))));

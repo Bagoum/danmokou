@@ -43,14 +43,14 @@ gtr {
 	poolcontrol  idify("p-gglcircle-black/w") tint rgba(1, 1, 1, 0)
 	poolcontrol({ { idify("p-gglcircle-*/w") },  colors }, tint rgba(1, 1, 1, 2))
 	bulletcontrol persist idify("p-empty") exec(b{
-		&ldelta::v2 = accdelta
+		&ldelta::Vector2 = accdelta
 	}, t < &tOffset)
 	bulletcontrol persist idify("p-gglcircle-black/w") oncollide _
 		gtr {
 		} {
 			// i don't like this but there isn't a good way to compare a GCX value to a bullet-control pred internal
 			savef savet1 &group 1
-			bulletcontrol persist { { idify("p-gglcircle-*/w") }, &colors } softcull("cwheel-black/b", (&group > -1) & load(savet1, &group) == 1)
+			bulletcontrol persist { { idify("p-gglcircle-*/w") }, &colors } softcull("cwheel-black/b", (&group > -1.0) & load(savet1, &group) == 1.0)
 			sfx "reimu-fantasyseal-onhit"
 			draiko 1.6 2.2
 			sync idify("gglcircle-*/w") <0.2;:> gsr2c 20 {
@@ -69,7 +69,7 @@ gtr {
 		 p this
 		 preloop b{
 			hvar group = i
-			hvar ldelta::v2 = px(0)
+			hvar ldelta::Vector2 = px(0)
 		 }
 		 bindLR
 		 wait(24)
@@ -80,7 +80,7 @@ gtr {
 		roffset(
 			Lplayer + tp(qrotate(pxy(lerp3(0, 1.2, 2.4, 4, t + st, 20, 60, 0), lerp(1.8, 4.3, t + st, 50, 0)), 
 									rx(lerpsmooth($(eoutsine), 0, 1, t, 0.5, 2.2), 90 + 350 * (t + st) + 60 * p)))),
-		nrvelocity(truerotatelerprate(lerp(0.4, 0.6, t - tOffset, 400, 30), &ldelta::v2 * 1s, LNearestEnemy - loc) * lerp3(0, 0.1, 0.2, 0.4, t - tOffset, 1, 0.2, 0.8))),
+		nrvelocity(truerotatelerprate(lerp(0.4, 0.6, t - tOffset, 400, 30), &ldelta::Vector2 * 1s, LNearestEnemy - loc) * lerp3(0, 0.1, 0.2, 0.4, t - tOffset, 1, 0.2, 0.8))),
 	{
 		gsr {
 			color { "black" }

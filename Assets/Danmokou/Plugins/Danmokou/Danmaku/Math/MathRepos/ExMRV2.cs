@@ -22,11 +22,10 @@ public static partial class ExMRV2 {
     /// <param name="nrot">Nonrotational component</param>
     /// <param name="rot">Rotational component (x,y,angle)</param>
     /// <returns></returns>
-    public static trv2 V2V3(tv2 nrot, tv3 rot) => TEx.Resolve(nrot, rot, (_nr, _r) => {
-        var nr = new TExV2(_nr);
+    public static trv2 V2V3(tv2 nrot, tv3 rot) => TEx.Resolve(rot, _r => TEx.ResolveV2AsXY(nrot, (nrx, nry) => {
         var r = new TExV3(_r);
-        return VRV2(nr.x, nr.y, r.x, r.y, r.z);
-    });
+        return VRV2(nrx, nry, r.x, r.y, r.z);
+    }, singleUse: true));
     
     /// <summary>
     /// Derive a V2RV2 from two vectors and a float.
@@ -35,11 +34,9 @@ public static partial class ExMRV2 {
     /// <param name="rot">Rotational x,y</param>
     /// <param name="angle">Rotational angle (degrees)</param>
     /// <returns></returns>
-    public static trv2 V2V2F(tv2 nrot, tv2 rot, tfloat angle) => TEx.Resolve(nrot, rot, (_nr, _r) => {
-        var nr = new TExV2(_nr);
-        var r = new TExV2(_r);
-        return VRV2(nr.x, nr.y, r.x, r.y, angle);
-    });
+    public static trv2 V2V2F(tv2 nrot, tv2 rot, tfloat angle) => TEx.ResolveV2AsXY(nrot, (nrx, nry) => 
+        TEx.ResolveV2AsXY(rot, (rx, ry) => VRV2(nrx, nry, rx, ry, angle), singleUse: true), 
+        singleUse: true);
     
     /// <summary>
     /// Derive a V2RV2 from three floats. RX and RY are set to zero.

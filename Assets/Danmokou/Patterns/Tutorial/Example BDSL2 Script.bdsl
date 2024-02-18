@@ -1,0 +1,14 @@
+
+function gcd(a, b)::int {
+    if (b == 0) {
+        return a
+    } else if (b > a) {
+        return gcd(b, a)
+    } else {
+        return gcd(b, a % b)
+    }
+}
+
+var x = 42
+gcd(x, 154)
+

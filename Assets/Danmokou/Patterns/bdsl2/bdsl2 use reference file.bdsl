@@ -8,7 +8,7 @@ There are multiple lines here.
 var abc = 4.34;
 
 pattern({
-	boss 'simp.kasen'
+	boss "simp.kasen"
 }, {
 	phase 0 { } {
 		paction 0 {

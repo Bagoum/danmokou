@@ -1,17 +1,26 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using LanguageServer.VsCode.Contracts;
 using Ex = System.Linq.Expressions.Expression;
 
 namespace Danmokou.Reflection {
 public abstract class TypeMember {
     //includes instance type if this is instance
+    /// <summary>
+    /// The parameters to this member. If this is an instance member (eg. string.Length), then the first
+    ///  element is the instance parameter.
+    /// </summary>
     public abstract Reflector.NamedParam[] Params { get; }
     public abstract Type ReturnType { get; }
     public abstract bool Static { get; }
     public abstract MemberInfo BaseMi { get; }
     public string Name => BaseMi.Name;
-    public string TypeName => BaseMi.DeclaringType!.SimpRName();
+    public string TypeName => BaseMi.ReflectedType!.SimpRName();
+    
+    public abstract SymbolKind Symbol { get; }
+    
     public T? GetAttribute<T>() where T : Attribute => BaseMi.GetCustomAttribute<T>();
     public abstract object? InvokeInst(object? instance, params object?[] args);
 #pragma warning disable CS8634
@@ -48,10 +57,18 @@ public abstract class TypeMember {
         public override Reflector.NamedParam[] Params { get; }
         public override Type ReturnType => Mi.ReturnType;
         public override bool Static => Mi.IsStatic;
+        public bool IsExtension { get; }
+        public override SymbolKind Symbol => SymbolKind.Method;
+
         public Method(MethodInfo Mi) {
             this.Mi = Mi;
-            var args = Mi.GetParameters().Select(x => (Reflector.NamedParam)x);
-            Params = (Mi.IsStatic ? args : args.Prepend(new(Mi.DeclaringType!, "Instance"))).ToArray();
+            Params = ParamsForMethod(Mi);
+            IsExtension = Mi.GetCustomAttribute<ExtensionAttribute>() != null;
+        }
+
+        public static Reflector.NamedParam[] ParamsForMethod(MethodInfo mi) {
+            var args = mi.GetParameters().Select(x => (Reflector.NamedParam)x);
+            return (mi.IsStatic ? args : args.Prepend(new(mi.ReflectedType!, "Instance"))).ToArray();
         }
 
         public override object? InvokeInst(object? instance, params object?[] args) => Mi.Invoke(instance, args);
@@ -75,6 +92,7 @@ public abstract class TypeMember {
         public override Reflector.NamedParam[] Params { get; }
         public override Type ReturnType => Cons.DeclaringType!;
         public override bool Static => true;
+        public override SymbolKind Symbol => SymbolKind.Constructor;
         public Constructor(ConstructorInfo Cons) {
             this.Cons = Cons;
             Params = Cons.GetParameters().Select(x => (Reflector.NamedParam)x).ToArray();
@@ -96,18 +114,21 @@ public abstract class TypeMember {
         public override Reflector.NamedParam[] Params { get; }
         public override Type ReturnType { get; }
         public override bool Static { get; }
+        public override SymbolKind Symbol => SymbolKind.Property;
         public Property(PropertyInfo Prop) {
             this.Prop = Prop;
             var getter = Prop.GetMethod!;
-            Params = getter.IsStatic ? 
-                Array.Empty<Reflector.NamedParam>() : 
-                new[] { new Reflector.NamedParam(Prop.DeclaringType!, "Instance") };
+            Params = Method.ParamsForMethod(getter);
             ReturnType = getter.ReturnType;
             Static = getter.IsStatic;
         }
 
-        public override object? InvokeInst(object? instance, params object?[] args) => Prop.GetValue(instance);
-        public override Ex InvokeExInst(Ex? instance, params Ex[] args) => Ex.Property(instance, Prop);
+        public override object? InvokeInst(object? instance, params object?[] args) =>
+            args.Length > 0 ? Prop.GetValue(instance, args) : Prop.GetValue(instance);
+
+        public override Ex InvokeExInst(Ex? instance, params Ex[] args) =>
+            //these return different expressions, so we can't just use the first call
+            args.Length > 0 ? Ex.Property(instance, Prop, args) : Ex.Property(instance, Prop);
 
         public override string TypeOnlySignature() => ReturnType.SimpRName();
         public override string AsSignature(Func<Reflector.NamedParam, int, string> paramMod) =>
@@ -120,11 +141,13 @@ public abstract class TypeMember {
         public override Reflector.NamedParam[] Params { get; }
         public override Type ReturnType { get; }
         public override bool Static { get; }
+        public override SymbolKind Symbol => Fi.DeclaringType == Fi.FieldType && Fi.DeclaringType?.IsEnum is true ? 
+            SymbolKind.Enum : SymbolKind.Field;
         public Field(FieldInfo Fi) {
             this.Fi = Fi;
             Params = Fi.IsStatic ? 
                 Array.Empty<Reflector.NamedParam>() : 
-                new[] { new Reflector.NamedParam(Fi.DeclaringType!, "Instance") };
+                new[] { new Reflector.NamedParam(Fi.ReflectedType!, "Instance") };
             ReturnType = Fi.FieldType;
             Static = Fi.IsStatic;
         }

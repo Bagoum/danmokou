@@ -20,7 +20,7 @@ namespace Danmokou.DMath.Functions {
 [Reflect]
 public static class ExMConversions {
 
-    public static tv2 Polar2ToXY(tv2 rt) => TEx.ResolveV2(rt, v2 => PolarToXY(v2.x, v2.y));
+    public static tv2 Polar2ToXY(tv2 rt) => TEx.ResolveV2AsXY(rt, (x, y) => PolarToXY(x, y), singleUse: true);
     /// <summary>
     /// Convert polar coordinates (theta in degrees) to Cartesian coordinates.
     /// </summary>
@@ -34,11 +34,12 @@ public static class ExMConversions {
     /// <summary>
     /// Convert Cartesian coordinates to polar coordinates (theta in degrees).
     /// </summary>
-    public static tv2 XYToPolar(tv2 v2) => TEx.Resolve(v2, xy => V2(Mag(xy), ATan(xy)));
+    public static tv2 XYToPolar(tv2 v2) => TEx.ResolveV2AsXY(v2, (x, y) => V2(Mag2(x, y), ATan2(y, x)));
+    
     /// <summary>
     /// Convert Cartesian coordinates to polar coordinates (theta in radians).
     /// </summary>
-    public static tv2 XYToPolarRad(tv2 v2) => TEx.Resolve(v2, xy => V2(Mag(xy), ATanR(xy)));
+    public static tv2 XYToPolarRad(tv2 v2) => TEx.ResolveV2AsXY(v2, (x, y) => V2(Mag2(x, y), ATanR2(y, x)));
 
     /// <summary>
     /// Converts an RV2 to Cartesian coordinates via TrueLocation.
@@ -71,33 +72,29 @@ public static class ExMConversions {
     /// Rotate an (x,y) pair by some radians counterclockwise.
     /// </summary>
     public static tv2 RotateRad2(tfloat ang_rad, tfloat xv, tfloat yv) => RotateV2(CosSin(ang_rad), xv, yv);
+
     /// <summary>
     /// Rotate a V2 by a vector containing cosine and sine values counterclockwise.
     /// </summary>
-    public static tv2 RotateV(tv2 cossin, tv2 v2) => TEx.Resolve(cossin, v2, (cs, vec) => {
-        var _cs = new TExV2(cs);
-        var tv2 = new TExV2(vec);
-        return RotateCS2(_cs.x, _cs.y, tv2.x, tv2.y);
-    });
+    public static tv2 RotateV(tv2 cossin, tv2 v2) => TEx.ResolveV2AsXY(cossin, (c, s) =>
+        TEx.ResolveV2AsXY(v2, (x, y) => RotateCS2(c, s, x, y), singleUse: true), singleUse: true);
+    
     /// <summary>
     /// Rotate a V2 by a vector containing cosine and sine values counterclockwise.
     /// </summary>
-    public static tv2 RotateV2(tv2 cossin, tfloat xv, tfloat yv) => TEx.Resolve(cossin, (cs) => {
-        var _cs = new TExV2(cs);
-        return RotateCS2(_cs.x, _cs.y, xv, yv);
-    });
+    public static tv2 RotateV2(tv2 cossin, tfloat xv, tfloat yv) => 
+        TEx.ResolveV2AsXY(cossin, (x, y) => RotateCS2(x, y, xv, yv), singleUse: true);
     /// <summary>
     /// Rotate a V2 by a calculated cosine and sine value counterclockwise.
     /// </summary>
-    public static tv2 RotateCS(tfloat cos, tfloat sin, tv2 v2) => TEx.Resolve(v2, vec => {
-        var tv2 = new TExV2(vec);
-        return RotateCS2(cos, sin, tv2.x, tv2.y);
-    });
+    public static tv2 RotateCS(tfloat cos, tfloat sin, tv2 v2) => 
+        TEx.ResolveV2AsXY(v2, (x, y) => RotateCS2(cos, sin, x, y), singleUse: true);
+    
     /// <summary>
     /// Rotate an (x,y) pair by a calculated cosine and sine value counterclockwise.
     /// </summary>
-    public static tv2 RotateCS2(tfloat cos, tfloat sin, tfloat xv, tfloat yv) => TEx.Resolve(cos, sin, xv, yv,
-        (c, s, x, y) => V2(c.Mul(x).Sub(s.Mul(y)), s.Mul(x).Add(c.Mul(y))));
+    public static tv2 RotateCS2(tfloat cos, tfloat sin, tfloat xv, tfloat yv) => 
+        TEx.Resolve(cos, sin, xv, yv, (c, s, x, y) => V2(c.Mul(x).Sub(s.Mul(y)), s.Mul(x).Add(c.Mul(y))));
 
     //Note that basis conversion is the same as inverse rotation,
     //and basis deconversion is the same as rotation.
@@ -119,15 +116,15 @@ public static class ExMConversions {
         ACos(v.z.Div(v3Mag(v)))
     )));
 
-    public static tv3 FromSphere(tfloat radius, tv2 sphere) => radius.Mul(TEx.ResolveV2(sphere, s => {
+    public static tv3 FromSphere(tfloat radius, tv2 sphere) => radius.Mul(TEx.ResolveV2AsXY(sphere, (sx, sy) => {
         var cst = new TExV2();
         var csp = new TExV2();
         return Ex.Block(new ParameterExpression[] {cst, csp},
-            cst.Is(CosSinDeg(s.x)),
-            csp.Is(CosSinDeg(s.y)),
+            cst.Is(CosSinDeg(sx)),
+            csp.Is(CosSinDeg(sy)),
             V3(cst.x.Mul(csp.y), cst.y.Mul(csp.y), csp.x)
         );
-    }));
+    }, singleUse: true));
 
     public static tv3 CrossProduct(tv3 v1, tv3 v2) => TEx.ResolveV3(v1, v2, (a, b) => V3(
         a.y.Mul(b.z).Sub(a.z.Mul(b.y)), 

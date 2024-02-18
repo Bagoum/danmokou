@@ -31,6 +31,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
   fileStateMachines: []
   licenses: []
-  importableScripts: []
+  importableScripts:
+  - name: eximport
+    file: {fileID: 2811297602134710623, guid: 82939b9a7f7e71a4f95c84efc64721a5, type: 3}
   scriptFolders: []
   fastParsing: 0

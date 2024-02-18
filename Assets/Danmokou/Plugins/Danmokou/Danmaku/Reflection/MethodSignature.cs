@@ -8,6 +8,7 @@ using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Reflection2;
+using JetBrains.Annotations;
 using Ex = System.Linq.Expressions.Expression;
 using MethodCall = Danmokou.Reflection2.AST.MethodCall;
 
@@ -32,6 +33,9 @@ namespace Danmokou.Reflection {
         /// The parameters of the method signature.
         /// </summary>
         Reflector.NamedParam[] Params { get; }
+        
+        /// <summary>Executable information for the method/constructor/field/property.</summary>
+        TypeMember Member { get; }
 
         /// <summary>
         /// True if this is a fallthrough method (BDSL1 only).
@@ -63,7 +67,14 @@ namespace Danmokou.Reflection {
         /// Show the signature of this method.
         /// </summary>
         string AsSignature { get; }
-        string AsSignatureWithParamMod(Func<Reflector.NamedParam, int, string> paramMod);
+        
+        /// <summary>
+        /// Show the signature of this method, including type restrictions.
+        /// </summary>
+        string AsSignatureWithRestrictions { get; }
+
+        [PublicAPI]
+        public string AsSignatureWithParamMod(Func<Reflector.NamedParam, int, string> paramMod);
         
         /// <summary>
         /// Show the signature of this method, only including types and not names.
@@ -122,7 +133,6 @@ namespace Danmokou.Reflection {
     /// </summary>
     public record MethodSignature : IMethodSignature {
         private static readonly Dictionary<MemberInfo, MethodSignature> globals = new();
-        /// <summary>Executable information for the method/constructor/field/property.</summary>
         public TypeMember Member { get; init; }
         /// <summary>
         /// Simplified description of the method parameters. Lifted methods have lifted parameters.
@@ -178,6 +188,17 @@ namespace Danmokou.Reflection {
 
         public string AsSignature => AsSignatureWithParamMod((p, _) => p.AsParameter);
 
+        public string AsSignatureWithRestrictions {
+            get {
+                var sig = AsSignature;
+                var restr = GenericTypeMap.Where(kv => kv.Value.RestrictedTypes != null).ToList();
+                if (restr.Count == 0) return sig;
+                var restrStrs = restr.Select(kv =>
+                    $"{kv.Key.RName()}:{string.Join(",", kv.Value.RestrictedTypes!.Select(t => t.SimpRName()))}");
+                return $"{sig} where {string.Join("; ", restrStrs)}";
+            }
+        }
+
         public string AsSignatureWithParamMod(Func<Reflector.NamedParam, int, string> paramMod) =>
             Member.AsSignature(paramMod);
 
@@ -226,6 +247,11 @@ namespace Danmokou.Reflection {
             var member = TypeMember.MaybeMake(mi);
             if (member == null)
                 return null;
+            return Get(member);
+        }
+
+        public static MethodSignature Get(TypeMember member) {
+            var mi = member.BaseMi;
             var fallthrough = mi.GetCustomAttribute<FallthroughAttribute>() != null;
             if (member is TypeMember.Method { Mi : {IsGenericMethodDefinition : true} } inf)
                 return globals[mi] = new GenericMethodSignature(inf, member.Params) { IsFallthrough = fallthrough };

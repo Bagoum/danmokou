@@ -79,7 +79,7 @@ class DerivativeVisitor : ExpressionVisitor {
         return base.VisitUnary(node);
     }
 
-    protected override Expression VisitConstant(ConstantExpression node) => ExMHelpers.E0;
+    protected override Expression VisitConstant(ConstantExpression node) => E0;
 
     protected override Expression VisitMethodCall(MethodCallExpression node) {
         var args = node.Arguments;
@@ -98,9 +98,9 @@ class DerivativeVisitor : ExpressionVisitor {
                 var dz = Visit(z);
                 //special case for x^c
                 if (y == x && z.Flatten(false) is ConstantExpression {Value: float f})
-                    return z.Mul(Pow(y, ExC(f - 1)));
+                    return z.Mul(Pow<float>(y, ExC(f - 1)));
                 //d/dx (y^z) = d/dx (e^zln(y)) = y^z * d/dx (zln(y)) = y^z * (z'ln(y) + zy'/y)
-                return Pow(y, z).Mul(dz.Mul(Ln(y)).Add(z.Mul(dy).Div(y)));
+                return Pow<float>(y, z).Mul(dz.Mul(Ln(y)).Add(z.Mul(dy).Div(y)));
             }
             if (node.Method.Name == "Floor" || node.Method.Name == "Ceiling") return E0;
             if (node.Method.Name == "Min") return Ex.Condition(y.LT(args[1]), Visit(y), Visit(args[1]));

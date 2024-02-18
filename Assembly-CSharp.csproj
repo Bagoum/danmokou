@@ -124,6 +124,7 @@
     <None Include="Assets\Danmokou\Rendering\Shaders\Display\DownDistorter.shader" />
     <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 lerpmany.bdsl" />
     <None Include="Assets\Danmokou\Patterns\PlayerFire\Flappy Aya DDCB 1234.bdsl" />
+    <None Include="Assets\Danmokou\Patterns\Tutorial\Example BDSL2 Import.bdsl" />
     <None Include="Assets\Danmokou\Patterns\Tutorial\DMK Tutorial Setup 00.bdsl" />
     <None Include="Assets\BRuH\Dialogue\en\tokiko.2.txt" />
     <None Include="Assets\Danmokou\Patterns\feature testing\easers comparison.bdsl" />
@@ -267,7 +268,7 @@
     <None Include="Assets\Danmokou\Fonts\YoZ\Readme_E.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Custom-Atlas.shader" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.ex.0.txt" />
-    <None Include="Assets\Danmokou\Patterns\Event Test.bdsl" />
+    <None Include="Assets\Danmokou\Patterns\feature testing\event based firing.bdsl" />
     <None Include="Assets\Danmokou\Rendering\Shaders\Display\LightningBG.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF.shader" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.e-good.txt" />
@@ -367,6 +368,7 @@
     <None Include="Assets\Danmokou\CG\BagoumShaders.cginc" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.ex.1.txt" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.3.1.txt" />
+    <None Include="Assets\Danmokou\Patterns\Tutorial\Example BDSL2 Script.bdsl" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.4.4.txt" />
     <None Include="Assets\Danmokou\Patterns\feature testing\z position support.bdsl" />
     <None Include="Assets\SZYU\Fonts\ubuntu-font-family-0.83\copyright.txt" />
@@ -417,6 +419,7 @@
     <None Include="Assets\Danmokou\Patterns\Testing\Save Test.txt" />
     <None Include="Assets\Danmokou\UXML\structures\Markdown\MkList.uxml" />
     <None Include="Assets\Danmokou\Rendering\Shaders\Display\SpellCircleV2.shader" />
+    <None Include="Assets\Danmokou\Patterns\Tutorial\Example BDSL2 StateMachine Script.bdsl" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.3.2.txt" />
     <None Include="Assets\Danmokou\Patterns\test variable binding soundness.bdsl" />
     <None Include="Assets\SiMP\Scripts\simp.reimu.bdsl" />
@@ -454,6 +457,7 @@
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.1.2.txt" />
     <None Include="Assets\Danmokou\UXML\structures\Markdown\MkLineFragmentCode.uxml" />
     <None Include="Assets\Danmokou\Patterns\cutin slides\GhostSpellCutins\slide ru to ld.bdsl" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 logsumshift.bdsl" />
     <None Include="Assets\Danmokou\UXML\UIScreen.uss" />
     <None Include="Assets\Danmokou\Rendering\Shaders\Display\FinalScreenRender.shader" />
     <None Include="Assets\SiMP\Scripts\simp.stage2_v3.bdsl" />

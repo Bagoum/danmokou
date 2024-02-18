@@ -8,7 +8,7 @@ pattern { } {
 			
 	// This is phase #1. 
 	phase 0 {
-		type(non, 'Hello World')
+		type(non, "Hello World")
 		hp(4000)
 	} {
 		paction 0 {

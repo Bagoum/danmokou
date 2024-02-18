@@ -351,10 +351,16 @@ public class GameManagement : CoroutineRegularUpdater {
 //#if EXBAKE_SAVE
     [ContextMenu("Bake Expressions")]
     public void BakeExpressions() {
-        BakeCodeGenerator.BakeExpressions();
+        BakeCodeGenerator.BakeExpressions(false);
         Reflector.GenerateAoT();
         EditorApplication.ExitPlaymode();
     }
+    
+    [ContextMenu("Verify Expressions")]
+    public void VerifyExpressions() {
+        BakeCodeGenerator.BakeExpressions(true);
+    }
+    
 //#endif
 #endif
 

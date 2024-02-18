@@ -9,7 +9,6 @@ using BagoumLib.Functional;
 using JetBrains.Annotations;
 using Mizuhashi;
 using Mizuhashi.Lexers;
-using UnityEngine;
 using static Mizuhashi.Combinators;
 
 namespace Danmokou.Reflection2 {
@@ -36,19 +35,18 @@ public static class Lexer {
     private const string num = @"[0-9]";
     private const string numMult = @"pi?|[hfsc]";
     private static readonly string[] specialOps = new[] { "\\", "->", "$" };
-    private static readonly string[] keywords = { "function", "const", "hvar", "var", "block", "return", "if", "else", 
-        "while", "for", "continue", "break", "import", "at", "as" };
-    private static readonly string[] valueKeywords = new[] { "true", "false", "null" };
+    private static readonly string[] keywords = { "hfunction", "function", "const", "hvar", "var", "block", "return", 
+        "if", "else", "while", "for", "continue", "break", "import", "at", "as", "new" };
+    private static readonly string[] valueKeywords = new[] { "true", "false" };
     private static readonly HashSet<string> operators = new[] {
         "++", "--",
         "!", 
-        "*", "/", "%", "^", //no // as that's comment :(
+        "*", "/", "%", "^", "^^", "^-", //no // as that's comment :(
         "+", "-",
         "<", ">", "<=", ">=", 
         "==", "!=", 
         "&&", "||", "&", "|",
         "=", "+=", "-=", "*=", "/=", "%=", "|=", "&=",
-        
         ".", //member
         "::", //type
         "?", ":", //conditional, though :text is used for LString
@@ -58,7 +56,7 @@ public static class Lexer {
     private static readonly Trie operatorTrie = new(operators.Concat(specialOps));
 
     static Lexer() {
-        var numLiteral = $@"(((({num}+(\.{num}+)?)|(\.{num}+))({numMult})?)|inf)";
+        var numLiteral = $@"(((({num}+(\.{num}*)?)|(\.{num}+))({numMult})?)|inf)";
         lexer = new(
             T(@"[^\S\n]+", TokenType.InlineWhitespace),
             //`b{` is short for `block {`
@@ -72,6 +70,8 @@ public static class Lexer {
                 var typ = TokenType.Identifier;
                 if (keywords.Contains(s.Value))
                     typ = TokenType.Keyword;
+                else if (s.Value == "null")
+                    typ = TokenType.NullKeyword;
                 else if (valueKeywords.Contains(s.Value))
                     typ = TokenType.ValueKeyword;
                 return new Token(typ, p, s);
@@ -111,11 +111,13 @@ public static class Lexer {
                 return (new Token(specialOps.Contains(op) ? TokenType.SpecialOperator : TokenType.Operator, 
                     p, op), op.Length);
             }),
-            //Strings may be "like this" or 'like this'
+            //As in C#, strings are "like this" and chars are 'a'
             T(@"""([^""\\]+|\\([a-zA-Z0-9\\""'&]))*""",
-                (p, s) => new Token(TokenType.String, p.CreateRange(s.Value, s.Length), s.Value[1..^1])),
+                (p, s) => new Token(TokenType.String, p.CreateRange(s.Value, s.Length), 
+                    System.Text.RegularExpressions.Regex.Unescape(s.Value[1..^1]))),
             T(@"'([^'\\]+|\\([a-zA-Z0-9\\""'&]))*'",
-                (p, s) => new Token(TokenType.String, p.CreateRange(s.Value, s.Length), s.Value[1..^1]))
+                (p, s) => new Token(TokenType.Char, p.CreateRange(s.Value, s.Length), 
+                    System.Text.RegularExpressions.Regex.Unescape(s.Value[1..^1])))
         );
     }
 
@@ -166,9 +168,13 @@ public static class Lexer {
         /// </summary>
         Keyword,
         /// <summary>
-        /// Value-based keywords (ie. just "true" and "false").
+        /// Value-based keywords except for "null" (ie. just "true" and "false").
         /// </summary>
         ValueKeyword,
+        /// <summary>
+        /// The keyword "null".
+        /// </summary>
+        NullKeyword,
         /// <summary>
         /// A special operator, such as :: or ->, which has functionality more
         ///  advanced than calling a function.
@@ -225,9 +231,13 @@ public static class Lexer {
         /// </summary>
         Number,
         /// <summary>
-        /// Strings, bounded by " " or ' '.
+        /// Strings, bounded by " ".
         /// </summary>
         String,
+        /// <summary>
+        /// Chars, bounded by ' '.
+        /// </summary>
+        Char,
         /// <summary>
         /// Localized strings, prefixed with :.
         /// </summary>
@@ -322,7 +332,7 @@ public static class Lexer {
         var bracket = new GroupingHandler(source, "bracket", "brackets", TokenType.OpenBracket, TokenType.CloseBracket);
         var brace = new GroupingHandler(source, "brace", "braces", TokenType.OpenBrace, TokenType.CloseBrace);
         bool RequiresWhitespaceSep(TokenType t) => IsAnyIdentifier(t) || t is 
-            TokenType.V2RV2 or TokenType.Number or TokenType.String or TokenType.LString;
+            TokenType.V2RV2 or TokenType.Number or TokenType.String or TokenType.LString or TokenType.Char;
         bool IsAnyIdentifier(TokenType t) => t is
             TokenType.Identifier or TokenType.TypeIdentifier;
         bool firstNonWSTokenOnLine = false;
@@ -518,6 +528,7 @@ public static class Lexer {
         var flagErr = new ParserError.Expected(flag switch {
             TokenFlags.PrecededByWhitespace => $"no whitespace before {desc}",
             TokenFlags.PostcededByWhitespace => $"no whitespace after {desc}",
+            TokenFlags.ImplicitBreak => $"no implicit break before {desc}",
             _ => throw new NotImplementedException()
         });
         return input => {

@@ -10,7 +10,7 @@ These are verbose instructions on how to set up Danmokou on your first run.
   - Run `git init`.
   - Run `git remote add super https://github.com/Bagoum/danmokou.git`. This will allow you to reference the project repository via the alias "super".
   - Run `git pull super master`.
-    - `master` is the latest version. You can also pick any version available [on the tags page](https://github.com/Bagoum/danmokou/tags) and run eg. `git pull super v10.1.0`.
+    - `master` is the latest version. You can also pick any version available [on the tags page](https://github.com/Bagoum/danmokou/tags) and run eg. `git pull super v11.0.0`.
   - Run `git submodule update --init --recursive`. This will import code from several submodules, including SiMP, which is a fully structured game, and SuzunoyaUnity, which is a visual novel engine that powers the dialogue system.
     - If you do not want code from the extra submodules, then you can run `git submodule update --init --recursive Assets/SZYU` to only handle SuzunoyaUnity, which is required for the engine to work.
 - If you already have a git repository with Danmokou, you can update it as follows:
@@ -41,42 +41,36 @@ These are verbose instructions on how to set up Danmokou on your first run.
 - This is a BDSL file, which is a raw text file. If you have VSCode, you can get the extension [Danmokou Scripting](https://marketplace.visualstudio.com/items?itemName=Bagoum.dmkscripting) and open it with VSCode. Otherwise, you can open it with whatever text editor you prefer to use.
 - The file should have the following contents:
 
-```python
-<#> warnprefix
-## Go to https://dmk.bagoum.com/docs/articles/t01.html for the tutorial. 
-pattern({ })
-phase(0)
-	paction(0)
-		shift-phase-to(1)
-		
-## This is phase #1. 
-<!> type(non, `Hello World`)
-<!> hp(4000)
-phase(0)
-	paction(0)
-		position(0, 1)
+```C#
+// Go to https://dmk.bagoum.com/docs/articles/t01.html for the tutorial. 
+pattern { } {
+	phase 0 {} {
+		paction 0 {
+			shiftphaseto(1)
+		}
+	}
+			
+	// This is phase #1. 
+	phase 0 {
+		type(non, "Hello World")
+		hp(4000)
+	} {
+		paction 0 {
+			position(0, 1)
+		}
+	}
+}
 ```
 
-- This is a **behavior script**. Almost all interesting behavior in DMK is defined through behavior scripts, written in Bagoum Danmaku Scripting Language (BDSL). Here are a few things to keep in mind about BDSL:
-  - Comments can be placed on their own lines or at the end of lines. One hashtag makes a comment (like Python).
-  - Indentation is not required, but you should do it.
-  - Newlines are usually required.
-  - Parentheses and argument separator commas are not required, unless you want infix mathematical operators (eg. `(1 + 2)` instead of `+ 1 2`).
+- This is a **behavior script**. Almost all interesting behavior in DMK is defined through behavior scripts, written in Bagoum Danmaku Scripting Language (BDSL).
 - Run the scene by pressing the play button at the top of the screen. Objects should start animating and you should see the message "Hello World" at the top of the game UI. 
   - Note: you may seen cyan squares on the screen when certain objects first appear. This should only happen once per object type. For example, the first time you open the pause menu, you might see a cyan square. This is due to shader recompilation and is harmless. It does not occur in builds.
 - Make sure that the FPS counter (bottom right of the game UI) is stable. If it is excessively high, then press Esc to open the in-game pause menu and turn Vsync OFF. If your computer is old, you may need to turn shaders OFF as well. These settings will be saved as soon as you close the menu.
 - Because behavior in DMK is written in BDSL and not in C#, you can **recompile scripts at runtime** without significant overhead. To do this, simply press R in the game view while the game is running. If you are successful, you should see the "Hello World" message disappear and fade back in, and the boss health bar should empty out a bit. 
-- That's all for setup. Feel free to move on to [the first tutorial](t01.md) once you're done with extra setup.
+- That's all for setup. If you'd like to get right into firing bullets, you can move onto [the first tutorial](t01.md), or if you'd like to get a feel for the scripting language first, you can reference the [language guide](language/guide1.md).
 
 ## Part Extra: IDE Setup
 
 When you get around to eventually extending the engine with your own functions and mechanics, you'll probably use some IDE for editing C#. The three most common are Rider, Visual Studio, and VS Code. I use Rider.
 
 If using VS Code, you may come across an issue where many references in the codebase do not compile. In this case, reinstall your C# extension to version 1.23.2. 
-
-## Part Extra: Notepad++ Setup
-
-If you are using Notepad++ instead of VSCode to edit behavior scripts, you can use the BDSL language theme for Notepad++. Note that the Notepad++ theme just colors words, and does not do any deep analysis of the code.
-
-- Copy `npp-nautical-theme.xml` into `AppData/Roaming/Notepad++/themes`, and then select it in `Settings > Style Configurator` via the dropdown. Make sure `Global Styles > Global override > Enable global background color` is checked.
-- Copy `npp-bdsm-language.xml` into `AppData/Roaming/Notepad++/userDefineLangs`, and then select "BDSM" (Bagoum Danmaku Scripting Markup) it under the Language dropdown when editing a script file.

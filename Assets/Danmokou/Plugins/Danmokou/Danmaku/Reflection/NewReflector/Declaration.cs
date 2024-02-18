@@ -9,7 +9,6 @@ using BagoumLib.Functional;
 using BagoumLib.Reflection;
 using BagoumLib.Unification;
 using Danmokou.Core;
-using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
 using Mizuhashi;
@@ -34,7 +33,7 @@ public interface IDeclaration {
     /// <summary>
     /// True if this variable should be hoisted into the parent scope of the location where its declaration occured.
     /// </summary>
-    bool Hoisted => false;
+    bool Hoisted { get; }
     
     /// <summary>
     /// The scope in which this variable is declared. Assigned by <see cref="LexicalScope.Declare"/>
@@ -214,6 +213,7 @@ public class ImplicitArgDecl<T> : ImplicitArgDecl {
 
 public class ScriptFnDecl : IDeclaration {
     public string Name { get; init; }
+    public bool Hoisted { get; }
     public ImplicitArgDecl[] Args { get; init; }
     public AST.ScriptFunctionDef Tree { get; set; }
     public TypeDesignation.Dummy CallType { get; private set; }
@@ -225,14 +225,27 @@ public class ScriptFnDecl : IDeclaration {
     public PositionRange Position => Tree.Position;
     public LexicalScope DeclarationScope { get; set; } = null!;
     public string? DocComment { get; set; }
-    private (MethodInfo, object)? _compiled = null;
-    public ScriptFnDecl(AST.ScriptFunctionDef Tree, string Name, ImplicitArgDecl[] Args, TypeDesignation.Dummy CallType) {
+    public Type? FuncType { get; private set; }
+    private object? _compiled = null;
+    private bool isCompiling = false;
+    public ScriptFnDecl(AST.ScriptFunctionDef Tree, bool Hoist, string Name, ImplicitArgDecl[] Args, TypeDesignation.Dummy CallType) {
         this.Name = Name;
+        this.Hoisted = Hoist;
         this.Args = Args;
         this.Tree = Tree;
         this.CallType = CallType;
     }
-    public (MethodInfo invoker, object func) Compile() => _compiled ??= Tree.CompileFunc();
+    public Expression Compile() {
+        if (_compiled is null) {
+            if (isCompiling) //recursive function
+                return Expression.Constant(this).Field(nameof(_compiled)).As(FuncType!);
+            isCompiling = true;
+            FuncType ??= Tree.CompileFuncType();
+            _compiled = Tree.CompileFunc(FuncType);
+            isCompiling = false;
+        }
+        return Expression.Constant(_compiled);
+    }
 
     public Type? ReturnType => Tree.Body.LocalScope!.Return!.FinalizedType;
 
@@ -258,6 +271,7 @@ public class ScriptFnDecl : IDeclaration {
 
 public record ScriptImport(PositionRange Position, EnvFrame Ef, string FileKey, string? ImportFrom, string? ImportAs) : IDeclaration {
     public string Name => ImportAs ?? FileKey;
+    public bool Hoisted => false;
     public LexicalScope DeclarationScope { get; set; } = null!;
     public string? DocComment { get; set; }
     

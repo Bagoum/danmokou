@@ -11,8 +11,8 @@ const function eqzero(x) {
 
 const var myF = eqzero(4);
 
-var sm = pattern({
-		boss 'simp.kasen'
+var sm = new PatternSM({
+		boss "simp.kasen"
 	}, {
 	phase 0 { } {
 		paction 0 {

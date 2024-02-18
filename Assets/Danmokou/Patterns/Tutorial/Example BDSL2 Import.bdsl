@@ -1,0 +1,13 @@
+//bdsl2-reference-script
+const var cx = round(11.7);
+var mn = sqrt(cx + 1);
+var ms = "hello";
+
+//This is a doc comment for aConstFn
+const function aConstFn(y) {
+    return 1 + cx + y;
+}
+
+function aFn(y) {
+    return aConstFn(mn + 2 * y);
+}

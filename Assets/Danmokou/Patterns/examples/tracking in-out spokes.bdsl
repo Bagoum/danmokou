@@ -13,7 +13,9 @@ phase 25
 			wait-child
 			savev2	ploc 0 Lplayer
 		} gcr2 3 20 <> {
-		} target (@0 ploc) gsr2c 12 {
+		} gsr { 
+			target a (@0 ploc) 
+		} gsr2c 12 {
 		} s roffset
 			px (* 6 equad0m10 3 7 t)
 		bullet-control persist circle-pink/b restyle circle-red/b > t 3

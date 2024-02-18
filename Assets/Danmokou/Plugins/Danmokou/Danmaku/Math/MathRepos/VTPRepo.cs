@@ -31,16 +31,11 @@ public delegate TEx<VTPExpr> CoordsToDelta(ITexMovement vel, TEx<float> dt, TExV
 /// <br/>These functions should not be invoked by users; instead, use the functions in <see cref="VTPRepo" />.
 /// </summary>
 public static class VTPConstructors {
-    public static V2ToCoords CartesianRot(ExTP erv) => (c, s, bpi, fxy) => {
-        var v2 = new TExV2();
-        return Ex.Block(new ParameterExpression[] { v2 },
-            Ex.Assign(v2, erv(bpi)),
-            fxy(Ex.Subtract(Ex.Multiply(c, v2.x), Ex.Multiply(s, v2.y)),
-                Ex.Add(Ex.Multiply(s, v2.x), Ex.Multiply(c, v2.y)),
-                ExMHelpers.E0),
-            Ex.Empty()
-        );
-    };
+    public static V2ToCoords CartesianRot(ExTP erv) => (c, s, bpi, fxy) => 
+        TEx.ResolveV2AsXY(erv(bpi), (x, y) => 
+            fxy(Ex.Subtract(Ex.Multiply(c, x), Ex.Multiply(s, y)),
+                Ex.Add(Ex.Multiply(s, x), Ex.Multiply(c, y)),
+                ExMHelpers.E0));
 
     public static CoordF CartesianRot(TP rv) => delegate(float c, float s, ParametricInfo bpi, ref Vector3 vec) {
         var v2 = rv(bpi);
@@ -49,13 +44,8 @@ public static class VTPConstructors {
         vec.z = 0;
     };
 
-    public static V2ToCoords CartesianNRot(ExTP enrv) => (c, s, bpi, fxy) => {
-        var nrv = new TExV2();
-        return Ex.Block(new ParameterExpression[] { nrv },
-            Ex.Assign(nrv, enrv(bpi)),
-            fxy(nrv.x, nrv.y, ExMHelpers.E0),
-            Ex.Empty());
-    };
+    public static V2ToCoords CartesianNRot(ExTP enrv) => (c, s, bpi, fxy) => 
+        TEx.ResolveV2AsXY(enrv(bpi), (x, y) => fxy(x, y, ExMHelpers.E0), singleUse: true);
 
     // ReSharper disable once RedundantAssignment
     public static CoordF CartesianNRot(TP tpnrv) => delegate(float c, float s, ParametricInfo bpi, ref Vector3 vec) {

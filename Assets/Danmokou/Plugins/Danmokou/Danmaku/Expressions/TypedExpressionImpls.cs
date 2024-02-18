@@ -80,7 +80,7 @@ public class TExV2 : TEx<Vector2> {
     public readonly MemberExpression x;
     public readonly MemberExpression y;
 
-    public TExV2() : this(ExMode.Parameter, null) { }
+    public TExV2(string? name = null) : this(ExMode.Parameter, name) { }
 
     public TExV2(ExMode m, string? name) : base(m, name) {
         x = Ex.Field(ex, "x");

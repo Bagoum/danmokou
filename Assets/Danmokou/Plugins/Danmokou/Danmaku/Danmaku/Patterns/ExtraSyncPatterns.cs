@@ -52,6 +52,7 @@ public static partial class AtomicPatterns {
 }
 public static partial class SyncPatterns {
     /*
+    [BDSL1Only]
     public static SyncPattern oArrowI(ExBPY times, ExBPY xstep, ExBPY ystep, GenCtxProperty[] props,
         SyncPattern[] inner) =>
         GSRepeat2(GCXF(times), RV2Zero, props.Prepend(
@@ -72,7 +73,7 @@ public static partial class SyncPatterns {
     private static readonly ExBPY rxi = Reference<float>(xi);
     private static readonly ExBPY ryi = Reference<float>(yi);
     private static SyncPattern _FArrow(ExBPY indexer, ExBPY n, ExBPY xstep, ExBPY ystep, GenCtxProperty[] props,
-        GCXU<VTP> path, string? poolSuffix, string? locSave, string? dirSave, params SyncPattern[] extraSp) {
+        VTP path, string? poolSuffix, string? locSave, string? dirSave, params SyncPattern[] extraSp) {
         return GuideEmpty(poolSuffix, indexer, AutoSaveV2(locSave ??= MakeV2Key(), dirSave ??= MakeV2Key()), 
             AutoSaveF, path, extraSp.Append(
             GSRepeat2(GCXF<float>(x => n(x).Mul(n(x).Add(E1)).Div(E2)), RV2Zero, new[] {
@@ -93,11 +94,13 @@ public static partial class SyncPatterns {
         ).ToArray());
     }
 
+    [BDSL1Only]
     public static SyncPattern FArrow(ExBPY indexer, ExBPY n, ExBPY xStep, ExBPY yStep, GenCtxProperty[] props,
-        GCXU<VTP> path) => _FArrow(indexer, n, xStep, yStep, props, path, null, null, null);
+        VTP path) => _FArrow(indexer, n, xStep, yStep, props, path, null, null, null);
 
+    [BDSL1Only]
     public static SyncPattern TreeArrow(ExBPY indexer, ExBPY n, ExBPY xStep, ExBPY yStep, GenCtxProperty[] props,
-        GCXU<VTP> path, string treeColor, GCXF<float> treeXLen, ExBPY treeYLen, ExBPY treeXStep,
+        VTP path, string treeColor, GCXF<float> treeXLen, ExBPY treeYLen, ExBPY treeXStep,
         ExBPY treeYStep) {
         var loc = MakeV2Key();
         var dir = MakeV2Key();

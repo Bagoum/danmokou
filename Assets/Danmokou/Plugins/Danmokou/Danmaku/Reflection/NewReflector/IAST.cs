@@ -107,9 +107,9 @@ public interface IAST : ITypeTree, IDebugAST {
         
         if (cu1s.Count != 1) {
             //Prefer to get a TooManyOverloads or TooManyTypes from the methods proper if possible
-            foreach (var u in cu1s) 
+            /*foreach (var u in cu1s) 
                 if (root.ResolveUnifiers(u.Item2, resolver, Unifier.Empty).TryR(out var err))
-                    return err;
+                    return err;*/
             foreach (var u in cu1s)
                 if (PinBlockTooManyTypesErr(root, resolver, u.Item3) is { } err)
                     return err;
@@ -139,7 +139,7 @@ public interface IAST : ITypeTree, IDebugAST {
             sb.Append($"The type of the variable `{decl.Name}` could not be determined.");
             if (decl.FinalizedTypeDesignation is TypeDesignation.Variable { RestrictedTypes: { } rt })
                 sb.Append($"\nIt might be any of the following: {string.Join(", ", rt.Select(r => r.SimpRName()))}");
-            sb.Append($"\nYou can specify the type as eg. `var x: float = 5`.");
+            sb.Append($"\nYou can specify the type as eg. `var x::float = 5`.");
         }
         if (e is TypeUnifyErr.NotEqual ne)
             sb.Append($"Type {ne.LReq} and {ne.RReq} could not be unified, " +
@@ -151,7 +151,11 @@ public interface IAST : ITypeTree, IDebugAST {
                       $"({ane.LResolved.Arguments.Length} and {ane.RResolved.Arguments.Length} respectively).");
         } else if (e is TypeUnifyErr.UnboundRestr unbound) {
             pos = (unbound.Tree as IAST)!.Position;
-            if (unbound.Tree is AST.Reference r && r.Value.TryL(out var decl)) {
+            if (unbound.Tree.SelectedOverloadReturnTypeNoCast?.IsResolved is true &&
+                unbound.Tree.ImplicitCast?.ResultType is { IsResolved: false} rt) {
+                sb.Append("The result type of this expression could not be determined because this expression is " +
+                          $"implicitly cast to an underdetermined type {rt.SimpRName()}.");
+            } else if (unbound.Tree is AST.Reference r && r.Value.TryL(out var decl)) {
                 UntypedRef(decl);
             } else if (unbound.Tree is AST.Number n) {
                 sb.Append($"It's not clear whether this number is an int or a float.");
@@ -176,11 +180,11 @@ public interface IAST : ITypeTree, IDebugAST {
                 var calledAs = (m is AST.InstanceMethodCall im) ? im.Name : m.Overloads[0].CalledAs;
                 var plural = m.Overloads.Count != 1 ? "s" : "";
                 if (m.Overloads.Count == 1) {
-                    sb.Append($"Typechecking failed for method {m.Overloads[0].Mi.AsSignature}.");
+                    sb.Append($"Typechecking failed for method {m.Overloads[0].Mi.AsSignatureWithRestrictions}.");
                 } else {
                     sb.Append($"Typechecking failed for method call `{calledAs}`, " +
                               $"which maps to {m.Overloads.Count} overloaded methods:\n\t" +
-                              $"{string.Join("\n\t", m.Overloads.Select(o => o.Mi.AsSignature))}");
+                              $"{string.Join("\n\t", m.Overloads.Select(o => o.Mi.AsSignatureWithRestrictions))}");
                 }
                 sb.Append($"\nThe parameters were inferred to have the following types:\n\t{setsDisplay(m.Params)}");
                 sb.Append($"\nThese parameters cannot be applied to the above method{plural}.");
@@ -193,11 +197,11 @@ public interface IAST : ITypeTree, IDebugAST {
                 pos = pm.MethodPosition;
                 var plural = pm.Overloads.Count != 1 ? "s" : "";
                 if (pm.Overloads.Count == 1) {
-                    sb.Append($"Typechecking failed for method {pm.Overloads[0].Meth.Mi.AsSignature}.");
+                    sb.Append($"Typechecking failed for method {pm.Overloads[0].Meth.Mi.AsSignatureWithRestrictions}.");
                 } else {
                     sb.Append($"Typechecking failed for method call `{pm.Overloads[0].Meth.CalledAs}`, " +
                               $"which maps to {pm.Overloads.Count} overloaded methods:\n\t" +
-                              $"{string.Join("\n\t", pm.Overloads.Select(o => o.Meth.Mi.AsSignature))}");
+                              $"{string.Join("\n\t", pm.Overloads.Select(o => o.Meth.Mi.AsSignatureWithRestrictions))}");
                 }
                 sb.Append($"\nThe parameters were inferred to have the following types:\n\t{setsDisplay(pm.Params)}");
                 sb.Append($"\nThese parameters cannot be partially applied to the above method{plural}.");
@@ -227,7 +231,7 @@ public interface IAST : ITypeTree, IDebugAST {
                 pos = m.MethodPosition;
                 sb.Append($"Typechecking failed for method call `{m.Overloads[0].CalledAs}`, " +
                           $"which maps to {m.RealizableOverloads!.Count} overloaded methods:\n\t" +
-                          $"{string.Join("\n\t", m.Overloads.Select(o => o.Mi.AsSignature))}");
+                          $"{string.Join("\n\t", m.RealizableOverloads.Select(o => o.Mi.AsSignature))}");
                 sb.Append($"\nThe typechecker could not determine whether the method call should return " +
                           $"type {mover.First.SimpRName()} or {mover.Second.SimpRName()}.");
             } else if (mover.Tree is AST.Reference r) {
