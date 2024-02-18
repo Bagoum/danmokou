@@ -31,7 +31,7 @@ var sm = pattern({
 				movetarget(b{ 
 					var myt::float = lr + 1
 					myt + 0.1
-				}, $(sin), pxy(0, lr))
+				}, $(eiosine), pxy(0, lr))
 				async "sakura-blue/w" <> gcr {
 					wtd(dl, 60, 10)
 					preloop b{ 
