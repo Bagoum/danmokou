@@ -19,6 +19,16 @@ The following features are planned for future releases.
 
 
 
+# v11.1.0
+
+#### Features
+
+- In SuzunoyaUnity, text now scales in (in addition to fading in) in the text box. This can be configured as "Char Scale In Time" and "Char Scale In From" on ADV Dialogue Box Mimic.
+
+#### Changes
+
+- Removed the `.csproj` and `.sln` files from the repository. These are required for normal C# projects, but Unity autogenerates them. 
+
 # v11.0.0 (2024/02/17)
 
 **The engine has changed significantly in v11**- make sure to read the Language Changes section before upgrading.
