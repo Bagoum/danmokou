@@ -209,6 +209,7 @@
     <None Include="Assets\Danmokou\CG\Noise.cginc" />
     <None Include="Assets\Danmokou\Patterns\examples\scrolling.bdsl" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.5.3.txt" />
+    <None Include="Assets\Danmokou\Patterns\bdsl2\bdsl2 game instance.bdsl" />
     <None Include="Assets\Danmokou\Plugins\DLLs\protobuf-net.Core.xml" />
     <None Include="Assets\SiMP\Dialogue\simp.dialogue.1.1.txt" />
     <None Include="Assets\Danmokou\Patterns\PlayerFire\Reimu Lazors 0.bdsl" />

@@ -17,6 +17,7 @@ public record InstanceFeatures {
     public IFeatureCreator<IFaithFeature> Faith { get; init; } = new FaithFeatureCreator();
 
     public IFeatureCreator<IMeterFeature> Meter { get; init; } = new MeterFeatureCreator();
+    public IFeatureCreator<ICustomDataFeature> CustomData { get; init; } = new NoCustomDataFeatureCreator();
 
     public static readonly InstanceFeatures ShotDemoFeatures = new() {
         Power = new DisabledPowerFeatureCreator(),

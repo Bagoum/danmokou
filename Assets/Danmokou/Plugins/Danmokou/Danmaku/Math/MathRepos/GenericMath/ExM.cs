@@ -556,10 +556,11 @@ public static partial class ExM {
     /// <summary>
     /// Returns true if the instance has not continued.
     /// </summary>
-    public static tbool Is1CC() => Ex.Not(Instance.Field(nameof(InstanceData.Continued)));
+    public static tbool Is1CC() => Ex.Not(inst.Field(nameof(InstanceData.Continued)));
 
-    [DontReflect]
-    public static Ex Instance => Ex.Property(null, typeof(GameManagement), nameof(GameManagement.Instance));
+    [DontReflect] public static Ex inst => Instance();
+    public static TEx<InstanceData> Instance() => 
+        Ex.Property(null, typeof(GameManagement), nameof(GameManagement.Instance));
 
 
     /// <summary>
@@ -673,7 +674,7 @@ public static partial class ExM {
     public static ExBPY OptionAngle(Func<TExArgCtx, TEx<FireOption>> ctr) => tac => 
         ctr(tac).Field(nameof(BehaviorEntity.original_angle));
 
-    private static Ex PowerFeature => Instance.Field(nameof(InstanceData.PowerF));
+    private static Ex PowerFeature => inst.Field(nameof(InstanceData.PowerF));
     /// <summary>
     /// Return the player's power value.
     /// </summary>

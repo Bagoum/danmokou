@@ -518,17 +518,20 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             if (ThisIsConstantVarInitialize(out var decl)) {
                 var valex = Params[1].Realize(tac);
                 if ((Ex)valex is ConstantExpression cex)
-                    decl.ConstantValue = Maybe<object?>.Of(cex.Value);
+                    decl.ConstantValue = Ex.Constant(cex.Value, decl.FinalizedType!);
                 else {
                     try {
                         var del = Ex.Lambda(valex).Compile();
-                        decl.ConstantValue = Maybe<object?>.Of(del.GetType().GetMethod("Invoke")!
-                            .Invoke(del, System.Array.Empty<object>()));
+                        decl.ConstantValue =
+                            Ex.Constant(del.GetType().GetMethod("Invoke")!
+                                .Invoke(del, System.Array.Empty<object>()),
+                                decl.FinalizedType!
+                            );
                     } catch (Exception e) {
                         throw new ReflectionException(Position, "Failed to assign constant value:", e);
                     }
                 }
-                return Ex.Constant(decl.ConstantValue.Value, decl.FinalizedType!);
+                return decl.ConstantValue.Value;
             }
             
             //shouldn't need ParsingScope, that's bdsl1 only
@@ -1051,6 +1054,8 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                             $"The variable `{d.Name}` (declared at {d.Position}) cannot be referenced from inside a constant function.");
                     }
             }
+            foreach (var err in IAST.VerifyChildren(this))
+                yield return err;
         }
 
         public Type CompileFuncType() {
@@ -1064,16 +1069,19 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                          throw new ReflectionException(Position, $"Script function return type is not finalized");
             if (Definition.IsConstant) //don't include ef
                 fTypes = fTypes.Skip(1).ToArray();
-            return ReflectionUtils.GetFuncType(fTypes.Length).MakeGenericType(fTypes);
+            return ReflectionUtils.MakeFuncType(fTypes);
         }
 
         public object CompileFunc(Type fnType) {
             var args = Definition.Args;
+            var ret = Body.LocalScope!.Return!;
             Func<TExArgCtx, TEx> body = tac => {
                 return Ex.Block(
                     Body.Realize(tac),
-                    Ex.Throw(Ex.Constant(new Exception($"The function {Definition.AsSignature()} ran to its end without reaching a return statement."))),
-                    Ex.Label(Body.LocalScope!.Return!.Label, Ex.Default(Body.LocalScope!.Return!.FinalizedType))
+                    ret.FinalizedType == typeof(void) ? Ex.Empty() :
+                        Ex.Throw(Ex.Constant(new Exception($"The function {Definition.AsSignature()} ran to its end " +
+                                                           $"without reaching a return statement."))),
+                    Ex.Label(ret.Label, Ex.Default(ret.FinalizedType!))
                 );
             };
             var argsWithEf = Definition.IsConstant ? args : //don't include ef
@@ -1104,6 +1112,16 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         public IReadOnlyList<ITypeTree> Arguments => Params;
         public List<Dummy>? RealizableOverloads { get; set; }
         public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
+
+        IEnumerable<ReflectionException> IAST.Verify() {
+            var typ = ReturnType(SelectedOverload?.simplified!);
+            if (typ == typeof(void) && Value != null)
+                yield return new(Position, "This function has a return type of void. No return value can be provided.");
+            if (typ != typeof(void) && Value == null)
+                yield return new(Position, "A return value is required here.");
+            foreach (var err in IAST.VerifyChildren(this))
+                yield return err;
+        }
 
         public override TEx _RealizeWithoutCast(TExArgCtx tac) {
             var returnCfg = Scope.NearestReturn!;

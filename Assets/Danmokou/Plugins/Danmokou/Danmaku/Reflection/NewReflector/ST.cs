@@ -126,7 +126,9 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                 };
             }
             
-            var unreachable = scope.ScriptRoot.AllVarsInDescendantScopes.Where(x => x.Name == Name).ToList();
+            var unreachable = scope.ScriptRoot.AllVarsInDescendantScopes
+                .Concat(scope.GlobalRoot.AllVisibleVars)
+                .Where(x => x.Name == Name).ToList();
             var err = $"Could not determine what \"{Name}\" refers to.";
             if (unreachable.Count > 0) {
                 err +=
@@ -794,7 +796,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             var localScope = LexicalScope.Derive(hoist ? scope.HoistedScope : scope);
             localScope.Type = LexicalScopeType.ExpressionEF;
             localScope.IsConstScope = ConstKwPos != null;
-            var krt = Parser.TypeFromToken(ReturnType, scope);
+            var krt = Parser.TypeFromToken(ReturnType, scope, allowVoid:true);
             if (!krt.TryL(out var retTyp))
                 return krt.Right;
             var rt = localScope.Return = new ReturnStatementConfig(localScope, retTyp);
@@ -811,6 +813,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             var decl = new ScriptFnDecl(null!, hoist, Name.Content, args, fnCallType) {
                 IsConstant = localScope.IsConstScope
             };
+            rt.Function = decl;
             if (scope.Declare(decl).TryR(out var prev))
                 return new AST.Failure(new(Position, 
                     $"The function {decl.Name} has already been declared at {prev.Position}."), scope);

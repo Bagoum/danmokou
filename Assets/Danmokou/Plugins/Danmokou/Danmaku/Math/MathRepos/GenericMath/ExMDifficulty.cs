@@ -20,7 +20,7 @@ public static class ExMDifficulty {
     //In most cases, difficulty does not change, but this allows preserving script compilations between executions.
     
     #region Difficulty
-    [DontReflect] private static Ex d => ExM.Instance.Field(nameof(InstanceData.Difficulty));
+    [DontReflect] private static Ex d => ExM.inst.Field(nameof(InstanceData.Difficulty));
 
     /// <summary>
     /// Get the difficulty multiplier. 1 is easy, ~2.3 is lunatic. POSITIVE values outside this range are possible.
@@ -77,7 +77,7 @@ public static class ExMDifficulty {
 
     #region Rank
 
-    private static Ex RankFeature => ExM.Instance.Field(nameof(InstanceData.RankF));
+    private static Ex RankFeature => ExM.inst.Field(nameof(InstanceData.RankF));
 
     /// <summary>
     /// Get the dynamic difficulty rank, which varies between MinRank and MaxRank.

@@ -42,7 +42,11 @@ public static partial class Reflector {
         public static readonly Dictionary<Type, Dictionary<string, List<MethodSignature>>> BDSL2ExtensionMethods =
             new();
 
-        public static void MaybeRecordExtensionMethod(MethodSignature sig) {
+        public static void RecordExtensionMethodsInClass(Type declaring) {
+            foreach (var mi in declaring.GetMethods())
+                MaybeRecordExtensionMethod(MethodSignature.Get(mi));
+        }
+        private static void MaybeRecordExtensionMethod(MethodSignature sig) {
             if (sig.Member is TypeMember.Method { IsExtension: true }) {
                 var thisTd = sig.SharedType.Arguments[0];
                 if ((thisTd.Resolve().LeftOrNull ?? (thisTd as TypeDesignation.Known)?.Typ) is { } thisTyp) {

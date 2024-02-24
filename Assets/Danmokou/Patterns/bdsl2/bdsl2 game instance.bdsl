@@ -1,0 +1,33 @@
+
+var data = instance.CustomDataF as SiMPCustomDataFeature;
+
+function printGraze(graze::long)::void {
+	Logs.Log(graze.ToString(), null, LogLevel.INFO);
+}
+(instance.Graze as IObservable<long>).Subscribe($(printGraze))
+data.SomeVariable = 4;
+
+var sm = pattern({}, {
+	phase 0 { } {
+		paction 0 {
+			shiftphaseto 1
+		}
+	}
+	phase 30 { } {
+		paction 0 {
+			position -2 1
+			
+			delay(3, exec(b{
+				data.SomeVariable = 20;
+			}))
+
+			async "fairy1" <> gcr2 400 inf <> {
+			} summon(rvelocity(px(1)), 
+				async "arrow-red/w" <> gcr2 120 inf <> {
+				} gsr2c data.SomeVariable {
+				} s rvelocity px 2
+			, { })
+		}
+	}
+})
+sm;

@@ -25,7 +25,7 @@ These are verbose instructions on how to set up Danmokou on your first run.
 ## Part 1: Unity Setup
 
 - Download/Install Unity Hub (https://store.unity.com/download-nuo), then run it
-- Within Unity Hub > Installs, add Unity version **2022.2.13f1** (Preferred for DMK v10.1.0, though 2021.3 also works)
+- Within Unity Hub > Installs, add Unity version **2023.2.9** (Preferred for DMK v11, though any 2023.2 or higher should work)
 - Within Unity Hub > Projects, click ADD and browse to the root Danmokou folder. 
 - Click on the project to load it. **The first time you load it, Unity may take several minutes to import resources.**
   - If you get an error that the project contains compilation errors, click "Ignore". Once the project has loaded, you may see a compilation error saying something about PanelSettings missing. If you trigger a recompile (eg. by adding code or comments to any C# file in the solution), the error should disappear.

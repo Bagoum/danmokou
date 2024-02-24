@@ -84,6 +84,10 @@ public class InstanceData {
     /// <inheritdoc cref="IMeterFeature"/>
     public IMeterFeature MeterF { get; }
     
+    /// <inheritdoc cref="ICustomDataFeature"/>
+    public ICustomDataFeature CustomDataF { get; }
+    
+    
     public readonly InstanceMode mode;
     
     /// <summary>
@@ -186,6 +190,7 @@ public class InstanceData {
         Features.Add(RankF = features.Rank.Create(this));
         Features.Add(FaithF = features.Faith.Create(this));
         Features.Add(MeterF = features.Meter.Create(this));
+        Features.Add(CustomDataF = features.CustomData.Create(this));
     }
 
     public (int success, int total)? LookForSpellHistory(string bossKey, int phaseIndex) {

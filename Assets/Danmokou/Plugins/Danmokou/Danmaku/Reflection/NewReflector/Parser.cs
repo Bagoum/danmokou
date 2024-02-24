@@ -38,13 +38,16 @@ public static class Parser {
         return typ.Left;
     }
 
-    public static Either<Type?, AST.Failure> TypeFromToken(Token? mtypStr, LexicalScope scope) {
+    public static Either<Type?, AST.Failure> TypeFromToken(Token? mtypStr, LexicalScope scope, bool allowVoid = false) {
         if (!mtypStr.Try(out var typStr))
             return null as Type;
         var result = TypeFromString(typStr.Content);
-        if (result.IsLeft)
-            return result.Left;
-        return new AST.Failure(new ReflectionException(typStr.Position, result.Right), scope) { IsTypeCompletion = true };
+        if (!result.TryL(out var typ))
+            return new AST.Failure(new ReflectionException(typStr.Position, result.Right), scope) 
+                { IsTypeCompletion = true };
+        if (typ == typeof(void) && !allowVoid)
+            return new AST.Failure(new(typStr.Position, "Cannot instantiate a value of type void."), scope);
+        return typ;
     }
 
     public static readonly Parser<Token, (Token id, Token? typ)> IdentAndType = 
@@ -441,7 +444,7 @@ public static class Parser {
                 return succ.Right;
             }
         }),
-        Sequential(Kw("return"), value, (kw, v) => new ST.Return(kw.Position, v) as ST),
+        Sequential(Kw("return"), value.Opt(), (kw, v) => new ST.Return(kw.Position, v.ValueOrNull()) as ST),
         Kw("continue").FMap(t => new ST.Continue(t.Position) as ST),
         Kw("break").FMap(t => new ST.Break(t.Position) as ST),
         IfElseStatement,

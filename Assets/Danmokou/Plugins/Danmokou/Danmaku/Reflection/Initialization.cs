@@ -42,17 +42,14 @@ public static partial class Reflector {
         AllowFuncification<TEx<Vector3>>();
         AllowFuncification<TEx<Vector4>>();
         AllowFuncification<TEx<V2RV2>>();
-        //Important for partial function application in BDSL2
-        foreach (var t in ReflectionUtils.FuncTypesByArity)
-            funcifiableReturnTypeGenerics.Add(t); 
         
         foreach (var type in ReflectorUtils.ReflectableAssemblyTypes) {
             if (type.GetCustomAttribute<ReflectAttribute>(false) is { } ra)
                 ReflectionData.RecordPublic(type, ra.returnType);
         }
 
-        foreach (var mi in typeof(System.Linq.Enumerable).GetMethods()) {
-            ReflectionData.MaybeRecordExtensionMethod(MethodSignature.Get(mi));
+        foreach (var type in new[]{ typeof(Enumerable), typeof(ObservableExtensions) }) {
+            ReflectionData.RecordExtensionMethodsInClass(type);
         }
 
         InitializeEnumResolvers();

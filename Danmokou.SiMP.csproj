@@ -52,6 +52,7 @@
     <Compile Include="Assets\SiMP\Plugins\Danmokou\Localization\Generated\SiMP.MusicRoom.cs" />
     <Compile Include="Assets\SiMP\Plugins\Danmokou\SiMPGameDef.cs" />
     <Compile Include="Assets\SiMP\Plugins\Danmokou\SiMPAchievementRepo.cs" />
+    <Compile Include="Assets\SiMP\Plugins\Danmokou\SiMPCustomDataFeature.cs" />
     <Compile Include="Assets\SiMP\Plugins\Danmokou\AssemblyMarker.cs" />
     <Compile Include="Assets\SiMP\Plugins\Danmokou\Localization\Generated\_StringRepository.cs" />
     <Compile Include="Assets\SiMP\Plugins\Danmokou\Localization\Generated\SiMP.Bosses.Cards.cs" />

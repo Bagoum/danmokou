@@ -23,7 +23,7 @@ The following features are planned for future releases.
 
 **The engine has changed significantly in v11**- make sure to read the Language Changes section before upgrading.
 
-I've upgraded the project's Unity version to 2023.2.3f1. Unity 2023 has a critical change where the TextMeshPro package has now been merged into Unity internals, so it is not clear that the project will still run on Unity 2022. As such, please upgrade to Unity 2023 along with updating DMK.
+I've upgraded the project's Unity version to 2023.2.9f1. Unity 2023 has a critical change where the TextMeshPro package has now been merged into Unity internals, so it is not clear that the project will still run on Unity 2022. As such, please upgrade to Unity 2023 along with updating DMK. Also make sure to update the [VSCode extension](https://marketplace.visualstudio.com/items?itemName=Bagoum.dmkscripting).
 
 #### Language Changes
 

@@ -16,13 +16,24 @@ using Mizuhashi;
 namespace Danmokou.Reflection2 {
 [Flags]
 public enum DeclarationLookup {
+    /// <summary>
+    /// A declaration with a constant value (declared via const var).
+    /// </summary>
     CONSTANT = 1 << 0,
+    
+    /// <summary>
+    /// A lexically scoped declaration.
+    /// </summary>
     LEXICAL_SCOPE = 1 << 1,
+    
+    /// <summary>
+    /// A dynamically scoped declaration.
+    /// </summary>
     DYNAMIC_SCOPE = 1 << 2,
     
     ConstOnly = CONSTANT,
-    Standard = CONSTANT | LEXICAL_SCOPE,
-    Dynamic = CONSTANT | LEXICAL_SCOPE | DYNAMIC_SCOPE,
+    Standard = ConstOnly | LEXICAL_SCOPE,
+    Dynamic = Standard | DYNAMIC_SCOPE,
 }
 public record UntypedVariable(VarDecl Declaration) : TypeUnifyErr;
 
@@ -74,7 +85,7 @@ public class VarDecl : IDeclaration {
     /// <summary>
     /// If <see cref="Constant"/> is true, then this stores the constant value of the declaration during execution.
     /// </summary>
-    public Maybe<object?> ConstantValue { get; set; } = Maybe<object?>.None;
+    public Maybe<ConstantExpression> ConstantValue { get; set; } = Maybe<ConstantExpression>.None;
     
     /// <summary>
     /// The type of this variable as provided in the declaration. May be empty, in which case it will be inferred.
@@ -137,8 +148,13 @@ public class VarDecl : IDeclaration {
         this.KnownType = knownType;
         this.Name = Name;
         this.SourceImplicit = sourceImplicit;
-        TypeDesignation = sourceImplicit?.TypeDesignation ?? 
-                          (knownType == null ? new TypeDesignation.Variable() : TypeDesignation.FromType(knownType));
+        if (knownType != null) {
+            TypeDesignation = TypeDesignation.FromType(knownType);
+            FinalizedType = knownType;
+        } else {
+            TypeDesignation = sourceImplicit?.TypeDesignation ??
+                              new TypeDesignation.Variable();
+        }
     }
 
     /// <summary>
@@ -184,7 +200,7 @@ public class VarDecl : IDeclaration {
 }
 
 /// <summary>
-/// A declaration implicitly provided through TExArgCtx.
+/// A declaration implicitly provided through TExArgCtx or a fixed expression.
 /// </summary>
 public class ImplicitArgDecl : VarDecl, IDelegateArg {
     Type IDelegateArg.Type => FinalizedType!;

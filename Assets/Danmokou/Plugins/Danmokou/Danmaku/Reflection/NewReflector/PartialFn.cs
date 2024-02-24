@@ -26,6 +26,8 @@ public static class PartialFn {
         //given Func<A,B,C,D...R> and args [A, B],
         // we create a delegate Func<Func<A,B,C,D...R>,A,B,Func<C,D...R>>, then execute that
         var origFnTypes = func.Type.GetGenericArguments();
+        if (func.Type.Name.StartsWith("Action"))
+            origFnTypes = origFnTypes.Append(typeof(void)).ToArray();
         var delTypes = origFnTypes.Take(applied.Length)
             .Prepend(func.Type)
             .Append(ReflectionUtils.MakeFuncType(origFnTypes.Skip(applied.Length).ToArray()))
@@ -70,7 +72,7 @@ public static class PartialFn {
     }
     
     /// <summary>
-    /// Undo <see cref="PartiallyApply(Ex,Ex[])"/>.
+    /// Undo <see cref="PartiallyApply(Dummy,int,bool)"/>.
     /// </summary>
     public static Dummy PartiallyUnApply(Dummy fn, int args, bool prependOriginal) {
         var applied = (prependOriginal ? fn.Arguments.Skip(1) : fn.Arguments).Take(args);
@@ -80,6 +82,9 @@ public static class PartialFn {
     }
 
     public static Known MakeFuncType(TypeDesignation[] typeArgs) {
+        if (typeArgs[^1].Resolve().LeftOrNull == typeof(void))
+            return new Known(ReflectionUtils.GetActionType(typeArgs.Length - 1),
+                typeArgs.Take(typeArgs.Length - 1).ToArray());
         return new Known(ReflectionUtils.GetFuncType(typeArgs.Length), typeArgs);
     }
 }

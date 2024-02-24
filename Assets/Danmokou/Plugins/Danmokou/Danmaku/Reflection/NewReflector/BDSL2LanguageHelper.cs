@@ -69,9 +69,9 @@ public class BDSL2LanguageHelper : CoroutineRegularUpdater {
             var vName = $"{vdecl.Name}<{vdecl.FinalizedType?.RName()}>";
             if (asImport != null)
                 vName = $"{asImport}.{vName}";
-            if (vdecl.ConstantValue.Try(out var v)) {
-                sb.Append($"(const) {vName}: {Print(v)}\n");
-            } else
+            if (vdecl.ConstantValue.Try(out var v))
+                sb.Append($"(const) {vName}: {Print(v.Value)}\n");
+            else
                 sb.Append($"{vName}: {Print(efVal.Specialize(vdecl.FinalizedType!).Invoke(null, ef, vdecl))}\n");
         }
         Header();

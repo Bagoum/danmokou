@@ -15,6 +15,8 @@ BDSL2 is only supported within the context of DMK. As such, you should first [se
 
 You can then open up the linked `Example BDSL2 Script` using the [VSCode extension](https://marketplace.visualstudio.com/items?itemName=Bagoum.dmkscripting) to edit it.
 
+In addition to the examples provided in this file, there are also example scripts in `Assets/Danmokou/Patterns/bdsl2` that show most of the features of BDSL2.
+
 ## What's in a Script?
 
 A BDSL2 script is a **block**. A block is a **list of statements**. These concepts are shared widely across programming languages. In BDSL2 specifically, a statement can be one of a few things:
@@ -192,7 +194,7 @@ BDSL2 supports dynamic variable lookup in a limited set of circumstances. This i
 
 ## Declaring Script Functions
 
-We can declare functions using the `function` keyword. As with variables, the type is usually inferred. Generic functions are currently not supported. Functions must have a non-void return type. 
+We can declare functions using the `function` keyword. As with variables, the type is usually inferred. Generic functions are currently not supported. 
 
 ```C#
 function myFn(x) {
@@ -210,6 +212,16 @@ function myFn(x::int):: float {
     return x + 1;
 }
 myFn(10)
+```
+
+From DMK v11.1.0 onwards, functions can have a void return type. This must be annotated.
+
+```c#
+function myFn(x::int):: void {
+	Logs.Log(x.ToString(), null, LogLevel.INFO);
+	return; //return statement is optional
+}
+myFn(1000)
 ```
 
 
@@ -258,7 +270,7 @@ This script returns `285.0f`.
 
 
 
-In the current version of BDSL2, functions do not have strong compile-time guarantees about the correctness of `return` statements. For example, consider the script below.
+In the current version of BDSL2, functions do not have strong compile-time guarantees about the correctness of `return` statements for non-void functions. For example, consider the script below.
 
 ```C#
 function myFn(x::float) {
@@ -271,6 +283,8 @@ myFn(1)
 ```
 
 This script will compile successfully, though it would be considered incorrect in most languages. The `myFn(3)` call will successfully get the value `7`. However, the `myFn(1)` call will cause a runtime exception. In a future version, this will ideally return a compile-time exception instead.
+
+- Note that functions with a void return type do not require `return` statements.
 
 
 
@@ -406,16 +420,43 @@ A term expression is a simple expression which composes some atomic expressions.
 
 - Partial function calls
 
-  - DMK supports a limited amount of handling for partially-applied functions and lambdas. Currently, they are only supported for DMK static method calls, script functions, and `Func` objects. The format to construct a lambda is `$(funcName, ...partialArgs)`. For example, using the DMK static method `Vector2 Rotate(float, Vector2)`, which rotates a Vector2 by some degrees:
-
-    ```C#
-    var myRotator::Func<Vector2,Vector2> = $(rotate, 45);
-    myRotator(px(2)).x //=1.414...
-    var lazyV2::Func<Vector2> = $(myRotator, px(2))
-    lazyV2().x //=1.414...
-    ```
+  - See the next section.
 
 
+### Partial Function Calls
+
+DMK supports a limited amount of handling for partially-applied functions and lambdas. Currently, they are only supported for DMK static method calls, script functions, and `Func/Action` objects. The format to construct a lambda is `$(funcName, ...partialArgs)`. For example, using the DMK static method `Vector2 Rotate(float, Vector2)`, which rotates a Vector2 by some degrees:
+
+```C#
+var myRotator::Func<Vector2,Vector2> = $(rotate, 45);
+myRotator(px(2)).x //=1.414...
+var lazyV2::Func<Vector2> = $(myRotator, px(2))
+lazyV2().x //=1.414...
+```
+
+There are some methods in the engine which require lambdas as arguments. For example, the `lerpsmooth` function takes an easing function as an argument. For example, we can provide [eoutbounce](https://easings.net/#easeOutBounce), which has type `Func<float, float>`, or we could provide [ceoutback](https://easings.net/#easeOutBack), which has type `Func<float, float, float>` and takes an extra argument that controls how far the movement moves past the end target.
+
+```C#
+sync "arrow-red/w" <> gsr2c 40 {
+} s roffset px(lerpsmooth($(elinear), 0, 2, t, 0.4, 2))
+
+sync "arrow-red/w" <> gsr2c 40 {
+} s roffset px(lerpsmooth($(eoutbounce), 0, 2, t, 0.4, 2))
+    
+sync "arrow-red/w" <> gsr2c 40 {
+} s roffset px(lerpsmooth($(ceoutback, 10), 0, 2, t, 0.4, 2))
+```
+
+
+
+You can also use partial methods where you would use lambdas in normal C# code. The following script code logs the current graze count to the console whenever a graze occurs (instance.Graze is an event that is fired whenever a graze occurs). The Subscribe method takes an argument of type `Action<long>`, and since `printGraze` has a return type of void, it becomes an `Action` when partially applied.
+
+```c#
+function printGraze(graze::long)::void {
+	Logs.Log(graze.ToString(), null, LogLevel.INFO);
+}
+(instance.Graze as IObservable<long>).Subscribe($(printGraze))
+```
 
 ### Non-Parenthesized Methods and Operators
 

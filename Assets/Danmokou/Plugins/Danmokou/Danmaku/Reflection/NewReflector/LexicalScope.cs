@@ -18,7 +18,9 @@ using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
+using Danmokou.GameInstance;
 using Danmokou.Reflection;
+using Danmokou.Services;
 using Danmokou.SM;
 using JetBrains.Annotations;
 using Mizuhashi;
@@ -53,10 +55,12 @@ public enum LexicalScopeType {
     ExpressionEF,
 }
 
+public record UntypedReturn(ReturnStatementConfig Return) : TypeUnifyErr;
 
 public class ReturnStatementConfig {
     public LexicalScope Scope { get; }
     public TypeDesignation Type { get; }
+    public ScriptFnDecl Function { get; set; } = null!;
     public Type? FinalizedType { get; private set; }
     private LabelTarget? label;
     public LabelTarget Label =>
@@ -70,7 +74,7 @@ public class ReturnStatementConfig {
     public TypeUnifyErr? FinalizeType(Unifier u) {
         var t = Type.Resolve(u);
         if (t.IsRight)
-            return t.Right;
+            return new UntypedReturn(this);
         label = Ex.Label(FinalizedType = t.Left);
         return null;
     }
@@ -394,13 +398,11 @@ public class LexicalScope {
                 !d.Constant && flags.HasFlag(DeclarationLookup.LEXICAL_SCOPE))
                 return (this, d);
         }
-        if (Parent is DMKScope)
-            return null;
         if (!flags.HasFlag(DeclarationLookup.DYNAMIC_SCOPE) && this is DynamicLexicalScope && Parent is not DynamicLexicalScope)
-            return Parent!.FindScopedVariable(name, DeclarationLookup.ConstOnly);
-        if (IsConstScope && !Parent!.IsConstScope)
-            return Parent!.FindScopedVariable(name, DeclarationLookup.ConstOnly);
-        return Parent!.FindScopedVariable(name, flags);
+            return Parent?.FindScopedVariable(name, flags & DeclarationLookup.ConstOnly);
+        if (IsConstScope && Parent?.IsConstScope is false)
+            return Parent.FindScopedVariable(name, flags & DeclarationLookup.ConstOnly);
+        return Parent?.FindScopedVariable(name, flags);
     }
 
     /// <summary>
@@ -412,18 +414,16 @@ public class LexicalScope {
                 !fn.IsConstant && flags.HasFlag(DeclarationLookup.LEXICAL_SCOPE))
                 return fn;
         }
-        if (Parent is DMKScope)
-            return null;
         if (!flags.HasFlag(DeclarationLookup.DYNAMIC_SCOPE) && this is DynamicLexicalScope && Parent is not DynamicLexicalScope)
-            return Parent!.FindScopedFunction(name, DeclarationLookup.ConstOnly);
-        if (IsConstScope && !Parent!.IsConstScope)
-            return Parent!.FindScopedFunction(name, DeclarationLookup.ConstOnly);
-        return Parent!.FindScopedFunction(name, flags);
+            return Parent?.FindScopedFunction(name, flags & DeclarationLookup.ConstOnly);
+        if (IsConstScope && Parent?.IsConstScope is false)
+            return Parent.FindScopedFunction(name, flags & DeclarationLookup.ConstOnly);
+        return Parent?.FindScopedFunction(name, flags);
     }
 
     public List<MethodSignature>? FindStaticMethodDeclaration(string name) => GlobalRoot.StaticMethodDeclaration(name);
 
-    public virtual Either<Unit, TypeUnifyErr> FinalizeVariableTypes(Unifier u) {
+    public Either<Unit, TypeUnifyErr> FinalizeVariableTypes(Unifier u) {
         return variableDecls.Values
             .SequenceL(v => v.FinalizeType(u))
             .FMapL(_ => {
@@ -481,7 +481,7 @@ public class LexicalScope {
     /// </summary>
     public Ex LocalOrParentVariable(TExArgCtx tac, Ex? envFrame, VarDecl variable) {
         if (variable.Constant && variable.ConstantValue.Try(out var val))
-            return Ex.Constant(val, variable.FinalizedType!);
+            return val;
         return _LocalOrParentVariable(tac, envFrame, variable, WithinAnyExpressionScope);
     }
 
@@ -798,14 +798,8 @@ public class DMKScope : LexicalScope {
         return null;
     }
 
-    public override void DeclareImplicitArgs(params IDelegateArg[] args) =>
-        throw new Exception("Do not declare arguments in DMKScope");
-
     protected override Either<Unit, IDeclaration> _Declare(IDeclaration decl) =>
         throw new Exception("Do not declare variables in DMKScope");
-
-    public override Either<Unit, TypeUnifyErr> FinalizeVariableTypes(Unifier u) =>
-        throw new Exception("Do not call FinalizeVariableTypes in DMKScope");
 }
 
 

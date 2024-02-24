@@ -389,6 +389,7 @@
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\IBehaviorEntityDependent.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\Items\BouncyItem.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\VN\Characters\EllyMimic.cs" />
+    <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\GameInstance\Features\CustomDataFeature.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Player\SupportAbility\Bombs\MimaBlackHole.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Behavior\SpikeObstacle.cs" />
     <Compile Include="Assets\Danmokou\Plugins\Danmokou\Danmaku\Scriptables\Player\Ability\WitchTimeCfg.cs" />

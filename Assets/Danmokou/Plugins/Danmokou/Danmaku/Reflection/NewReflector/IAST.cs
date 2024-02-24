@@ -245,6 +245,10 @@ public interface IAST : ITypeTree, IDebugAST {
             }
         } else if (e is UntypedVariable ut) {
             UntypedRef(ut.Declaration);
+        } else if (e is UntypedReturn ur) {
+            var fn = ur.Return.Function;
+            pos = fn.Position;
+            sb.Append($"The return type of the function {fn.Name} could not be determined.");
         } else if (e is TypeUnifyErr.TooManyPossibleTypes pt) {
             pos = (pt.Tree as IAST)!.Position;
             sb.Append("Couldn't determine a unique type for this expression.\n It might be any of the following: " +
