@@ -36,6 +36,7 @@ public enum DeclarationLookup {
     Dynamic = Standard | DYNAMIC_SCOPE,
 }
 public record UntypedVariable(VarDecl Declaration) : TypeUnifyErr;
+public record VoidTypedVariable(VarDecl Declaration) : TypeUnifyErr;
 
 public interface IDeclaration {
     PositionRange Position { get; }
@@ -185,6 +186,8 @@ public class VarDecl : IDeclaration {
         if (td.IsRight)
             return new UntypedVariable(this);
         FinalizedType = td.Left;
+        if (FinalizedType == typeof(void))
+            return new VoidTypedVariable(this);
         return SourceImplicit?.FinalizeType(u) ?? Unit.Default;
     }
         
@@ -230,7 +233,8 @@ public class ImplicitArgDecl<T> : ImplicitArgDecl {
 public class ScriptFnDecl : IDeclaration {
     public string Name { get; init; }
     public bool Hoisted { get; }
-    public ImplicitArgDecl[] Args { get; init; }
+    public ImplicitArgDecl[] Args { get; }
+    public IAST?[] Defaults { get; }
     public AST.ScriptFunctionDef Tree { get; set; }
     public TypeDesignation.Dummy CallType { get; private set; }
     
@@ -244,10 +248,11 @@ public class ScriptFnDecl : IDeclaration {
     public Type? FuncType { get; private set; }
     private object? _compiled = null;
     private bool isCompiling = false;
-    public ScriptFnDecl(AST.ScriptFunctionDef Tree, bool Hoist, string Name, ImplicitArgDecl[] Args, TypeDesignation.Dummy CallType) {
+    public ScriptFnDecl(AST.ScriptFunctionDef Tree, bool Hoist, string Name, ImplicitArgDecl[] Args, IAST?[] Defaults, TypeDesignation.Dummy CallType) {
         this.Name = Name;
         this.Hoisted = Hoist;
         this.Args = Args;
+        this.Defaults = Defaults;
         this.Tree = Tree;
         this.CallType = CallType;
     }
@@ -283,6 +288,15 @@ public class ScriptFnDecl : IDeclaration {
     }
 
     public override string ToString() => $"{Tree.Position} {AsSignature()}";
+}
+
+public record MacroDecl(ST.MacroDef Tree, string Name, string[] Args, ST?[] Defaults) : IDeclaration {
+    public PositionRange Position => Tree.Position;
+    public bool Hoisted => false;
+    public LexicalScope DeclarationScope { get; set; } = null!;
+    public string? DocComment { get; set; }
+    
+    public Either<Unit, TypeUnifyErr> FinalizeType(Unifier u) => Unit.Default;
 }
 
 public record ScriptImport(PositionRange Position, EnvFrame Ef, string FileKey, string? ImportFrom, string? ImportAs) : IDeclaration {

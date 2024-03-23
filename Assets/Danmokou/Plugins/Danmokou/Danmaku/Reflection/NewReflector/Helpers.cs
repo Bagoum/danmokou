@@ -47,7 +47,7 @@ public static class Helpers {
         if (parse.IsRight)
             throw parse.Right;
         var scope = LexicalScope.NewTopLevelScope();
-        var ast = parse.Left.AnnotateWithParameters(scope, args).LeftOrRight<AST.Block, AST.Failure, IAST>();
+        var ast = parse.Left.AnnotateWithParameters(new(scope), args).LeftOrRight<AST.Block, AST.Failure, IAST>();
         scope.SetDocComments(metadata);
         return (ast, scope);
     }

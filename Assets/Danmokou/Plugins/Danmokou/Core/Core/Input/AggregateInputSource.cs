@@ -36,10 +36,11 @@ public class AggregateInputSource : IInputHandlerInputSource, IInputSource {
     }
 
     private T? Aggregate<T>(Func<IInputSource, T?> map) where T : struct {
+        T? ret = null;
         for (int ii = 0; ii < Sources.Count; ++ii)
             if (Sources.ExistsAt(ii) && map(Sources[ii]).Try(out var inp))
-                return inp;
-        return map(MainSource.Current);
+                ret ??= inp;
+        return ret ?? map(MainSource.Current);
     }
 
     public bool OncePerUnityFrameToggleControls() {
@@ -78,6 +79,7 @@ public class AggregateInputSource : IInputHandlerInputSource, IInputSource {
     public bool? VNBacklogPause => Aggregate(x => x.VNBacklogPause);
     public bool? UIConfirm => Aggregate(x => x.UIConfirm);
     public bool? UIBack => Aggregate(x => x.UIBack);
+    public bool? UIContextMenu => Aggregate(x => x.UIContextMenu);
     public bool? UILeft => Aggregate(x => x.UILeft);
     public bool? UIRight => Aggregate(x => x.UIRight);
     public bool? UIUp => Aggregate(x => x.UIUp);

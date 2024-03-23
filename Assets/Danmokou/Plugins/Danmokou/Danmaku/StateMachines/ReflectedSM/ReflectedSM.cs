@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using BagoumLib.Tasks;
 using Danmokou.Behavior;
@@ -505,8 +506,8 @@ t > fadein ?
     /// </summary>
     [ExpressionBoundary]
     public static ReflectableLASM MoveWrap(ExBPY t1, ExTP target1, ExBPY t2, ExTP target2, StateMachine wrapped) {
-        var w1 = MoveTarget(t1, _ => Expression.Constant((Func<float,float>)M.EOutSine), target1);
-        var w2 = MoveTarget(t2, _ => Expression.Constant((Func<float,float>)M.EInSine), target2);
+        var w1 = MoveTarget(t1, _ => Expression.Constant((Func<float,float>)Easers.EOutSine), target1);
+        var w2 = MoveTarget(t2, _ => Expression.Constant((Func<float,float>)Easers.EInSine), target2);
         return new(async smh => {
             await w1.Start(smh);
             smh.ThrowIfCancelled();
@@ -520,7 +521,7 @@ t > fadein ?
     /// Move to a target position, run a state machine nonblockingly, wait for a synchronization event,
     /// and then move to another target position.
     /// </summary>
-    [Alias("MoveWrap~")]
+    [Alias("MoveWrap~")] [Alias("MoveWrap_")]
     [ExpressionBoundary]
     public static ReflectableLASM MoveWrapFixedDelay(Synchronizer s, ExBPY t1, ExTP target1, ExBPY t2, 
         ExTP target2, StateMachine wrapped) 
@@ -530,7 +531,7 @@ t > fadein ?
     /// Run a state machine nonblockingly, move to a target position, wait for a synchronization event,
     /// and then move to another target position.
     /// </summary>
-    [Alias("MoveWrap~~")]
+    [Alias("MoveWrap~~")] [Alias("MoveWrap__")]
     [ExpressionBoundary]
     public static ReflectableLASM MoveWrapFixedDelayNB(Synchronizer s, ExBPY t1, ExTP target1, ExBPY t2, 
         ExTP target2, StateMachine wrapped) {
@@ -549,8 +550,8 @@ t > fadein ?
     /// </summary>
     [ExpressionBoundary]
     public static ReflectableLASM IMoveWrap(ExBPY t1, ExTP target1, ExBPY t2, ExTP target2, StateMachine wrapped) {
-        var w1 = MoveTarget(t1, _ => Expression.Constant((Func<float,float>)M.EOutSine), target1);
-        var w2 = MoveTarget(t2, _ => Expression.Constant((Func<float,float>)M.EInSine), target2);
+        var w1 = MoveTarget(t1, _ => Expression.Constant((Func<float,float>)Easers.EOutSine), target1);
+        var w2 = MoveTarget(t2, _ => Expression.Constant((Func<float,float>)Easers.EInSine), target2);
         return new(async smh => {
             if (smh.Exec.isEnemy) smh.Exec.Enemy.SetVulnerable(Vulnerability.NO_DAMAGE);
             await w1.Start(smh);

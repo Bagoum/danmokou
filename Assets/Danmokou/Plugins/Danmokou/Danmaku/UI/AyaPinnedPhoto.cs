@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using BagoumLib;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -75,9 +76,9 @@ public class AyaPinnedPhoto : CoroutineRegularUpdater {
         float ea0 = photo.Angle;
         float endRotAdjust = EndRotAdjust();
         for (float t = 0; t < timeToPosition; t += ETime.FRAME_TIME) {
-            tr.position = loc = Vector2.Lerp(source, target, M.EOutSine(t / timeToPosition));
+            tr.position = loc = Vector2.Lerp(source, target, Easers.EOutSine(t / timeToPosition));
             tr.eulerAngles = new Vector3(0, 0, ea0 + 360 *
-                M.Lerp(-successRotationLoops, endRotAdjust, M.EOutSine(t / timeToPosition)));
+                M.Lerp(-successRotationLoops, endRotAdjust, Easers.EOutSine(t / timeToPosition)));
             yield return null;
         }
         tr.position = loc = target;

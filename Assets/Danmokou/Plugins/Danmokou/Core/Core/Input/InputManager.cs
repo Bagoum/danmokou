@@ -127,7 +127,7 @@ public static class InputManager {
     }
     
     /* New controls must be added in the following places:
-     * Below, as `Type? IsCtrl => PlayerInput.Ctrl ?? (default)`
+     * Below, as `Type IsCtrl => PlayerInput.Ctrl ?? (default)`
      * In AggregateInputSource, as `Type? Ctrl => Aggregate(x => x.Ctrl)`
      * In IInputSource, as `Type? Ctrl => null`
      * In NullInputSource, as `Type? Ctrl => (default)`
@@ -158,6 +158,7 @@ public static class InputManager {
     public static bool VNBacklogPause => PlayerInput.VNBacklogPause ?? false;
     public static bool UIConfirm => PlayerInput.UIConfirm ?? false;
     public static bool UIBack => PlayerInput.UIBack ?? false;
+    public static bool UIContextMenu => PlayerInput.UIContextMenu ?? false;
     public static bool UILeft => PlayerInput.UILeft ?? false;
     public static bool UIRight => PlayerInput.UIRight ?? false;
     public static bool UIUp => PlayerInput.UIUp ?? false;

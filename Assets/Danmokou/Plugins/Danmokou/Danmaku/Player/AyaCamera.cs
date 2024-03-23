@@ -3,6 +3,7 @@ using System.Collections;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Events;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -189,8 +190,8 @@ public class AyaCamera : BehaviorEntity {
         using var cToken = new Cancellable();
         ISFXService.SFXService.RequestSource(whileFire, cToken);
         for (float t = 0f; t < cameraLerpDownTime; t += ETime.FRAME_TIME) {
-            float scale = M.Lerp(cameraFireSize, 1f, M.EInSine(t / cameraLerpDownTime));
-            charge = 100 * (1 - M.EInSine(t / cameraLerpDownTime));
+            float scale = M.Lerp(cameraFireSize, 1f, Easers.EInSine(t / cameraLerpDownTime));
+            charge = 100 * (1 - Easers.EInSine(t / cameraLerpDownTime));
             viewfinder.localScale = new Vector3(scale, scale, scale);
             tr.position = location += cameraFireControlSpeed * ETime.FRAME_TIME * player.DesiredMovement01;
             var vf = ViewfinderRect(scale);
@@ -281,7 +282,7 @@ public class AyaCamera : BehaviorEntity {
         c.a = 1;
         flash.color = c;
         for (float t = 0; t < time; t += ETime.FRAME_TIME) {
-            c.a = 1 - M.EInSine(t / time);
+            c.a = 1 - Easers.EInSine(t / time);
             flash.color = c;
             yield return null;
         }

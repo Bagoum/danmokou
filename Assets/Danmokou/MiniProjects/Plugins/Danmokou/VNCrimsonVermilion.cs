@@ -827,7 +827,7 @@ public static class _VNCrimsonVermilion {
                 yuuka.SayC(l325),
                 youmu.EmoteSay("surprise", l326).And(
                     youmu.Disturb(youmu.ComputedLocation, t =>
-                        new Vector3(M.PolarToXY(M.Sine(1, 0.4f, 12 * M.EOutSine(t)), 600 * M.EOutSine(t))._(), 0), 3)
+                        new Vector3(M.PolarToXY(M.Sine(1, 0.4f, 12 * Easers.EOutSine(t)), 600 * Easers.EOutSine(t))._(), 0), 3)
                 ).C,
                 youmu.EmoteSayC("angry", l326_1),
                 youmu.SayC(l326_1_1),

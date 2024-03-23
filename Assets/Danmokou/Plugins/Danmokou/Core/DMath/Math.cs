@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using BagoumLib.Mathematics;
 using UnityEngine;
 using Danmokou.Core;
 using Ex = System.Linq.Expressions.Expression;
@@ -302,25 +303,6 @@ public static class M {
         if (t > 1) return b;
         return a + (b - a) * t;
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static double Lerp(double low, double high, double controller, double a, double b) =>
-        Lerp(a, b, (controller - low) / (high - low));
-
-    /// <summary>
-    /// Unclamped lerp.
-    /// </summary>
-    /// <param name="a">Lower bound</param>
-    /// <param name="b">Upper bound</param>
-    /// <param name="t">0-1 controller (if outside [0, 1], the result will also be outside [a, b])</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float LerpU(float a, float b, float t) => a + (b - a) * t;
-    /// <summary>
-    /// Clamped lerp.
-    /// </summary>
-    /// <param name="a">Lower bound</param>
-    /// <param name="b">Upper bound</param>
-    /// <param name="t">0-1 controller (will be clamped to [0,1] if outside)</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Lerp(float a, float b, float t) {
         if (t < 0) return a;
@@ -329,8 +311,12 @@ public static class M {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double Lerp(double low, double high, double controller, double a, double b) =>
+        Lerp(a, b, (controller - low) / (high - low));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Lerp(float controllerZeroBound, float controllerOneBound, float controller, float a, float b) =>
-        Lerp(a, b, (controller - controllerZeroBound) / (controllerOneBound - controllerZeroBound));
+        BMath.Lerp(a, b, (controller - controllerZeroBound) / (controllerOneBound - controllerZeroBound));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3 Lerp(float controllerZeroBound, float controllerOneBound, float controller, Vector3 a, Vector3 b) =>
@@ -344,40 +330,6 @@ public static class M {
     public static Vector3 Lerp3(float lowest, float low, float high, float highest, float controller, Vector3 a, Vector3 b,
         Vector3 c) =>
         controller < high ? Lerp(lowest, low, controller, a, b) : Lerp(high, highest, controller, b, c);
-
-    /// <summary>
-    /// HLSL smoothstep. Return a smoothed value of Ratio.
-    /// WARNING: <see cref="Mathf.SmoothStep"/> returns something different.
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float Smoothstep(float low, float high, float t) {
-        var t1 = M.Clamp(0, 1, (t - low) / (high - low));
-        return t1 * t1 * (3 - 2 * t1);
-    }
-
-    /// <summary>
-    /// Returns (x - a) / (b - a); ie. t such that LerpUnclamped(a, b, t) = x.
-    /// </summary>
-    public static double Ratio(double a, double b, double x) => (x - a) / (b - a);
-    public static float Ratio(float a, float b, float x) => (x - a) / (b - a);
-    /// <summary>
-    /// Returns (x - a) / (b - a) clamped to (0, 1).
-    /// </summary>
-    
-    public static float RatioC(float a, float b, float x) => Mathf.Clamp01((x - a) / (b - a));
-
-    public static float EInSine(float x) => 1f - (float) Math.Cos(HPI * x);
-    public static float EOutSine(float x) => (float) Math.Sin(HPI * x);
-    public static float EIOSine(float x) => 0.5f - 0.5f * (float) Math.Cos(PI * x);
-    public static float DEOutSine(float x) => HPI * (float) Math.Cos(HPI * x);
-    public static float EOutPow(float x, float pow) => 1f - (float)Math.Pow(1f - x, pow);
-    public static float EOutQuad(float x) => 1f - (float)Math.Pow(1f - x, 4f);
-
-    public static float Identity(float x) => x;
-
-    public static float EOutBack(float a, float x) {
-        return 1 + (a+1) * (float)Math.Pow(x - 1, 3) + a * (x - 1) * (x - 1);
-    }
     
     public static Vector3 MulBy(this Vector3 x, Vector3 m) => new Vector3(x.x * m.x, x.y * m.y, x.z * m.z);
     public static Bounds MulBy(this Bounds b, Vector3 m) {

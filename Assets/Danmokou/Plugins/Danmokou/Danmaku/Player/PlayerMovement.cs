@@ -35,6 +35,7 @@ public abstract partial record PlayerMovement {
         public float MaxFallSpeed { get; init; } = 10f;
         private float timeToNextJump = 0f;
         private float holdingJumpRemainingTime = 0f;
+        public bool releasedHoldSinceLastJump = true;
         
         public override Vector2 UpdateNextDesiredDelta(PlayerController player, ShipConfig ship, float dT, out bool didInput) {
             var moveVel = player.DesiredMovement01;
@@ -63,8 +64,9 @@ public abstract partial record PlayerMovement {
                 didInput = true;
                 if ((holdingJumpRemainingTime -= dT) > 0) {
                     y = JumpVel * dT;
-                } else if ((timeToNextJump -= dT) <= 0f) {
+                } else if ((timeToNextJump -= dT) <= 0f && releasedHoldSinceLastJump) {
                     timeToNextJump = JumpCooldown;
+                    releasedHoldSinceLastJump = false;
                     holdingJumpRemainingTime = MaxHoldJumpTime;
                     y = JumpVel * dT;
                     player.SpawnedShip.displayer!.Animate(AnimationType.Attack, false, null);
@@ -72,6 +74,7 @@ public abstract partial record PlayerMovement {
             } else {
                 holdingJumpRemainingTime = 0;
                 timeToNextJump -= dT;
+                releasedHoldSinceLastJump = true;
             }
             return new Vector2(x, Math.Max(-MaxFallSpeed * dT, y));
         }

@@ -449,7 +449,7 @@ sync "arrow-red/w" <> gsr2c 40 {
 
 
 
-You can also use partial methods where you would use lambdas in normal C# code. The following script code logs the current graze count to the console whenever a graze occurs (instance.Graze is an event that is fired whenever a graze occurs). The Subscribe method takes an argument of type `Action<long>`, and since `printGraze` has a return type of void, it becomes an `Action` when partially applied.
+You can also use partial methods where you would use lambdas in normal C# code. The following script code logs the current graze count to the console whenever a graze occurs ([instance.Graze](https://github.com/Bagoum/danmokou/blob/master/Assets/Danmokou/Plugins/Danmokou/Danmaku/GameInstance/InstanceData.cs#L129) is an event defined on the game instance data that is fired whenever a graze occurs). The Subscribe method takes an argument of type `Action<long>`, and since `printGraze` has a return type of void, it becomes an `Action` when partially applied.
 
 ```c#
 function printGraze(graze::long)::void {
@@ -483,7 +483,7 @@ var a = 3.2
 min 3 a--
 ```
 
-returns 3.0f and sets `a` to 2.2f. (Note that `min(3, a)--` would not compile.)
+is parsed as `min(3, a--)`, returns 3.0f and sets `a` to 2.2f. (Note that `min(3, a)--` would not compile.)
 
 On the other hand, `x + y` is a loose operator, so the following code:
 
@@ -491,7 +491,7 @@ On the other hand, `x + y` is a loose operator, so the following code:
 min 5 1 + 10
 ```
 
-returns 11.0f.
+is parsed as `min(5, 1) + 10` and returns 11.0f.
 
 
 
@@ -536,5 +536,5 @@ The valid types of statements are as follows:
 - A for/while loop,
 - A continue/break statement (within a loop).
 
-If/else blocks and for/while loops are handled the same as in C#. Likewise, continue and break statements within are handled the same as in C#. The other types of statements are discussed in their own sections above.
+If/else blocks and for/while loops are handled the same as in C#. Likewise, continue and break statements within loops are handled the same as in C#. The other types of statements are discussed in their own sections above.
 

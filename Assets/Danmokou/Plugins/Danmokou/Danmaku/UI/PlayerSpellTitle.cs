@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
 using TMPro;
 using UnityEngine;
+using static BagoumLib.Mathematics.BMath;
 
 namespace Danmokou.UI {
 public class PlayerSpellTitle : CoroutineRegularUpdater {
@@ -35,10 +37,10 @@ public class PlayerSpellTitle : CoroutineRegularUpdater {
         float eR() => elapsed / displayTime;
         var l = tr.localPosition = new Vector2(3.5f, -4.4f);
         float Vel() => (0.4f 
-                        + 4.6f * (1 - M.EIOSine(M.RatioC(0, 0.4f, eR())))
-                        + 2f * M.EInSine(M.RatioC(0.7f, 1, eR()))) / displayTime;
-        float Opacity() => M.EIOSine(M.RatioC(0, 0.35f, eR())) * (1 - M.EInSine(M.RatioC(0.7f, 1, eR())));
-        float textScale() => 1 + 0.4f * M.EInSine(M.RatioC(0.75f, 1, eR()));
+                        + 4.6f * (1 - Easers.EIOSine(RatioC(0, 0.4f, eR())))
+                        + 2f * Easers.EInSine(RatioC(0.7f, 1, eR()))) / displayTime;
+        float Opacity() => Easers.EIOSine(RatioC(0, 0.35f, eR())) * (1 - Easers.EInSine(RatioC(0.7f, 1, eR())));
+        float textScale() => 1 + 0.4f * Easers.EInSine(RatioC(0.75f, 1, eR()));
 
         var ct = title.color;
         var c1 = underline1.color;

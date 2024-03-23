@@ -64,7 +64,7 @@ public record UIGroupHierarchy(UIGroup Group, UIGroupHierarchy? Parent) : IEnume
 }
 
 public abstract class UIGroup {
-    protected static readonly UIResult NoOp = new StayOnNode(true);
+    public static readonly UIResult NoOp = new StayOnNode(true);
     public static readonly UIResult SilentNoOp = new StayOnNode(StayOnNodeType.Silent);
     public bool Visible { get; private set; } = false;
     public UIScreen Screen { get; }
@@ -439,6 +439,7 @@ public class PopupUIGroup : CompositeUIGroup {
     private UINode Source { get; }
     
     public bool EasyExit { get; set; }
+    public float? OverlayAlphaOverride { get; set; }
     private readonly Func<LString>? header;
     private readonly UIRenderConstructed render;
 
@@ -452,7 +453,7 @@ public class PopupUIGroup : CompositeUIGroup {
     /// <returns></returns>
     public static PopupUIGroup CreatePopup(UINode source, Func<LString>? header, Func<UIRenderSpace, UIGroup> bodyInner,
         PopupButtonOpts buttons) {
-        var render = new UIRenderConstructed(source.Screen.AbsoluteTerritory, XMLUtils.Prefabs.Popup);
+        var render = MakeRenderer(source.Screen.AbsoluteTerritory, XMLUtils.Prefabs.Popup);
         var bodyGroup = bodyInner(new UIRenderExplicit(source.Screen, _ => render.HTML.Q("BodyHTML")));
         UINode?[] opts;
         if (buttons is PopupButtonOpts.LeftRightFlush lr) {
@@ -478,9 +479,32 @@ public class PopupUIGroup : CompositeUIGroup {
             EntryNodeOverride = bodyGroup.HasEntryNode ? (UINode?)bodyGroup.EntryNode : entry,
             ExitNodeOverride = exit
         };
+        return p;
+    }
+
+    public static PopupUIGroup CreateContextMenu(UINode source, UINode?[] options) {
+        var render = MakeRenderer(source.Screen.AbsoluteTerritory, XMLUtils.Prefabs.ContextMenu);
+        render.HTML.ConfigureAbsolute(XMLUtils.Pivot.TopLeft).WithAbsolutePosition(
+            source.HTML.worldBound.center + source.HTML.worldBound.size * 0.4f);
+        var back = new FuncNode(LocalizedStrings.Generic.generic_back, UIButton.GoBackCommand<FuncNode>(source));
+        //NB: you can press X/RightClick *once* to leave an options menu.
+        // If you add a ExitNodeOverride to the UIColumn, then you'll need to press it twice (as with standard popups)
+        var grp = new UIColumn(new UIRenderConstructed(render, new(XMLUtils.AddColumn)), 
+            options.Append(back).Select(x => x?.With(XMLUtils.noPointerClass)));
+        var p = new PopupUIGroup(render, null, source, grp) {
+            EntryNodeOverride = options[0],
+            ExitNodeOverride = back,
+            EasyExit = true,
+            OverlayAlphaOverride = 0,
+        };
+        return p;
+    }
+
+    private static UIRenderConstructed MakeRenderer(UIRenderAbsoluteTerritory at, VisualTreeAsset prefab) {
+        var render = new UIRenderConstructed(at, prefab);
         //Don't allow pointer events to hit the underlying Absolute Territory
         render.HTML.RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
-        return p;
+        return render;
     }
     
     public PopupUIGroup(UIRenderConstructed r, Func<LString>? header, UINode source, UIGroup body) :
@@ -523,8 +547,13 @@ public class PopupUIGroup : CompositeUIGroup {
 
     public override void Redraw() {
         var h = Render.HTML.Q<Label>("Header");
-        var htext = header?.Invoke().Value;
-        h.style.display = (htext != null).ToStyle();
+        if (header is null) {
+            if (h != null)
+                h.style.display = DisplayStyle.None;
+            return;
+        }
+        var htext = header();
+        h.style.display = DisplayStyle.Flex;
         h.text = htext ?? "";
     }
 }

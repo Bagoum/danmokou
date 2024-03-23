@@ -2,6 +2,7 @@
 using System.Reactive;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Player;
@@ -47,7 +48,7 @@ public class MeterFeature : BaseInstanceFeature, IMeterFeature {
     public MeterFeature(InstanceData inst) {
         Inst = inst;
         ResetMeter();
-        VisibleMeter = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 3f)), 
+        VisibleMeter = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, Easers.CEOutPow(t, 3f)), 
             () => (float)Meter, 0.2f);
     }
     

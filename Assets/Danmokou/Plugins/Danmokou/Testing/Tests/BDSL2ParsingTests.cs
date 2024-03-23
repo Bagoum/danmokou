@@ -35,7 +35,7 @@ public static class BDSL2ParsingTests {
         if (res.IsRight)
             Assert.Fail(stream.ShowAllFailures(res.Right));
         var gs = LexicalScope.NewTopLevelScope();
-        return (res.Left.AnnotateWithParameters(gs, args).LeftOrRight<AST.Block, AST.Failure, IAST>(), gs);
+        return (res.Left.AnnotateWithParameters(new(gs), args).LeftOrRight<AST.Block, AST.Failure, IAST>(), gs);
     }
     private static void AssertASTFail(string source, string pattern, IDelegateArg[] args) {
         var (ast, gs) = MakeAST(ref source, args);

@@ -42,7 +42,7 @@ public class PhasePerformanceStar : CoroutineRegularUpdater {
             unfilled.enabled = true;
             var tr = unfilled.transform;
             tr.localScale = Vector3.zero;
-            tr.ScaleTo(unfilledScale, scaleTime, M.EOutSine).Run(this);
+            tr.ScaleTo(unfilledScale, scaleTime, Easers.EOutSine).Run(this);
         }
     }
 }

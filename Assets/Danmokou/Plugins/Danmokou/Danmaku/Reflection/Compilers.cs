@@ -287,6 +287,7 @@ public static class Compilers {
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public struct UncompiledCode<T> {
+    [DontReflect]
     public readonly Func<TExArgCtx, TEx<T>> code;
     public UncompiledCode(Func<TExArgCtx, TEx<T>> code) {
         this.code = code;

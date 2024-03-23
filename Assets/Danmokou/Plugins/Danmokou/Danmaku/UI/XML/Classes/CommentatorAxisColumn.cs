@@ -6,6 +6,7 @@ using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using BagoumLib.Functional;
+using BagoumLib.Mathematics;
 using Danmokou.DMath;
 using UnityEngine;
 
@@ -63,9 +64,9 @@ public class CommentatorAxisColumn<T> : UIColumn {
             tr.scale = new Vector3(scale, scale, scale);
             //tr.color = color;
         } else {
-            tr.GoTo(myLoc, time, M.EOutSine, canceller).Run(Controller, new CoroutineOptions(true));
-            tr.ScaleTo(scale, time, M.EOutSine, canceller).Run(Controller, new CoroutineOptions(true));
-            //sr.ColorTo(color, time, M.EOutSine, canceller).Run(this, new CoroutineOptions(true));
+            tr.GoTo(myLoc, time, Easers.EOutSine, canceller).Run(Controller, new CoroutineOptions(true));
+            tr.ScaleTo(scale, time, Easers.EOutSine, canceller).Run(Controller, new CoroutineOptions(true));
+            //sr.ColorTo(color, time, Easers.EOutSine, canceller).Run(this, new CoroutineOptions(true));
         }
 
     }

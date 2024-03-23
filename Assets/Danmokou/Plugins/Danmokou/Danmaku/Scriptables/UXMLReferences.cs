@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Danmokou.UI.XML;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UIElements;
 
 namespace Danmokou.Scriptables {
@@ -14,6 +15,7 @@ public class UXMLReferences : ScriptableObject, IUXMLReferences {
     public VisualTreeAsset UIScreenRowNoStretch = null!;
     public VisualTreeAsset Popup = null!;
     public VisualTreeAsset Tooltip = null!;
+    public VisualTreeAsset ContextMenu = null!;
     
     public VisualTreeAsset UINode = null!;
     public VisualTreeAsset OptionsColumnUINode = null!;
@@ -62,6 +64,7 @@ public class UXMLReferences : ScriptableObject, IUXMLReferences {
     VisualTreeAsset IUXMLReferences.UIScreenRowNoStretch => UIScreenRowNoStretch;
     VisualTreeAsset IUXMLReferences.Popup => Popup;
     VisualTreeAsset IUXMLReferences.Tooltip => Tooltip;
+    VisualTreeAsset IUXMLReferences.ContextMenu => ContextMenu;
     VisualTreeAsset IUXMLReferences.AbsoluteTerritory => AbsoluteTerritory;
     VisualTreeAsset IUXMLReferences.PureTextNode => PureTextNode;
 }

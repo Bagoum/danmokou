@@ -125,12 +125,25 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
     public override VisualElement HTML => _html!;
     private readonly Color bgc;
     private readonly DisturbedOr isTransitioning = new();
+    
+    /// <summary>
+    /// Alpha of the darkened overlay when fully visible.
+    /// Can be overriden by <see cref="PopupUIGroup.OverlayAlphaOverride"/>.
+    /// </summary>
     public float Alpha { get; set; } = 0.5f;
+
+    private float GetTargetAlpha() {
+        float? a = null;
+        for (int ii = 0; ii < Sources.Count; ++ii)
+            if (Sources[ii] is PopupUIGroup { OverlayAlphaOverride: { } f })
+                a = Math.Max(a ?? f, f);
+        return a ?? Alpha;
+    }
     public override bool ShouldBeVisible => Sources.Count > 0;
 
     public Task FadeIn() {
         var token = isTransitioning.AddConst(true);
-        return TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, Alpha, 0.14f, 
+        return TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, GetTargetAlpha(), 0.14f, 
                 a => HTML.style.backgroundColor = Helpers.WithA(bgc, a))
             .Run(Controller)
             .ContinueWithSync(token.Dispose);
@@ -139,7 +152,7 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
     public Task FadeOutIfNoOtherDependencies(UIGroup g) {
         if (Sources.Count == 1 && Sources[0] == g && HTML.style.display == DisplayStyle.Flex) {
             var token = isTransitioning.AddConst(true);
-            TransitionHelpers.TweenTo(Alpha, 0, 0.12f, a => HTML.style.backgroundColor = Helpers.WithA(bgc, a))
+            TransitionHelpers.TweenTo(GetTargetAlpha(), 0, 0.12f, a => HTML.style.backgroundColor = Helpers.WithA(bgc, a))
                 .Run(Controller)
                 .ContinueWithSync(token.Dispose);
         }

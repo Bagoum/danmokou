@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: FB Level Stage
   m_EditorClassIdentifier: 
   sceneConfig: {fileID: 11400000, guid: 0c49b8698085eba4cb4bdeebea3dc93d, type: 2}
-  stateMachine: {fileID: 2811297602134710623, guid: 1eeebb1d0e4b52640b6b35b86f920f46,
+  stateMachine: {fileID: 2811297602134710623, guid: 13c91483fcabaa146aeeda788912a9c0,
     type: 3}
   description: 
   stageNumber: 1

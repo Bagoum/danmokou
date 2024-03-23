@@ -254,6 +254,8 @@ public static class Parser {
         }),
         TokenOfType(TokenType.NullKeyword).Then(TypeSuffixStr).FMap(t => 
             new ST.DefaultValue(t.a.Position, t.b) as ST),
+        TokenOfType(TokenType.DefaultKeyword).FMap(t => 
+            new ST.DefaultValue(t.Position, null, asFunctionArg: true) as ST),
         TokenOfType(TokenType.String).FMap(t => new ST.TypedValue<string>(t.Position, t.Content) 
             { Kind = SymbolKind.String} as ST),
         TokenOfType(TokenType.Char).FMap(t => t.Content.Length == 1 ?
@@ -420,8 +422,16 @@ public static class Parser {
             });
 
     private static readonly Parser<Token, ST.FunctionDef> functionDecl =
-        Sequential(Kw("function").Or(Kw("hfunction")), Lexer.Ident, Paren(IdentAndType), TypeSuffixStr, BracedBlock,
+        Sequential(Kw("function").Or(Kw("hfunction")), Lexer.Ident,
+            Paren(IdentAndType.Then(op("=").Then(value).OptN())), 
+            TypeSuffixStr, BracedBlock,
             (fn, name, args, type, body) => new ST.FunctionDef(fn, name, args.args, type, body));
+
+    private static readonly Parser<Token, ST> macroDecl =
+        Sequential(Kw("macro"), Lexer.Ident, 
+            Paren(Ident.Then(op("=").Then(value).OptN())), 
+            BracedBlock,
+            (fn, name, args, body) => new ST.MacroDef(fn, name, args.args, body) as ST);
 
     private static readonly Parser<Token, ST> ifElseStatement =
         Sequential(Kw("if"), Paren1(value), BracedBlock, Kw("else")
@@ -444,6 +454,7 @@ public static class Parser {
                 return succ.Right;
             }
         }),
+        macroDecl,
         Sequential(Kw("return"), value.Opt(), (kw, v) => new ST.Return(kw.Position, v.ValueOrNull()) as ST),
         Kw("continue").FMap(t => new ST.Continue(t.Position) as ST),
         Kw("break").FMap(t => new ST.Break(t.Position) as ST),

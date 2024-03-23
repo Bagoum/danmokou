@@ -299,7 +299,11 @@ public interface IInputHandler {
     /// <summary>
     /// Update the state of the input method.
     /// </summary>
-    /// <returns>True iff the input method is now active.</returns>
+    /// <returns>
+    /// True iff the input method is receiving input.
+    /// This does not mean that <see cref="Active"/> is true - for example, a key that is held down will continue
+    ///  to return true here, but <see cref="Active"/> will be set true only once (for <see cref="InputTriggerMethod.ONCE"/>).
+    /// </returns>
     bool OncePerUnityFrameUpdate();
 }
 
@@ -350,7 +354,7 @@ public class InputHandler : IInputHandler {
             if (refractory && !keyDown) refractory = false;
             _active = (trigger == InputTriggerMethod.ONCE_TOGGLE) ? toggledValue : false;
         }
-        return _active;
+        return keyDown;
     }
 }
 }

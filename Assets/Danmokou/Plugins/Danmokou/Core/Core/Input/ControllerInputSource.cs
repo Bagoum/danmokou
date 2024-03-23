@@ -62,6 +62,7 @@ public class ControllerRebindingProxy : IPurposefulInputBinding {
 public class ControllerInputSource : IKeyedInputSource, IPrimaryInputSource {
     public List<IInputHandler> Handlers { get; } = new();
     public bool AnyKeyPressedThisFrame { get; private set; }
+    public int Priority => -1;
     bool IInputHandlerInputSource.AnyKeyPressedThisFrame {
         get => AnyKeyPressedThisFrame;
         set => AnyKeyPressedThisFrame = value;
@@ -94,6 +95,7 @@ public class ControllerInputSource : IKeyedInputSource, IPrimaryInputSource {
         vnBacklogPause = InputHandler.Trigger(Proxy(i.CBacklog), backlog);
         uiConfirm = InputHandler.Trigger(Proxy(i.CConfirm), confirm);
         uiBack = InputHandler.Trigger(Proxy(i.CBack), back);
+        uiContextMenu = InputHandler.Trigger(Proxy(i.CContextMenu), back);
 
         ((IKeyedInputSource)this).AddUpdaters();
     }
@@ -113,6 +115,7 @@ public class ControllerInputSource : IKeyedInputSource, IPrimaryInputSource {
     public IInputHandler vnBacklogPause { get; }
     public IInputHandler uiConfirm { get; }
     public IInputHandler uiBack { get; }
+    public IInputHandler uiContextMenu { get; }
     public IInputHandler? dialogueSkipAll { get; } = null;
 
     private readonly List<(Either<ControllerAxis, KeyCode>, float)> accValues = new();

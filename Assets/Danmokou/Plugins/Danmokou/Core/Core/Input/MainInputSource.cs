@@ -12,6 +12,12 @@ namespace Danmokou.Core.DInput {
 public interface IPrimaryInputSource : IDescriptiveInputSource {
     public MainInputSource Container { set; }
     public bool AnyKeyPressedThisFrame { get; }
+
+    /// <summary>
+    /// The priority of this input source when multiple input sources are simultaneously active
+    ///  (lower priority = more prioritized).
+    /// </summary>
+    public int Priority { get; }
 }
 
 /// <summary>
@@ -79,7 +85,10 @@ public class MainInputSource {
 
     private IPrimaryInputSource? nextCurrent = null;
     public void MarkActive(IPrimaryInputSource src) {
-        nextCurrent ??= src;
+        if (nextCurrent is null)
+            nextCurrent = src;
+        else if (src.Priority < nextCurrent.Priority)
+            nextCurrent = src;
     }
 
     public bool OncePerUnityFrameToggleControls() {

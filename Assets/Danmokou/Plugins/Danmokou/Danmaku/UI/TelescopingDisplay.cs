@@ -2,6 +2,7 @@
 using System.Collections;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -44,9 +45,9 @@ public class TelescopingDisplay : FancyDisplay {
             tr.localScale = new Vector3(scale, scale, scale);
             sr.color = color;
         } else {
-            tr.GoTo(myLoc, time, M.EOutSine, canceller).Run(this, new CoroutineOptions(true));
-            tr.ScaleTo(scale, time, M.EOutSine, canceller).Run(this, new CoroutineOptions(true));
-            sr.ColorTo(color, time, M.EOutSine, canceller).Run(this, new CoroutineOptions(true));
+            tr.GoTo(myLoc, time, Easers.EOutSine, canceller).Run(this, new CoroutineOptions(true));
+            tr.ScaleTo(scale, time, Easers.EOutSine, canceller).Run(this, new CoroutineOptions(true));
+            sr.ColorTo(color, time, Easers.EOutSine, canceller).Run(this, new CoroutineOptions(true));
         }
     }
 }

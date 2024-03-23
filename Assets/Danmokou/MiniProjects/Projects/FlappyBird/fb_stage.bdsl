@@ -140,7 +140,7 @@ phase 0
 				stagger 0.24
 				dynamic polar( 
 					2 * t,
-					* lerpsmooth(out-sine, 0, 1, &lt, 1, 0) sine 1.4 (9) + * 1.1 * 1p &lt t)
+					lerpsmooth(out-sine, 0, 1, &lt, 1, 0) * sine(1.4, 9, 1.1p * &lt + t))
             })),
         { hp 300 })
 !}

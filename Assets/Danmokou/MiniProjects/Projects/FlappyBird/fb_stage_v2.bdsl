@@ -1,0 +1,340 @@
+
+
+function obj1(y = 0, x = rand(3.5, 5.2)) {
+    return color "tfairy" summonr(none(cx(9)), 
+        movewrap_(3, 1.5, pxy(x, y), 4, gox(9),
+            async "gcircle-teal/w" <> gcr3 (120 / dl) 6s <> {
+                delay(lerpd(60, 0))
+                sfx "x-bubble"
+            } gsr { target ang Lplayer } s tprot px 3),
+        { hp 100 })
+}
+
+function obj2(y = 0, x = rand(4, 5.2), c = "amulet-orange/w") {
+    return color "tfairy" summonr(none(cx(9)), 
+        movewrap_(4, 1.5, pxy(x, y), 4, gox(9),
+            async c <> gcr2 240 (2 + d3d1) <> {
+                delay(lerpd(240, 170))
+                sfx "x-fire-burst-2"
+            } gsr { target ang Lplayer } gsr2 (5 + d3d2) <1> {
+                center
+            } s tprot px 2),
+        { hp 100 })
+}
+
+macro obj3(y = 2, x = 5) {
+    color "tlfairy" summonr(none(cx(9)), 
+        saction 0 {
+            //print("y1" + y.ToString())
+            movewrap(1.5, pxy(x, y), 4, gox(9),
+                saction 0 {
+                    sync "powerup1" <> poweraura { 
+                        boss1(lerp 0 1 t purple (rgb 1 1 1), purple)
+                    }
+                    //print("y2" + y.ToString())
+                    thendelay 3 async "gdlaser-purple/w" <-2;:180> gcr {
+                        delay(180)
+                    } laser(null, 1, 1 + 0.2 * dc, {
+                        dsfx
+                    })
+                })
+        },
+        { hp 300 })
+}
+
+function obj4() {
+    return color "tlfairy" gsr {
+        preloop b{
+            hvar start = rv2toxy rv2
+        } 
+    } summonr(none(cx(9)), 
+        saction 0 {
+            movetarget(3, $(eoutsine), pxy(Lplayer.x, 3.5))
+            sync "powerup1" <> poweraura {
+                boss1(lerp 0 1 t pink (rgb 1 1 1), pink)
+            }
+            movetarget(1.5, $(eoutsine), gox(Lplayer.x))
+            thendelay 3 sync "gdlaser-pink/w" <-2;:-90> laser(null, 1, 1 + 0.2 * dc, {
+                dsfx
+            })
+            movetarget(1.5, $(einsine), gox(-9))
+        },
+        { hp 300 })
+}
+
+function obj5(y = 0) {
+    return color "tfairy" summonr(none(cx(9)), 
+        movewrap_(4, 1.5, pxy(5, y), 4, gox(9),
+            async "arrow-green/w" <> gir2 240 2 <> {
+                target ang Lplayer
+            } gcr2 10 6 <> {
+                delay 120
+                sfx "x-fire-burst-1"
+                p this
+            } s tprot px(3 + 0.25 * p)),
+        { hp 100 })
+}
+
+function obj6(y = 2) {
+    return color "tlfairy" summonr(none(cx(9)), 
+        movewrap(2, pxy(5, y), 4, gox(9),
+            async "triangle-yellow*" <> gir2 480 2 <> {
+                p this
+                color { "/w", "/b" }
+            } gcr2 12 (6 - 3 * p) <> {
+                target ang Lplayer
+                p add
+                sfx "x-fire-burst-2"
+            } gsr2 (3 + d3d2) <21> {
+                center
+            } s tprot px(2.4 - 0.2 * p2 - 0.5 * p1)),
+        { hp 300 })
+}
+
+function obj7(y = 2) {
+    return color "tlfairy" summonr(none(cx(9)), 
+        movewrap(2, pxy(4, y), 4, gox(9),
+            async "star-green*" <> gir2 600 2 <> {
+                delay(lerpd(180, 120))
+            } gcr2 90 2 <> {
+                p this
+                color { "/w", "/b" }
+                sfx "x-fire-star-1"
+            } gsr2c (16 * dl) {
+            } simple tprot px(1.5 + 1 * p) {
+                dir(starrot1 * pm1(p))
+            }),
+        { hp 300 })
+}
+
+function obj8(y = 2, x = 3) {
+    return color "tlfairy" summonr(none(cx(9)), 
+        movewrap(3, pxy(x, y), 4, gox(9),
+            saction 0 {
+                sync "powerup1" <> poweraura {
+                    boss1(lerp 0 1 t yellow orange, yellow)
+                }
+                thendelay 3 async "gdlaser-yellow/" <> gcr {
+                    delay(180)
+                } gsr { target ang Lplayer } laser(null, 1, 1 + 0.2 * dc, {
+                    dsfx
+                    s 1.4
+                    stagger 0.24
+                    dynamic polar( 
+                        2 * t,
+                        lerpsmooth($(eoutsine), 0, 1, lt, 1, 0) * sine(1.4, 9, 1.1p * lt + t))
+                })
+            }),
+        { hp 300 })
+}
+
+function bookctrl() {
+    return behcontrol(_, "book", ondestroy(_, 
+        sync "sakura-black/w" <> gsr2c (15 * dl) { 
+            sfx("x-fire-burst-3") 
+        } s tprot cx 2))
+}
+
+function book(y = 0, mov::VTP = Compilers.VTP(nrvelocity(px(-2)))) {
+    return color "book" summonr(rvtp(pxy(9, y), mov), stall,
+        { hp 600, drops3(0, 0, 0) })
+}
+
+function iswindmill(t, wfreq, pi) {
+    return (t == 1 & 0 == (mod(wfreq, pi)))
+}
+
+function pipes(wfreq = 3, ct = 15) {
+    return ~ async "" <8;:> gcr2 360 ct <> { 
+        root zero 
+        center
+        preloop b{
+            rv2.ry = rand(-3, 3)
+        }
+    } gsr2 2 <> {
+        p this
+        colorf({ "pipe-blue", "windmill" }, iswindmill(t, wfreq, pi) ? 1 : 0)
+        preloop b{
+            hvar rotf = iswindmill(t, wfreq, pi) ?  0 : 180 * p
+            rv2.ry = (brv2.ry + (iswindmill(t, wfreq, pi) ? -2 : (1 - p) * lerpd(1, 0)))
+        }
+    } summon tpnrot px(-2) stall {
+        rotate(rotf)
+    }
+}
+
+pattern { bgm {
+	(2, "fb.stage")
+} } {
+phase 0 {} {
+	paction 0 {
+		shiftphaseto 3
+    }
+}		
+
+//1
+phase 0 { stage, silent } {
+    saction 0 {
+        executevn $(flappybirddialogue1) "d1"
+        shiftphase
+    }
+}
+
+//2
+phase 0 { announce } { 
+	saction 0 {
+		stageannounce
+		shiftphase
+    }
+}
+
+//3
+phasej 51 0 { stage, checkpoint } {
+	saction 0 {
+        bookctrl()
+        pipes(3)
+        ~ async "" <> gcr2 lerpt(0, 6, 720p, 360p) 9 <> {
+            delay(300)
+            fortime(36s)
+            root zero
+        } wrap(book(Lplayer.y, nrvelocity(pxy(-2.3, sine(4, 0.5, t)))))
+    }
+    saction 0 {
+        sync "" <> obj1(2)
+        wait 4
+        sync "" <> obj1(-2)
+        wait 2
+        sync "" <> obj1(0)
+        wait 1
+        sync "" <> obj1(3)
+    }
+    saction 2 {
+        sync "" <> obj3(1.5)
+        wait 1
+        sync "" <> obj1(-0.5)
+        wait 2
+        sync "" <> obj5(-3)
+    }
+    saction 3 {
+        sync "" <> obj2(3)
+        wait 1.4
+        sync "" <> obj2(-2.5)
+    }
+    saction 3 {
+        ~ _ 0.6 sync "" <> obj3(-2)
+        async "" <;3:> gcr2 120 3 <;-1.4:> {
+        } obj1(0)
+    }
+    //5
+    saction 4 {
+        sync "" <> obj3(2, 4)
+        wait 1
+        sync "" <> obj1(3, 5)
+        sync "" <> obj1(1, 5)
+        wait 1
+        sync "" <> obj2(-3)
+    }
+    saction 3 {
+        sync "" <> obj2(3)
+        wait 1.3
+        sync "" <> obj3(0)
+        wait 1.4
+        sync "" <> obj5(-2)
+    }
+    saction 2 {
+        sync "" <> obj2(1)
+        wait 2
+        async "" <> gcr2 80 3 <> {
+            p this
+        } gsr2 2 <> {
+            bindLR
+        } wrap(obj5((lr * (3 - p))))
+        wait 1
+        async "" <> gcr2 240 3 <> {
+        } wrap(obj3(Lplayer.y))
+    }
+}
+
+
+//4 Aya
+phase 0 { midboss, checkpoint } {
+	saction 0 {
+		boss "fb.aya"
+		shiftphase
+    }
+}
+
+//5
+phasej 58 0 { stage, checkpoint, bg "prairie" } {
+    saction 0 {
+        bulletcontrol(_, "sun-*", cull(scale <= 0))
+        behcontrol(_, "plane", sm(onlyonce(offscreen(loc) & t > 2.8), 
+            sync "sun-orange/w" a(rand(-20p, 20p)) gsr2c (12 * dl) {
+                sfx "x-boom"
+            } simple tprot(px(2 * sqrt(dl) - 0.2 * t)) { scale(lerpt(0, 0.4, 0.2, 1.8 - 1 * t)) }
+        ))
+        ~ async "plane" <> gcr3 (8s / sqrt(dl)) 52s <> {
+        } summonr(rvtp(pxy(9, rand(-4, 4)), nrvelocity(
+            ss(1.2, norm(Lplayer - loc)) * 8 * lerpt3(0, 1, 1.9, 2.6, 1, 0.1, 1.6))), 
+                saction 2 {
+                    sfx "x-incoming"
+                    wait time inf
+                }, { hp 6000 })
+        _ 1 pipes(1, 17)
+    }
+    saction 1 {
+        sync "" <> obj6(3)
+        wait 1
+        sync "" <> obj1(0)
+        wait 2
+        sync "" <> obj7(-3)
+    }
+    saction 3 {
+        sync "" <> obj4()
+        wait 2
+        sync "" <> wrap(obj3(Lplayer.y))
+    }
+    saction 5 {
+        sync "" <> obj1(3)
+        wait 3
+        sync "" <> obj4()
+        sync "" <> obj6(-2)
+    }
+    saction 5 {
+        sync "" <> obj7(3)
+        sync "" <> obj7(-3)
+        wait 3 
+        sync "" <> obj3(0)
+    }
+    saction 3 { //5 
+        sync "" <> obj8(-2)
+        wait 3
+        sync "" <> obj8(3)
+        sync "" <> obj1(-1)
+    }
+    saction 3 {
+        sync "" <> obj5(3)
+        wait 2
+        sync "" <> obj6(-2)
+        wait 1
+        sync "" <> obj3(0)
+    }
+    saction 3 {
+        async "" <> gcr2 280 3 <> {
+            p this
+        } gsr2 2 <> {
+            p add
+        } wrap(obj8(pm1(p2) * (3 - p1), 2.5 + p1))
+    }
+}
+        
+
+//6 Tokiko
+phase 0 { endboss, checkpoint } {
+	saction 0 {
+		boss "fb.tokiko"
+		shiftphase
+    }
+}
+
+}

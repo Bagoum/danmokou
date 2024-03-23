@@ -10,6 +10,7 @@
     --violetliner: rgb(108, 68, 125);
     --violetbg70: rgba(92, 22, 106, 0.7);
     --darkvioletbg80: rgba(74, 16, 84, 0.8);
+    --darkervioletbg80: rgba(46, 8, 53, 0.8);
 }
 
 .unity-label {
@@ -211,11 +212,10 @@
 .node > .body {
     transition-property: border-color;
     transition-duration: 0.1s;
-    border-top-width: 6px;
     border-bottom-width: 6px;
     border-color: var(--goldsub0);
     flex-direction: row;
-    background-image: url('project://database/Assets/Danmokou/Sprites/util/1u-square-feather-80pct.png?fileID=2800000&guid=06ccdb42d2d62514c9c96270fc6ab823&type=3#1u-square-feather-80pct');
+    background-image: url('project://database/Assets/Danmokou/Sprites/util/1u-square-featherlr-80pct-u-60pct.png?fileID=2800000&guid=630513b3f0593ae4bb16401ccea7e601&type=3#1u-square-featherlr-80pct-u-60pct');
     -unity-background-image-tint-color: var(--violetsub0);
     padding-left: 10px;
     padding-right: 10px;
@@ -305,7 +305,7 @@
 
 .node.saveentry .body {
     border-color: var(--goldsub60);
-    background-image: url('project://database/Assets/Danmokou/Sprites/util/1u-square-feather-90pct.png?fileID=2800000&guid=20a7ca53c3ccd9b4ebf9b8745c32a5f6&type=3#1u-square-feather-90pct');
+    background-image: url('project://database/Assets/Danmokou/Sprites/util/1u-square-featherlr-90pct.png?fileID=2800000&guid=20a7ca53c3ccd9b4ebf9b8745c32a5f6&type=3#1u-square-featherlr-90pct');
 }
 
 .node.saveentry.focus .body {
@@ -389,13 +389,20 @@
     border-bottom-right-radius: 40px;
     border-top-right-radius: 40px;
     border-top-left-radius: 40px;
-    border-left-width: 6px;
-    border-right-width: 6px;
-    border-top-width: 6px;
-    border-bottom-width: 6px;
+    border-left-width: 5px;
+    border-right-width: 5px;
+    border-top-width: 5px;
+    border-bottom-width: 5px;
     translate: 0 -100%;
     left: 100%;
     position: absolute;
     max-width: 800px;
     min-width: 100px;
+}
+
+.tooltip.tooltip-contextmenu {
+    border-top-left-radius: initial;
+    border-bottom-left-radius: 40px;
+    background-color: var(--darkervioletbg80);
+    border-color: var(--goldsub60);
 }

@@ -229,6 +229,12 @@ public class UINode {
     /// Overrides Navigate for Confirm entries. Runs after Navigator but before Navigate.
     /// </summary>
     public Func<UINode, UIResult>? OnConfirm { get; init; }
+    
+    /// <summary>
+    /// Provides a menu to show when the "context menu" button (C by default) is pressed while this node is active.
+    /// </summary>
+    public Func<UINode, UIResult>? OnContextMenu { get; set; }
+    
     /// <summary>
     /// A function that is run the first time the node is made visible.
     /// </summary>
@@ -315,18 +321,39 @@ public class UINode {
 
     #region Construction
 
-    public UINode MakeTooltip(UIScreen s, UINode element) {
-        OnBuilt = OnBuilt.Then(_ => 
-            tooltip = new UIColumn(
-                    new UIRenderConstructed(new UIRenderExplicit(s, this), XMLUtils.Prefabs.Tooltip)
-                        { AnimateOnShowHide = true },
-                    element)
-                { Interactable = false });
+    /// <summary>
+    /// Add a tooltip that appears to the upper-right of this node when this node is focused.
+    /// <br/>Tooltips cannot be interacted with.
+    /// </summary>
+    public UINode MakeTooltip(Func<UINode, UIGroup> tt) {
+        OnBuilt = OnBuilt.Then(n => {
+            tooltip = tt(n);
+            if (tooltip.Interactable)
+                throw new Exception("Interactable tooltips not supported");
+        });
         return this;
     }
 
+    /// <inheritdoc cref="MakeTooltip(System.Func{Danmokou.UI.XML.UINode,Danmokou.UI.XML.UIGroup})"/>
+    public UINode MakeTooltip(UIScreen s, UINode element) =>
+        MakeTooltip(n => new UIColumn(
+                new UIRenderConstructed(new UIRenderExplicit(s, n), XMLUtils.Prefabs.Tooltip)
+                    { AnimateOnShowHide = true },
+                element)
+            { Interactable = false });
+
+    /// <inheritdoc cref="MakeTooltip(System.Func{Danmokou.UI.XML.UINode,Danmokou.UI.XML.UIGroup})"/>
     public UINode MakeTooltip(UIScreen s, LString text) =>
         MakeTooltip(s, new UINode(text) { Prefab = XMLUtils.Prefabs.PureTextNode }.With(XMLUtils.highVisClass));
+
+    /// <summary>
+    /// Add an options menu that appears to the lower-right of this node when C is pressed while this node is focused.
+    /// <br/>An options menu is like a popup. While the options menu is active, nothing else receives interaction.
+    /// </summary>
+    public UINode MakeContextMenu(Func<UINode, UINode[]> options) {
+        OnContextMenu = n => PopupUIGroup.CreateContextMenu(n, options(n));
+        return this;
+    }
 
     //float MONKEYPATCH_mouseDelay = 0;
     protected virtual void RegisterEvents() {
@@ -501,6 +528,7 @@ public class UINode {
         if (req == UICommand.Confirm && !IsEnabled) return new UIResult.StayOnNode(true);
         return Navigator?.Invoke(this, req) ?? req switch {
             UICommand.Confirm when OnConfirm != null => OnConfirm(this),
+            UICommand.ContextMenu => OnContextMenu?.Invoke(this) ?? UIGroup.NoOp,
             _ => NavigateInternal(req)
         };
     }
@@ -975,9 +1003,10 @@ public class UIButton : UINode {
     public UIButton(LString descriptor, ButtonType type, Func<UIButton, UIResult> onClick) : 
         this(() => descriptor, type, onClick) { }
 
-    public static Func<UIButton, UIResult> GoBackCommand(UINode source) => _ =>
+    public static Func<T, UIResult> GoBackCommand<T>(UINode source) => _ =>
         new UIResult.ReturnToTargetGroupCaller(source.Group);
 
+    public static Func<UIButton, UIResult> GoBackCommand(UINode source) => GoBackCommand<UIButton>(source);
     public static UIButton Cancel(UINode source) =>
         new(() => LocalizedStrings.Generic.generic_cancel, ButtonType.Cancel, GoBackCommand(source));
     

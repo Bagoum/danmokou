@@ -35,8 +35,8 @@ public static class Lexer {
     private const string num = @"[0-9]";
     private const string numMult = @"pi?|[hfsc]";
     private static readonly string[] specialOps = new[] { "\\", "->", "$" };
-    private static readonly string[] keywords = { "hfunction", "function", "const", "hvar", "var", "block", "return", 
-        "if", "else", "while", "for", "continue", "break", "import", "at", "as", "new" };
+    private static readonly string[] keywords = { "hfunction", "function", "macro", "const", "hvar", "var", "block", 
+        "return", "if", "else", "while", "for", "continue", "break", "import", "at", "as", "new" };
     private static readonly string[] valueKeywords = new[] { "true", "false" };
     private static readonly HashSet<string> operators = new[] {
         "++", "--",
@@ -72,6 +72,8 @@ public static class Lexer {
                     typ = TokenType.Keyword;
                 else if (s.Value == "null")
                     typ = TokenType.NullKeyword;
+                else if (s.Value == "default")
+                    typ = TokenType.DefaultKeyword;
                 else if (valueKeywords.Contains(s.Value))
                     typ = TokenType.ValueKeyword;
                 return new Token(typ, p, s);
@@ -175,6 +177,10 @@ public static class Lexer {
         /// The keyword "null".
         /// </summary>
         NullKeyword,
+        /// <summary>
+        /// The keyword "default", used for default function parameters.
+        /// </summary>
+        DefaultKeyword,
         /// <summary>
         /// A special operator, such as :: or ->, which has functionality more
         ///  advanced than calling a function.

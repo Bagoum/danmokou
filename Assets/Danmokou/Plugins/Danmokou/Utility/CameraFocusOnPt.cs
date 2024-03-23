@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using BagoumLib.Mathematics;
 using Danmokou.DMath;
 using UnityEngine;
 
@@ -30,7 +31,7 @@ public class CameraFocusOnPt : MonoBehaviour {
         //To retain the screen location v1, the camera center should have position (x-1)/x * v1.
 
         for (float t = 0; t < overTime; t += Time.deltaTime) {
-            var zm = M.Lerp(startZoom, zoom, M.EOutSine(t / overTime));
+            var zm = M.Lerp(startZoom, zoom, Easers.EOutSine(t / overTime));
             cam.orthographicSize = baseSize / zm;
             transform.position = start + (zm - 1) / zm * (target.position - start);
             yield return null;

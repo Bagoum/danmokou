@@ -171,10 +171,15 @@ public interface IAST : ITypeTree, IDebugAST {
                       $"the first resolved to {rbr.LResolved}, which occurs in {rbr.RResolved}.");
         } else if (e is TypeUnifyErr.NoPossibleOverload npo) {
             pos = (npo.Tree as IAST)!.Position;
-            string setsDisplay(IAST[] prams) =>
-                string.Join("\n\t", npo.ArgSets.Select((set, i) =>
-                    $"Parameter #{i + 1}: {string.Join(" or ", set.Select(s => s.Item1.SimpRName()).Distinct())}" +
-                    $" (at {prams[i].Position})"));
+            string setsDisplay(IAST?[] prams) {
+                var ai = 0;
+                return string.Join("\n\t",
+                    prams.Select((p, pi) => 
+                        $"Parameter #{pi + 1}: " + (p == null ? "<N/A>" : 
+                            (string.Join(" or ", npo.ArgSets[ai++].Select(s => s.Item1.SimpRName()).Distinct()) +
+                            $" (at {p.Position})"))
+                    ));
+            }
             if (npo.Tree is AST.MethodCall m) {
                 pos = m.MethodPosition;
                 var calledAs = (m is AST.InstanceMethodCall im) ? im.Name : m.Overloads[0].CalledAs;
@@ -221,9 +226,16 @@ public interface IAST : ITypeTree, IDebugAST {
                           $" but the return parameter was inferred to have a different type:\n\t{setsDisplay(ret.Params)}");
             } else if (npo.Tree is AST.ScriptFunctionCall sfc) {
                 pos = sfc.Position;
-                sb.Append($"Typechecking failed for script function {sfc.Definition.AsSignature()}.");
+                sb.Append($"Typechecking failed for this invocation of script function {sfc.Definition.AsSignature()}.");
                 sb.Append($"\nThe parameters were inferred to have the following types:\n\t{setsDisplay(sfc.Params)}");
                 sb.Append($"\nThese parameters cannot be applied to the above script function.");
+            } else if (npo.Tree is AST.ScriptFunctionDef sfd) {
+                pos = sfd.Position;
+                sb.Append($"Typechecking failed for the default values of script function {sfd.Definition.AsSignature()}.");
+                var u = npo.ArgSets[^1][0].Item2;
+                var args = sfd.Definition.Args.Select((x, i) => $"Parameter #{i + 1}: {u[x.TypeDesignation].SimpRName()}");
+                sb.Append($"\nThe parameters were inferred to have the following types:\n\t{string.Join("\n\t", args)}");
+                sb.Append($"\nThe default values were inferred to have the following types:\n\t{setsDisplay(sfd.Definition.Defaults)}");
             } else
                 throw new NotImplementedException(npo.Tree.GetType().SimpRName());
         } else if (e is TypeUnifyErr.MultipleOverloads mover) {
@@ -245,6 +257,9 @@ public interface IAST : ITypeTree, IDebugAST {
             }
         } else if (e is UntypedVariable ut) {
             UntypedRef(ut.Declaration);
+        } else if (e is VoidTypedVariable vt) {
+            pos = vt.Declaration.Position;
+            sb.Append($"The variable `{vt.Declaration.Name}` was inferred to have a type of void.");
         } else if (e is UntypedReturn ur) {
             var fn = ur.Return.Function;
             pos = fn.Position;

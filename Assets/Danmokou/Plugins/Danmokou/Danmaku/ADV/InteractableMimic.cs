@@ -98,8 +98,8 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
     
     private Interactable entity = null!;
     
-    private readonly PushLerperF<float> offsetter = new(0.3f, M.LerpU);
-    private readonly PushLerper<float> borderColor = new(0.2f, (a, b, t) => M.LerpU(a, b, cssDefaultEase(t)));
+    private readonly PushLerperF<float> offsetter = new(0.3f, BMath.LerpU);
+    private readonly PushLerper<float> borderColor = new(0.2f, (a, b, t) => BMath.LerpU(a, b, cssDefaultEase(t)));
     private static readonly Easer cssDefaultEase = Bezier.CBezier(0.25f, 0.1f, 0.25f, 1f);
     private static readonly Easer bEase = Easers.CEOutBounce(0, 0.45f, 0.7f, 0.85f, 1f);
     private readonly Func<float, float> bounce = t => 160 * (-1f + bEase(Mathf.Clamp01(BMath.Mod(2f, t) / 1.2f)));

@@ -10,6 +10,7 @@ using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using CommunityToolkit.HighPerformance;
 using Danmokou.Behavior;
 using Danmokou.Behavior.Display;
@@ -429,7 +430,7 @@ public partial class PlayerController : BehaviorEntity,
                 if (IsFocus) {
                     //Add offset to all tracking positions so they stay the same relative position
                     for (int ii = 0; ii < MarisaAPositions.Count; ++ii) {
-                        MarisaAPositions[ii] += delta;
+                        MarisaAPositions.RelativeIndex(ii) += delta;
                     }
                 } else {
                     MarisaAPositions.Add(Hurtbox.location);
@@ -798,7 +799,7 @@ public partial class PlayerController : BehaviorEntity,
             IsTryingWitchTime && Instance.MeterF.TryUseMeterFrame(); ++f) {
             SpawnedShip.MaybeDrawWitchTimeGhost(f);
             MeterIsActive.OnNext(Instance.MeterF.EnoughMeterToUse ? meterDisplay : meterDisplayInner);
-            float meterDisplayRatio = M.EOutSine(Mathf.Clamp01(f / 30f));
+            float meterDisplayRatio = Easers.EOutSine(Mathf.Clamp01(f / 30f));
             meterPB.SetFloat(PropConsts.fillRatio, Instance.MeterF.VisibleMeter.Value * meterDisplayRatio);
             meter.SetPropertyBlock(meterPB);
             yield return null;

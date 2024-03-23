@@ -28,7 +28,8 @@ public enum UICommand {
     Up,
     Down,
     Confirm,
-    Back
+    Back,
+    ContextMenu,
 }
 
 public abstract record UIPointerCommand {
@@ -71,7 +72,7 @@ public abstract record UIResult {
 
     public record GoToNode(UINode Target) : UIResult {
         public GoToNode(UIGroup Group, int? Index = null) : 
-            this(Index.Try(out var i) ? Group.Nodes.ModIndex(i) : Group.EntryNode) {}
+            this(Index.Try(out var i) ? Group.Nodes[Math.Clamp(i, 0, Group.Nodes.Count-1)] : Group.EntryNode) {}
         
         public GoToNode(UIScreen s) : this(s.Groups[0]) { }
     }
@@ -160,6 +161,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     public SFXConfig? confirmSound;
     public SFXConfig? failureSound;
     public SFXConfig? backSound;
+    public SFXConfig? showOptsSound;
     
     public bool MenuActive => Current != null;
     //TODO what happens if you screw with the 16x9 frame? how would you measure this in non-ideal conditions?
@@ -222,6 +224,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         UIDown ? UICommand.Down :
         UIConfirm ? UICommand.Confirm :
         UIBack ? UICommand.Back :
+        UIContextMenu ? UICommand.ContextMenu :
         null;
 
     //Note: it should be possible to use Awake instead of FirstFrame w.r.t UIDocument being instantiated, 
@@ -421,6 +424,8 @@ public abstract class UIController : CoroutineRegularUpdater {
                     }
                     if (next == null)
                         throw new Exception("Return-to-target resulted in a null node");
+                    if (next.Destroyed)
+                        next = ngroup.EntryNode;
                     break;
                 case UIResult.ReturnToScreenCaller sc:
                     if (prev == null) throw new Exception("Current must be present for return-to-screen op");
@@ -496,6 +501,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                                 UICommand.Down => upDownSound,
                                 UICommand.Confirm => confirmSound,
                                 UICommand.Back => backSound,
+                                UICommand.ContextMenu => showOptsSound,
                                 _ => null
                             }
                         });
@@ -595,16 +601,16 @@ public abstract class UIController : CoroutineRegularUpdater {
             if (opts.DelayScreenFadeIn)
                 await RUWaitingUtils.WaitForUnchecked(this, Cancellable.Null, t / 2f, false);
             await Task.WhenAll(
-                to.HTML.FadeTo(1, t, M.EIOSine).Run(this),
+                to.HTML.FadeTo(1, t, Easers.EIOSine).Run(this),
                 to.SceneObjects == null ?
                     Task.CompletedTask :
-                    to.SceneObjects.transform.GoTo(Vector3.zero, t, M.EIOSine).Run(this)
+                    to.SceneObjects.transform.GoTo(Vector3.zero, t, Easers.EIOSine).Run(this)
             );
         }
         await Task.WhenAll(
-            from.HTML.FadeTo(0, opts.ScreenTransitionTime, M.EIOSine).Run(this),
+            from.HTML.FadeTo(0, opts.ScreenTransitionTime, Easers.EIOSine).Run(this),
             from.SceneObjects == null ? Task.CompletedTask : 
-                from.SceneObjects.transform.GoTo(eput, opts.ScreenTransitionTime, M.EIOSine).Run(this),
+                from.SceneObjects.transform.GoTo(eput, opts.ScreenTransitionTime, Easers.EIOSine).Run(this),
             FadeIn()
         );
     }

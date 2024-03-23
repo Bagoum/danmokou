@@ -1,6 +1,7 @@
 ﻿using System;
 using BagoumLib;
 using BagoumLib.Events;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior.Items;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -94,7 +95,7 @@ public class RankFeature : BaseInstanceFeature, IRankFeature {
             _ => 3
         };
         this.RankPoints = DefaultRankPointsForLevel(RankLevel);
-        VisibleRankPointFill = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 2f)),
+        VisibleRankPointFill = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, Easers.CEOutPow(t, 2f)),
             () => (float) (RankPoints / RankPointsRequired), 0.3f);
         
         Tokens.Add(Inst.ExtendAcquired.Subscribe(HandleExtend));
@@ -169,7 +170,7 @@ public class RankFeature : BaseInstanceFeature, IRankFeature {
         public int MaxRankLevel => 1;
         public int RankLevel => 0;
         public double RankRatio => 0;
-        public Lerpifier<float> VisibleRankPointFill { get; } = new((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 2f)),
+        public Lerpifier<float> VisibleRankPointFill { get; } = new((a, b, t) => M.Lerp(a, b, Easers.CEOutPow(t, 2f)),
         () => 0, 0.3f);
     }
 }

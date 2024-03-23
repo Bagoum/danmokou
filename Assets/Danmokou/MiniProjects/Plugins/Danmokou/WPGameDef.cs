@@ -55,7 +55,7 @@ public class WPGameDef : ADVGameDef {
 
 
         //--- Lerpers
-        private readonly PushLerper<float> evSize = new(0.5f, (a, b, t) => M.LerpU(a, b, Easers.EOutBack(t)));
+        private readonly PushLerper<float> evSize = new(0.5f, (a, b, t) => BMath.LerpU(a, b, Easers.EOutBack(t)));
 
 
         public Executing(WPGameDef gdef, ADVInstance inst) : base(inst) {

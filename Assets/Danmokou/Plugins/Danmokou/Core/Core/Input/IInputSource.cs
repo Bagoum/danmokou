@@ -29,6 +29,7 @@ public interface IInputSource {
     bool? VNBacklogPause => null;
     bool? UIConfirm => null;
     bool? UIBack => null;
+    bool? UIContextMenu => null;
     bool? UILeft => null;
     bool? UIRight => null;
     bool? UIUp => null;
@@ -64,6 +65,7 @@ public class NullInputSource : IInputSource {
     public bool? VNBacklogPause => false;
     public bool? UIConfirm => false;
     public bool? UIBack => false;
+    public bool? UIContextMenu => false;
     public bool? UILeft => false;
     public bool? UIRight => false;
     public bool? UIUp => false;

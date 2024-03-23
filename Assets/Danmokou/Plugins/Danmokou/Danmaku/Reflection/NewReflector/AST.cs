@@ -22,6 +22,7 @@ using Danmokou.SM;
 using JetBrains.Annotations;
 using LanguageServer.VsCode.Contracts;
 using Mizuhashi;
+using NUnit.Framework;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using static BagoumLib.Unification.TypeDesignation;
@@ -194,10 +195,11 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
             ast is Array && 
             flattenArrayTypes.Contains(ast.SelectedOverloadReturnType?.Resolve(Unifier.Empty).LeftOrNull?.GetElementType());
         foreach (var (p, sym) in Params.Select((p, i) => (p, mapper?.Invoke(p, i) ?? p.ToSymbolTree()))) {
-            if (DefaultFlatten(p))
+            if (DefaultFlatten(p)) {
                 foreach (var s in sym.Children ?? System.Array.Empty<DocumentSymbol>())
-                    yield return s;
-            else
+                    if (s != null)
+                        yield return s;
+            } else if (sym != null!)
                 yield return sym;
         }
     }
@@ -425,17 +427,17 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         /// <param name="Methods">Method signatures. These may be generic, requiring specialization before invocation.</param>
         /// <param name="Params">Arguments to the method</param>
         /// <param name="overloadsEq"><see cref="OverloadsAreInterchangeable"/></param>
-        public static MethodCall Make(PositionRange Position, PositionRange MethodPosition, LexicalScope EnclosingScope, 
+        public static MethodCall Make(PositionRange Position, PositionRange MethodPosition, STAnnotater EnclosingScope, 
             Reflector.InvokedMethod[] Methods, IEnumerable<ST> Params, bool overloadsEq = false) {
             var localScope = MaybeMakeLocalScope(EnclosingScope, MethodPosition, Methods);
-            return new MethodCall(Position, MethodPosition, EnclosingScope, Methods,
+            return new MethodCall(Position, MethodPosition, EnclosingScope.Scope, Methods,
                 Params.Select(p => p.Annotate(localScope ?? EnclosingScope)).ToArray()) {
-                LocalScope = localScope,
+                LocalScope = localScope?.Scope,
                 OverloadsAreInterchangeable = overloadsEq
             };
         }
 
-        private static LexicalScope? MaybeMakeLocalScope(LexicalScope enclosing, PositionRange methodPos, Reflector.InvokedMethod[] methods) {
+        private static STAnnotater? MaybeMakeLocalScope(STAnnotater enclosing, PositionRange methodPos, Reflector.InvokedMethod[] methods) {
             var nWithScope = methods.Count(m => m.Mi.GetAttribute<CreatesInternalScopeAttribute>() != null);
             if (nWithScope > 0) {
                 if (nWithScope != methods.Length)
@@ -444,18 +446,19 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                         $"This is not permitted by the language design. Please report this.");
                 var cfg = methods[0].Mi.GetAttribute<CreatesInternalScopeAttribute>()!;
                 var sc = cfg.dynamic ?
-                    new DynamicLexicalScope(enclosing) :
-                    LexicalScope.Derive(enclosing);
+                    new DynamicLexicalScope(enclosing.Scope) :
+                    LexicalScope.Derive(enclosing.Scope);
                 sc.Type = LexicalScopeType.MethodScope;
                 sc.AutoDeclareVariables(methodPos, cfg.type);
-                return sc;
+                return enclosing with { Scope = sc };
             } else if (methods.All(m => m.Mi.GetAttribute<ExtendsInternalScopeAttribute>() != null)) {
-                enclosing.AutoDeclareExtendedVariables(methodPos, 
+                enclosing.Scope.AutoDeclareExtendedVariables(methodPos, 
                     methods[0].Mi.GetAttribute<ExtendsInternalScopeAttribute>()!.type);
             }
             return null;
         }
 
+        /// <inheritdoc cref="IMethodTypeTree{Dummy}.ImplicitParameterCast"/>
         public virtual Either<IImplicitTypeConverter, bool> ImplicitParameterCast(Reflector.InvokedMethod overload, int index) {
             if (DMKScope.GetConverterForCompiledExpressionType(overload.Mi.Params[index].Type) is { } conv)
                 return new(conv);
@@ -589,12 +592,18 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                             ParseArg(ii);
                 }
                 TEx Finalize() {
-                    var raw = mi.Invoke(ast as MethodCall, prms);
-                    if (raw is Func<TExArgCtx, TEx> f)
-                        return f(tac);
-                    else
-                        return dataTyp.MakeTypedTEx(
-                            raw as TEx ?? throw new StaticException($"Incorrect return from function {mi.Name}"));
+                    try {
+                        var raw = mi.Invoke(ast as MethodCall, prms);
+                        if (raw is Func<TExArgCtx, TEx> f)
+                            return f(tac);
+                        else
+                            return dataTyp.MakeTypedTEx(
+                                raw as TEx ?? throw new StaticException($"Incorrect return from function {mi.Name}"));
+                    } catch (Exception exc) {
+                        if (ast != null)
+                            throw new ReflectionException(ast.Position, $"Method invocation for `{mi.AsSignature}` failed.", exc);
+                        throw;
+                    }
                 }
                 //Handle the exceptional case where we assign to a dynamically scoped variable
                 var writesTo = mi.GetAttribute<AssignsAttribute>()?.Indices ?? System.Array.Empty<int>();
@@ -746,7 +755,8 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                     t = k.Typ;
                 } else
                     return System.Array.Empty<MethodSignature>();
-                return t.GetMember(Name).SelectNotNull(MethodSignature.MaybeGet)
+                return t.GetMember(Name).Where(x => x.GetCustomAttribute<DontReflectAttribute>() is null)
+                    .SelectNotNull(MethodSignature.MaybeGet)
                     .Concat(Reflector.ReflectionData.ExtensionMethods(t, Name));
             }).Where(sig => (!sig.Member.Static || sig.Member is TypeMember.Method {IsExtension:true}) 
                             && sig.Params.Length == Params.Length)
@@ -859,7 +869,8 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
     public record LambdaCall(PositionRange Position, LexicalScope EnclosingScope, params IAST[] Params) : 
         AST(Position, EnclosingScope, Params), IMethodAST<Dummy> {
         public IReadOnlyList<Dummy> Overloads { get; } = new[] {
-            OverloadForArgCount(Params.Length)
+            FuncOverloadForArgCount(Params.Length),
+            ActionOverloadForArgCount(Params.Length),
         };
         public IReadOnlyList<ITypeTree> Arguments => Params;
         public List<Dummy>? RealizableOverloads { get; set; }
@@ -873,8 +884,14 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 Params.Skip(1).Select(p => (Ex)p.Realize(tac))));
         }
 
-        private static Dummy OverloadForArgCount(int pargs) {
+        private static Dummy FuncOverloadForArgCount(int pargs) {
             var pfnTyps = pargs.Range().Select(_ => new Variable() as TypeDesignation).ToArray();
+            var argTyps = pfnTyps.Take(pargs - 1);
+            return Dummy.Method(pfnTyps[^1], argTyps.Prepend(PartialFn.MakeFuncType(pfnTyps)).ToArray());
+        }
+        private static Dummy ActionOverloadForArgCount(int pargs) {
+            var pfnTyps = (pargs - 1).Range().Select(_ => new Variable() as TypeDesignation)
+                .Append(TypeDesignation.FromType(typeof(void))).ToArray();
             var argTyps = pfnTyps.Take(pargs - 1);
             return Dummy.Method(pfnTyps[^1], argTyps.Prepend(PartialFn.MakeFuncType(pfnTyps)).ToArray());
         }
@@ -945,7 +962,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
     /// <br/>In the form $(scriptFunction, x, y).
     /// </summary>
     public record PartialScriptFunctionCall(PositionRange Position, PositionRange MethodPosition, LexicalScope EnclosingScope,
-        ScriptImport? InImport, ScriptFnDecl Definition, params IAST[] Params) : AST(Position, EnclosingScope, Params), IMethodAST<Dummy> {
+        ScriptImport? InImport, ScriptFnDecl Definition, params IAST[] Params) : AST(Position, EnclosingScope, Params), IMethodAST<Dummy>, IScriptFnCall {
         public IReadOnlyList<Dummy> Overloads { get; } = new[] {
             PartialFn.PartiallyApply(Definition.CallType, Params.Length, false)
         };
@@ -954,17 +971,13 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         public string NameWithImport => InImport is null ? Definition.Name : $"{InImport.Name}.{Definition.Name}";
         public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
 
+        public bool IsDynamicInvocation => false;
+
         public override TEx _RealizeWithoutCast(TExArgCtx tac) {
-            var prms = Params.Select(p => (Ex)p.Realize(tac));
-            Expression target;
-            if (Definition.IsConstant) {
-                target = PartialFn.PartiallyApply(Definition.Compile(), prms);
-            } else if (InImport is null) {
-                target = Scope.LocalOrParentFunction(tac.EnvFrame, Definition, prms, isPartial: true);
-            } else {
-                target = InImport.Ef.Scope.LocalOrParentFunction(Ex.Constant(InImport.Ef), Definition, prms, isPartial: true);
-            }
-            end:
+            Ex raisedEf = IScriptFnCall.RaiseEfAndGetParams(this, tac, out var prms);
+            var target = Definition.IsConstant ?
+                PartialFn.PartiallyApply(Definition.Compile(), prms) :
+                PartialFn.PartiallyApply(Definition.Compile(), prms.Prepend(raisedEf));
             return ReturnType(SelectedOverload?.simplified!).MakeTypedTEx(target);
         }
 
@@ -982,16 +995,66 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 .WithConst(Definition.IsConstant));
     }
 
+    public interface IScriptFnCall: IAST {
+        LexicalScope Scope { get; }
+        ScriptImport? InImport { get; }
+        ScriptFnDecl Definition { get; }
+        bool IsDynamicInvocation { get; }
+        
+        public static Ex RaiseEf(IScriptFnCall me, TExArgCtx tac) {
+            if (me.Definition.IsConstant)
+                return tac.EnvFrame;
+            else if (me.InImport is null)
+                return me.IsDynamicInvocation ?
+                    tac.EnvFrame :
+                    me.Scope.LocalOrParentFunctionEf(tac.EnvFrame, me.Definition);
+            else
+                return me.InImport.Ef.Scope.LocalOrParentFunctionEf(Ex.Constant(me.InImport.Ef), me.Definition);
+        }
+
+        public static Ex RaiseEfAndGetParams(IScriptFnCall me, TExArgCtx tac, out IEnumerable<Ex> prms) {
+            Ex raisedEf = RaiseEf(me, tac);
+            var raisedTac = tac.MakeCopyForType<EnvFrame>(raisedEf);
+            prms = me.Params.Select((p, i) => {
+                if (p is DefaultValue { AsFunctionArg: true }) {
+                    Ex deflt = me.Definition.Defaults[i]!.Realize(raisedTac);
+                    if (me.IsDynamicInvocation && deflt is not ConstantExpression)
+                        throw new ReflectionException(p.Position, 
+                            $"When dynamically invoking a method, any default values must be constants.");
+                    return deflt;
+                }
+                return (Ex)p.Realize(tac);
+            });
+            return raisedEf;
+        }
+        
+        IEnumerable<ReflectionException> IAST.Verify() {
+            for (int ii = 0; ii < Params.Length; ++ii)
+                if (Params[ii] is DefaultValue {AsFunctionArg: true} p && Definition.Defaults[ii] is null)
+                    yield return new ReflectionException(p.Position,
+                        $"No default value is configured for argument {Definition.Args[ii].AsParam} of script function {Definition.Name}.");
+            foreach (var err in IAST.VerifyChildren(this))
+                yield return err;
+        }
+    }
+
     public record ScriptFunctionCall(PositionRange Position, PositionRange MethodPosition,
-        LexicalScope EnclosingScope, ScriptImport? InImport, ScriptFnDecl Definition, bool IsDynamicInvocation, params IAST[] Params) : AST(Position, EnclosingScope, Params), IMethodAST<Dummy> {
+        LexicalScope EnclosingScope, ScriptImport? InImport, ScriptFnDecl Definition, bool IsDynamicInvocation, params IAST[] Params) : AST(Position, EnclosingScope, Params), IMethodAST<Dummy>, IScriptFnCall {
         public IReadOnlyList<Dummy> Overloads { get; } = new[] { Definition.CallType };
         public IReadOnlyList<ITypeTree> Arguments => Params;
         public List<Dummy>? RealizableOverloads { get; set; }
         public string NameWithImport => InImport is null ? Definition.Name : $"{InImport.Name}.{Definition.Name}";
         public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
         
+        Either<IImplicitTypeConverter, bool> IMethodTypeTree<Dummy>.ImplicitParameterCast(Dummy overload, int index) {
+            if (overload.Arguments[index].Resolve().TryL(out var t) && 
+                DMKScope.GetConverterForCompiledExpressionType(t) is { } conv)
+                return new(conv);
+            return true;
+        }
+
         public override TEx _RealizeWithoutCast(TExArgCtx tac) {
-            var prms = Params.Select(p => (Ex)p.Realize(tac));
+            Ex raisedEf = IScriptFnCall.RaiseEfAndGetParams(this, tac, out var prms);
             Expression target;
             if (Definition.IsConstant) {
                 var func = Definition.Compile();
@@ -1009,14 +1072,10 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 goto end;
                 call_ex:
                 target = PartialFn.Execute(func, aprms);
-            } else if (InImport is null) {
-                if (IsDynamicInvocation) {
-                    target = LexicalScope.FunctionWithoutLexicalScope(tac, Definition, prms);
-                } else
-                    target = Scope.LocalOrParentFunction(tac.EnvFrame, Definition, prms);
-            } else {
-                target = InImport.Ef.Scope.LocalOrParentFunction(Ex.Constant(InImport.Ef), Definition, prms);
-            }
+            } else if (InImport is null && IsDynamicInvocation) {
+                target = LexicalScope.FunctionWithoutLexicalScope(tac, Definition, prms);
+            } else
+                target = PartialFn.Execute(Definition.Compile(), prms.Prepend(raisedEf));
             end:
             return ReturnType(SelectedOverload?.simplified!).MakeTypedTEx(target);
         }
@@ -1034,9 +1093,12 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 .WithConst(Definition.IsConstant));
     }
     
-    public record ScriptFunctionDef(PositionRange Position, string Name, LexicalScope EnclosingScope, LexicalScope FnScope, ScriptFnDecl Definition, Block Body) : AST(Position, EnclosingScope, Body), IMethodAST<Dummy> {
+    public record ScriptFunctionDef(PositionRange Position, string Name, LexicalScope EnclosingScope, LexicalScope FnScope, ScriptFnDecl Definition, Block Body) : AST(Position, EnclosingScope, Definition.Defaults.Where(x => x != null).Append(Body).ToArray()), IMethodAST<Dummy> {
         public IReadOnlyList<Dummy> Overloads { get; } = 
-            new[] { Dummy.Method(new Known(typeof(void)), Body.Overloads[0].Last) };
+            new[] { Dummy.Method(new Known(typeof(void)), 
+                Definition.Args.Select((a, i) => Definition.Defaults[i] != null ? a.TypeDesignation : null)
+                    .FilterNone()
+                    .Append(Body.Overloads[0].Last).ToArray()) };
         public IReadOnlyList<ITypeTree> Arguments => Params;
         public List<Dummy>? RealizableOverloads { get; set; }
         public (Dummy method, Dummy simplified)? SelectedOverload { get; set; }
@@ -1745,7 +1807,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
     }
     
-    public record DefaultValue(PositionRange Position, LexicalScope EnclosingScope, Type? Typ = null) : AST(Position,
+    public record DefaultValue(PositionRange Position, LexicalScope EnclosingScope, Type? Typ = null, bool AsFunctionArg = false) : AST(Position,
         EnclosingScope), IAST, IAtomicTypeTree, IAnyTypedValueAST {
         public string? TokenType { get; init; } = SemanticTokenTypes.Keyword;
         public string? Description { get; init; }
@@ -1755,23 +1817,33 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         public TypeDesignation? SelectedOverload { get; set; }
 
         public override TEx _RealizeWithoutCast(TExArgCtx tac) {
+            if (AsFunctionArg)
+                throw new ReflectionException(Position, "The `default` keyword can only be used as an argument to a script function.");
             var t = ReturnType(SelectedOverload!);
             if (t == typeof(void))
                 return Ex.Empty();
             return t.MakeTypedTEx(Ex.Default(t));
         }
 
-        public string Explain() => $"{CompactPosition} {Description ?? "`null`"}";
+        public string Explain() => $"{CompactPosition} {Description ?? (AsFunctionArg ? "`default`" : "`null`")}";
 
         public DocumentSymbol ToSymbolTree(string? descr = null) {
-            return new DocumentSymbol(Description ?? "null", descr, SymbolKind.Constant, Position.ToRange());
+            if (AsFunctionArg && TokenType == null)
+                return null!; //implicit default, hide me
+            return new DocumentSymbol(Description ?? (AsFunctionArg ? "default" : "null"), 
+                descr, SymbolKind.Constant, Position.ToRange());
         }
 
         protected override IEnumerable<SemanticToken> _ToSemanticTokens() {
             if (TokenType != null)
                 yield return new(Position, TokenType);
         }
-        
+
+        public override IEnumerable<(IDebugAST tree, int? childIndex)>? NarrowestASTForPosition(PositionRange p) {
+            if (AsFunctionArg && TokenType == null)
+                return null;
+            return base.NarrowestASTForPosition(p);
+        }
     }
 
     public record TypedValue<T>(PositionRange Position, LexicalScope EnclosingScope, T Value, SymbolKind Kind) : AST(Position,
@@ -1788,7 +1860,12 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         public string Explain() => $"{CompactPosition} {typeof(T).SimpRName()} `{Value?.ToString()}`";
 
         public DocumentSymbol ToSymbolTree(string? descr = null) {
-            return new DocumentSymbol(Value?.ToString() ?? "null", descr, Kind, Position.ToRange());
+            return new DocumentSymbol(
+                Value switch {
+                    null => "<null>",
+                    "" => "<empty string>",
+                    _ => Value.ToString()
+                }, descr, Kind, Position.ToRange());
         }
 
         protected override IEnumerable<SemanticToken> _ToSemanticTokens() {

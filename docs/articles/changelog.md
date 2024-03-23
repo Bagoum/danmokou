@@ -21,13 +21,24 @@ The following features are planned for future releases.
 
 # v11.1.0
 
+In this version, I've removed the `.csproj` and `.sln` files from the repository. These are required for normal C# projects, but Unity autogenerates them. When upgrading via `git pull --rebase`, this may cause merges error like the following:
+
+```
+CONFLICT (modify/delete): SuzunoyaUnity.csproj deleted in HEAD and modified in d801b396...
+```
+
+ If you get this error, then manually delete the `*.csproj` and `*.sln` files in the base directory, then run `git add . ` and `git rebase --continue`. The files will be regenerated when you reopen Unity.
+
+
+
 #### Features
 
 - In SuzunoyaUnity, text now scales in (in addition to fading in) in the text box. This can be configured as "Char Scale In Time" and "Char Scale In From" on ADV Dialogue Box Mimic.
+- UI nodes can now have context menus (viewable by pressing C while selecting a node) that show up to the lower-right of the node. You can create such a context menu by calling `myUINode.MakeContextMenu`. See Assets/Danmokou/Plugins/Danmokou/Utility/LocalXMLUIFreeformExample for an example. (Note that context menus are interactable, as opposed to tooltips, which are not.)
 
-#### Changes
+### Fixes
 
-- Removed the `.csproj` and `.sln` files from the repository. These are required for normal C# projects, but Unity autogenerates them. 
+- Fixed an issue where controller menu navigation could occasionally result in double movement with the joystick/DPad. 
 
 # v11.0.0 (2024/02/17)
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Player;
@@ -20,10 +21,10 @@ public class ValueItem : Item {
         if (!autocollected && collection != null) {
             bonus = M.Lerp(1, MAX_BONUS, 
                 collection.direction switch {
-                    LRUD.RIGHT => M.Ratio(LocationHelpers.LeftPlayerBound + 1, collection.Bound.x, tr.position.x),
-                    LRUD.UP => M.Ratio(LocationHelpers.BotPlayerBound + 1, collection.Bound.y, tr.position.y),
-                    LRUD.LEFT => M.Ratio(LocationHelpers.RightPlayerBound - 1, collection.Bound.x, tr.position.x),
-                    _ => M.Ratio(LocationHelpers.TopPlayerBound - 1, collection.Bound.y, tr.position.y),
+                    LRUD.RIGHT => BMath.Ratio(LocationHelpers.LeftPlayerBound + 1, collection.Bound.x, tr.position.x),
+                    LRUD.UP => BMath.Ratio(LocationHelpers.BotPlayerBound + 1, collection.Bound.y, tr.position.y),
+                    LRUD.LEFT => BMath.Ratio(LocationHelpers.RightPlayerBound - 1, collection.Bound.x, tr.position.x),
+                    _ => BMath.Ratio(LocationHelpers.TopPlayerBound - 1, collection.Bound.y, tr.position.y),
                 });
         }
         AddMe(collector, bonus);

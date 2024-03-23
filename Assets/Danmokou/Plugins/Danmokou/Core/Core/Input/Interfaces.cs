@@ -11,7 +11,7 @@ public interface IInputHandlerInputSource {
     public bool AnyKeyPressedThisFrame { get; protected set; }
 
     /// <summary>
-    /// Update all linked <see cref="IInputHandler"/>s, and returns true if any of them were set to true.
+    /// Update all linked <see cref="IInputHandler"/>s, and returns true if any of them had activity.
     /// </summary>
     /// <returns></returns>
     bool OncePerUnityFrameUpdateHandlers() {
@@ -59,6 +59,8 @@ public interface IDescriptiveInputSource : IInputSource {
     bool? IInputSource.DialogueConfirm => UIConfirm;
     IInputHandler uiBack { get; }
     bool? IInputSource.UIBack => uiBack.Active;
+    IInputHandler uiContextMenu { get; }
+    bool? IInputSource.UIContextMenu => uiContextMenu.Active;
     IInputHandler? dialogueSkipAll { get; }
     bool? IInputSource.DialogueSkipAll => dialogueSkipAll?.Active;
 
@@ -73,7 +75,7 @@ public interface IKeyedInputSource : IDescriptiveInputSource, IInputHandlerInput
         Handlers.AddRange(new[] {
                 arrowLeft, arrowRight, arrowUp, arrowDown,
                 focusHold, fireHold, bomb, meter, swap, fly, slowFall,
-                pause, vnBacklogPause, uiConfirm, uiBack, dialogueSkipAll
+                pause, vnBacklogPause, uiConfirm, uiBack, uiContextMenu, dialogueSkipAll
             }.FilterNone()
         );
     }

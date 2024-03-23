@@ -3,6 +3,7 @@ using System.Linq;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Culture;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -246,7 +247,7 @@ public readonly struct PhaseCompletion {
     private float ElapsedRatio => timeout > 0 ? ElapsedTime / timeout : 0;
     private const float ELAPSED_YIELD = 0.58f;
     private float ElapsedItemMultiplier => phase.Props.phaseType == PhaseType.Timeout ? 1 : 
-        M.Lerp(1, 0.27183f, (ElapsedRatio - ELAPSED_YIELD) / (1 - ELAPSED_YIELD));
+        BMath.Lerp(1, 0.27183f, (ElapsedRatio - ELAPSED_YIELD) / (1 - ELAPSED_YIELD));
     private float ItemMultiplier => phase.Props.cardValueMult * ElapsedItemMultiplier;
 
     public string Performance {

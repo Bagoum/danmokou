@@ -136,6 +136,9 @@ public class InputConfig {
             , new KeyInputBinding(KeyCode.Escape)
 #endif
         );
+    
+    public RebindableInputBinding ContextMenu { get; init; } =
+        new(contextmenu, new KBMKeyInputBinding(KeyCode.C), null);
 
     public RebindableInputBinding Pause { get; init; } =
         new RebindableInputBinding(pause, new KBMKeyInputBinding(KeyCode.BackQuote),
@@ -195,6 +198,9 @@ public class InputConfig {
     public RebindableInputBinding CBack { get; init; } =
         //B
         new(back, new AnyControllerInputBinding.Key(KeyCode.JoystickButton1), null);
+    public RebindableInputBinding CContextMenu { get; init; } =
+        //Select
+        new(contextmenu, new AnyControllerInputBinding.Key(KeyCode.JoystickButton6), null);
 
     public RebindableInputBinding CPause { get; init; } =
         //Start
@@ -214,7 +220,7 @@ public class InputConfig {
         Special,
         Swap, Fly, SlowFall,
         Left, Right, Up, Down,
-        Confirm, Back,
+        Confirm, Back, ContextMenu,
         Pause, SkipDialogue, Backlog
     };
     [JsonIgnore]
@@ -224,7 +230,7 @@ public class InputConfig {
         CSpecial,
         CSwap, CFly, CSlowFall,
         CLeft, CRight, CUp, CDown,
-        CConfirm, CBack,
+        CConfirm, CBack, CContextMenu,
         CPause, CSkipDialogue, CBacklog
     };
 }

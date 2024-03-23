@@ -45,7 +45,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
     private class Executing : DMKExecutingADV<Executing.GOTPIdealizedState, GOTPADVData> {
         private readonly EvidenceRequest<Evidence> evidenceRequest;
         //--- Lerpers
-        private readonly PushLerper<float> evSize = new(0.5f, (a, b, t) => M.LerpU(a, b, Easers.EOutBack(t)));
+        private readonly PushLerper<float> evSize = new(0.5f, (a, b, t) => BMath.LerpU(a, b, Easers.EOutBack(t)));
 
         
         public Executing(GhostOfThePastGameDef gdef, ADVInstance inst) : base(inst) {

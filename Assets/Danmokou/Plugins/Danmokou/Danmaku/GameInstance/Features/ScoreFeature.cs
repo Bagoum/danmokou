@@ -1,5 +1,6 @@
 ﻿using System;
 using BagoumLib.Events;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.DMath;
 
@@ -49,7 +50,7 @@ public class ScoreFeature : BaseInstanceFeature, IScoreFeature {
     public ScoreFeature(InstanceData inst, ScoreFeatureCreator creator) {
         Inst = inst;
         MaxScore = new(creator.HighScore ?? 9001);
-        VisibleScore = new Lerpifier<long>((a, b, t) => (long)M.Lerp(a, b, (double)M.EOutSine(t)), 
+        VisibleScore = new Lerpifier<long>((a, b, t) => (long)M.Lerp(a, b, (double)Easers.EOutSine(t)), 
             () => Score, 1.3f);
         AllowPointPlusItemDrops = creator.AllowPointPlusItems;
     }

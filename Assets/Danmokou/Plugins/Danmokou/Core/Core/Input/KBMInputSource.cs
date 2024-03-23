@@ -9,6 +9,8 @@ namespace Danmokou.Core.DInput {
 public class KBMInputSource : IKeyedInputSource, IPrimaryInputSource {
     public List<IInputHandler> Handlers { get; } = new();
     public bool AnyKeyPressedThisFrame { get; private set; }
+    public int Priority => 1; //less priority because keyboard input may be shadowing controller input
+                              //(notably in case of arrows shadowing dpad)
     bool IInputHandlerInputSource.AnyKeyPressedThisFrame {
         get => AnyKeyPressedThisFrame;
         set => AnyKeyPressedThisFrame = value;
@@ -34,9 +36,8 @@ public class KBMInputSource : IKeyedInputSource, IPrimaryInputSource {
     public IInputHandler pause { get; } =InputHandler.Trigger(i.Pause, LocalizedStrings.Controls.pause);
     public IInputHandler vnBacklogPause { get; } = InputHandler.Trigger(i.Backlog, backlog);
     public IInputHandler uiConfirm { get; } = InputHandler.Trigger(i.Confirm, confirm);
-    
-    
     public IInputHandler uiBack { get; } = InputHandler.Trigger(i.Back, back);
+    public IInputHandler uiContextMenu { get; } = InputHandler.Trigger(i.ContextMenu, back);
     public IInputHandler dialogueSkipAll { get; } = InputHandler.Trigger(i.SkipDialogue, skip);
     
     

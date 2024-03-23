@@ -140,7 +140,9 @@ public class TExArgCtx {
     private readonly TExArgCtx? parent;
     public RootCtx Ctx => ctx ?? parent?.Ctx ?? throw new StaticException("No RootCtx found");
     private TExPI? _bpi;
-    public TExPI BPI => _bpi ??= GetByExprType<TExPI>();
+    public TExPI BPI => MaybeBPI ?? throw new CompileException(
+        "You are refencing fields on ParametricInfo, but no variable with this type is provided. This is most likely " +
+        "because you need to use `Wrap` to make a GCXF<T> instead of a compile-time function call.");
     public TExPI? MaybeBPI => _bpi ??= MaybeGetByExprType<TExPI>(out _);
     public Ex FCTX => BPI.FiringCtx;
 

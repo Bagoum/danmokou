@@ -107,7 +107,9 @@ public class LexicalScope {
     public readonly Dictionary<string, VarDecl> variableDecls = new();
     public readonly Dictionary<string, ScriptFnDecl> functionDecls = new();
     private readonly Dictionary<string, ScriptImport> _importDecls = new();
+    private readonly Dictionary<string, MacroDecl> _macroDecls = new();
     public Dictionary<string, ScriptImport> ImportDecls => ScriptRoot._importDecls;
+    public Dictionary<string, MacroDecl> MacroDecls => ScriptRoot._macroDecls;
     public IEnumerable<VarDecl> AllVarsInDescendantScopes => 
         variableDecls.Values.Concat(Children.SelectMany(c => c.AllVarsInDescendantScopes));
     public IEnumerable<ScriptFnDecl> AllFnsInDescendantScopes => 
@@ -288,12 +290,16 @@ public class LexicalScope {
             return prevf;
         if (ImportDecls.TryGetValue(decl.Name, out var previmp))
             return previmp;
+        if (MacroDecls.TryGetValue(decl.Name, out var prevmac))
+            return prevmac;
         if (decl is VarDecl v) {
             variableDecls[v.Name] = v;
         } else if (decl is ScriptFnDecl fn) {
             functionDecls[fn.Name] = fn;
         } else if (decl is ScriptImport si) {
             ImportDecls[si.Name] = si;
+        } else if (decl is MacroDecl md) {
+            MacroDecls[md.Name] = md;
         } else
             throw new StaticException($"Unhandled declaration type: {decl.GetType()}");
         decl.DeclarationScope = this;
@@ -454,24 +460,6 @@ public class LexicalScope {
     }
 
     /// <summary>
-    /// Get an expression representing calling a script function declared locally in this scope,
-    ///  or declared in any parent scope.
-    /// </summary>
-    public Ex LocalOrParentFunction(Ex envFrame, ScriptFnDecl sfn, IEnumerable<Ex> arguments, bool isPartial = false)
-        => _LocalOrParentFunction(envFrame, sfn, arguments, WithinAnyExpressionScope, isPartial);
-    private Ex _LocalOrParentFunction(Ex envFrame, ScriptFnDecl sfn, IEnumerable<Ex> arguments, bool methodScopeVisible, bool isPartial) {
-        var visible = (methodScopeVisible || Type != LexicalScopeType.MethodScope);
-        if (visible && functionDecls.TryGetValue(sfn.Name, out var f) && f == sfn) {
-            return isPartial ?
-                PartialFn.PartiallyApply(sfn.Compile(), arguments.Prepend(envFrame)) :
-                PartialFn.Execute(sfn.Compile(), arguments.Prepend(envFrame));
-        }
-        if (Parent is DMKScope || this is DynamicLexicalScope && Parent is not DynamicLexicalScope)
-            throw new Exception($"Could not find a scope containing function {sfn.Name}");
-        return Parent!._LocalOrParentFunction(UseEF && visible ? envFrame.Field(nameof(EnvFrame.Parent)) : envFrame, sfn, arguments, methodScopeVisible, isPartial);
-    }
-
-    /// <summary>
     /// Get an expression representing a readable/writeable variable
     ///  stored locally in an environment frame for this scope,
     ///  or stored locally in any parent environment frame.
@@ -547,6 +535,39 @@ public class LexicalScope {
             tac.Ctx.UnscopedEnvframeAcess.Remove((varName, typ));
             return ret;
         }
+    }
+
+    /// <summary>
+    /// Raise the provided envframe to the correct parent level for calling the provided script function.
+    /// </summary>
+    public Ex LocalOrParentFunctionEf(Ex envFrame, ScriptFnDecl sfn) =>
+        _LocalOrParentFunctionEf(envFrame, sfn, WithinAnyExpressionScope);
+    private Ex _LocalOrParentFunctionEf(Ex envFrame, ScriptFnDecl sfn, bool methodScopeVisible) {
+        var visible = (methodScopeVisible || Type != LexicalScopeType.MethodScope);
+        if (visible && functionDecls.TryGetValue(sfn.Name, out var f) && f == sfn) 
+            return envFrame;
+        if (Parent is DMKScope || this is DynamicLexicalScope && Parent is not DynamicLexicalScope)
+            throw new Exception($"Could not find a scope containing function {sfn.Name}");
+        return Parent!._LocalOrParentFunctionEf(UseEF && visible ? envFrame.Field(nameof(EnvFrame.Parent)) : envFrame, 
+            sfn, methodScopeVisible);
+    }
+
+    /// <summary>
+    /// Get an expression representing calling a script function declared locally in this scope,
+    ///  or declared in any parent scope.
+    /// </summary>
+    public Ex LocalOrParentFunction(Ex envFrame, ScriptFnDecl sfn, IEnumerable<Ex> arguments, bool isPartial = false)
+        => _LocalOrParentFunction(envFrame, sfn, arguments, WithinAnyExpressionScope, isPartial);
+    private Ex _LocalOrParentFunction(Ex envFrame, ScriptFnDecl sfn, IEnumerable<Ex> arguments, bool methodScopeVisible, bool isPartial) {
+        var visible = (methodScopeVisible || Type != LexicalScopeType.MethodScope);
+        if (visible && functionDecls.TryGetValue(sfn.Name, out var f) && f == sfn) {
+            return isPartial ?
+                PartialFn.PartiallyApply(sfn.Compile(), arguments.Prepend(envFrame)) :
+                PartialFn.Execute(sfn.Compile(), arguments.Prepend(envFrame));
+        }
+        if (Parent is DMKScope || this is DynamicLexicalScope && Parent is not DynamicLexicalScope)
+            throw new Exception($"Could not find a scope containing function {sfn.Name}");
+        return Parent!._LocalOrParentFunction(UseEF && visible ? envFrame.Field(nameof(EnvFrame.Parent)) : envFrame, sfn, arguments, methodScopeVisible, isPartial);
     }
 
     public static Ex FunctionWithoutLexicalScope(TExArgCtx tac, ScriptFnDecl sfn, IEnumerable<Ex> arguments) {

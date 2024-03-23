@@ -11,6 +11,7 @@ using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using BagoumLib.Functional;
+using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using BagoumLib.Sorting;
 using CommunityToolkit.HighPerformance;
@@ -747,7 +748,7 @@ public partial class BulletManager {
                         //Normally handled via FT_SCALE_IN / SCALEIN macro, but that doesn't work for matrix setup
                         var scale = scaleTime > 0 ? 
                             sb.scale * (scaleMin + (1 - scaleMin) *
-                                M.Smoothstep(0, scaleTime, sb.bpi.t)) : 
+                                BMath.Smoothstep(0, scaleTime, sb.bpi.t)) : 
                             sb.scale;
                         m.m00 = m.m11 = sb.direction.x * scale;
                         m.m01 = -(m.m10 = sb.direction.y * scale);
@@ -781,7 +782,7 @@ public partial class BulletManager {
                         //Normally handled via FT_SCALE_IN / SCALEIN macro, but that doesn't work for matrix setup
                         var scale = scaleTime > 0 ? 
                             sb.scale * (scaleMin + (1 - scaleMin) *
-                                M.Smoothstep(0, scaleTime, sb.bpi.t)) : 
+                                BMath.Smoothstep(0, scaleTime, sb.bpi.t)) : 
                             sb.scale;
                         m.m00 = m.m11 = sb.direction.x * scale;
                         m.m01 = -(m.m10 = sb.direction.y * scale);

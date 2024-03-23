@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Reactive;
 using System.Threading.Tasks;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Scenes;
@@ -392,7 +393,7 @@ public static class _VNBlessedRain {
             r.SetEmote("angry"),
             a.MoveBy(V3(-2, 0), 0.5f)
                 .And(r.Disturb(r.ComputedLocation, t =>
-                    new Vector3(M.Sine(1, 0.1f, 4 * M.EOutSine(t)), 0, 0), 1))
+                    new Vector3(M.Sine(1, 0.1f, 4 * Easers.EOutSine(t)), 0, 0), 1))
                 .And(a.Disturb(a.ComputedLocation, JumpY(0.7f), 0.5f))
                 .And(n.Say(l228)).C,
             a.SayC(l229),
@@ -537,7 +538,7 @@ public static class _VNBlessedRain {
             n.SayC(l351),
             a.Say(l352).And(
                 a.Disturb(a.ComputedLocation, t =>
-                    new Vector3(M.Sine(1, 0.1f, 3 * M.EOutSine(t)), 0, 0), 1)).C,
+                    new Vector3(M.Sine(1, 0.1f, 3 * Easers.EOutSine(t)), 0, 0), 1)).C,
             n.SayC(l353),
             a.ESayC("angry", l354),
             r.ESayC("worry", l355),

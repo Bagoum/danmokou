@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -116,7 +117,7 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
             var t = (bpi.t - 0.5f * (1.9f - xf - yf) * spreadTime) / moveTime + 
                     RNG.GetSeededFloat(-0.05f, 0f, RNG.Rehash(bpi.id));
             t = Mathf.Clamp01(t);
-            return M.EInSine(invert ? 1 - t : t);
+            return Easers.EInSine(invert ? 1 - t : t);
         }
         TP mover = bpi => M.CosSinDeg(RNG.GetSeededFloat(moveDirectionMinMax.x, 
             moveDirectionMinMax.y, bpi.id)) * (moveDist * Effective01Time(in bpi));
@@ -127,8 +128,8 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
             for (float y = bounds.min.y; y < bounds.max.y + s; y += s, ++iy) {
                 var index = ix * iyd + iy;
                 var loc = trloc + new Vector2(x, y);
-                var uv = new Vector2(M.Ratio(bounds.min.x, bounds.max.x, x), 
-                    M.Ratio(bounds.min.y, bounds.max.y, y));
+                var uv = new Vector2(BMath.Ratio(bounds.min.x, bounds.max.x, x), 
+                    BMath.Ratio(bounds.min.y, bounds.max.y, y));
                 yield return new Fragment(loc, uv, 
                     Mathf.PI/4, mover, index, null, scaler);
             }

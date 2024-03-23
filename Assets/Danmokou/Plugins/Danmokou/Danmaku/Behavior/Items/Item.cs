@@ -1,5 +1,6 @@
 ﻿using BagoumLib;
 using BagoumLib.Events;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Player;
@@ -23,7 +24,7 @@ public abstract class Item : Pooled<Item> {
     protected virtual float peakt => 0.8f;
     protected Vector2 Direction => ((collection != null) ? collection.direction : LRUD.UP).Direction();
     protected virtual Vector2 Velocity(float t) => 
-        M.Lerp(speed0, speed1, t * (speed0 / (speed0 - speed1))/peakt) * Direction;
+        BMath.Lerp(speed0, speed1, t * (speed0 / (speed0 - speed1))/peakt) * Direction;
     
     protected Vector2 loc;
 
@@ -112,10 +113,10 @@ public abstract class Item : Pooled<Item> {
         } 
         if (State == HomingState.HOMING && playerIsValid) {
             timeHoming += ETime.FRAME_TIME;
-            loc = Vector2.Lerp(loc, target!.Location, M.Lerp(homeRate * ETime.FRAME_TIME, peakedHomeRate, timeHoming/maxTimeHoming));
+            loc = Vector2.Lerp(loc, target!.Location, BMath.Lerp(homeRate * ETime.FRAME_TIME, peakedHomeRate, timeHoming/maxTimeHoming));
         } else {
             loc += ETime.FRAME_TIME * (Velocity(time) + summonTarget * 
-                M.DEOutSine(Mathf.Clamp01(time / lerpIntoOffsetTime)) / lerpIntoOffsetTime);
+                Easers.DEOutSine(Mathf.Clamp01(time / lerpIntoOffsetTime)) / lerpIntoOffsetTime);
             if (Attractible && playerIsValid && CollisionMath.CircleOnPoint(loc, target!.Ship.itemAttractRadius, target.Location)) 
                 SetHome();
             else if (!LocationHelpers.OnScreenInDirection(loc, -screenRange * Direction) || 
@@ -126,7 +127,7 @@ public abstract class Item : Pooled<Item> {
             }
         }
         tr.localEulerAngles = new Vector3(0, 0, 360 * RotationTurns * 
-                                                M.EOutSine(Mathf.Clamp01(time/RotationTime)));
+                                                Easers.EOutSine(Mathf.Clamp01(time/RotationTime)));
         tr.position = loc;
         time += ETime.FRAME_TIME;
     }

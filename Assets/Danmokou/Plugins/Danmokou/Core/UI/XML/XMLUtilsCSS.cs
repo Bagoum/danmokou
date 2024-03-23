@@ -114,6 +114,24 @@ public static class XMLUtils {
         return ve;
     }
 
+    public static VisualElement WithAbsolutePosition(this VisualElement ve, Vector2 leftTop) {
+        ve.style.left = leftTop.x;
+        ve.style.top = leftTop.y;
+        return ve;
+    }
+    public static VisualElement WithAbsolutePosition(this VisualElement ve, 
+        float? left = null, float? top = null, float? right = null, float? bot = null) {
+        if (left is { } l)
+            ve.style.left = l;
+        if (top is { } t)
+            ve.style.top = t;
+        if (right is { } r)
+            ve.style.right = r;
+        if (bot is { } b)
+            ve.style.bottom = b;
+        return ve;
+    }
+
     public static VisualElement ConfigureEmpty(this VisualElement empty, bool pickable = true) {
         empty.SetPadding(0, 0, 0, 0);
         empty.pickingMode = pickable ? PickingMode.Position : PickingMode.Ignore;

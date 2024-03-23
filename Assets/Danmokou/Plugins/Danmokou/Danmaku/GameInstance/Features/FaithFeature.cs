@@ -1,5 +1,6 @@
 ﻿using System;
 using BagoumLib.Events;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
@@ -40,9 +41,9 @@ public class FaithFeature : BaseInstanceFeature, IFaithFeature {
 
     public FaithFeature(InstanceData inst) {
         Inst = inst;
-        VisibleFaith = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 4f)), 
+        VisibleFaith = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, Easers.CEOutPow(t, 4f)), 
             () => (float)Faith, 0.2f);
-        VisibleFaithLenience = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, M.EOutPow(t, 3f)), 
+        VisibleFaithLenience = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, Easers.CEOutPow(t, 3f)), 
             () => (float)Math.Min(1, FaithLenience / 3), 0.2f);
     }
 

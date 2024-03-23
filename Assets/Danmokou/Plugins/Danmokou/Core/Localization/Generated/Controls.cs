@@ -51,6 +51,10 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "決定"))
 			{ ID = "confirm" };
 		
+		public static readonly LString contextmenu = new LText("Context Menu",
+			(Locales.JP, "コンテキストメニュー"))
+			{ ID = "contextmenu" };
+		
 		public static readonly LString back = new LText("Back",
 			(Locales.JP, "戻る"))
 			{ ID = "back" };

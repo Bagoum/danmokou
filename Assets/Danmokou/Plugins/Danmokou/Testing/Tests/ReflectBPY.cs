@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Linq.Expressions;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using Danmokou.Danmaku.Options;
 using NUnit.Framework;
 using Danmokou.DMath;
@@ -56,7 +57,7 @@ namespace Danmokou.Testing {
             }
             BPY s = BPY(x => ExMEasers.EIOSine(x.t));
             TestE01(s, new []{ (0.1f, 0.02447f) });
-            s = BPY(x => SmoothLoop(ExC((Func<float,float>)M.EIOSine), x.t));
+            s = BPY(x => SmoothLoop(ExC((Func<float,float>)Easers.EIOSine), x.t));
             TestE01(s, new []{ (1.1f, 1.02447f) });
             TestE01(s, new []{ (3.1f, 3.02447f) });
         }

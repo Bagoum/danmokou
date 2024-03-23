@@ -14,6 +14,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+//wip tests for dynamic animations on an informational menu
 public class LocalXMLTesting : CoroutineRegularUpdater {
     //in unity units
     public Vector2 Size = Vector2.one;

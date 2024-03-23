@@ -1,86 +1,34 @@
-//var w = pxyz(dsine(9, 40, t), dsine(9p, 40, t), lerpback(10, 14, 20, 24, mod(24, t), 90, -150));
-var si::float = 8.0;
-const var myZero = 0.0 + b{
-	var w = 5;
-	w - 5.0
-};
-const function eqzero(x) {
-	var w = myZero;
-	return x == w;
+
+macro obj3(ay = Lplayer.y, ax = 2) {
+    color "tlfairy" summonr(none(cx(9)), 
+        saction 0 {
+            print(ay)
+            movewrap(1.5, pxy(ax, ay), 4, gox(9),
+                saction 0 {
+                    sync "powerup1" <> poweraura { 
+                        boss1(lerp 0 1 t purple (rgb 1 1 1), purple)
+                    }
+                    print(ay)
+                    thendelay 3 async "gdlaser-purple/w" <-2;:180> gcr {
+                        delay(180)
+                    } laser(null, 1, 1 + 0.2 * dc, {
+                        dsfx
+                    })
+                })
+        },
+        { hp 300 })
 }
 
-const var myF = eqzero(4);
-
-var sm = new PatternSM({
-		boss "simp.kasen"
-	}, {
+var sm = pattern({}, {
 	phase 0 { } {
 		paction 0 {
 			shiftphaseto 1
 		}
 	}
-
-	phase 30 { 
-		type non :simp.boss.mima.keine1
-		hp 10000
-	} {
+	phase 30 { } {
 		paction 0 {
-			position 0 0
-			bulletcontrol persist "circle-*/w" restyle "circle-blue/" (t > 1 & eqzero(&loop2))
-			bulletcontrol persist "circle-green/w" sm(onlyonce(t>1), 
-				async "ellipse-orange/w" <> gcr2 12 4 <> { } s tprot pxy(-2 - sine(7p, 0.7, &loop1), &loop2 * 3)
-			)
-			bulletcontrol persist "circle-green/w" exec(b{
-				&size = &size + 1f
-			}, t > 0.2 &  t < 1.2)
-			behcontrol true "pather-purple/w" exec(b{
-				&opacity::float = &opacity - 0.4f
-			}, t > 0.4 & t < 1.7)
-
-			gtr {
-				wait 70
-				times inf
-				preloop block {
-					hvar tloop = i
-				}
-				rv2incr <180>
-				waitchild
-			} {
-				async "pather-purple*" <90> gcr2 120 4 <15> {
-					start(b{
-						hvar opacity = 1
-					})
-					colorf({ "/w", "/b" }, pi)
-				} pather 2 2 rvelocity px 2 {
-					tint(rgba(opacity, 1, 1, opacity))
-					s(2)
-				}
-			}
-			sync("gdlaser-green/w", <270>, laser(null, 2, 20, {
-				dynamic(roffset(pxy(t, sine(3, 0.8 + sine(3p, 0.6, lt), t))))
-			}))
-			
-			async "circle-*/w" <> gcr2 24 inf <3> {
-				//bindItr(loop1)
-				preloop block {
-					hvar loop1 = i
-					hvar size = 1 //shared between red and green!
-				}
-				bindlr
-			} gsr2c 2 {
-				color { "red", "green" }
-				preloop b{
-					hvar loop2 = i
-				}
-			} simple
-				rvelocity px (1.6 + sine(7p, lerp(2, 1, t, 0.7, 1), loop1)) {
-					scale(b{
-						var hello = 0.5f;
-						size += hello;
-						size
-					})
-				}
-				
+			sync null <> obj3(default, 3.0)
+			_ 2 sync null <> obj3(default, -2.0)
 		}
 	}
 })
