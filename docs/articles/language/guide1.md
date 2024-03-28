@@ -226,6 +226,19 @@ myFn(1000)
 
 
 
+Functions can have default arguments. If you need to provide default arguments out-of-order, you can use the `default` keyword.
+
+```c#
+function add(a = 100, b = 9000)::int {
+    return a + b;
+}
+add(); //returns 9100
+add(1); //returns 9001
+add(default, 2); //returns 102
+```
+
+
+
 Functions can access variables outside of the function definition if they are lexically visible.
 
 ```C#
@@ -302,6 +315,27 @@ sayHello("world").Length
 ```
 
 This script returns `11.0f` (or you can set the script's target type to string and remove `.Length`, in which case it returns `hello world`.) Since `sayHello` accesses `hello` and `join`, both `hello` and `join` must be constant for the script to compile.
+
+## Declaring Script Macros
+
+Macros replace text in the script before the script is compiled. They are declared similarly to functions, but do not involve function calls. They basically run a find&replace on the provided code.
+
+The below macro usage:
+
+```C#
+macro add(a, b) {
+    a + b
+}
+add(5.0, 4.0)
+```
+
+is EXACTLY THE SAME as the following script:
+
+```
+5.0 + 4.0
+```
+
+In most cases, it's better to use functions instead of macros, because functions offer better typechecking and code inspection without significant overhead. Also, recursive functions are supported in the engine, but recursive macros might blow up your computer. That said, there are some cases where it makes sense to use macros for certain types of StateMachine repeaters. See the `bdsl2 macro vs function.bdsl` script for am example of this.
 
 ## Comments
 
@@ -483,7 +517,7 @@ var a = 3.2
 min 3 a--
 ```
 
-is parsed as `min(3, a--)`, returns 3.0f and sets `a` to 2.2f. (Note that `min(3, a)--` would not compile.)
+is parsed as `min(3, a--)`, returns 3.0f and sets `a` to 2.2f. (Note that `min(3, a)--` would not compile, since `--` can only be applied to writeable expressions.)
 
 On the other hand, `x + y` is a loose operator, so the following code:
 

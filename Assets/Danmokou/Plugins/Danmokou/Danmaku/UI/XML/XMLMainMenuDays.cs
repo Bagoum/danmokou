@@ -83,7 +83,7 @@ public class XMLMainMenuDays : XMLMainMenu {
                         var completion = SaveData.r.ChallengeCompletion(p, idx, Meta());
                         photoBoardToken = photoBoard?.ConstructPhotos(completion?.Photos, photoSize);
                     }
-                    UIResult Confirm(UINode _) {
+                    UIResult Confirm(UINode _, ICursorState __) {
                         ConfirmCache();
                         new InstanceRequest(InstanceRequest.PracticeSuccess, Meta(), new PhaseChallengeRequest(p, c)).Run();
                         return new UIResult.StayOnNode();
@@ -102,8 +102,8 @@ public class XMLMainMenuDays : XMLMainMenu {
                                         new Color(1, 1, 1, 0.52f));
                                 }) {
                                 OnConfirm = Confirm,
-                                OnEnter = n => SetChallenge((n as IBaseOptionNodeLR)!.Index),
-                                OnLeave = _ => photoBoardToken?.Dispose()
+                                OnEnter = (n, _) => SetChallenge((n as IBaseOptionNodeLR)!.Index),
+                                OnLeave = (_, _) => photoBoardToken?.Dispose()
                             }.With(optionNoKeyClass),
                             new UINode(() => new LText("Press Z to start level", (Locales.JP, "Zキー押すとレベルスタート"))) 
                                     { OnConfirm = Confirm }

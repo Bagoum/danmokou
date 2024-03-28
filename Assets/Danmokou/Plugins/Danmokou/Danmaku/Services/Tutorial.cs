@@ -97,9 +97,9 @@ public class Tutorial : BehaviorEntity {
         pauseMenu.GoToNth(0, 0);
         const float menuLeft = 3.8f;
         Prompt(text00, options2_1, 1.3f, x:-1f);
-        yield return waitlf(() => pauseMenu.Current?.Description().Value.Contains("GAME") ?? false);
+        yield return waitlf(() => pauseMenu.Current?.DescriptionOrEmpty.Value.Contains("GAME") ?? false);
         Prompt(text00, graphics3_1, 1.3f, x:menuLeft);
-        yield return waitlf(() => pauseMenu.Current?.Description().Value.Contains("GRAPHICS") ?? false);
+        yield return waitlf(() => pauseMenu.Current?.DescriptionOrEmpty.Value.Contains("GRAPHICS") ?? false);
         Message(text00, shaders4, 1.1f, x:menuLeft);
         yield return confirm();
         Prompt(text00, shaders5, 1.1f, x:menuLeft);

@@ -14,9 +14,9 @@ namespace Danmokou.UI {
 public interface IFixedXMLReceiver {
     public LString? Tooltip => null;
     public void OnBuilt(EmptyNode n) { }
-    public UIResult OnConfirm(UINode n);
-    public void OnEnter(UINode n);
-    public void OnLeave(UINode n);
+    public UIResult OnConfirm(UINode n, ICursorState cs);
+    public void OnEnter(UINode n, ICursorState cs);
+    public void OnLeave(UINode n, ICursorState cs);
     public void OnPointerDown(UINode n, PointerDownEvent ev);
     public void OnPointerUp(UINode n, PointerUpEvent ev);
 }
@@ -63,7 +63,7 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
     public override void FirstFrame() {
         var menu = Container ?? ServiceLocator.Find<XMLDynamicMenu>();
         if (Receiver.Tooltip is { } tt)
-            Node.MakeTooltip(menu.Screen, tt);
+            Node.MakeTooltip(tt);
         menu.AddNodeDynamic(Node);
         if (delayedStartPassthrough != null)
             Node.UpdatePassthrough(delayedStartPassthrough);

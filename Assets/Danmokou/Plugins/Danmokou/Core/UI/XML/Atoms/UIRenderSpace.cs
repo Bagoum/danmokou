@@ -25,11 +25,18 @@ public abstract class UIRenderSpace {
     public LazyEvented<bool> IsVisible { get; }
     public virtual bool ShouldBeVisible => true;
     public UIController Controller => Screen.Controller;
+    
     /// <summary>
-    /// Run a nonblocking scale-in/out animation when the renderer visibility is changed.
+    /// Animation played when the render space becomes visible. (Skipped if the render space starts as visible.)
     /// </summary>
-    public bool AnimateOnShowHide { get; set; } = false;
-    private ICancellable? animateToken;
+    public Func<UIRenderSpace, ICancellee, Task>? IsVisibleAnimation { get; set; }
+    
+    /// <summary>
+    /// Animation played when the render space becomes invisible. (Skipped if the render space starts as invisible.)
+    /// </summary>
+    public Func<UIRenderSpace, ICancellee, Task>? IsNotVisibleAnimation { get; set; }
+    private bool isFirstRender = true;
+    public ICancellable? AnimateToken { get; private set; }
 
     public UIRenderSpace(UIScreen screen, UIRenderSpace? parent) {
         this.Screen = screen;
@@ -37,55 +44,77 @@ public abstract class UIRenderSpace {
         IsVisible = new(() => ShouldBeVisible);
     }
 
-    protected void UpdateVisibility() {
+    protected async Task UpdateVisibility() {
         var oldVis = IsVisible.Value;
         IsVisible.Recompute();
         var newVis = IsVisible.Value;
         if (_html != null) {
-            HTML.style.display = newVis.ToStyle();
-            if (newVis != oldVis && AnimateOnShowHide) {
-                animateToken?.Cancel();
-                var cT = animateToken = new Cancellable();
-                //Keep it visible so the animate-out can play
-                if (!newVis)
-                    HTML.style.display = true.ToStyle();
-                _ = MakeTask(
-                        HTML.transform.ScaleTo(newVis ? Vector3.one : Vector3.zero, newVis ? 0.4f : 0.25f, 
-                            newVis ? Easers.EOutBack : null, cT),
-                        HTML.style.FadeTo(newVis ? 1 : 0, 0.25f, cT: cT)
-                    ).ContinueWithSync(() => {
-                    if (!cT.Cancelled)
-                        HTML.style.display = newVis.ToStyle();
-                });
-            }
+            var first = isFirstRender;
+            isFirstRender = false;
+            if (newVis && (first || !oldVis) && IsVisibleAnimation is {} entry) {
+                AnimateToken?.Cancel();
+                var cT = AnimateToken = new Cancellable();
+                if (first) cT.SoftCancel();
+                HTML.style.display = DisplayStyle.Flex;
+                await entry(this, cT);
+                if (AnimateToken == cT)
+                    AnimateToken = null;
+            } else if (!newVis && (first || oldVis) && IsNotVisibleAnimation is { } exit) {
+                AnimateToken?.Cancel();
+                var cT = AnimateToken = new Cancellable();
+                if (first) cT.SoftCancel();
+                else HTML.style.display = DisplayStyle.Flex;
+                await exit(this, cT);
+                HTML.style.display = DisplayStyle.None;
+                if (AnimateToken == cT)
+                    AnimateToken = null;
+            } else if (newVis != oldVis || first)
+                HTML.style.display = newVis.ToStyle();
         }
     }
 
-    private Task MakeTask(params ITransition[] tweens) =>
-        Task.WhenAll(tweens.Select(t => t.Run(Controller, CoroutineOptions.DroppableDefault)));
+    public static Func<UIRenderSpace, ICancellee, Task> TooltipVisibleAnim =
+        (rs, cT) => rs.MakeTask(rs.HTML.transform.ScaleTo(Vector3.one, 0.4f, Easers.EOutBack, cT),
+            rs.HTML.style.FadeTo(1, .25f, cT: cT));
+    
+    public static Func<UIRenderSpace, ICancellee, Task> TooltipNotVisibleAnim =
+        (rs, cT) => rs.MakeTask(rs.HTML.transform.ScaleTo(Vector3.zero, 0.25f, null, cT),
+            rs.HTML.style.FadeTo(0, .25f, cT: cT));
 
-    public void AddSource(UIGroup grp) {
+    public UIRenderSpace WithTooltipAnim() {
+        IsVisibleAnimation = TooltipVisibleAnim;
+        IsNotVisibleAnimation = TooltipNotVisibleAnim;
+        return this;
+    }
+
+    public Task MakeTask(params ITransition[] tweens) =>
+        //stepTryPrepend is important so first-frame cancellation takes place immediately
+        Task.WhenAll(tweens.Select(t => t.Run(Controller, new(true, CoroutineType.StepTryPrepend))));
+
+    public async Task AddSource(UIGroup grp) {
         if (!Sources.Contains(grp)) {
             Sources.Add(grp);
-            UpdateVisibility();
+            await UpdateVisibility();
             Parent?.AddSource(grp);
         }
     }
 
-    public void RemoveSource(UIGroup grp) {
+    public async Task RemoveSource(UIGroup grp) {
         Sources.Remove(grp);
-        UpdateVisibility();
+        await UpdateVisibility();
         Parent?.RemoveSource(grp);
     }
 
-    public void SourceBecameVisible(UIGroup grp) {
-        UpdateVisibility();
-        Parent?.SourceBecameVisible(grp);
+    public async Task SourceBecameVisible(UIGroup grp) {
+        var t = UpdateVisibility();
+        await (Parent?.SourceBecameVisible(grp) ?? Task.CompletedTask);
+        await t;
     }
 
-    public void SourceBecameHidden(UIGroup grp) {
-        UpdateVisibility();
-        Parent?.SourceBecameHidden(grp);
+    public async Task SourceBecameHidden(UIGroup grp) {
+        var t = UpdateVisibility();
+        await (Parent?.SourceBecameHidden(grp) ?? Task.CompletedTask);
+        await t;
     }
 
     public UIRenderConstructed Construct(VisualTreeAsset prefab,
@@ -123,15 +152,11 @@ public class UIRenderDirect : UIRenderSpace {
 /// </summary>
 public class UIRenderAbsoluteTerritory : UIRenderSpace {
     public override VisualElement HTML => _html!;
-    private readonly Color bgc;
-    private readonly DisturbedOr isTransitioning = new();
-    
     /// <summary>
     /// Alpha of the darkened overlay when fully visible.
     /// Can be overriden by <see cref="PopupUIGroup.OverlayAlphaOverride"/>.
     /// </summary>
     public float Alpha { get; set; } = 0.5f;
-
     private float GetTargetAlpha() {
         float? a = null;
         for (int ii = 0; ii < Sources.Count; ++ii)
@@ -139,37 +164,30 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
                 a = Math.Max(a ?? f, f);
         return a ?? Alpha;
     }
-    public override bool ShouldBeVisible => Sources.Count > 0;
-
-    public Task FadeIn() {
-        var token = isTransitioning.AddConst(true);
-        return TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, GetTargetAlpha(), 0.14f, 
-                a => HTML.style.backgroundColor = Helpers.WithA(bgc, a))
-            .Run(Controller)
-            .ContinueWithSync(token.Dispose);
-    }
-
-    public Task FadeOutIfNoOtherDependencies(UIGroup g) {
-        if (Sources.Count == 1 && Sources[0] == g && HTML.style.display == DisplayStyle.Flex) {
-            var token = isTransitioning.AddConst(true);
-            TransitionHelpers.TweenTo(GetTargetAlpha(), 0, 0.12f, a => HTML.style.backgroundColor = Helpers.WithA(bgc, a))
-                .Run(Controller)
-                .ContinueWithSync(token.Dispose);
-        }
-        return Task.CompletedTask;
-    }
+    public override bool ShouldBeVisible => Sources.Count > 0 && Sources.Any(g => g.Visible);
 
     public UIRenderAbsoluteTerritory(UIScreen screen) : base(screen, null) {
         _html = Screen.HTML.Query("AbsoluteContainer");
-        //TODO: this doesn't work correctly, so I'm setting the alpha value manually
-        bgc = _html.style.backgroundColor.value;
+        //TODO: opacity doesn't work correctly? so I'm setting the alpha value manually
+        var bgc = _html.style.backgroundColor.value;
         _html.style.display = DisplayStyle.None;
         _html.RegisterCallback<PointerUpEvent>(evt => {
-            if (evt.button != 0 || screen.Controller.Current == null || isTransitioning) return;
+            if (evt.button != 0 || screen.Controller.Current == null || AnimateToken?.Cancelled is false) return;
             Logs.Log("Clicked on absolute territory");
             screen.Controller.QueueEvent(new UIPointerCommand.NormalCommand(UICommand.Back, null));
             evt.StopPropagation();
         });
+        IsVisibleAnimation = (rs, cT) => {
+            return MakeTask(
+                TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, GetTargetAlpha(), .2f,
+                    a => HTML.style.backgroundColor = Helpers.WithA(bgc, a), cT: cT));
+        };
+        IsNotVisibleAnimation = (rs, cT) => {
+            return MakeTask(
+                TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, 0, .12f,
+                    a => HTML.style.backgroundColor = Helpers.WithA(bgc, a), cT: cT));
+        };
+        _ = UpdateVisibility().ContinueWithSync();
     }
 }
 
@@ -213,12 +231,12 @@ public class UIRenderConstructed : UIRenderSpace {
                 else
                     _html = prefab.Right(parent.HTML);
                 builder?.Invoke(this, _html);
-                UpdateVisibility();
+                _ = UpdateVisibility().ContinueWithSync();
             }
             return _html;
         }
     }
-    public override bool ShouldBeVisible => Sources.Any(g => g.Visible);
+    public override bool ShouldBeVisible => Sources.Count > 0 && Sources.Any(g => g.Visible);
 
     /// <summary>
     /// Constructor for <see cref="UIRenderConstructed"/>.

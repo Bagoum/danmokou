@@ -836,7 +836,8 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                     target = args[ii];
                 repl[decl.Args[ii]] = target;
             }
-            var ast = decl.Tree.Body.Annotate(ann with { VarReplace = repl });
+            //a macro has exactly one line. we want that line, not the body as a block.
+            var ast = decl.Tree.Body.Args[0].Annotate(ann with { VarReplace = repl });
             (ast as AST)!.AddTokens(new[] { new SemanticToken(meth, SemanticTokenTypes.Function) });
             return ast;
         }

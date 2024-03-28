@@ -12,6 +12,7 @@ using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Functional;
 using BagoumLib.Mathematics;
+using BagoumLib.Tasks;
 using BagoumLib.Transitions;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
@@ -29,27 +30,38 @@ public enum UINodeVisibility {
     /// <summary>
     /// The cursor is on the node and it is in a special state that
     ///  permits some sort of functionality (such as modification of an OptionLR node).
+    /// TODO this is unused.
     /// </summary>
     Active = 4,
+    
     /// <summary>
     /// The cursor is on the node.
     /// </summary>
     Focused = 3,
+    
+    /// <summary>
+    /// This node is the source of the currently active popup.
+    /// </summary>
+    PopupSource = 4,
+    
     /// <summary>
     /// The node is in the same group as the Focused or Active node.
     /// </summary>
     GroupFocused = 2,
+    
     /// <summary>
     /// The node is in the GroupCall stack.
     /// </summary>
     GroupCaller = 1,
+    
     /// <summary>
     /// Default state (visible).
     /// </summary>
     Default = 0
 }
 public class UINode {
-    public Func<LString> Description { get; init; }
+    public Func<LString>? Description { get; }
+    public LString DescriptionOrEmpty => Description?.Invoke() ?? LString.Empty;
     private UIGroup _group = null!;
     public UIGroup Group {
         get => _group;
@@ -57,8 +69,6 @@ public class UINode {
             _group = value;
             if (ShowHideGroup != null)
                 ShowHideGroup.Parent = _group;
-            if (tooltip != null)
-                tooltip.Parent = _group;
         }
     }
     /// <summary>
@@ -80,7 +90,7 @@ public class UINode {
     /// Whether or not the node's HTML has been built yet.
     /// </summary>
     public bool Built { get; private set; }
-    public VisualElement BodyHTML => NodeHTML.Q("Body");
+    public VisualElement? BodyHTML => NodeHTML.Q("Body");
     public VisualElement BodyOrNodeHTML => BodyHTML ?? NodeHTML;
 
     /// <summary>
@@ -193,11 +203,20 @@ public class UINode {
     /// <summary>
     /// Called when this node gains focus.
     /// </summary>
-    public Action<UINode>? OnEnter { get; init; }
+    public Action<UINode, ICursorState>? OnEnter { get; init; }
+    
+    /// <summary>
+    /// Called along with <see cref="OnEnter"/> when this node gains focus,
+    ///  or when <see cref="RemakeTooltip"/> is called.
+    /// <br/>Creates a tooltip to the upper-right of this node.
+    /// </summary>
+    public Func<UINode, ICursorState, UIGroup?>? CreateTooltip { get; set; }
+    private UIGroup? currentTooltip = null;
+    
     /// <summary>
     /// Called when this node loses focus.
     /// </summary>
-    public Action<UINode>? OnLeave { get; init; }
+    public Action<UINode, ICursorState>? OnLeave { get; init; }
     
     /*
     /// <summary>
@@ -228,12 +247,12 @@ public class UINode {
     /// <summary>
     /// Overrides Navigate for Confirm entries. Runs after Navigator but before Navigate.
     /// </summary>
-    public Func<UINode, UIResult>? OnConfirm { get; init; }
+    public Func<UINode, ICursorState, UIResult?>? OnConfirm { get; init; }
     
     /// <summary>
     /// Provides a menu to show when the "context menu" button (C by default) is pressed while this node is active.
     /// </summary>
-    public Func<UINode, UIResult>? OnContextMenu { get; set; }
+    public Func<UINode, ICursorState, UIResult?>? OnContextMenu { get; set; }
     
     /// <summary>
     /// A function that is run the first time the node is made visible.
@@ -252,8 +271,6 @@ public class UINode {
             _showHideGroup = value;
         } 
     }
-
-    private UIGroup? tooltip;
     
     /// <summary>
     /// List of CSS classes to apply to the node HTML.
@@ -312,12 +329,12 @@ public class UINode {
     /// </summary>
     public UIResult ReturnGroup => new UIResult.ReturnToTargetGroupCaller(this);
 
-    public UINode(Func<LString> description) {
+    public UINode(Func<LString>? description) {
         this.Description = description;
     }
     
     public UINode(LString description) : this(() => description) { }
-    public UINode() : this(() => LString.Empty) { }
+    public UINode() : this(null as Func<LString>) { }
 
     #region Construction
 
@@ -325,33 +342,36 @@ public class UINode {
     /// Add a tooltip that appears to the upper-right of this node when this node is focused.
     /// <br/>Tooltips cannot be interacted with.
     /// </summary>
-    public UINode MakeTooltip(Func<UINode, UIGroup> tt) {
-        OnBuilt = OnBuilt.Then(n => {
-            tooltip = tt(n);
-            if (tooltip.Interactable)
-                throw new Exception("Interactable tooltips not supported");
-        });
+    public UINode MakeTooltip(Func<UINode, ICursorState, UINode?> element) {
+        CreateTooltip = (n, cs) => 
+            element(n, cs) is {} node ?
+                new UIColumn(new UIRenderConstructed(new UIRenderDirect(Screen), XMLUtils.Prefabs.Tooltip)
+                        .WithTooltipAnim(), node) { Interactable = false }
+                : null;
         return this;
     }
 
-    /// <inheritdoc cref="MakeTooltip(System.Func{Danmokou.UI.XML.UINode,Danmokou.UI.XML.UIGroup})"/>
-    public UINode MakeTooltip(UIScreen s, UINode element) =>
-        MakeTooltip(n => new UIColumn(
-                new UIRenderConstructed(new UIRenderExplicit(s, n), XMLUtils.Prefabs.Tooltip)
-                    { AnimateOnShowHide = true },
-                element)
-            { Interactable = false });
-
-    /// <inheritdoc cref="MakeTooltip(System.Func{Danmokou.UI.XML.UINode,Danmokou.UI.XML.UIGroup})"/>
-    public UINode MakeTooltip(UIScreen s, LString text) =>
-        MakeTooltip(s, new UINode(text) { Prefab = XMLUtils.Prefabs.PureTextNode }.With(XMLUtils.highVisClass));
+    /// <inheritdoc cref="MakeTooltip(System.Func{Danmokou.UI.XML.UINode,Danmokou.UI.XML.ICursorState,Danmokou.UI.XML.UINode?})"/>
+    public UINode MakeTooltip(Func<LString?> text) =>
+        MakeTooltip((_, _) => text() is {} txt ? 
+            new UINode(txt) { Prefab = XMLUtils.Prefabs.PureTextNode }.With(XMLUtils.highVisClass)
+            : null);
+    
+    /// <inheritdoc cref="MakeTooltip(System.Func{Danmokou.UI.XML.UINode,Danmokou.UI.XML.ICursorState,Danmokou.UI.XML.UINode?})"/>
+    public UINode MakeTooltip(LString text) =>
+        MakeTooltip(() => text);
+    
 
     /// <summary>
     /// Add an options menu that appears to the lower-right of this node when C is pressed while this node is focused.
     /// <br/>An options menu is like a popup. While the options menu is active, nothing else receives interaction.
     /// </summary>
-    public UINode MakeContextMenu(Func<UINode, UINode[]> options) {
-        OnContextMenu = n => PopupUIGroup.CreateContextMenu(n, options(n));
+    public UINode MakeContextMenu(Func<UINode, ICursorState, UINode[]?> options) {
+        OnContextMenu = (n, cs) => {
+            if (options(n, cs) is not { } opts)
+                return null;
+            return PopupUIGroup.CreateContextMenu(n, opts);
+        };
         return this;
     }
 
@@ -424,6 +444,7 @@ public class UINode {
     }
 
     public void Remove() {
+        CloseDependencies(false);
         Destroyed = true;
         Group.Nodes.Remove(this);
         HTML.RemoveFromHierarchy();
@@ -433,7 +454,7 @@ public class UINode {
     #endregion
 
     #region Drawing
-
+    
     public void ScrollTo() {
         NodeHTML.Focus();
         if (ContainerHTML is ScrollView sv)
@@ -448,7 +469,7 @@ public class UINode {
         }
     }
     public virtual void Rebind() {
-        if (Label != null)
+        if (Label != null && Description != null)
             Label.text = Description();
     }
 
@@ -484,21 +505,26 @@ public class UINode {
         lastVisibility = visibility;
         NodeHTML.AddToClassList(!thisFrameRender ? "invisible" : visibility switch {
             UINodeVisibility.Active => "focus",
-            UINodeVisibility.Focused => "focus",
+            UINodeVisibility.Focused or UINodeVisibility.PopupSource => "focus",
             UINodeVisibility.GroupFocused => "group",
             UINodeVisibility.GroupCaller => "selected",
             UINodeVisibility.Default => "visible",
             _ => throw new ArgumentOutOfRangeException(nameof(visibility), visibility, null)
         });
-        //Active receives .focus.active
-        if (Group.Visible && visibility == UINodeVisibility.Active)
-            NodeHTML.AddToClassList("active");
-        foreach (var cls in OverrideClasses)
-            NodeHTML.AddToClassList(cls);
-        if (!(IsEnabled = EnabledIf?.Invoke() ?? true))
-            NodeHTML.AddToClassList(disabledClass);
-        Rebind();
-        InlineStyle?.Invoke(visibility, this);
+        if (thisFrameRender) {
+            //Active receives .focus.active
+            if (Group.Visible && visibility == UINodeVisibility.Active)
+                NodeHTML.AddToClassList("active");
+            foreach (var cls in OverrideClasses)
+                NodeHTML.AddToClassList(cls);
+            if (!(IsEnabled = EnabledIf?.Invoke() ?? true))
+                NodeHTML.AddToClassList(disabledClass);
+            Rebind();
+            InlineStyle?.Invoke(visibility, this);
+        }
+        if (currentTooltip is not null)
+            HTML.SetTooltipAbsolutePosition(currentTooltip.Render.HTML);
+        
         if (thisFrameRender && isFirstRender) {
             isFirstRender = false;
             OnFirstRender?.Invoke(this);
@@ -524,36 +550,79 @@ public class UINode {
     /// Provided an input, modify the state of the UI appropriately, and return instructions for
     ///  control flow modification.
     /// </summary>
-    public UIResult Navigate(UICommand req) {
+    public UIResult Navigate(UICommand req, ICursorState cs) {
         if (req == UICommand.Confirm && !IsEnabled) return new UIResult.StayOnNode(true);
         return Navigator?.Invoke(this, req) ?? req switch {
-            UICommand.Confirm when OnConfirm != null => OnConfirm(this),
-            UICommand.ContextMenu => OnContextMenu?.Invoke(this) ?? UIGroup.NoOp,
-            _ => NavigateInternal(req)
+            UICommand.Confirm when OnConfirm != null => OnConfirm(this, cs) ?? NavigateInternal(req, cs),
+            UICommand.ContextMenu => OnContextMenu?.Invoke(this, cs) ?? UIGroup.NoOp,
+            _ => NavigateInternal(req, cs)
         };
     }
 
-    protected virtual UIResult NavigateInternal(UICommand req) => Group.Navigate(this, req);
-
-    public void Enter(bool animate) {
+    protected virtual UIResult NavigateInternal(UICommand req, ICursorState cs) => Group.Navigate(this, req);
+    
+    public void Enter(bool animate, ICursorState cs) {
         if (CacheOnEnter) Controller.TentativeCache(this);
         //TODO: handle this via options, eg. OnEnterAnim = new[] { ScaleBop(1.03, 0.1, 0.13), LocationTo(-100, 10)... }
         if (animate) {
             _ = PlayAnimation(EnterAnimation.Valid ? EnterAnimation.Value : DefaultEnterAnimation());
         }
         ShowHideGroup?.EnterShow();
-        tooltip?.EnterShow();
-        OnEnter?.Invoke(this);
+        RemakeTooltip(cs);
+        OnEnter?.Invoke(this, cs);
         Group.EnteredNode(this, animate);
     }
 
-    public virtual void Leave(bool animate) {   
+    public virtual void Leave(bool animate, ICursorState cs, bool isEnteringPopup) {   
         if (animate) {
             _ = PlayAnimation(LeaveAnimation.Valid ? LeaveAnimation.Value : DefaultLeaveAnimation());
         }
+        if (!isEnteringPopup)
+            CloseDependencies(animate);
+        OnLeave?.Invoke(this, cs);
+    }
+
+    public void RemovedFromGroupStack() {
+        CloseDependencies(true);
+    }
+
+    private void CloseDependencies(bool animate) {
+        if (ShowHideGroup != null)
+            Logs.Log($"Closing show/hide on {DescriptionOrEmpty} ({Group})");
         ShowHideGroup?.LeaveHide();
-        tooltip?.LeaveHide();
-        OnLeave?.Invoke(this);
+        CloseTooltip(animate);
+    }
+
+    public void CloseTooltip(bool animate) {
+        if (currentTooltip is null) return;
+        var ctt = currentTooltip;
+        currentTooltip = null;
+        if (animate) {
+            _ = ctt.LeaveHide().ContinueWithSync(Finish);
+        } else
+            Finish();
+        void Finish() {
+            ctt.Destroy();
+            (ctt.Render as UIRenderConstructed)?.Destroy();
+        }
+    }
+    public void RemakeTooltip(ICursorState cs) {
+        var animateEntry = currentTooltip is null;
+        if (CreateTooltip?.Invoke(this, cs) is not { } tt)
+            CloseTooltip(true);
+        else {
+            CloseTooltip(false);
+            currentTooltip = tt;
+            tt.Parent = Group;
+            if (tt.Interactable)
+                throw new Exception("Interactable tooltips not supported");
+            tt.Render.HTML.SetRecursivePickingMode(PickingMode.Ignore);
+            tt.EnterShow();
+            if (!animateEntry)
+                tt.Render.AnimateToken?.SoftCancel();
+            HTML.SetTooltipAbsolutePosition(tt.Render.HTML);
+        }
+        
     }
     protected virtual Func<UINode, ICancellee, Task>? DefaultEnterAnimation() => (n, cT) => 
         n.NodeHTML.transform.ScaleTo(1.02f, 0.1f, Easers.EOutSine, cT)
@@ -567,7 +636,6 @@ public class UINode {
 
 public class EmptyNode : UINode {
     public IFixedXMLObject? Source { get; }
-    private readonly string desc = "empty node";
 
     public EmptyNode() : base("empty node") {
         DisableAnimations();
@@ -575,7 +643,6 @@ public class EmptyNode : UINode {
     public EmptyNode(IFixedXMLObject source, Action<EmptyNode>? onBuild = null, bool useVisiblityPassthrough = true) : 
             base(source.Descriptor) {
         this.Source = source;
-        this.desc = source.Descriptor;
         DisableAnimations().ConfigureAbsoluteLocation(source, extraOnBuild: n => {
             n.HTML.ConfigureEmpty();
             onBuild?.Invoke(this);
@@ -611,24 +678,28 @@ public class TwoLabelUINode : UINode {
     }
 }
 public class FuncNode : UINode {
-    public Func<FuncNode, UIResult> Command { get; }
+    public Func<FuncNode, ICursorState, UIResult> Command { get; }
 
-    public FuncNode(Func<LString> description, Func<FuncNode, UIResult> command) : base(description) {
+    public FuncNode(Func<LString>? description, Func<FuncNode, ICursorState, UIResult> command) : base(description) {
         this.Command = command;
     }
+    public FuncNode(Func<LString>? description, Func<FuncNode, UIResult> command) : base(description) {
+        this.Command = (n, cs) => command(n);
+    }
+    public FuncNode(LString description, Func<FuncNode, ICursorState, UIResult> command) : this(() => description, command) { }
     public FuncNode(LString description, Func<FuncNode, UIResult> command) : this(() => description, command) { }
-    public FuncNode(Func<LString> description, Func<UIResult> command) : this(description, _ => command()) { }
+    public FuncNode(Func<LString>? description, Func<UIResult> command) : this(description, (_, _) => command()) { }
     public FuncNode(LString description, Func<UIResult> command) : this(() => description, command) { }
-    public FuncNode(Func<LString> description, Action command) : this(description, () => {
+    public FuncNode(Func<LString>? description, Action command) : this(description, () => {
         command();
         return new UIResult.StayOnNode();
     }) { }
     public FuncNode(LString description, Action command) : this(() => description, command) { }
     public FuncNode(LString description, Func<bool> command) : this(() => description, () => new UIResult.StayOnNode(!command())) { }
-    protected override UIResult NavigateInternal(UICommand req) {
+    protected override UIResult NavigateInternal(UICommand req, ICursorState cs) {
         if (req == UICommand.Confirm)
-            return Command(this);
-        return base.NavigateInternal(req);
+            return Command(this, cs);
+        return base.NavigateInternal(req, cs);
     }
 }
 
@@ -665,20 +736,20 @@ public class ConfirmFuncNode : UINode {
         () => new UIResult.StayOnNode(!command())) { }
 
     public override void Rebind() {
-        if (Label != null)
+        if (Label != null && Description != null)
             Label.text = isConfirm ? LocalizedStrings.UI.are_you_sure : Description();
     }
 
-    protected override UIResult NavigateInternal(UICommand req) {
+    protected override UIResult NavigateInternal(UICommand req, ICursorState cs) {
         if (req == UICommand.Confirm)
             // ReSharper disable once AssignmentInConditionalExpression
             return (isConfirm = !isConfirm) ? new UIResult.StayOnNode(false) : Command(this);
-        return base.NavigateInternal(req);
+        return base.NavigateInternal(req, cs);
     }
 
-    public override void Leave(bool animate) {
+    public override void Leave(bool animate, ICursorState cs, bool isEnteringPopup) {
         isConfirm = false;
-        base.Leave(animate);
+        base.Leave(animate, cs, isEnteringPopup);
     }
 }
 
@@ -713,10 +784,10 @@ public abstract class BaseLROptionUINode<T> : UINode {
     protected abstract UIResult Left();
     protected abstract UIResult Right();
 
-    protected override UIResult NavigateInternal(UICommand req) => req switch {
+    protected override UIResult NavigateInternal(UICommand req, ICursorState cs) => req switch {
         UICommand.Left => Left(),
         UICommand.Right => Right(),
-        _ => base.NavigateInternal(req)
+        _ => base.NavigateInternal(req, cs)
     };
 }
 
@@ -753,7 +824,7 @@ public class OptionNodeLR<T> : BaseLROptionUINode<T>, IOptionNodeLR {
 
     public override void Rebind() {
         base.Rebind();
-        NodeHTML.Q<Label>("Key").text = Description();
+        NodeHTML.Q<Label>("Key").text = DescriptionOrEmpty;
         NodeHTML.Q<Label>("Value").text = values()[Index].key;
     }
 
@@ -805,7 +876,7 @@ public class ComplexLROptionUINode<T> : BaseLROptionUINode<T>, IComplexOptionNod
 
     public override void Rebind() {
         base.Rebind();
-        NodeHTML.Q<Label>("Key").text = Description();
+        NodeHTML.Q<Label>("Key").text = DescriptionOrEmpty;
         NodeHTML.Q("LR2ChildContainer").Clear();
         foreach (var (i, v) in values().Enumerate()) {
             var ve = objectTree.CloneTreeNoContainer();
@@ -851,7 +922,7 @@ public class KeyRebindInputNode : UINode {
     }
     
     public override void Rebind() {
-        string t = Description();
+        string t = DescriptionOrEmpty;
         NodeHTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
         NodeHTML.Q("FadedBack").style.display = !isEntryEnabled ? DisplayStyle.Flex : DisplayStyle.None;
         NodeHTML.Q<Label>("Label").text = isEntryEnabled ?
@@ -901,15 +972,15 @@ public class KeyRebindInputNode : UINode {
     }
     
     //This is only reached if custom handling does nothing
-    protected override UIResult NavigateInternal(UICommand req) => req switch {
-        UICommand.Confirm => !isEntryEnabled ? EnableDisableEntry() : base.NavigateInternal(req),
-        UICommand.Back => isEntryEnabled ? EnableDisableEntry() : base.NavigateInternal(req),
-        _ => base.NavigateInternal(req)
+    protected override UIResult NavigateInternal(UICommand req, ICursorState cs) => req switch {
+        UICommand.Confirm => !isEntryEnabled ? EnableDisableEntry() : base.NavigateInternal(req, cs),
+        UICommand.Back => isEntryEnabled ? EnableDisableEntry() : base.NavigateInternal(req, cs),
+        _ => base.NavigateInternal(req, cs)
     };
 
-    public override void Leave(bool animate) {
+    public override void Leave(bool animate, ICursorState cs, bool isEnteringPopup) {
         isEntryEnabled = false;
-        base.Leave(animate);
+        base.Leave(animate, cs, isEnteringPopup);
     }
 
 }
@@ -924,7 +995,7 @@ public class TextInputNode : UINode {
     public TextInputNode(LString title) : base(title) { }
 
     public override void Rebind() {
-        string t = Description();
+        string t = DescriptionOrEmpty;
         NodeHTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
         NodeHTML.Q("FadedBack").style.display = DisplayWIP.Length == 0 ? DisplayStyle.Flex : DisplayStyle.None;
         NodeHTML.Q<Label>("Label").text = DisplayWIP;
@@ -963,17 +1034,17 @@ public class TextInputNode : UINode {
     }
     
     //This is only reached if custom handling does nothing
-    protected override UIResult NavigateInternal(UICommand req) => req switch {
+    protected override UIResult NavigateInternal(UICommand req, ICursorState cs) => req switch {
         UICommand.Left => Left(),
         UICommand.Right => Right(),
-        UICommand.Confirm => !isEntryEnabled ? EnableDisableEntry() : base.NavigateInternal(req),
-        UICommand.Back => isEntryEnabled ? EnableDisableEntry() : base.NavigateInternal(req),
-        _ => base.NavigateInternal(req)
+        UICommand.Confirm => !isEntryEnabled ? EnableDisableEntry() : base.NavigateInternal(req, cs),
+        UICommand.Back => isEntryEnabled ? EnableDisableEntry() : base.NavigateInternal(req, cs),
+        _ => base.NavigateInternal(req, cs)
     };
 
-    public override void Leave(bool animate) {
+    public override void Leave(bool animate, ICursorState cs, bool isEnteringPopup) {
         isEntryEnabled = false;
-        base.Leave(animate);
+        base.Leave(animate, cs, isEnteringPopup);
     }
 }
 
@@ -1004,7 +1075,7 @@ public class UIButton : UINode {
         this(() => descriptor, type, onClick) { }
 
     public static Func<T, UIResult> GoBackCommand<T>(UINode source) => _ =>
-        new UIResult.ReturnToTargetGroupCaller(source.Group);
+        new UIResult.ReturnToTargetGroupCaller(source);
 
     public static Func<UIButton, UIResult> GoBackCommand(UINode source) => GoBackCommand<UIButton>(source);
     public static UIButton Cancel(UINode source) =>
@@ -1025,10 +1096,11 @@ public class UIButton : UINode {
             _ => load() ? returner : new UIResult.StayOnNode(true));
     
     public override void Rebind() {
-        Label!.text = isConfirm ? LocalizedStrings.UI.are_you_sure : Description();
+        if (Label != null && Description != null)
+            Label.text = isConfirm ? LocalizedStrings.UI.are_you_sure : Description();
     }
 
-    protected override UIResult NavigateInternal(UICommand req) {
+    protected override UIResult NavigateInternal(UICommand req, ICursorState cs) {
         if (req == UICommand.Confirm) {
             if (requiresConfirm) {
                 // ReSharper disable once AssignmentInConditionalExpression
@@ -1036,21 +1108,21 @@ public class UIButton : UINode {
             } else
                 return onClick(this);
         }
-        return base.NavigateInternal(req);
+        return base.NavigateInternal(req, cs);
     }
 
-    protected override Func<UINode, ICancellee, Task>? DefaultEnterAnimation() => (n, cT) => 
+    protected override Func<UINode, ICancellee, Task> DefaultEnterAnimation() => (n, cT) => 
             n.NodeHTML.transform.ScaleTo(1.16f, 0.1f, Easers.EOutSine, cT)
                 .Then(() => n.NodeHTML.transform.ScaleTo(1.1f, 0.1f, cT: cT))
-                .Run(Controller, new CoroutineOptions(true));
+                .Run(Controller, new CoroutineOptions(true, CoroutineType.StepTryPrepend));
     
-    protected override Func<UINode, ICancellee, Task>? DefaultLeaveAnimation() => (n, cT) =>
+    protected override Func<UINode, ICancellee, Task> DefaultLeaveAnimation() => (n, cT) =>
             n.NodeHTML.transform.ScaleTo(1f, 0.1f, Easers.EOutSine, cT)
-                .Run(Controller, new CoroutineOptions(true));
+                .Run(Controller, new CoroutineOptions(true, CoroutineType.StepTryPrepend));
     
-    public override void Leave(bool animate) {
+    public override void Leave(bool animate, ICursorState cs, bool isEnteringPopup) {
         isConfirm = false;
-        base.Leave(animate);
+        base.Leave(animate, cs, isEnteringPopup);
     }
 }
 

@@ -102,9 +102,9 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
     private readonly PushLerper<float> borderColor = new(0.2f, (a, b, t) => BMath.LerpU(a, b, cssDefaultEase(t)));
     private static readonly Easer cssDefaultEase = Bezier.CBezier(0.25f, 0.1f, 0.25f, 1f);
     private static readonly Easer bEase = Easers.CEOutBounce(0, 0.45f, 0.7f, 0.85f, 1f);
-    private readonly Func<float, float> bounce = t => 160 * (-1f + bEase(Mathf.Clamp01(BMath.Mod(2f, t) / 1.2f)));
-    private readonly Func<float, float> _wave = t => 20 * M.SinDeg(50 * t);
-    private readonly Func<float, float> _wave0 = t => 0;
+    private static readonly Func<float, float> bounce = t => 160 * (-1f + bEase(Mathf.Clamp01(BMath.Mod(2f, t) / 1.2f)));
+    private static readonly Func<float, float> _wave = t => 20 * M.SinDeg(50 * t);
+    private static readonly Func<float, float> _wave0 = t => 0;
     private Func<float, float> Wave => (entity.Metadata ?? throw new Exception("hello")).UseWaveEffect ? _wave : _wave0;
     private VisualElement? w = null!;
 
@@ -134,6 +134,13 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
     }
 
     public void OnBuilt(EmptyNode n) {
+        //When the user hovers over the node, it should "bounce" or "wave". 
+        // However, we don't want the root EmptyNode to change position, since that makes keyboard-based
+        // movement unstable. Thus, we create a VE inside the empty node, which is `wb`.
+        //`wb` has a border. Since Unity UXML has box-sizing: border-box, we don't want to use a border together with
+        // background-image. Thus, to render the background, we create another VE within `wb`, which is `w`.
+        //In this setup, the root emptynode has a size of XMLSize, `wb` has a size of XMLSize+2*borderWidth,
+        // and `w` has a size of of XMLSize. (The border appears outside of the dimensions of the root emptynode.)
         var wb = new VisualElement().ConfigureAbsolute().ConfigureEmpty(false).ConfigureLeftTopListeners(
             n.CreateCenterOffsetChildX(new ConstantObservable<float>(0)),
             n.CreateCenterOffsetChildY(this.offsetter));
@@ -144,8 +151,7 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
             , 10));
         w = new VisualElement().ConfigureEmpty(false);
         wb.Add(w);
-        w.style.width = 160;
-        w.style.height = 160;
+        w.SetWidthHeight(xml.XMLSize);
         w.style.backgroundImage = new(entity.Metadata.Icon);
         w.style.unityBackgroundImageTintColor = entity.ComputedTint.Value._();
 
@@ -158,7 +164,7 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
         .Run(Controller, new CoroutineOptions(true))*/
     }
 
-    public UIResult OnConfirm(UINode n) {
+    public UIResult OnConfirm(UINode n, ICursorState _) {
         if (entity.InteractableStates.Contains(ServiceLocator.Find<ADVManager>().ADVState.Value)) {
             //OnLeave(n); //Implicitly called through UpdatePassthrough > MoveCursorAwayFromNode
             return entity.OnClick(n) ?? new UIResult.StayOnNode();
@@ -172,14 +178,14 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
         base.DoUpdate(dT);
     }
 
-    public void OnEnter(UINode n) {
+    public void OnEnter(UINode n, ICursorState cs) {
         hoverActiveAction?.Dispose();
         hoverActiveAction = entity.Hover?.Enter(entity);
         offsetter.Push(bounce);
         borderColor.Push(1f);
     }
 
-    public void OnLeave(UINode n) {
+    public void OnLeave(UINode n, ICursorState cs) {
         hoverActiveAction?.Dispose();
         hoverActiveAction = null;
         offsetter.Push(Wave);

@@ -156,6 +156,12 @@ public static class XMLUtils {
         return n;
     }
 
+    public static VisualElement SetWidthHeight(this VisualElement n, Vector2 wh) {
+        n.style.width = wh.x;
+        n.style.height = wh.y;
+        return n;
+    }
+
     public static VisualElement AddVE(this VisualElement root, VisualElement? child) {
         child ??= new VisualElement();
         root.Add(child);
@@ -185,7 +191,23 @@ public static class XMLUtils {
 
     public static VisualElement AddRow(this VisualElement root) => root.AddVTA(Prefabs.UIScreenRow);
     public static VisualElement AddNodeRow(this VisualElement root) => root.AddVTA(Prefabs.UIScreenRowNoStretch);
-    
+
+    public static VisualElement SetRecursivePickingMode(this VisualElement ve, PickingMode mode) {
+        ve.pickingMode = mode;
+        foreach (var child in ve.Children())
+            child.SetRecursivePickingMode(mode);
+        return ve;
+    }
+
+    public static void SetTooltipAbsolutePosition(this VisualElement node, VisualElement tooltip) {
+        var nr = node.worldBound;
+        var leftTop = new Vector2(nr.xMax, nr.yMin); //by default, tooltip is above-right
+        if (tooltip.ClassListContains("tooltip-above")) {
+            leftTop = new(nr.center.x, nr.yMin);
+        }
+        tooltip.WithAbsolutePosition(leftTop);
+    }
+        
     public static void ConfigureFloatingImage(VisualElement node, Sprite s) {
         node.style.backgroundImage = new StyleBackground(s);
         //node.style.marginBottom = node.style.marginTop = -s.rect.height / 2;

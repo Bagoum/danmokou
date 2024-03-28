@@ -148,9 +148,12 @@ public class UIBuilderRenderer : RegularUpdater {
         throw new Exception($"No render group by id {renderGroup}");
     }
 
+    public static float ComputeXMLDimensionX(float screenX) =>
+        screenX / MainCamera.ScreenWidth * UIResolution.w;
+    public static float ComputeXMLDimensionY(float screenY) =>
+        screenY / MainCamera.ScreenHeight * UIResolution.h;
     public static Vector2 ComputeXMLDimensions(Vector2 screenDim) =>
-        new(screenDim.x / MainCamera.ScreenWidth * UIResolution.w,
-            screenDim.y / MainCamera.ScreenHeight * UIResolution.h);
+        new(ComputeXMLDimensionX(screenDim.x), ComputeXMLDimensionY(screenDim.y));
     
     public static Vector2 ComputeXMLPosition(Vector2 screenPosition) {
         var asDim = ComputeXMLDimensions(screenPosition - globalTransform);

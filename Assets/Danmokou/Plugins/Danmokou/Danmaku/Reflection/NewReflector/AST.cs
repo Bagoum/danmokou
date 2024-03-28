@@ -34,6 +34,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
     /// <inheritdoc cref="IAST.Position"/>
     public PositionRange Position { get; init; } = Position;
     protected string CompactPosition => Position.Print(true);
+    protected string DebugPosition => $"D{EnclosingScope.Depth}|{Position.Print(true)}";
     
     /// <inheritdoc cref="IAST.EnclosingScope"/>
     public LexicalScope EnclosingScope { get; private set; } = EnclosingScope;
@@ -309,7 +310,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
 
         public IEnumerable<PrintToken> DebugPrint() {
-            yield return $"{CompactPosition} {NameWithImport}";
+            yield return $"{DebugPosition} {NameWithImport}";
         }
     }
 
@@ -364,7 +365,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
 
         public IEnumerable<PrintToken> DebugPrint() {
-            yield return $"{CompactPosition} &{Name}";
+            yield return $"{DebugPosition} &{Name}";
         }
     }
 
@@ -468,7 +469,9 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
 
         public override Either<Unifier, TypeUnifyErr> WillSelectOverload(Reflector.InvokedMethod mi, IImplicitTypeConverterInstance? cast, Unifier u) {
-            AllowInvokeAsConst = mi.Mi.IsStatic && mi.Mi.GetAttribute<NonConstableAttribute>() == null;
+            //Only static methods can be converted to constants
+            AllowInvokeAsConst = mi.Mi is { IsStatic: true, Member: TypeMember.Method }
+                                 && mi.Mi.GetAttribute<NonConstableAttribute>() == null;
             return base.WillSelectOverload(mi, cast, u).FMapL(u => {
                 //Handles cases where compilation is done inside functions (eg. MoveTarget)
                 if (mi.Mi.GetAttribute<ExpressionBoundaryAttribute>() != null && LocalScope == null) {
@@ -731,7 +734,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
 
         public IEnumerable<PrintToken> DebugPrint() {
-            yield return $"{CompactPosition} {(SelectedOverload?.method ?? Methods[0]).TypeEnclosedName}(";
+            yield return $"{DebugPosition} {(SelectedOverload?.method ?? Methods[0]).TypeEnclosedName}(";
             foreach (var w in IDebugPrint.PrintArgs(Params))
                 yield return w;
             yield return ")";
@@ -1290,7 +1293,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
 
         public IEnumerable<PrintToken> DebugPrint() {
-            yield return $"{CompactPosition} (";
+            yield return $"{DebugPosition} (";
             foreach (var w in Params[0].DebugPrint())
                 yield return w;
             yield return ") ?";
@@ -1371,7 +1374,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
 
         public IEnumerable<PrintToken> DebugPrint() {
-            yield return $"{CompactPosition} for (";
+            yield return $"{DebugPosition} for (";
             if (Initializer != null)
                 foreach (var w in Initializer.DebugPrint())
                     yield return w;
@@ -1624,7 +1627,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
 
         public IEnumerable<PrintToken> DebugPrint() {
-            yield return $"{CompactPosition} block<{GetReturnTypeDescr(this)}>({{";
+            yield return $"{DebugPosition} block<{GetReturnTypeDescr(this)}>({{";
             foreach (var w in IDebugPrint.PrintArgs(Params, ";"))
                 yield return w;
             yield return "})";
@@ -1668,7 +1671,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
 
         public string Explain() {
-            return $"{CompactPosition} {GetReturnTypeDescr(this)}[{Params.Length}]";
+            return $"{CompactPosition} {GetReturnTypeDescr(this)[..^2]}[{Params.Length}]";
         }
         
         public DocumentSymbol ToSymbolTree(string? descr = null) {
@@ -1683,7 +1686,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
         
         public IEnumerable<PrintToken> DebugPrint() {
-            yield return $"{CompactPosition} {GetReturnTypeDescr(this)}[{Params.Length}]{{";
+            yield return $"{DebugPosition} {GetReturnTypeDescr(this)[..^2]}[{Params.Length}]{{";
             foreach (var w in IDebugPrint.PrintArgs(Params, ","))
                 yield return w;
             yield return "}";
@@ -1736,7 +1739,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
         }
         
         public IEnumerable<PrintToken> DebugPrint() {
-            yield return $"{CompactPosition} (";
+            yield return $"{DebugPosition} (";
             foreach (var w in IDebugPrint.PrintArgs(Params, ","))
                 yield return w;
             yield return ")";

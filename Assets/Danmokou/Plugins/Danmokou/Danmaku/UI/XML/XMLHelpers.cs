@@ -49,7 +49,7 @@ public static class XMLHelpers {
         return screen;
     }
     
-    public static UIScreen PlaymodeScreen(this UIController m, ICampaignDanmakuGameDef game, UIScreen bossPractice, UIScreen stagePractice, Dictionary<Mode, Sprite> sprites, PlayModeCommentator? commentator, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, UIResult>> getMetadata, out bool onlyOneMode) {
+    public static UIScreen PlaymodeScreen(this UIController m, ICampaignDanmakuGameDef game, UIScreen bossPractice, UIScreen stagePractice, Dictionary<Mode, Sprite> sprites, PlayModeCommentator? commentator, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, ICursorState, UIResult>> getMetadata, out bool onlyOneMode) {
         var floater = References.uxmlDefaults.FloatingNode;
         var s = new UIScreen(m, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => ve.CenterElements()
@@ -77,7 +77,7 @@ public static class XMLHelpers {
             (PracticeBossesExist ?
                 new UINode() {
                     EnabledIf = () => PBosses.Length > 0,
-                    OnConfirm = _ => new UIResult.GoToNode(bossPractice),
+                    OnConfirm = (_, _) => new UIResult.GoToNode(bossPractice),
                     Prefab = floater,
                     OnBuilt = Builder(Mode.BOSSPRAC)
                 } : null,
@@ -85,13 +85,13 @@ public static class XMLHelpers {
             (PracticeStagesExist ?
                 new UINode() {
                     EnabledIf = () => PStages.Length > 0,
-                    OnConfirm = _ => new UIResult.GoToNode(stagePractice),
+                    OnConfirm = (_, _) => new UIResult.GoToNode(stagePractice),
                     Prefab = floater,
                     OnBuilt = Builder(Mode.STAGEPRAC)
                 } : null,
                 Wrap(Mode.STAGEPRAC, PStages.Length == 0)),
             (game.Tutorial != null ? new UINode {
-                OnConfirm = _ => new UIResult.StayOnNode(!InstanceRequest.RunTutorial(game)),
+                OnConfirm = (_, _) => new UIResult.StayOnNode(!InstanceRequest.RunTutorial(game)),
                 Prefab = floater,
                 OnBuilt = Builder(Mode.TUTORIAL)
             } : null, Wrap(Mode.TUTORIAL, false))
@@ -104,7 +104,7 @@ public static class XMLHelpers {
         return s;
     }
     public static UIScreen StagePracticeScreen(this UIController m,
-        Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, UIResult>> getMetadata) {
+        Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, ICursorState, UIResult>> getMetadata) {
         var s = new UIScreen(m, "STAGE PRACTICE") {Builder = (s, ve) => {
             s.Margin.SetLRMargin(720, 720);
             ve.AddColumn().style.flexGrow = 2;
@@ -140,7 +140,7 @@ public static class XMLHelpers {
     }
 
     public static UIScreen BossPracticeScreen(this UIController m, VisualTreeAsset spellPracticeNodeV,
-        Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, UIResult>> getMetadata) {
+        Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, ICursorState, UIResult>> getMetadata) {
         var cmpSpellHist = SaveData.r.GetCampaignSpellHistory();
         var prcSpellHist = SaveData.r.GetPracticeSpellHistory();
 
@@ -436,24 +436,28 @@ public static class XMLHelpers {
                 var c1 = ve.AddColumn();
                 var c2 = ve.AddColumn();
                 c1.style.justifyContent = c2.style.justifyContent = Justify.SpaceBetween;
+                c1.style.width = c2.style.width = 50f.Percent();
+                c1.style.paddingRight = c2.style.paddingLeft = 10;
             }
         };
         
         UINode CreatePage(int p) {
-            var c1 = new UIColumn(s, null, (p * perPage, p * perPage + perPage / 2).Range()
-                .Select(CreateSaveLoadEntry));
+            var c1 = new UIColumn(s, new UIRenderColumn(s, 0)) {
+                LazyNodes = () => (p * perPage, p * perPage + perPage / 2)
+                    .Range().Select(CreateSaveLoadEntry)
+            };
+            var c2 = new UIColumn(s, new UIRenderColumn(s, 1)) {
+                LazyNodes = () => (p * perPage + perPage / 2, (p + 1) * perPage)
+                    .Range().Select(CreateSaveLoadEntry)
+            };
             return new UINode($"{p + 1}") {
                 Prefab = Prefabs.HeaderNode,
                 OnBuilt = n => {
                     n.Label!.style.unityTextAlign = TextAnchor.MiddleCenter;
                     n.Label.style.fontSize = 100;
-                    n.BodyHTML.SetPadding(0, 25, 0, 25);
+                    n.BodyHTML!.SetPadding(0, 25, 0, 25);
                 },
-                ShowHideGroup = new HGroup(
-                    c1,
-                    new UIColumn(s, new UIRenderColumn(s, 1), (p * perPage + perPage / 2, (p + 1) * perPage)
-                        .Range().Select(CreateSaveLoadEntry))
-                ) { EntryNodeOverride = c1.EntryNode}
+                ShowHideGroup = new HGroup(c1, c2) { EntryNodeOverride = new(() => c1.EntryNode) }
             };
         }
 
@@ -875,7 +879,7 @@ public static class XMLHelpers {
                     0, 0.4, 0.8, 1.2, 1.6, 2
                 }), () => dfc.pocOffset, x => dfc.pocOffset = x, desc_poc),
             //new PassthroughNode(""),
-            new UINode(to_select) { OnConfirm = _ => dfcCont(dfc) } ,
+            new UINode(to_select) { OnConfirm = (_, _) => dfcCont(dfc) } ,
             new UINode(manage_setting) {
                 ShowHideGroup = new UIColumn(descCol, 
                     saved.Select(MakeSaveLoadDFCNode)

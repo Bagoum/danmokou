@@ -70,7 +70,7 @@ public abstract record UIResult {
         public StayOnNode(bool IsNoOp = false) : this(IsNoOp ? StayOnNodeType.NoOp : StayOnNodeType.DidSomething) { }
     }
 
-    public record GoToNode(UINode Target) : UIResult {
+    public record GoToNode(UINode Target, bool NoOpIfSameNode = true) : UIResult {
         public GoToNode(UIGroup Group, int? Index = null) : 
             this(Index.Try(out var i) ? Group.Nodes[Math.Clamp(i, 0, Group.Nodes.Count-1)] : Group.EntryNode) {}
         
@@ -131,9 +131,9 @@ public abstract class UIController : CoroutineRegularUpdater {
     public DisturbedAnd TransitionEnabled { get; } = new();
     public Stack<UINode> ScreenCall { get; } = new();
     public Stack<(UIGroup group, UINode? node)> GroupCall { get; } = new();
-
     
     public UINode? Current { get; private set; }
+    public OverrideEvented<ICursorState> CursorState { get; } = new(new NullCursorState());
 
     //Fields for event-based changes 
     //Not sure if I want to generalize these to properly event-based...
@@ -310,9 +310,12 @@ public abstract class UIController : CoroutineRegularUpdater {
         Profiler.BeginSample("UI Redraw");
         UIRoot.style.display = DisplayStyle.Flex;
         var states = new Dictionary<UINode, UINodeVisibility>();
-        foreach (var (_, node) in GroupCall)
+        var nextIsPopupSrc = Current.Group is PopupUIGroup;
+        foreach (var (grp, node) in GroupCall) {
             if (node != null)
-                states[node] = UINodeVisibility.GroupCaller;
+                states[node] = nextIsPopupSrc ? UINodeVisibility.PopupSource : UINodeVisibility.GroupCaller;
+            nextIsPopupSrc = grp is PopupUIGroup;
+        }
         foreach (var n in Current.Group.Nodes)
             states[n] = UINodeVisibility.GroupFocused;
         states[Current] = UINodeVisibility.Focused;
@@ -333,23 +336,18 @@ public abstract class UIController : CoroutineRegularUpdater {
         while (!ETime.FirstUpdateForScreen) yield return null;
         Current?.ScrollTo();
     }
-
-    //public List<(UINode?, UIResult, (UIGroup, UINode?)[])> queries = new();
-    //public List<UINode> currents = new();
+    
+    
     private Task _OperateOnResult(UIResult? result, UITransitionOptions? opts) {
-        if (result == null || (result is UIResult.GoToNode gTo && gTo.Target == Current) ||
+        if (result == null || (result is UIResult.GoToNode {NoOpIfSameNode:true} gTo && gTo.Target == Current) ||
             result is UIResult.StayOnNode) {
             if (result != null) Redraw();
             return Task.CompletedTask;
         } 
         opts ??= UITransitionOptions.DontAnimate;
         var next = Current;
-        List<UIGroup> LeftGroups = new();
-        List<UIGroup> EnteredGroups = new();
-        void PopGroupCall(UIGroup src, out (UIGroup group, UINode? node) dst) {
-            LeftGroups.Add(src);
-            dst = GroupCall.Pop();
-        }
+        List<(UIGroup group, UINode? node)> LeftCalls = new();
+        List<(UIGroup group, UINode? node)> EntryCalls = new();
         foreach (var r in new[] { result }.Unroll()) {
             var prev = next;
             void TransferToNodeSameScreen(UINode target) {
@@ -357,33 +355,41 @@ public abstract class UIController : CoroutineRegularUpdater {
                     var th = target.Group.Hierarchy;
                     var ch = prev?.Group.Hierarchy;
                     var intersection = UIGroupHierarchy.GetIntersection(ch, th);
-                    var lastSource = (prev?.Group,prev);
+                    var lastSource = (group: prev?.Group!, node: prev);
                     //Pop until we reach the intersection
-                    for (var x = ch; x != intersection; x = x.Parent) {
-                        LeftGroups.Add(x!.Group);
+                    for (var x = ch; x != intersection; x = x!.Parent) {
+                        if (lastSource.group != null)
+                            LeftCalls.Add(lastSource);
                         lastSource = GroupCall.Pop();
                     }
-                    //Push until we reach the target
-                    foreach (var x in th.PrefixRemainder(intersection)) {
-                        EnteredGroups.Add(x);
-                        if (lastSource.Group != null)
-                            GroupCall.Push(lastSource!);
-                        lastSource = (x, x == target.Group ? target : 
-                            (x.HasInteractableNodes ? 
-                                (x.Nodes.Contains(x.EntryNode) ? x.EntryNode : x.FirstInteractableNode) : 
-                                null));
-                    }
+                    //If the intersection is the target group, then add an extra LeftCall and EntryCall for the node
+                    // being swapped out at the intersection, so RemovedFromGroupStack can be called properly
+                    if (th == intersection) {
+                        if (lastSource.node != target) {
+                            LeftCalls.Add(lastSource);
+                            EntryCalls.Add((lastSource.group, target));
+                        }
+                    } else
+                        //Push until we reach the target
+                        foreach (var x in th.PrefixRemainder(intersection)) {
+                            if (lastSource.group != null)
+                                GroupCall.Push(lastSource);
+                            lastSource = (x, x == target.Group ? target : 
+                                (x.HasInteractableNodes ? 
+                                    (x.Nodes.Contains(x.EntryNode) ? x.EntryNode : x.FirstInteractableNode) : 
+                                    null));
+                            EntryCalls.Add(lastSource);
+                        }
                 }
                 next = target;
             }
-            //queries.Add((prev, r, GroupCall.ToArray()));
             switch (r) {
                 case UIResult.DestroyMenu:
                     next = null;
                     opts = UITransitionOptions.DontAnimate;
                     if (prev != null)
-                        LeftGroups.Add(prev.Group);
-                    LeftGroups.AddRange(GroupCall.Select(g => g.group));
+                        LeftCalls.Add((prev.Group, prev));
+                    LeftCalls.AddRange(GroupCall);
                     GroupCall.Clear();
                     ScreenCall.Clear();
                     break;
@@ -406,35 +412,37 @@ public abstract class UIController : CoroutineRegularUpdater {
                 case UIResult.ReturnToGroupCaller:
                     next = null;
                     while (GroupCall.Count > 0 && next == null) {
-                        PopGroupCall(prev!.Group, out var nextg);
-                        next = nextg.node;
+                        LeftCalls.Add((prev!.Group, prev));
+                        next = GroupCall.Pop().node;
                     }
                     if (next == null)
                         throw new Exception("Return-to-group resulted in a null node");
                     break;
                 case UIResult.ReturnToTargetGroupCaller rtg:
                     if (prev == null) throw new Exception("Current must be present for return-to-target op");
-                    var ngroup = prev.Group;
-                    while (GroupCall.TryPeek(out var n)) {
-                        //Logs.Log($"RPopping from group stack {n.node?.Description()}", level:LogLevel.DEBUG1);
-                        PopGroupCall(ngroup, out _);
-                        (ngroup, next) = n;
+                    var pn = (prev.Group, prev);
+                    while (GroupCall.TryPop(out var n)) {
+                        LeftCalls.Add(pn);
+                        pn = n!;
+                        next = n.node;
                         if (n.group == rtg.Target)
                             break;
                     }
                     if (next == null)
                         throw new Exception("Return-to-target resulted in a null node");
                     if (next.Destroyed)
-                        next = ngroup.EntryNode;
+                        next = pn.Group.EntryNode;
                     break;
                 case UIResult.ReturnToScreenCaller sc:
                     if (prev == null) throw new Exception("Current must be present for return-to-screen op");
                     var ngn = (prev.Group, (UINode?)prev);
                     for (int ii = 0; ii < sc.Ascensions; ++ii)
                         if (ScreenCall.TryPop(out var s)) {
-                            while (GroupCall.TryPeek(out var g) && (g.group.Screen == prev.Screen))
-                                PopGroupCall(ngn.Group, out ngn);
-                            LeftGroups.Add(ngn.Group);
+                            while (GroupCall.TryPeek(out var g) && (g.group.Screen == prev.Screen)) {
+                                LeftCalls.Add(ngn);
+                                ngn = GroupCall.Pop();
+                            }
+                            LeftCalls.Add(ngn);
                             ngn = (s.Group, next = s);
                         }
                     if (next == null)
@@ -442,7 +450,24 @@ public abstract class UIController : CoroutineRegularUpdater {
                     break;
             }
         }
-        return TransitionToNode(next, opts, LeftGroups.Except(EnteredGroups), EnteredGroups.Except(LeftGroups))
+
+        var leftGroups = new List<UIGroup>();
+        foreach (var (g, n) in LeftCalls) {
+            foreach (var (ge, ne) in EntryCalls) {
+                if (g == ge) {
+                    if (n != ne)
+                        n?.RemovedFromGroupStack();
+                    goto end;
+                }
+            }
+            n?.RemovedFromGroupStack();
+            leftGroups.Add(g);
+            end: ;
+        }
+        var entryGroups = EntryCalls.Select(c => c.group).Except(LeftCalls.Select(c => c.group)).ToList();
+        //Logs.Log($"Left: {string.Join(",", LeftCalls.Select(x => x.ToString()))}, Entered: {string.Join(",", EntryCalls.Select(x => x.ToString()))}");
+        //Logs.Log($"Left: {string.Join(",", leftGroups.Select(x => x.ToString()))}, Entered: {string.Join(",", entryGroups.Select(x => x.ToString()))}");
+        return TransitionToNode(next, opts, leftGroups, entryGroups)
             .ContinueWithSync(result.OnPostTransition);
     }
 
@@ -468,12 +493,13 @@ public abstract class UIController : CoroutineRegularUpdater {
                 UICommand? command = null;
                 UIResult? result = null;
                 bool silence = false;
-                if (QueuedEvent is UIPointerCommand.Goto mgt && mgt.Target.Destroyed) {
-                } else if (QueuedEvent is UIPointerCommand.Goto mouseGoto && mouseGoto.Target.Screen == Current.Screen &&
-                          mouseGoto.Target != Current) {
-                    result = new UIResult.GoToNode(mouseGoto.Target);
-                    ISFXService.SFXService.Request(
-                        mouseGoto.Target.Group == Current.Group ? upDownSound : leftRightSound);
+                if (QueuedEvent is UIPointerCommand.Goto mgt) {
+                    if (!mgt.Target.Destroyed && mgt.Target.Screen == Current.Screen &&
+                        mgt.Target != Current && UIGroupHierarchy.CanTraverse(Current, mgt.Target)) {
+                        result = new UIResult.GoToNode(mgt.Target);
+                        ISFXService.SFXService.Request(
+                            mgt.Target.Group == Current.Group ? upDownSound : leftRightSound);
+                    }
                 } else if (Current.CustomEventHandling().Try(out var r)) {
                     result = r;
                     doCustomSFX = true;
@@ -483,11 +509,11 @@ public abstract class UIController : CoroutineRegularUpdater {
                             uic.Command :
                             CurrentInputCommand;
                     if (command.Try(out var cmd))
-                        result = Current.Navigate(cmd);
+                        result = CursorState.Value.Navigate(Current, cmd);
                     silence = (QueuedEvent as UIPointerCommand.NormalCommand)?.Silent ?? silence;
                 }
                 QueuedEvent = null;
-                if (result is UIResult.GoToNode gTo && gTo.Target == Current)
+                if (result is UIResult.GoToNode {NoOpIfSameNode:true} gTo && gTo.Target == Current)
                     result = null;
                 if (result != null && !silence) {
                     ISFXService.SFXService.Request(
@@ -534,7 +560,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     protected Task Close() => OperateOnResult(new UIResult.DestroyMenu(), null);
 
     private readonly Queue<Func<Task>> uiOperations = new();
-    private async Task TransitionToNode(UINode? next, UITransitionOptions opts, IEnumerable<UIGroup> leftGroups, IEnumerable<UIGroup> enteredGroups) {
+    private async Task TransitionToNode(UINode? next, UITransitionOptions opts, List<UIGroup> leftGroups, List<UIGroup> enteredGroups) {
         var prev = Current;
         if (prev == next) {
             //Cases like text input
@@ -544,8 +570,9 @@ public abstract class UIController : CoroutineRegularUpdater {
         var screenChanged = next?.Screen != prev?.Screen;
         //currents.Add(null!);
         using var token = TransitionEnabled.AddConst(false);
-        prev?.Leave(opts.Animate);
-        await Task.WhenAll(leftGroups.Select(l => l.LeaveGroup()));
+        prev?.Leave(opts.Animate, CursorState.Value, leftGroups.Count == 0 && enteredGroups.Try(0) is PopupUIGroup);
+        if (leftGroups.Count > 0)
+            await Task.WhenAll(leftGroups.Select(l => l.LeaveGroup()));
         if (screenChanged) {
             prev?.Screen.ExitStart();
             next?.Screen.EnterStart(prev == null);
@@ -557,12 +584,13 @@ public abstract class UIController : CoroutineRegularUpdater {
                 enterTasks.Add(t);
         
         Current = next;
-        next?.Enter(opts.Animate);
+        next?.Enter(opts.Animate, CursorState.Value);
         Redraw();
         
         if (screenChanged && next != null)
             enterTasks.Add(TransitionScreen(prev?.Screen, next.Screen, opts));
-        await Task.WhenAll(enterTasks);
+        if (enterTasks.Count > 0)
+            await Task.WhenAll(enterTasks);
 
         if (screenChanged) {
             prev?.Screen.ExitEnd();
@@ -637,7 +665,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// <returns>True iff the cursor was moved (which also redraws the screen).</returns>
     public bool MoveCursorAwayFromNode(UINode n) {
         if (n == Current) {
-            if (!n.Destroyed) n.Leave(false);
+            if (!n.Destroyed) n.Leave(false, CursorState.Value, false);
             Current = n.Group.ExitNode;
             Redraw();
             return true;

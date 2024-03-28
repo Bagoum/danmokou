@@ -39,6 +39,7 @@ CONFLICT (modify/delete): SuzunoyaUnity.csproj deleted in HEAD and modified in d
 ### Fixes
 
 - Fixed an issue where controller menu navigation could occasionally result in double movement with the joystick/DPad. 
+- Fixed an issue where the default dialogue box could allow clicking buttons that were not visible.
 
 # v11.0.0 (2024/02/17)
 
@@ -56,7 +57,7 @@ To verify the correctness of your scripts after upgrading, you can run any scene
 
 The tutorials have been updated to use BDSL2.
 
-Existing BDSL1 scripts will function more-or-less as-is, though there have been some internal data model changes to support BDSL2. Critically, dynamic type construction (introduced in v9.2.0) and the GCXU type abstraction have been removed and replaced with a more "standard" data model based on [environment frames](https://www.composingprograms.com/pages/16-higher-order-functions.html). For the most part, this shouldn't affect scripts, except for one major change to language functionality: variables are now **shared** by all consumers. Consider the following code:
+Existing BDSL1 scripts will function more-or-less as-is, though there have been some internal data model changes to support BDSL2. Critically, dynamic type construction (introduced in v9.2.0) and the GCXU type abstraction have been removed and replaced with a more "standard" data model based on [environment frames](https://www.composingprograms.com/pages/16-higher-order-functions.html). For the most part, this shouldn't affect scripts, except for one major change to language functionality: variables are now **shared** by all consumers. Consider the following BDSL1 code:
 
 ```
 gtr {

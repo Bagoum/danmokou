@@ -7,6 +7,7 @@ using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Culture;
 using BagoumLib.DataStructures;
+using BagoumLib.Functional;
 using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
 using Danmokou.Core;
@@ -61,12 +62,36 @@ public record UIGroupHierarchy(UIGroup Group, UIGroupHierarchy? Parent) : IEnume
         }
         return a;
     }
+
+    /// <summary>
+    /// Returns true if it is legal to traverse from the source to target hierarchy.
+    /// </summary>
+    public static bool CanTraverse(UIGroupHierarchy? from, UIGroupHierarchy to) {
+        if (from is null)
+            return true;
+        var target = GetIntersection(from, to);
+        if (target is null)
+            return false;
+        for (var x = from; x != target; x = x.Parent) {
+            if (!x.Group.NavigationCanLeaveGroup)
+                return false;
+        }
+        return true;
+    }
+
+    /// <inheritdoc cref="CanTraverse(Danmokou.UI.XML.UIGroupHierarchy?,Danmokou.UI.XML.UIGroupHierarchy)"/>
+    public static bool CanTraverse(UINode? from, UINode to) => CanTraverse(from?.Group.Hierarchy, to.Group.Hierarchy);
 }
 
 public abstract class UIGroup {
     public static readonly UIResult NoOp = new StayOnNode(true);
     public static readonly UIResult SilentNoOp = new StayOnNode(StayOnNodeType.Silent);
     public bool Visible { get; private set; } = false;
+    
+    /// <summary>
+    /// Whether or not user focus can leave this group via mouse/keyboard control. (True by default, except for popups.)
+    /// </summary>
+    public bool NavigationCanLeaveGroup { get; set; } = true;
     public UIScreen Screen { get; }
     public UIRenderSpace Render { get; }
     
@@ -105,11 +130,12 @@ public abstract class UIGroup {
         }
     }
     public bool Interactable { get; init; } = true;
+    
     /// <summary>
     /// Node to go to when trying to enter this group.
     /// <br/>Note that this node may be in a descendant of this group.
     /// </summary>
-    public UINode? EntryNodeOverride { get; set; }
+    public Delayed<UINode>? EntryNodeOverride { get; set; }
     public UINode? EntryNodeBottomOverride { get; set; }
     public Func<int>? EntryIndexOverride { get; init; }
     /// <summary>
@@ -131,8 +157,8 @@ public abstract class UIGroup {
     public bool IsCurrent => Controller.Current != null && Nodes.Contains(Controller.Current);
     public UINode? PreferredEntryNode {
         get {
-            if (EntryNodeOverride != null)
-                return EntryNodeOverride;
+            if (EntryNodeOverride is { } eno)
+                return eno.Value;
             if (EntryIndexOverride != null)
                 return Nodes.ModIndex(EntryIndexOverride());
             return null;
@@ -151,8 +177,8 @@ public abstract class UIGroup {
         get {
             if (EntryNodeBottomOverride != null)
                 return EntryNodeBottomOverride;
-            if (EntryNodeOverride != null)
-                return EntryNodeOverride;
+            if (EntryNodeOverride is { } eno)
+                return eno.Value;
             if (EntryIndexOverride != null)
                 return Nodes.ModIndex(EntryIndexOverride());
             for (int ii = Nodes.Count - 1; ii >= 0; --ii)
@@ -190,7 +216,7 @@ public abstract class UIGroup {
         this.nodes = nodes?.FilterNone().ToList() ?? new();
         foreach (var n in this.nodes)
             n.Group = this;
-        Render.AddSource(this);
+        _ = Render.AddSource(this).ContinueWithSync();
         Screen.AddGroup(this);
     }
 
@@ -218,7 +244,7 @@ public abstract class UIGroup {
 
     public void Destroy() {
         Screen.Groups.Remove(this);
-        Render.RemoveSource(this);
+        _ = Render.RemoveSource(this).ContinueWithSync();
         foreach (var g in DependentGroups)
             g.Destroy();
         ClearNodes();
@@ -232,8 +258,9 @@ public abstract class UIGroup {
     /// (their enterShow should be controlled by the parent).</param>
     public void EnterShow(bool callIfDependent = false) {
         if (IsDependentGroup && !callIfDependent) return;
+        if (Visible) return;
         Visible = true;
-        Render.SourceBecameVisible(this);
+        _ = Render.SourceBecameVisible(this).ContinueWithSync();
         EnterShowDependents();
     }
 
@@ -247,12 +274,15 @@ public abstract class UIGroup {
     /// </summary>
     /// <param name="callIfDependent">If false, this will noop for dependent groups
     /// (their leaveHide should be controlled by the parent).</param>
-    public void LeaveHide(bool callIfDependent = false) {
-        if (IsDependentGroup && !callIfDependent) return;
+    public Task LeaveHide(bool callIfDependent = false) {
+        if (IsDependentGroup && !callIfDependent) return Task.CompletedTask;
+        if (!Visible) return Task.CompletedTask;
         Visible = false;
-        Render.SourceBecameHidden(this);
-        foreach (var g in DependentGroups)
-            g.LeaveHide(true);
+        var tasks = new Task[DependentGroups.Count + 1];
+        tasks[^1] = Render.SourceBecameHidden(this);
+        for (int ii = 0; ii < DependentGroups.Count; ++ii)
+            tasks[ii] = DependentGroups[ii].LeaveHide(true);
+        return Task.WhenAll(tasks);
     }
 
     /// <summary>
@@ -272,12 +302,12 @@ public abstract class UIGroup {
     public abstract UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req);
 
     /// <summary>
-    /// If permitted, delegate navigation to the parent group by calling <see cref="Parent"/>.<see cref="NavigateOutOfEnclosed"/>.
-    /// <br/>Overrides such as <see cref="PopupUIGroup"/> may disable this if they do not want to permit delegation to parent group.
+    /// If permitted by <see cref="NavigationCanLeaveGroup"/>, delegate navigation to the parent group by calling <see cref="Parent"/>.<see cref="NavigateOutOfEnclosed"/>.
     /// </summary>
-    protected virtual bool TryDelegateNavigationToEnclosure(UINode current, UICommand req, out UIResult res) {
+    protected bool TryDelegateNavigationToEnclosure(UINode current, UICommand req, out UIResult res) {
         res = default!;
-        return Parent != null && Parent.NavigateOutOfEnclosed(this, current, req).Try(out res);
+        return NavigationCanLeaveGroup &&
+               Parent != null && Parent.NavigateOutOfEnclosed(this, current, req).Try(out res);
     }
 
     protected UIResult NavigateToPreviousNode(UINode node, UICommand req) {
@@ -344,16 +374,16 @@ public abstract class UIGroup {
     public virtual void EnteredNode(UINode node, bool animate) { }
 
 
-    public virtual Task? EnterGroup() {
+    public Task? EnterGroup() {
         EnterShow();
         return OnEnter?.Invoke(this);
     }
 
-    protected virtual Task LeaveGroupTasks() {
-        return OnLeave?.Invoke(this) ?? Task.CompletedTask;
+    public virtual async Task LeaveGroup() {
+        await (OnLeave?.Invoke(this) ?? Task.CompletedTask);
+        await LeaveHide();
     }
-    public Task LeaveGroup() => LeaveGroupTasks().ContinueWithSync(() => LeaveHide());
-    
+
     public virtual void ScreenExitStart() { }
     
     /// <summary>
@@ -501,7 +531,12 @@ public class PopupUIGroup : CompositeUIGroup {
     }
 
     private static UIRenderConstructed MakeRenderer(UIRenderAbsoluteTerritory at, VisualTreeAsset prefab) {
-        var render = new UIRenderConstructed(at, prefab);
+        var render = new UIRenderConstructed(at, prefab) {
+            IsVisibleAnimation = (rs, cT) => 
+                rs.MakeTask(rs.HTML.transform.ScaleTo(new Vector3(1, 1, 1), .2f, Easers.EOutSine, cT: cT)),
+            IsNotVisibleAnimation = (rs, cT) =>
+                rs.MakeTask(rs.HTML.transform.ScaleTo(new Vector3(1, 0, 1), .12f, Easers.EIOSine, cT: cT))
+        };
         //Don't allow pointer events to hit the underlying Absolute Territory
         render.HTML.RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
         return render;
@@ -513,36 +548,18 @@ public class PopupUIGroup : CompositeUIGroup {
         this.header = header;
         this.Source = source;
         this.Parent = source.Group;
+        this.NavigationCanLeaveGroup = false;
     }
 
     public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) => req switch {
         UICommand.Back => EasyExit ? Source.ReturnGroup : NoOp,
         _ => null
     };
-    
-    //Popups do not delegate navigation to the enclosure.
-    protected override bool TryDelegateNavigationToEnclosure(UINode current, UICommand req, out UIResult res) {
-        res = default!;
-        return false;
-    }
 
-    //note: we don't handle these tasks in UIRenderConstructed since UIRenderConstructed creates nonblocking tasks;
-    // these are blocking.
-    public override Task EnterGroup() {
-        render.HTML.transform.scale = new Vector3(1, 0, 0);
-        return Task.WhenAll(base.EnterGroup() ?? Task.CompletedTask,
-                Screen.AbsoluteTerritory.FadeIn(),
-                render.HTML.transform.ScaleTo(new Vector3(1, 1, 1), 0.12f, Easers.EOutSine).Run(Controller));
-    }
-
-    protected override Task LeaveGroupTasks() {
-        return Task.WhenAll(base.LeaveGroupTasks(), 
-                Screen.AbsoluteTerritory.FadeOutIfNoOtherDependencies(this),
-                render.HTML.transform.ScaleTo(new Vector3(1, 0, 1), 0.12f, Easers.EIOSine).Run(Controller))
-                .ContinueWithSync(() => {
-                    Destroy();
-                    render.Destroy();
-                });
+    public override async Task LeaveGroup() {
+        await base.LeaveGroup();
+        Destroy();
+        render.Destroy();
     }
 
     public override void Redraw() {
@@ -631,7 +648,7 @@ public abstract class CompositeUIGroup : UIGroup {
             UICommand.Right => new Vector2(0, from.center.y),
             _ => throw new Exception()
         }, new(2, 2));
-        Logs.Log($"Wraparound {dir} from {from} to {newFrom}");
+        //Logs.Log($"Wraparound {dir} from {from} to {newFrom}");
         //When doing wraparound, allow navigating to the same node (it should be preferred over selecting an adjacent node)
         return FinalizeTransition(current, UIFreeformGroup.FindClosest(newFrom, dir, NodesAndDependentNodes, _angleLimits));
     }

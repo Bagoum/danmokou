@@ -395,9 +395,24 @@
     border-bottom-width: 5px;
     translate: 0 -100%;
     left: 100%;
+    top: 0;
+    transform-origin: left bottom;
     position: absolute;
     max-width: 800px;
     min-width: 100px;
+    transition-property: left,top;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out;
+    /* TODO z-index isn't supported yet, but it should be used for tooltips. */
+    z-index: 100;
+}
+
+.tooltip.tooltip-above {
+    translate: -50% -100%;
+    left: 50%;
+    top: 0;
+    transform-origin: center bottom;
+    border-bottom-left-radius: 40px;
 }
 
 .tooltip.tooltip-contextmenu {
@@ -405,4 +420,10 @@
     border-bottom-left-radius: 40px;
     background-color: var(--darkervioletbg80);
     border-color: var(--goldsub60);
+}
+
+.inventory-example-bg {
+    height: 100%;
+    width: 100%;
+    background-color: rgb(208, 208, 208);
 }

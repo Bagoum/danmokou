@@ -47,7 +47,7 @@ public class UIFreeformGroup : CompositeUIGroup, IFixedXMLObjectContainer {
         if (TryDelegateNavigationToEnclosure(current, dir, out var res))
             return res;
         //no wraparound permitted for now
-        return SilentNoOp;
+        return null;
     }
 
     private static Vector2 DirAsVec(UICommand dir) => dir switch {

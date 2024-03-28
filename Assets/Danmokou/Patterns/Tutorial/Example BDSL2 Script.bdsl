@@ -11,4 +11,3 @@ function gcd(a, b)::int {
 
 var x = 42
 gcd(x, 154)
-

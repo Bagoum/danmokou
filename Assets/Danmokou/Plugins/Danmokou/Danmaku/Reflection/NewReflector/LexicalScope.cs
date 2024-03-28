@@ -103,6 +103,7 @@ public class LexicalScope {
     
     public DMKScope GlobalRoot { get; protected init; }
     public LexicalScope ScriptRoot { get; }
+    public int Depth => Parent is null ? 0 : 1 + Parent.Depth;
     public LexicalScope? Parent { get; protected set; }
     public readonly Dictionary<string, VarDecl> variableDecls = new();
     public readonly Dictionary<string, ScriptFnDecl> functionDecls = new();
@@ -145,7 +146,7 @@ public class LexicalScope {
         Type = conv?.Kind switch {
             ScopedConversionKind.BlockScopedExpression => LexicalScopeType.ExpressionBlock,
             ScopedConversionKind.EFScopedExpression => LexicalScopeType.ExpressionEF,
-            _ => LexicalScopeType.Standard
+            _ => Type
         };
         return this;
     }

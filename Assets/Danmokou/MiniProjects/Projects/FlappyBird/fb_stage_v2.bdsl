@@ -189,7 +189,7 @@ phase 0 { announce } {
 }
 
 //3
-phasej 51 0 { stage, checkpoint } {
+phasej 51 7 { stage, checkpoint } {
 	saction 0 {
         bookctrl()
         pipes(3)
@@ -251,7 +251,7 @@ phasej 51 0 { stage, checkpoint } {
         } wrap(obj5((lr * (3 - p))))
         wait 1
         async "" <> gcr2 240 3 <> {
-        } wrap(obj3(Lplayer.y))
+        } obj3(Lplayer.y)
     }
 }
 

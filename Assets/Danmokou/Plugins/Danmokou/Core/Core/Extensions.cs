@@ -166,7 +166,7 @@ public static class FuncExtensions {
     
     public static Action<T> Then<T>(this Action<T>? a, Action<T>? b) {
         if (a == null) return b ?? (_ => {});
-        if (b == null) return a ?? (_ => {});
+        if (b == null) return a;
         return x => {
             a(x);
             b(x);

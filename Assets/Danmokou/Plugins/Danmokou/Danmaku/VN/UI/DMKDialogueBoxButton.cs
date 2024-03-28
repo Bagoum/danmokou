@@ -21,6 +21,7 @@ public class DMKDialogueBoxButton : DialogueBoxButton, IFixedXMLReceiver {
         parent.AddToken(isVisible.AddDisturbance(db.Visible));
         parent.AddToken(isVisible.AddDisturbance(db.ComputedTint.Map(c => c.a > 0)));
         parent.AddToken(isVisible.AddDisturbance(db.MinimalState.Map(b => !b)));
+        parent.AddToken(IsInteractable.AddDisturbance(isVisible));
         parent.Listen(db.MinimalState, b => {
             if (b)
                 FastSetState(State | ButtonState.Hide);
@@ -29,14 +30,14 @@ public class DMKDialogueBoxButton : DialogueBoxButton, IFixedXMLReceiver {
         });
     }
     
-    public UIResult OnConfirm(UINode n) {
+    public UIResult OnConfirm(UINode n, ICursorState _) {
         OnPointerClick(null!);
         return new UIResult.StayOnNode();
     }
 
-    public void OnEnter(UINode n) => OnPointerEnter(null!);
+    public void OnEnter(UINode n, ICursorState cs) => OnPointerEnter(null!);
 
-    public void OnLeave(UINode n) => OnPointerExit(null!);
+    public void OnLeave(UINode n, ICursorState cs) => OnPointerExit(null!);
 
     public void OnPointerDown(UINode n, PointerDownEvent ev) => OnPointerDown(null!);
 

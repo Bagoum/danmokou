@@ -68,7 +68,7 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
     /// </summary>
     public (UIScreen, UIFreeformGroup) MakeScreen(Func<UINode, UIResult?>? unselectConfirm, Action<UIScreen, VisualElement>? builder = null) {
         var unselect = new EmptyNode(new UnselectorFixedXML()) {
-            OnConfirm = n => unselectConfirm?.Invoke(n) ?? UIGroup.SilentNoOp
+            OnConfirm = (n, cs) => unselectConfirm?.Invoke(n) ?? UIGroup.SilentNoOp
         };
         var s = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = builder ?? ((s, ve) => {
@@ -128,7 +128,7 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
             BuildLate(s);
     }
 
-    protected UIResult UnselectorConfirm(UINode n) =>
+    protected UIResult UnselectorConfirm(UINode n, ICursorState _) =>
         HandleUnselectConfirm?.Invoke(n) ??
         UIGroup.SilentNoOp;
 }

@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
+    <ui:VisualElement class="node" style="height: 240px; width: 240px; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0;">
+        <ui:VisualElement name="Body" class="body" style="flex-direction: row; flex-grow: 1; border-top-width: 4px; border-left-width: 4px; border-right-width: 4px; border-bottom-width: 4px; border-top-left-radius: 10px; border-bottom-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0; align-items: center; margin-top: 4px; margin-right: 4px; margin-bottom: 4px; margin-left: 4px;">
+            <ui:VisualElement name="BG" class="inventory-example-bg">
+                <ui:Label text="2" name="Content" style="font-size: 90px; -unity-text-align: upper-right; margin-top: 12px; margin-right: 12px; margin-bottom: 12px; margin-left: 12px; flex-grow: 1; background-image: url(&apos;project://database/Assets/Danmokou/Sprites/items/gems1/0001.png?fileID=2800000&amp;guid=a3e68d26b33f78b4fa0d6859aaec0020&amp;type=3#0001&apos;); -unity-text-outline-width: 2px; -unity-text-outline-color: rgb(0, 0, 0); -unity-font-style: normal;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
