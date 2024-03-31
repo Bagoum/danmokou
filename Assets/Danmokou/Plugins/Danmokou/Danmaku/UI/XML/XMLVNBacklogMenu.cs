@@ -57,30 +57,51 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
         RegisterService<IVNBacklog>(this);
     }
 
+    private class BacklogEntryVM : UIViewModel {
+        public UINode Node { get; }
+        public DialogueLogEntry Entry { get; }
+        public BacklogEntryVM(UINode node, DialogueLogEntry entry) {
+            Node = node;
+            Entry = entry;
+        }
+
+        public override long GetViewHash() => Node.Selection.GetHashCode();
+    }
+    private class BacklogEntryView : UIView<BacklogEntryVM> {
+        public BacklogEntryView(BacklogEntryVM vm) : base(vm) { }
+
+        public override void NodeBuilt(UINode node) {
+            base.NodeBuilt(node);
+            var entry = ViewModel.Entry;
+            node.NodeHTML.Q<Label>("Description").text = entry.readableSpeech;
+            if (entry.speakerSprite != null)
+                node.NodeHTML.Q("Speaker").style.backgroundImage = new StyleBackground(entry.speakerSprite);
+        }
+
+        protected override BindingResult Update(in BindingContext context) {
+            var entry = ViewModel.Entry;
+            var vis = Node.Selection;
+            var b = Node.NodeHTML.Q("Borderer");
+            var smul = vis == UINodeSelection.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f);
+            b.style.borderTopColor = entry.uiColor * smul;
+            b.style.borderLeftColor = entry.uiColor * smul * new Color(0.65f, 0.65f, 0.65f);
+            Node.NodeHTML.Q<Label>("Description").style.color =
+                Node.NodeHTML.Q<Label>("Label").style.color =
+                    entry.textColor * (vis == UINodeSelection.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f));
+            return base.Update(in context);
+        }
+    }
+    
     private void MakeNode(DialogueLogEntry entry) {
         var backlog = CurrVN?.doBacklog;
         var node = new UINode($"<smallcaps>{entry.speakerName}</smallcaps>") {
             Prefab = BacklogEntry,
-            OnBuilt = n => {
-                n.NodeHTML.Q<Label>("Description").text = entry.readableSpeech;
-                if (entry.speakerSprite != null)
-                    n.NodeHTML.Q("Speaker").style.backgroundImage = new StyleBackground(entry.speakerSprite);
-            },
-            InlineStyle = (s, n) => {
-                var b = n.NodeHTML.Q("Borderer");
-                var smul = s == UINodeVisibility.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f);
-                b.style.borderTopColor = entry.uiColor * smul;
-                b.style.borderLeftColor = entry.uiColor * smul * new Color(0.65f, 0.65f, 0.65f);
-                n.NodeHTML.Q<Label>("Description").style.color =
-                    n.NodeHTML.Q<Label>("Label").style.color =
-                        entry.textColor * (s == UINodeVisibility.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f));
-            },
             OnConfirm = backlog != null && entry.location is not null ?
                 (_, _) => {
                     backlog(entry.location);
                     return new UIResult.StayOnNode();
                 } : null
-        };
+        }.WithView(n => new BacklogEntryView(new(n, entry)));
         backlogEntries.AddNodeDynamic(node);
     }
 

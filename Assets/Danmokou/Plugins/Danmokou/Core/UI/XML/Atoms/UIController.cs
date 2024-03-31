@@ -10,6 +10,7 @@ using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
+using BagoumLib.Transitions;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -94,6 +95,7 @@ public abstract record UIResult {
 }
 
 public abstract class UIController : CoroutineRegularUpdater {
+    public static readonly CoroutineOptions AnimOptions = new(true, CoroutineType.StepTryPrepend);
     public static readonly Event<Unit> UIEventQueued = new();
     public abstract record CacheInstruction {
         public record ToOption(int OptionIndex) : CacheInstruction;
@@ -309,23 +311,22 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
         Profiler.BeginSample("UI Redraw");
         UIRoot.style.display = DisplayStyle.Flex;
-        var states = new Dictionary<UINode, UINodeVisibility>();
+        var states = new Dictionary<UINode, UINodeSelection>();
         var nextIsPopupSrc = Current.Group is PopupUIGroup;
         foreach (var (grp, node) in GroupCall) {
             if (node != null)
-                states[node] = nextIsPopupSrc ? UINodeVisibility.PopupSource : UINodeVisibility.GroupCaller;
+                states[node] = nextIsPopupSrc ? UINodeSelection.PopupSource : UINodeSelection.GroupCaller;
             nextIsPopupSrc = grp is PopupUIGroup;
         }
         foreach (var n in Current.Group.Nodes)
-            states[n] = UINodeVisibility.GroupFocused;
-        states[Current] = UINodeVisibility.Focused;
+            states[n] = UINodeSelection.GroupFocused;
+        states[Current] = UINodeSelection.Focused;
         //Other screens don't need to be redrawn
         var dependentGroups = Current.Group.Hierarchy.SelectMany(g => g.DependentGroups).ToHashSet();
         foreach (var g in Current.Screen.Groups) {
-            var fallback = dependentGroups.Contains(g) ? UINodeVisibility.GroupFocused : UINodeVisibility.Default;
-            g.Redraw();
+            var fallback = dependentGroups.Contains(g) ? UINodeSelection.GroupFocused : UINodeSelection.Default;
             foreach (var n in g.Nodes)
-                n.Redraw(states.TryGetValue(n, out var s) ? s : fallback);
+                n.UpdateSelection(states.TryGetValue(n, out var s) ? s : fallback);
         }
         RunDroppableRIEnumerator(scrollToCurrent());
         Profiler.EndSample();
@@ -496,11 +497,12 @@ public abstract class UIController : CoroutineRegularUpdater {
                 if (QueuedEvent is UIPointerCommand.Goto mgt) {
                     if (!mgt.Target.Destroyed && mgt.Target.Screen == Current.Screen &&
                         mgt.Target != Current && UIGroupHierarchy.CanTraverse(Current, mgt.Target)) {
-                        result = new UIResult.GoToNode(mgt.Target);
-                        ISFXService.SFXService.Request(
-                            mgt.Target.Group == Current.Group ? upDownSound : leftRightSound);
+                        result = CursorState.Value.PointerGoto(Current, mgt.Target);
+                        if (result is UIResult.GoToNode { Target: {} target} && target != Current)
+                            command = (Current.Group is UIColumn) == (target.Group == Current.Group) ?
+                                UICommand.Up : UICommand.Right;
                     }
-                } else if (Current.CustomEventHandling().Try(out var r)) {
+                } else if (CursorState.Value.CustomEventHandling(Current).Try(out var r)) {
                     result = r;
                     doCustomSFX = true;
                 } else {
@@ -513,8 +515,8 @@ public abstract class UIController : CoroutineRegularUpdater {
                     silence = (QueuedEvent as UIPointerCommand.NormalCommand)?.Silent ?? silence;
                 }
                 QueuedEvent = null;
-                if (result is UIResult.GoToNode {NoOpIfSameNode:true} gTo && gTo.Target == Current)
-                    result = null;
+                if (result is UIResult.GoToNode gTo && gTo.Target == Current)
+                    result = new UIResult.StayOnNode(gTo.NoOpIfSameNode);
                 if (result != null && !silence) {
                     ISFXService.SFXService.Request(
                         result switch {
@@ -534,7 +536,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                 } else if (doCustomSFX)
                     //Probably need to get this from the custom node handling? idk
                     ISFXService.SFXService.Request(leftRightSound);
-                if (result != null)
+                if (result != null && result is not UIResult.StayOnNode)
                     OperateOnResult(result, UITransitionOptions.Default).ContinueWithSync();
                 break;
             } else
@@ -563,34 +565,34 @@ public abstract class UIController : CoroutineRegularUpdater {
     private async Task TransitionToNode(UINode? next, UITransitionOptions opts, List<UIGroup> leftGroups, List<UIGroup> enteredGroups) {
         var prev = Current;
         if (prev == next) {
-            //Cases like text input
-            Redraw();
             return;
         }
         var screenChanged = next?.Screen != prev?.Screen;
-        //currents.Add(null!);
         using var token = TransitionEnabled.AddConst(false);
         prev?.Leave(opts.Animate, CursorState.Value, leftGroups.Count == 0 && enteredGroups.Try(0) is PopupUIGroup);
-        if (leftGroups.Count > 0)
-            await Task.WhenAll(leftGroups.Select(l => l.LeaveGroup()));
+        var tasks = new List<Task>();
+        foreach (var g in leftGroups)
+            if (g.LeaveGroup() is { IsCompletedSuccessfully: false} task)
+                tasks.Add(task);
+        if (tasks.Count > 0)
+            await Task.WhenAll(tasks);
         if (screenChanged) {
             prev?.Screen.ExitStart();
             next?.Screen.EnterStart(prev == null);
         }
-        var enterTasks = new List<Task>();
-        //Doing this explicitly causes EnterGroup>EnterShow to be run for all enter groups immediately
+        tasks.Clear();
         foreach (var g in enteredGroups)
-            if (g.EnterGroup().Try(out var t))
-                enterTasks.Add(t);
+            if (g.EnterGroup() is { IsCompletedSuccessfully: false} task)
+                tasks.Add(task);
         
         Current = next;
         next?.Enter(opts.Animate, CursorState.Value);
         Redraw();
         
         if (screenChanged && next != null)
-            enterTasks.Add(TransitionScreen(prev?.Screen, next.Screen, opts));
-        if (enterTasks.Count > 0)
-            await Task.WhenAll(enterTasks);
+            tasks.Add(TransitionScreen(prev?.Screen, next.Screen, opts));
+        if (tasks.Count > 0)
+            await Task.WhenAll(tasks);
 
         if (screenChanged) {
             prev?.Screen.ExitEnd();
@@ -672,10 +674,19 @@ public abstract class UIController : CoroutineRegularUpdater {
         } else
             return false;
     }
+
+    public Task PlayAnimation(ITransition anim) => anim.Run(this, UIController.AnimOptions);
     
     public override int UpdatePriority => UpdatePriorities.UI;
-    
-    
+
+    protected override void OnDisable() {
+        foreach (var s in Screens) {
+            s?.MarkScreenDestroyed();
+        }
+        base.OnDisable();
+    }
+
+
     [ContextMenu("Debug group call stack")]
     public void DebugGroupCallStack() => Logs.Log(string.Join("; ", 
         GroupCall.Select(gn => $"{gn.node?.IndexInGroup}::{gn.group}")));

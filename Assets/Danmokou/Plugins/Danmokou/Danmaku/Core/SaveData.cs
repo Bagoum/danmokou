@@ -40,23 +40,27 @@ public static class SaveData {
     [Serializable]
     public class Record : IGlobalVNDataProvider {
         public bool TutorialDone = false;
-        public Dictionary<string, InstanceRecord> FinishedGames { get; init; } = new();
+        public List<InstanceRecord> FinishedGames { get; init; } = new();
+        [JsonIgnore]
+        public Event<Unit> FinishedGamesUpdated { get; } = new();
         public Dictionary<string, State> Achievements { get; init; } = new();
         public GlobalData GlobalVNData { get; init; } = new();
 
         [JsonIgnore]
         public IEnumerable<InstanceRecord> FinishedCampaignGames => 
-            FinishedGames.Values.Where(gr => gr.RequestKey is CampaignRequestKey);
+            FinishedGames.Where(gr => gr.RequestKey is CampaignRequestKey);
 
         [JsonIgnore]
         private ICollection<string> CompletedCampaigns =>
             new HashSet<string>(
-                FinishedGames.Values
+                FinishedGames
                     .Select(g => (g.Completed && g.RequestKey is CampaignRequestKey cr) ? cr.Campaign : null)
                     .FilterNone());
 
-        public bool CampaignCompleted(string key) =>
-            CompletedCampaigns.Contains(key);
+        public bool CampaignCompleted(string key) {
+            //for (int ii = 0; ii < FinishedGames.Count; ++ii)
+            return CompletedCampaigns.Contains(key);
+        }
 
         public static readonly Event<Unit> TutorialCompleted = new();
 
@@ -78,25 +82,21 @@ public static class SaveData {
         }
 
         public void RecordGame(InstanceRecord rec) {
-            FinishedGames[rec.Uuid] = rec;
+            FinishedGames.Add(rec);
             SaveData.SaveRecord();
-        }
-
-        public void InvalidateRecord(string uuid) {
-            FinishedGames.Remove(uuid);
-            SaveData.SaveRecord();
+            FinishedGamesUpdated.OnNext(default);
         }
 
         public Dictionary<BossPracticeRequestKey, (int success, int total)> GetCampaignSpellHistory() =>
             Statistics.AccSpellHistory(FinishedCampaignGames);
 
         public Dictionary<BossPracticeRequestKey, (int success, int total)> GetPracticeSpellHistory() =>
-            Statistics.AccSpellHistory(FinishedGames.Values.Where(gr => gr.RequestKey is BossPracticeRequestKey));
+            Statistics.AccSpellHistory(FinishedGames.Where(gr => gr.RequestKey is BossPracticeRequestKey));
 
 
         public long? GetHighScore(InstanceRequest req) {
             var campaign = req.lowerRequest.Key;
-            return FinishedGames.Values.Where(g =>
+            return FinishedGames.Where(g =>
                 Equals(g.RequestKey, campaign) &&
                 g.SavedMetadata.difficulty.standard == req.metadata.difficulty.standard
             ).Select(x => x.Score).OrderByDescending(x => x).FirstOrNull();
@@ -105,8 +105,7 @@ public static class SaveData {
         public InstanceRecord? ChallengeCompletion(SMAnalysis.DayPhase phase, int c, SharedInstanceMetadata meta) {
             var key = new PhaseChallengeRequest(phase, c).Key;
             //You can add filters on the meta properties (difficulty/player) as necessary.
-
-            return FinishedGames.Values
+            return FinishedGames
                 .Where(g =>
                     g.Completed &&
                     g.RequestKey.Equals(key))
@@ -139,7 +138,8 @@ public static class SaveData {
         public bool Verbose = false;
         public bool Shaders { get; set; } = true;
         public bool LegacyRenderer = false;
-        public (int w, int h) Resolution { get; set; } = GraphicsUtils.BestResolution;
+        public Evented<(int w, int h)> Resolution { get; } = new(GraphicsUtils.BestResolution);
+        (int, int) IGraphicsSettings.Resolution => Resolution;
 #if UNITY_EDITOR && !EXBAKE_SAVE && !EXBAKE_LOAD
         public static bool TeleportAtPhaseStart => false;
 #else
@@ -147,7 +147,7 @@ public static class SaveData {
         public const bool TeleportAtPhaseStart = false;
 #endif
         public float Screenshake = 1f;
-        public FullScreenMode Fullscreen = FullScreenMode.FullScreenWindow;
+        public Evented<FullScreenMode> Fullscreen { get; } = new(FullScreenMode.FullScreenWindow);
         public int Vsync = 0;
         public bool UnfocusedHitbox = true;
         public Evented<float> MasterVolume { get; } = new(1f);
@@ -159,7 +159,7 @@ public static class SaveData {
         public Evented<float> _SEVolume { get; } = new(1f);
         [JsonIgnore]
         public DisturbedProduct<float> SEVolume { get; } = new();
-        public bool Backgrounds = true;
+        public Evented<bool> Backgrounds { get; } = new(true);
         public bool ProfilingEnabled = false;
         
         public float VNDialogueOpacity = 0.9f;
@@ -206,20 +206,22 @@ public static class SaveData {
             #if UNITY_ANDROID || UNITY_IOS
                 Resolution = (1280, 720);
             #endif
-
-                return new Settings() {
+                var s = new Settings() {
 #if WEBGL
                     Shaders = false,
                     AllowInputLinearization = false,
-                    Fullscreen = FullScreenMode.Windowed,
                     LegacyRenderer = true,
                     UnfocusedHitbox = false,
                     Vsync = 1,
-                    Resolution = (1920, 1080),
-#else
-                    Resolution = Resolution,
 #endif
                 };
+#if WEBGL
+                s.Fullscreen.Value = FullScreenMode.Windowed;
+                s.Resolution.Value = (1920, 1080);
+#else
+                s.Resolution.Value = Resolution;
+#endif
+                return s;
             }
         }
     }
@@ -347,11 +349,11 @@ public static class SaveData {
         Newtonsoft.Json.Utilities.AotHelper.EnsureList<string>();
         s = ReadJson<Settings>(SETTINGS) ?? Settings.Default;
         _ = ServiceLocator.Register<IDMKLocaleProvider>(s);
-        UpdateResolution(s.Resolution);
-        UpdateFullscreen(s.Fullscreen);
+        s.Resolution.Subscribe(res => UpdatedResolution(res));
+        s.Fullscreen.Subscribe(UpdatedFullscreen);
         ETime.SetVSync(s.Vsync);
         Logs.Verbose = s.Verbose;
-        Logs.Log($"Initial settings: resolution {s.Resolution}, fullscreen {s.Fullscreen}, vsync {s.Vsync}");
+        Logs.Log($"Initial settings: resolution {s.Resolution.Value}, fullscreen {s.Fullscreen.Value}, vsync {s.Vsync}");
         r = ReadRecord() ?? new Record();
         _ = ServiceLocator.Register<IGlobalVNDataProvider>(r);
         Achievement.AchievementStateUpdated.Subscribe(r.UpdateAchievement);
@@ -360,32 +362,40 @@ public static class SaveData {
         StartProfiling();
         SettingsEv = new Evented<Settings>(s);
         _ = SettingsEv.Subscribe(IGraphicsSettings.SettingsEv.OnNext);
+        
+        //save language changes to disk immediately for convenience
+        s.TextLocale.OnChange.Subscribe(_ => AssignSettingsChanges());
+        //BackgroundOrchestrator uses the resolution update event to turn on/off backgrounds
+        s.Backgrounds.OnChange.Subscribe(_ => UpdatedResolution());
     }
 
     private static Record? ReadRecord() => ReadJson<Record>(RECORD);
 
-    public static void SaveRecord() => WriteJson(RECORD, r);
+    public static void SaveRecord() {
+        Logs.Log($"Saving record to file {RECORD}");
+        WriteJson(RECORD, r);
+    }
 
     //Screen changes does not take effect immediately, so we need to do this on-change instead of together with
     //shader variable reassignment
     //this is also used to turn backgrounds on/off
-    public static void UpdateResolution((int w, int h)? wh = null) {
-        if (wh.HasValue) {
-            s.Resolution = wh.Value;
+    public static void UpdatedResolution((int w, int h)? dims = null) {
+        if (dims is {} wh) {
             //Changing output resolution on phones doesn't make sense and does weird things
         #if !(UNITY_ANDROID || UNITY_IOS)
-            Screen.SetResolution(s.Resolution.w, s.Resolution.h, s.Fullscreen);
+            Screen.SetResolution(wh.w, wh.h, s.Fullscreen);
         #endif
-            Logs.Log($"Set resolution to {wh.Value}");
+            Logs.Log($"Set resolution to {wh}");
         }
         SuzunoyaUnity.Rendering.RenderHelpers.PreferredResolution.OnNext(s.Resolution);
     }
 
-    public static void UpdateFullscreen(FullScreenMode mode) {
-        Screen.fullScreenMode = s.Fullscreen = mode;
+    public static void UpdatedFullscreen(FullScreenMode mode) {
+        Screen.fullScreenMode = mode;
     }
 
     public static void AssignSettingsChanges() {
+        Logs.Log($"Saving settings to file {SETTINGS}");
         WriteJson(SETTINGS, s);
         //dialogue speed settings are stored in the global VN info in record
         SaveData.SaveRecord();

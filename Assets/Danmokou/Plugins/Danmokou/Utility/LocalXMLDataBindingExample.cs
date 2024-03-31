@@ -17,7 +17,7 @@ using UnityEngine.UIElements;
 using static Danmokou.UI.XML.XMLUtils;
 
 //generic data source using default data binding
-public class ValueDataSrc<T> : IDataSourceViewHashProvider {
+public class ValueDataSrc<T> : UIViewModel {
     private readonly Delayed<T> val1;
     /// <summary>
     /// Example property read from an underlying data source.
@@ -44,7 +44,7 @@ public class ValueDataSrc<T> : IDataSourceViewHashProvider {
     //Additionally, the data binder's GetHashCode *will* be used internally for data binder identity checks,
     // so it would be a bad idea to have it just return the data hash code!
     //As such, use classes instead of records
-    public long GetViewHashCode() {
+    public override long GetViewHash() {
         return EqualityComparer<T>.Default.GetHashCode(Value);
     }
 }
@@ -55,10 +55,10 @@ public class ValueDataSrc<T> : IDataSourceViewHashProvider {
 //As such, I'm implementing this by taking the node and data source as arguments, and doing a pretty
 // raw UXML write.
 //Note that by implementing IDataSourceProvider, we don't need to specify dataSource on the source UXML object.
-public class CustomLabelBinding<T> : CustomBinding, IDataSourceProvider {
+public class CustomLabelView<T> : UIView, IDataSourceProvider {
     private UINode n;
     private ValueDataSrc<T> data;
-    public CustomLabelBinding(UINode n, ValueDataSrc<T> data) {
+    public CustomLabelView(UINode n, ValueDataSrc<T> data) : base(data) {
         this.n = n;
         this.data = data;
         updateTrigger = BindingUpdateTrigger.OnSourceChanged;
@@ -66,7 +66,7 @@ public class CustomLabelBinding<T> : CustomBinding, IDataSourceProvider {
 
     protected override BindingResult Update(in BindingContext context) {
         Logs.Log("updating custom binding");
-        n.Label.text = data.Value!.ToString();
+        n.NodeHTML.Q<Label>().text = data.Value!.ToString();
         return base.Update(in context);
     }
 
@@ -84,13 +84,13 @@ public static class MHelpers {
         //(deflt as DataBinding)?.sourceToUiConverters.AddConverter((ref LString x) => "ls:" + x.Value);
     }
     public static UINode BindLabel<T>(this UINode n, ValueDataSrc<T> dataSrc, string path) {
+        //return n.WithView(n => new CustomLabelView<T>(n, dataSrc));
+        
         n.OnBuilt = n.OnBuilt.Then(n => {
-            //n.Label!.dataSource = dataSrc;
-            //n.Label!.dataSourcePath = new PropertyPath(path);
-            //n.Label!.SetBinding("text", deflt);
-
-            //n.HTML.dataSource = dataSrc;
-            n.HTML.SetBinding(new BindingId("custom"), new CustomLabelBinding<T>(n, dataSrc));
+            var l = n.NodeHTML.Q<Label>();
+            l.dataSource = dataSrc;
+            l.dataSourcePath = new PropertyPath(path);
+            l.SetBinding("text", deflt);
         });
         return n;
     }
@@ -121,10 +121,10 @@ public class LocalXMLDataBindingExample : CoroutineRegularUpdater {
 
         var dataSrc = new ValueDataSrc<LString>(new(() => this.mydata1));
         g1.AddNodeDynamic(new UINode().BindLabel(dataSrc, nameof(ValueDataSrc<LString>.Value))
-            .MakeTooltip("this is a tooltip!"));
+            .PrepareTooltip("this is a tooltip!"));
         
-        g1.AddNodeDynamic(new FuncNode(null as Func<LString>, n => {
-            var p = PopupUIGroup.CreatePopup(n, () => "Popup",
+        g1.AddNodeDynamic(new FuncNode(null, n => {
+            var p = PopupUIGroup.CreatePopup(n, "Popup",
                 r => new UIColumn(r, new UINode("basic popup description")
                         { Prefab = Prefabs.PureTextNode })
                     { Interactable = false },
@@ -135,12 +135,12 @@ public class LocalXMLDataBindingExample : CoroutineRegularUpdater {
         }).BindString("this node has a popup"));
         g1.AddNodeDynamic(new UINode()
             .BindString("this node has a menu (C)")
-            .MakeTooltip("this is a tooltip!")
-            .MakeContextMenu(ContextMenu));
+            .PrepareTooltip("this is a tooltip!")
+            .PrepareContextMenu(ContextMenu));
 
         UINode[] ContextMenu(UINode n, ICursorState cs) {
             return new[] {
-                new UINode("another one").MakeContextMenu(ContextMenu),
+                new UINode("another one").PrepareContextMenu(ContextMenu),
                 new FuncNode("go to previous node", () => new UIResult.GoToNode(n.Group, n.Group.Nodes.IndexOf(n) - 1)),
                 new FuncNode("delete this node", () => {
                     var ind = n.Group.Nodes.IndexOf(n);

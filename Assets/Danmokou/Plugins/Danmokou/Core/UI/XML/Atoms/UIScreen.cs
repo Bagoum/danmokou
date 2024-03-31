@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
 using BagoumLib;
+using BagoumLib.Cancellation;
 using BagoumLib.Culture;
 using BagoumLib.Events;
 using BagoumLib.Mathematics;
@@ -14,7 +16,7 @@ using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
 
-public class UIScreen {
+public class UIScreen : ITokenized {
     [Flags]
     public enum Display {
         Basic = 0,
@@ -25,12 +27,16 @@ public class UIScreen {
         
         OverlayTH = PauseThin | PauseLined
     }
+
+    public bool ScreenIsActive { get; private set; } = false;
+    public List<IDisposable> Tokens { get; } = new();
     public UIController Controller { get; }
     public Display Type { get; set; }
     private LString? HeaderText { get; }
     public List<UIGroup> Groups { get; } = new();
     public VisualElement HTML { get; private set; } = null!;
-    public UIRenderDirect DirectRender { get; private set; }
+    public UIRenderScreen ScreenRender { get; private set; }
+    public UIRenderScreenContainer ContainerRender { get; private set; }
     public UIRenderAbsoluteTerritory AbsoluteTerritory { get; private set; } = null!;
     /// <summary>
     /// Whether or not the screen can be exited via the player clicking the "back" button.
@@ -44,14 +50,32 @@ public class UIScreen {
     /// Overrides the visualTreeAsset used to construct this screen's HTML.
     /// </summary>
     public VisualTreeAsset? Prefab { get; init; }
-    public Action? OnExitStart { private get; init; }
-    public Action? OnExitEnd { private get; init; }
     /// <summary>
-    /// Action to run when entering the screen.
+    /// Event fired when entering the screen.
     /// <br/>bool- True iff this UIScreen is being entered "from null", ie. without a transition.
     /// </summary>
-    public Action<bool>? OnEnterStart { get; set; }
-    public Action? OnEnterEnd { private get; init; }
+    public Event<bool> OnEnterStart { get; } = new();
+    public UIScreen WithOnEnterStart(Action<bool> cb) {
+        Tokens.Add(OnEnterStart.Subscribe(cb));
+        return this;
+    }
+    public Event<Unit> OnEnterEnd { get; } = new();
+    public UIScreen WithOnEnterEnd(Action<Unit> cb) {
+        Tokens.Add(OnEnterEnd.Subscribe(cb));
+        return this;
+    }
+    public Event<Unit> OnExitStart { get; } = new();
+    public UIScreen WithOnExitStart(Action<Unit> cb) {
+        Tokens.Add(OnExitStart.Subscribe(cb));
+        return this;
+    }
+    public Event<Unit> OnExitEnd { get; } = new();
+    public UIScreen WithOnExitEnd(Action<Unit> cb) {
+        Tokens.Add(OnExitEnd.Subscribe(cb));
+        return this;
+    }
+    
+    
     /// <summary>
     /// The opacity of the HTML background image of the menu containing the uiScreen.
     /// <br/>In the default setup, this is a block of dark color with opacity ~ 0.8 to lower contrast on the content behind the menu.
@@ -86,7 +110,8 @@ public class UIScreen {
         Controller = controller;
         HeaderText = header;
         Type = display;
-        DirectRender = new UIRenderDirect(this);
+        ScreenRender = new UIRenderScreen(this);
+        ContainerRender = new UIRenderScreenContainer(this);
     }
     
     public void AddGroup(UIGroup grp) {
@@ -148,29 +173,22 @@ public class UIScreen {
     public UIRenderColumn ColumnRender(int index) => new(this, index);
 
     public void ExitStart() {
-        OnExitStart?.Invoke();
-        foreach (var g in Groups)
-            g.ScreenExitStart();
+        ScreenIsActive = false;
+        OnExitStart.OnNext(default);
     }
     public void ExitEnd() {
         SetVisible(false);
-        OnExitEnd?.Invoke();
-        //Groups may destroy themselves during exit
-        foreach (var g in Groups.ToList())
-            g.ScreenExitEnd();
+        OnExitEnd.OnNext(default);
     }
     public void EnterStart(bool fromNull) {
+        ScreenIsActive = true;
         SetVisible(true);
         Controller.BackgroundOpacity.Push(MenuBackgroundOpacity);
         backgroundOpacity.Push(BackgroundOpacity);
-        OnEnterStart?.Invoke(fromNull);
-        foreach (var g in Groups)
-            g.ScreenEnterStart();
+        OnEnterStart.OnNext(fromNull);
     }
     public void EnterEnd() {
-        OnEnterEnd?.Invoke();
-        foreach (var g in Groups)
-            g.ScreenEnterEnd();
+        OnEnterEnd.OnNext(default);
     }
 
     public void VisualUpdate(float dT) {
@@ -186,6 +204,12 @@ public class UIScreen {
                 StringBuffer.JoinPooled("    ", AsControl(inp.uiConfirm), AsControl(inp.uiBack));
     }
 
-    public static implicit operator UIRenderSpace(UIScreen s) => s.DirectRender;
+    public void MarkScreenDestroyed() {
+        foreach (var g in Groups)
+            g.MarkNodesDestroyed();
+        Tokens.DisposeAll();
+    }
+
+    public static implicit operator UIRenderSpace(UIScreen s) => s.ContainerRender;
 }
 }

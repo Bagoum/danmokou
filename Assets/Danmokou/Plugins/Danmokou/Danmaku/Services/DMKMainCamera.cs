@@ -159,7 +159,8 @@ public class DMKMainCamera : MainCamera, IScreenshotter {
             c.targetTexture = camOriginalRenderTo;
         }
         Shader.DisableKeyword("AYA_CAPTURE");
-        var ss = RenderHelpers.DefaultTempRT(((int) (SaveData.s.Resolution.w * xsr), (int) (SaveData.s.Resolution.h * ysr)));
+        var ss = RenderHelpers.DefaultTempRT(((int) (SaveData.s.Resolution.Value.w * xsr), 
+                                              (int) (SaveData.s.Resolution.Value.h * ysr)));
         Profiler.BeginSample("Blit");
         UnityEngine.Graphics.Blit(RenderTo, ss, ayaMaterial);
         Profiler.EndSample();

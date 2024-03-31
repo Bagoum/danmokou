@@ -224,6 +224,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   capturer: {fileID: 2394385641491456286}
   runWhileHidden: 0
+  isMenuBackground: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
 --- !u!212 &7978953047393074414
 SpriteRenderer:

@@ -31,12 +31,14 @@ public class XMLDeathMenu : PausedGameplayMenu {
                 }),
             #endif
             (GameManagement.Instance.BasicF.ContinuesAllowed) ?
-                new FuncNode(() => death_continue_ls(GameManagement.Instance.BasicF.Continues), () => {
+                new FuncNode(null, () => {
                     if (GameManagement.Instance.BasicF.TryContinue()) {
                         ProtectHide();
                         return new UIResult.StayOnNode();
                     } else return new UIResult.StayOnNode(true);
-                }) {EnabledIf = () => GameManagement.Instance.BasicF.ContinuesRemaining} : null,
+                }) {EnabledIf = () => GameManagement.Instance.BasicF.ContinuesRemaining}
+                .WithView(new LabelView<int>(new(() => GameManagement.Instance.BasicF.Continues, x => death_continue_ls(x))))
+                : null,
             new ConfirmFuncNode(checkpoint_restart, GameManagement.Instance.RestartFromCheckpoint)
                 {EnabledIf = () => GameManagement.CanRestart && GameManagement.Instance.CanRestartCheckpoint},
             new ConfirmFuncNode(full_restart, GameManagement.Instance.Restart)

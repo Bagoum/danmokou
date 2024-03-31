@@ -74,7 +74,7 @@ public class WPGameDef : ADVGameDef {
                 Prefab = XMLUtils.Prefabs.PureTextNode,
                 Passthrough = true,
                 OnBuilt = n => {
-                    var l = n.Label!;
+                    var l = n.NodeHTML.Q<Label>();
                     l.style.backgroundColor = new Color(0.42f, 0.08f, 0.47f, 0.7f);
                     l.SetPadding(44, 64, 44, 64);
                 }
@@ -104,45 +104,44 @@ public class WPGameDef : ADVGameDef {
             };
             var evInfo = evidenceScreen.ColumnRender(1);
             var evs = new UIColumn(evidenceScreen, null, 
-                Data.Evidences.Select(ev => new UINode(() => 
-                    ev.Enabled ? ev.Title : "---") {
-                    ShowHideGroup = new UIColumn(evInfo, 
-                        new UINode(() => ev.Enabled ? ev.Description : "I don't have any evidence to put here.") 
-                            { Prefab = XMLUtils.Prefabs.PureTextNode, Passthrough = true, InlineStyle = (_, n) => n.Style.minHeight = 500 }
-                            .With(XMLUtils.fontBiolinumClass, XMLUtils.small1Class),
-                        new UIButton("Use Evidence", UIButton.ButtonType.Confirm, 
-                            _ => {
-                                if (targetEvReq.Request.CanPresentAny) {
-                                    targetEvReq.NextEvidence = ev;
-                                    return new UIResult.GoToScreen(targetScreen);
-                                } else {
-                                    var __ = evidenceRequest.Present(ev).ContinueWithSync();
-                                    return new UIResult.ReturnToScreenCaller();
-                                }
-                            }) { 
-                                VisibleIf = () => ev.Enabled && CanEvidence
-                        })
-            }));
+                Data.Evidences.Select(ev => new UINode {
+                    ShowHideGroup = new UIColumn(evInfo, new UINode {
+                                Prefab = XMLUtils.Prefabs.PureTextNode, 
+                                Passthrough = true, 
+                                OnBuilt = n => n.Style.minHeight = 500
+                            }.WithCSS(XMLUtils.fontBiolinumClass, XMLUtils.small1Class)
+                            .WithView(new FlagLabelView(new(() => ev.Enabled, ev.Description, 
+                                "I don't have any evidence to put here."))),
+                        new UIButton("Use Evidence", UIButton.ButtonType.Confirm, _ => {
+                            if (targetEvReq.Request.CanPresentAny) {
+                                targetEvReq.NextEvidence = ev;
+                                return new UIResult.GoToScreen(targetScreen);
+                            } else {
+                                var __ = evidenceRequest.Present(ev).ContinueWithSync();
+                                return new UIResult.ReturnToScreenCaller();
+                            }
+                        }) { VisibleIf = () => ev.Enabled && CanEvidence })
+                }.WithView(new FlagLabelView(new(() => ev.Enabled, ev.Title, "---")))
+            ));
             evidenceScreen.SetFirst(evs);
             menu.AddScreen(evidenceScreen);
             //Since this button is always present, we don't need to bother
             // going through Assertions for it
             // (Though we don't yet have an Assertion for generic UITK objects, only one for icon-based interactables)
-            var toEvidenceButton = new UIButton(() => CanSpecificEvidence ? "Show Evidence" : "Evidence", 
+            var toEvidenceButton = new UIButton(null, 
                 UIButton.ButtonType.Confirm, _ => new UIResult.GoToScreen(evidenceScreen, menu.Unselect)) {
                 OnBuilt = n => {
-                    var l = n.Label!;
+                    var l = n.NodeHTML.Q<Label>();
                     l.style.backgroundColor = Color.clear;
                     l.style.backgroundImage = new StyleBackground(gdef.evidenceReviewBg);
                     l.SetPadding(54, 64, 54, 64);
                     tokens.Add(evSize.Subscribe(s => n.HTML.transform.scale = new UnityEngine.Vector3(s, s, 1)));
                 },
-            };
+            }.WithView(new FlagLabelView(new(() => CanSpecificEvidence, "Show Evidence", "Evidence")));
             toEvidenceButton.ConfigureAbsoluteLocation(new FixedXMLObject(120, 90, null, null), XMLUtils.Pivot.TopLeft);
             menu.AddNodeDynamic(toEvidenceButton);
             void UpdateEvidenceButton(Unit _) {
                 evSize.PushIfNotSame(CanSpecificEvidence ? 1.2f : 1f);
-                toEvidenceButton.RedrawIfBuilt();
             }
             tokens.Add(targetEvReq.Request.RequestsChanged.Subscribe(UpdateEvidenceButton));
             tokens.Add(evidenceRequest.RequestsChanged.Subscribe(UpdateEvidenceButton));

@@ -1,8 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="CompletionStar.uss" />
-    <ui:VisualElement style="width: 320px; height: 200px; background-image: none; flex-direction: row; justify-content: center;">
+    <Style src="project://database/Assets/Danmokou/UXML/nodes/CompletionStar.uss?fileID=7433441132597879392&amp;guid=d01cabd8bb428c243b0e039511dcd690&amp;type=3#CompletionStar" />
+    <ui:VisualElement style="width: 280px; height: 200px; background-image: none; flex-direction: row; justify-content: center;">
         <ui:Label text="[" name="LBracket" class="bracket" />
-        <ui:VisualElement name="Star" style="width: 200px;" />
+        <ui:VisualElement name="Star" style="width: 200px; margin-right: -30px; margin-left: -30px;" />
         <ui:Label text="]" name="RBracket" class="bracket" />
     </ui:VisualElement>
 </ui:UXML>

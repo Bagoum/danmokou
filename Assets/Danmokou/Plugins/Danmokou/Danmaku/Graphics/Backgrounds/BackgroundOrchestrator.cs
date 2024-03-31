@@ -35,13 +35,10 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
 
     private void ShowHide() {
         if (FromBG != null) {
-            if (SaveData.s.Backgrounds) {
-                FromBG.Show();
-                if (ToBG != null) ToBG.Show();
-            } else {
-                FromBG.Hide();
-                if (ToBG != null) ToBG.Hide();
-            }
+            FromBG.ShowHideBySettings(SaveData.s.Backgrounds);
+        }
+        if (ToBG != null) {
+            ToBG.ShowHideBySettings(SaveData.s.Backgrounds);
         }
     }
 
@@ -58,10 +55,11 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
 
     private GameObject? lastRequestedBGC;
     public override void FirstFrame() {
-        if (FromBG == null && SaveData.s.Backgrounds) {
+        if (FromBG == null) {
             var bgc = (lastRequestedBGC == null) ? defaultBGCPrefab : lastRequestedBGC;
             lastRequestedBGC = null;
             FromBG = CreateBGC(bgc);
+            ShowHide();
         }
     }
     public static GameObject? NextSceneStartupBGC { get; set; }
@@ -128,6 +126,7 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         } else {
             FromBG = bgc;
         }
+        ShowHide();
     }
 
     private static readonly HashSet<Cancellable> transitionCTS = new();

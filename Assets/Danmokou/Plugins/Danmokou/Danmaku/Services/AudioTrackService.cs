@@ -98,11 +98,12 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
         for (var n = bgm.Last; n != null; n = n.Previous) {
             if (n.Value is { } t && t.State <= AudioTrackState.Paused && t.Track == track) {
                 //increase priority
-                //TODO update cT?
                 if (n != bgm.Last) {
                     bgm.Remove(n);
                     bgm.AddLast(n);
                 }
+                //extend lifetime
+                t.cT = MinCancellee.From(t.cT, cT);
                 if (t.State > AudioTrackState.Active)
                     t.UnPause();
                 rtrack = t;

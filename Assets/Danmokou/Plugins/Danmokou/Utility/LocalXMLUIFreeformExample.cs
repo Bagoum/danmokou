@@ -31,9 +31,9 @@ public class LocalXMLUIFreeformExample : CoroutineRegularUpdater {
         menu.FreeformGroup.AddGroupDynamic(g1);
         g1.AddNodeDynamic(new UINode("foobar"));
         g1.AddNodeDynamic(new UINode("this node has a tooltip")
-            .MakeTooltip("this is a tooltip!"));
+            .PrepareTooltip("this is a tooltip!"));
         g1.AddNodeDynamic(new FuncNode("this node has a popup", n => {
-            var p = PopupUIGroup.CreatePopup(n, () => "Popup",
+            var p = PopupUIGroup.CreatePopup(n, "Poffpup",
                 r => new UIColumn(r, new UINode("basic popup description")
                         { Prefab = Prefabs.PureTextNode })
                     { Interactable = false },
@@ -43,12 +43,12 @@ public class LocalXMLUIFreeformExample : CoroutineRegularUpdater {
             return p;
         }));
         g1.AddNodeDynamic(new UINode("this node has a menu (C)")
-            .MakeTooltip("this is a tooltip!")
-            .MakeContextMenu(ContextMenu));
+            .PrepareTooltip("this is a tooltip!")
+            .PrepareContextMenu(ContextMenu));
 
         UINode[] ContextMenu(UINode n, ICursorState cs) {
             return new[] {
-                new UINode("another one").MakeContextMenu(ContextMenu),
+                new UINode("another one").PrepareContextMenu(ContextMenu),
                 new FuncNode("go to previous node", () => new UIResult.GoToNode(n.Group, n.Group.Nodes.IndexOf(n) - 1)),
                 new FuncNode("delete this node", () => {
                     var ind = n.Group.Nodes.IndexOf(n);
@@ -75,20 +75,19 @@ public class LocalXMLUIFreeformExample : CoroutineRegularUpdater {
 
     [ContextMenu("Add scale in node")]
     public void AddNodeWithScaleIn() {
-        var n = new UINode("this will scale in") {
-            OnFirstRender = n => {
-                //I don't think there's a good way to handle scaling in an object that doesn't have a fixed initial size
-                // Negative percent margin doesn't work as it's relative to *parent width*, and transform scale on its own
-                // only affects visual display, not layout.
-                //If you do have a fixed initial size, you can handle it like this (in this example, just y-scaling):
-                var h = 120f;
-                n.HTML.style.height = h;
-                TransitionHelpers.TweenTo(0f, 1f, 1.5f, y => {
-                    n.HTML.transform.scale = new(1, y, 1);
-                    n.HTML.style.marginTop = n.HTML.style.marginBottom = (1 - y) * h / -2f;
-                }, Easers.EOutSine).Run(menu);
-            }
-        };
+        var n = new UINode("this will scale in");
+        n.RootView.OnFirstRender((n, cT) => {
+            //I don't think there's a good way to handle scaling in an object that doesn't have a fixed initial size
+            // Negative percent margin doesn't work as it's relative to *parent width*, and transform scale on its own
+            // only affects visual display, not layout.
+            //If you do have a fixed initial size, you can handle it like this (in this example, just y-scaling):
+            var h = 120f;
+            n.HTML.style.height = h;
+            return TransitionHelpers.TweenTo(0f, 1f, 1.5f, y => {
+                n.HTML.transform.scale = new(1, y, 1);
+                n.HTML.style.marginTop = n.HTML.style.marginBottom = (1 - y) * h / -2f;
+            }, Easers.EOutSine, cT);
+        });
         g1.AddNodeDynamic(n);
     }
 }

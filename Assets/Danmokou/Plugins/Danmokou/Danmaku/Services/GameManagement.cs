@@ -138,7 +138,6 @@ public class GameManagement : CoroutineRegularUpdater {
         GetComponentInChildren<SFXService>().Setup();
         GetComponentInChildren<AudioTrackService>().Setup();
 
-        //TODO fix
         Achievements = References.gameDefinition.MakeAchievements()?.Construct();
         
         References.gameDefinition.ApplyConfigurations();

@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reactive;
 using System.Text;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Culture;
+using BagoumLib.Events;
 using BagoumLib.Functional;
 using Danmokou.Achievements;
 using Danmokou.ADV;
@@ -31,8 +33,10 @@ using static Danmokou.UI.PlayModeCommentator;
 using static Danmokou.UI.XML.XMLUtils;
 
 namespace Danmokou.UI.XML {
-public static class XMLHelpers {
+public static partial class XMLHelpers {
     public static UXMLReferences Prefabs => GameManagement.UXMLPrefabs;
+
+    public static EventedBinder<T> Binder<T>(this Evented<T> ev) => new(ev, null);
     
     /// <summary>
     /// Configure a DMK prefab-based background for use with a <see cref="UIScreen"/>.
@@ -40,7 +44,7 @@ public static class XMLHelpers {
     public static UIScreen WithBG(this UIScreen screen,
         (GameObject prefab, BackgroundTransition transition)? background) {
         if (background.Try(out var bg)) {
-            screen.OnEnterStart = screen.OnEnterStart.Then(fromNull => {
+            screen.WithOnEnterStart(fromNull => {
                 var bgo = ServiceLocator.FindOrNull<IBackgroundOrchestrator>();
                 bgo?.QueueTransition(bg.transition);
                 bgo?.ConstructTarget(bg.prefab, !fromNull);
@@ -53,51 +57,57 @@ public static class XMLHelpers {
         var floater = References.uxmlDefaults.FloatingNode;
         var s = new UIScreen(m, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => ve.CenterElements()
+        }.WithOnEnterStart(_ => { if (commentator != null) commentator.Appear(); })
+            .WithOnExitStart(_ => { if (commentator != null) commentator.Disappear(); });
+        Action<UINode> Builder(PlayModeStatus mode) => n => {
+            if (commentator != null)
+                n.OnEnter = n.OnEnter.Then((_, _) => commentator.SetCommentFromValue(mode));
+            n.NodeHTML.ConfigureFloatingImage(sprites[mode.Mode]);
         };
-        Action<UINode> Builder(Mode mode) => n => XMLUtils.ConfigureFloatingImage(n.NodeHTML, sprites[mode]);
         bool tutorialIncomplete = !SaveData.r.TutorialDone && game.Tutorial != null;
         PlayModeStatus Wrap(Mode m, bool locked) =>
-            new PlayModeStatus(m, locked) { TutorialIncomplete = tutorialIncomplete };
-        var axisGroup = new CommentatorAxisColumn<PlayModeStatus>(s, new UIRenderDirect(s), new[] {
-            (new UINode() {
+            new(m, locked) { TutorialIncomplete = tutorialIncomplete };
+        var campaignComplete = SaveData.r.CampaignCompleted(game.Campaign.Key);
+        var unlockedPracticeBosses = PBosses.Length > 0;
+        var unlockedPracticeStages = PStages.Length > 0;
+        var vm = new AxisViewModel();
+        AxisView View() => new(vm);
+        //the AddVE is an anchor located in the center of the screen
+        var axisGroup = new UIColumn(new UIRenderConstructed(s, new(x => x.AddVE(null))), 
+            new UINode {
                 OnConfirm = getMetadata(game.Campaign, meta => 
                     InstanceRequest.RunCampaign(MainCampaign, null, meta)),
                 Prefab = floater,
-                OnBuilt = Builder(Mode.MAIN)
-            }, Wrap(Mode.MAIN, false)),
-            (game.ExCampaign != null ? 
-                new UINode() {
-                    EnabledIf = () => SaveData.r.CampaignCompleted(game.Campaign.Key),
-                    OnConfirm = getMetadata(game.ExCampaign, meta => 
-                        InstanceRequest.RunCampaign(ExtraCampaign, null, meta)),
-                    Prefab = floater,
-                    OnBuilt = Builder(Mode.EX)
-                } : null, 
-                Wrap(Mode.EX, !SaveData.r.CampaignCompleted(game.Campaign.Key))),
-            (PracticeBossesExist ?
-                new UINode() {
-                    EnabledIf = () => PBosses.Length > 0,
-                    OnConfirm = (_, _) => new UIResult.GoToNode(bossPractice),
-                    Prefab = floater,
-                    OnBuilt = Builder(Mode.BOSSPRAC)
-                } : null,
-                Wrap(Mode.BOSSPRAC, PBosses.Length == 0)),
-            (PracticeStagesExist ?
-                new UINode() {
-                    EnabledIf = () => PStages.Length > 0,
-                    OnConfirm = (_, _) => new UIResult.GoToNode(stagePractice),
-                    Prefab = floater,
-                    OnBuilt = Builder(Mode.STAGEPRAC)
-                } : null,
-                Wrap(Mode.STAGEPRAC, PStages.Length == 0)),
-            (game.Tutorial != null ? new UINode {
-                OnConfirm = (_, _) => new UIResult.StayOnNode(!InstanceRequest.RunTutorial(game)),
+                OnBuilt = Builder(Wrap(Mode.MAIN, false))
+            }.WithView(View()), 
+        (game.ExCampaign != null ? 
+            new UINode {
+                EnabledIf = () => campaignComplete,
+                OnConfirm = getMetadata(game.ExCampaign, meta => 
+                    InstanceRequest.RunCampaign(ExtraCampaign, null, meta)),
                 Prefab = floater,
-                OnBuilt = Builder(Mode.TUTORIAL)
-            } : null, Wrap(Mode.TUTORIAL, false))
-        }) {
-            EntryIndexOverride = () => tutorialIncomplete ? -1 : 0,
-            Commentator = commentator
+                OnBuilt = Builder(Wrap(Mode.EX, !campaignComplete))
+            } : null)?.WithView(View()), 
+        (PracticeBossesExist ?
+            new UINode {
+                EnabledIf = () => unlockedPracticeBosses,
+                OnConfirm = (_, _) => new UIResult.GoToNode(bossPractice),
+                Prefab = floater,
+                OnBuilt = Builder(Wrap(Mode.BOSSPRAC, !unlockedPracticeBosses))
+            } : null)?.WithView(View()), 
+        (PracticeStagesExist ?
+            new UINode {
+                EnabledIf = () => unlockedPracticeStages,
+                OnConfirm = (_, _) => new UIResult.GoToNode(stagePractice),
+                Prefab = floater,
+                OnBuilt = Builder(Wrap(Mode.STAGEPRAC, !unlockedPracticeStages))
+            } : null)?.WithView(View()), 
+        (game.Tutorial != null ? new UINode {
+            OnConfirm = (_, _) => new UIResult.StayOnNode(!InstanceRequest.RunTutorial(game)),
+            Prefab = floater,
+            OnBuilt = Builder(Wrap(Mode.TUTORIAL, false))
+        } : null)?.WithView(View())) {
+            EntryIndexOverride = () => tutorialIncomplete ? -1 : 0
         };
         s.SetFirst(axisGroup);
         onlyOneMode = axisGroup.Nodes.Count == 1;
@@ -107,8 +117,8 @@ public static class XMLHelpers {
         Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, ICursorState, UIResult>> getMetadata) {
         var s = new UIScreen(m, "STAGE PRACTICE") {Builder = (s, ve) => {
             s.Margin.SetLRMargin(720, 720);
-            ve.AddColumn().style.flexGrow = 2;
-            ve.AddColumn().style.flexGrow = 5;
+            ve.AddColumn().style.width = 30f.Percent();
+            ve.AddColumn().style.width = 70f.Percent();
         }};
         var stageSel1 = s.ColumnRender(1);
         s.SetFirst(new UIColumn(s, null) {
@@ -145,8 +155,8 @@ public static class XMLHelpers {
         var prcSpellHist = SaveData.r.GetPracticeSpellHistory();
 
         var s = new UIScreen(m, "BOSS PRACTICE") {Builder = (_, ve) => {
-            ve.AddScrollColumn().style.flexGrow = 2f;
-            ve.AddScrollColumn().style.flexGrow = 5f;
+            ve.AddScrollColumn().style.width = 30f.Percent();
+            ve.AddScrollColumn().style.width = 70f.Percent();
         }};
         var bossSel1 = s.ColumnRender(1);
         s.SetFirst(new UIColumn(s, null) {
@@ -181,11 +191,10 @@ public static class XMLHelpers {
     };
     public static UIScreen OptionsScreen(this UIController m, bool allowStaticOptions) {
         var s = new UIScreen(m, null) {
-            OnExitEnd = SaveData.AssignSettingsChanges,
             Builder = (s, _) => {
                 s.HTML.Q("HeaderRow").SetLRMargin(-80, -80);
             }
-        };
+        }.WithOnExitEnd(_ => SaveData.AssignSettingsChanges());
         //To support a setup where the top row does not scroll, we do as follows:
         //Controls container (column)
         // - Top row (row)
@@ -197,27 +206,32 @@ public static class XMLHelpers {
         var controlsSpace = new UIRenderConstructed(controlsContainer, 
             new(parent => parent.AddZeroPaddingScrollColumn())).ColumnRender(0);
         UINode NodeForBinding(RebindableInputBinding b, int index, KeyRebindInputNode.Mode mode) {
-            return new FuncNode(() => (b.Sources[index]?.Description ?? "(No binding)"), n => {
+            return new FuncNode(null, n => {
                 if (b.ProtectedIndices.Contains(index))
-                    return PopupUIGroup.CreatePopup(n, () => $"Keybinding for \"{b.Purpose}\"",
+                    return PopupUIGroup.CreatePopup(n, $"Keybinding for \"{b.Purpose}\"",
                         r => new UIColumn(r,
                                 new UINode("You cannot rebind this key.") { Prefab = Prefabs.PureTextNode })
                             { Interactable = false }, new PopupButtonOpts.Centered(null));
                 
                 Maybe<IInspectableInputBinding>? newTempBinding = null;
-                return PopupUIGroup.CreatePopup(n, () => $"Keybinding for \"{b.Purpose}\"",
-                    r => new UIColumn(r, new UINode(() => {
-                            var curr = $"Current binding: {b.Sources[index]?.Description ?? "(No binding)"}";
-                            if (newTempBinding is { } nb)
-                                curr += $"\nNew binding: {nb.ValueOrNull()?.Description ?? "(No binding)"}";
-                            return curr;
-                        }) { Prefab = GameManagement.References.uxmlDefaults.PureTextNode, Passthrough = true }
-                            .With(fontControlsClass),
+                return PopupUIGroup.CreatePopup(n, $"Keybinding for \"{b.Purpose}\"",
+                    r => new UIColumn(r, new UINode {
+                                Prefab = GameManagement.References.uxmlDefaults.PureTextNode, Passthrough = true
+                            }.WithCSS(fontControlsClass)
+                            .WithView(new LabelView<(string? curr, bool hasNext, string? next)>(new(
+                                () => (b.Sources[index]?.Description, newTempBinding != null, 
+                                    newTempBinding?.ValueOrNull()?.Description), cn => {
+                                    var show = $"Current binding: {cn.curr ?? "(No binding)"}";
+                                    if (cn.hasNext)
+                                        show += $"\nNew binding: {cn.next ?? "(No binding)"}";
+                                    return show;
+                                })
+                            )),
                         new KeyRebindInputNode(LString.Empty, keys => 
                                 newTempBinding = keys == null ? 
                                     Maybe<IInspectableInputBinding>.None :
                                     new(SimultaneousInputBinding.FromMany(keys)), mode)
-                            .With(noSpacePrefixClass, centerTextClass)),
+                            .WithCSS(noSpacePrefixClass, centerTextClass)),
                     new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
                         new UIButton("Unassign", UIButton.ButtonType.Confirm, _ => {
                             newTempBinding = Maybe<IInspectableInputBinding>.None;
@@ -232,12 +246,14 @@ public static class XMLHelpers {
                         })
                     })
                 );
-            }) { OnBuilt = n => n.HTML.style.width = 30f.Percent() }.With(small1Class, fontControlsClass);
+            }) { OnBuilt = n => n.HTML.style.width = 30f.Percent() }
+                .WithCSS(small1Class, fontControlsClass)
+                .WithView(new LabelView(() => b.Sources[index]?.Description ?? "(No binding)"));
         }
         UIGroup[] MakeBindings(IEnumerable<RebindableInputBinding> src, KeyRebindInputNode.Mode mode) => 
             src.Select(b => (UIGroup)new UIRow(
                 controlsSpace.Construct(Prefabs.UIScreenRow),
-                new PassthroughNode(() => b.Purpose) {
+                new PassthroughNode(b.Purpose) {
                     OnBuilt = n => n.HTML.style.width = 40f.Percent()
                 },
                 NodeForBinding(b, 0, mode), NodeForBinding(b, 1, mode)
@@ -254,11 +270,11 @@ public static class XMLHelpers {
                 OnBuilt = n => n.HTML.style.width = 30f.Percent()
             });
         var kbBindingsLead = new UIRow(controlsSpace.Construct(Prefabs.UIScreenRow), 
-            new PassthroughNode("Keyboard Bindings").With(large1Class));
+            new PassthroughNode("Keyboard Bindings").WithCSS(large1Class));
         var (kbm, ctrlr) = References.gameDefinition.GetRebindableControls();
         var kbBindings = MakeBindings(kbm, KeyRebindInputNode.Mode.KBM);
         var cBindingsLead = new UIRow(controlsSpace.Construct(Prefabs.UIScreenRow), 
-            new PassthroughNode("Controller Bindings").With(large1Class));
+            new PassthroughNode("Controller Bindings").WithCSS(large1Class));
         var cBindings = MakeBindings(ctrlr, KeyRebindInputNode.Mode.Controller);
         
         var controlsGroup = new UINode("<cspace=16>CONTROLS</cspace>") {
@@ -273,68 +289,62 @@ public static class XMLHelpers {
                 EntryNodeBottomOverride = cBindings[^1].Nodes[2]
             }
         };
-        
-        s.SetFirst(new UIRow(new UIRenderExplicit(s, ve => ve.Q("HeaderRow")), new[] {
+        PropTwoWayBinder<T> SB<T>(string prop) => new(SaveData.s, prop, null);
+        s.SetFirst(new UIRow(new UIRenderExplicit(s.ScreenRender, ve => ve.Q("HeaderRow")), new[] {
             new UINode("<cspace=16>GAME</cspace>") {
                 Prefab = GameManagement.UXMLPrefabs.HeaderNode,
                 //Using UIRenderConstructed allows making different "screens" for each options page
                 ShowHideGroup = new UIColumn(new UIRenderConstructed(s, Prefabs.UIScreenColumn, 
                         (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)), 
                     allowStaticOptions ?
-                            new OptionNodeLR<string?>(main_lang, l => {
-                                SaveData.s.TextLocale.OnNext(l);
-                                SaveData.AssignSettingsChanges();
-                        }, new[] {
+                            new OptionNodeLR<string?>(main_lang, SaveData.s.TextLocale, new[] {
                             (LText.Make("English"), Locales.EN),
                             (LText.Make("日本語"), Locales.JP)
-                        }, SaveData.s.TextLocale) :
+                        }) :
                         null,
                     allowStaticOptions ?
-                        new OptionNodeLR<bool>(smoothing, b => SaveData.s.AllowInputLinearization = b, OnOffOption,
-                            SaveData.s.AllowInputLinearization) :
+                        new OptionNodeLR<bool>(smoothing, SB<bool>(nameof(SaveData.s.AllowInputLinearization)), OnOffOption) :
                         null,
-                    new OptionNodeLR<float>(screenshake, b => SaveData.s.Screenshake = b, new(LString, float)[] {
+                    new OptionNodeLR<float>(screenshake, SB<float>(nameof(SaveData.s.Screenshake)), new(LString, float)[] {
                             ("Off", 0),
                             ("x0.5", 0.5f),
                             ("x1", 1f),
                             ("x1.5", 1.5f),
                             ("x2", 2f)
-                        }, SaveData.s.Screenshake),
-                    new OptionNodeLR<bool>(hitbox, b => SaveData.s.UnfocusedHitbox = b, new[] {
+                        }),
+                    new OptionNodeLR<bool>(hitbox, SB<bool>(nameof(SaveData.s.UnfocusedHitbox)), new[] {
                         (hitbox_always, true),
                         (hitbox_focus, false)
-                    }, SaveData.s.UnfocusedHitbox),
-                    new OptionNodeLR<bool>(backgrounds, b => {
-                            SaveData.s.Backgrounds = b;
-                            SaveData.UpdateResolution();
-                        }, OnOffOption,
-                        SaveData.s.Backgrounds),
+                    }),
+                    new OptionNodeLR<bool>(backgrounds, SaveData.s.Backgrounds, OnOffOption),
                     allowStaticOptions ?
-                        new OptionNodeLR<float>(dialogue_speed, ds => SaveData.VNSettings.TextSpeed = ds, new(LString, float)[] {
+                        new OptionNodeLR<float>(dialogue_speed, 
+                            new PropTwoWayBinder<float>(SaveData.VNSettings, nameof(SaveData.VNSettings.TextSpeed), null)
+                            , new(LString, float)[] {
                             ("x2", 2f),
                             ("x1.5", 1.5f),
                             ("x1", 1f),
                             ("x0.75", 0.75f),
                             ("x0.5", 0.5f),
-                        }, SaveData.VNSettings.TextSpeed) :
+                        }) :
                         null,
-                    new OptionNodeLR<float>(dialogue_opacity, x => SaveData.s.VNDialogueOpacity = x, 11.Range().Select(x =>
-                        (LText.Make($"{x * 10}"), x / 10f)).ToArray(), SaveData.s.VNDialogueOpacity),
-                    new OptionNodeLR<bool>(dialogue_skip, x => SaveData.s.VNOnlyFastforwardReadText = x, new[] {
+                    new OptionNodeLR<float>(dialogue_opacity, SB<float>(nameof(SaveData.s.VNDialogueOpacity)), 11.Range().Select(x =>
+                        (LText.Make($"{x * 10}"), x / 10f)).ToArray()),
+                    new OptionNodeLR<bool>(dialogue_skip, SB<bool>(nameof(SaveData.s.VNOnlyFastforwardReadText)), new[] {
                         (dialogue_skip_read, true),
                         (dialogue_skip_all, false)
-                    }, SaveData.s.VNOnlyFastforwardReadText)
+                    })
                 )
             },
             new UINode("<cspace=16>GRAPHICS</cspace>") {
                 Prefab = GameManagement.UXMLPrefabs.HeaderNode,
                 ShowHideGroup = new UIColumn(new UIRenderConstructed(s, Prefabs.UIScreenColumn, 
                     (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)), 
-                    new OptionNodeLR<bool>(shaders, yn => SaveData.s.Shaders = yn, new[] {
+                    new OptionNodeLR<bool>(shaders, SB<bool>(nameof(SaveData.s.Shaders)), new[] {
                         (shaders_low, false),
                         (shaders_high, true)
-                    }, SaveData.s.Shaders),
-                    new OptionNodeLR<(int, int)>(resolution, b => SaveData.UpdateResolution(b), new (LString, (int, int))[] {
+                    }),
+                    new OptionNodeLR<(int, int)>(resolution, SaveData.s.Resolution, new (LString, (int, int))[] {
                         ("3840x2160", (3840, 2160)),
                         ("2560x1440", (2560, 1440)),
                         ("1920x1080", (1920, 1080)),
@@ -342,22 +352,22 @@ public static class XMLHelpers {
                         ("1280x720", (1280, 720)),
                         ("848x477", (848, 477)),
                         ("640x360", (640, 360))
-                    }, SaveData.s.Resolution),
-                    new OptionNodeLR<FullScreenMode>(fullscreen, SaveData.UpdateFullscreen, new[] {
+                    }),
+                    new OptionNodeLR<FullScreenMode>(fullscreen, SaveData.s.Fullscreen, new[] {
                         (fullscreen_exclusive, FullScreenMode.ExclusiveFullScreen),
                         (fullscreen_borderless, FullScreenMode.FullScreenWindow),
                         (fullscreen_window, FullScreenMode.Windowed),
-                    }, SaveData.s.Fullscreen),
-                    new OptionNodeLR<int>(vsync, v => SaveData.s.Vsync = v, new[] {
+                    }),
+                    new OptionNodeLR<int>(vsync, SB<int>(nameof(SaveData.s.Vsync)), new[] {
                         (generic_off, 0),
                         (generic_on, 1),
                         //(vsync_double, 2)
-                    }, SaveData.s.Vsync)
+                    })
 #if !WEBGL
-                    , new OptionNodeLR<bool>(LocalizedStrings.UI.renderer, b => SaveData.s.LegacyRenderer = b, new[] {
+                    , new OptionNodeLR<bool>(LocalizedStrings.UI.renderer, SB<bool>(nameof(SaveData.s.LegacyRenderer)), new[] {
                         (renderer_legacy, true),
                         (renderer_normal, false)
-                    }, SaveData.s.LegacyRenderer)
+                    })
 #endif
                 )
             },
@@ -365,14 +375,14 @@ public static class XMLHelpers {
                 Prefab = GameManagement.UXMLPrefabs.HeaderNode,
                 ShowHideGroup = new UIColumn(new UIRenderConstructed(s, Prefabs.UIScreenColumn, 
                     (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)),
-                    new OptionNodeLR<float>(master_volume, SaveData.s.MasterVolume.OnNext, 21.Range().Select(x =>
-                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s.MasterVolume),
-                    new OptionNodeLR<float>(bgm_volume, SaveData.s._BGMVolume.OnNext, 21.Range().Select(x =>
-                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s._BGMVolume),
-                    new OptionNodeLR<float>(sfx_volume, SaveData.s._SEVolume.OnNext, 21.Range().Select(x =>
-                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s._SEVolume),
-                    new OptionNodeLR<float>("Dialogue Typing Volume", SaveData.s._VNTypingSoundVolume.OnNext, 21.Range().Select(x =>
-                        ((LString)$"{x * 10}", x / 10f)).ToArray(), SaveData.s._VNTypingSoundVolume)
+                    new OptionNodeLR<float>(master_volume, SaveData.s.MasterVolume, 21.Range().Select(x =>
+                        ((LString)$"{x * 10}", x / 10f)).ToArray()),
+                    new OptionNodeLR<float>(bgm_volume, SaveData.s._BGMVolume, 21.Range().Select(x =>
+                        ((LString)$"{x * 10}", x / 10f)).ToArray()),
+                    new OptionNodeLR<float>(sfx_volume, SaveData.s._SEVolume, 21.Range().Select(x =>
+                        ((LString)$"{x * 10}", x / 10f)).ToArray()),
+                    new OptionNodeLR<float>("Dialogue Typing Volume", SaveData.s._VNTypingSoundVolume, 21.Range().Select(x =>
+                        ((LString)$"{x * 10}", x / 10f)).ToArray())
                 )
             }, controlsGroup
         }));
@@ -382,12 +392,12 @@ public static class XMLHelpers {
     public static UIScreen SaveLoadVNScreen(this UIController m, Func<SerializedSave, bool>? loader, Func<int, SerializedSave>? saver, bool loadIsDangerous=true) {
         int perPage = 8;
         UINode CreateSaveLoadEntry(int i) {
-            return new FuncNode(LString.Empty, n => {
-                var ind = n.Group.Nodes.IndexOf(n);
+            return new FuncNode(null, n => {
+                var ind = n.IndexInGroup;
                 var save = SaveData.v.Saves.TryGetValue(i, out var _s) ? _s : null;
                 if (saver == null && (loader == null || save == null))
                     return new UIResult.StayOnNode(true);
-                return PopupUIGroup.CreatePopup(n, () => saveload_header,
+                return PopupUIGroup.CreatePopup(n, saveload_header,
                     r => new UIColumn(r,
                             new UINode(saveload_what_do_ls(i + 1))
                                 { Prefab = Prefabs.PureTextNode })
@@ -410,23 +420,8 @@ public static class XMLHelpers {
                                 })
                     }));
             }) {
-                Prefab = Prefabs.SaveLoadNode,
-                InlineStyle = (_, n) => {
-                    var title = n.HTML.Q<Label>("Title");
-                    title.text = $"Save #{i + 1}";
-                    var desc = n.HTML.Q<Label>("Description");
-                    var bg = n.HTML.Q("SS");
-                    if (SaveData.v.Saves.TryGetValue(i, out var save)) {
-                        title.RemoveFromClassList("saveentry-title-unset");
-                        desc.text = save.Description;
-                        bg.style.backgroundImage = save.Image.Texture;
-                    } else {
-                        title.AddToClassList("saveentry-title-unset");
-                        desc.text = "";
-                        bg.style.backgroundImage = UXMLPrefabs.defaultSaveLoadBG;
-                    }
-                }
-            };
+                Prefab = Prefabs.SaveLoadNode
+            }.WithView(new SaveLoadDataView(new(i)));
         }
 
         var s = new UIScreen(m, "SAVE/LOAD") {
@@ -453,8 +448,9 @@ public static class XMLHelpers {
             return new UINode($"{p + 1}") {
                 Prefab = Prefabs.HeaderNode,
                 OnBuilt = n => {
-                    n.Label!.style.unityTextAlign = TextAnchor.MiddleCenter;
-                    n.Label.style.fontSize = 100;
+                    var l = n.NodeHTML.Q<Label>();
+                    l.style.unityTextAlign = TextAnchor.MiddleCenter;
+                    l.style.fontSize = 100;
                     n.BodyHTML!.SetPadding(0, 25, 0, 25);
                 },
                 ShowHideGroup = new HGroup(c1, c2) { EntryNodeOverride = new(() => c1.EntryNode) }
@@ -462,7 +458,7 @@ public static class XMLHelpers {
         }
 
         var pages = 9.Range().Select(CreatePage).ToArray();
-        s.SetFirst(new UIRow(new UIRenderExplicit(s, ve => ve.Q("HeaderRow")), pages));
+        s.SetFirst(new UIRow(new UIRenderExplicit(s.ScreenRender, ve => ve.Q("HeaderRow")), pages));
         return s;
     }
     public static UIScreen ReplayScreen(this UIController m, UIScreen gameDetails) {
@@ -473,7 +469,7 @@ public static class XMLHelpers {
             LazyNodes = () => SaveData.p.ReplayData.Select(rep => {
                 return new FuncNode(rep.Metadata.Record.AsDisplay(true, true), n => {
                     var ind = n.Group.Nodes.IndexOf(n);
-                    return PopupUIGroup.CreatePopup(n, () => replay_window,
+                    return PopupUIGroup.CreatePopup(n, replay_window,
                         r => new UIColumn(r,
                                 new UINode(replay_what_do_ls(rep.Metadata.Record.CustomName))
                                     { Prefab = Prefabs.PureTextNode })
@@ -494,15 +490,66 @@ public static class XMLHelpers {
                         }));
                 }) {
                     CacheOnEnter = true
-                }.With(monospaceClass, small2Class, centerTextClass);
+                }.WithCSS(monospaceClass, small2Class, centerTextClass);
             })
         });
         return s;
     }
 
-    public static UIScreen RecordsScreen(this UIController m, UIScreen replayScreen, UIScreen detailsScreen,
+    private class RecordsScreenFilter : VersionedUIViewModel {
+        private InstanceMode _mode = InstanceMode.CAMPAIGN;
+        public InstanceMode Mode {
+            get => _mode;
+            set {
+                _mode = value;
+                ModelChanged();
+            } 
+        }
+        private int _cmpIndex;
+        public int CmpIndex {
+            get => _cmpIndex;
+            set {
+                _cmpIndex = value;
+                campaign = campaigns[_cmpIndex].Key;
+                Stage = 0;
+                if (campaigns[_cmpIndex].bosses.Length > 0)
+                    Boss = campaigns[_cmpIndex].bosses[0].boss.key;
+                else
+                    throw new Exception("No high score handling for days menu implemented yet"); //AssignBoss(days!.bosses[]);
+                ModelChanged();
+            }
+        }
+        public string campaign = null!;
+        private string _boss = null!;
+        public string Boss {
+            get => _boss;
+            set {
+                _boss = value;
+                bphase = 0;
+                ModelChanged();
+            }
+        }
+        public int bphase;
+        private int _stage;
+        public int Stage {
+            get => _stage;
+            set {
+                _stage = value;
+                sphase = 0;
+                ModelChanged();
+            }
+        }
+        public int sphase;
+
+        private readonly SMAnalysis.AnalyzedCampaign[] campaigns;
+        public RecordsScreenFilter(SMAnalysis.AnalyzedCampaign[] campaigns) {
+            this.campaigns = campaigns;
+            CmpIndex = 0;
+        }
+    }
+    public static UIScreen RecordsScreen(this UIController menu, UIScreen replayScreen, UIScreen detailsScreen,
         SMAnalysis.AnalyzedCampaign[] campaigns, SMAnalysis.AnalyzedDayCampaign? days = null) {
-        var screen = new UIScreen(m, "RECORDS") {Builder = (s, ve) => {
+        var screen = new UIScreen(menu, "RECORDS") {Builder = (s, ve) => {
             s.Margin.SetLRMargin(600, 600);
             var container = ve.AddColumn();
             var opts = container.AddColumn();
@@ -518,56 +565,27 @@ public static class XMLHelpers {
             _ = new UIColumn(screen, null, new UINode(scores_nocampaign));
             return screen;
         }
-        var mode = InstanceMode.CAMPAIGN;
-        int cmpIndex;
-        string _campaign;
-        string _boss;
-        int _bphase;
-        int _stage;
-        int _sphase;
-        bool Matches(LowInstanceRequestKey key) => mode switch {
-            InstanceMode.CAMPAIGN => key is CampaignRequestKey cr && cr.Campaign == _campaign,
+        var m = new RecordsScreenFilter(campaigns);
+        bool Matches(LowInstanceRequestKey key) => m.Mode switch {
+            InstanceMode.CAMPAIGN => key is CampaignRequestKey cr && cr.Campaign == m.campaign,
             InstanceMode.BOSS_PRACTICE => key is BossPracticeRequestKey br && 
-                                          br.Campaign == _campaign && br.Boss == _boss && br.PhaseIndex == _bphase,
+                                          br.Campaign == m.campaign && br.Boss == m.Boss && br.PhaseIndex == m.bphase,
             InstanceMode.STAGE_PRACTICE => key is StagePracticeRequestKey sr && 
-                                           sr.Campaign == _campaign && sr.StageIndex == _stage && sr.PhaseIndex == _sphase,
+                                           sr.Campaign == m.campaign && sr.StageIndex == m.Stage && sr.PhaseIndex == m.sphase,
             InstanceMode.SCENE_CHALLENGE => key is PhaseChallengeRequestKey sc &&
-                                            sc.Campaign == _campaign && sc.Boss == _boss && sc.PhaseIndex == _bphase,
+                                            sc.Campaign == m.campaign && sc.Boss == m.Boss && sc.PhaseIndex == m.bphase,
             _ => throw new Exception($"No high score screen handling for key of type {key.GetType()}")
         };
         
-        void AssignCampaign(int cmpInd) {
-            cmpIndex = cmpInd;
-            _campaign = campaigns[cmpIndex].Key;
-            AssignStage(0);
-            if (campaigns[cmpIndex].bosses.Length > 0)
-                AssignBoss(campaigns[cmpIndex].bosses[0].boss.key);
-            else
-                throw new Exception("No high score handling for days menu implemented yet"); //AssignBoss(days!.bosses[]);
-        }
-        void AssignBoss(string boss) {
-            _boss = boss;
-            AssignBossPhase(0);
-        }
-        void AssignStage(int stage) {
-            //Better not to mix with AssignBoss to avoid invalid assignments.
-            _stage = stage;
-            AssignStagePhase(0);
-        }
-        void AssignBossPhase(int phase) {
-            _bphase = phase;
-        }
-        void AssignStagePhase(int phase) {
-            _sphase = phase;
-        }
-        AssignCampaign(0);
-        var scoreNodes = SaveData.r.FinishedGames.Values
+        PropTwoWayBinder<T> VM<T>(string prop) => new(m, prop);
+        
+        var scoreNodes = SaveData.r.FinishedGames
             //If the user doesn't enter a name on the replay screen, the score won't show up, but it will still be recorded internally
             .Where(g => !string.IsNullOrWhiteSpace(g.CustomNameOrPartial) && g.Score > 0)
             .OrderByDescending(g => g.Score).Select(g =>
                 //Don't need to show the request (eg. Yukari (Ex) p3) because it's shown by the option nodes above this
-                new FuncNode(() => g.AsDisplay(true, false), n => PopupUIGroup.CreatePopup(
-                        n, () => record_header, 
+                new FuncNode(g.AsDisplay(true, false), n => PopupUIGroup.CreatePopup(
+                        n, record_header, 
                         r => new UIColumn(r,new UINode(record_what_do(g.CustomNameOrPartial)) 
                             { Prefab = Prefabs.PureTextNode} ) { Interactable = false },
                         new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
@@ -576,48 +594,50 @@ public static class XMLHelpers {
                             new UIButton(record_view_replay, UIButton.ButtonType.Confirm, _ => {
                                 foreach (var (ir, replay) in SaveData.p.ReplayData.Enumerate())
                                     if (replay.Metadata.Record.Uuid == g.Uuid)
-                                        return  n.ReturnGroup.Then(new UIResult.GoToNode(replayScreen.Groups[0], ir));
+                                        return n.ReturnGroup.Then(new UIResult.GoToNode(replayScreen.Groups[0], ir));
                                 return new UIResult.StayOnNode(true);
-                            }) { EnabledIf = () =>SaveData.p.ReplayData.Any(rep => rep.Metadata.Record.Uuid == g.Uuid) }
+                            }) { EnabledIf = 
+                                SaveData.p.ReplayData.Any(rep => rep.Metadata.Record.Uuid == g.Uuid).Freeze() }
                         })
                     )) {
                     VisibleIf = () => Matches(g.RequestKey)
-                }.With(monospaceClass, small2Class, centerTextClass));
-        bool IsBossOrChallenge() => mode is InstanceMode.BOSS_PRACTICE or InstanceMode.SCENE_CHALLENGE;
-        bool IsStage() => mode == InstanceMode.STAGE_PRACTICE;
+                }.WithCSS(monospaceClass, small2Class, centerTextClass)
+                 .WithRootView(v => v.ViewModel.NodeIsVisibleHash = () => m.ViewVersion));
+        bool IsBossOrChallenge() => m.Mode is InstanceMode.BOSS_PRACTICE or InstanceMode.SCENE_CHALLENGE;
+        bool IsStage() => m.Mode == InstanceMode.STAGE_PRACTICE;
         var optnodes = new UINode[] {
-            new OptionNodeLR<InstanceMode>(practice_type, i => mode = i, new[] {
+            new OptionNodeLR<InstanceMode>(practice_type, VM<InstanceMode>(nameof(m.Mode)), new[] {
                 (practice_m_campaign, InstanceMode.CAMPAIGN),
                 (practice_m_boss, InstanceMode.BOSS_PRACTICE),
                 days == null ? ((LString, InstanceMode)?) null : (practice_m_scene, InstanceMode.SCENE_CHALLENGE),
                 (practice_m_stage, InstanceMode.STAGE_PRACTICE)
-            }.FilterNone().ToArray(), mode),
-            new OptionNodeLR<int>(practice_campaign, AssignCampaign,
-                campaigns.Select((c, i) => ((LString)c.campaign.shortTitle, i)).ToArray(), cmpIndex),
-            new OptionNodeLR<string>(practice_m_whichboss, AssignBoss, () =>
+            }.FilterNone().ToArray()),
+            new OptionNodeLR<int>(practice_campaign, VM<int>(nameof(m.CmpIndex)),
+                campaigns.Select((c, i) => ((LString)c.campaign.shortTitle, i)).ToArray()),
+            new OptionNodeLR<string>(practice_m_whichboss, VM<string>(nameof(m.Boss)), () =>
                     IsBossOrChallenge() ?
-                        campaigns[cmpIndex].bosses.Select(b => (b.boss.BossPracticeName, b.boss.key)).ToArray() :
+                        campaigns[m.CmpIndex].bosses.Select(b => (b.boss.BossPracticeName, b.boss.key)).ToArray() :
                         new (LString, string)[] {("", "")} //required to avoid errors with the option node
-                , ""){ VisibleIf = IsBossOrChallenge },
-            new OptionNodeLR<int>(practice_m_whichstage, AssignStage, () =>
+                ){ VisibleIf = IsBossOrChallenge },
+            new OptionNodeLR<int>(practice_m_whichstage, VM<int>(nameof(m.Stage)), () =>
                     IsStage() ?
-                        campaigns[cmpIndex].stages.Select((s, i) => ((LString)s.stage.stageNumber, i)).ToArray() :
+                        campaigns[m.CmpIndex].stages.Select((s, i) => ((LString)s.stage.stageNumber, i)).ToArray() :
                         new (LString, int)[] {("", 0)} //required to avoid errors with the option node
-                , 0){ VisibleIf = IsStage },
-            new OptionNodeLR<int>(practice_m_whichphase, AssignBossPhase, () =>
+                ){ VisibleIf = IsStage },
+            new OptionNodeLR<int>(practice_m_whichphase, VM<int>(nameof(m.bphase)), () =>
                     IsBossOrChallenge() ?
-                        campaigns[cmpIndex].bossKeyMap[_boss].Phases.Select(
+                        campaigns[m.CmpIndex].bossKeyMap[m.Boss].Phases.Select(
                             //p.index is used as request key
                             (p, i) => ((LString)$"{i + 1}. {p.Title}", p.index)).ToArray() :
-                        new (LString, int)[] {("", 0)}, 0) {
+                        new (LString, int)[] {("", 0)}) {
                     OnBuilt = n => n.NodeHTML.Q("ValueContainer").style.width = new StyleLength(new Length(80, LengthUnit.Percent)),
                     VisibleIf = IsBossOrChallenge
                 },
-            new OptionNodeLR<int>(practice_m_whichphase, AssignStagePhase, () =>
+            new OptionNodeLR<int>(practice_m_whichphase, VM<int>(nameof(m.sphase)), () =>
                     IsStage() ?
-                        campaigns[cmpIndex].stages[_stage].Phases.Select(
+                        campaigns[m.CmpIndex].stages[m.Stage].Phases.Select(
                             p => (p.Title, p.index)).Prepend((practice_fullstage, 1)).ToArray() :
-                        new (LString, int)[] {("", 0)}, 0) {
+                        new (LString, int)[] {("", 0)}) {
                     VisibleIf = IsStage
                 }
         };
@@ -628,7 +648,29 @@ public static class XMLHelpers {
         });
         return screen;
     }
-    
+
+    private class PlayerSelect : VersionedUIViewModel {
+        private ShipConfig _player = null!;
+        public ShipConfig Player {
+            get => _player;
+            set {
+                _player = value; 
+                ModelChanged(); //changes the available supports/shots
+            }
+        }
+        public (LString, IAbilityCfg)[] PlayerSupports =>
+            Player.supports.Select(s =>
+                ((LString)s.ordinal, (IAbilityCfg)s.ability)).ToArray();
+        public IAbilityCfg support = null!;
+        
+        public (LString, ShotConfig)[] PlayerShots =>
+            Player.shots2.Select(s => ((LString)(s.shot.isMultiShot ?
+                shotsel_multi(s.ordinal) :
+                shotsel_type(s.ordinal)), s.shot)).ToArray();
+        public ShotConfig shot = null!;
+        
+        public Subshot subshot = Subshot.TYPE_D;
+    }
     [SuppressMessage("ReSharper", "AccessToModifiedClosure")]
     public static UIScreen CreatePlayerScreen(this UIController m, SMAnalysis.AnalyzedCampaign c, 
         BehaviorEntity? demoSetup, GameObject? demoPlayerPrefab, Transform shotDisplayContainer, Func<TeamConfig, bool> continuation) {
@@ -641,10 +683,12 @@ public static class XMLHelpers {
         }
         PlayerController? demoPlayer = null;
         Cancellable? demoCT = null;
-        OptionNodeLR<ShipConfig> playerSelect = null!;
-        OptionNodeLR<IAbilityCfg> supportSelect = null!;
-        OptionNodeLR<ShotConfig> shotSelect = null!;
-        OptionNodeLR<Subshot> subshotSelect = null!;
+        var initPlayer = c.campaign.players[0];
+        var p = new PlayerSelect() {
+            Player = initPlayer,
+            support = initPlayer.supports[0].ability,
+            shot = initPlayer.shots2[0].shot
+        };
 
         var team = new TeamConfig(0, Subshot.TYPE_D, null,
             c.campaign.players
@@ -668,7 +712,7 @@ public static class XMLHelpers {
         void UpdateDemo() {
             if (demoSetup == null || demoPlayerPrefab == null) return;
             GameManagement.DeactivateInstance();
-            var effShot = shotSelect.Value.GetSubshot(subshotSelect.Value);
+            var effShot = p.shot.GetSubshot(p.subshot);
             ReplayActor r;
             if (effShot.demoReplay != null) {
                 r = Replayer.BeginReplaying(new Replayer.ReplayerConfig(
@@ -692,7 +736,7 @@ public static class XMLHelpers {
             if (demoPlayer == null) {
                 demoPlayer = UnityEngine.Object.Instantiate(demoPlayerPrefab).GetComponent<PlayerController>();
             }
-            demoPlayer.UpdateTeam((playerSelect.Value, shotSelect.Value), subshotSelect.Value, true);
+            demoPlayer.UpdateTeam((p.Player, p.shot), p.subshot, true);
             demoPlayer.transform.position = new Vector2(0, -3);
         }
         
@@ -701,11 +745,11 @@ public static class XMLHelpers {
             display.Show(false);
             return (p, display);
         }).ToArray();
-
-        void ShowShot(ShipConfig p, ShotConfig s, Subshot sub, IAbilityCfg support, bool first) {
+        
+        void ShowShot(bool first) {
             if (!first) UpdateDemo();
-            var index = displays.IndexOf(sd => sd.player == p);
-            displays[index].display.SetShot(p, s, sub, support);
+            var index = displays.IndexOf(sd => sd.player == p.Player);
+            displays[index].display.SetShot(p.Player, p.shot, p.subshot, p.support);
             foreach (var (i, (_, display)) in displays.Enumerate()) {
                 //Only show the selected player on entry so the others don't randomly appear on screen during swipe
                 display.Show(!first || i == index);
@@ -713,55 +757,52 @@ public static class XMLHelpers {
             }
         }
 
-        void _ShowShot(bool first = false) {
-            ShowShot(playerSelect.Value, shotSelect.Value, subshotSelect.Value, supportSelect.Value, first);
-        }
+        PropTwoWayBinder<T> VM<T>(string prop) => new(p, prop);
         
-        playerSelect = new OptionNodeLR<ShipConfig>(LString.Empty, _ => _ShowShot(),
-            c.campaign.players.Select(p => (p.ShortTitle, p)).ToArray(), c.campaign.players[0]);
+        var playerSelect = new OptionNodeLR<ShipConfig>(LString.Empty, VM<ShipConfig>(nameof(p.Player)),
+            c.campaign.players.Select(p => (p.ShortTitle, p)).ToArray());
 
-        supportSelect = new OptionNodeLR<IAbilityCfg>(LString.Empty, _ => _ShowShot(),
+        var supportSelect = new OptionNodeLR<IAbilityCfg>(LString.Empty, VM<IAbilityCfg>(nameof(p.support)),
             () => playerSelect.Value.supports.Select(s => 
-                ((LString)s.ordinal, (IAbilityCfg)s.ability)).ToArray(), 
-            playerSelect.Value.supports[0].ability);
-        shotSelect = new OptionNodeLR<ShotConfig>(LString.Empty, _ => _ShowShot(), () =>
+                ((LString)s.ordinal, (IAbilityCfg)s.ability)).ToArray());
+        var shotSelect = new OptionNodeLR<ShotConfig>(LString.Empty, VM<ShotConfig>(nameof(p.shot)), () =>
                 playerSelect.Value.shots2.Select(s => ((LString)(s.shot.isMultiShot ? 
                         shotsel_multi(s.ordinal) : 
-                        shotsel_type(s.ordinal)), s.shot)).ToArray(),
-            playerSelect.Value.shots2[0].shot);
-        subshotSelect = new OptionNodeLR<Subshot>(LString.Empty, _ => _ShowShot(),
-            EnumHelpers2.Subshots.Select(x => (shotsel_variant_ls(x.Describe()), x)).ToArray(), Subshot.TYPE_D) 
-            {VisibleIf = () => shotSelect.Value.isMultiShot};
+                        shotsel_type(s.ordinal)), s.shot)).ToArray());
+        var subshotSelect = new OptionNodeLR<Subshot>(LString.Empty, VM<Subshot>(nameof(p.subshot)),
+            EnumHelpers2.Subshots.Select(x => (shotsel_variant_ls(x.Describe()), x)).ToArray()) 
+            {VisibleIf = () => p.shot.isMultiShot };
+
         var screen = new UIScreen(m, null, UIScreen.Display.Unlined) {
-            Builder = (s, ve) => {
-                s.Margin.style.marginLeft = 160;
-                var g = ve.AddColumn();
-                g.style.maxWidth = new Length(25, LengthUnit.Percent);
-                g.style.paddingTop = 720;
-            },
-            OnEnterStart = _ => _ShowShot(true),
-            OnEnterEnd = UpdateDemo,
-            OnExitStart = () => {
+                Builder = (s, ve) => {
+                    s.Margin.style.marginLeft = 160;
+                    var g = ve.AddColumn();
+                    g.style.maxWidth = new Length(25, LengthUnit.Percent);
+                    g.style.paddingTop = 720;
+                },
+            }.WithOnEnterStart(_ => ShowShot(true))
+            .WithOnEnterEnd(_ => UpdateDemo())
+            .WithOnExitStart(_ => {
                 CleanupDemo();
                 foreach (var (player, display) in displays) {
                     if (player != playerSelect.Value) display.Show(false);
                 }
-            }
-        };
+            });
+        screen.Tokens.Add(p.ViewVersion.OnChange.Subscribe(_ => ShowShot(false)));
         _ = new UIColumn(screen, null,
-            new PassthroughNode(shotsel_player).With(centerTextClass),
-            playerSelect.With(optionNoKeyClass),
+            new PassthroughNode(shotsel_player).WithCSS(centerTextClass),
+            playerSelect.WithCSS(optionNoKeyClass),
             new PassthroughNode(LString.Empty),
-            new PassthroughNode(shotsel_shot).With(centerTextClass),
-            shotSelect.With(optionNoKeyClass),
-            subshotSelect.With(optionNoKeyClass),
+            new PassthroughNode(shotsel_shot).WithCSS(centerTextClass),
+            shotSelect.WithCSS(optionNoKeyClass),
+            subshotSelect.WithCSS(optionNoKeyClass),
             new PassthroughNode(LString.Empty),
-            new PassthroughNode(shotsel_support).With(centerTextClass),
-            supportSelect.With(optionNoKeyClass),
+            new PassthroughNode(shotsel_support).WithCSS(centerTextClass),
+            supportSelect.WithCSS(optionNoKeyClass),
             new PassthroughNode(LString.Empty),
             new FuncNode(play_game, () => continuation(new TeamConfig(0, subshotSelect.Value,
                 supportSelect.Value,
-                (playerSelect.Value, shotSelect.Value)))).With(centerTextClass)
+                (playerSelect.Value, shotSelect.Value)))).WithCSS(centerTextClass)
             //new UINode(() => shotSelect.Value.title).SetAlwaysVisible().FixDepth(1),
             //new UINode(() => shotSelect.Value.description)
             //    .With(shotDescrClass).With(smallClass)
@@ -777,14 +818,15 @@ public static class XMLHelpers {
             g1.style.paddingRight = 120;
             ve.AddScrollColumn().style.flexGrow = 2;
         }};
-        var load_cbs = new List<Action>();
         var dfc = new DifficultySettings(null);
+        var viewModel = new VersionedUIViewModel();
+        //dfc may be reloaded, use () => to avoid keeping reference to a single one
+        //normally we wouldn't need to share the view model, but we need to keep track of ModelChanged on dfc load
+        PropTwoWayBinder<T> VM<T>(string prop) => new(() => dfc, prop, viewModel);
         void SetNewDFC(DifficultySettings? newDfc) {
             if (newDfc == null) return;
             dfc = FileUtils.CopyJson(newDfc);
-            foreach (var cb in load_cbs) {
-                cb();
-            }
+            viewModel.ModelChanged();
         }
         double[] _pctMods = {
             0.31, 0.45, 0.58, 0.7, 0.85, 1, 1.2, 1.4, 1.6, 1.8, 2
@@ -800,9 +842,8 @@ public static class XMLHelpers {
             return ((LString)($"{prefix}{x}"), x);
         });
         var descCol = screen.ColumnRender(1);
-        UINode MakeOption<T>(LString title, IEnumerable<(LString, T)> options, Func<T> deflt, Action<T> apply,
-            LString description) {
-            var node = new OptionNodeLR<T>(title, apply, options.ToArray(), deflt()) {
+        UINode MakeOption<T>(LString title, IEnumerable<(LString, T)> options, string dfcProp, LString description) {
+            return new OptionNodeLR<T>(title, VM<T>(dfcProp), options.ToArray()) {
                 ShowHideGroup = new UIColumn(descCol, new UINode(LString.Format("\n\n{0}", description))) {
                     Interactable = false
                 },
@@ -810,27 +851,22 @@ public static class XMLHelpers {
                     n.NodeHTML.style.paddingLeft = 20;
                     n.NodeHTML.style.paddingRight = 20;
                 },
-                OverrideClasses = new() { small1Class }
-            };
-            load_cbs.Add(() => node.SetIndexFromVal(deflt()));
-            return node;
+            }.WithCSS(small1Class);
         }
-        UINode MakePctOption(LString title, Func<double> deflt, Action<double> apply, LString description)
-            => MakeOption(title, pctMods, deflt, apply, description);
-        UINode MakeOnOffOption(LString title, Func<bool> deflt, Action<bool> apply, LString description)
-            => MakeOption(title, yesNo, deflt, apply, description);
-        UINode MakeOptionAuto<T>(LString title, IEnumerable<T> options, Func<T> deflt, Action<T> apply, LString description)
-            => MakeOption(title, options.Select(x => ((LString)(x!.ToString()), x)), deflt, apply, description);
+        UINode MakePctOption(LString title, string dfcProp, LString description)
+            => MakeOption(title, pctMods, dfcProp, description);
+        UINode MakeOnOffOption(LString title, string dfcProp, LString description)
+            => MakeOption(title, yesNo, dfcProp, description);
+        UINode MakeOptionAuto<T>(LString title, IEnumerable<T> options, string dfcProp, LString description)
+            => MakeOption(title, options.Select(x => ((LString)(x!.ToString()), x)), dfcProp, description);
 
         var saved = SaveData.s.DifficultySettings;
-
-        
         
         UINode MakeSaveLoadDFCNode((string name, DifficultySettings settings) s) =>
-            new FuncNode(() => (LString)(s.name),
+            new FuncNode(s.name,
                 n => {
                     var ind = n.Group.Nodes.IndexOf(n);
-                    return PopupUIGroup.CreatePopup(n, () => setting,
+                    return PopupUIGroup.CreatePopup(n, setting,
                         r => new UIColumn(r, new UINode(setting_what_do_ls(s.name)) {Prefab = Prefabs.PureTextNode}) 
                             { Interactable = false },
                         new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
@@ -848,45 +884,43 @@ public static class XMLHelpers {
                     );
                 });
         
-        var optSliderHelper = new PassthroughNode(() =>
-            desc_effective_ls(effective, DifficultySettings.FancifySlider(dfc.customValueSlider)));
+        var optSliderHelper = new PassthroughNode()
+            .WithView(new LabelView<int>(new(() => dfc.customValueSlider, 
+                x => desc_effective_ls(effective, DifficultySettings.FancifySlider(x)))));
         dfc.respawnOnDeath = false;
         screen.SetFirst(new UIColumn(screen, null,
             MakeOption(scaling, (DifficultySettings.MIN_SLIDER, DifficultySettings.MAX_SLIDER + 1).Range()
-                .Select(x => ((LString)($"{x}"), x)), () => dfc.customValueSlider, dfc.SetCustomDifficulty,
-                desc_scaling),
-            optSliderHelper.With(small2Class),
-            MakeOptionAuto(suicide, new[] {0, 1, 3, 5, 7}, () => dfc.numSuicideBullets,
-                x => dfc.numSuicideBullets = x, desc_suicide),
-            MakePctOption(p_dmg, () => dfc.playerDamageMod, x => dfc.playerDamageMod = x, desc_p_dmg),
-            MakePctOption(boss_hp, () => dfc.bossHPMod, x => dfc.bossHPMod = x, desc_boss_hp),
-            MakeOnOffOption(respawn, () => dfc.respawnOnDeath.Value, x => dfc.respawnOnDeath = x, desc_respawn),
-            MakePctOption(faith_decay, () => dfc.faithDecayMultiplier, x => dfc.faithDecayMultiplier = x, desc_faith_decay),
-            MakePctOption(faith_acquire, () => dfc.faithAcquireMultiplier, x => dfc.faithAcquireMultiplier = x, desc_faith_acquire),
-            MakePctOption(meter_usage, () => dfc.meterUsageMultiplier, x => dfc.meterUsageMultiplier = x, desc_meter_usage),
-            MakePctOption(meter_acquire, () => dfc.meterAcquireMultiplier, x => dfc.meterAcquireMultiplier = x, desc_meter_acquire),
-            MakeOnOffOption(bombs_enabled, () => dfc.bombsEnabled, x => dfc.bombsEnabled = x, desc_bombs_enabled),
-            MakeOnOffOption(meter_enabled, () => dfc.meterEnabled, x => dfc.meterEnabled = x, desc_meter_enabled),
-            MakePctOption(player_speed, () => dfc.playerSpeedMultiplier, x => dfc.playerSpeedMultiplier = x, desc_player_speed),
-            MakePctOption(player_hitbox, () => dfc.playerHitboxMultiplier, x => dfc.playerHitboxMultiplier = x, desc_player_hitbox),
-            MakePctOption(player_grazebox, () => dfc.playerGrazeboxMultiplier,
-                x => dfc.playerGrazeboxMultiplier = x, desc_player_grazebox),
+                .Select(x => ((LString)($"{x}"), x)), nameof(dfc.customValueSlider), desc_scaling),
+            optSliderHelper.WithCSS(small2Class),
+            MakeOptionAuto(suicide, new[] {0, 1, 3, 5, 7}, nameof(dfc.numSuicideBullets), desc_suicide),
+            MakePctOption(p_dmg, nameof(dfc.playerDamageMod), desc_p_dmg),
+            MakePctOption(boss_hp, nameof(dfc.bossHPMod), desc_boss_hp),
+            MakeOnOffOption(respawn, nameof(dfc.respawnOnDeath), desc_respawn),
+            MakePctOption(faith_decay, nameof(dfc.faithDecayMultiplier), desc_faith_decay),
+            MakePctOption(faith_acquire, nameof(dfc.faithAcquireMultiplier), desc_faith_acquire),
+            MakePctOption(meter_usage, nameof(dfc.meterUsageMultiplier), desc_meter_usage),
+            MakePctOption(meter_acquire, nameof(dfc.meterAcquireMultiplier), desc_meter_acquire),
+            MakeOnOffOption(bombs_enabled, nameof(dfc.bombsEnabled), desc_bombs_enabled),
+            MakeOnOffOption(meter_enabled, nameof(dfc.meterEnabled), desc_meter_enabled),
+            MakePctOption(player_speed, nameof(dfc.playerSpeedMultiplier), desc_player_speed),
+            MakePctOption(player_hitbox, nameof(dfc.playerHitboxMultiplier), desc_player_hitbox),
+            MakePctOption(player_grazebox, nameof(dfc.playerGrazeboxMultiplier), desc_player_grazebox),
             MakeOption(lives, (1, 14).Range().Select(x => ((LString)($"{x}"), (int?) x)).Prepend((generic_default, null)),
-                () => dfc.startingLives, x => dfc.startingLives = x, desc_lives),
+                nameof(dfc.startingLives), desc_lives),
             MakeOption(poc, AddPlus(new[] {
                     //can't use addition to generate these because -6 + 0.4 =/= -5.6...
                     -6, -5.6, -5.2, -4.8, -4.4, -4, -3.6, -3.2, -2.8, -2.4, -2, -1.6, -1.2, -0.8, -0.4,
                     0, 0.4, 0.8, 1.2, 1.6, 2
-                }), () => dfc.pocOffset, x => dfc.pocOffset = x, desc_poc),
+                }), nameof(dfc.pocOffset), desc_poc),
             //new PassthroughNode(""),
             new UINode(to_select) { OnConfirm = (_, _) => dfcCont(dfc) } ,
             new UINode(manage_setting) {
                 ShowHideGroup = new UIColumn(descCol, 
                     saved.Select(MakeSaveLoadDFCNode)
-                        .Prepend(new FuncNode(() => create_setting, 
+                        .Prepend(new FuncNode(create_setting, 
                             n => {
                                 var settingNameEntry = new TextInputNode(LString.Empty);
-                                return PopupUIGroup.CreatePopup(n, () => create_setting,
+                                return PopupUIGroup.CreatePopup(n, create_setting,
                                     r => new UIColumn(r, new UINode(new_setting_name) {
                                         Prefab = Prefabs.PureTextNode, Passthrough = true
                                     }, settingNameEntry),
@@ -898,44 +932,50 @@ public static class XMLHelpers {
                                         }, n.ReturnGroup), 
                                     }));
                             }) {
-                            InlineStyle = (_, n) => n.NodeHTML.style.marginBottom = 120
+                            OnBuilt = n => n.NodeHTML.style.marginBottom = 120
                         }))
             }
         ));
         return screen;
     }
+
+    private class StatsScreenFilter : VersionedUIViewModel {
+        private int? _cmpIndex;
+        public int? campaignIndex {
+            get => _cmpIndex;
+            set {
+                _cmpIndex = value;
+                boss = null;
+                ModelChanged();
+            }
+        }
+        public string? boss;
+        public Maybe<FixedDifficulty?> difficultySwitch = Maybe<FixedDifficulty?>.None;
+        public ShipConfig? playerSwitch = null;
+        public (ShipConfig, ShotConfig)? shotSwitch = null;
+    }
     
     public static UIScreen StatisticsScreen(this UIController menu, IDanmakuGameDef game, IEnumerable<InstanceRecord> allGames, 
         SMAnalysis.AnalyzedCampaign[] campaigns) {
         InstanceRecord[] games = allGames.ToArray();
-        int? campaignIndex;
-        Maybe<FixedDifficulty?> difficultySwitch = Maybe<FixedDifficulty?>.None;
-        ShipConfig? playerSwitch = null;
-        (ShipConfig, ShotConfig)? shotSwitch = null;
+        var f = new StatsScreenFilter();
+        PropTwoWayBinder<T> VM<T>(string prop) => new(f, prop);
         bool Filter(InstanceRecord ir) =>
-            (campaignIndex == null ||
-             campaigns[campaignIndex.Value].Key == ir.RequestKey.Campaign) &&
-            (!difficultySwitch.Valid || difficultySwitch.Value == ir.SharedInstanceMetadata.difficulty.standard) &&
-            (playerSwitch == null || playerSwitch == ir.SharedInstanceMetadata.team.ships[0].ship) &&
-            (shotSwitch == null || shotSwitch == ir.SharedInstanceMetadata.team.ships[0])
+            (f.campaignIndex == null ||
+             campaigns[f.campaignIndex.Value].Key == ir.RequestKey.Campaign) &&
+            (!f.difficultySwitch.Valid || f.difficultySwitch.Value == ir.SharedInstanceMetadata.difficulty.standard) &&
+            (f.playerSwitch == null || f.playerSwitch == ir.SharedInstanceMetadata.team.ships[0].ship) &&
+            (f.shotSwitch == null || f.shotSwitch == ir.SharedInstanceMetadata.team.ships[0])
             ;
-        string? boss;
 
-        Statistics.StatsGenerator stats;
-        void UpdateStats() => 
-            stats = new Statistics.StatsGenerator(games.Where(Filter), campaigns, cbp => 
-                (campaignIndex == null || (campaigns[campaignIndex.Value].Key == cbp.Campaign)) &&
-                (boss == null || (boss == cbp.Boss)));
-        
-        void AssignCampaign(int? cmpInd) {
-            campaignIndex = cmpInd;
-            AssignBoss(null);
+        Statistics.StatsGenerator stats = default!;
+        void UpdateStats() {
+            stats = new Statistics.StatsGenerator(games.Where(Filter), campaigns, cbp =>
+                (f.campaignIndex == null || (campaigns[f.campaignIndex.Value].Key == cbp.Campaign)) &&
+                (f.boss == null || (f.boss == cbp.Boss)));
         }
-        void AssignBoss(string? nboss) {
-            boss = nboss;
-            UpdateStats();
-        }
-        AssignCampaign(null);
+        ILabelViewModel Show(Func<string> stat) =>
+            new LabelViewModel<string>(stat, x=>x) { OverrideHashHandler = () => f.ViewVersion };
 
         string AsPct(float f01) => $"{(int) (f01 * 100)}%";
         LString ShowCard((BossPracticeRequest card, float ratio) bpr) {
@@ -947,66 +987,58 @@ public static class XMLHelpers {
         }
 
         var optNodes = new UINode[] {
-            new OptionNodeLR<int?>(practice_campaign, AssignCampaign,
+            new OptionNodeLR<int?>(practice_campaign, VM<int?>(nameof(f.campaignIndex)),
                 campaigns
                     .Select((c, i) => ((LString)(c.campaign.shortTitle), (int?)i))
                     .Prepend((stats_allcampaigns, null))
-                    .ToArray(), campaignIndex),
-            new OptionNodeLR<Maybe<FixedDifficulty?>>(stats_seldifficulty, x => {
-                    difficultySwitch = x;
-                    UpdateStats();
-                },
+                    .ToArray()),
+            new OptionNodeLR<Maybe<FixedDifficulty?>>(stats_seldifficulty, VM<Maybe<FixedDifficulty?>>(nameof(f.difficultySwitch)),
                 GameManagement.CustomAndVisibleDifficulties
                     .Select(x => (x?.Describe() ?? difficulty_custom, Maybe<FixedDifficulty?>.Of(x)))
-                    .Prepend((stats_alldifficulty, Maybe<FixedDifficulty?>.None)).ToArray(), difficultySwitch),
-            new OptionNodeLR<ShipConfig?>(stats_selplayer, x => {
-                    playerSwitch = x;
-                    UpdateStats();
-                },
+                    .Prepend((stats_alldifficulty, Maybe<FixedDifficulty?>.None)).ToArray()),
+            new OptionNodeLR<ShipConfig?>(stats_selplayer, VM<ShipConfig?>(nameof(f.playerSwitch)),
                 game.AllShips
                     .Select(x => (x.ShortTitle, (ShipConfig?)x))
-                    .Prepend((stats_allplayers, null)).ToArray(), playerSwitch),
-            new OptionNodeLR<(ShipConfig, ShotConfig)?>(stats_selshot, x => {
-                    shotSwitch = x;
-                    UpdateStats();
-                },
+                    .Prepend((stats_allplayers, null)).ToArray()),
+            new OptionNodeLR<(ShipConfig, ShotConfig)?>(stats_selshot, 
+                VM<(ShipConfig, ShotConfig)?>(nameof(f.shotSwitch)),
                 game.AllShips
                     .SelectMany(p => p.shots2
                         .Select(os => (ShotConfig.PlayerShotDescription(p, os.shot),
                             ((ShipConfig, ShotConfig)?)(p, os.shot))))
-                    .Prepend((stats_allshots, null)).ToArray(), shotSwitch),
+                    .Prepend((stats_allshots, null)).ToArray()),
         };
         var statsNodes = new UINode[] {
-            new TwoLabelUINode(stats_allruns, () => $"{stats.TotalRuns}"),
-            new TwoLabelUINode(stats_complete, () => $"{stats.CompletedRuns}"),
-            new TwoLabelUINode(stats_1cc, () => $"{stats.OneCCRuns}"),
-            new TwoLabelUINode(stats_deaths, () => $"{stats.TotalDeaths}"),
-            new TwoLabelUINode(stats_totaltime, () => stats.TotalFrames.FramesToTime()),
-            new TwoLabelUINode(stats_avgtime, () => stats.AvgFrames.FramesToTime()),
-            new TwoLabelUINode(stats_favday, () => 
+            new TwoLabelUINode(stats_allruns, Show(() => $"{stats.TotalRuns}")),
+            new TwoLabelUINode(stats_complete, Show(() => $"{stats.CompletedRuns}")),
+            new TwoLabelUINode(stats_1cc, Show(() => $"{stats.OneCCRuns}")),
+            new TwoLabelUINode(stats_deaths, Show(() => $"{stats.TotalDeaths}")),
+            new TwoLabelUINode(stats_totaltime, Show(() => stats.TotalFrames.FramesToTime())),
+            new TwoLabelUINode(stats_avgtime, Show(() => stats.AvgFrames.FramesToTime())),
+            new TwoLabelUINode(stats_favday, Show(() => 
                 stats.TotalRuns == 0 ? generic_na :
-                (LString)($"{stats.FavoriteDay.Item1} ({stats.FavoriteDay.Item2.Length})")),
-            new TwoLabelUINode(stats_favplayer, () => 
+                (LString)($"{stats.FavoriteDay.Item1} ({stats.FavoriteDay.Item2.Length})"))),
+            new TwoLabelUINode(stats_favplayer, Show(() => 
                 stats.TotalRuns == 0 ? generic_na :
                     LString.Format(
                 "{0} ({1})", stats.FavoriteShip.Item1.ShortTitle, (LString)($"{stats.FavoriteShip.Item2.Length}")
-            )),
-            new TwoLabelUINode(stats_favshot, () => {
+            ))),
+            new TwoLabelUINode(stats_favshot, Show(() => {
                 if (stats.TotalRuns == 0) return generic_na;
                 var ((pc, sc), recs) = stats.FavoriteShot;
                 return LString.Format("{0} ({1})", 
                     ShotConfig.PlayerShotDescription(pc, sc),
                     $"{recs.Length}"
                 );
-            }),
-            new TwoLabelUINode(stats_highestscore, () => 
-                stats.TotalRuns == 0 ? generic_na : $"{stats.MaxScore}"),
-            new TwoLabelUINode(stats_capturerate, () => AsPct(stats.CaptureRate)),
-            new TwoLabelUINode(stats_bestcard, () => 
-                !stats.HasSpellHist ? generic_na : ShowCard(stats.BestCapture)),
-            new TwoLabelUINode(stats_worstcard, () => 
-                !stats.HasSpellHist ? generic_na : ShowCard(stats.WorstCapture))
-        }.Select(x => x.With(small1Class));
+            })),
+            new TwoLabelUINode(stats_highestscore, Show(() => 
+                stats.TotalRuns == 0 ? generic_na.Value : $"{stats.MaxScore}")),
+            new TwoLabelUINode(stats_capturerate, Show(() => AsPct(stats.CaptureRate))),
+            new TwoLabelUINode(stats_bestcard, Show(() => 
+                !stats.HasSpellHist ? generic_na : ShowCard(stats.BestCapture))),
+            new TwoLabelUINode(stats_worstcard, Show(() => 
+                !stats.HasSpellHist ? generic_na : ShowCard(stats.WorstCapture)))
+        }.Select(x => x.WithCSS(small1Class));
         
         var screen = new UIScreen(menu, "STATISTICS") {Builder = (s, ve) => {
             s.Margin.SetLRMargin(720, 720);
@@ -1020,6 +1052,7 @@ public static class XMLHelpers {
             scores.SetLRMargin(0, 60);
             scores.style.width = 100f.Percent();
         }};
+        screen.Tokens.Add(f.ViewVersion.Subscribe(_ => UpdateStats()));
         screen.SetFirst(new VGroup(
                 new UIColumn(screen.ColumnRender(1), optNodes),
                 new UIColumn(screen.ColumnRender(2), statsNodes)
@@ -1029,6 +1062,32 @@ public static class XMLHelpers {
         return screen;
     }
 
+    private class AchievementViewModel : CSSClassViewModel {
+        public Achievement Achv { get; }
+
+        public AchievementViewModel(Achievement a) : base(() => a.Completed, CheckmarkClass(true), CheckmarkClass(false)) {
+            this.Achv = a;
+        }
+        public override long GetViewHash() => (Achv.VisibleDescription, Achv.Completed).GetHashCode();
+    }
+
+    private class AchievementView : CssClassView {
+        private readonly AchievementViewModel viewModel;
+        public AchievementView(AchievementViewModel viewModel) : base(viewModel) {
+            this.viewModel = viewModel;
+        }
+
+        public override void NodeBuilt(UINode node) {
+            base.NodeBuilt(node);
+            node.NodeHTML.style.paddingLeft = 20;
+            node.NodeHTML.style.paddingRight = 20;
+        }
+
+        protected override BindingResult Update(in BindingContext context) {
+            Node.HTML.Q<Label>("Description").text = viewModel.Achv.VisibleDescription;
+            return base.Update(in context);
+        }
+    }
     public static UIScreen AchievementsScreen(this UIController menu, VisualTreeAsset node, 
         AchievementManager acvs) {
         var screen = new UIScreen(menu, "ACHIEVEMENTS") {Builder = (s, ve) => {
@@ -1037,16 +1096,8 @@ public static class XMLHelpers {
         }};
         _ = new UIColumn(screen, null, acvs.SortedAchievements.Select(a =>
                 new UINode(a.Title) {
-                        Prefab = node,
-                        OnBuilt = n => {
-                            n.NodeHTML.style.paddingLeft = 20;
-                            n.NodeHTML.style.paddingRight = 20;
-                        },
-                        InlineStyle = (_, n) => {
-                            n.NodeHTML.Q<Label>("Description").text = a.VisibleDescription;
-                            n.NodeHTML.AddToClassList(CheckmarkClass(a.Completed));
-                        }
-                }
+                        Prefab = node
+                }.WithView(new AchievementView(new(a)))
             ).ToArray()
         );
         return screen;
@@ -1062,16 +1113,16 @@ public static class XMLHelpers {
             true => new FuncNode(string.Format("({0}) {1}", m.TrackPlayLocation, m.Title), 
                 () => new UIResult.StayOnNode(ServiceLocator.Find<IAudioTrackService>().InvokeBGM(m) == null)) {
                 ShowHideGroup = new UIColumn(descCol, 
-                    new UINode(m.MusicRoomDescription).With(small2Class, fontUbuntuClass)) 
+                    new UINode(m.MusicRoomDescription).WithCSS(small2Class, fontUbuntuClass)) 
                 {Interactable = false}
             },
             false => new UINode("????????????????") {
                 ShowHideGroup = new UIColumn(descCol, 
-                    new UINode("This track is not yet unlocked.").With(small2Class, fontUbuntuClass))
+                    new UINode("This track is not yet unlocked.").WithCSS(small2Class, fontUbuntuClass))
                 {Interactable = false}
             },
             _ => null
-        })?.With(small1Class))));
+        })?.WithCSS(small1Class))));
         return screen;
     }
 
@@ -1104,8 +1155,8 @@ public static class XMLHelpers {
         return (reqNodes
             .Prepend(new TwoLabelUINode(practice_type, rec.Mode.Describe()))
             //() => allows updates when a replay name is saved
-            .Prepend(new TwoLabelUINode("Name", () => rec.CustomNameOrPartial))
-            .Append(new UINode {Passthrough = true}).Concat(new TwoLabelUINode?[] {
+            .Prepend(new TwoLabelUINode("Name", () => rec.CustomNameOrPartial, null))
+            .Append(new UINode("") {Passthrough = true}).Concat(new TwoLabelUINode?[] {
                 new("Completed?", rec.Completed.ToString()),
                 new("Difficulty", rec.Difficulty.Describe()),
                 new("Player", ShotConfig.PlayerShotDescription(ship?.ship, ship?.shot)),
@@ -1135,8 +1186,9 @@ public static class XMLHelpers {
             new UIColumn(new UIRenderExplicit(resultsScreen, ve => ve.Q("Right")), r),
             new UIRow(new UIRenderExplicit(resultsScreen, ve => ve.Q("Bottom")), options)
                 { ExitNodeOverride = options[0] }
-        ) { ExitNodeOverride = options[0], EntryNodeOverride = options[0], OnScreenExitEnd = g => g.Destroy() };
-        resultsScreen.AddGroup(details);
+        ) { ExitNodeOverride = options[0], EntryNodeOverride = options[0] };
+        resultsScreen.Tokens.Add(resultsScreen.OnExitEnd.SubscribeOnce(_ => details.Destroy()));
+        resultsScreen.SetFirst(details);
         return new UIResult.GoToNode(details);
     }
 
@@ -1145,8 +1197,12 @@ public static class XMLHelpers {
         var inner = ve.AddColumn();
         var lr = inner.AddRow();
         lr.style.height = 90f.Percent();
-        lr.AddColumn().SetPadding(20, 50, 50, 50).name = "Left";
-        lr.AddColumn().SetPadding(20, 50, 50, 50).name = "Right";
+        var left = lr.AddColumn().SetPadding(20, 50, 50, 50);
+        left.style.width = 50f.Percent();
+        left.name = "Left";
+        var right = lr.AddColumn().SetPadding(20, 50, 50, 50);
+        right.style.width = 50f.Percent();
+        right.name = "Right";
         var bot = inner.AddNodeRow();
         bot.style.height = 10f.Percent();
         bot.name = "Bottom";
@@ -1163,23 +1219,24 @@ public static class XMLHelpers {
         Action<UINode> setMargin = n => {
             n.HTML.style.marginBottom = 50;
         };
+        var finishedAnyCampaign = FinishedCampaigns.Any();
         s.SetFirst(new UIColumn(s, null,
                 new TransferNode(main_scores, records) {
-                        EnabledIf = FinishedCampaigns.Any,
+                        EnabledIf = () => finishedAnyCampaign,
                         OnBuilt = setMargin
-                    }.With(large2Class),
+                    }.WithCSS(large2Class),
                 new TransferNode(main_stats, stats) {
-                            EnabledIf = FinishedCampaigns.Any,
+                            EnabledIf = () => finishedAnyCampaign,
                             OnBuilt = setMargin
-                }.With(large2Class),
+                }.WithCSS(large2Class),
                 achievements == null ? null :
                     new TransferNode(main_achievements, achievements) {
                             OnBuilt = setMargin
-                        }.With(large2Class),
+                        }.WithCSS(large2Class),
                 new TransferNode(main_replays, replays) {
                         EnabledIf = () => SaveData.p.ReplayData.Count > 0,
                         OnBuilt = setMargin
-                    }.With(large2Class)
+                    }.WithCSS(large2Class)
         ));
         return s;
     }

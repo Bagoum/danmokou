@@ -28,6 +28,7 @@ public interface IRunningAudioTrack {
     void Pause();
     void UnPause();
     
+    ICancellee cT { get; set; }
     Evented<AudioTrackState> State { get; }
     
     /// <summary>
@@ -73,7 +74,7 @@ public abstract class BaseRunningAudioTrack : IRunningAudioTrack {
     public IAudioTrackInfo Track { get; }
     public bool IsRunningAsBGM { get; init; }
     public Evented<AudioTrackState> State { get; } = new(AudioTrackState.Active);
-    private ICancellee cT;
+    public ICancellee cT { get; set; }
     protected bool BreakCoroutine => State == AudioTrackState.DestroyReady;
     protected bool UpdateCoroutine =>
         State.Value is AudioTrackState.Active or AudioTrackState.Pausing or AudioTrackState.DestroyPrepare;

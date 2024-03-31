@@ -20,10 +20,11 @@ public class LocalXMLTesting : CoroutineRegularUpdater {
     public Vector2 Size = Vector2.one;
     public Vector2 Offset;
     public FixedXMLObject XML { get; private set; } = null!;
-    public Sprite testIcon;
+    public Sprite testIcon = null!;
 
-    public Vector2 XMLLocation => UIBuilderRenderer.ComputeXMLPosition((Vector2)transform.position + Offset);
-    public Vector2 XMLSize => UIBuilderRenderer.ComputeXMLDimensions(Size);
+    public Vector2 XMLLocation => UIBuilderRenderer.ToXMLPos((Vector2)transform.position + Offset);
+    public Vector2 XMLSize => UIBuilderRenderer.ToXMLDims(Size);
+    public bool[] visible = new bool[4];
 
     public override void FirstFrame() {
         XML = new(XMLLocation.x, XMLLocation.y, null, null) {
@@ -42,19 +43,18 @@ public class LocalXMLTesting : CoroutineRegularUpdater {
         };
         var nodes = data.Select((d, i) => {
             var show = "";
-            return new TwoLabelUINode(d.Item1, () => show) {
-                OnFirstRenderAnimation = (n, cT) => {
-                    var delta = (Vector3)UIBuilderRenderer.ComputeXMLDimensions(new(0, 5));
-                    n.NodeHTML.transform.position -= delta;
-                    return new NoopTweener(0.2f * i, cT).Then(
-                        n.NodeHTML.transform.TranslateBy(delta, 1.4f, Easers.EOutBack, cT).Parallel(
-                            new NoopTweener(0.4f, cT).Then(new Tweener<float>(0, d.Item2, 2f, f => {
-                                show = ((int)Math.Round(f)).ToString();
-                                n.Rebind();
-                            }, Easers.EOutQuart, cT))))
-                    .Run(n.Controller, new(true));
-                }
-            }.With(XMLUtils.noPointerClass, XMLUtils.highVisClass);
+            var node = new TwoLabelUINode(d.Item1, () => show, null) {
+                VisibleIf = () => visible[i]
+            }.WithCSS(XMLUtils.noPointerClass, XMLUtils.highVisClass);
+            node.RootView.OnFirstRender((n, cT) => {
+                var delta = (Vector3)UIBuilderRenderer.ToXMLDims(new(0, 5));
+                n.NodeHTML.transform.position -= delta;
+                return new NoopTweener(0.2f * i, cT).Then(
+                    n.NodeHTML.transform.TranslateBy(delta, 1.4f, Easers.EOutBack, cT).Parallel(
+                        new NoopTweener(0.4f, cT).Then(new Tweener<float>(0, d.Item2, 2f,
+                            f => { show = ((int)Math.Round(f)).ToString(); }, Easers.EOutQuart, cT))));
+            });
+            return node;
         });
 
 
@@ -62,7 +62,7 @@ public class LocalXMLTesting : CoroutineRegularUpdater {
             new UIRenderConstructed(menu.FreeformGroup.Render, new(XMLUtils.AddColumn), (_, ve) => {
                 ve.ConfigureAbsolute(XMLUtils.Pivot.Top);
                 ve.style.top = 400;
-                ve.style.left = UIBuilderRenderer.ComputeXMLPosition(Vector2.zero).x;
+                ve.style.left = UIBuilderRenderer.ToXMLPos(Vector2.zero).x;
                 ve.style.width = 26f.Percent();
                 ve.style.height = new StyleLength(StyleKeyword.Auto);
                 ve.SetPadding(30, 50, 30, 50);

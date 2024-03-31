@@ -73,41 +73,38 @@ public class GhostOfThePastGameDef : ADVGameDef {
             };
             var evInfo = evidenceScreen.ColumnRender(1);
             var evs = new UIColumn(evidenceScreen, null, 
-                Data.Evidences.Select(ev => new UINode(() => 
-                    ev.Enabled ? ev.Title : "---") {
+                Data.Evidences.Select(ev => new UINode {
                     ShowHideGroup = new UIColumn(evInfo, 
-                        new UINode(() => ev.Enabled ? ev.Description : "I don't have any evidence to put here.") 
-                            { Prefab = XMLUtils.Prefabs.PureTextNode, Passthrough = true, InlineStyle = (_, n) => n.Style.minHeight = 500 }
-                            .With(XMLUtils.fontBiolinumClass, XMLUtils.small1Class),
-                        new UIButton("Present Evidence", UIButton.ButtonType.Confirm, 
-                            _ => {
-                                var __ = evidenceRequest.Present(ev).ContinueWithSync();
-                                return new UIResult.ReturnToScreenCaller();
-                            }) { 
-                                VisibleIf = () => ev.Enabled && evidenceRequest.CanPresent
-                        })
-            }));
+                        new UINode { Prefab = XMLUtils.Prefabs.PureTextNode, Passthrough = true, OnBuilt = n => n.Style.minHeight = 500 }
+                            .WithCSS(XMLUtils.fontBiolinumClass, XMLUtils.small1Class)
+                            .WithView(new FlagLabelView(new(() => ev.Enabled, ev.Description, 
+                                "I don't have any evidence to put here."))),
+                        new UIButton("Present Evidence", UIButton.ButtonType.Confirm, _ => {
+                            var __ = evidenceRequest.Present(ev).ContinueWithSync();
+                            return new UIResult.ReturnToScreenCaller();
+                        }) { VisibleIf = () => ev.Enabled && evidenceRequest.CanPresent })
+                }.WithView(new FlagLabelView(new(() => ev.Enabled, ev.Title, "---")))
+            ));
             evidenceScreen.SetFirst(evs);
             menu.AddScreen(evidenceScreen);
             //Since this button is always present, we don't need to bother
             // going through Assertions for it
             // (Though we don't yet have an Assertion for generic UITK objects, only one for icon-based interactables)
-            var toEvidenceButton = new UIButton(() => evidenceRequest.CanPresent ? "Present Evidence" : "Review Evidence", 
+            var toEvidenceButton = new UIButton(null, 
                 UIButton.ButtonType.Confirm, _ => new UIResult.GoToScreen(evidenceScreen, menu.Unselect)) {
                 OnBuilt = n => {
-                    var l = n.Label!;
+                    var l = n.NodeHTML.Q<Label>();
                     l.style.backgroundColor = Color.clear;
                     l.style.backgroundImage = new StyleBackground(gdef.evidenceReviewBg);
                     l.SetPadding(54, 64, 54, 64);
                     tokens.Add(evSize.Subscribe(s => n.HTML.transform.scale = new UnityEngine.Vector3(s, s, 1)));
                 },
                 VisibleIf = () => Data.EvidenceButtonVisible
-            };
+            }.WithView(new FlagLabelView(new(() => evidenceRequest.CanPresent, "Show Evidence", "Evidence")));
             toEvidenceButton.ConfigureAbsoluteLocation(new FixedXMLObject(120, 90, null, null), XMLUtils.Pivot.TopLeft);
             menu.AddNodeDynamic(toEvidenceButton);
             tokens.Add(evidenceRequest.RequestsChanged.Subscribe(_ => {
                 evSize.PushIfNotSame(evidenceRequest.CanPresent ? 1.4f : 1f);
-                toEvidenceButton.RedrawIfBuilt();
             }));
         }
 
@@ -400,7 +397,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                         m.ESayC("worry", l198)
                     );
                     UpdateDataV(d => {
-                        d.EvYuyuko = d.EvYuyuko with { Status = Evidence.Yuyuko.Level.L1 };
+                        d.EvYuyuko.Status = Evidence.Yuyuko.Level.L1;
                         d.State = d.State with { Yuyuko = YuyukoState.L1 } ;
                     });
                 } else {
@@ -447,7 +444,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                         m.ESayC("worry", l230)
                     );
                     UpdateDataV(d => {
-                        d.EvSakuya = d.EvSakuya with { Status = Evidence.Sakuya.Level.L1 };
+                        d.EvSakuya.Status = Evidence.Sakuya.Level.L1;
                         d.State = d.State with { Remilia = RemiliaState.L1 };
                     });
                 } else {
@@ -881,16 +878,16 @@ public class GhostOfThePastGameDef : ADVGameDef {
         public State State = new();
         public State DelayedState = new();
         public bool EvidenceButtonVisible;
-        public Evidence.Marisa EvMarisa = new() { Enabled = true };
-        public Evidence.Mima EvMima = new() { Enabled = true };
-        public Evidence.Remilia EvRemilia = new() { Enabled = true };
-        public Evidence.Flandre EvFlandre = new() { Enabled = true };
-        public Evidence.Sakuya EvSakuya = new() { Enabled = true };
-        public Evidence.Yuyuko EvYuyuko = new() { Enabled = true };
-        public Evidence.Youmu EvYoumu = new() { Enabled = true };
-        public Evidence.Byakuren EvByakuren = new();
-        public Evidence.Nue EvNue = new();
-        public Evidence.Murasa EvMurasa = new();
+        public Evidence.Marisa EvMarisa { get; init; } = new() { Enabled = true };
+        public Evidence.Mima EvMima { get; init; } = new() { Enabled = true };
+        public Evidence.Remilia EvRemilia { get; init; } = new() { Enabled = true };
+        public Evidence.Flandre EvFlandre { get; init; } = new() { Enabled = true };
+        public Evidence.Sakuya EvSakuya { get; init; } = new() { Enabled = true };
+        public Evidence.Yuyuko EvYuyuko { get; init; } = new() { Enabled = true };
+        public Evidence.Youmu EvYoumu { get; init; } = new() { Enabled = true };
+        public Evidence.Byakuren EvByakuren { get; init; } = new();
+        public Evidence.Nue EvNue { get; init; } = new();
+        public Evidence.Murasa EvMurasa { get; init; } = new();
 
         [JsonIgnore] public Evidence[] Evidences = null!;
 
@@ -938,6 +935,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                 L0 = 0,
                 L1 = 1
             }
+            public Level Status { get; set; } = Status;
             public override LString Title => LocalizedStrings.FindReference("dialogue.yuyuko");
             private const string baseDescr =
                 "Yuyuko is the master of Hakugyokurou. She is a so-called \"true ghost\".";
@@ -952,6 +950,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                 L0 = 0,
                 L1 = 1
             }
+            public Level Status { get; set; } = Status;
             public override LString Title => LocalizedStrings.FindReference("dialogue.sakuya");
             private const string baseDescr = "Sakuya is the maid at the Scarlet Devil Mansion. She is human, supposedly.";
             public override LString Description => Status switch {

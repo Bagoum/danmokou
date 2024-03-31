@@ -96,6 +96,19 @@ public abstract class UIGroup {
     public UIRenderSpace Render { get; }
     
     /// <summary>
+    /// Called after all nodes in this group are built.
+    /// </summary>
+    public Action<UIGroup>? OnBuilt { get; private set; }
+
+    public UIGroup WithOnBuilt(Action<UIGroup>? act) {
+        if (buildMap != null)
+            act?.Invoke(this);
+        else if (act != null)
+            OnBuilt = OnBuilt.Then(act);
+        return this;
+    }
+    
+    /// <summary>
     /// The UI group that contains this UI group, and to which navigation delegates if internal navigation fails.
     /// <br/>Note that the parent does not neccessarily know about the child's existence,
     ///  unless it is set via <see cref="DependentParent"/>.
@@ -129,13 +142,13 @@ public abstract class UIGroup {
             return nodes;
         }
     }
-    public bool Interactable { get; init; } = true;
+    public bool Interactable { get; set; } = true;
     
     /// <summary>
     /// Node to go to when trying to enter this group.
     /// <br/>Note that this node may be in a descendant of this group.
     /// </summary>
-    public Delayed<UINode>? EntryNodeOverride { get; set; }
+    public Delayed<UINode?>? EntryNodeOverride { get; set; }
     public UINode? EntryNodeBottomOverride { get; set; }
     public Func<int>? EntryIndexOverride { get; init; }
     /// <summary>
@@ -146,8 +159,6 @@ public abstract class UIGroup {
     public int? ExitIndexOverride { get; init; }
     public Func<UIGroup, Task?>? OnEnter { private get; init; }
     public Func<UIGroup, Task?>? OnLeave { private get; init; }
-    /// <inheritdoc cref="ScreenExitEnd"/>
-    public Action<UIGroup>? OnScreenExitEnd { private get; init; }
     
     
     private Dictionary<Type, VisualTreeAsset>? buildMap;
@@ -236,20 +247,6 @@ public abstract class UIGroup {
         Controller.Redraw();
     }
 
-    public void ClearNodes() {
-        foreach (var n in Nodes.ToList())
-            n.Remove();
-        Nodes.Clear();
-    }
-
-    public void Destroy() {
-        Screen.Groups.Remove(this);
-        _ = Render.RemoveSource(this).ContinueWithSync();
-        foreach (var g in DependentGroups)
-            g.Destroy();
-        ClearNodes();
-    }
-
 
     /// <summary>
     /// Make the group visible (it is being entered).
@@ -284,12 +281,6 @@ public abstract class UIGroup {
             tasks[ii] = DependentGroups[ii].LeaveHide(true);
         return Task.WhenAll(tasks);
     }
-
-    /// <summary>
-    /// Handle any redraws for linked render groups.
-    /// Occurs before component node redraws.
-    /// </summary>
-    public virtual void Redraw() { }
 
     /// <summary>
     /// When an group A has a navigation command that moves out of the bounds of A, this function is called on A.Parent to determine how to handle it.
@@ -379,22 +370,35 @@ public abstract class UIGroup {
         return OnEnter?.Invoke(this);
     }
 
-    public virtual async Task LeaveGroup() {
-        await (OnLeave?.Invoke(this) ?? Task.CompletedTask);
-        await LeaveHide();
+    public virtual Task LeaveGroup() {
+        return (OnLeave?.Invoke(this) ?? Task.CompletedTask).And(LeaveHide());
     }
 
-    public virtual void ScreenExitStart() { }
-    
-    /// <summary>
-    /// Called by the containing screen after it has transitioned to a different screen.
-    /// </summary>
-    public void ScreenExitEnd() {
-        OnScreenExitEnd?.Invoke(this);
+    public void ClearNodes() {
+        foreach (var n in Nodes.ToList())
+            n.Remove();
+        Nodes.Clear();
     }
-    public virtual void ScreenEnterStart() { }
-    
-    public virtual void ScreenEnterEnd() { }
+
+    public void Destroy() {
+        Screen.Groups.Remove(this);
+        _ = Render.RemoveSource(this).ContinueWithSync();
+        foreach (var g in DependentGroups)
+            g.Destroy();
+        ClearNodes();
+    }
+
+    /// <summary>
+    /// Mark all nodes as destroyed.
+    /// <br/>If this is a lazy-loaded group that has not yet loaded, then this function is a no-op.
+    /// <br/>Call this when the menu containing this group is being destroyed.
+    /// </summary>
+    public void MarkNodesDestroyed() {
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (nodes is null) return;
+        foreach (var n in nodes)
+            n.MarkDestroyed();
+    }
     
     public override string ToString() => $"{Hierarchy}({this.GetType()})";
 }
@@ -470,7 +474,7 @@ public class PopupUIGroup : CompositeUIGroup {
     
     public bool EasyExit { get; set; }
     public float? OverlayAlphaOverride { get; set; }
-    private readonly Func<LString>? header;
+    private readonly LString? header;
     private readonly UIRenderConstructed render;
 
     /// <summary>
@@ -481,10 +485,10 @@ public class PopupUIGroup : CompositeUIGroup {
     /// <param name="bodyInner">Constructor for the UIGroup containing the popup messages, entry box, etc</param>
     /// <param name="buttons">Configuration for action buttons</param>
     /// <returns></returns>
-    public static PopupUIGroup CreatePopup(UINode source, Func<LString>? header, Func<UIRenderSpace, UIGroup> bodyInner,
+    public static PopupUIGroup CreatePopup(UINode source, LString? header, Func<UIRenderSpace, UIGroup> bodyInner,
         PopupButtonOpts buttons) {
         var render = MakeRenderer(source.Screen.AbsoluteTerritory, XMLUtils.Prefabs.Popup);
-        var bodyGroup = bodyInner(new UIRenderExplicit(source.Screen, _ => render.HTML.Q("BodyHTML")));
+        var bodyGroup = bodyInner(new UIRenderExplicit(render, html => html.Q("BodyHTML")));
         UINode?[] opts;
         if (buttons is PopupButtonOpts.LeftRightFlush lr) {
             var leftOpts = lr.left ?? new UINode[] { UIButton.Back(source) };
@@ -501,7 +505,7 @@ public class PopupUIGroup : CompositeUIGroup {
         var exit = opts.FirstOrDefault(o => o is UIButton { Type: UIButton.ButtonType.Cancel });
         var entry = opts.FirstOrDefault(o => o is UIButton { Type: UIButton.ButtonType.Confirm }) ?? exit;
         var p = new PopupUIGroup(render, header, source, new VGroup(bodyGroup, 
-            new UIRow(new UIRenderExplicit(source.Screen, _ => render.HTML.Q("OptionsHTML")), opts) {
+            new UIRow(new UIRenderExplicit(render, html => html.Q("OptionsHTML")), opts) {
                 EntryNodeOverride = entry,
                 ExitNodeOverride = exit
             })) {
@@ -515,14 +519,14 @@ public class PopupUIGroup : CompositeUIGroup {
     public static PopupUIGroup CreateContextMenu(UINode source, UINode?[] options) {
         var render = MakeRenderer(source.Screen.AbsoluteTerritory, XMLUtils.Prefabs.ContextMenu);
         render.HTML.ConfigureAbsolute(XMLUtils.Pivot.TopLeft).WithAbsolutePosition(
-            source.HTML.worldBound.center + source.HTML.worldBound.size * 0.4f);
+            source.HTML.worldBound.center + source.HTML.worldBound.size * 0.3f);
         var back = new FuncNode(LocalizedStrings.Generic.generic_back, UIButton.GoBackCommand<FuncNode>(source));
         //NB: you can press X/RightClick *once* to leave an options menu.
         // If you add a ExitNodeOverride to the UIColumn, then you'll need to press it twice (as with standard popups)
         var grp = new UIColumn(new UIRenderConstructed(render, new(XMLUtils.AddColumn)), 
-            options.Append(back).Select(x => x?.With(XMLUtils.noPointerClass)));
+            options.Append(back).Select(x => x?.WithCSS(XMLUtils.noPointerClass)));
         var p = new PopupUIGroup(render, null, source, grp) {
-            EntryNodeOverride = options[0],
+            EntryNodeOverride = options.First(x => x != null)!,
             ExitNodeOverride = back,
             EasyExit = true,
             OverlayAlphaOverride = 0,
@@ -542,13 +546,22 @@ public class PopupUIGroup : CompositeUIGroup {
         return render;
     }
     
-    public PopupUIGroup(UIRenderConstructed r, Func<LString>? header, UINode source, UIGroup body) :
+    public PopupUIGroup(UIRenderConstructed r, LString? header, UINode source, UIGroup body) :
         base(r, body) {
         this.render = r;
-        this.header = header;
         this.Source = source;
         this.Parent = source.Group;
         this.NavigationCanLeaveGroup = false;
+        WithOnBuilt(_ => {
+            var h = Render.HTML.Q<Label>("Header");
+            if (header is null) {
+                if (h != null)
+                    h.style.display = DisplayStyle.None;
+                return;
+            }
+            h.style.display = DisplayStyle.Flex;
+            h.text = header;
+        });
     }
 
     public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) => req switch {
@@ -560,18 +573,6 @@ public class PopupUIGroup : CompositeUIGroup {
         await base.LeaveGroup();
         Destroy();
         render.Destroy();
-    }
-
-    public override void Redraw() {
-        var h = Render.HTML.Q<Label>("Header");
-        if (header is null) {
-            if (h != null)
-                h.style.display = DisplayStyle.None;
-            return;
-        }
-        var htext = header();
-        h.style.display = DisplayStyle.Flex;
-        h.text = htext ?? "";
     }
 }
 

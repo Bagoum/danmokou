@@ -111,23 +111,30 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             FixedDifficulty.Lunatic => lunaticDifficulty,
             _ => customDifficulty
         };
-        (UINode?, FixedDifficulty?) MakeDifficultyNode(FixedDifficulty? fd) =>
-            SpriteForDFC(fd) == null ? (null, fd) : 
-                (new UINode {
-                    OnConfirm = (_, _) => fd == null ? 
-                        new UIResult.GoToNode(CustomDifficultyScreen) : dfcContinuation(new(fd)),
-                    Prefab = floater,
-                    OnBuilt = n => XMLUtils.ConfigureFloatingImage(n.NodeHTML, SpriteForDFC(fd)!)
-                }, fd);
+        var vm = new AxisViewModel {
+            BaseLoc = new(-2.9f, 0),
+            Axis = new Vector2(1.4f, -2.6f).normalized * 0.7f,
+        };
+        AxisView View() => new(vm);
+        UINode? MakeDifficultyNode(FixedDifficulty? fd) =>
+            SpriteForDFC(fd) == null ? null : new UINode {
+                OnConfirm = (_, _) => fd == null ? 
+                    new UIResult.GoToNode(CustomDifficultyScreen) : dfcContinuation(new(fd)),
+                Prefab = floater,
+                OnBuilt = n => {
+                    if (difficultyCommentator != null)
+                        n.OnEnter = n.OnEnter.Then((_, _) => difficultyCommentator.SetCommentFromValue(fd));
+                    n.NodeHTML.ConfigureFloatingImage(SpriteForDFC(fd)!);
+                }
+            }.WithView(View());
             
         DifficultyScreen = new UIScreen(this, null, UIScreen.Display.Unlined) {
-            Builder = (s, ve) => ve.CenterElements()
-        };
-        DifficultyScreen.SetFirst(new CommentatorAxisColumn<FixedDifficulty?>(DifficultyScreen, 
-            DifficultyScreen, CustomAndVisibleDifficulties.Select(MakeDifficultyNode).ToArray()) {
-            Commentator = difficultyCommentator,
-            BaseLoc = new(-2.9f * 240f, 0),
-            Axis = new Vector2(1.4f, 2.6f).normalized * (0.7f * 240f),
+            Builder = (s, ve) => ve.CenterElements(),
+        }.WithOnEnterStart(_ => { if (difficultyCommentator != null) difficultyCommentator.Appear(); })
+            .WithOnExitStart(_ => { if (difficultyCommentator != null) difficultyCommentator.Disappear(); });
+        
+        DifficultyScreen.SetFirst(new UIColumn(new UIRenderConstructed(DifficultyScreen, new(x => x.AddVE(null))),
+            CustomAndVisibleDifficulties.Select(MakeDifficultyNode).ToArray()) {
             EntryIndexOverride = () => 2
         });
         
@@ -198,7 +205,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             new FuncNode(main_quit, Application.Quit),
         #endif
             new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
-        }.Select(x => x.With(large1Class, centerTextClass))) {
+        }.Select(x => x.WithCSS(large1Class, centerTextClass))) {
             ExitIndexOverride = -2
         });
 

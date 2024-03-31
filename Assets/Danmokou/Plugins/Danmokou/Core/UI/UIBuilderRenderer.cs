@@ -148,17 +148,18 @@ public class UIBuilderRenderer : RegularUpdater {
         throw new Exception($"No render group by id {renderGroup}");
     }
 
-    public static float ComputeXMLDimensionX(float screenX) =>
+    public static float ToXMLDimX(float screenX) =>
         screenX / MainCamera.ScreenWidth * UIResolution.w;
-    public static float ComputeXMLDimensionY(float screenY) =>
+    public static float ToXMLDimY(float screenY) =>
         screenY / MainCamera.ScreenHeight * UIResolution.h;
-    public static Vector2 ComputeXMLDimensions(Vector2 screenDim) =>
-        new(ComputeXMLDimensionX(screenDim.x), ComputeXMLDimensionY(screenDim.y));
+    public static Vector2 ToXMLDims(Vector2 screenDim) =>
+        new(ToXMLDimX(screenDim.x), ToXMLDimY(screenDim.y));
     
-    public static Vector2 ComputeXMLPosition(Vector2 screenPosition) {
-        var asDim = ComputeXMLDimensions(screenPosition - globalTransform);
-        return new Vector2(UICenter.x + asDim.x, UICenter.y - asDim.y);
-    }
+    public static Vector2 ToXMLOffset(Vector2 screenDim) =>
+        new(ToXMLDimX(screenDim.x), -ToXMLDimY(screenDim.y));
+
+    public static Vector2 ToXMLPos(Vector2 screenPosition) =>
+        UICenter + ToXMLOffset(screenPosition - globalTransform);
     
 
     protected override void OnDisable() {

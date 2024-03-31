@@ -142,6 +142,8 @@ public static class M {
         float sin_rot = (float)Math.Sin(ang);
         return new Vector2(cos_rot * x - sin_rot * y, sin_rot * x + cos_rot * y);
     }
+
+    public static Vector2 PtMul(this Vector2 a, Vector2 b) => new(a.x * b.x, a.y * b.y);
     public static Vector2 ConvertBasis(Vector2 source, Vector2 basis1) => RotateVector(source, basis1.x, -basis1.y);
     public static Vector2 DeconvertBasis(Vector2 source, Vector2 basis1) => RotateVector(source, basis1.x, basis1.y);
 

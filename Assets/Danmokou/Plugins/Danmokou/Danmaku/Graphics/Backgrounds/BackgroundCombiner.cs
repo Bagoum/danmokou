@@ -21,7 +21,6 @@ public class BackgroundCombiner : RegularUpdater {
     private void Awake() {
         pb = new MaterialPropertyBlock();
         sr = GetComponent<SpriteRenderer>();
-        sr.enabled = SaveData.s.Backgrounds;
         mat = sr.material;
         mat.EnableKeyword("MIX_FROM_ONLY");
         sr.SetPropertyBlock(pb);
@@ -30,7 +29,7 @@ public class BackgroundCombiner : RegularUpdater {
     public void Initialize(BackgroundOrchestrator _orchestrator) {
         orchestrator = _orchestrator;
         //reconstruct shouldn't be called until orchestrator is bound
-        Listen(RenderHelpers.PreferredResolution, _ => Reconstruct());
+        Listen(RenderHelpers.PreferredResolution, _ => UpdateTextures());
     }
 
 
@@ -44,14 +43,12 @@ public class BackgroundCombiner : RegularUpdater {
         sr.material = mat;
     }
 
-    private void Reconstruct() {
-        sr.enabled = SaveData.s.Backgrounds;
-        UpdateTextures();
-    }
-
     private void UpdateTextures() {
-        if (!SaveData.s.Backgrounds || orchestrator.FromBG == null) return;
-        //Update PB
+        if (orchestrator.FromBG == null || !orchestrator.FromBG.IsDrawing) {
+            sr.enabled = false;
+            return;
+        }
+        sr.enabled = true;
         var fromTex = orchestrator.FromBG.capturer.Captured;
         var toTex = (orchestrator.ToBG == null) ? null : orchestrator.ToBG.capturer.Captured;
         if (toTex == null) {

@@ -24,6 +24,7 @@ public class MainCamera : RegularUpdater {
     protected Camera mainCam = null!;
     public static float VertRadius { get; private set; }
     public static float HorizRadius { get; private set; }
+    public static Vector2 HalfDim => new(HorizRadius, VertRadius);
     public static float Aspect => HorizRadius / VertRadius;
     public static float ScreenWidth => HorizRadius * 2;
     public static float ScreenHeight => VertRadius * 2;

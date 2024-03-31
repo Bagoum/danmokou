@@ -34,7 +34,14 @@ public class DifficultySettings {
     public const int MAX_SLIDER = 42;
     public const int DEFAULT_SLIDER = 18;
     public FixedDifficulty? standard;
-    public int customValueSlider;
+    private int _customValueSlider;
+    public int customValueSlider {
+        get => _customValueSlider;
+        set {
+            _customValueSlider = value;
+            customStandard = Nearest(_customValueSlider);
+        }
+    }
     //Cached to avoid rechecking the difficulty list every op 
     private FixedDifficulty customStandard;
     public int? customRank;
@@ -88,10 +95,6 @@ public class DifficultySettings {
     [Obsolete]
     public DifficultySettings() : this(FixedDifficulty.Normal) { }
 
-    public void SetCustomDifficulty(int value) {
-        customValueSlider = value;
-        customStandard = Nearest(customValueSlider);
-    }
     public DifficultySettings(FixedDifficulty? standard, int slider=DEFAULT_SLIDER, int? rank = null, 
         int numSuicideBullets = 0,
         double playerDamageMod=1f, float bulletSpeedMod=1f, double bossHPMod=1f, bool? respawnOnDeath = null, 
@@ -102,7 +105,7 @@ public class DifficultySettings {
         ) {
         this.standard = standard;
         this.customRank = rank;
-        SetCustomDifficulty(slider);
+        customValueSlider = slider;
         this.numSuicideBullets = numSuicideBullets;
         this.playerDamageMod = playerDamageMod;
         this.bossHPMod = bossHPMod;

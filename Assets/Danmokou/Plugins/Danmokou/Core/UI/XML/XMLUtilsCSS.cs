@@ -5,6 +5,7 @@ using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Events;
 using BagoumLib.Reflection;
+using Danmokou.Core;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using UnityEngine;
@@ -88,29 +89,27 @@ public static class XMLUtils {
     public static VisualElement SetPadding(this VisualElement root, float padding) =>
         root.SetPadding(padding, padding, padding, padding);
 
-    public enum Pivot {
-        TopLeft,
-        Top,
-        TopRight,
-        Center,
+    public static class Pivot {
+        public static Vector2 TopLeft { get; } = new(0, 1);
+        public static Vector2 Top { get; } = new(0.5f, 1);
+        public static Vector2 TopRight { get; } = new(1, 1);
+        public static Vector2 Center { get; } = new(0.5f, 0.5f);
     }
+    
 
-    private static Translate ToTranslation(Pivot p) => p switch {
-        Pivot.TopLeft => Translate.None(),
-        Pivot.Top => new Translate((-50f).Percent(), 0f, 0),
-        Pivot.TopRight => new Translate((-100f).Percent(), 0f, 0),
-        _ => new Translate((-50f).Percent(), (-50f).Percent(), 0)
-    };
-    private static TransformOrigin ToOrigin(Pivot p) => p switch {
-        Pivot.TopLeft => new TransformOrigin(0f.Percent(), 0f.Percent(), 0f),
-        Pivot.Top => new TransformOrigin(50f.Percent(), 0f.Percent(), 0f),
-        Pivot.TopRight => new TransformOrigin(100f.Percent(), 0f.Percent(), 0f),
-        _ => TransformOrigin.Initial()
-    };
-    public static VisualElement ConfigureAbsolute(this VisualElement ve, Pivot pivot = Pivot.Center) {
+    /// <param name="p">Pivot with (0,0) as bottom left and (1,1) as top right.</param>
+    private static Translate ToTranslation(Vector2 p) =>
+        new Translate((p.x * -100).Percent(), (p.y * 100 - 100).Percent());
+    
+
+    /// <param name="p">Pivot with (0,0) as bottom left and (1,1) as top right.</param>
+    private static TransformOrigin ToOrigin(Vector2 p) =>
+        new((p.x * 100).Percent(), (100 - 100 * p.y).Percent(), 0f);
+    public static VisualElement ConfigureAbsolute(this VisualElement ve, Vector2? pivot = null) {
+        var p = pivot ?? Pivot.Center;
         ve.style.position = Position.Absolute;
-        ve.style.translate = new StyleTranslate(ToTranslation(pivot));
-        ve.style.transformOrigin = ToOrigin(pivot);
+        ve.style.translate = new StyleTranslate(ToTranslation(p));
+        ve.style.transformOrigin = ToOrigin(p);
         return ve;
     }
 
@@ -119,6 +118,12 @@ public static class XMLUtils {
         ve.style.top = leftTop.y;
         return ve;
     }
+
+    public static VisualElement WithAbsolutePositionCentered(this VisualElement ve) {
+        ve.style.left = ve.style.top = 50f.Percent();
+        return ve;
+    }
+    
     public static VisualElement WithAbsolutePosition(this VisualElement ve, 
         float? left = null, float? top = null, float? right = null, float? bot = null) {
         if (left is { } l)
@@ -159,6 +164,8 @@ public static class XMLUtils {
     public static VisualElement SetWidthHeight(this VisualElement n, Vector2 wh) {
         n.style.width = wh.x;
         n.style.height = wh.y;
+        n.style.maxWidth = n.style.minWidth =
+            n.style.maxHeight = n.style.minHeight = new StyleLength(StyleKeyword.None);
         return n;
     }
 
@@ -199,7 +206,13 @@ public static class XMLUtils {
         return ve;
     }
 
-    public static void SetTooltipAbsolutePosition(this VisualElement node, VisualElement tooltip) {
+    /// <summary>
+    /// Reposition an absolute-positioned tooltip relative to a node.
+    /// <br/>The relative positioning of the toolip (eg. top right or top left of the node)
+    ///  depends on the CSS classes of the tooltip.
+    /// </summary>
+    public static void SetTooltipAbsolutePosition(this VisualElement node, VisualElement? tooltip) {
+        if (tooltip is null) return;
         var nr = node.worldBound;
         var leftTop = new Vector2(nr.xMax, nr.yMin); //by default, tooltip is above-right
         if (tooltip.ClassListContains("tooltip-above")) {
@@ -207,11 +220,63 @@ public static class XMLUtils {
         }
         tooltip.WithAbsolutePosition(leftTop);
     }
-        
-    public static void ConfigureFloatingImage(VisualElement node, Sprite s) {
-        node.style.backgroundImage = new StyleBackground(s);
-        //node.style.marginBottom = node.style.marginTop = -s.rect.height / 2;
-        //node.style.marginLeft = node.style.marginRight = -s.rect.width / 2;
+
+    /// <summary>
+    /// Create a RenderSpace for an absolute-positioned tooltip.
+    /// </summary>
+    public static UIRenderSpace TooltipRender(this UIScreen s, Action<UIRenderConstructed, VisualElement>? builder = null) =>
+        new UIRenderConstructed(s.ScreenRender, XMLUtils.Prefabs.Tooltip, builder)
+            .WithTooltipAnim();
+
+    /// <summary>
+    /// Instantiate a UIGroup and RenderSpace representing a tooltip, and make it show on the screen.
+    /// </summary>
+    public static T MakeTooltip<T>(this UINode n, Func<UIRenderSpace, T> ttGroup, Action<UIRenderConstructed, VisualElement>? builder = null, bool animateEntry = true) where T : UIGroup {
+        var tt = ttGroup(n.Screen.TooltipRender(builder));
+        tt.Parent = n.Group;
+        tt.Interactable = false;
+        //can't put this in render.OnBuilt since it needs to run after the tooltip group HTML is constructed
+        tt.Render.HTML.SetRecursivePickingMode(PickingMode.Ignore);
+        n.HTML.SetTooltipAbsolutePosition(tt.Render.HTML);
+        if (!animateEntry)
+            tt.Render.IsFirstRender = true;
+        tt.EnterShow();
+        return tt;
+    }
+
+    /// <summary>
+    /// Render a visual element as a sprite with its actual coordinates and pivot,
+    ///  positioned at the center of the parent object.
+    /// </summary>
+    public static VisualElement ConfigureParentedFloatingImage(this VisualElement ve, Sprite s) {
+        ve.ConfigureAbsolute(s.Pivot())
+            .WithAbsolutePositionCentered()
+            .SetWidthHeight(UIBuilderRenderer.ToXMLDims(s.Dims()))
+            .style.backgroundImage = new(s);
+        return ve;
+    }
+    public static VisualElement ConfigureFloatingImage(this VisualElement ve, Sprite s, Vector2? pivot = null) =>
+        ve.ConfigureAbsolute(pivot ?? s.Pivot())
+            .ConfigureImage(s);
+    
+    public static VisualElement ConfigureImage(this VisualElement ve, Sprite s) {
+        ve.SetWidthHeight(UIBuilderRenderer.ToXMLDims(s.Dims()))
+            .style.backgroundImage = new(s);
+        return ve;
+    }
+
+    public static VisualElement AddTransition(this VisualElement ve, string property, float time,
+        EasingMode ease = EasingMode.EaseOut) {
+        if (ve.style.transitionProperty.value is null)
+            ve.style.transitionProperty = new List<StylePropertyName>();
+        if (ve.style.transitionDuration.value is null)
+            ve.style.transitionDuration = new List<TimeValue>();
+        if (ve.style.transitionTimingFunction.value is null)
+            ve.style.transitionTimingFunction = new List<EasingFunction>();
+        ve.style.transitionProperty.value.Add(property);
+        ve.style.transitionDuration.value.Add(time);
+        ve.style.transitionTimingFunction.value.Add(ease);
+        return ve;
     }
 
     public static VisualElement CloneTreeNoContainer(this VisualTreeAsset vta) {

@@ -11,12 +11,12 @@ var sm = pattern({
 }, {
 phase 0 { } {
 	paction 0 {
-		shiftphaseto 4
+		shiftphaseto 1
 	}
 }
 //Of the four alternatives, #2 (function call) is the only one that works "incorrectly".
-//This is because the function is called once with the value of FrameNumber when the script is compiled,
-// and is never called again.
+//This is because the script function DoPrintFn is called once with the value of FrameNumber 
+// when the script is compiled, and is never called again.
 phase 30 { 
 	type non "Print Time Directly"
 	hp 10000

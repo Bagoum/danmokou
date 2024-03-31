@@ -175,7 +175,6 @@ public class InstanceRecord {
         SubshotSwitches = end.SubshotSwitches;
         OneUpItemsCollected = end.OneUpItemsCollected;
     }
-    public void Invalidate() => SaveData.r.InvalidateRecord(Uuid);
     public void AssignName(string newName) => CustomName = newName[..Math.Min(newName.Length, CustomNameLength)];
 
     public const int CustomNameLength = 16;

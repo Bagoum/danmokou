@@ -36,6 +36,11 @@ public abstract class TypeMember {
     public static TypeMember Make(MemberInfo mi) =>
         MaybeMake(mi) ?? throw new ArgumentOutOfRangeException(mi.GetType().ToString());
     
+    public static Writeable MakeWriteable(MemberInfo mi) {
+        var res = MaybeMake(mi);
+        return res as Writeable ?? throw new Exception($"Member {mi.Name} is not writeable");
+    }
+
     public static TypeMember? MaybeMake(MemberInfo mi) => mi switch {
         MethodInfo meth => new Method(meth),
         ConstructorInfo cons => new Constructor(cons),
@@ -108,7 +113,11 @@ public abstract class TypeMember {
             $"new {TypeName}({string.Join(", ", Params.Select(paramMod))})";
     }
 
-    public class Property : TypeMember {
+    public abstract class Writeable : TypeMember {
+        public abstract void SetInst(object? instance, object value, params object?[] index);
+    }
+    
+    public class Property : Writeable {
         public PropertyInfo Prop { get; init; }
         public override MemberInfo BaseMi => Prop;
         public override Reflector.NamedParam[] Params { get; }
@@ -123,19 +132,27 @@ public abstract class TypeMember {
             Static = getter.IsStatic;
         }
 
-        public override object? InvokeInst(object? instance, params object?[] args) =>
-            args.Length > 0 ? Prop.GetValue(instance, args) : Prop.GetValue(instance);
+        public override object? InvokeInst(object? instance, params object?[] index) =>
+            index.Length > 0 ? Prop.GetValue(instance, index) : Prop.GetValue(instance);
 
-        public override Ex InvokeExInst(Ex? instance, params Ex[] args) =>
+        public override void SetInst(object? instance, object value, params object?[] index) {
+            if (index.Length > 0) {
+                Prop.SetValue(instance, value, index);
+            } else {
+                Prop.SetValue(instance, value);
+            }
+        }
+
+        public override Ex InvokeExInst(Ex? instance, params Ex[] index) =>
             //these return different expressions, so we can't just use the first call
-            args.Length > 0 ? Ex.Property(instance, Prop, args) : Ex.Property(instance, Prop);
+            index.Length > 0 ? Ex.Property(instance, Prop, index) : Ex.Property(instance, Prop);
 
         public override string TypeOnlySignature() => ReturnType.SimpRName();
         public override string AsSignature(Func<Reflector.NamedParam, int, string> paramMod) =>
             $"{ReturnType.SimpRName()} {TypeName}.{Prop.Name}";
     }
 
-    public class Field : TypeMember {
+    public class Field : Writeable {
         public FieldInfo Fi { get; init; }
         public override MemberInfo BaseMi => Fi;
         public override Reflector.NamedParam[] Params { get; }
@@ -153,6 +170,9 @@ public abstract class TypeMember {
         }
 
         public override object? InvokeInst(object? instance, params object?[] args) => Fi.GetValue(instance);
+        
+        public override void SetInst(object? instance, object value, params object?[] args) => 
+            Fi.SetValue(instance, value);
         public override Ex InvokeExInst(Ex? instance, params Ex[] args) => Ex.Field(instance, Fi);
 
         public override string TypeOnlySignature() => ReturnType.SimpRName();

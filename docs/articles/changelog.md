@@ -29,9 +29,45 @@ CONFLICT (modify/delete): SuzunoyaUnity.csproj deleted in HEAD and modified in d
 
  If you get this error, then manually delete the `*.csproj` and `*.sln` files in the base directory, then run `git add . ` and `git rebase --continue`. The files will be regenerated when you reopen Unity.
 
+### UI Changes
 
+This version introduces a significant overhaul to the internal handling for Danmokou's UI utilities (built on top of UIToolkit). In previous versions, any change to the UI (such as the cursor moving from one node to another) resulted in the entire visible UI being redrawn. In order to reduce this overhead, dynamic UI rendering is now handled in a [MVVM pattern](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel) where Views write to the UI whenever they detect changes in the View-Model. As an example, consider a case where we have a string that might change, and we want to render this string to screen. We can implement a basic view model as follows (abbreviated for simplicity):
 
-#### Features
+```C#
+public class LabelViewModel : IUIViewModel {
+	private Func<string> _value;
+	public string Label => _value();
+	
+	public LabelViewModel(Func<string> value) {
+		this._value = value;
+	}
+	
+	public long GetViewHashCode() => Label.GetHashCode();
+}
+```
+
+The view model contains data that we want to render (the `Label` string), as well as some mechanism for determining whether the data has changed (in this case, `GetViewHashCode`, though there are other ways to handle changes). Then, we can create a view that actually performs rendering as follows:
+
+```c#
+public class LabelView : UIView<LabelViewModel> {
+    public LabelView(LabelViewModel model) : base(model) { }
+    
+    protected override BindingResult Update(in BindingContext context) {
+        Node.HTML.Q<Label>().text = ViewModel.Label;
+        return base.Update(in context);
+    }
+}
+```
+
+(Note: UIView is a helper class in DMK, but it derives from CustomBinding, which is a Unity UIToolkit class that is required for this functionality.)
+
+Finally, we can set a node to use this view model and view by calling `node.WithView(new LabelView(new LabelViewModel(stringFunctionHere)))`. (In this basic example, the Model part of MVVM is whatever provided us the `stringFunctionHere` data.)
+
+The benefit of this approach is that a view makes changes to the UI HTML— which are extremely expensive!— only when `GetViewHashCode` changes on its view model. This minimizes the amount of changes made to the UI HTML at any point.
+
+Along with this, the handling for OptionNodeLR has been updated to simplify creation and fix a lot of lingering issues. Instead of taking a getter and setter as arguments, OptionNodeLR now takes an `ITwoWayBinder`, which allows backend data to be modified by the OptionNodeLR View or by backend services, and for those modifications to be visible in both directions.
+
+### Features
 
 - In SuzunoyaUnity, text now scales in (in addition to fading in) in the text box. This can be configured as "Char Scale In Time" and "Char Scale In From" on ADV Dialogue Box Mimic.
 - UI nodes can now have context menus (viewable by pressing C while selecting a node) that show up to the lower-right of the node. You can create such a context menu by calling `myUINode.MakeContextMenu`. See Assets/Danmokou/Plugins/Danmokou/Utility/LocalXMLUIFreeformExample for an example. (Note that context menus are interactable, as opposed to tooltips, which are not.)
@@ -40,6 +76,7 @@ CONFLICT (modify/delete): SuzunoyaUnity.csproj deleted in HEAD and modified in d
 
 - Fixed an issue where controller menu navigation could occasionally result in double movement with the joystick/DPad. 
 - Fixed an issue where the default dialogue box could allow clicking buttons that were not visible.
+- Fixed issues that could arise when the Backgrounds setting was turned on and off repeatedly. Also adjusted internal logic so menu backgrounds always appear regardless of the Backgrounds setting.
 
 # v11.0.0 (2024/02/17)
 

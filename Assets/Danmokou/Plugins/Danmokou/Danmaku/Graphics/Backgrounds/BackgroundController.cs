@@ -18,6 +18,7 @@ public class BackgroundController : CoroutineRegularUpdater {
     protected Transform tr = null!;
     public ArbitraryCapturer capturer = null!;
     public bool runWhileHidden;
+    public bool isMenuBackground;
 
     private FragmentRenderInstance? currentShatter;
 
@@ -26,6 +27,7 @@ public class BackgroundController : CoroutineRegularUpdater {
     private int arb2Layer;
     private int arb2Mask;
     private int arbNullLayer;
+    public bool IsDrawing => DrawToLayer != 0 && DrawToLayer != arbNullLayer;
     protected int DrawToLayer { get; private set; }
     public GameObject? source { get; private set; }
     protected BackgroundOrchestrator Orchestrator { get; private set; } = null!;
@@ -41,8 +43,6 @@ public class BackgroundController : CoroutineRegularUpdater {
             capturer = Object.Instantiate(GameManagement.Prefabs.arbitraryCapturer, tr, false)
                 .GetComponent<ArbitraryCapturer>();
     }
-
-    private void Start() => AssignLayersNext();
 
     private static int nextLayer = 0;
 
@@ -104,8 +104,8 @@ public class BackgroundController : CoroutineRegularUpdater {
     }
 
     public void Hide() {
+        _AssignLayers(arbNullLayer, 0);
         if (runWhileHidden) {
-            _AssignLayers(arbNullLayer, 0);
             capturer.Camera.gameObject.SetActive(false);
         } else {
             gameObject.SetActive(false);
@@ -113,9 +113,19 @@ public class BackgroundController : CoroutineRegularUpdater {
     }
 
     public void Show() {
-        capturer.Camera.gameObject.SetActive(true);
-        gameObject.SetActive(true);
-        AssignLayersNext();
+        if (!gameObject.activeSelf) {
+            capturer.Camera.gameObject.SetActive(true);
+            gameObject.SetActive(true);
+            AssignLayersNext();
+        } else if (!IsDrawing)
+            AssignLayersNext();
+    }
+
+    public void ShowHideBySettings(bool backgroundsEnabled) {
+        if (backgroundsEnabled || isMenuBackground)
+            Show();
+        else
+            Hide();
     }
 
     public void Kill() {

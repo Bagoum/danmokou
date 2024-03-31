@@ -42,8 +42,8 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
         (actionHandler as IFixedXMLReceiver) ??
         throw new Exception($"Action handler {actionHandler} is not an IFixedXMLReceiver");
 
-    public Vector2 XMLLocation => UIBuilderRenderer.ComputeXMLPosition((Vector2)transform.position + Offset);
-    public Vector2 XMLSize => UIBuilderRenderer.ComputeXMLDimensions(Size);
+    public Vector2 XMLLocation => UIBuilderRenderer.ToXMLPos((Vector2)transform.position + Offset);
+    public Vector2 XMLSize => UIBuilderRenderer.ToXMLDims(Size);
 
     private bool? delayedStartPassthrough = null;
 
@@ -58,12 +58,12 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
             OnMouseDown = Receiver.OnPointerDown,
             OnMouseUp = Receiver.OnPointerUp
         };
-        Node.With(xmlClasses);
+        Node.WithCSS(xmlClasses);
     }
     public override void FirstFrame() {
         var menu = Container ?? ServiceLocator.Find<XMLDynamicMenu>();
         if (Receiver.Tooltip is { } tt)
-            Node.MakeTooltip(tt);
+            Node.PrepareTooltip(tt);
         menu.AddNodeDynamic(Node);
         if (delayedStartPassthrough != null)
             Node.UpdatePassthrough(delayedStartPassthrough);

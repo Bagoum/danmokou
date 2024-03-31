@@ -7,6 +7,7 @@ using Danmokou.Core;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static BagoumLib.Transitions.TransitionHelpers;
+using static Danmokou.UI.XML.XMLUtils;
 
 namespace Danmokou.DMath {
 public static class Tweening {
@@ -48,6 +49,20 @@ public static class Tweening {
     public static Tweener<Vector3> RotateTo(this ITransform tr, Vector3 eulers, float time, 
         Easer? ease = null, ICancellee? cT = null)
         => TweenTo(tr.rotation.eulerAngles, eulers, time, x => tr.rotation = Quaternion.Euler(x), ease, cT);
+
+    /// <summary>
+    /// Create a tweener for rotating an entity to a target eulers, ignoring any multiples of 360 and moving in the closest direction.
+    /// </summary>
+    public static Tweener<Vector3> RotateToClosest(this ITransform tr, Vector3 targetEulers, float time,
+        Easer? ease = null, ICancellee? cT = null)
+        => new(new(() => tr.rotation.eulerAngles), new(() => {
+            var src = tr.rotation.eulerAngles;
+            return new Vector3(
+                BMath.GetClosestAroundBound(360f, src.x, targetEulers.x),
+                BMath.GetClosestAroundBound(360f, src.y, targetEulers.y),
+                BMath.GetClosestAroundBound(360f, src.z, targetEulers.z));
+        }), time, x => tr.rotation = Quaternion.Euler(x), ease, cT);
+    
     public static DeltaTweener<Vector3> RotateBy(this ITransform tr, Vector3 eulerDelta, float time, 
         Easer? ease = null, ICancellee? cT = null)
         => TweenDelta(tr.rotation.eulerAngles, eulerDelta, time, x => tr.rotation = Quaternion.Euler(x), ease, cT);
@@ -60,5 +75,10 @@ public static class Tweening {
         Easer? ease = null, ICancellee? cT = null) =>
         TweenTo(tr.style.opacity.keyword == StyleKeyword.Null ? 1 : tr.style.opacity.value, 
             opacity, time, x => tr.style.opacity = x, ease, cT);
+    
+    public static Tweener<Vector2> GoToLeftTop(this VisualElement ve, Vector2 leftTop, float time, 
+        Easer? ease = null, ICancellee? cT = null) =>
+        TweenTo(new(ve.style.left.value.value, ve.style.top.value.value), leftTop, time, 
+            x => ve.WithAbsolutePosition(x.x, x.y), ease, cT);
 }
 }

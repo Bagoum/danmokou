@@ -172,6 +172,15 @@ public static class FuncExtensions {
             b(x);
         };
     }
+    
+    public static Action<T1,T2> Then<T1,T2>(this Action<T1,T2>? a, Action<T1,T2>? b) {
+        if (a == null) return b ?? ((_,_) => {});
+        if (b == null) return a;
+        return (x,y) => {
+            a(x,y);
+            b(x,y);
+        };
+    }
 }
 
 public static class FormattingExtensions {
@@ -214,6 +223,23 @@ public static class UnityExtensions {
         var c = sr.color;
         c.a = a;
         sr.color = c;
+    }
+
+    /// <summary>
+    /// Return the pivot of a sprite in (0, 1) coordinates.
+    /// </summary>
+    public static Vector2 Pivot(this Sprite s) {
+        var p = s.pivot;
+        p.x /= s.rect.width;
+        p.y /= s.rect.height;
+        return p;
+    }
+
+    /// <summary>
+    /// Return the dimensions of a sprite in Unity coordinates.
+    /// </summary>
+    public static Vector2 Dims(this Sprite s) {
+        return new Vector2(s.rect.width / s.pixelsPerUnit, s.rect.height / s.pixelsPerUnit);
     }
 }
 

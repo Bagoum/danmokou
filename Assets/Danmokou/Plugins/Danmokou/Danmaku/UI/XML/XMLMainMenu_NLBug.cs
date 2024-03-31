@@ -9,7 +9,7 @@ public class XMLMainMenu_NLBug : UIController {
         }};
         _ = new UIColumn(MainScreen, null, new[] {
             new UINode("Replays"),
-            new UINode("Replays").With("large1"),
+            new UINode("Replays").WithCSS("large1"),
             new UINode("Stage 1"),
             new UINode("Stage 2"),
             new UINode("Stage2"),

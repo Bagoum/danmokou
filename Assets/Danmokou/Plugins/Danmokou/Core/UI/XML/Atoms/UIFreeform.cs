@@ -12,8 +12,8 @@ namespace Danmokou.UI.XML {
 /// <br/>Used with <see cref="XMLDynamicMenu"/>.
 /// </summary>
 public class UIFreeformGroup : CompositeUIGroup, IFixedXMLObjectContainer {
-    private readonly UINode unselector;
-    public UIFreeformGroup(UIScreen container, UINode unselector) : base(container, Array.Empty<UIGroup>(), new[] { unselector }) {
+    private readonly UINode? unselector;
+    public UIFreeformGroup(UIScreen container, UINode? unselector) : base(container, Array.Empty<UIGroup>(), new[] { unselector }) {
         this.unselector = unselector;
         ExitNodeOverride = unselector;
     }

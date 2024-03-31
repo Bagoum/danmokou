@@ -27,13 +27,13 @@ public class XMLReplaySaveMenu : UIController {
             if (inst.data.Replay is ReplayRecorder { State: ReplayActorState.Finalized } rr) {
                 var rec = rr.Compile(inst.record);
                 var didSave = false;
-                options.Add(new FuncNode(() => !didSave ? save_replay : replay_saved, n => {
+                options.Add(new FuncNode(null, n => {
                     if (didSave) return new UIResult.StayOnNode(true);
                     var nameEntry = new TextInputNode(LString.Empty);
-                    return PopupUIGroup.CreatePopup(n, () => save_replay,
+                    return PopupUIGroup.CreatePopup(n, save_replay,
                         r => new UIColumn(r, new UINode(replay_name) {
                             Prefab = GameManagement.References.uxmlDefaults.PureTextNode, Passthrough = true
-                        }, nameEntry.With(noSpacePrefixClass, centerTextClass)),
+                        }, nameEntry.WithCSS(noSpacePrefixClass, centerTextClass)),
                         new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
                             UIButton.Save(() => {
                                 rec.Metadata.Record.AssignName(nameEntry.DataWIP);
@@ -43,7 +43,7 @@ public class XMLReplaySaveMenu : UIController {
                                 return didSave = true;
                             }, n.ReturnGroup),
                         }));
-                }));
+                }).WithView(new FlagLabelView(new(() => didSave, replay_saved, save_replay))));
             }
             var (lNodes, rNodes) = GameMetadataDisplay(inst.record);
             MainScreen.SetFirst(new LRBGroup(

@@ -12,6 +12,7 @@ using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.GameInstance;
+using Danmokou.UI;
 using Danmokou.UI.XML;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -21,43 +22,28 @@ using static Danmokou.UI.XML.XMLUtils;
 namespace System.Runtime.CompilerServices {
 internal static class IsExternalInit {}
 }
-public class MyInventorySwapCS : ICursorState {
+public class MyInventorySwapCS : CustomCursorState, ICursorState {
     public int FromIndex { get; }
     public UINode Source { get; }
     public UIGroup? Tooltip { get; }
-    private readonly IDisposable token;
-    public MyInventorySwapCS(int fromIndex, UINode source, LocalXMLInventoryExample menu) {
+    public MyInventorySwapCS(int fromIndex, UINode source, LocalXMLInventoryExample menu) : base(menu.Menu) {
         FromIndex = fromIndex;
         Source = source;
-        if (menu.inventory[fromIndex] is { } item) {
-            var render = new UIRenderConstructed(new UIRenderDirect(source.Screen), XMLUtils.Prefabs.Tooltip, (_, ve) => {
-                ve.AddToClassList("tooltip-above");
-                ve.SetPadding(10, 10, 10, 10);
-            }).WithTooltipAnim();
-            var en = new EmptyNode() {
-                OnBuilt = n => {
-                    // manually construct the shadow
-                    // there isn't a good way to clone the VE
-                    n.HTML.style.backgroundImage = new(item.s);
-                    n.HTML.SetWidthHeight(new(140, 140));
-                }
-            };
-            Tooltip = new UIColumn(render, en);
-            UpdateTooltipPosition(source);
-            render.HTML.SetRecursivePickingMode(PickingMode.Ignore);
-            Tooltip.EnterShow();
-        }
-        token = menu.Menu.CursorState.AddConst(this);
+        var item = menu.inventory[fromIndex] ?? throw new Exception("Item required for swap cursor");
+        Tooltip = source.MakeTooltip(rs => new UIColumn(rs, new EmptyNode { OnBuilt = n => {
+            n.HTML.style.backgroundImage = new(item.s);
+            n.HTML.SetWidthHeight(new(140, 140));
+        } }), (_, ve) => {
+            ve.AddToClassList("tooltip-above");
+            ve.SetPadding(10, 10, 10, 10);
+        });
     }
 
-    public void UpdateTooltipPosition(UINode next) {
-        if (Tooltip is null) return;
-        Tooltip.Render.HTML.style.left = next.WorldLocation.center.x;
-        Tooltip.Render.HTML.style.top = next.WorldLocation.yMin;
-    }
+    public void UpdateTooltipPosition(UINode next) =>
+        next.NodeHTML.SetTooltipAbsolutePosition(Tooltip?.Render.HTML);
 
-    public void Dispose() {
-        token.Dispose();
+    public override void Destroy() {
+        base.Destroy();
         if (Tooltip is null) return;
         _ = Tooltip.LeaveGroup().ContinueWithSync(() => {
             Tooltip.Destroy();
@@ -66,12 +52,12 @@ public class MyInventorySwapCS : ICursorState {
     }
 
 
-    public UIResult Navigate(UINode node, UICommand cmd) {
+    public override UIResult Navigate(UINode current, UICommand cmd) {
         if (cmd == UICommand.Back) {
-            Dispose();
+            Destroy();
             return new UIResult.GoToNode(Source, NoOpIfSameNode:false);
         }
-        return node.Navigate(cmd, this);
+        return current.Navigate(cmd, this);
     }
 }
 
@@ -94,10 +80,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
         var s = Menu.MainScreen;
 
         for (int ii = 0; ii < inventory.Length; ii += 3) {
-            if (ii % 3 == 0)
-                inventory[ii] = new MyInventoryItem(ItemTypes[RNG.GetInt(0, ItemTypes.Length)], RNG.GetInt(2, 10));
-            else
-                inventory[ii] = null;
+            inventory[ii] = new MyInventoryItem(ItemTypes[RNG.GetInt(0, ItemTypes.Length)], RNG.GetInt(2, 10));
         }
 
         var w = 10;
@@ -121,10 +104,11 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
             var index = ir * w + ic;
             return new UINode() {
                 Prefab = itemVTA,
-                ShowHideGroup = new UIColumn(details, new UINode(() => inventory[index] is {} item ?
-                    $"Item type: {item.Name}\nCount: {item.ct}" : "No item at this index") {
+                ShowHideGroup = new UIColumn(details, new UINode {
                     Prefab = XMLUtils.Prefabs.PureTextNode
-                }.With(XMLUtils.small1Class, XMLUtils.fontBiolinumClass)) {
+                }.WithCSS(XMLUtils.small1Class, XMLUtils.fontBiolinumClass)
+                .WithView(new LabelView<MyInventoryItem?>(new(() => inventory[index], 
+                    item => item != null ? $"Item type: {item.Name}\nCount: {item.ct}" : "No item at this index")))) {
                     Interactable = false
                 },
                 OnEnter = (n, cs) => {
@@ -147,29 +131,19 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
                             }
                         } else
                             (swapFrom, swapTo) = (swapTo, swapFrom);
-                        swap.Dispose();
+                        swap.Destroy();
                         n.RemakeTooltip(cs);
                         return new UIResult.StayOnNode();
-                    } else return null;
+                    } else {
+                        n.SetTooltip(n.MakeTooltip(rs => new UIColumn(rs, new UINode("temporary toolip") 
+                            { Prefab = XMLUtils.Prefabs.PureTextNode })));
+                        return null;
+                    }
                 },
-                InlineStyle = (vis, n) => {
-                    var title = n.HTML.Q<Label>("Content");
-                    if (inventory[index] is { } item) {
-                        title.style.display = DisplayStyle.Flex;
-                        title.style.backgroundImage = new(item.s);
-                        title.text = $"{item.ct}";
-                    } else
-                        title.style.display = DisplayStyle.None;
-                    /* proof of concept for changing styling based on current cursor state
-                    var bg = n.HTML.Q("BG");
-                    //TODO: can we access cs in the callback instead of circuitously?
-                    bg.style.backgroundColor = (n.Controller.CursorState.Value is MyInventorySwapCS) ?
-                        new Color(0.2f, 0.4f, 0.6f) :
-                        new StyleColor(StyleKeyword.Null);
-                    */
-                },
-            }.MakeTooltip(() => inventory[index] is {} item ? (LString)$"{item.Name} x{item.ct}" : null)
-            .MakeContextMenu((n, cs) => {
+            }
+            .WithView(new InventorySlotDataView(new(this, index)))
+            .PrepareTooltip(() => inventory[index] is {} item ? (LString)$"{item.Name} x{item.ct}" : null)
+            .PrepareContextMenu((n, cs) => {
                 if (cs is NullCursorState && inventory[index] is {} item) {
                     return new UINode[] {
                         new FuncNode("Move", fn => {
@@ -184,6 +158,39 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
         var g = new VGroup(rows);
         Menu.FreeformGroup.AddGroupDynamic(g);
         
+    }
+
+    private class InventorySlotViewModel : UIViewModel {
+        private readonly LocalXMLInventoryExample src;
+        public int Index { get; }
+        public MyInventoryItem? Item => src.inventory[Index];
+        public InventorySlotViewModel(LocalXMLInventoryExample src, int index) {
+            this.src = src;
+            Index = index;
+        }
+
+        public override long GetViewHash() => Item?.GetHashCode() ?? 0;
+    }
+
+    private class InventorySlotDataView : UIView<InventorySlotViewModel> {
+        public InventorySlotDataView(InventorySlotViewModel viewModel) : base(viewModel) { }
+
+        protected override BindingResult Update(in BindingContext context) {
+            var title = Node.HTML.Q<Label>("Content");
+            if (ViewModel.Item is { } item) {
+                title.style.display = DisplayStyle.Flex;
+                title.style.backgroundImage = new(item.s);
+                title.text = $"{item.ct}";
+            } else
+                title.style.display = DisplayStyle.None;
+            /* proof of concept for changing styling based on current cursor state
+            var bg = n.HTML.Q("BG");
+            bg.style.backgroundColor = (n.Controller.CursorState.Value is MyInventorySwapCS) ?
+                new Color(0.2f, 0.4f, 0.6f) :
+                new StyleColor(StyleKeyword.Null);
+            */
+            return base.Update(in context);
+        }
     }
 
 }

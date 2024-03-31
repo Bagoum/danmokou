@@ -1096,7 +1096,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 .WithConst(Definition.IsConstant));
     }
     
-    public record ScriptFunctionDef(PositionRange Position, string Name, LexicalScope EnclosingScope, LexicalScope FnScope, ScriptFnDecl Definition, Block Body) : AST(Position, EnclosingScope, Definition.Defaults.Where(x => x != null).Append(Body).ToArray()), IMethodAST<Dummy> {
+    public record ScriptFunctionDef(PositionRange Position, string Name, LexicalScope EnclosingScope, LexicalScope FnScope, ScriptFnDecl Definition, Block Body) : AST(Position, EnclosingScope, Definition.Defaults.FilterNone().Append(Body).ToArray()), IMethodAST<Dummy> {
         public IReadOnlyList<Dummy> Overloads { get; } = 
             new[] { Dummy.Method(new Known(typeof(void)), 
                 Definition.Args.Select((a, i) => Definition.Defaults[i] != null ? a.TypeDesignation : null)

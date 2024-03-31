@@ -76,7 +76,7 @@ public class XMLMainMenuDays : XMLMainMenu {
                 b.phases.Select(p => {
                     //TODO: this return is not safe if you change the difficulty.
                     if (!p.Enabled(Meta()))
-                        return new UINode(() => p.Title(Meta())) {EnabledIf = () => false};
+                        return new UINode(p.Title(Meta())) {EnabledIf = () => false};
                     Challenge c = p.challenges[0];
                     void SetChallenge(int idx) {
                         c = p.challenges[idx];
@@ -88,13 +88,13 @@ public class XMLMainMenuDays : XMLMainMenu {
                         new InstanceRequest(InstanceRequest.PracticeSuccess, Meta(), new PhaseChallengeRequest(p, c)).Run();
                         return new UIResult.StayOnNode();
                     }
-                    return new UINode(() => p.Title(Meta())) {
+                    return new UINode(p.Title(Meta())) {
                         CacheOnEnter = true, ShowHideGroup = new UIColumn(sceneChallengeCol, 
-                            new UINode(() => c.Description(p.boss.boss)) 
-                                    { OnConfirm = Confirm }
-                                .With(large1Class, centerTextClass),
+                            new UINode { OnConfirm = Confirm }
+                                .WithCSS(large1Class, centerTextClass)
+                                .WithView(new LabelView<Challenge>(new(() => c, c => c.Description(p.boss.boss)))),
                             new ComplexLROptionUINode<int>(LString.Empty, VTALR2Option, SetChallenge,
-                                p.challenges.Length.Range().ToArray, (i, v, on) => {
+                                p.challenges.Length.Range().ToArray(), (i, v, on) => {
                                     v.Query(null!, "bracket")
                                         .ForEach(x => x.style.display = on ? DisplayStyle.Flex : DisplayStyle.None);
                                     v.Q("Star").style.unityBackgroundImageTintColor = new StyleColor(p.Completed(i, Meta()) ?
@@ -104,12 +104,12 @@ public class XMLMainMenuDays : XMLMainMenu {
                                 OnConfirm = Confirm,
                                 OnEnter = (n, _) => SetChallenge((n as IBaseOptionNodeLR)!.Index),
                                 OnLeave = (_, _) => photoBoardToken?.Dispose()
-                            }.With(optionNoKeyClass),
-                            new UINode(() => new LText("Press Z to start level", (Locales.JP, "Zキー押すとレベルスタート"))) 
+                            }.WithCSS(optionNoKeyClass),
+                            new UINode(main_gamestart) 
                                     { OnConfirm = Confirm }
-                                .With(large1Class, centerTextClass)
+                                .WithCSS(large1Class, centerTextClass)
                         )
-                    }.With(large1Class, 
+                    }.WithCSS(large1Class, 
                         p.CompletedAll(Meta()) ? completedAllClass : 
                         p.CompletedOne(Meta()) ? completed1Class :
                         null
@@ -130,26 +130,23 @@ public class XMLMainMenuDays : XMLMainMenu {
         }, SceneObjects = MainScreenOnlyObjects};
         _ = new UIColumn(MainScreen, null,
             new TransferNode(main_gamestart, SceneSelectScreen)
-                .With(large1Class),
-            new OptionNodeLR<string?>(main_lang, l => {
-                    SaveData.s.TextLocale.OnNext(l);
-                    SaveData.AssignSettingsChanges();
-                }, new[] {
+                .WithCSS(large1Class),
+            new OptionNodeLR<string?>(main_lang, SaveData.s.TextLocale, new[] {
                     ((LString)("English"), Locales.EN),
                     ((LString)("日本語"), Locales.JP)
-                }, SaveData.s.TextLocale)
-                .With(large1Class),
+                })
+                .WithCSS(large1Class),
             new TransferNode(main_replays, ReplayScreen) {
                 EnabledIf = () => (SaveData.p.ReplayData.Count > 0)
-            }.With(large1Class),
+            }.WithCSS(large1Class),
             new TransferNode(main_options, OptionsScreen)
-                .With(large1Class),
+                .WithCSS(large1Class),
 #if !WEBGL
             new FuncNode(main_quit, Application.Quit)
-                .With(large1Class),
+                .WithCSS(large1Class),
 #endif
             new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
-                .With(large1Class));
+                .WithCSS(large1Class));
 
         bool doAnim = ReturnTo == null;
         base.FirstFrame();

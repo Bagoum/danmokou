@@ -12,6 +12,7 @@ using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Functional;
 using BagoumLib.Mathematics;
+using BagoumLib.Reflection;
 using BagoumLib.Tasks;
 using BagoumLib.Transitions;
 using Danmokou.Core;
@@ -26,23 +27,16 @@ namespace Danmokou.UI.XML {
 /// An enum describing the visibility of a node based on its functional state.
 /// <br/>Note that this enum does not describe the functional state of the node, just the visibility.
 /// </summary>
-public enum UINodeVisibility {
-    /// <summary>
-    /// The cursor is on the node and it is in a special state that
-    ///  permits some sort of functionality (such as modification of an OptionLR node).
-    /// TODO this is unused.
-    /// </summary>
-    Active = 4,
-    
+public enum UINodeSelection {
     /// <summary>
     /// The cursor is on the node.
     /// </summary>
-    Focused = 3,
+    Focused = 4,
     
     /// <summary>
     /// This node is the source of the currently active popup.
     /// </summary>
-    PopupSource = 4,
+    PopupSource = 3,
     
     /// <summary>
     /// The node is in the same group as the Focused or Active node.
@@ -60,8 +54,8 @@ public enum UINodeVisibility {
     Default = 0
 }
 public class UINode {
-    public Func<LString>? Description { get; }
-    public LString DescriptionOrEmpty => Description?.Invoke() ?? LString.Empty;
+    public LString? Description { get; }
+    public LString DescriptionOrEmpty => Description ?? LString.Empty;
     private UIGroup _group = null!;
     public UIGroup Group {
         get => _group;
@@ -97,19 +91,23 @@ public class UINode {
     /// Parent of HTML. Either Render.HTML or a descendant of Render.HTML.
     /// </summary>
     private VisualElement ContainerHTML { get; set; } = null!;
-    /// <summary>
-    /// The top-level descriptor label for this node.
-    /// </summary>
-    public Label? Label { get; set; }
 
-    public bool IsEnabled { get; private set; } = true;
+    /// <summary>
+    /// True iff the node is visible, regardless of whether the group is visible.
+    /// </summary>
+    public bool IsNodeVisible => (VisibleIf?.Invoke() ?? true);
     
     /// <summary>
-    /// Cached result of VisibleIf.
+    /// True iff the node is visible (as determined by <see cref="VisibleIf"/>) and the group is also visible.
     /// </summary>
-    private bool _visible = true;
+    public bool IsVisible => Group.Visible && IsNodeVisible;
     
-    public bool AllowInteraction => (Passthrough != true) && Group.Interactable && _visible;
+    /// <summary>
+    /// True iff the node is enabled (true by default, overridable by <see cref="EnabledIf"/>).
+    /// </summary>
+    public bool IsEnabled => EnabledIf?.Invoke() ?? true;
+    
+    public bool AllowInteraction => (Passthrough != true) && Group.Interactable && IsNodeVisible;
     public int IndexInGroup => Group.Nodes.IndexOf(this);
     public bool Destroyed { get; private set; } = false;
 
@@ -119,7 +117,7 @@ public class UINode {
     /// </summary>
     public IFixedXMLObject? AbsoluteLocationSource { get; private set; } = null;
 
-    public void ConfigureAbsoluteLocation(IFixedXMLObject source, Pivot pivot = Pivot.Center, Action<UINode>? extraOnBuild = null, bool useVisiblityPassthrough = true) {
+    public void ConfigureAbsoluteLocation(IFixedXMLObject source, Vector2? pivot = null, Action<UINode>? extraOnBuild = null, bool useVisiblityPassthrough = true) {
         if (AbsoluteLocationSource != null)
             throw new Exception($"Duplicate defintion of {nameof(AbsoluteLocationSource)}");
         this.AbsoluteLocationSource = source;
@@ -166,6 +164,7 @@ public class UINode {
     /// navigates to it.
     /// </summary>
     public bool CacheOnEnter { private get; init; } = false;
+    
     /// <summary>
     /// Provide a function that determines whether or not the node is visible.
     ///  By default, a node is always visible.
@@ -173,6 +172,7 @@ public class UINode {
     ///  none of its nodes will be visible.
     /// </summary>
     public Func<bool>? VisibleIf { private get; init; }
+    
     /// <summary>
     /// Provide a function that determines whether or not the node is "enabled". A disabled node will
     ///  not allow confirm or edit operations, but can still be navigated. By default, a node is always enabled.
@@ -189,28 +189,33 @@ public class UINode {
     }
 
     /// <summary>
-    /// Provide handling for styling the node or binding text when it is redrawn.
-    /// </summary>
-    public Action<UINodeVisibility, UINode>? InlineStyle { get; set; }
-    /// <summary>
     /// Overrides the visualTreeAsset used to construct this node's HTML.
+    /// <br/>This overrides <see cref="IUIView"/>.<see cref="IUIView.Prefab"/>.
     /// </summary>
     public VisualTreeAsset? Prefab { get; init; }
+
+    /// <summary>
+    /// View rendering configurations to bind to this node's HTML.
+    /// </summary>
+    private List<IUIView> Views { get; } = new();
+    public RootNodeView RootView { get; }
+    
     /// <summary>
     /// Called after the HTML is built.
     /// </summary>
     public Action<UINode>? OnBuilt { get; set; }
+    
     /// <summary>
     /// Called when this node gains focus.
     /// </summary>
-    public Action<UINode, ICursorState>? OnEnter { get; init; }
+    public Action<UINode, ICursorState>? OnEnter { get; set; }
     
     /// <summary>
     /// Called along with <see cref="OnEnter"/> when this node gains focus,
     ///  or when <see cref="RemakeTooltip"/> is called.
     /// <br/>Creates a tooltip to the upper-right of this node.
     /// </summary>
-    public Func<UINode, ICursorState, UIGroup?>? CreateTooltip { get; set; }
+    public Func<UINode, ICursorState, bool, UIGroup?>? CreateTooltip { get; set; }
     private UIGroup? currentTooltip = null;
     
     /// <summary>
@@ -247,18 +252,13 @@ public class UINode {
     /// <summary>
     /// Overrides Navigate for Confirm entries. Runs after Navigator but before Navigate.
     /// </summary>
-    public Func<UINode, ICursorState, UIResult?>? OnConfirm { get; init; }
+    public Func<UINode, ICursorState, UIResult?>? OnConfirm { get; set; }
     
     /// <summary>
     /// Provides a menu to show when the "context menu" button (C by default) is pressed while this node is active.
     /// </summary>
     public Func<UINode, ICursorState, UIResult?>? OnContextMenu { get; set; }
     
-    /// <summary>
-    /// A function that is run the first time the node is made visible.
-    /// </summary>
-    public Action<UINode>? OnFirstRender { get; init; }
-    private bool isFirstRender = true;
     private readonly UIGroup? _showHideGroup;
     /// <summary>
     /// A UIGroup to show on entry and hide on exit.
@@ -271,16 +271,6 @@ public class UINode {
             _showHideGroup = value;
         } 
     }
-    
-    /// <summary>
-    /// List of CSS classes to apply to the node HTML.
-    /// </summary>
-    public List<string> OverrideClasses { get; init; } = new();
-    
-    /// <summary>
-    /// Animation played when the node is first rendered. Defaults to null.
-    /// </summary>
-    public Func<UINode, ICancellee, Task>? OnFirstRenderAnimation { get; set; }
     
     /// <summary>
     /// Animation played when focus is placed on the node. Defaults to <see cref="DefaultEnterAnimation"/>.
@@ -311,13 +301,18 @@ public class UINode {
     
     #endregion
     
-    private string[] boundClasses = null!;
     private Cancellable animToken = new();
 
-    public UINode With(params string?[] clss) {
-        foreach (var cls in clss) {
-            if (!string.IsNullOrWhiteSpace(cls)) OverrideClasses.Add(cls!);
+    public UINode WithCSS(params string?[] clss) {
+        void AddClassesToNode(UINode n) {
+            foreach (var cls in clss)
+                if (!string.IsNullOrWhiteSpace(cls))
+                    n.NodeHTML.AddToClassList(cls);
         }
+        if (Built)
+            AddClassesToNode(this);
+        else
+            OnBuilt = ((Action<UINode>)AddClassesToNode).Then(OnBuilt);
         return this;
     }
     
@@ -329,44 +324,86 @@ public class UINode {
     /// </summary>
     public UIResult ReturnGroup => new UIResult.ReturnToTargetGroupCaller(this);
 
-    public UINode(Func<LString>? description) {
+    public UINode(LString? description) {
         this.Description = description;
+        Views.Add(RootView = new RootNodeView(this));
     }
     
-    public UINode(LString description) : this(() => description) { }
-    public UINode() : this(null as Func<LString>) { }
+    public UINode() : this(null) { }
 
     #region Construction
+    
+    /// <summary>
+    /// Add a <see cref="IUIView"/> that configures dynamic rendering for some aspect of the node.
+    /// </summary>
+    public UINode WithView<T>(T view) where T : IUIView {
+        Views.Add(view);
+        if (Built) {
+            view.Bind(HTML);
+            view.NodeBuilt(this);
+        }
+        return this;
+    }
+
+    /// <inheritdoc cref="WithView{T}(T)"/>
+    public UINode WithView<T>(Func<UINode, T> view) where T : IUIView => WithView(view(this));
+
+    public UINode WithRootView(Action<RootNodeView> updater) {
+        updater(this.RootView);
+        return this;
+    }
 
     /// <summary>
-    /// Add a tooltip that appears to the upper-right of this node when this node is focused.
+    /// Retrieve the view of type T, or throw an exception.
+    /// </summary>
+    public T View<T>() where T : class, IUIView => MaybeView<T>() ??
+                                            throw new Exception($"No view found for type {typeof(T).RName()}");
+    
+    /// <summary>
+    /// Retrieve the view of type T.
+    /// </summary>
+    public T? MaybeView<T>() where T: class, IUIView {
+        for (int ii = 0; ii < Views.Count; ++ii)
+            if (Views[ii] is T view)
+                return view;
+        return null;
+    }
+
+    /// <summary>
+    /// Configure a tooltip that will appear to the upper-right of this node when this node is focused.
     /// <br/>Tooltips cannot be interacted with.
     /// </summary>
-    public UINode MakeTooltip(Func<UINode, ICursorState, UINode?> element) {
-        CreateTooltip = (n, cs) => 
+    public UINode PrepareTooltip(Func<UINode, ICursorState, UINode?> element) {
+        CreateTooltip = (n, cs, animate) => 
             element(n, cs) is {} node ?
-                new UIColumn(new UIRenderConstructed(new UIRenderDirect(Screen), XMLUtils.Prefabs.Tooltip)
-                        .WithTooltipAnim(), node) { Interactable = false }
+                this.MakeTooltip(SimpleTTGroup(node), animateEntry: animate)
                 : null;
         return this;
     }
 
-    /// <inheritdoc cref="MakeTooltip(System.Func{Danmokou.UI.XML.UINode,Danmokou.UI.XML.ICursorState,Danmokou.UI.XML.UINode?})"/>
-    public UINode MakeTooltip(Func<LString?> text) =>
-        MakeTooltip((_, _) => text() is {} txt ? 
-            new UINode(txt) { Prefab = XMLUtils.Prefabs.PureTextNode }.With(XMLUtils.highVisClass)
-            : null);
+    public Func<UIRenderSpace, UIColumn> SimpleTTGroup(UINode node) =>
+        rs => new UIColumn(rs, node);
+    public Func<UIRenderSpace, UIColumn> SimpleTTGroup(LString text) =>
+        rs => new UIColumn(rs, SimpleTTNode(text));
     
-    /// <inheritdoc cref="MakeTooltip(System.Func{Danmokou.UI.XML.UINode,Danmokou.UI.XML.ICursorState,Danmokou.UI.XML.UINode?})"/>
-    public UINode MakeTooltip(LString text) =>
-        MakeTooltip(() => text);
+    public UINode SimpleTTNode(LString text) =>
+        new UINode(text) { Prefab = XMLUtils.Prefabs.PureTextNode }.WithCSS(XMLUtils.highVisClass);
+
+
+    /// <inheritdoc cref="PrepareTooltip(System.Func{Danmokou.UI.XML.UINode,Danmokou.UI.XML.ICursorState,Danmokou.UI.XML.UINode?})"/>
+    public UINode PrepareTooltip(Func<LString?> text) =>
+        PrepareTooltip((_, _) => text() is { } txt ? SimpleTTNode(txt) : null);
+    
+    /// <inheritdoc cref="PrepareTooltip(System.Func{Danmokou.UI.XML.UINode,Danmokou.UI.XML.ICursorState,Danmokou.UI.XML.UINode?})"/>
+    public UINode PrepareTooltip(LString text) =>
+        PrepareTooltip(() => text);
     
 
     /// <summary>
-    /// Add an options menu that appears to the lower-right of this node when C is pressed while this node is focused.
-    /// <br/>An options menu is like a popup. While the options menu is active, nothing else receives interaction.
+    /// Configure a context menu that appears to the lower-right of this node when C is pressed while this node is focused.
+    /// <br/>A context menu is like a popup. While the options menu is active, nothing else receives interaction.
     /// </summary>
-    public UINode MakeContextMenu(Func<UINode, ICursorState, UINode[]?> options) {
+    public UINode PrepareContextMenu(Func<UINode, ICursorState, UINode[]?> options) {
         OnContextMenu = (n, cs) => {
             if (options(n, cs) is not { } opts)
                 return null;
@@ -375,24 +412,12 @@ public class UINode {
         return this;
     }
 
-    //float MONKEYPATCH_mouseDelay = 0;
     protected virtual void RegisterEvents() {
-        //IEnumerator MONKEYPATCH_trackDelay() {
-        //    while (true) {
-        //        yield return null;
-        //        MONKEYPATCH_mouseDelay -= ETime.FRAME_TIME;
-        //    }
-            // ReSharper disable once IteratorNeverReturns
-        //}
-        //Controller.RunDroppableRIEnumerator(MONKEYPATCH_trackDelay());
-        
         bool isInElement = false;
         bool startedClickHere = false;
         //It's a bit more mouse-friendly to use BodyHTML when possible so empty space on rows doesn't draw events
         var evtBinder = BodyOrNodeHTML;
         evtBinder.RegisterCallback<PointerEnterEvent>(evt => {
-            //Logs.Log($"Enter {Description()} {MONKEYPATCH_mouseDelay} {evt.position} {evt.localPosition}");
-            //if (MONKEYPATCH_mouseDelay > 0f) return;
         #if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IOS)
             //PointerEnter is still issued while there's no touch, at the last touched point
             if (evt.pressure <= 0)
@@ -433,19 +458,43 @@ public class UINode {
         });
     }
     public void Build(Dictionary<Type, VisualTreeAsset> map) {
-        NodeHTML = (Prefab != null ? Prefab : map.SearchByType(this, true)).CloneTreeNoContainer();
-        //NodeHTML = HTML.Q<VisualElement>(null!, nodeClass);
-        Label = NodeHTML.Query<Label>().ToList().FirstOrDefault();
-        boundClasses = NodeHTML.GetClasses().ToArray();
+        var prefab = Prefab;
+        if (prefab == null) {
+            foreach (var view in Views) {
+                if (view.Prefab != null) {
+                    if (prefab != null)
+                        throw new Exception("Multiple view prefabs defined for node");
+                    prefab = view.Prefab;
+                }
+            }
+        }
+        if (prefab == null)
+            prefab = map.SearchByType(this, true);
+        NodeHTML = prefab.CloneTreeNoContainer();
+        if (Description != null) {
+            var label = NodeHTML.Q<Label>();
+            if (label != null)
+                label.text = Description;
+        }
         (ContainerHTML = BuildTarget?.Invoke(Render.HTML) ?? Render.HTML).Add(HTML);
+        foreach (var view in Views)
+            view.Bind(HTML);
         Built = true;
         RegisterEvents();
+        foreach (var view in Views)
+            view.NodeBuilt(this);
         OnBuilt?.Invoke(this);
+    }
+
+    public void MarkDestroyed() {
+        Destroyed = true;
+        foreach (var view in Views)
+            view.NodeDestroyed(this);
     }
 
     public void Remove() {
         CloseDependencies(false);
-        Destroyed = true;
+        MarkDestroyed();
         Group.Nodes.Remove(this);
         HTML.RemoveFromHierarchy();
         Controller.MoveCursorAwayFromNode(this);
@@ -468,73 +517,21 @@ public class UINode {
             }
         }
     }
-    public virtual void Rebind() {
-        if (Label != null && Description != null)
-            Label.text = Description();
-    }
 
-    private static UINodeVisibility Max(UINodeVisibility a, UINodeVisibility b) => a > b ? a : b;
+    private static UINodeSelection Max(UINodeSelection a, UINodeSelection b) => a > b ? a : b;
 
-    private UINodeVisibility lastVisibility = UINodeVisibility.Default;
-    /// <summary>
-    /// Cached result of whether or not this node rendered (ie. _visible && Group.Visible)
-    /// </summary>
-    private bool lastFrameRendered = true;
-    public void Redraw(UINodeVisibility visibility) {
-        _visible = VisibleIf?.Invoke() ?? true;
-        //Don't do any HTML updates if the node is not rendered between both frames.
-        //This makes structures such as save/load (~1/10 of nodes are rendered at a time) much more efficient.
-        var thisFrameRender = _visible && Group.Visible;
-        if (!lastFrameRendered && !thisFrameRender)
-            return;
-        
-        //If the render target is going invisible, then don't bother redrawing
-        // (Note: this is important for non-blocking animations like popup scale-out to work)
-        if (!Render.IsVisible)
-            return;
-        
-        lastFrameRendered = thisFrameRender;
-        NodeHTML.ClearClassList();
-        foreach (var c in boundClasses)
-            NodeHTML.AddToClassList(c);
+    public UINodeSelection Selection { get; private set; } = UINodeSelection.Default;
+
+    public void UpdateSelection(UINodeSelection selection) {
         //For inaccessible groups, we make them group-focused
-        //TODO changed from .HasInteractableNodes to .Interactable in order to not encompass dynamically inaccessible groups
-        // for the evidence buildout in GOTP
-        if (visibility >= UINodeVisibility.Default && !Group.Interactable)
-            visibility = Max(visibility, UINodeVisibility.GroupFocused);
-        lastVisibility = visibility;
-        NodeHTML.AddToClassList(!thisFrameRender ? "invisible" : visibility switch {
-            UINodeVisibility.Active => "focus",
-            UINodeVisibility.Focused or UINodeVisibility.PopupSource => "focus",
-            UINodeVisibility.GroupFocused => "group",
-            UINodeVisibility.GroupCaller => "selected",
-            UINodeVisibility.Default => "visible",
-            _ => throw new ArgumentOutOfRangeException(nameof(visibility), visibility, null)
-        });
-        if (thisFrameRender) {
-            //Active receives .focus.active
-            if (Group.Visible && visibility == UINodeVisibility.Active)
-                NodeHTML.AddToClassList("active");
-            foreach (var cls in OverrideClasses)
-                NodeHTML.AddToClassList(cls);
-            if (!(IsEnabled = EnabledIf?.Invoke() ?? true))
-                NodeHTML.AddToClassList(disabledClass);
-            Rebind();
-            InlineStyle?.Invoke(visibility, this);
-        }
+        //Use Interactable instead of HasInteractableNodes in order to avoid encompassing groups that are
+        // dynamically inacessible
+        if (selection >= UINodeSelection.Default && !Group.Interactable)
+            selection = Max(selection, UINodeSelection.GroupFocused);
+        Selection = selection;
+        //TODO not sure where to put this
         if (currentTooltip is not null)
             HTML.SetTooltipAbsolutePosition(currentTooltip.Render.HTML);
-        
-        if (thisFrameRender && isFirstRender) {
-            isFirstRender = false;
-            OnFirstRender?.Invoke(this);
-            _ = PlayAnimation(OnFirstRenderAnimation);
-        }
-    }
-
-    public void RedrawIfBuilt() {
-        if (Built)
-            Redraw(lastVisibility);
     }
     
     #endregion
@@ -563,7 +560,6 @@ public class UINode {
     
     public void Enter(bool animate, ICursorState cs) {
         if (CacheOnEnter) Controller.TentativeCache(this);
-        //TODO: handle this via options, eg. OnEnterAnim = new[] { ScaleBop(1.03, 0.1, 0.13), LocationTo(-100, 10)... }
         if (animate) {
             _ = PlayAnimation(EnterAnimation.Valid ? EnterAnimation.Value : DefaultEnterAnimation());
         }
@@ -587,8 +583,8 @@ public class UINode {
     }
 
     private void CloseDependencies(bool animate) {
-        if (ShowHideGroup != null)
-            Logs.Log($"Closing show/hide on {DescriptionOrEmpty} ({Group})");
+        //if (ShowHideGroup != null)
+            //Logs.Log($"Closing show/hide on {DescriptionOrEmpty} ({Group})");
         ShowHideGroup?.LeaveHide();
         CloseTooltip(animate);
     }
@@ -607,27 +603,18 @@ public class UINode {
         }
     }
     public void RemakeTooltip(ICursorState cs) {
-        var animateEntry = currentTooltip is null;
-        if (CreateTooltip?.Invoke(this, cs) is not { } tt)
-            CloseTooltip(true);
-        else {
-            CloseTooltip(false);
-            currentTooltip = tt;
-            tt.Parent = Group;
-            if (tt.Interactable)
-                throw new Exception("Interactable tooltips not supported");
-            tt.Render.HTML.SetRecursivePickingMode(PickingMode.Ignore);
-            tt.EnterShow();
-            if (!animateEntry)
-                tt.Render.AnimateToken?.SoftCancel();
-            HTML.SetTooltipAbsolutePosition(tt.Render.HTML);
-        }
-        
+        SetTooltip(CreateTooltip?.Invoke(this, cs, currentTooltip is null));
     }
+
+    public void SetTooltip(UIGroup? tooltip) {
+        CloseTooltip(tooltip is null || tooltip.Render.IsAnimating);
+        currentTooltip = tooltip;
+    }
+    
     protected virtual Func<UINode, ICancellee, Task>? DefaultEnterAnimation() => (n, cT) => 
         n.NodeHTML.transform.ScaleTo(1.02f, 0.1f, Easers.EOutSine, cT)
                                 .Then(() => n.NodeHTML.transform.ScaleTo(1f, 0.13f, cT: cT))
-                                .Run(Controller, new CoroutineOptions(true));
+                                .Run(Controller, UIController.AnimOptions);
 
     protected virtual Func<UINode, ICancellee, Task>? DefaultLeaveAnimation() => null;
 
@@ -637,7 +624,7 @@ public class UINode {
 public class EmptyNode : UINode {
     public IFixedXMLObject? Source { get; }
 
-    public EmptyNode() : base("empty node") {
+    public EmptyNode() {
         DisableAnimations();
     }
     public EmptyNode(IFixedXMLObject source, Action<EmptyNode>? onBuild = null, bool useVisiblityPassthrough = true) : 
@@ -657,45 +644,44 @@ public class EmptyNode : UINode {
 }
 
 public class PassthroughNode : UINode {
-    public PassthroughNode(LString? desc = null) : base(desc ?? LString.Empty) {
-        Passthrough = true;
-    }
-    public PassthroughNode(Func<LString> desc) : base(desc) {
+    public PassthroughNode(LString? desc = null) : base(desc) {
         Passthrough = true;
     }
 }
 public class TwoLabelUINode : UINode {
-    private readonly Func<LString> desc2;
-    public TwoLabelUINode(LString description1, Func<LString> description2) : base(() => description1) {
-        desc2 = description2;
+    public TwoLabelUINode(LString description1, Func<LString> description2, IObservable<Unit>? updater) : base(description1) {
+        var view = new LabelView<LString>(new(description2, x => x.Value), "Label2");
+        if (updater != null)
+            view.DirtyOn(updater);
+        WithView(view);
     }
-    public TwoLabelUINode(LString description1, LString description2) : this(description1, () => description2){ }
-    public TwoLabelUINode(LString description1, object description2) : this(description1, description2.ToString()) { }
+    public TwoLabelUINode(LString description1, Func<string> description2, IObservable<Unit>? updater) : base(description1) {
+        var view = new LabelView(description2, "Label2");
+        if (updater != null)
+            view.DirtyOn(updater);
+        WithView(view);
+    }
+    public TwoLabelUINode(LString description1, ILabelViewModel vm) : base(description1) {
+        WithView(new LabelView(vm, "Label2"));
+    }
 
-    public override void Rebind() {
-        base.Rebind();
-        NodeHTML.Q<Label>("Label2").text = desc2();
+    public TwoLabelUINode(LString description1, object description2) : base(description1) {
+        OnBuilt = OnBuilt.Then(n => n.NodeHTML.Q<Label>("Label2").text = description2.ToString());
     }
 }
 public class FuncNode : UINode {
     public Func<FuncNode, ICursorState, UIResult> Command { get; }
 
-    public FuncNode(Func<LString>? description, Func<FuncNode, ICursorState, UIResult> command) : base(description) {
+    public FuncNode(LString? description, Func<FuncNode, ICursorState, UIResult> command) : base(description) {
         this.Command = command;
     }
-    public FuncNode(Func<LString>? description, Func<FuncNode, UIResult> command) : base(description) {
-        this.Command = (n, cs) => command(n);
-    }
-    public FuncNode(LString description, Func<FuncNode, ICursorState, UIResult> command) : this(() => description, command) { }
-    public FuncNode(LString description, Func<FuncNode, UIResult> command) : this(() => description, command) { }
-    public FuncNode(Func<LString>? description, Func<UIResult> command) : this(description, (_, _) => command()) { }
-    public FuncNode(LString description, Func<UIResult> command) : this(() => description, command) { }
-    public FuncNode(Func<LString>? description, Action command) : this(description, () => {
+    public FuncNode(LString? description, Func<FuncNode, UIResult> command) : this(description, (n,cs) => command(n)) { }
+    public FuncNode(LString? description, Func<UIResult> command) : this(description, (_, _) => command()) { }
+    public FuncNode(LString? description, Action command) : this(description, (_, _) => {
         command();
         return new UIResult.StayOnNode();
     }) { }
-    public FuncNode(LString description, Action command) : this(() => description, command) { }
-    public FuncNode(LString description, Func<bool> command) : this(() => description, () => new UIResult.StayOnNode(!command())) { }
+    public FuncNode(LString? description, Func<bool> command) : this(description, (_, _) => new UIResult.StayOnNode(!command())) { }
     protected override UIResult NavigateInternal(UICommand req, ICursorState cs) {
         if (req == UICommand.Confirm)
             return Command(this, cs);
@@ -704,7 +690,7 @@ public class FuncNode : UINode {
 }
 
 public class OpenUrlNode : FuncNode {
-    public OpenUrlNode(LString Description, string URL) : base(() => Description, () => {
+    public OpenUrlNode(LString? Description, string URL) : base(Description, () => {
         Application.OpenURL(URL);
         return new UIResult.StayOnNode(false);
     }) { }
@@ -721,24 +707,18 @@ public class ConfirmFuncNode : UINode {
     private bool isConfirm = false;
     public Func<ConfirmFuncNode, UIResult> Command { get; }
 
-    public ConfirmFuncNode(Func<LString> description, Func<ConfirmFuncNode, UIResult> command) : base(description) {
+    public ConfirmFuncNode(LString description, Func<ConfirmFuncNode, UIResult> command) : base(description) {
         this.Command = command;
+        if (Description != null)
+            WithView(new FlagLabelView(new(() => isConfirm, LocalizedStrings.UI.are_you_sure, Description)));
     }
-    public ConfirmFuncNode(Func<LString> description, Func<UIResult> command) : this(description, _ => command()) { }
-    
-    public ConfirmFuncNode(LString description, Func<UIResult> command) : this(() => description, command) { }
-    public ConfirmFuncNode(LString description, Action command) : this(() => description, command) { }
-    public ConfirmFuncNode(Func<LString> description, Action command) : this(description, () => {
+    public ConfirmFuncNode(LString description, Func<UIResult> command) : this(description, _ => command()) { }
+    public ConfirmFuncNode(LString description, Action command) : this(description, () => {
         command();
         return new UIResult.StayOnNode();
     }) { }
-    public ConfirmFuncNode(LString description, Func<bool> command) : this(() => description, 
+    public ConfirmFuncNode(LString description, Func<bool> command) : this(description, 
         () => new UIResult.StayOnNode(!command())) { }
-
-    public override void Rebind() {
-        if (Label != null && Description != null)
-            Label.text = isConfirm ? LocalizedStrings.UI.are_you_sure : Description();
-    }
 
     protected override UIResult NavigateInternal(UICommand req, ICursorState cs) {
         if (req == UICommand.Confirm)
@@ -762,10 +742,9 @@ public interface IOptionNodeLR : IBaseOptionNodeLR {
 public interface IComplexOptionNodeLR : IBaseOptionNodeLR {
 }
 public abstract class BaseLROptionUINode<T> : UINode {
-    protected int index;
     public Action<T> OnChange { get; }
 
-    public BaseLROptionUINode(Func<LString> Description, Action<T> OnChange) : base(Description) {
+    public BaseLROptionUINode(LString Description, Action<T> OnChange) : base(Description) {
         this.OnChange = OnChange;
     }
 
@@ -791,62 +770,86 @@ public abstract class BaseLROptionUINode<T> : UINode {
     };
 }
 
-public class OptionNodeLR<T> : BaseLROptionUINode<T>, IOptionNodeLR {
-    private readonly Func<(LString key, T val)[]> values;
-    public int Index {
-        get => index = M.Clamp(0, values().Length - 1, index);
-        set => index = value;
+public class OptionNodeLR<T> : BaseLROptionUINode<T>, IOptionNodeLR, IDerivativeViewModel {
+    private readonly ITwoWayBinder<T> binder;
+    public IUIViewModel Delegator => binder.ViewModel;
+    
+    private class View : UIView<OptionNodeLR<T>> {
+        public View(OptionNodeLR<T> data) : base(data) { }
+        public override void NodeBuilt(UINode node) {
+            base.NodeBuilt(node);
+            Node.NodeHTML.Q<Label>("Key").text = Node.DescriptionOrEmpty;
+        }
+
+        protected override BindingResult Update(in BindingContext context) {
+            Node.NodeHTML.Q<Label>("Value").text = ViewModel.lastKey;
+            return base.Update(in context);
+        }
     }
 
-    public T Value => values()[Index].val;
+    private readonly Func<(LString key, T val)[]> values;
+    private int _index;
+    public int Index {
+        get => _index;
+        set => Update(value, values()[value]);
+    }
+    private LString lastKey { get; set; }
+    public T Value => binder.Value;
+
+    private void Update(int index, (LString key, T val) selected) {
+        _index = index;
+        lastKey = selected.key;
+        if (!EqualityComparer<T>.Default.Equals(binder.Value, selected.val))
+            binder.Value = selected.val;
+    }
+    
 
     public void SetIndexFromVal(T val) {
-        index = this.values().Enumerate().FirstOrDefault(x => Equals(x.val.val, val)).idx;
+        var vals = values();
+        var ind = 0;
+        for (int ii = 0; ii < vals.Length; ++ii)
+            if (EqualityComparer<T>.Default.Equals(vals[ii].val, val)) {
+                ind = ii;
+                break;
+            }
+        Update(ind, vals[ind]);
     }
-    public OptionNodeLR(Func<LString> description, Action<T> onChange, Func<(LString, T)[]> values, T defaulter) : base(description, onChange) {
+    
+    public OptionNodeLR(LString description, ITwoWayBinder<T> binder, Func<(LString, T)[]> values) : base(description, null!) {
         this.values = values;
-        SetIndexFromVal(defaulter);
+        this.binder = binder;
+        var view = new View(this);
+        WithView(view);
+        (view as ITokenized).AddToken(binder.ValueUpdatedFromModel.Subscribe(_ => SetIndexFromVal(Value)));
+        SetIndexFromVal(binder.Value);
     }
+    public OptionNodeLR(LString description, ITwoWayBinder<T> binder, (LString, T)[] values) : 
+        this(description, binder, () => values) { }
 
-    public OptionNodeLR(Func<LString> description, Action<T> onChange, (LString, T)[] values, T defaulter) :
-        this(description, onChange, () => values, defaulter) { }
-    public OptionNodeLR(LString description, Action<T> onChange, (LString, T)[] values, T defaulter) :
-        this(() => description, onChange, () => values, defaulter) { }
-    public OptionNodeLR(LString description, Action<T> onChange, Func<(LString, T)[]> values, T defaulter) :
-        this(() => description, onChange, values, defaulter) { }
-
-    public OptionNodeLR(LString description, Action<T> onChange, T[] values, T defaulter) :
-        this(() => description, onChange, () => values.Select(x => (default(LString)!, x)).ToArray(), defaulter) {
-        var valuesAndStrs = values.Select(x => ((LString)(x?.ToString() ?? "Null"), x)).ToArray();
-        this.values = () => valuesAndStrs;
-    }
-
-
-    public override void Rebind() {
-        base.Rebind();
-        NodeHTML.Q<Label>("Key").text = DescriptionOrEmpty;
-        NodeHTML.Q<Label>("Value").text = values()[Index].key;
-    }
+    public OptionNodeLR(LString description, Evented<T> ev, (LString, T)[] values) :
+        this(description, new EventedBinder<T>(ev, null), () => values) { }
 
     private void ScaleEndpoint(VisualElement ep) {
         ep.ScaleTo(1.35f, 0.06f, Easers.EOutSine)
             .Then(() => ep.ScaleTo(1f, 0.15f))
-            .Run(Controller, new(true));
+            .Run(Controller, UIController.AnimOptions);
     }
     protected override UIResult Left() {
         var v = values();
+        var ind = BMath.Clamp(0, v.Length - 1, Index);
         if (v.Length > 0) {
-            index = BMath.Mod(v.Length, index - 1);
-            OnChange(v[index].val);
+            ind = BMath.Mod(v.Length, ind - 1);
+            Update(ind, v[ind]);
             ScaleEndpoint(NodeHTML.Q("Left"));
         }
         return new UIResult.StayOnNode();
     }
     protected override UIResult Right() {
         var v = values();
+        var ind = BMath.Clamp(0, v.Length - 1, Index);
         if (v.Length > 0) {
-            index = BMath.Mod(v.Length, index + 1);
-            OnChange(v[index].val);
+            ind = BMath.Mod(v.Length, ind + 1);
+            Update(ind, v[ind]);
             ScaleEndpoint(NodeHTML.Q("Right"));
         }
         return new UIResult.StayOnNode();
@@ -854,39 +857,46 @@ public class OptionNodeLR<T> : BaseLROptionUINode<T>, IOptionNodeLR {
 }
 
 
-public class ComplexLROptionUINode<T> : BaseLROptionUINode<T>, IComplexOptionNodeLR {
+public class ComplexLROptionUINode<T> : BaseLROptionUINode<T>, IComplexOptionNodeLR, IUIViewModel {
+    public BindingUpdateTrigger UpdateTrigger { get; set; }
+    public Func<long>? OverrideHashHandler { get; set; }
+    public long GetViewHash() => Index.GetHashCode();
+    private class ComplexLROptionNodeView : UIView<ComplexLROptionUINode<T>> {
+        public ComplexLROptionNodeView(ComplexLROptionUINode<T> data) : base(data) { }
+        protected override BindingResult Update(in BindingContext context) {
+            ViewModel.NodeHTML.Q<Label>("Key").text = ViewModel.DescriptionOrEmpty;
+            ViewModel.NodeHTML.Q("LR2ChildContainer").Clear();
+            foreach (var (i, v) in ViewModel.values.Enumerate()) {
+                var ve = ViewModel.objectTree.CloneTreeNoContainer();
+                ViewModel.NodeHTML.Q("LR2ChildContainer").Add(ve);
+                ViewModel.binder(v, ve, i == ViewModel.index);
+            }
+            return base.Update(in context);
+        }
+    }
+    
     private readonly VisualTreeAsset objectTree;
     private readonly Action<T, VisualElement, bool> binder;
-    private readonly Func<T[]> values;
+    private readonly T[] values;
+    private int index;
     public int Index {
-        get => index = M.Clamp(0, values().Length - 1, index);
+        get => index = M.Clamp(0, values.Length - 1, index);
         set => index = value;
     }
     
-    public T Value => values()[Index];
+    public T Value => values[Index];
 
-    public ComplexLROptionUINode(LString description, VisualTreeAsset objectTree, Action<T> onChange, Func<T[]> values, Action<T, VisualElement, bool> binder) : 
-        base(() => description, onChange) {
+    public ComplexLROptionUINode(LString description, VisualTreeAsset objectTree, Action<T> onChange, T[] values, Action<T, VisualElement, bool> binder) : 
+        base(description, onChange) {
         this.values = values;
         this.objectTree = objectTree;
         this.binder = binder;
         this.index = 0;
-    }
-
-
-    public override void Rebind() {
-        base.Rebind();
-        NodeHTML.Q<Label>("Key").text = DescriptionOrEmpty;
-        NodeHTML.Q("LR2ChildContainer").Clear();
-        foreach (var (i, v) in values().Enumerate()) {
-            var ve = objectTree.CloneTreeNoContainer();
-            NodeHTML.Q("LR2ChildContainer").Add(ve);
-            binder(v, ve, i == index);
-        }
+        WithView(new ComplexLROptionNodeView(this));
     }
 
     protected override UIResult Left() {
-        var v = values();
+        var v = values;
         if (v.Length > 0) {
             index = BMath.Mod(v.Length, index - 1);
             OnChange(v[index]);
@@ -894,7 +904,7 @@ public class ComplexLROptionUINode<T> : BaseLROptionUINode<T>, IComplexOptionNod
         return new UIResult.StayOnNode();
     }
     protected override UIResult Right() {
-        var v = values();
+        var v = values;
         if (v.Length > 0) {
             index = BMath.Mod(v.Length, index + 1);
             OnChange(v[index]);
@@ -903,7 +913,29 @@ public class ComplexLROptionUINode<T> : BaseLROptionUINode<T>, IComplexOptionNod
     }
 }
 
-public class KeyRebindInputNode : UINode {
+public class KeyRebindInputNode : UINode, IUIViewModel {
+
+    public BindingUpdateTrigger UpdateTrigger { get; set; }
+    public Func<long>? OverrideHashHandler { get; set; }
+    public long GetViewHash() => 0;
+    private readonly KeyRebindInputNodeView view;
+    private class KeyRebindInputNodeView : UIView<KeyRebindInputNode> {
+        public KeyRebindInputNodeView(KeyRebindInputNode data) : base(data) {
+            UpdateTrigger = BindingUpdateTrigger.WhenDirty;
+        }
+        protected override BindingResult Update(in BindingContext context) {
+            var n = ViewModel;
+            string t = n.DescriptionOrEmpty;
+            n.NodeHTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
+            n.NodeHTML.Q("FadedBack").style.display = !n.isEntryEnabled ? DisplayStyle.Flex : DisplayStyle.None;
+            n.NodeHTML.Q<Label>("Label").text = n.isEntryEnabled ?
+                n.lastHeld == null ?
+                    "Press desired keys" :
+                    string.Join("+", n.lastHeld.Select(l => l.Description)) :
+                "";
+            return base.Update(in context);
+        }
+    }
     public enum Mode {
         KBM,
         Controller
@@ -918,18 +950,8 @@ public class KeyRebindInputNode : UINode {
     public KeyRebindInputNode(LString title, Action<IInspectableInputBinding[]?> applier, Mode mode) : base(title) {
         this.applier = applier;
         this.mode = mode;
-        With(fontControlsClass);
-    }
-    
-    public override void Rebind() {
-        string t = DescriptionOrEmpty;
-        NodeHTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
-        NodeHTML.Q("FadedBack").style.display = !isEntryEnabled ? DisplayStyle.Flex : DisplayStyle.None;
-        NodeHTML.Q<Label>("Label").text = isEntryEnabled ?
-            lastHeld == null ?
-                "Press desired keys" :
-                string.Join("+", lastHeld.Select(l => l.Description)) :
-            "";
+        WithCSS(fontControlsClass);
+        WithView(view = new(this));
     }
 
     public override UIResult? CustomEventHandling() {
@@ -954,8 +976,10 @@ public class KeyRebindInputNode : UINode {
 
             //Maintain the largest set of held keys.
         //Eg. If I hold shift+ctrl+R, and then release R, it should continue to display shift+ctrl+R.
-        if (lastHeld == null || heldKeys?.Length >= lastHeld.Length)
+        if (lastHeld == null || heldKeys?.Length >= lastHeld.Length) {
             lastHeld = heldKeys;
+            view.MarkDirty();
+        }
 
         if (InputManager.GetKeyTrigger(KeyCode.Escape).Active)
             return EnableDisableEntry();
@@ -968,6 +992,7 @@ public class KeyRebindInputNode : UINode {
         isEntryEnabled = !isEntryEnabled;
         isHoldReady = false;
         lastHeld = null;
+        view.MarkDirty();
         return new UIResult.StayOnNode();
     }
     
@@ -982,23 +1007,32 @@ public class KeyRebindInputNode : UINode {
         isEntryEnabled = false;
         base.Leave(animate, cs, isEnteringPopup);
     }
-
 }
 
-public class TextInputNode : UINode {
+public class TextInputNode : UINode, IUIViewModel {
+    public BindingUpdateTrigger UpdateTrigger { get; set; }
+    public Func<long>? OverrideHashHandler { get; set; }
+    public long GetViewHash() => (isEntryEnabled, DataWIP, bdCursorIdx).GetHashCode();
+    private class TextInputNodeView : UIView<TextInputNode> {
+        public TextInputNodeView(TextInputNode data) : base(data) { }
+        protected override BindingResult Update(in BindingContext context) {
+            var n = ViewModel;
+            string t = n.DescriptionOrEmpty;
+            n.NodeHTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
+            n.NodeHTML.Q("FadedBack").style.display = n.DisplayWIP.Length == 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            n.NodeHTML.Q<Label>("Label").text = n.DisplayWIP;
+            return base.Update(in context);
+        }
+    }
     public string DataWIP { get; private set; } = "";
     private bool isEntryEnabled = false;
     private int cursorIdx = 0;
     private int bdCursorIdx => Math.Min(cursorIdx, DataWIP.Length);
     private string DisplayWIP => isEntryEnabled ? DataWIP.Insert(bdCursorIdx, "|") : DataWIP;
 
-    public TextInputNode(LString title) : base(title) { }
 
-    public override void Rebind() {
-        string t = DescriptionOrEmpty;
-        NodeHTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
-        NodeHTML.Q("FadedBack").style.display = DisplayWIP.Length == 0 ? DisplayStyle.Flex : DisplayStyle.None;
-        NodeHTML.Q<Label>("Label").text = DisplayWIP;
+    public TextInputNode(LString title) : base(title) {
+        WithView(new TextInputNodeView(this));
     }
 
     public override UIResult? CustomEventHandling() {
@@ -1060,45 +1094,39 @@ public class UIButton : UINode {
     private readonly Func<UIButton, UIResult> onClick;
     private readonly bool requiresConfirm;
 
-    public UIButton(Func<LString> descriptor, ButtonType type, Func<UIButton, UIResult> onClick) : base(descriptor) {
+    public UIButton(LString? descriptor, ButtonType type, Func<UIButton, UIResult> onClick) : base(descriptor) {
         this.Type = type;
-        With(type switch {
+        WithCSS(type switch {
             ButtonType.Confirm => "confirm",
             ButtonType.Danger => "danger",
             _ => null
         });
         requiresConfirm = type == ButtonType.Danger;
         this.onClick = onClick;
+        if (descriptor != null)
+            WithView(new FlagLabelView(new(() => isConfirm, LocalizedStrings.UI.are_you_sure, descriptor)));
     }
-
-    public UIButton(LString descriptor, ButtonType type, Func<UIButton, UIResult> onClick) : 
-        this(() => descriptor, type, onClick) { }
 
     public static Func<T, UIResult> GoBackCommand<T>(UINode source) => _ =>
         new UIResult.ReturnToTargetGroupCaller(source);
 
     public static Func<UIButton, UIResult> GoBackCommand(UINode source) => GoBackCommand<UIButton>(source);
     public static UIButton Cancel(UINode source) =>
-        new(() => LocalizedStrings.Generic.generic_cancel, ButtonType.Cancel, GoBackCommand(source));
+        new(LocalizedStrings.Generic.generic_cancel, ButtonType.Cancel, GoBackCommand(source));
     
     public static UIButton Back(UINode source) =>
-        new(() => LocalizedStrings.Generic.generic_back, ButtonType.Cancel, GoBackCommand(source));
+        new(LocalizedStrings.Generic.generic_back, ButtonType.Cancel, GoBackCommand(source));
 
     public static UIButton Delete(Func<bool> deleter, Func<UIResult> returner) =>
-        new(() => LocalizedStrings.Generic.generic_delete, ButtonType.Danger, 
+        new(LocalizedStrings.Generic.generic_delete, ButtonType.Danger, 
             _ => deleter() ? returner() : new UIResult.StayOnNode(true));
     
     public static UIButton Save(Func<bool> saver, UIResult returner) =>
-        new(() => LocalizedStrings.Generic.generic_save, ButtonType.Confirm, 
+        new(LocalizedStrings.Generic.generic_save, ButtonType.Confirm, 
             _ => saver() ? returner : new UIResult.StayOnNode(true));
     public static UIButton Load(Func<bool> load, UIResult returner, bool danger=false) =>
-        new(() => LocalizedStrings.Generic.generic_load, danger ? ButtonType.Danger : ButtonType.Confirm, 
+        new(LocalizedStrings.Generic.generic_load, danger ? ButtonType.Danger : ButtonType.Confirm, 
             _ => load() ? returner : new UIResult.StayOnNode(true));
-    
-    public override void Rebind() {
-        if (Label != null && Description != null)
-            Label.text = isConfirm ? LocalizedStrings.UI.are_you_sure : Description();
-    }
 
     protected override UIResult NavigateInternal(UICommand req, ICursorState cs) {
         if (req == UICommand.Confirm) {
@@ -1114,11 +1142,11 @@ public class UIButton : UINode {
     protected override Func<UINode, ICancellee, Task> DefaultEnterAnimation() => (n, cT) => 
             n.NodeHTML.transform.ScaleTo(1.16f, 0.1f, Easers.EOutSine, cT)
                 .Then(() => n.NodeHTML.transform.ScaleTo(1.1f, 0.1f, cT: cT))
-                .Run(Controller, new CoroutineOptions(true, CoroutineType.StepTryPrepend));
+                .Run(Controller, UIController.AnimOptions);
     
     protected override Func<UINode, ICancellee, Task> DefaultLeaveAnimation() => (n, cT) =>
             n.NodeHTML.transform.ScaleTo(1f, 0.1f, Easers.EOutSine, cT)
-                .Run(Controller, new CoroutineOptions(true, CoroutineType.StepTryPrepend));
+                .Run(Controller, UIController.AnimOptions);
     
     public override void Leave(bool animate, ICursorState cs, bool isEnteringPopup) {
         isConfirm = false;
