@@ -45,7 +45,10 @@ public static class XMLUtils {
     public const string hideClass = "hide";
     public const string descriptorClass = "descriptor";
     public const string centerTextClass = "centertext";
-    public static string CheckmarkClass(bool active) => active ? "checked" : "unchecked";
+    public const string dropdownSelect = "checked";
+    public const string dropdownUnselect = "unchecked";
+    public const string dropdownTarget = "dropdown-target";
+    public static string CheckmarkClass(bool active) => active ? dropdownSelect : dropdownUnselect;
 
     public static IUXMLReferences Prefabs => ServiceLocator.Find<IUXMLReferences>();
     public static LString CSpace(this LString s, int space = 12) =>
@@ -161,13 +164,20 @@ public static class XMLUtils {
         return n;
     }
 
-    public static VisualElement SetWidthHeight(this VisualElement n, Vector2 wh) {
-        n.style.width = wh.x;
-        n.style.height = wh.y;
-        n.style.maxWidth = n.style.minWidth =
-            n.style.maxHeight = n.style.minHeight = new StyleLength(StyleKeyword.None);
+
+    public static VisualElement SetWidth(this VisualElement n, float w) {
+        n.style.width = w;
+        n.style.maxWidth = n.style.minWidth = new StyleLength(StyleKeyword.None);
         return n;
     }
+    public static VisualElement SetHeight(this VisualElement n, float h) {
+        n.style.height = h;
+        n.style.maxHeight = n.style.minHeight = new StyleLength(StyleKeyword.None);
+        return n;
+    }
+
+    public static VisualElement SetWidthHeight(this VisualElement n, Vector2 wh) =>
+        n.SetWidth(wh.x).SetHeight(wh.y);
 
     public static VisualElement AddVE(this VisualElement root, VisualElement? child) {
         child ??= new VisualElement();
@@ -217,6 +227,8 @@ public static class XMLUtils {
         var leftTop = new Vector2(nr.xMax, nr.yMin); //by default, tooltip is above-right
         if (tooltip.ClassListContains("tooltip-above")) {
             leftTop = new(nr.center.x, nr.yMin);
+        } else if (tooltip.ClassListContains("tooltip-below")) {
+            leftTop = new(nr.center.x, nr.yMax);
         }
         tooltip.WithAbsolutePosition(leftTop);
     }
@@ -244,6 +256,16 @@ public static class XMLUtils {
         return tt;
     }
 
+    public static UINode SelectorDropdown(this Selector sel, LString description) =>
+        new UINode(description) {
+            Prefab = XMLUtils.Prefabs.TwoLabelNode,
+            OnConfirm = (n, cs) => PopupUIGroup.CreateDropdown(n, sel)
+        }.Bind(new LabelView<(int ct, int first)>(new(sel.SelectedCount, ctf => {
+            if (ctf.ct == 0) return "(None)";
+            if (ctf.ct > 1) return "(Multiple)";
+            return sel.DescribeAt(ctf.first);
+        }), "Label2"));
+
     /// <summary>
     /// Render a visual element as a sprite with its actual coordinates and pivot,
     ///  positioned at the center of the parent object.
@@ -262,6 +284,16 @@ public static class XMLUtils {
     public static VisualElement ConfigureImage(this VisualElement ve, Sprite s) {
         ve.SetWidthHeight(UIBuilderRenderer.ToXMLDims(s.Dims()))
             .style.backgroundImage = new(s);
+        return ve;
+    }
+
+    /// <summary>
+    /// Move this element to a given index in its parent's child container.
+    /// </summary>
+    public static VisualElement MoveToIndex(this VisualElement ve, int index) {
+        var parent = ve.parent;
+        parent.Remove(ve);
+        parent.Insert(index, ve);
         return ve;
     }
 

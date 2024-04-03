@@ -12,8 +12,11 @@ public interface IUXMLReferences {
     public VisualTreeAsset Popup { get; }
     public VisualTreeAsset Tooltip { get; }
     public VisualTreeAsset ContextMenu { get; }
+    public VisualTreeAsset Dropdown { get; }
     public VisualTreeAsset AbsoluteTerritory { get; }
     public VisualTreeAsset PureTextNode { get; }
+    public VisualTreeAsset TwoLabelNode { get; }
+    public VisualTreeAsset HeaderNode { get; }
 
     public Dictionary<Type, VisualTreeAsset> TypeMap { get; }
 }

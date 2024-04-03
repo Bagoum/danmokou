@@ -66,7 +66,7 @@ public class CustomLabelView<T> : UIView, IDataSourceProvider {
 
     protected override BindingResult Update(in BindingContext context) {
         Logs.Log("updating custom binding");
-        n.NodeHTML.Q<Label>().text = data.Value!.ToString();
+        n.HTML.Q<Label>().text = data.Value!.ToString();
         return base.Update(in context);
     }
 
@@ -87,7 +87,7 @@ public static class MHelpers {
         //return n.WithView(n => new CustomLabelView<T>(n, dataSrc));
         
         n.OnBuilt = n.OnBuilt.Then(n => {
-            var l = n.NodeHTML.Q<Label>();
+            var l = n.HTML.Q<Label>();
             l.dataSource = dataSrc;
             l.dataSourcePath = new PropertyPath(path);
             l.SetBinding("text", deflt);
@@ -121,7 +121,7 @@ public class LocalXMLDataBindingExample : CoroutineRegularUpdater {
 
         var dataSrc = new ValueDataSrc<LString>(new(() => this.mydata1));
         g1.AddNodeDynamic(new UINode().BindLabel(dataSrc, nameof(ValueDataSrc<LString>.Value))
-            .PrepareTooltip("this is a tooltip!"));
+            .Bind(new TooltipView(new("this is a tooltip!"))));
         
         g1.AddNodeDynamic(new FuncNode(null, n => {
             var p = PopupUIGroup.CreatePopup(n, "Popup",
@@ -135,12 +135,12 @@ public class LocalXMLDataBindingExample : CoroutineRegularUpdater {
         }).BindString("this node has a popup"));
         g1.AddNodeDynamic(new UINode()
             .BindString("this node has a menu (C)")
-            .PrepareTooltip("this is a tooltip!")
-            .PrepareContextMenu(ContextMenu));
+            .Bind(new TooltipView(new("this is a tooltip!")))
+            .Bind(new ContextMenuView(new(ContextMenu))));
 
         UINode[] ContextMenu(UINode n, ICursorState cs) {
             return new[] {
-                new UINode("another one").PrepareContextMenu(ContextMenu),
+                new UINode("another one").Bind(new ContextMenuView(new(ContextMenu))),
                 new FuncNode("go to previous node", () => new UIResult.GoToNode(n.Group, n.Group.Nodes.IndexOf(n) - 1)),
                 new FuncNode("delete this node", () => {
                     var ind = n.Group.Nodes.IndexOf(n);

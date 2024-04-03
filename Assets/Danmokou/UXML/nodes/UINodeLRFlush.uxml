@@ -3,9 +3,9 @@
     <ui:VisualElement class="node">
         <ui:VisualElement name="Selector" class="pointer prefix" />
         <ui:VisualElement name="Checkmark" class="checkmark prefix" />
-        <ui:VisualElement class="body" style="flex-grow: 1; justify-content: space-between;">
+        <ui:VisualElement name="Body" class="body" style="flex-grow: 1; justify-content: space-between;">
             <ui:Label text="one two three日本語" name="Label" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; white-space: nowrap; flex-grow: 0; flex-shrink: 0;" />
-            <ui:Label text="red blue green yellow orangered blue green yellow orangered blue green yellow orangered blue green yellow orange" name="Label2" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; white-space: nowrap; -unity-text-align: upper-right; flex-grow: 0; overflow: hidden; text-overflow: ellipsis;" />
+            <ui:Label text="red blue green yellow orangered blue" name="Label2" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; white-space: nowrap; -unity-text-align: upper-right; flex-grow: 0; overflow: hidden; text-overflow: ellipsis;" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

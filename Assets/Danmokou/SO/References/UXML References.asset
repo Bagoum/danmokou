@@ -26,6 +26,8 @@ MonoBehaviour:
   Tooltip: {fileID: 9197481963319205126, guid: 2f4b73a7f027154428bae4f3654aefa4, type: 3}
   ContextMenu: {fileID: 9197481963319205126, guid: c268fb6a9fb4dc94e83d13ca3fc9165d,
     type: 3}
+  Dropdown: {fileID: 9197481963319205126, guid: 39b219f32ce587844b4ee990e47335df,
+    type: 3}
   UINode: {fileID: 9197481963319205126, guid: a814838ea7fd5364e96b285b2bfd246b, type: 3}
   OptionsColumnUINode: {fileID: 9197481963319205126, guid: 911971cc3f092fd4aba74da671e2b949,
     type: 3}

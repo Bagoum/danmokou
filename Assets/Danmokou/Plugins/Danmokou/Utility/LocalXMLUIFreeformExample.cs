@@ -31,7 +31,7 @@ public class LocalXMLUIFreeformExample : CoroutineRegularUpdater {
         menu.FreeformGroup.AddGroupDynamic(g1);
         g1.AddNodeDynamic(new UINode("foobar"));
         g1.AddNodeDynamic(new UINode("this node has a tooltip")
-            .PrepareTooltip("this is a tooltip!"));
+            .Bind(new TooltipView(new("this is a tooltip!"))));
         g1.AddNodeDynamic(new FuncNode("this node has a popup", n => {
             var p = PopupUIGroup.CreatePopup(n, "Poffpup",
                 r => new UIColumn(r, new UINode("basic popup description")
@@ -43,12 +43,12 @@ public class LocalXMLUIFreeformExample : CoroutineRegularUpdater {
             return p;
         }));
         g1.AddNodeDynamic(new UINode("this node has a menu (C)")
-            .PrepareTooltip("this is a tooltip!")
-            .PrepareContextMenu(ContextMenu));
+            .Bind(new TooltipView(new("this is a tooltip!")))
+            .Bind(new ContextMenuView(new(ContextMenu))));
 
         UINode[] ContextMenu(UINode n, ICursorState cs) {
             return new[] {
-                new UINode("another one").PrepareContextMenu(ContextMenu),
+                new UINode("another one").Bind(new ContextMenuView(new(ContextMenu))),
                 new FuncNode("go to previous node", () => new UIResult.GoToNode(n.Group, n.Group.Nodes.IndexOf(n) - 1)),
                 new FuncNode("delete this node", () => {
                     var ind = n.Group.Nodes.IndexOf(n);

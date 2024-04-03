@@ -8,28 +8,51 @@ using UnityEngine.UIElements;
 namespace Danmokou.Scriptables {
 [CreateAssetMenu(menuName = "Data/UXML References")]
 public class UXMLReferences : ScriptableObject, IUXMLReferences {
-    public VisualTreeAsset UIScreen = null!;
-    public VisualTreeAsset UIScreenColumn = null!;
-    public VisualTreeAsset UIScreenScrollColumn = null!;
-    public VisualTreeAsset UIScreenRow = null!;
-    public VisualTreeAsset UIScreenRowNoStretch = null!;
-    public VisualTreeAsset Popup = null!;
-    public VisualTreeAsset Tooltip = null!;
-    public VisualTreeAsset ContextMenu = null!;
+    [field:SerializeField]
+    public VisualTreeAsset UIScreen { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset UIScreenColumn { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset UIScreenScrollColumn { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset UIScreenRow { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset UIScreenRowNoStretch { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset Popup { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset Tooltip { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset ContextMenu { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset Dropdown { get; set; } = null!;
+    [field:SerializeField]
     
-    public VisualTreeAsset UINode = null!;
-    public VisualTreeAsset OptionsColumnUINode = null!;
-    public VisualTreeAsset EmptyNode = null!;
-    public VisualTreeAsset TwoTextUINode = null!;
-    public VisualTreeAsset OptionLRNode = null!;
-    public VisualTreeAsset ComplexOptionLRNode = null!;
-    public VisualTreeAsset FloatingNode = null!;
-    public VisualTreeAsset AbsoluteTerritory = null!;
-    public VisualTreeAsset PopupButton = null!;
-    public VisualTreeAsset PureTextNode = null!;
-    public VisualTreeAsset TextInputNode = null!;
-    public VisualTreeAsset HeaderNode = null!;
-    public VisualTreeAsset SaveLoadNode = null!;
+    public VisualTreeAsset UINode { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset OptionsColumnUINode { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset EmptyNode { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset TwoLabelNode { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset OptionLRNode { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset ComplexOptionLRNode { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset FloatingNode { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset AbsoluteTerritory { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset PopupButton { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset PureTextNode { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset TextInputNode { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset HeaderNode { get; set; } = null!;
+    [field:SerializeField]
+    public VisualTreeAsset SaveLoadNode { get; set; } = null!;
 
     public Texture2D defaultSaveLoadBG = null!;
 
@@ -51,21 +74,11 @@ public class UXMLReferences : ScriptableObject, IUXMLReferences {
         {typeof(UINode), UINode},
         {typeof(EmptyNode), EmptyNode},
         {typeof(UIButton), PopupButton},
-        {typeof(TwoLabelUINode), TwoTextUINode},
+        {typeof(TwoLabelUINode), TwoLabelNode},
         {typeof(TextInputNode), TextInputNode},
         {typeof(KeyRebindInputNode), TextInputNode},
-        {typeof(IOptionNodeLR), OptionLRNode},
-        {typeof(IComplexOptionNodeLR), ComplexOptionLRNode}
+        {typeof(ILROptionNode), OptionLRNode},
+        {typeof(IComplexLROptionNode), ComplexOptionLRNode}
     };
-
-    VisualTreeAsset IUXMLReferences.UIScreenColumn => UIScreenColumn;
-    VisualTreeAsset IUXMLReferences.UIScreenScrollColumn => UIScreenScrollColumn;
-    VisualTreeAsset IUXMLReferences.UIScreenRow => UIScreenRow;
-    VisualTreeAsset IUXMLReferences.UIScreenRowNoStretch => UIScreenRowNoStretch;
-    VisualTreeAsset IUXMLReferences.Popup => Popup;
-    VisualTreeAsset IUXMLReferences.Tooltip => Tooltip;
-    VisualTreeAsset IUXMLReferences.ContextMenu => ContextMenu;
-    VisualTreeAsset IUXMLReferences.AbsoluteTerritory => AbsoluteTerritory;
-    VisualTreeAsset IUXMLReferences.PureTextNode => PureTextNode;
 }
 }

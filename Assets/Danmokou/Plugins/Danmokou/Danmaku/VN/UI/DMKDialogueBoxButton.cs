@@ -17,11 +17,12 @@ public class DMKDialogueBoxButton : DialogueBoxButton, IFixedXMLReceiver {
     public void Bind(DMKADVDialogueBoxMimic parent, ADVDialogueBox db) {
         parent.Listen(db.ComputedLocation, _ => xml.UpdatedLocations());
         var isVisible = new DisturbedAnd();
-        parent.Listen(isVisible, xml.XML.IsVisible.OnNext);
+        parent.Listen(isVisible, xml.XML.IsVisible);
         parent.AddToken(isVisible.AddDisturbance(db.Visible));
         parent.AddToken(isVisible.AddDisturbance(db.ComputedTint.Map(c => c.a > 0)));
         parent.AddToken(isVisible.AddDisturbance(db.MinimalState.Map(b => !b)));
         parent.AddToken(IsInteractable.AddDisturbance(isVisible));
+        parent.Listen(IsInteractable, x => xml.XML.IsInteractable.BaseValue = x);
         parent.Listen(db.MinimalState, b => {
             if (b)
                 FastSetState(State | ButtonState.Hide);

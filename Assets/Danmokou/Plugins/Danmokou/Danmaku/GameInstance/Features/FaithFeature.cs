@@ -13,7 +13,7 @@ namespace Danmokou.GameInstance {
 public interface IFaithFeature : IInstanceFeature {
     public double Faith { get; }
     public double FaithLenience { get; }
-    public DisturbedEvented<float> externalFaithDecayMultiplier { get; }
+    public DisturbedEvented<float,float> externalFaithDecayMultiplier { get; }
     public Lerpifier<float> VisibleFaith { get; }
     public Lerpifier<float> VisibleFaithLenience { get; }
 }
@@ -31,7 +31,7 @@ public class FaithFeature : BaseInstanceFeature, IFaithFeature {
     private InstanceData Inst { get; }
     public double Faith { get; private set; } = 1f;
     public double FaithLenience { get; private set; } = 0f;
-    public DisturbedEvented<float> externalFaithDecayMultiplier { get;  }= new DisturbedProduct<float>(1);
+    public DisturbedEvented<float,float> externalFaithDecayMultiplier { get;  }= new DisturbedProduct<float>(1);
     
     private double FaithDecayRateMultiplier => (Inst.CurrentBoss != null ? 0.666f : 1f) * externalFaithDecayMultiplier.Value;
     private double FaithLenienceGraze => M.Lerp(0, 3, Inst.Difficulty.Counter, 0.42, 0.3);
@@ -112,7 +112,7 @@ public class FaithFeature : BaseInstanceFeature, IFaithFeature {
     public class Disabled : BaseInstanceFeature, IFaithFeature {
         public double Faith => 0;
         public double FaithLenience => 0;
-        public DisturbedEvented<float> externalFaithDecayMultiplier { get; } = new DisturbedProduct<float>(1);
+        public DisturbedEvented<float,float> externalFaithDecayMultiplier { get; } = new DisturbedProduct<float>(1);
         public Lerpifier<float> VisibleFaith { get; }
             = new(M.Lerp,() => 0, 0.2f);
         public Lerpifier<float> VisibleFaithLenience { get; }

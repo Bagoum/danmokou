@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using BagoumLib;
@@ -63,6 +64,8 @@ public static class RNG {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Rehash(in int x) => (int) (knuth * x);
+
+    public static T Random<T>(this IList<T> arr) => arr[GetInt(0, arr.Count)];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int GetInt(in int low, in int high, in Random r) {

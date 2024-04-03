@@ -2,6 +2,10 @@
 using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
+
+/// <summary>
+/// A view/model that enables and disables two CSS classes based on whether a function returns true or false.
+/// </summary>
 public class CSSClassViewModel : UIViewModel {
     public Func<bool> Switch { get; }
     public string? WhenTrue { get; }
@@ -15,6 +19,8 @@ public class CSSClassViewModel : UIViewModel {
 
     public override long GetViewHash() => Switch().GetHashCode();
 }
+
+/// <inheritdoc cref="CSSClassViewModel"/>
 public class CssClassView : UIView<CSSClassViewModel> {
     public CssClassView(CSSClassViewModel viewModel) : base(viewModel) { }
 

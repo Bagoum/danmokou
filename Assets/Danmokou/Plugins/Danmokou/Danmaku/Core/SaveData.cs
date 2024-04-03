@@ -41,8 +41,6 @@ public static class SaveData {
     public class Record : IGlobalVNDataProvider {
         public bool TutorialDone = false;
         public List<InstanceRecord> FinishedGames { get; init; } = new();
-        [JsonIgnore]
-        public Event<Unit> FinishedGamesUpdated { get; } = new();
         public Dictionary<string, State> Achievements { get; init; } = new();
         public GlobalData GlobalVNData { get; init; } = new();
 
@@ -50,16 +48,12 @@ public static class SaveData {
         public IEnumerable<InstanceRecord> FinishedCampaignGames => 
             FinishedGames.Where(gr => gr.RequestKey is CampaignRequestKey);
 
-        [JsonIgnore]
-        private ICollection<string> CompletedCampaigns =>
-            new HashSet<string>(
-                FinishedGames
-                    .Select(g => (g.Completed && g.RequestKey is CampaignRequestKey cr) ? cr.Campaign : null)
-                    .FilterNone());
-
         public bool CampaignCompleted(string key) {
-            //for (int ii = 0; ii < FinishedGames.Count; ++ii)
-            return CompletedCampaigns.Contains(key);
+            for (int ii = 0; ii < FinishedGames.Count; ++ii) {
+                if (FinishedGames[ii] is { Completed: true, RequestKey: CampaignRequestKey cr } && cr.Campaign == key)
+                    return true;
+            }
+            return false;
         }
 
         public static readonly Event<Unit> TutorialCompleted = new();
@@ -84,7 +78,6 @@ public static class SaveData {
         public void RecordGame(InstanceRecord rec) {
             FinishedGames.Add(rec);
             SaveData.SaveRecord();
-            FinishedGamesUpdated.OnNext(default);
         }
 
         public Dictionary<BossPracticeRequestKey, (int success, int total)> GetCampaignSpellHistory() =>
@@ -102,7 +95,7 @@ public static class SaveData {
             ).Select(x => x.Score).OrderByDescending(x => x).FirstOrNull();
         }
 
-        public InstanceRecord? ChallengeCompletion(SMAnalysis.DayPhase phase, int c, SharedInstanceMetadata meta) {
+        public InstanceRecord? ChallengeCompletion(SMAnalysis.DayPhase phase, Challenge c, SharedInstanceMetadata meta) {
             var key = new PhaseChallengeRequest(phase, c).Key;
             //You can add filters on the meta properties (difficulty/player) as necessary.
             return FinishedGames
@@ -113,19 +106,19 @@ public static class SaveData {
                 .FirstOrDefault();
         }
 
-        public bool ChallengeCompleted(SMAnalysis.DayPhase phase, int c, SharedInstanceMetadata meta) =>
+        public bool ChallengeCompleted(SMAnalysis.DayPhase phase, Challenge c, SharedInstanceMetadata meta) =>
             ChallengeCompletion(phase, c, meta) != null;
 
         public bool PhaseCompletedOne(SMAnalysis.DayPhase phase, SharedInstanceMetadata meta) {
             for (int ii = 0; ii < phase.challenges.Length; ++ii) {
-                if (ChallengeCompleted(phase, ii, meta)) return true;
+                if (ChallengeCompleted(phase, phase.challenges[ii], meta)) return true;
             }
             return false;
         }
 
         public bool PhaseCompletedAll(SMAnalysis.DayPhase phase, SharedInstanceMetadata meta) {
             for (int ii = 0; ii < phase.challenges.Length; ++ii) {
-                if (!ChallengeCompleted(phase, ii, meta)) return false;
+                if (!ChallengeCompleted(phase, phase.challenges[ii], meta)) return false;
             }
             return true;
         }

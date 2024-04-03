@@ -46,7 +46,7 @@ public class LabelViewModel : IUIViewModel {
 }
 ```
 
-The view model contains data that we want to render (the `Label` string), as well as some mechanism for determining whether the data has changed (in this case, `GetViewHashCode`, though there are other ways to handle changes). Then, we can create a view that actually performs rendering as follows:
+The view model contains data that we want to render (the `Label` string), as well as some mechanism for determining whether the data has changed (in this case, we compute the hash-code of the Label string to determine changes, but we could instead explicitly track changes via versioning, as in `VersionedUIViewModel`). Then, we can create a view that actually performs rendering as follows:
 
 ```c#
 public class LabelView : UIView<LabelViewModel> {
@@ -61,20 +61,30 @@ public class LabelView : UIView<LabelViewModel> {
 
 (Note: UIView is a helper class in DMK, but it derives from CustomBinding, which is a Unity UIToolkit class that is required for this functionality.)
 
-Finally, we can set a node to use this view model and view by calling `node.WithView(new LabelView(new LabelViewModel(stringFunctionHere)))`. (In this basic example, the Model part of MVVM is whatever provided us the `stringFunctionHere` data.)
+Finally, we can bind this view model and view to a node by calling `node.Bind(new LabelView(new LabelViewModel(stringFunctionHere)))`. Now, `LabelView.Update` will be called automatically whenever `LabelViewModel` changes.
 
-The benefit of this approach is that a view makes changes to the UI HTML— which are extremely expensive!— only when `GetViewHashCode` changes on its view model. This minimizes the amount of changes made to the UI HTML at any point.
+(In this basic example, the Model part of MVVM is whatever provided us the `stringFunctionHere` data.) 
 
-Along with this, the handling for OptionNodeLR has been updated to simplify creation and fix a lot of lingering issues. Instead of taking a getter and setter as arguments, OptionNodeLR now takes an `ITwoWayBinder`, which allows backend data to be modified by the OptionNodeLR View or by backend services, and for those modifications to be visible in both directions.
+The benefit of this approach is that a view makes changes to the UI HTML— which are extremely expensive!— *only* when `GetViewHashCode` changes on its view model. This minimizes the amount of changes made to the UI HTML at any point. Furthermore, one node can have multiple independent view models handling different parts of the UI interaction, making it easy to compose behavior and minimize dependencies between different areas of the UI HTML. In fact, the basic behavior of highlighting and animating nodes when the mouse cursor is moved over them is handled by `RootNodeView`, which is bound to every node. 
+
+Along with this, the handling for OptionNodeLR has been updated to simplify creation and fix a lot of lingering issues. Instead of taking a getter and setter as arguments, OptionNodeLR now takes an `ITwoWayBinder`, which allows source data to be modified by the OptionNodeLR View or by backend services, and for those modifications to be visible in both directions.
 
 ### Features
 
+- When holding the L/R/U/D directions on a menu, the input will begin repeating after a short delay, mirroring standard input handling in most programs. This is configurable as `InputTriggerMethod.OnceRefire`.
+- The color theming for DMK's UITK support has been standardized, and supports overriding theming via classes. For example, dropdown menus use the CSS class `.theme-blue`, which gives them a blue background instead of a purple one. See the CSS configuration in `UINode.uss`. 
 - In SuzunoyaUnity, text now scales in (in addition to fading in) in the text box. This can be configured as "Char Scale In Time" and "Char Scale In From" on ADV Dialogue Box Mimic.
-- UI nodes can now have context menus (viewable by pressing C while selecting a node) that show up to the lower-right of the node. You can create such a context menu by calling `myUINode.MakeContextMenu`. See Assets/Danmokou/Plugins/Danmokou/Utility/LocalXMLUIFreeformExample for an example. (Note that context menus are interactable, as opposed to tooltips, which are not.)
+- UI nodes can now have context menus (viewable by pressing C while selecting a node) that show up to the lower-right of the node. You can create such a context menu by binding a view model to the node that implements `IUIViewModel.OnContextMenu` (eg. `ContextMenuViewModel`). See Assets/Danmokou/Plugins/Danmokou/Utility/LocalXMLUIFreeformExample for an example. (Note that context menus are interactable, as opposed to tooltips, which are not.)
+  - Similarly, in order to implement a tooltip, you can binding a view model that implements `IUIViewModel.Tooltip` (eg. `TooltipViewModel`).
+
+### Breaking Changes
+
+- `UINode.NodeHTML` has been removed. (It was the same as `UINode.HTML`,  so please use that instead.)
 
 ### Fixes
 
-- Fixed an issue where controller menu navigation could occasionally result in double movement with the joystick/DPad. 
+- Fixed an issue where controller menu navigation with the joystick/DPad could occasionally result in double movement. 
+- Fixed an old issue where menu navigation would not be correct when moving from the Records screen to the Replay screen to watching a replay, then back to the Records screen.
 - Fixed an issue where the default dialogue box could allow clicking buttons that were not visible.
 - Fixed issues that could arise when the Backgrounds setting was turned on and off repeatedly. Also adjusted internal logic so menu backgrounds always appear regardless of the Backgrounds setting.
 

@@ -96,37 +96,27 @@ public class XMLMainMenuCampaign : XMLMainMenu {
     public Sprite bossMode = null!;
     public Sprite stageMode = null!;
     public Sprite tutorialMode = null!;
-
+    
+    private Func<DifficultySettings, UIResult> dfcContinuation = null!;
+    Sprite? SpriteForDFC(FixedDifficulty? fd) => fd switch {
+        FixedDifficulty.Easy => easyDifficulty,
+        FixedDifficulty.Normal => normalDifficulty,
+        FixedDifficulty.Hard => hardDifficulty,
+        FixedDifficulty.Lunatic => lunaticDifficulty,
+        _ => customDifficulty
+    };
     public override void FirstFrame() {
         var game = References.CampaignGameDef;
-        Func<DifficultySettings, UIResult> dfcContinuation = null!;
         Func<TeamConfig, bool> shotContinuation = null!;
         var campaignToShotScreenMap = new Dictionary<CampaignConfig, UIScreen>();
 
-        var floater = References.uxmlDefaults.FloatingNode;
-        Sprite? SpriteForDFC(FixedDifficulty? fd) => fd switch {
-            FixedDifficulty.Easy => easyDifficulty,
-            FixedDifficulty.Normal => normalDifficulty,
-            FixedDifficulty.Hard => hardDifficulty,
-            FixedDifficulty.Lunatic => lunaticDifficulty,
-            _ => customDifficulty
-        };
         var vm = new AxisViewModel {
             BaseLoc = new(-2.9f, 0),
             Axis = new Vector2(1.4f, -2.6f).normalized * 0.7f,
         };
         AxisView View() => new(vm);
         UINode? MakeDifficultyNode(FixedDifficulty? fd) =>
-            SpriteForDFC(fd) == null ? null : new UINode {
-                OnConfirm = (_, _) => fd == null ? 
-                    new UIResult.GoToNode(CustomDifficultyScreen) : dfcContinuation(new(fd)),
-                Prefab = floater,
-                OnBuilt = n => {
-                    if (difficultyCommentator != null)
-                        n.OnEnter = n.OnEnter.Then((_, _) => difficultyCommentator.SetCommentFromValue(fd));
-                    n.NodeHTML.ConfigureFloatingImage(SpriteForDFC(fd)!);
-                }
-            }.WithView(View());
+            SpriteForDFC(fd) == null ? null : new UINode(View(), new DFCView(new(this, fd)));
             
         DifficultyScreen = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => ve.CenterElements(),
@@ -214,6 +204,36 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         if (doAnim) {
             //_ = TransitionHelpers.TweenTo(720f, 0f, 1f, x => UIRoot.style.left = x, Easers.EOutSine).Run(this);
             _ = TransitionHelpers.TweenTo(0f, 1f, 0.8f, x => UIRoot.style.opacity = x, x => x).Run(this);
+        }
+    }
+    
+    
+    private class DFCViewModel : IConstUIViewModel {
+        public XMLMainMenuCampaign src { get; }
+        public FixedDifficulty? fd { get; }
+        public DFCViewModel(XMLMainMenuCampaign src, FixedDifficulty? fd) {
+            this.src = src;
+            this.fd = fd;
+        }
+
+        UIResult? IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
+            return fd == null ?
+                new UIResult.GoToNode(src.CustomDifficultyScreen) :
+                src.dfcContinuation(new(fd));
+        }
+    }
+    private class DFCView : UIView<DFCViewModel>, IUIView {
+        public override VisualTreeAsset? Prefab => References.uxmlDefaults.FloatingNode;
+        public DFCView(DFCViewModel viewModel) : base(viewModel) { }
+
+        public override void OnBuilt(UINode node) {
+            base.OnBuilt(node);
+            Node.HTML.ConfigureFloatingImage(VM.src.SpriteForDFC(VM.fd)!);
+        }
+
+        void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
+            if (VM.src.difficultyCommentator != null)
+                VM.src.difficultyCommentator.SetCommentFromValue(VM.fd);
         }
     }
 }

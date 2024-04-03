@@ -23,7 +23,7 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
         public ICObservable<float?> Width { get; } = new ConstantObservable<float?>(0);
         public ICObservable<float?> Height { get; } = new ConstantObservable<float?>(0);
         public ICObservable<bool> IsVisible { get; } = new ConstantObservable<bool>(true);
-        public UIResult? Navigate(UINode n, UICommand c) => null;
+        public ICObservable<bool> IsInteractable { get; } = new ConstantObservable<bool>(true);
     }
 
     protected virtual bool CaptureFallthroughInteraction => false;
@@ -44,9 +44,9 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
     //most menus are defined in FirstFrame, but since XMLDynamicMenu is consumed as a service, it's useful
     // to construct it in Awake
     private void Awake() {
-        Unselect = new EmptyNode(new UnselectorFixedXML()) {
-            OnConfirm = UnselectorConfirm
-        };
+        Unselect = new EmptyNode(new FixedXMLView(new(new UnselectorFixedXML())
+                { OnConfirmer = UnselectorConfirm }) 
+            { AsEmpty = true });
         MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => {
                 //Allow clicks to fallthrough if they don't hit any nodes on this menu
@@ -67,9 +67,10 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
     /// (this can be configured by setting `HTML.pickingMode` in `<paramref name="builder"/>`).
     /// </summary>
     public (UIScreen, UIFreeformGroup) MakeScreen(Func<UINode, UIResult?>? unselectConfirm, Action<UIScreen, VisualElement>? builder = null) {
-        var unselect = new EmptyNode(new UnselectorFixedXML()) {
-            OnConfirm = (n, cs) => unselectConfirm?.Invoke(n) ?? UIGroup.SilentNoOp
-        };
+        var unselect = 
+            new EmptyNode(new FixedXMLView(new(new UnselectorFixedXML())
+                    { OnConfirmer = (n, cs) => unselectConfirm?.Invoke(n) ?? UIGroup.SilentNoOp }) 
+                { AsEmpty = true });
         var s = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = builder ?? ((s, ve) => {
                 //Block fallthrough clicks

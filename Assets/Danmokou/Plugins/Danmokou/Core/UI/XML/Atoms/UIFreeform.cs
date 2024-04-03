@@ -13,7 +13,7 @@ namespace Danmokou.UI.XML {
 /// </summary>
 public class UIFreeformGroup : CompositeUIGroup, IFixedXMLObjectContainer {
     private readonly UINode? unselector;
-    public UIFreeformGroup(UIScreen container, UINode? unselector) : base(container, Array.Empty<UIGroup>(), new[] { unselector }) {
+    public UIFreeformGroup(UIRenderSpace container, UINode? unselector = null) : base(container, Array.Empty<UIGroup>(), new[] { unselector }) {
         this.unselector = unselector;
         ExitNodeOverride = unselector;
     }
@@ -29,7 +29,7 @@ public class UIFreeformGroup : CompositeUIGroup, IFixedXMLObjectContainer {
 
     protected override UIResult? NavigateAmongComposite(UINode current, UICommand dir) {
         var targets = NodesAndDependentNodes.Where(n => n.AllowInteraction && n != unselector).ToList();
-        if (targets.Count > 1) {
+        if (targets.Count > 0) {
             if (current == unselector) {
                 //Return the node farthest in the pressed direction
                 return dir switch {

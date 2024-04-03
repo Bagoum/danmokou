@@ -48,9 +48,9 @@ public class LocalXMLTesting : CoroutineRegularUpdater {
             }.WithCSS(XMLUtils.noPointerClass, XMLUtils.highVisClass);
             node.RootView.OnFirstRender((n, cT) => {
                 var delta = (Vector3)UIBuilderRenderer.ToXMLDims(new(0, 5));
-                n.NodeHTML.transform.position -= delta;
+                n.HTML.transform.position -= delta;
                 return new NoopTweener(0.2f * i, cT).Then(
-                    n.NodeHTML.transform.TranslateBy(delta, 1.4f, Easers.EOutBack, cT).Parallel(
+                    n.HTML.transform.TranslateBy(delta, 1.4f, Easers.EOutBack, cT).Parallel(
                         new NoopTweener(0.4f, cT).Then(new Tweener<float>(0, d.Item2, 2f,
                             f => { show = ((int)Math.Round(f)).ToString(); }, Easers.EOutQuart, cT))));
             });

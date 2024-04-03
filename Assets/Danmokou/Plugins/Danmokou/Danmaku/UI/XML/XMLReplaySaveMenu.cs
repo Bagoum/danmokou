@@ -41,9 +41,9 @@ public class XMLReplaySaveMenu : UIController {
                                 SaveData.SaveRecord();
                                 SaveData.p.SaveNewReplay(rec);
                                 return didSave = true;
-                            }, n.ReturnGroup),
+                            }, n.ReturnToGroup),
                         }));
-                }).WithView(new FlagLabelView(new(() => didSave, replay_saved, save_replay))));
+                }).Bind(new FlagView(new(() => didSave, replay_saved, save_replay))));
             }
             var (lNodes, rNodes) = GameMetadataDisplay(inst.record);
             MainScreen.SetFirst(new LRBGroup(

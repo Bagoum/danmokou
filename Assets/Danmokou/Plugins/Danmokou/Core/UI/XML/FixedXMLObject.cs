@@ -2,6 +2,7 @@
 using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Events;
+using UnityEngine;
 
 namespace Danmokou.UI.XML {
 /// <summary>
@@ -9,12 +10,15 @@ namespace Danmokou.UI.XML {
 /// </summary>
 public interface IFixedXMLObject {
     string Descriptor { get; }
+    Vector2 Pivot => XMLUtils.Pivot.Center;
     ICObservable<float> Left { get; }
     ICObservable<float> Top { get; }
     ICObservable<float?> Width { get; }
     ICObservable<float?> Height { get; }
     ICObservable<bool> IsVisible { get; }
-    UIResult? Navigate(UINode n, UICommand c);
+    ICObservable<bool> IsInteractable { get; }
+
+    public void Cleanup() { }
     
     public ICObservable<float> CreateCenterOffsetChildX(ICObservable<float> childX) =>
         new LazyEvented<float>(() => childX.Value + (Width.Value ?? throw new Exception()) / 2f,
@@ -34,20 +38,43 @@ public interface IFixedXMLObjectContainer {
 } 
 
 /// <inheritdoc cref="IFixedXMLObject"/>
-public record FixedXMLObject(float l, float t, float? w, float? h) : IFixedXMLObject {
+public record FixedXMLObject : IFixedXMLObject {
     public string Descriptor { get; init; } = "";
+    public Vector2 Pivot { get; init; } = XMLUtils.Pivot.Center;
     ICObservable<float> IFixedXMLObject.Left => Left;
-    public Evented<float> Left { get; } = new(l);
+    public Evented<float> Left { get; }
     ICObservable<float> IFixedXMLObject.Top => Top;
-    public Evented<float> Top { get; } = new(t);
+    public Evented<float> Top { get; }
     ICObservable<float?> IFixedXMLObject.Width => Width;
-    public Evented<float?> Width { get; } = new(w);
+    public Evented<float?> Width { get; }
     ICObservable<float?> IFixedXMLObject.Height => Height;
-    public Evented<float?> Height { get; } = new(h);
+    public Evented<float?> Height { get; }
     public Evented<bool> IsVisible { get; } = new(true);
     ICObservable<bool> IFixedXMLObject.IsVisible => IsVisible;
-    public Func<UINode, UIResult?>? OnConfirm { get; init; }
-    public UIResult? Navigate(UINode n, UICommand c) => 
-        c is UICommand.Confirm ? OnConfirm?.Invoke(n) : null;
+    public DisturbedAnd IsInteractable { get; } = new(true);
+    ICObservable<bool> IFixedXMLObject.IsInteractable => IsInteractable;
+    
+    /// <inheritdoc cref="IFixedXMLObject"/>
+    public FixedXMLObject(float l, float t, float? w, float? h) {
+        Left = new(l);
+        Top = new(t);
+        Width = new(w);
+        Height = new(h);
+        IsInteractable.AddDisturbance(IsVisible);
+    }
+
+    public FixedXMLObject MakeUninteractable(out IDisposable token) {
+        token = IsInteractable.AddConst(false);
+        return this;
+    }
+
+    public void Cleanup() {
+        Left.OnCompleted();
+        Top.OnCompleted();
+        Width.OnCompleted();
+        Height.OnCompleted();
+        IsInteractable.OnCompleted();
+        IsVisible.OnCompleted();
+    }
 }
 }

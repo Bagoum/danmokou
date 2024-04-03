@@ -74,13 +74,14 @@ public class WPGameDef : ADVGameDef {
                 Prefab = XMLUtils.Prefabs.PureTextNode,
                 Passthrough = true,
                 OnBuilt = n => {
-                    var l = n.NodeHTML.Q<Label>();
+                    var l = n.HTML.Q<Label>();
                     l.style.backgroundColor = new Color(0.42f, 0.08f, 0.47f, 0.7f);
                     l.SetPadding(44, 64, 44, 64);
                 }
-            };
-            targetInfo.ConfigureAbsoluteLocation(new FixedXMLObject(1920, 200, null, null), XMLUtils.Pivot.Center,
-                useVisiblityPassthrough:false);
+            }.Bind(new FixedXMLView(new(new FixedXMLObject(1920, 200, null, null) {
+                Pivot = XMLUtils.Pivot.Center
+            }.MakeUninteractable(out var t))));
+            tokens.Add(t);
             evTargets.AddNodeDynamic(targetInfo);
             
             //The actual evidence window needs to be set up in ADVDataFinalized since it depends on Data.Evidences
@@ -110,7 +111,7 @@ public class WPGameDef : ADVGameDef {
                                 Passthrough = true, 
                                 OnBuilt = n => n.Style.minHeight = 500
                             }.WithCSS(XMLUtils.fontBiolinumClass, XMLUtils.small1Class)
-                            .WithView(new FlagLabelView(new(() => ev.Enabled, ev.Description, 
+                            .Bind(new FlagView(new(() => ev.Enabled, ev.Description, 
                                 "I don't have any evidence to put here."))),
                         new UIButton("Use Evidence", UIButton.ButtonType.Confirm, _ => {
                             if (targetEvReq.Request.CanPresentAny) {
@@ -121,24 +122,26 @@ public class WPGameDef : ADVGameDef {
                                 return new UIResult.ReturnToScreenCaller();
                             }
                         }) { VisibleIf = () => ev.Enabled && CanEvidence })
-                }.WithView(new FlagLabelView(new(() => ev.Enabled, ev.Title, "---")))
+                }.Bind(new FlagView(new(() => ev.Enabled, ev.Title, "---")))
             ));
             evidenceScreen.SetFirst(evs);
             menu.AddScreen(evidenceScreen);
             //Since this button is always present, we don't need to bother
             // going through Assertions for it
             // (Though we don't yet have an Assertion for generic UITK objects, only one for icon-based interactables)
-            var toEvidenceButton = new UIButton(null, 
-                UIButton.ButtonType.Confirm, _ => new UIResult.GoToScreen(evidenceScreen, menu.Unselect)) {
-                OnBuilt = n => {
-                    var l = n.NodeHTML.Q<Label>();
-                    l.style.backgroundColor = Color.clear;
-                    l.style.backgroundImage = new StyleBackground(gdef.evidenceReviewBg);
-                    l.SetPadding(54, 64, 54, 64);
-                    tokens.Add(evSize.Subscribe(s => n.HTML.transform.scale = new UnityEngine.Vector3(s, s, 1)));
-                },
-            }.WithView(new FlagLabelView(new(() => CanSpecificEvidence, "Show Evidence", "Evidence")));
-            toEvidenceButton.ConfigureAbsoluteLocation(new FixedXMLObject(120, 90, null, null), XMLUtils.Pivot.TopLeft);
+            var toEvidenceButton = new UIButton(null,
+                    UIButton.ButtonType.Confirm, _ => new UIResult.GoToScreen(evidenceScreen, menu.Unselect)) {
+                    OnBuilt = n => {
+                        var l = n.HTML.Q<Label>();
+                        l.style.backgroundColor = Color.clear;
+                        l.style.backgroundImage = new StyleBackground(gdef.evidenceReviewBg);
+                        l.SetPadding(54, 64, 54, 64);
+                        tokens.Add(evSize.Subscribe(s => n.HTML.transform.scale = new UnityEngine.Vector3(s, s, 1)));
+                    },
+                }.Bind(new FlagView(new(() => CanSpecificEvidence, "Show Evidence", "Evidence")))
+                .Bind(new FixedXMLView(new(new FixedXMLObject(120, 90, null, null) {
+                    Pivot = XMLUtils.Pivot.TopLeft
+            })));
             menu.AddNodeDynamic(toEvidenceButton);
             void UpdateEvidenceButton(Unit _) {
                 evSize.PushIfNotSame(CanSpecificEvidence ? 1.2f : 1f);

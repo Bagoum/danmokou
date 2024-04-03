@@ -311,12 +311,62 @@ public interface IInputHandler {
 /// See <see cref="IInputHandler"/>
 /// </summary>
 public class InputHandler : IInputHandler {
-    private bool refractory;
+    /// <summary>
+    /// Method that governs when an <see cref="InputHandler"/> is active as depending on its underlying sources.
+    /// </summary>
+    private record InputTriggerMethod {
+        /// <summary>
+        /// The handler is active on the first Regular Update frame
+        /// for the Unity frame when the source was first made active.
+        /// </summary>
+        public record Once : InputTriggerMethod;
+
+        /// <summary>
+        /// The handler is active on the first Regular Update frame
+        /// for the Unity frame when the source was first made active.
+        /// If it is held further, it will also be active once after `LongPause`
+        ///  seconds, and then repeatedly once every `ShortPause` seconds.
+        /// </summary>
+        public record OnceRefire(float LongPause = 0.3f, float ShortPause = 0.1f) : Once;
+
+        /// <summary>
+        /// The handler is continuously active starting from the first Regular Update frame
+        /// for the Unity frame when the source was first made active,
+        /// and is deactivated when the source is made active again.
+        /// </summary>
+        public record OnceToggle : InputTriggerMethod;
+
+        /// <summary>
+        /// The handler is active while the source is active.
+        /// </summary>
+        public record Persistent : InputTriggerMethod;
+    }
+    private enum RecoveryStage {
+        /// <summary>
+        /// The key is not pressed. When the key is pressed, the handler will fire.
+        /// </summary>
+        ReadyForInput = 0,
+        
+        /// <summary>
+        /// The key is currently being pressed. In most cases, it needs to be released
+        ///  before the handler will fire again. However, if held for long enough in some cases,
+        ///  the handler will fire and enter <see cref="AfterSecondaryInput"/>.
+        /// </summary>
+        AfterInitialInput = 1,
+        
+        /// <summary>
+        /// The key is currently being pressed and the handler will repeatedly fire at short intervals.
+        /// </summary>
+        AfterSecondaryInput = 2,
+    }
+
+    private RecoveryStage stage = RecoveryStage.ReadyForInput;
+    private float lastFireTime = 0;
     private readonly InputTriggerMethod trigger;
     private bool toggledValue;
     public bool Active => _active && EngineStateManager.State.InputAllowed() &&
                           //Prevents events like Bomb from being triggered twice in two RU frames per one unity frame
-                          (trigger == InputTriggerMethod.ONCE ?
+                          (trigger is InputTriggerMethod.Once ?
                             ETime.FirstUpdateForScreen :
                             true);
     private bool _active;
@@ -325,34 +375,58 @@ public class InputHandler : IInputHandler {
     public LString Purpose { get; }
 
     private InputHandler(InputTriggerMethod method, IInputBinding check, LString purpose) {
-        refractory = false;
         trigger = method;
         binding = check;
         Purpose = purpose;
     }
     
     public static IInputHandler Toggle(IInputBinding check, LString? purpose = null) => 
-        new InputHandler(InputTriggerMethod.ONCE_TOGGLE, check, 
+        new InputHandler(new InputTriggerMethod.OnceToggle(), check, 
             purpose ?? (check as IPurposefulInputBinding)?.Purpose ?? 
             "(This key handler has no defined purpose. This should not display.)");
     public static IInputHandler Hold(IInputBinding check, LString? purpose = null) => 
-        new InputHandler(InputTriggerMethod.PERSISTENT, check, 
+        new InputHandler(new InputTriggerMethod.Persistent(), check, 
             purpose ?? (check as IPurposefulInputBinding)?.Purpose ?? 
             "(This key handler has no defined purpose. This should not display.)");
     public static IInputHandler Trigger(IInputBinding check, LString? purpose = null) => 
-        new InputHandler(InputTriggerMethod.ONCE, check, 
+        new InputHandler(new InputTriggerMethod.Once(), check, 
+            purpose ?? (check as IPurposefulInputBinding)?.Purpose ?? 
+            "(This key handler has no defined purpose. This should not display.)");
+    
+    public static IInputHandler TriggerRefire(IInputBinding check, LString? purpose = null) => 
+        new InputHandler(new InputTriggerMethod.OnceRefire(), check, 
             purpose ?? (check as IPurposefulInputBinding)?.Purpose ?? 
             "(This key handler has no defined purpose. This should not display.)");
 
     public bool OncePerUnityFrameUpdate() {
         var keyDown = binding.Active;
-        if (!refractory && keyDown) {
-            refractory = trigger is InputTriggerMethod.ONCE or InputTriggerMethod.ONCE_TOGGLE;
-            if (trigger == InputTriggerMethod.ONCE_TOGGLE) _active = toggledValue = !toggledValue;
-            else _active = true;
+        var time = Time.realtimeSinceStartup;
+        if (stage is RecoveryStage.ReadyForInput && keyDown) {
+            if (trigger is InputTriggerMethod.Once or InputTriggerMethod.OnceToggle)
+                stage = RecoveryStage.AfterInitialInput;
+            if (trigger is InputTriggerMethod.OnceToggle) 
+                _active = toggledValue = !toggledValue;
+            else 
+                _active = true;
+            lastFireTime = time;
         } else {
-            if (refractory && !keyDown) refractory = false;
-            _active = (trigger == InputTriggerMethod.ONCE_TOGGLE) ? toggledValue : false;
+            if (stage > RecoveryStage.ReadyForInput && !keyDown) {
+                stage = RecoveryStage.ReadyForInput;
+            }
+            if (trigger is InputTriggerMethod.OnceToggle)
+                _active = toggledValue;
+            else
+                _active = false;
+            if (trigger is InputTriggerMethod.OnceRefire rf && keyDown) {
+                if (stage is RecoveryStage.AfterInitialInput && time > lastFireTime + rf.LongPause) {
+                    stage = RecoveryStage.AfterSecondaryInput;
+                    _active = true;
+                    lastFireTime = time;
+                } else if (stage is RecoveryStage.AfterSecondaryInput && time > lastFireTime + rf.ShortPause) {
+                    _active = true;
+                    lastFireTime = time;
+                }
+            }
         }
         return keyDown;
     }

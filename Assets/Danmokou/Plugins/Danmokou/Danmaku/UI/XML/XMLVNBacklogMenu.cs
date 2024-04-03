@@ -70,23 +70,23 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
     private class BacklogEntryView : UIView<BacklogEntryVM> {
         public BacklogEntryView(BacklogEntryVM vm) : base(vm) { }
 
-        public override void NodeBuilt(UINode node) {
-            base.NodeBuilt(node);
+        public override void OnBuilt(UINode node) {
+            base.OnBuilt(node);
             var entry = ViewModel.Entry;
-            node.NodeHTML.Q<Label>("Description").text = entry.readableSpeech;
+            node.HTML.Q<Label>("Description").text = entry.readableSpeech;
             if (entry.speakerSprite != null)
-                node.NodeHTML.Q("Speaker").style.backgroundImage = new StyleBackground(entry.speakerSprite);
+                node.HTML.Q("Speaker").style.backgroundImage = new StyleBackground(entry.speakerSprite);
         }
 
         protected override BindingResult Update(in BindingContext context) {
             var entry = ViewModel.Entry;
             var vis = Node.Selection;
-            var b = Node.NodeHTML.Q("Borderer");
+            var b = Node.HTML.Q("Borderer");
             var smul = vis == UINodeSelection.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f);
             b.style.borderTopColor = entry.uiColor * smul;
             b.style.borderLeftColor = entry.uiColor * smul * new Color(0.65f, 0.65f, 0.65f);
-            Node.NodeHTML.Q<Label>("Description").style.color =
-                Node.NodeHTML.Q<Label>("Label").style.color =
+            Node.HTML.Q<Label>("Description").style.color =
+                Node.HTML.Q<Label>("Label").style.color =
                     entry.textColor * (vis == UINodeSelection.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f));
             return base.Update(in context);
         }
@@ -101,7 +101,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
                     backlog(entry.location);
                     return new UIResult.StayOnNode();
                 } : null
-        }.WithView(n => new BacklogEntryView(new(n, entry)));
+        }.Bind(n => new BacklogEntryView(new(n, entry)));
         backlogEntries.AddNodeDynamic(node);
     }
 

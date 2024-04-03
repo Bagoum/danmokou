@@ -27,22 +27,25 @@ public class AxisViewModel : UIViewModel {
     public override long GetViewHash() => Index.GetHashCode();
 }
 
-public class AxisView : UIView<AxisViewModel> {
+public class AxisView : UIView<AxisViewModel>, IUIView {
     private Cancellable? canceller;
     public AxisView(AxisViewModel viewModel) : base(viewModel) {}
 
-    public override void NodeBuilt(UINode node) {
-        base.NodeBuilt(node);
-        Node.DisableAnimations();
-        Node.OnEnter = Node.OnEnter.Then((n, cs) => VM.Set(n));
+    public override void OnBuilt(UINode node) {
+        base.OnBuilt(node);
+        Node.RootView.DisableAnimations();
+    }
+
+    public void OnEnter(UINode node, ICursorState cs, bool animate) {
+        VM.Set(node);
     }
 
     protected override BindingResult Update(in BindingContext context) {
-        SetRelativeLocation(VM.Index, !IsFirstRender());
+        SetRelativeLocation(VM.Index);
         return base.Update(in context);
     }
 
-    private void SetRelativeLocation(int selectedIndex, bool animate) {
+    private void SetRelativeLocation(int selectedIndex) {
         var center = (Node.Group.Nodes.Count - 1) / 2f;
         var selLoc = VM.Axis * ((selectedIndex - center) * 1.4f);
         var nodeIndex = Node.IndexInGroup;
@@ -53,21 +56,12 @@ public class AxisView : UIView<AxisViewModel> {
         var scale = isSel ? 2 : 1;
         var alpha = isSel ? 1 : 0.7f;
         var color = (Node.IsEnabled ? Color.white: Color.gray).WithA(alpha);
-        float time = 0.4f;
-        var tr = Node.NodeHTML.transform;
-        canceller?.Cancel();
-        canceller = new Cancellable();
-        if (!animate) {
-            Node.HTML.WithAbsolutePosition(UIBuilderRenderer.ToXMLOffset(myLoc));
-            //tr.position = myLoc;
-            tr.scale = new Vector3(scale, scale, scale);
-            //tr.color = color;
-        } else {
-            Node.Controller.PlayAnimation(Node.HTML.GoToLeftTop(
-                UIBuilderRenderer.ToXMLOffset(myLoc), time, Easers.EOutSine, canceller));
-            Node.Controller.PlayAnimation(tr.ScaleTo(scale, time, Easers.EOutSine, canceller));
-            //sr.ColorTo(color, time, Easers.EOutSine, canceller).Run(this, new CoroutineOptions(true));
-        }
+        var tr = Node.HTML.transform;
+        Cancellable.Replace(ref canceller);
+        Node.Controller.PlayAnimation(Node.HTML.GoToLeftTop(
+            UIBuilderRenderer.ToXMLOffset(myLoc), 0.6f, Easers.EOutSine, canceller));
+        Node.Controller.PlayAnimation(tr.ScaleTo(scale, 0.4f, Easers.EOutSine, canceller));
+        //sr.ColorTo(color, time, Easers.EOutSine, canceller).Run(this, new CoroutineOptions(true));
     }
 }
 }

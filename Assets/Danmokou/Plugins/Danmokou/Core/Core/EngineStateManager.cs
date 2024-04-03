@@ -32,7 +32,7 @@ public static class EngineStateHelpers {
 }
 
 public static class EngineStateManager {
-    private static readonly DisturbedEvented<EngineState> stateOverrides =
+    private static readonly DisturbedEvented<EngineState,EngineState> stateOverrides =
         new DisturbedFold<EngineState>(EngineState.RUN, (x, y) => (x > y) ? x : y);
     public static EngineState State { get; private set; } = EngineState.RUN;
     private static readonly Evented<EngineState> evState = new Evented<EngineState>(EngineState.RUN);

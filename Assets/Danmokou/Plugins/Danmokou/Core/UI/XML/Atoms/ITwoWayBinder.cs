@@ -5,18 +5,12 @@ using BagoumLib.Events;
 namespace Danmokou.UI.XML {
 /// <summary>
 /// Helper for binding changes two ways between a view and view model.
+/// <br/>When <see cref="Value"/> is set, the default logic will
+///  re-publish the linked view model (if it is <see cref="IVersionedUIViewModel"/>).
 /// </summary>
 public interface ITwoWayBinder<T> {
     public IUIViewModel ViewModel { get; }
-    public T Value { get; set; }
-    public IObservable<Unit> ValueUpdatedFromModel { get; }
-
-}
-
-public abstract class TwoWayBinder<T> : ITwoWayBinder<T> {
-    public IUIViewModel ViewModel { get; }
-    public IObservable<Unit> ValueUpdatedFromModel { get; } 
-    T ITwoWayBinder<T>.Value {
+    public T Value {
         get => GetInner();
         set {
             SetInner(value);
@@ -24,16 +18,33 @@ public abstract class TwoWayBinder<T> : ITwoWayBinder<T> {
                 vers.Publish();
         }
     }
+    public IObservable<Unit> ValueUpdatedFromModel { get; }
+    
+    protected T GetInner();
+    protected void SetInner(T value);
+
+}
+
+/// <summary>
+/// Base class for binding values two ways between a view and model/view model.
+/// <br/>When <see cref="ITwoWayBinder{T}.Value"/> is set, this class will
+///  re-publish the linked view model (if it is <see cref="IVersionedUIViewModel"/>).
+/// </summary>
+public abstract class TwoWayBinder<T> : ITwoWayBinder<T> {
+    public IUIViewModel ViewModel { get; }
+    public IObservable<Unit> ValueUpdatedFromModel { get; } 
 
     public TwoWayBinder(IUIViewModel? vm) {
         ViewModel = vm ?? new VersionedUIViewModel();
         if (ViewModel is IVersionedUIViewModel vers)
             ValueUpdatedFromModel = vers.UpdatedFromModel;
         else
-            ValueUpdatedFromModel = new Event<Unit>();
+            ValueUpdatedFromModel = NullEvent<Unit>.Default;
     }
 
+    T ITwoWayBinder<T>.GetInner() => GetInner();
     protected abstract T GetInner();
+    void ITwoWayBinder<T>.SetInner(T value) => SetInner(value);
     protected abstract void SetInner(T value);
 }
 

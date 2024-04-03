@@ -174,23 +174,26 @@ public abstract class UIController : CoroutineRegularUpdater {
         var revInds = new List<CacheInstruction>();
         var groupStack = new Stack<(UIGroup group, UINode? node)>(GroupCall.Reverse());
         var screenStack = new Stack<UINode>(ScreenCall.Reverse());
+        void GoToThisNode() {
+            revInds.Add(new CacheInstruction.ToGroupNode(c.IndexInGroup));
+            for (int ii = c.Group.Nodes.Count - 1; ii >= 0; --ii)
+                if (c.Group.Nodes[ii] is IBaseLROptionNode opt) {
+                    revInds.Add(new CacheInstruction.ToOption(opt.Index));
+                    revInds.Add(new CacheInstruction.ToGroupNode(((UINode)opt).IndexInGroup));
+                }
+        }
         while (c != null) {
-            if (c is IOptionNodeLR opt) {
-                revInds.Add(new CacheInstruction.ToOption(opt.Index));
-            } else if (c is IComplexOptionNodeLR copt) {
-                revInds.Add(new CacheInstruction.ToOption(copt.Index));
-            }
             if ((groupStack.TryPeek(out var g) && (g.group.Screen == c.Screen))) {
-                revInds.Add(new CacheInstruction.ToGroupNode(c.Group.Nodes.IndexOf(c)));
+                GoToThisNode();
                 revInds.Add(new CacheInstruction.ToGroup(null, c.Screen.Groups.IndexOf(c.Group)));
                 var (g_, c_) = groupStack.Pop();
                 c = c_ ?? g_.EntryNode;
             } else if (screenStack.TryPeek(out _)) {
-                revInds.Add(new CacheInstruction.ToGroupNode(c.Group.Nodes.IndexOf(c)));
+                GoToThisNode();
                 revInds.Add(new CacheInstruction.ToGroup(Screens.IndexOf(c.Screen), c.Screen.Groups.IndexOf(c.Group)));
                 c = screenStack.Pop();
             }  else {
-                revInds.Add(new CacheInstruction.ToGroupNode(c.Group.Nodes.IndexOf(c)));
+                GoToThisNode();
                 c = null;
             }
         }
@@ -275,7 +278,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                     await OperateOnResult(new UIResult.GoToNode(Current.Group.Nodes[toGroupNode.NodeIndex]), null);
                     break;
                 case CacheInstruction.ToOption toOption:
-                    if (Current is IOptionNodeLR opt) {
+                    if (Current is IBaseLROptionNode opt) {
                         opt.Index = toOption.OptionIndex;
                     } else
                         throw new Exception("Couldn't rebuild menu position: node is not an option");

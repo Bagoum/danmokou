@@ -93,11 +93,11 @@ public abstract class UIRenderSpace {
         return Task.CompletedTask;
     }
 
-    public static Func<UIRenderSpace, ICancellee, Task> TooltipVisibleAnim =
+    public static readonly Func<UIRenderSpace, ICancellee, Task> TooltipVisibleAnim =
         (rs, cT) => rs.MakeTask(rs.HTML.transform.ScaleTo(Vector3.one, 0.4f, Easers.EOutBack, cT),
             rs.HTML.style.FadeTo(1, .25f, cT: cT));
     
-    public static Func<UIRenderSpace, ICancellee, Task> TooltipNotVisibleAnim =
+    public static readonly Func<UIRenderSpace, ICancellee, Task> TooltipNotVisibleAnim =
         (rs, cT) => rs.MakeTask(rs.HTML.transform.ScaleTo(Vector3.zero, 0.25f, null, cT),
             rs.HTML.style.FadeTo(0, .25f, cT: cT));
 

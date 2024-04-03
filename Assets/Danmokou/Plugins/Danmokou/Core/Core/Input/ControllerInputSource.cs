@@ -80,17 +80,17 @@ public class ControllerInputSource : IKeyedInputSource, IPrimaryInputSource {
 
         ControllerRebindingProxy Proxy(RebindableInputBinding b) => new(b, source);
         
-        arrowLeft = InputHandler.Trigger(pleft = Proxy(i.CLeft), left);
-        arrowRight = InputHandler.Trigger(pright = Proxy(i.CRight), right);
-        arrowUp = InputHandler.Trigger(pup = Proxy(i.CUp), up);
-        arrowDown = InputHandler.Trigger(pdown = Proxy(i.CDown), down);
+        arrowLeft = InputHandler.TriggerRefire(pleft = Proxy(i.CLeft), left);
+        arrowRight = InputHandler.TriggerRefire(pright = Proxy(i.CRight), right);
+        arrowUp = InputHandler.TriggerRefire(pup = Proxy(i.CUp), up);
+        arrowDown = InputHandler.TriggerRefire(pdown = Proxy(i.CDown), down);
         focusHold = InputHandler.Hold(Proxy(i.CFocusHold), focus);
         fireHold = InputHandler.Hold(Proxy(i.CShootHold), fire);
         bomb = InputHandler.Trigger(Proxy(i.CSpecial), special);
         meter = InputHandler.Hold(Proxy(i.CSpecial), special);
         swap = InputHandler.Trigger(Proxy(i.CSwap), LocalizedStrings.Controls.swap);
-        fly = InputHandler.Trigger(Proxy(i.CFly), LocalizedStrings.Controls.fly);
-        slowFall = InputHandler.Trigger(Proxy(i.CSlowFall), LocalizedStrings.Controls.slowfall);
+        fly = InputHandler.Hold(Proxy(i.CFly), LocalizedStrings.Controls.fly);
+        slowFall = InputHandler.Hold(Proxy(i.CSlowFall), LocalizedStrings.Controls.slowfall);
         pause = InputHandler.Trigger(Proxy(i.CPause), LocalizedStrings.Controls.pause);
         vnBacklogPause = InputHandler.Trigger(Proxy(i.CBacklog), backlog);
         uiConfirm = InputHandler.Trigger(Proxy(i.CConfirm), confirm);

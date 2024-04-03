@@ -142,7 +142,15 @@ public abstract class UIGroup {
             return nodes;
         }
     }
-    public bool Interactable { get; set; } = true;
+    private bool _interactable = true;
+    public bool Interactable { get => _interactable;
+        set {
+            _interactable = value;
+            if (!value && nodes != null)
+                foreach (var n in Nodes)
+                    n.ReprocessSelection();
+        } 
+    }
     
     /// <summary>
     /// Node to go to when trying to enter this group.
@@ -474,7 +482,6 @@ public class PopupUIGroup : CompositeUIGroup {
     
     public bool EasyExit { get; set; }
     public float? OverlayAlphaOverride { get; set; }
-    private readonly LString? header;
     private readonly UIRenderConstructed render;
 
     /// <summary>
@@ -484,10 +491,11 @@ public class PopupUIGroup : CompositeUIGroup {
     /// <param name="header">Popup header (optional)</param>
     /// <param name="bodyInner">Constructor for the UIGroup containing the popup messages, entry box, etc</param>
     /// <param name="buttons">Configuration for action buttons</param>
+    /// <param name="builder">Extra on-build configuration for the popup HTML</param>
     /// <returns></returns>
     public static PopupUIGroup CreatePopup(UINode source, LString? header, Func<UIRenderSpace, UIGroup> bodyInner,
-        PopupButtonOpts buttons) {
-        var render = MakeRenderer(source.Screen.AbsoluteTerritory, XMLUtils.Prefabs.Popup);
+        PopupButtonOpts buttons, Action<UIRenderConstructed, VisualElement>? builder = null) {
+        var render = MakeRenderer(source.Screen.AbsoluteTerritory, XMLUtils.Prefabs.Popup, builder);
         var bodyGroup = bodyInner(new UIRenderExplicit(render, html => html.Q("BodyHTML")));
         UINode?[] opts;
         if (buttons is PopupButtonOpts.LeftRightFlush lr) {
@@ -534,8 +542,24 @@ public class PopupUIGroup : CompositeUIGroup {
         return p;
     }
 
-    private static UIRenderConstructed MakeRenderer(UIRenderAbsoluteTerritory at, VisualTreeAsset prefab) {
-        var render = new UIRenderConstructed(at, prefab) {
+    public static PopupUIGroup CreateDropdown(UINode src, Selector selector) {
+        var target = src.HTML.Q(null, XMLUtils.dropdownTarget) ?? src.BodyOrNodeHTML;
+        var render = MakeRenderer(src.Screen.AbsoluteTerritory, XMLUtils.Prefabs.Dropdown, 
+            (_, ve) => {
+                ve.style.width = target.worldBound.width;
+                ve.AddScrollColumn().style.maxHeight = 500;
+            });
+        target.SetTooltipAbsolutePosition(render.HTML.ConfigureAbsolute(XMLUtils.Pivot.Top));
+        var grp = new UIColumn(new UIRenderColumn(render, 0), selector.MakeNodes(src));
+        return new PopupUIGroup(render, null, src, grp) {
+            EntryNodeOverride = grp.EntryNode,
+            EasyExit = true,
+            OverlayAlphaOverride = 0
+        };
+    }
+
+    private static UIRenderConstructed MakeRenderer(UIRenderAbsoluteTerritory at, VisualTreeAsset prefab, Action<UIRenderConstructed, VisualElement>? builder = null) {
+        var render = new UIRenderConstructed(at, prefab, builder) {
             IsVisibleAnimation = (rs, cT) => 
                 rs.MakeTask(rs.HTML.transform.ScaleTo(new Vector3(1, 1, 1), .2f, Easers.EOutSine, cT: cT)),
             IsNotVisibleAnimation = (rs, cT) =>
@@ -565,7 +589,7 @@ public class PopupUIGroup : CompositeUIGroup {
     }
 
     public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) => req switch {
-        UICommand.Back => EasyExit ? Source.ReturnGroup : NoOp,
+        UICommand.Back => EasyExit ? Source.ReturnToGroup : NoOp,
         _ => null
     };
 

@@ -15,11 +15,7 @@ public class PropTwoWayBinder<T> : TwoWayBinder<T> {
     private readonly Delayed<object> model;
     private readonly TypeMember.Writeable property;
     protected override T GetInner() => (T)property.InvokeInst(model.Value)!;
-    protected override void SetInner(T value) {
-        property.SetInst(model.Value, value!);
-        if (ViewModel is IVersionedUIViewModel vers)
-            vers.Publish();
-    }
+    protected override void SetInner(T value) => property.SetInst(model.Value, value!);
     
     public PropTwoWayBinder(IUIViewModel vm, string prop) : this(vm, prop, vm) { }
 

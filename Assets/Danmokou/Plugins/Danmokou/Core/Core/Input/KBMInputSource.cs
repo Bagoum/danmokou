@@ -21,10 +21,10 @@ public class KBMInputSource : IKeyedInputSource, IPrimaryInputSource {
         ((IKeyedInputSource)this).AddUpdaters();
     }
 
-    public IInputHandler arrowLeft { get; } = InputHandler.Trigger(i.Left, left);
-    public IInputHandler arrowRight { get; } = InputHandler.Trigger(i.Right, right);
-    public IInputHandler arrowUp { get; } = InputHandler.Trigger(i.Up, up);
-    public IInputHandler arrowDown { get; } = InputHandler.Trigger(i.Down, down);
+    public IInputHandler arrowLeft { get; } = InputHandler.TriggerRefire(i.Left, left);
+    public IInputHandler arrowRight { get; } = InputHandler.TriggerRefire(i.Right, right);
+    public IInputHandler arrowUp { get; } = InputHandler.TriggerRefire(i.Up, up);
+    public IInputHandler arrowDown { get; } = InputHandler.TriggerRefire(i.Down, down);
     
     public IInputHandler focusHold { get; } = InputHandler.Hold(i.FocusHold, focus);
     public IInputHandler fireHold { get; } = InputHandler.Hold(i.ShootHold, fire);

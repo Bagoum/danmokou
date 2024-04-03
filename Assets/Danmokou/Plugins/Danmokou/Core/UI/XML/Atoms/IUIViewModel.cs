@@ -16,16 +16,42 @@ public interface IUIViewModel : IDataSourceViewHashProvider {
     //In most cases when we set the update trigger to WhenDirty, we want to avoid allocations
     // that would otherwise occur in hash code computation. As such, we provide this default behavior
     // to prevent calculating the hash if it's not going to be used.
-    long IDataSourceViewHashProvider.GetViewHashCode() =>
-        UpdateTrigger == BindingUpdateTrigger.WhenDirty ? 0 : 
+    long IDataSourceViewHashProvider.GetViewHashCode() {
+        UpdateEvents(); //TODO put the UpdateEvents call in a better place
+        return UpdateTrigger == BindingUpdateTrigger.WhenDirty ?
+            0 :
             OverrideHashHandler?.Invoke() ?? GetViewHash();
-        
+    }
+
+    /// <summary>
+    /// Update any <see cref="LazyEvented{T}"/> that may lead to event-driven CSS updates.
+    /// </summary>
+    void UpdateEvents() { }
+
     /// <summary>
     /// Get a hash code that changes whenever the view needs to be redrawn.
     /// <br/>This will not be called if <see cref="UpdateTrigger"/> is WhenDirty,
     ///  and is overriden by <see cref="OverrideHashHandler"/>.
     /// </summary>
     long GetViewHash();
+
+    /// <inheritdoc cref="ICursorState.CustomEventHandling"/>
+    UIResult? CustomEventHandling(UINode node) => null;
+
+    /// <summary>
+    /// Overrides <see cref="UINode"/>.<see cref="UINode.Navigate"/> when the event is OpenContextMenu.
+    /// </summary>
+    UIResult? OnContextMenu(UINode node, ICursorState cs) => null;
+
+    /// <summary>
+    /// Overrides <see cref="UINode"/>.<see cref="UINode.Navigate"/> when the event is Confirm.
+    /// </summary>
+    UIResult? OnConfirm(UINode node, ICursorState cs) => null;
+
+    /// <summary>
+    /// Called when the node is entered in order to determine a tooltip to show next to the node.
+    /// </summary>
+    UIGroup? Tooltip(UINode node, ICursorState cs, bool prevExists) => null;
 }
 
 /// <summary>
@@ -34,7 +60,30 @@ public interface IUIViewModel : IDataSourceViewHashProvider {
 public abstract class UIViewModel : IUIViewModel {
     public BindingUpdateTrigger UpdateTrigger { get; set; }
     public Func<long>? OverrideHashHandler { get; set; }
+    
+    public virtual void UpdateEvents() { }
     public abstract long GetViewHash();
+}
+
+/// <summary>
+/// A view model that never requires a redraw.
+/// </summary>
+public interface IConstUIViewModel : IUIViewModel {
+    BindingUpdateTrigger IUIViewModel.UpdateTrigger {
+        get => BindingUpdateTrigger.OnSourceChanged;
+        set {
+            if (value != BindingUpdateTrigger.OnSourceChanged)
+                throw new Exception($"Cannot set update trigger on {nameof(IConstUIViewModel)}");
+        }
+    }
+    Func<long>? IUIViewModel.OverrideHashHandler { 
+        get => null;
+        set {
+            if (value != null)
+                throw new Exception($"Cannot set override hash handler on {nameof(IConstUIViewModel)}");
+        } 
+    }
+    long IUIViewModel.GetViewHash() => 0;
 }
 
 /// <summary>

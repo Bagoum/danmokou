@@ -12,6 +12,11 @@ namespace Danmokou.UI.XML {
 /// </summary>
 public interface IUIView {
     /// <summary>
+    /// The view model bound to this view.
+    /// </summary>
+    IUIViewModel ViewModel { get; }
+    
+    /// <summary>
     /// An override prefab that should be used for the construction of the node to which this view is attached.
     /// <br/>Only one view on a node may provide a prefab. If all are null,
     ///  then will fall back to default prefab determination logic based on the node type.
@@ -20,19 +25,57 @@ public interface IUIView {
     VisualTreeAsset? Prefab { get; } 
     
     /// <summary>
+    /// An override set of instructions for constructing the node to which this view is attached,
+    ///  provided the HTML of the build target.
+    /// <br/>Overrides <see cref="Prefab"/>. Does not require *actually* building HTML; it is safe
+    ///  to simply query and return some part of the build target.
+    /// </summary>
+    Func<VisualElement, VisualElement>? Builder { get; }
+    
+    /// <summary>
     /// Attach this view to a VisualElement (called during UI instantiation).
     /// </summary>
     void Bind(VisualElement ve);
     
     /// <summary>
-    /// Notify that the node using this view was built.
+    /// Called when the node using this view was built.
     /// </summary>
-    void NodeBuilt(UINode node);
+    void OnBuilt(UINode node);
     
     /// <summary>
-    /// Notify that the node using this view was destroyed.
+    /// Called when navigation entered this node.
     /// </summary>
-    void NodeDestroyed(UINode node);
+    void OnEnter(UINode node, ICursorState cs, bool animate) { }
+
+    /// <summary>
+    /// Called when navigation exited this node.
+    /// </summary>
+    void OnLeave(UINode node, ICursorState cs, bool animate, bool isEnteringPopup) { }
+    
+    /// <summary>
+    /// Called when this node is being removed from the group call stack.
+    /// </summary>
+    void OnCloseDependencies(UINode node) { }
+
+    /// <summary>
+    /// Called when the mouse is pressed over this node.
+    /// <br/>Note that this may not be followed by OnMouseUp (if the mouse moves outside the bounds
+    ///  before being released).
+    /// <br/>OnMouseEnter and OnMouseLeave are not provided as it is preferred to use OnEnter and OnLeave,
+    ///  which are tied more closely to layout handling.
+    /// </summary>
+    void OnMouseDown(UINode node, PointerDownEvent ev) { }
+    
+    /// <summary>
+    /// Called when the mouse is released over this node.
+    /// <br/>Note that this may not be preceded by OnMouseDown.
+    /// </summary>
+    void OnMouseUp(UINode node, PointerUpEvent ev) { }
+    
+    /// <summary>
+    /// Called when the node using this view was destroyed.
+    /// </summary>
+    void OnDestroyed(UINode node);
     
     /// <summary>
     /// Mark that this view should use the provided event to determine when it is dirty,
@@ -46,9 +89,10 @@ public interface IUIView {
 public abstract class UIView : CustomBinding, IUIView, ITokenized {
     private static readonly Dictionary<Type, BindingId> typeBindings = new();
     public virtual VisualTreeAsset? Prefab => null;
+    public virtual Func<VisualElement, VisualElement>? Builder => null;
     public List<IDisposable> Tokens { get; } = new();
     public UINode Node { get; private set; } = null!;
-    private IUIViewModel ViewModel { get; }
+    public IUIViewModel ViewModel { get; }
     public BindingUpdateTrigger UpdateTrigger {
         get => updateTrigger;
         set => ViewModel.UpdateTrigger = updateTrigger = value;
@@ -65,11 +109,11 @@ public abstract class UIView : CustomBinding, IUIView, ITokenized {
 
     public void Bind(VisualElement ve) => ve.SetBinding(BindingId, this);
 
-    public virtual void NodeBuilt(UINode node) {
+    public virtual void OnBuilt(UINode node) {
         Node = node;
     }
 
-    public virtual void NodeDestroyed(UINode node) {
+    public virtual void OnDestroyed(UINode node) {
         (this as IDisposable).Dispose();
     }
 
@@ -79,14 +123,21 @@ public abstract class UIView : CustomBinding, IUIView, ITokenized {
     }
 }
 public abstract class UIView<T> : UIView, IDataSourceProvider where T : IUIViewModel {
-    public T ViewModel { get; }
+    public new T ViewModel { get; }
     public T VM => ViewModel;
     public object dataSource => ViewModel!;
     public PropertyPath dataSourcePath => new();
     private bool _isFirstRender = true;
+    private bool _isFirstVisibleRender = true;
     protected bool IsFirstRender() {
         if (_isFirstRender) {
             _isFirstRender = false;
+            return true;
+        } else return false;
+    }
+    protected bool IsFirstVisibleRender() {
+        if (_isFirstVisibleRender) {
+            _isFirstVisibleRender = false;
             return true;
         } else return false;
     }

@@ -77,13 +77,13 @@ public class GhostOfThePastGameDef : ADVGameDef {
                     ShowHideGroup = new UIColumn(evInfo, 
                         new UINode { Prefab = XMLUtils.Prefabs.PureTextNode, Passthrough = true, OnBuilt = n => n.Style.minHeight = 500 }
                             .WithCSS(XMLUtils.fontBiolinumClass, XMLUtils.small1Class)
-                            .WithView(new FlagLabelView(new(() => ev.Enabled, ev.Description, 
+                            .Bind(new FlagView(new(() => ev.Enabled, ev.Description, 
                                 "I don't have any evidence to put here."))),
                         new UIButton("Present Evidence", UIButton.ButtonType.Confirm, _ => {
                             var __ = evidenceRequest.Present(ev).ContinueWithSync();
                             return new UIResult.ReturnToScreenCaller();
                         }) { VisibleIf = () => ev.Enabled && evidenceRequest.CanPresent })
-                }.WithView(new FlagLabelView(new(() => ev.Enabled, ev.Title, "---")))
+                }.Bind(new FlagView(new(() => ev.Enabled, ev.Title, "---")))
             ));
             evidenceScreen.SetFirst(evs);
             menu.AddScreen(evidenceScreen);
@@ -93,15 +93,17 @@ public class GhostOfThePastGameDef : ADVGameDef {
             var toEvidenceButton = new UIButton(null, 
                 UIButton.ButtonType.Confirm, _ => new UIResult.GoToScreen(evidenceScreen, menu.Unselect)) {
                 OnBuilt = n => {
-                    var l = n.NodeHTML.Q<Label>();
+                    var l = n.HTML.Q<Label>();
                     l.style.backgroundColor = Color.clear;
                     l.style.backgroundImage = new StyleBackground(gdef.evidenceReviewBg);
                     l.SetPadding(54, 64, 54, 64);
                     tokens.Add(evSize.Subscribe(s => n.HTML.transform.scale = new UnityEngine.Vector3(s, s, 1)));
                 },
                 VisibleIf = () => Data.EvidenceButtonVisible
-            }.WithView(new FlagLabelView(new(() => evidenceRequest.CanPresent, "Show Evidence", "Evidence")));
-            toEvidenceButton.ConfigureAbsoluteLocation(new FixedXMLObject(120, 90, null, null), XMLUtils.Pivot.TopLeft);
+            }.Bind(new FlagView(new(() => evidenceRequest.CanPresent, "Show Evidence", "Evidence")))
+            .Bind(new FixedXMLView(new(new FixedXMLObject(120, 90, null, null) {
+                Pivot = XMLUtils.Pivot.TopLeft
+            })));
             menu.AddNodeDynamic(toEvidenceButton);
             tokens.Add(evidenceRequest.RequestsChanged.Subscribe(_ => {
                 evSize.PushIfNotSame(evidenceRequest.CanPresent ? 1.4f : 1f);

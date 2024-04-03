@@ -13,27 +13,6 @@ using static Danmokou.Core.DInput.KeyCodeHelpers;
 
 
 namespace Danmokou.Core.DInput {
-
-/// <summary>
-/// Method that governs when an <see cref="InputHandler"/> is active as depending on its underlying sources.
-/// </summary>
-public enum InputTriggerMethod {
-    /// <summary>
-    /// The handler is active on the first Regular Update frame
-    /// for the Unity frame when the source was first made active.
-    /// </summary>
-    ONCE,
-    /// <summary>
-    /// The handler is continuously active starting from the first Regular Update frame
-    /// for the Unity frame when the source was first made active,
-    /// and is deactivated when the source is made active again.
-    /// </summary>
-    ONCE_TOGGLE,
-    /// <summary>
-    /// The handler is active while the source is active.
-    /// </summary>
-    PERSISTENT
-}
 public static class InputManager {
     public static readonly ShiftKeyBinding Shift = new();
     public static readonly AltKeyBinding Alt = new();

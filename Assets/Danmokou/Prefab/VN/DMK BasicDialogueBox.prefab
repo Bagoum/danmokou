@@ -618,8 +618,8 @@ MonoBehaviour:
   autoplayButton: {fileID: 6051577456208764453}
   skipButton: {fileID: 1367835850857553346}
   charLoadTime: 0.1
-  charScaleInTime: 0.2
-  charScaleInFrom: 1.1
+  charScaleInTime: 0.1
+  charScaleInFrom: 1.24
   scrollWaitTime: 0.2
   background: {fileID: 8236975217106531522}
 --- !u!1 &8236975217751179112

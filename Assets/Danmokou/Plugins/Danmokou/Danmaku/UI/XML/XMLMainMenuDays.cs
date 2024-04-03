@@ -9,6 +9,7 @@ using Danmokou.Services;
 using Danmokou.Danmaku;
 using Danmokou.GameInstance;
 using Danmokou.Player;
+using Danmokou.SM;
 using JetBrains.Annotations;
 using UnityEngine.UIElements;
 using UnityEngine;
@@ -63,7 +64,6 @@ public class XMLMainMenuDays : XMLMainMenu {
         SharedInstanceMetadata Meta() => new(Team(), new(dfc));
 
         var photoBoard = ServiceLocator.FindOrNull<IAyaPhotoBoard>();
-        IDisposable? photoBoardToken = null;
 
         SceneSelectScreen = new UIScreen(this, "SCENE SELECT") {Builder = (s, ve) => {
             s.Margin.SetLRMargin(600, 600);
@@ -77,36 +77,24 @@ public class XMLMainMenuDays : XMLMainMenu {
                     //TODO: this return is not safe if you change the difficulty.
                     if (!p.Enabled(Meta()))
                         return new UINode(p.Title(Meta())) {EnabledIf = () => false};
-                    Challenge c = p.challenges[0];
-                    void SetChallenge(int idx) {
-                        c = p.challenges[idx];
-                        var completion = SaveData.r.ChallengeCompletion(p, idx, Meta());
-                        photoBoardToken = photoBoard?.ConstructPhotos(completion?.Photos, photoSize);
-                    }
-                    UIResult Confirm(UINode _, ICursorState __) {
-                        ConfirmCache();
-                        new InstanceRequest(InstanceRequest.PracticeSuccess, Meta(), new PhaseChallengeRequest(p, c)).Run();
-                        return new UIResult.StayOnNode();
-                    }
+                    var vm = new DayPhaseViewModel(this, p, Meta);
+                    var binder = new PropTwoWayBinder<Challenge>(vm, nameof(vm.c));
                     return new UINode(p.Title(Meta())) {
                         CacheOnEnter = true, ShowHideGroup = new UIColumn(sceneChallengeCol, 
-                            new UINode { OnConfirm = Confirm }
+                            new UINode { OnConfirm = vm.OnConfirm }
                                 .WithCSS(large1Class, centerTextClass)
-                                .WithView(new LabelView<Challenge>(new(() => c, c => c.Description(p.boss.boss)))),
-                            new ComplexLROptionUINode<int>(LString.Empty, VTALR2Option, SetChallenge,
-                                p.challenges.Length.Range().ToArray(), (i, v, on) => {
-                                    v.Query(null!, "bracket")
+                                .Bind(new LabelView<Challenge>(new(() => vm.c, c => c.Description(p.boss.boss)))),
+                            new ComplexLROptionNode<Challenge>(LString.Empty, binder, p.challenges, (_, c, on) => {
+                                    var ve = VTALR2Option.CloneTreeNoContainer();
+                                    ve.Query(null!, "bracket")
                                         .ForEach(x => x.style.display = on ? DisplayStyle.Flex : DisplayStyle.None);
-                                    v.Q("Star").style.unityBackgroundImageTintColor = new StyleColor(p.Completed(i, Meta()) ?
+                                    ve.Q("Star").style.unityBackgroundImageTintColor = p.Completed(c, Meta()) ?
                                         p.boss.boss.colors.uiHPColor :
-                                        new Color(1, 1, 1, 0.52f));
-                                }) {
-                                OnConfirm = Confirm,
-                                OnEnter = (n, _) => SetChallenge((n as IBaseOptionNodeLR)!.Index),
-                                OnLeave = (_, _) => photoBoardToken?.Dispose()
-                            }.WithCSS(optionNoKeyClass),
+                                        new Color(1, 1, 1, 0.52f);
+                                    return ve;
+                                }).Bind(new DayPhaseView(vm, photoBoard, photoSize)).WithCSS(optionNoKeyClass),
                             new UINode(main_gamestart) 
-                                    { OnConfirm = Confirm }
+                                    { OnConfirm = vm.OnConfirm }
                                 .WithCSS(large1Class, centerTextClass)
                         )
                     }.WithCSS(large1Class, 
@@ -131,7 +119,7 @@ public class XMLMainMenuDays : XMLMainMenu {
         _ = new UIColumn(MainScreen, null,
             new TransferNode(main_gamestart, SceneSelectScreen)
                 .WithCSS(large1Class),
-            new OptionNodeLR<string?>(main_lang, SaveData.s.TextLocale, new[] {
+            new LROptionNode<string?>(main_lang, SaveData.s.TextLocale, new[] {
                     ((LString)("English"), Locales.EN),
                     ((LString)("日本語"), Locales.JP)
                 })
@@ -155,5 +143,54 @@ public class XMLMainMenuDays : XMLMainMenu {
             _ = TransitionHelpers.TweenTo(0f, 1f, 0.8f, x => UIRoot.style.opacity = x, x => x).Run(this);
         }
     }
+
+    private class DayPhaseViewModel : VersionedUIViewModel, IUIViewModel {
+        private XMLMainMenuDays src { get; }
+        public SMAnalysis.DayPhase p { get; }
+        public Challenge c { get; set; } //written via PropBinder
+        public Func<SharedInstanceMetadata> Meta { get; }
+        
+        public DayPhaseViewModel(XMLMainMenuDays src, SMAnalysis.DayPhase p, Func<SharedInstanceMetadata> meta) {
+            this.src = src;
+            this.p = p;
+            c = p.challenges[0];
+            Meta = meta;
+        }
+
+        public UIResult? OnConfirm(UINode node, ICursorState cs) {
+            src.ConfirmCache();
+            new InstanceRequest(InstanceRequest.PracticeSuccess, Meta(), new PhaseChallengeRequest(p, c)).Run();
+            return new UIResult.StayOnNode();
+        }
+    }
+
+    private class DayPhaseView : UIView<DayPhaseViewModel>, IUIView {
+        private IDisposable? photoBoardToken;
+        private readonly IAyaPhotoBoard? photoBoard;
+        private readonly float photoSize;
+
+        public DayPhaseView(DayPhaseViewModel data, IAyaPhotoBoard? photoBoard, float photoSize) : base(data) {
+            this.photoBoard = photoBoard;
+            this.photoSize = photoSize;
+        }
+
+        private void ShowPhotos() {
+            var completion = SaveData.r.ChallengeCompletion(VM.p, VM.c, VM.Meta());
+            photoBoardToken?.Dispose();
+            photoBoardToken = photoBoard?.ConstructPhotos(completion?.Photos, photoSize);
+        }
+
+        void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) => ShowPhotos();
+
+        protected override BindingResult Update(in BindingContext context) {
+            ShowPhotos();
+            return base.Update(in context);
+        }
+
+        void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, bool isEnteringPopup) {
+            photoBoardToken?.Dispose();
+        }
+    }
+    
 }
 }

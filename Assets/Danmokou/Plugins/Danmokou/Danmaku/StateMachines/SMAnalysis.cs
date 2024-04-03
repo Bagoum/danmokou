@@ -182,7 +182,7 @@ public static class SMAnalysis {
             };
         public LString Title(SharedInstanceMetadata meta) => (boss.Enabled(meta)) ? _Title : (LString)("??? Locked ???");
         public readonly AnalyzedDayBoss boss;
-        public bool Completed(int cIndex, SharedInstanceMetadata meta) => SaveData.r.ChallengeCompleted(this, cIndex, meta);
+        public bool Completed(Challenge c, SharedInstanceMetadata meta) => SaveData.r.ChallengeCompleted(this, c, meta);
         public bool CompletedOne(SharedInstanceMetadata meta) => SaveData.r.PhaseCompletedOne(this, meta);
         public bool CompletedAll(SharedInstanceMetadata meta) => SaveData.r.PhaseCompletedAll(this, meta);
         public bool Enabled(SharedInstanceMetadata meta) {

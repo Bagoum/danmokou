@@ -54,16 +54,10 @@ public static partial class XMLHelpers {
     }
     
     public static UIScreen PlaymodeScreen(this UIController m, ICampaignDanmakuGameDef game, UIScreen bossPractice, UIScreen stagePractice, Dictionary<Mode, Sprite> sprites, PlayModeCommentator? commentator, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, ICursorState, UIResult>> getMetadata, out bool onlyOneMode) {
-        var floater = References.uxmlDefaults.FloatingNode;
         var s = new UIScreen(m, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => ve.CenterElements()
         }.WithOnEnterStart(_ => { if (commentator != null) commentator.Appear(); })
             .WithOnExitStart(_ => { if (commentator != null) commentator.Disappear(); });
-        Action<UINode> Builder(PlayModeStatus mode) => n => {
-            if (commentator != null)
-                n.OnEnter = n.OnEnter.Then((_, _) => commentator.SetCommentFromValue(mode));
-            n.NodeHTML.ConfigureFloatingImage(sprites[mode.Mode]);
-        };
         bool tutorialIncomplete = !SaveData.r.TutorialDone && game.Tutorial != null;
         PlayModeStatus Wrap(Mode m, bool locked) =>
             new(m, locked) { TutorialIncomplete = tutorialIncomplete };
@@ -71,48 +65,67 @@ public static partial class XMLHelpers {
         var unlockedPracticeBosses = PBosses.Length > 0;
         var unlockedPracticeStages = PStages.Length > 0;
         var vm = new AxisViewModel();
-        AxisView View() => new(vm);
+        IUIView[] View(PlayModeStatus pm) => new IUIView[] { new AxisView(vm), 
+            new PlaymodeView(new(pm), commentator, sprites) };
         //the AddVE is an anchor located in the center of the screen
         var axisGroup = new UIColumn(new UIRenderConstructed(s, new(x => x.AddVE(null))), 
             new UINode {
                 OnConfirm = getMetadata(game.Campaign, meta => 
                     InstanceRequest.RunCampaign(MainCampaign, null, meta)),
-                Prefab = floater,
-                OnBuilt = Builder(Wrap(Mode.MAIN, false))
-            }.WithView(View()), 
+            }.Bind(View(Wrap(Mode.MAIN, false))), 
         (game.ExCampaign != null ? 
             new UINode {
                 EnabledIf = () => campaignComplete,
                 OnConfirm = getMetadata(game.ExCampaign, meta => 
                     InstanceRequest.RunCampaign(ExtraCampaign, null, meta)),
-                Prefab = floater,
-                OnBuilt = Builder(Wrap(Mode.EX, !campaignComplete))
-            } : null)?.WithView(View()), 
+            } : null)?.Bind(View(Wrap(Mode.EX, !campaignComplete))), 
         (PracticeBossesExist ?
             new UINode {
                 EnabledIf = () => unlockedPracticeBosses,
                 OnConfirm = (_, _) => new UIResult.GoToNode(bossPractice),
-                Prefab = floater,
-                OnBuilt = Builder(Wrap(Mode.BOSSPRAC, !unlockedPracticeBosses))
-            } : null)?.WithView(View()), 
+            } : null)?.Bind(View(Wrap(Mode.BOSSPRAC, !unlockedPracticeBosses))), 
         (PracticeStagesExist ?
             new UINode {
                 EnabledIf = () => unlockedPracticeStages,
                 OnConfirm = (_, _) => new UIResult.GoToNode(stagePractice),
-                Prefab = floater,
-                OnBuilt = Builder(Wrap(Mode.STAGEPRAC, !unlockedPracticeStages))
-            } : null)?.WithView(View()), 
+            } : null)?.Bind(View(Wrap(Mode.STAGEPRAC, !unlockedPracticeStages))), 
         (game.Tutorial != null ? new UINode {
             OnConfirm = (_, _) => new UIResult.StayOnNode(!InstanceRequest.RunTutorial(game)),
-            Prefab = floater,
-            OnBuilt = Builder(Wrap(Mode.TUTORIAL, false))
-        } : null)?.WithView(View())) {
+        } : null)?.Bind(View(Wrap(Mode.TUTORIAL, false)))) {
             EntryIndexOverride = () => tutorialIncomplete ? -1 : 0
         };
         s.SetFirst(axisGroup);
         onlyOneMode = axisGroup.Nodes.Count == 1;
         return s;
     }
+
+    private class PlaymodeViewModel : IConstUIViewModel {
+        public PlayModeStatus mode { get; }
+        public PlaymodeViewModel(PlayModeStatus mode) {
+            this.mode = mode;
+        }
+    }
+    private class PlaymodeView : UIView<PlaymodeViewModel>, IUIView {
+        public override VisualTreeAsset? Prefab => References.uxmlDefaults.FloatingNode;
+        private readonly PlayModeCommentator? commentator;
+        private readonly Dictionary<Mode, Sprite> sprites;
+
+        public PlaymodeView(PlaymodeViewModel viewModel, PlayModeCommentator? commentator, Dictionary<Mode, Sprite> sprites) : base(viewModel) {
+            this.commentator = commentator;
+            this.sprites = sprites;
+        }
+
+        public override void OnBuilt(UINode node) {
+            base.OnBuilt(node);
+            Node.HTML.ConfigureFloatingImage(sprites[VM.mode.Mode]);
+        }
+
+        void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
+            if (commentator != null)
+                commentator.SetCommentFromValue(VM.mode);
+        }
+    }
+    
     public static UIScreen StagePracticeScreen(this UIController m,
         Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, ICursorState, UIResult>> getMetadata) {
         var s = new UIScreen(m, "STAGE PRACTICE") {Builder = (s, ve) => {
@@ -170,8 +183,8 @@ public static partial class XMLHelpers {
                             OnBuilt = n => {
                                 var (cs, ct) = cmpSpellHist.GetOrDefault(key) ?? (0, 0);
                                 var (ps, pt) = prcSpellHist.GetOrDefault(key) ?? (0, 0);
-                                n.NodeHTML.Q<Label>("CampaignHistory").text = $"{cs}/{ct}";
-                                n.NodeHTML.Q<Label>("PracticeHistory").text = $"{ps}/{pt}";
+                                n.HTML.Q<Label>("CampaignHistory").text = $"{cs}/{ct}";
+                                n.HTML.Q<Label>("PracticeHistory").text = $"{ps}/{pt}";
                             },
                             CacheOnEnter = true,
                             OnConfirm = getMetadata(boss.campaign.campaign, meta => {
@@ -218,7 +231,7 @@ public static partial class XMLHelpers {
                     r => new UIColumn(r, new UINode {
                                 Prefab = GameManagement.References.uxmlDefaults.PureTextNode, Passthrough = true
                             }.WithCSS(fontControlsClass)
-                            .WithView(new LabelView<(string? curr, bool hasNext, string? next)>(new(
+                            .Bind(new LabelView<(string? curr, bool hasNext, string? next)>(new(
                                 () => (b.Sources[index]?.Description, newTempBinding != null, 
                                     newTempBinding?.ValueOrNull()?.Description), cn => {
                                     var show = $"Current binding: {cn.curr ?? "(No binding)"}";
@@ -237,7 +250,7 @@ public static partial class XMLHelpers {
                             newTempBinding = Maybe<IInspectableInputBinding>.None;
                             return new UIResult.StayOnNode();
                         }),
-                        new UIButton("Confirm", UIButton.ButtonType.Confirm, _ => {
+                        new UIButton(LocalizedStrings.Controls.confirm, UIButton.ButtonType.Confirm, _ => {
                             if (newTempBinding is { } nb) {
                                 b.ChangeBindingAt(index, nb.ValueOrNull());
                                 InputSettings.SaveInputConfig();
@@ -248,7 +261,7 @@ public static partial class XMLHelpers {
                 );
             }) { OnBuilt = n => n.HTML.style.width = 30f.Percent() }
                 .WithCSS(small1Class, fontControlsClass)
-                .WithView(new LabelView(() => b.Sources[index]?.Description ?? "(No binding)"));
+                .Bind(new SimpleLabelView(() => b.Sources[index]?.Description ?? "(No binding)"));
         }
         UIGroup[] MakeBindings(IEnumerable<RebindableInputBinding> src, KeyRebindInputNode.Mode mode) => 
             src.Select(b => (UIGroup)new UIRow(
@@ -297,28 +310,28 @@ public static partial class XMLHelpers {
                 ShowHideGroup = new UIColumn(new UIRenderConstructed(s, Prefabs.UIScreenColumn, 
                         (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)), 
                     allowStaticOptions ?
-                            new OptionNodeLR<string?>(main_lang, SaveData.s.TextLocale, new[] {
+                            new LROptionNode<string?>(main_lang, SaveData.s.TextLocale, new[] {
                             (LText.Make("English"), Locales.EN),
                             (LText.Make("日本語"), Locales.JP)
                         }) :
                         null,
                     allowStaticOptions ?
-                        new OptionNodeLR<bool>(smoothing, SB<bool>(nameof(SaveData.s.AllowInputLinearization)), OnOffOption) :
+                        new LROptionNode<bool>(smoothing, SB<bool>(nameof(SaveData.s.AllowInputLinearization)), OnOffOption) :
                         null,
-                    new OptionNodeLR<float>(screenshake, SB<float>(nameof(SaveData.s.Screenshake)), new(LString, float)[] {
+                    new LROptionNode<float>(screenshake, SB<float>(nameof(SaveData.s.Screenshake)), new(LString, float)[] {
                             ("Off", 0),
                             ("x0.5", 0.5f),
                             ("x1", 1f),
                             ("x1.5", 1.5f),
                             ("x2", 2f)
                         }),
-                    new OptionNodeLR<bool>(hitbox, SB<bool>(nameof(SaveData.s.UnfocusedHitbox)), new[] {
+                    new LROptionNode<bool>(hitbox, SB<bool>(nameof(SaveData.s.UnfocusedHitbox)), new[] {
                         (hitbox_always, true),
                         (hitbox_focus, false)
                     }),
-                    new OptionNodeLR<bool>(backgrounds, SaveData.s.Backgrounds, OnOffOption),
+                    new LROptionNode<bool>(backgrounds, SaveData.s.Backgrounds, OnOffOption),
                     allowStaticOptions ?
-                        new OptionNodeLR<float>(dialogue_speed, 
+                        new LROptionNode<float>(dialogue_speed, 
                             new PropTwoWayBinder<float>(SaveData.VNSettings, nameof(SaveData.VNSettings.TextSpeed), null)
                             , new(LString, float)[] {
                             ("x2", 2f),
@@ -328,9 +341,9 @@ public static partial class XMLHelpers {
                             ("x0.5", 0.5f),
                         }) :
                         null,
-                    new OptionNodeLR<float>(dialogue_opacity, SB<float>(nameof(SaveData.s.VNDialogueOpacity)), 11.Range().Select(x =>
+                    new LROptionNode<float>(dialogue_opacity, SB<float>(nameof(SaveData.s.VNDialogueOpacity)), 11.Range().Select(x =>
                         (LText.Make($"{x * 10}"), x / 10f)).ToArray()),
-                    new OptionNodeLR<bool>(dialogue_skip, SB<bool>(nameof(SaveData.s.VNOnlyFastforwardReadText)), new[] {
+                    new LROptionNode<bool>(dialogue_skip, SB<bool>(nameof(SaveData.s.VNOnlyFastforwardReadText)), new[] {
                         (dialogue_skip_read, true),
                         (dialogue_skip_all, false)
                     })
@@ -340,11 +353,11 @@ public static partial class XMLHelpers {
                 Prefab = GameManagement.UXMLPrefabs.HeaderNode,
                 ShowHideGroup = new UIColumn(new UIRenderConstructed(s, Prefabs.UIScreenColumn, 
                     (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)), 
-                    new OptionNodeLR<bool>(shaders, SB<bool>(nameof(SaveData.s.Shaders)), new[] {
+                    new LROptionNode<bool>(shaders, SB<bool>(nameof(SaveData.s.Shaders)), new[] {
                         (shaders_low, false),
                         (shaders_high, true)
                     }),
-                    new OptionNodeLR<(int, int)>(resolution, SaveData.s.Resolution, new (LString, (int, int))[] {
+                    new LROptionNode<(int, int)>(resolution, SaveData.s.Resolution, new (LString, (int, int))[] {
                         ("3840x2160", (3840, 2160)),
                         ("2560x1440", (2560, 1440)),
                         ("1920x1080", (1920, 1080)),
@@ -353,18 +366,18 @@ public static partial class XMLHelpers {
                         ("848x477", (848, 477)),
                         ("640x360", (640, 360))
                     }),
-                    new OptionNodeLR<FullScreenMode>(fullscreen, SaveData.s.Fullscreen, new[] {
+                    new LROptionNode<FullScreenMode>(fullscreen, SaveData.s.Fullscreen, new[] {
                         (fullscreen_exclusive, FullScreenMode.ExclusiveFullScreen),
                         (fullscreen_borderless, FullScreenMode.FullScreenWindow),
                         (fullscreen_window, FullScreenMode.Windowed),
                     }),
-                    new OptionNodeLR<int>(vsync, SB<int>(nameof(SaveData.s.Vsync)), new[] {
+                    new LROptionNode<int>(vsync, SB<int>(nameof(SaveData.s.Vsync)), new[] {
                         (generic_off, 0),
                         (generic_on, 1),
                         //(vsync_double, 2)
                     })
 #if !WEBGL
-                    , new OptionNodeLR<bool>(LocalizedStrings.UI.renderer, SB<bool>(nameof(SaveData.s.LegacyRenderer)), new[] {
+                    , new LROptionNode<bool>(LocalizedStrings.UI.renderer, SB<bool>(nameof(SaveData.s.LegacyRenderer)), new[] {
                         (renderer_legacy, true),
                         (renderer_normal, false)
                     })
@@ -375,13 +388,13 @@ public static partial class XMLHelpers {
                 Prefab = GameManagement.UXMLPrefabs.HeaderNode,
                 ShowHideGroup = new UIColumn(new UIRenderConstructed(s, Prefabs.UIScreenColumn, 
                     (_, ve) => ve.style.maxWidth = new Length(60, LengthUnit.Percent)),
-                    new OptionNodeLR<float>(master_volume, SaveData.s.MasterVolume, 21.Range().Select(x =>
+                    new LROptionNode<float>(master_volume, SaveData.s.MasterVolume, 21.Range().Select(x =>
                         ((LString)$"{x * 10}", x / 10f)).ToArray()),
-                    new OptionNodeLR<float>(bgm_volume, SaveData.s._BGMVolume, 21.Range().Select(x =>
+                    new LROptionNode<float>(bgm_volume, SaveData.s._BGMVolume, 21.Range().Select(x =>
                         ((LString)$"{x * 10}", x / 10f)).ToArray()),
-                    new OptionNodeLR<float>(sfx_volume, SaveData.s._SEVolume, 21.Range().Select(x =>
+                    new LROptionNode<float>(sfx_volume, SaveData.s._SEVolume, 21.Range().Select(x =>
                         ((LString)$"{x * 10}", x / 10f)).ToArray()),
-                    new OptionNodeLR<float>("Dialogue Typing Volume", SaveData.s._VNTypingSoundVolume, 21.Range().Select(x =>
+                    new LROptionNode<float>("Dialogue Typing Volume", SaveData.s._VNTypingSoundVolume, 21.Range().Select(x =>
                         ((LString)$"{x * 10}", x / 10f)).ToArray())
                 )
             }, controlsGroup
@@ -416,12 +429,12 @@ public static partial class XMLHelpers {
                                 save == null ? UIButton.ButtonType.Confirm : UIButton.ButtonType.Danger,
                                 _ => {
                                     SaveData.v.SaveNewSave(saver(i));
-                                    return new UIResult.ReturnToTargetGroupCaller(n);
+                                    return n.ReturnToGroup;
                                 })
                     }));
             }) {
                 Prefab = Prefabs.SaveLoadNode
-            }.WithView(new SaveLoadDataView(new(i)));
+            }.Bind(new SaveLoadDataView(new(i)));
         }
 
         var s = new UIScreen(m, "SAVE/LOAD") {
@@ -448,7 +461,7 @@ public static partial class XMLHelpers {
             return new UINode($"{p + 1}") {
                 Prefab = Prefabs.HeaderNode,
                 OnBuilt = n => {
-                    var l = n.NodeHTML.Q<Label>();
+                    var l = n.HTML.Q<Label>();
                     l.style.unityTextAlign = TextAnchor.MiddleCenter;
                     l.style.fontSize = 100;
                     n.BodyHTML!.SetPadding(0, 25, 0, 25);
@@ -482,7 +495,7 @@ public static partial class XMLHelpers {
                                 } else return false;
                             }, () => new UIResult.GoToNode(n.Group, ind)),
                             new UIButton(view_details, UIButton.ButtonType.Confirm, _ => 
-                                n.ReturnGroup.Then(CreateGameResultsView(rep.Metadata.Record, gameDetails))),
+                                n.ReturnToGroup.Then(CreateGameResultsView(rep.Metadata.Record, gameDetails))),
                             new UIButton(replay_view, UIButton.ButtonType.Confirm, _ => {
                                 s.Controller.ConfirmCache();
                                 return new UIResult.StayOnNode(!InstanceRequest.ViewReplay(rep));
@@ -590,11 +603,11 @@ public static partial class XMLHelpers {
                             { Prefab = Prefabs.PureTextNode} ) { Interactable = false },
                         new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
                             new UIButton(view_details, UIButton.ButtonType.Confirm, _ =>
-                                n.ReturnGroup.Then(CreateGameResultsView(g, detailsScreen))),
+                                n.ReturnToGroup.Then(CreateGameResultsView(g, detailsScreen))),
                             new UIButton(record_view_replay, UIButton.ButtonType.Confirm, _ => {
                                 foreach (var (ir, replay) in SaveData.p.ReplayData.Enumerate())
                                     if (replay.Metadata.Record.Uuid == g.Uuid)
-                                        return n.ReturnGroup.Then(new UIResult.GoToNode(replayScreen.Groups[0], ir));
+                                        return n.ReturnToGroup.Then(new UIResult.GoToNode(replayScreen.Groups[0], ir));
                                 return new UIResult.StayOnNode(true);
                             }) { EnabledIf = 
                                 SaveData.p.ReplayData.Any(rep => rep.Metadata.Record.Uuid == g.Uuid).Freeze() }
@@ -606,34 +619,34 @@ public static partial class XMLHelpers {
         bool IsBossOrChallenge() => m.Mode is InstanceMode.BOSS_PRACTICE or InstanceMode.SCENE_CHALLENGE;
         bool IsStage() => m.Mode == InstanceMode.STAGE_PRACTICE;
         var optnodes = new UINode[] {
-            new OptionNodeLR<InstanceMode>(practice_type, VM<InstanceMode>(nameof(m.Mode)), new[] {
+            new LROptionNode<InstanceMode>(practice_type, VM<InstanceMode>(nameof(m.Mode)), new[] {
                 (practice_m_campaign, InstanceMode.CAMPAIGN),
                 (practice_m_boss, InstanceMode.BOSS_PRACTICE),
                 days == null ? ((LString, InstanceMode)?) null : (practice_m_scene, InstanceMode.SCENE_CHALLENGE),
                 (practice_m_stage, InstanceMode.STAGE_PRACTICE)
             }.FilterNone().ToArray()),
-            new OptionNodeLR<int>(practice_campaign, VM<int>(nameof(m.CmpIndex)),
+            new LROptionNode<int>(practice_campaign, VM<int>(nameof(m.CmpIndex)),
                 campaigns.Select((c, i) => ((LString)c.campaign.shortTitle, i)).ToArray()),
-            new OptionNodeLR<string>(practice_m_whichboss, VM<string>(nameof(m.Boss)), () =>
+            new LROptionNode<string>(practice_m_whichboss, VM<string>(nameof(m.Boss)), () =>
                     IsBossOrChallenge() ?
                         campaigns[m.CmpIndex].bosses.Select(b => (b.boss.BossPracticeName, b.boss.key)).ToArray() :
                         new (LString, string)[] {("", "")} //required to avoid errors with the option node
                 ){ VisibleIf = IsBossOrChallenge },
-            new OptionNodeLR<int>(practice_m_whichstage, VM<int>(nameof(m.Stage)), () =>
+            new LROptionNode<int>(practice_m_whichstage, VM<int>(nameof(m.Stage)), () =>
                     IsStage() ?
                         campaigns[m.CmpIndex].stages.Select((s, i) => ((LString)s.stage.stageNumber, i)).ToArray() :
                         new (LString, int)[] {("", 0)} //required to avoid errors with the option node
                 ){ VisibleIf = IsStage },
-            new OptionNodeLR<int>(practice_m_whichphase, VM<int>(nameof(m.bphase)), () =>
+            new LROptionNode<int>(practice_m_whichphase, VM<int>(nameof(m.bphase)), () =>
                     IsBossOrChallenge() ?
                         campaigns[m.CmpIndex].bossKeyMap[m.Boss].Phases.Select(
                             //p.index is used as request key
                             (p, i) => ((LString)$"{i + 1}. {p.Title}", p.index)).ToArray() :
                         new (LString, int)[] {("", 0)}) {
-                    OnBuilt = n => n.NodeHTML.Q("ValueContainer").style.width = new StyleLength(new Length(80, LengthUnit.Percent)),
+                    OnBuilt = n => n.HTML.Q("ValueContainer").style.width = new StyleLength(new Length(80, LengthUnit.Percent)),
                     VisibleIf = IsBossOrChallenge
                 },
-            new OptionNodeLR<int>(practice_m_whichphase, VM<int>(nameof(m.sphase)), () =>
+            new LROptionNode<int>(practice_m_whichphase, VM<int>(nameof(m.sphase)), () =>
                     IsStage() ?
                         campaigns[m.CmpIndex].stages[m.Stage].Phases.Select(
                             p => (p.Title, p.index)).Prepend((practice_fullstage, 1)).ToArray() :
@@ -759,17 +772,17 @@ public static partial class XMLHelpers {
 
         PropTwoWayBinder<T> VM<T>(string prop) => new(p, prop);
         
-        var playerSelect = new OptionNodeLR<ShipConfig>(LString.Empty, VM<ShipConfig>(nameof(p.Player)),
+        var playerSelect = new LROptionNode<ShipConfig>(LString.Empty, VM<ShipConfig>(nameof(p.Player)),
             c.campaign.players.Select(p => (p.ShortTitle, p)).ToArray());
 
-        var supportSelect = new OptionNodeLR<IAbilityCfg>(LString.Empty, VM<IAbilityCfg>(nameof(p.support)),
+        var supportSelect = new LROptionNode<IAbilityCfg>(LString.Empty, VM<IAbilityCfg>(nameof(p.support)),
             () => playerSelect.Value.supports.Select(s => 
                 ((LString)s.ordinal, (IAbilityCfg)s.ability)).ToArray());
-        var shotSelect = new OptionNodeLR<ShotConfig>(LString.Empty, VM<ShotConfig>(nameof(p.shot)), () =>
+        var shotSelect = new LROptionNode<ShotConfig>(LString.Empty, VM<ShotConfig>(nameof(p.shot)), () =>
                 playerSelect.Value.shots2.Select(s => ((LString)(s.shot.isMultiShot ? 
                         shotsel_multi(s.ordinal) : 
                         shotsel_type(s.ordinal)), s.shot)).ToArray());
-        var subshotSelect = new OptionNodeLR<Subshot>(LString.Empty, VM<Subshot>(nameof(p.subshot)),
+        var subshotSelect = new LROptionNode<Subshot>(LString.Empty, VM<Subshot>(nameof(p.subshot)),
             EnumHelpers2.Subshots.Select(x => (shotsel_variant_ls(x.Describe()), x)).ToArray()) 
             {VisibleIf = () => p.shot.isMultiShot };
 
@@ -843,13 +856,13 @@ public static partial class XMLHelpers {
         });
         var descCol = screen.ColumnRender(1);
         UINode MakeOption<T>(LString title, IEnumerable<(LString, T)> options, string dfcProp, LString description) {
-            return new OptionNodeLR<T>(title, VM<T>(dfcProp), options.ToArray()) {
+            return new LROptionNode<T>(title, VM<T>(dfcProp), options.ToArray()) {
                 ShowHideGroup = new UIColumn(descCol, new UINode(LString.Format("\n\n{0}", description))) {
                     Interactable = false
                 },
                 OnBuilt = n => {
-                    n.NodeHTML.style.paddingLeft = 20;
-                    n.NodeHTML.style.paddingRight = 20;
+                    n.HTML.style.paddingLeft = 20;
+                    n.HTML.style.paddingRight = 20;
                 },
             }.WithCSS(small1Class);
         }
@@ -879,13 +892,13 @@ public static partial class XMLHelpers {
                             UIButton.Load(() => {
                                 SetNewDFC(s.settings);
                                 return true;
-                            }, n.ReturnGroup),
+                            }, n.ReturnToGroup),
                         })
                     );
                 });
         
         var optSliderHelper = new PassthroughNode()
-            .WithView(new LabelView<int>(new(() => dfc.customValueSlider, 
+            .Bind(new LabelView<int>(new(() => dfc.customValueSlider, 
                 x => desc_effective_ls(effective, DifficultySettings.FancifySlider(x)))));
         dfc.respawnOnDeath = false;
         screen.SetFirst(new UIColumn(screen, null,
@@ -929,10 +942,10 @@ public static partial class XMLHelpers {
                                             SaveData.s.AddDifficultySettings(settingNameEntry.DataWIP, dfc);
                                             n.Group.AddNodeDynamic(MakeSaveLoadDFCNode(saved.Last()));
                                             return true;
-                                        }, n.ReturnGroup), 
+                                        }, n.ReturnToGroup), 
                                     }));
                             }) {
-                            OnBuilt = n => n.NodeHTML.style.marginBottom = 120
+                            OnBuilt = n => n.HTML.style.marginBottom = 120
                         }))
             }
         ));
@@ -987,20 +1000,20 @@ public static partial class XMLHelpers {
         }
 
         var optNodes = new UINode[] {
-            new OptionNodeLR<int?>(practice_campaign, VM<int?>(nameof(f.campaignIndex)),
+            new LROptionNode<int?>(practice_campaign, VM<int?>(nameof(f.campaignIndex)),
                 campaigns
                     .Select((c, i) => ((LString)(c.campaign.shortTitle), (int?)i))
                     .Prepend((stats_allcampaigns, null))
                     .ToArray()),
-            new OptionNodeLR<Maybe<FixedDifficulty?>>(stats_seldifficulty, VM<Maybe<FixedDifficulty?>>(nameof(f.difficultySwitch)),
+            new LROptionNode<Maybe<FixedDifficulty?>>(stats_seldifficulty, VM<Maybe<FixedDifficulty?>>(nameof(f.difficultySwitch)),
                 GameManagement.CustomAndVisibleDifficulties
                     .Select(x => (x?.Describe() ?? difficulty_custom, Maybe<FixedDifficulty?>.Of(x)))
                     .Prepend((stats_alldifficulty, Maybe<FixedDifficulty?>.None)).ToArray()),
-            new OptionNodeLR<ShipConfig?>(stats_selplayer, VM<ShipConfig?>(nameof(f.playerSwitch)),
+            new LROptionNode<ShipConfig?>(stats_selplayer, VM<ShipConfig?>(nameof(f.playerSwitch)),
                 game.AllShips
                     .Select(x => (x.ShortTitle, (ShipConfig?)x))
                     .Prepend((stats_allplayers, null)).ToArray()),
-            new OptionNodeLR<(ShipConfig, ShotConfig)?>(stats_selshot, 
+            new LROptionNode<(ShipConfig, ShotConfig)?>(stats_selshot, 
                 VM<(ShipConfig, ShotConfig)?>(nameof(f.shotSwitch)),
                 game.AllShips
                     .SelectMany(p => p.shots2
@@ -1077,10 +1090,10 @@ public static partial class XMLHelpers {
             this.viewModel = viewModel;
         }
 
-        public override void NodeBuilt(UINode node) {
-            base.NodeBuilt(node);
-            node.NodeHTML.style.paddingLeft = 20;
-            node.NodeHTML.style.paddingRight = 20;
+        public override void OnBuilt(UINode node) {
+            base.OnBuilt(node);
+            node.HTML.style.paddingLeft = 20;
+            node.HTML.style.paddingRight = 20;
         }
 
         protected override BindingResult Update(in BindingContext context) {
@@ -1097,7 +1110,7 @@ public static partial class XMLHelpers {
         _ = new UIColumn(screen, null, acvs.SortedAchievements.Select(a =>
                 new UINode(a.Title) {
                         Prefab = node
-                }.WithView(new AchievementView(new(a)))
+                }.Bind(new AchievementView(new(a)))
             ).ToArray()
         );
         return screen;
