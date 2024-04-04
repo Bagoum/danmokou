@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f64d4a00c194018afbe5db3323da211, type: 3}
+  m_Name: THJ13 Campaign
+  m_EditorClassIdentifier: 
+  key: thj13
+  shortTitle: THJ13
+  replayable: 1
+  allowDialogueSkip: 1
+  startLives: 3
+  players:
+  - {fileID: 11400000, guid: 9f27b34e64733c64e9e98c93439075f8, type: 2}
+  - {fileID: 11400000, guid: e0671fcda14610e4d9f45e930404aa43, type: 2}
+  stages:
+  - {fileID: 11400000, guid: 1c05cc80f3b91ad44874b6bbe352b96f, type: 2}
+  bosses:
+  - {fileID: 11400000, guid: a7c62158d3b71d248b2a38fe28612ac0, type: 2}
+  - {fileID: 11400000, guid: a595638ff4cbf5e41bbebf6ca6cc4a42, type: 2}
+  endings: []
+  fixedShot:
+  - ship: {fileID: 11400000, guid: 9f27b34e64733c64e9e98c93439075f8, type: 2}
+    shot: {fileID: 11400000, guid: e89357d08e40831458970df574a4eb13, type: 2}
+    ability: {fileID: 11400000, guid: 13157d81a8a5ff646accca16a0311ad8, type: 2}
+  - ship: {fileID: 11400000, guid: e0671fcda14610e4d9f45e930404aa43, type: 2}
+    shot: {fileID: 11400000, guid: 229f847abcf377b49a7fa3c1d58152c0, type: 2}
+    ability: {fileID: 11400000, guid: 13157d81a8a5ff646accca16a0311ad8, type: 2}

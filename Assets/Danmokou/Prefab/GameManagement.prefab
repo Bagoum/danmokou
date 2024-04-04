@@ -345,6 +345,7 @@ MonoBehaviour:
   meterUsable: {fileID: 11400000, guid: 231215c84b23c4b4583e96504e246217, type: 2}
   meterActivated: {fileID: 11400000, guid: 9ad1892b93a0ea34f986b224656664a9, type: 2}
   meterDeActivated: {fileID: 11400000, guid: a142a99862f499746b6e7ef08f56f910, type: 2}
+  meterUseFail: {fileID: 11400000, guid: 0288ed3be0da62b4d98ab7cbc53a08e3, type: 2}
   swapHPScore: {fileID: 11400000, guid: ec75cb7ac0342f9489ad6e5610810bfc, type: 2}
   flakeItemCollected: {fileID: 11400000, guid: 8a0c14d7b69e7874dbf2fc43ba5bb467, type: 2}
   rankUp: {fileID: 0}
@@ -533,6 +534,8 @@ MonoBehaviour:
     effect: {fileID: 11400000, guid: 6981be9118b41d345b1df81e62edd2fd, type: 2}
   - name: oh1-green-pt
     effect: {fileID: 11400000, guid: 950fca6ac2929ff4abbc39660fbe38fc, type: 2}
+  - name: splurge-1
+    effect: {fileID: 11400000, guid: 732f840ce30721744a461b43b230646c, type: 2}
   bgTransitions:
   - name: shatter4
     transition: {fileID: 11400000, guid: ee89dae89d15f34418474c82d6d3a3ba, type: 2}

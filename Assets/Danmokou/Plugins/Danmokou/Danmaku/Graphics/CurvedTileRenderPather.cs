@@ -66,6 +66,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     //Note: trailRenderer requires reversing the sprite.
     protected override bool HandleAsMesh => false;
     public readonly TrailRenderer trailR;
+    public string? Style => Pather.myStyle.style;
 
     //player bullets only
     private PlayerBullet? playerBullet;

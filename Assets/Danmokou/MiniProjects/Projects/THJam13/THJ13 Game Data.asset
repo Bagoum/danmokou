@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d7768018aff40589017a165e079b3c1, type: 3}
+  m_Name: THJ13 Game Data
+  m_EditorClassIdentifier: 
+  gameDefinition: {fileID: 11400000, guid: de7a6474e926ae249a453f88cd9cb2b1, type: 2}
+  mainMenu: {fileID: 11400000, guid: 7baecc97800a8c94f8d45c72be493af7, type: 2}
+  defaultUIFrame: {fileID: 21300000, guid: bdb3863bdffe3a141aa528b7fbe3ff2c, type: 3}
+  unitScene: {fileID: 11400000, guid: f6d073d9562719741ac86ec620f65354, type: 2}
+  defaultTransition: {fileID: 11400000, guid: 7f40ba8c491f48c46910e8f854d76e9c, type: 2}
+  dialogue: []
+  bossMetadata:
+  - {fileID: 11400000, guid: a7c62158d3b71d248b2a38fe28612ac0, type: 2}
+  - {fileID: 11400000, guid: a595638ff4cbf5e41bbebf6ca6cc4a42, type: 2}
+  - {fileID: 11400000, guid: 2bd1174b5ea06a049a1ff589cdddebe2, type: 2}
+  tracks:
+  - {fileID: 11400000, guid: d0384c9173d719446bf4ca1acaafce8e, type: 2}
+  - {fileID: 11400000, guid: 21ef0f5aada9836488c0b54a161258a4, type: 2}
+  - {fileID: 11400000, guid: 31040ab8818c9454a9232b1ec4f9c9fb, type: 2}
+  - {fileID: 11400000, guid: 3499ff5c30d1f404a8d7ec5ccb5e2f60, type: 2}
+  items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
+  prefabReferences: {fileID: 11400000, guid: 842bcc7c616103e4c9880c49f9735bb4, type: 2}
+  suzunoyaReferences: {fileID: 11400000, guid: a936563f4e58b294db033ff8ee6be6f8, type: 2}
+  advReferences: {fileID: 0}
+  uxmlDefaults: {fileID: 11400000, guid: b4213b3830762944fbcb9250a4b73463, type: 2}
+  SFX:
+  - {fileID: 11400000, guid: 2765638c24dcd6f4684c2acbc07800c4, type: 2}
+  summonables:
+  - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
+  - {fileID: 11400000, guid: cdee2c8a4694b2148b6bff090233f211, type: 2}
+  fileStateMachines: []
+  licenses: []
+  importableScripts: []
+  scriptFolders:
+  - Assets/Danmokou/MiniProjects/Projects/THJam13
+  fastParsing: 0

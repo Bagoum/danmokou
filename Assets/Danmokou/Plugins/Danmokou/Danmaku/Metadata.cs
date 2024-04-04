@@ -179,8 +179,11 @@ public readonly struct SMRunner {
             (ICancellee)new PassthroughCancellee(cT.Root, local);
     
     private readonly GenCtx? gcx;
-    public GenCtx NewGCX(BehaviorEntity beh) => 
-        gcx?.Copy(null) ?? GenCtx.New(beh);
+    public GenCtx NewGCX(BehaviorEntity beh) {
+        var ngcx = gcx?.Copy(null) ?? GenCtx.New(beh);
+        ngcx.exec = beh;
+        return ngcx;
+    }
 
     /// <summary>
     /// Run the SM and then destroy the executing object.

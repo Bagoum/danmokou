@@ -43,15 +43,15 @@ public interface IApproximatelyCircularSimpleBulletCollisionReceiver : ISimpleBu
     float MaxCollisionRadius { get; }
     
     /// <summary>
-    /// True if the collidee can receive collisions.
+    /// True if the collidee can receive collisions from the given style.
     /// </summary>
-    bool ReceivesBulletCollisions { get; }
+    bool ReceivesBulletCollisions(string? style);
 
     bool CollidesWithPool(BulletManager.SimpleBulletCollection sbc) => true;
 
     void ISimpleBulletCollisionReceiver.ProcessSimpleBucketed(BulletManager.SimpleBulletCollection sbc,
         BulletManager.FrameBucketing frame) {
-        if (!ReceivesBulletCollisions || !CollidesWithPool(sbc)) return;
+        if (!ReceivesBulletCollisions(sbc.Style) || !CollidesWithPool(sbc)) return;
         var mcd = MaxCollisionRadius + sbc.Collider.MaxRadius * frame.maxScale;
         var mcd2 = new Vector2(mcd, mcd);
         ProcessSimpleBuckets(sbc, sbc.BucketsSpanForPosition(Location - mcd2, Location + mcd2));
@@ -149,6 +149,7 @@ public interface ICircularGrazableEnemySimpleBulletCollisionReceiver : IEnemySim
         CollisionResult coll, int damage, in ParametricInfo bulletBPI, ushort grazeEveryFrames);
     
     void ISimpleBulletCollisionReceiver.ProcessSimple(BulletManager.SimpleBulletCollection sbc) {
+        if (!ReceivesBulletCollisions(sbc.Style) || !CollidesWithPool(sbc)) return;
         var hb = Hurtbox;
         var deleted = sbc.Deleted;
         var data = sbc.Data;

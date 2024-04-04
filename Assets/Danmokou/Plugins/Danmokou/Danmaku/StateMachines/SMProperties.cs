@@ -36,7 +36,10 @@ public class PatternProperty {
 
     public static PatternProperty Bosses(string[] keys, (int phase, int index)[] uiUsage) => new BossesProp(keys, uiUsage);
 
-    public static PatternProperty BGM((int, string?)[] phasesAndTracks) => new BGMProp(phasesAndTracks);
+    public static PatternProperty BGM((int phase, string track)[] tracks) => 
+        new BGMProp(tracks.Select(t => (t.phase, new[]{(t.track, null as BPY)})).ToArray());
+
+    public static PatternProperty Mixer((int phase, (string? track, BPY volume)[])[] tracks) => new BGMProp(tracks!);
     
     public static PatternProperty SetUIFrom(int firstPhase) => new SetUIFromProp(firstPhase);
 
@@ -59,8 +62,8 @@ public class PatternProperty {
             base((keys.Select(ResourceManager.GetBoss).ToArray(), uiUsage)) { }
     }
 
-    public class BGMProp : ValueProp<(int, string?)[]> {
-        public BGMProp((int, string?)[] tracks) : base(tracks) { }
+    public class BGMProp : ValueProp<(int phase, (string track, BPY? volume)[])[]> {
+        public BGMProp((int, (string, BPY?)[])[] tracks) : base(tracks) { }
     }
 
     public class SetUIFromProp : ValueProp<int> {
@@ -78,7 +81,7 @@ public class PatternProperties {
     public readonly BossConfig[]? bosses;
     public readonly (int phase, int index)[]? bossUI;
     public readonly int setUIFrom = 0;
-    public readonly (int phase, string?)[]? bgms;
+    public readonly (int phase, (string track, BPY? volume)[])[]? bgms;
     public PatternProperties(PatternProperty[] props) {
         foreach (var prop in props) {
             if        (prop is BossProp bp) {

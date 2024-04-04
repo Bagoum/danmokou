@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00e8d30b4ba6ce944bd8860272bb2d0b, type: 3}
   m_Name: HPBarSubradius.Normal
   m_EditorClassIdentifier: 
-  value: 0.045
+  value: 0.03

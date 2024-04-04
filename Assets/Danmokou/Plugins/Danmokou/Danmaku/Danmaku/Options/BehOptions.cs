@@ -111,6 +111,17 @@ public record BehOption {
     /// Set that an NPC bullet is not allowed to cause grazes against the player.
     /// </summary>
     public static BehOption NoGraze() => new NoGrazeFlag();
+
+    /// <summary>
+    /// Set the bullet styles to which this entity is vulnerable (Enemy only).
+    /// </summary>
+    public static BehOption Vuln(BulletManager.StyleSelector styles, bool exclude = false) => new VulnProp((styles, exclude));
+    
+    /// <summary>
+    /// Set a per-frame multiplier for the amount of damage this entity recieves (Enemy only).
+    /// <br/>If this is LEQ 0, then bullets will pass through the enemy.
+    /// </summary>
+    public static BehOption ReceiveDamage(BPY mult) => new ReceivedDamageProp(mult);
     
     #region impl
     
@@ -166,6 +177,14 @@ public record BehOption {
     public record DeleteProp : ValueProp<Pred> {
         public DeleteProp(Pred f) : base(f) { }
     }
+
+    public record VulnProp : ValueProp<(BulletManager.StyleSelector, bool)> {
+        public VulnProp((BulletManager.StyleSelector, bool) value) : base(value) { }
+    }
+    
+    public record ReceivedDamageProp : ValueProp<BPY> {
+        public ReceivedDamageProp(BPY value) : base(value) { }
+    }
     
     public record PlayerBulletProp : ValueProp<PlayerBulletCfg> {
         public PlayerBulletProp(PlayerBulletCfg cfg) : base(cfg) { }
@@ -196,6 +215,8 @@ public readonly struct RealizedBehOptions {
     public readonly Pred? delete;
     public readonly PlayerBullet? playerBullet;
     public readonly bool grazeAllowed;
+    public readonly (BulletManager.StyleSelector, bool)? vulnerable;
+    public readonly BPY? receivedDamage;
 
     public RealizedBehOptions(BehOptions opts, GenCtx gcx, PIData fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
         smooth = opts.smooth;
@@ -214,6 +235,8 @@ public readonly struct RealizedBehOptions {
         delete = opts.delete;
         playerBullet = opts.playerBullet?.Realize(fctx.PlayerController);
         grazeAllowed = opts.grazeAllowed;
+        vulnerable = opts.vulnerable;
+        receivedDamage = opts.receivedDamage;
     }
 
     public RealizedBehOptions(RealizedLaserOptions rlo) {
@@ -231,6 +254,8 @@ public readonly struct RealizedBehOptions {
         this.delete = rlo.delete;
         playerBullet = rlo.playerBullet;
         grazeAllowed = rlo.grazeAllowed;
+        vulnerable = null;
+        receivedDamage = null;
     }
 }
 
@@ -253,6 +278,8 @@ public class BehOptions {
     public readonly BPY? rotator;
     public readonly (TP4 black, TP4 white)? recolor;
     public readonly PlayerBulletCfg? playerBullet;
+    public readonly (BulletManager.StyleSelector, bool)? vulnerable;
+    public readonly BPY? receivedDamage;
     public readonly bool grazeAllowed = true;
     private readonly string? id = null;
     public string ID => id ?? "_";
@@ -273,6 +300,8 @@ public class BehOptions {
             else if (p is RecolorProp rcp) recolor = (rcp.black, rcp.white);
             else if (p is TintProp tp) tint = tp.value;
             else if (p is DeleteProp dp) delete = dp.value;
+            else if (p is VulnProp vn) vulnerable = vn.value;
+            else if (p is ReceivedDamageProp rdp) receivedDamage = rdp.value;
             else if (p is PlayerBulletProp pbp) playerBullet = pbp.value;
             else if (p is NameProp np) id = np.value;
             else if (p is NoGrazeFlag) grazeAllowed = false;

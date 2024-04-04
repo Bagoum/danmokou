@@ -64,6 +64,13 @@ public static partial class LocalizedStrings {
 		public static readonly LString tokiko_tracker = new LText("朱鷺子")
 			{ ID = "boss.tokiko.tracker" };
 		
+		public static readonly LString marisa = new LText("Marisa",
+			(Locales.JP, "魔理沙"))
+			{ ID = "boss.marisa" };
+		
+		public static readonly LString marisa_tracker = new LText("魔理沙")
+			{ ID = "boss.marisa.tracker" };
+		
 	}
 }
 }

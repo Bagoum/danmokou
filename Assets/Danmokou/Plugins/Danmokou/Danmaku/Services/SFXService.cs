@@ -33,6 +33,7 @@ public class SFXService : RegularUpdater, ISFXService {
     public SFXConfig meterUsable = null!;
     public SFXConfig meterActivated = null!;
     public SFXConfig meterDeActivated = null!;
+    public SFXConfig meterUseFail = null!;
     public SFXConfig swapHPScore = null!;
     public SFXConfig flakeItemCollected = null!;
     public SFXConfig rankUp = null!;
@@ -75,6 +76,7 @@ public class SFXService : RegularUpdater, ISFXService {
 
         Listen(PlayerController.PlayerActivatedMeter, () => Request(meterActivated));
         Listen(PlayerController.PlayerDeactivatedMeter, () => Request(meterDeActivated));
+        Listen(PlayerController.PlayerMeterFailed, () => Request(meterUseFail));
 
         Listen(GameManagement.EvInstance, i => i.MeterF.MeterBecameUsable, () => Request(meterUsable));
         Listen(GameManagement.EvInstance, i => i.ExtendAcquired, _ => Request(lifeExtend));

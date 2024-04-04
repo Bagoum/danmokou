@@ -45,12 +45,12 @@ public interface ICircularPlayerLaserCollisionReceiver : IPlayerLaserCollisionRe
     float CollisionRadius { get; }
     
     /// <summary>
-    /// True if the collidee can receive collisions.
+    /// True if the collidee can receive collisions from the given style.
     /// </summary>
-    bool ReceivesBulletCollisions { get; }
+    bool ReceivesBulletCollisions(string? style);
 
     CollisionResult IPlayerLaserCollisionReceiver.Process(CurvedTileRenderLaser laser, PlayerBullet plb, Vector2 laserLoc, float cos, float sin, out int segment) {
-        if (ReceivesBulletCollisions &&
+        if (ReceivesBulletCollisions(laser.Style) &&
             laser.ComputeCircleCollision(laserLoc, cos, sin, Location, CollisionRadius, out segment, out var loc)) {
             TakeHit(laser, loc, plb);
             return new(true, false);
@@ -78,13 +78,13 @@ public interface ICircularGrazableEnemyLaserCollisionReceiver: IEnemyLaserCollis
     Hurtbox Hurtbox { get; }
     
     /// <summary>
-    /// True if the collidee can receive collisions.
+    /// True if the collidee can receive collisions from the given style.
     /// </summary>
-    bool ReceivesBulletCollisions { get; }
+    bool ReceivesBulletCollisions(string? style);
     
     
     CollisionResult IEnemyLaserCollisionReceiver.Check(CurvedTileRenderLaser laser, Vector2 laserLoc, float cos, float sin, out int segment, out Vector2 collLoc) {
-        if (ReceivesBulletCollisions) {
+        if (ReceivesBulletCollisions(laser.Style)) {
             return laser.ComputeGrazeCollision(laserLoc, cos, sin, Hurtbox, out segment, out collLoc);
         } else {
             segment = 0;

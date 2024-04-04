@@ -18,12 +18,15 @@ public interface IMeterFeature : IInstanceFeature {
     bool EnoughMeterToUse { get; }
     double Meter { get; }
     int MeterFrames { get; }
+    double MeterForSwap => 0;
 
     //Gems are the meter restore item
     bool AllowGemDrops { get; }
     void AddGems(int delta);
     IDisposable? TryStartMeter();
     bool TryUseMeterFrame();
+
+    bool TryConsumeMeterDiscrete(double amount);
     
     Lerpifier<float> VisibleMeter { get; }
 }
@@ -35,6 +38,8 @@ public class MeterFeature : BaseInstanceFeature, IMeterFeature {
     public const double meterUseInstantCost = 0.042;
     public Event<Unit> MeterBecameUsable { get; }= new();
     public double MeterUseThreshold => meterUseThreshold;
+    public double MeterForSwap =>  M.Lerp(0, 3, Inst.Difficulty.Counter, 0.06, 0.12);
+
     public Lerpifier<float> VisibleMeter { get; }
     private InstanceData Inst { get; }
     public double Meter { get; private set; }
@@ -89,6 +94,15 @@ public class MeterFeature : BaseInstanceFeature, IMeterFeature {
         }
     }
 
+    public bool TryConsumeMeterDiscrete(double amount) {
+        double consume = Math.Max(0, amount * Inst.Difficulty.meterUsageMultiplier);
+        if (Meter >= consume) {
+            Meter -= consume;
+            return true;
+        } else
+            return false;
+    }
+
     public void OnContinueOrCheckpoint() => ResetMeter();
     public void OnDied() => Meter = 1;
 
@@ -122,6 +136,8 @@ public class MeterFeature : BaseInstanceFeature, IMeterFeature {
         public IDisposable? TryStartMeter() => null;
 
         public bool TryUseMeterFrame() => false;
+
+        public bool TryConsumeMeterDiscrete(double amount) => amount <= 0;
 
         public Lerpifier<float> VisibleMeter { get; } 
             = new(M.Lerp, () => 0, 0.2f);

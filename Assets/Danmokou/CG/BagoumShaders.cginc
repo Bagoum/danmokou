@@ -64,7 +64,6 @@ float2 getDisplace(float2 uv, float t) {
     uv.xy = float2(0.5-abs(uv.y - 0.5), uv.x);
 #endif
     uv.x += t;
-    //uv = polarToUV(uv);
     disp = tex2D(_DisplaceTex, uv).xy;
     disp = ((disp * 2) - 1) * _DisplaceMagnitude * mask;
     return disp;

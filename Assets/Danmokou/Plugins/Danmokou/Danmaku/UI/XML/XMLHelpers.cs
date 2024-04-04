@@ -703,11 +703,11 @@ public static partial class XMLHelpers {
             shot = initPlayer.shots2[0].shot
         };
 
-        var team = new TeamConfig(0, Subshot.TYPE_D, null,
-            c.campaign.players
-                .SelectMany(p => p.shots2
-                    .Select(s => (p, s.shot)))
-                .ToArray());
+        var team = new TeamConfig(0, Subshot.TYPE_D,
+            (from pl in c.campaign.players
+            from s in pl.shots2
+            from a in pl.supports
+            select (pl, s.shot, a.ability as IAbilityCfg)).ToArray());
         var smeta = new SharedInstanceMetadata(team, new DifficultySettings(FixedDifficulty.Normal));
         
         void CleanupDemo() {
@@ -749,7 +749,7 @@ public static partial class XMLHelpers {
             if (demoPlayer == null) {
                 demoPlayer = UnityEngine.Object.Instantiate(demoPlayerPrefab).GetComponent<PlayerController>();
             }
-            demoPlayer.UpdateTeam((p.Player, p.shot), p.subshot, true);
+            demoPlayer.UpdateTeam((p.Player, p.shot, p.support), p.subshot, true);
             demoPlayer.transform.position = new Vector2(0, -3);
         }
         
@@ -813,9 +813,8 @@ public static partial class XMLHelpers {
             new PassthroughNode(shotsel_support).WithCSS(centerTextClass),
             supportSelect.WithCSS(optionNoKeyClass),
             new PassthroughNode(LString.Empty),
-            new FuncNode(play_game, () => continuation(new TeamConfig(0, subshotSelect.Value,
-                supportSelect.Value,
-                (playerSelect.Value, shotSelect.Value)))).WithCSS(centerTextClass)
+            new FuncNode(play_game, () => continuation(new TeamConfig(0, 
+                p.subshot, (p.Player, p.shot, p.support)))).WithCSS(centerTextClass)
             //new UINode(() => shotSelect.Value.title).SetAlwaysVisible().FixDepth(1),
             //new UINode(() => shotSelect.Value.description)
             //    .With(shotDescrClass).With(smallClass)
@@ -978,7 +977,10 @@ public static partial class XMLHelpers {
              campaigns[f.campaignIndex.Value].Key == ir.RequestKey.Campaign) &&
             (!f.difficultySwitch.Valid || f.difficultySwitch.Value == ir.SharedInstanceMetadata.difficulty.standard) &&
             (f.playerSwitch == null || f.playerSwitch == ir.SharedInstanceMetadata.team.ships[0].ship) &&
-            (f.shotSwitch == null || f.shotSwitch == ir.SharedInstanceMetadata.team.ships[0])
+            //don't include check for ability for now
+            (f.shotSwitch is not { } ss ||
+             (ss.Item1 == ir.SharedInstanceMetadata.team.ships[0].ship &&
+              ss.Item2 == ir.SharedInstanceMetadata.team.ships[0].shot))
             ;
 
         Statistics.StatsGenerator stats = default!;
@@ -1038,9 +1040,10 @@ public static partial class XMLHelpers {
             ))),
             new TwoLabelUINode(stats_favshot, Show(() => {
                 if (stats.TotalRuns == 0) return generic_na;
-                var ((pc, sc), recs) = stats.FavoriteShot;
-                return LString.Format("{0} ({1})", 
+                var ((pc, sc, ab), recs) = stats.FavoriteShot;
+                return LString.Format("{0} {1} ({1})", 
                     ShotConfig.PlayerShotDescription(pc, sc),
+                    ab?.Value.ShortTitle ?? new(null, "No ability"),
                     $"{recs.Length}"
                 );
             })),
@@ -1122,9 +1125,14 @@ public static partial class XMLHelpers {
             ve.AddColumn();
         }};
         var descCol = new UIRenderColumn(screen, 1);
+        AudioTrackSet? ts = null;
         screen.SetFirst(new UIColumn(screen, null, musics.SelectNotNull(m => (m.DisplayInMusicRoom switch {
             true => new FuncNode(string.Format("({0}) {1}", m.TrackPlayLocation, m.Title), 
-                () => new UIResult.StayOnNode(ServiceLocator.Find<IAudioTrackService>().InvokeBGM(m) == null)) {
+                () => {
+                    ts?.FadeOut(1, AudioTrackState.DestroyReady);
+                    ts = ServiceLocator.Find<IAudioTrackService>().AddTrackset();
+                    return new UIResult.StayOnNode(ts.AddTrack(m) is null);
+                }) {
                 ShowHideGroup = new UIColumn(descCol, 
                     new UINode(m.MusicRoomDescription).WithCSS(small2Class, fontUbuntuClass)) 
                 {Interactable = false}

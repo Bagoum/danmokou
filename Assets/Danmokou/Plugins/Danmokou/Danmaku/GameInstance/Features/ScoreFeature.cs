@@ -1,4 +1,6 @@
 ﻿using System;
+using BagoumLib;
+using BagoumLib.Cancellation;
 using BagoumLib.Events;
 using BagoumLib.Mathematics;
 using Danmokou.Core;
@@ -12,7 +14,7 @@ namespace Danmokou.GameInstance {
 public interface IScoreFeature : IInstanceFeature {
     Evented<long> MaxScore { get; }
     Evented<long> Score { get; }
-    Evented<double> PIV { get; }
+    DisturbedAggregation<double> Multiplier { get; }
     long ValueItemPoints { get; }
     double SmallValueRatio { get; }
     Lerpifier<long> VisibleScore { get; }
@@ -30,7 +32,7 @@ public interface IScoreFeature : IInstanceFeature {
     void AddScore(long delta);
 }
 
-public class ScoreFeature : BaseInstanceFeature, IScoreFeature {
+public class ScoreFeature : BaseInstanceFeature, IScoreFeature, ITokenized {
     public const long smallValueItemPoints = 314;
     public const long valueItemPoints = 3142;
     public long ValueItemPoints => valueItemPoints;
@@ -41,8 +43,7 @@ public class ScoreFeature : BaseInstanceFeature, IScoreFeature {
     private InstanceData Inst { get; }
     public Evented<long> MaxScore { get; }
     public Evented<long> Score { get; } = new(0);
-    public Evented<double> PIV { get; } = new(1);
-    public double EffectivePIV => PIV + Inst.Graze / (double)1337;
+    public DisturbedAggregation<double> Multiplier { get; } = new(1);
     
     public Lerpifier<long> VisibleScore { get; }
     public bool AllowPointPlusItemDrops { get; }
@@ -53,6 +54,12 @@ public class ScoreFeature : BaseInstanceFeature, IScoreFeature {
         VisibleScore = new Lerpifier<long>((a, b, t) => (long)M.Lerp(a, b, (double)Easers.EOutSine(t)), 
             () => Score, 1.3f);
         AllowPointPlusItemDrops = creator.AllowPointPlusItems;
+        var grazeMult = new Evented<Aggregator<double, double>>(new(0, (acc, x) => acc + x));
+        Tokens.Add(Inst.Graze.Subscribe(g => {
+            grazeMult.Value.Data = g / (double)1337;
+            grazeMult.OnNext(grazeMult.Value);
+        }));
+        Tokens.Add(Multiplier.AddDisturbance(grazeMult));
     }
     
 
@@ -64,14 +71,14 @@ public class ScoreFeature : BaseInstanceFeature, IScoreFeature {
     }
     
     public long AddValueItems(int delta, double multiplier) {
-        long scoreDelta = (long) Math.Round(delta * valueItemPoints * EffectivePIV * multiplier);
+        long scoreDelta = (long) Math.Round(delta * valueItemPoints * Multiplier.Value * multiplier);
         AddScore(scoreDelta);
         foreach (var f in Inst.Features)
             f.OnItemValue(delta, multiplier);
         return scoreDelta;
     }
     public long AddSmallValueItems(int delta, double multiplier) {
-        long scoreDelta = (long) Math.Round(delta * smallValueItemPoints * EffectivePIV * multiplier);
+        long scoreDelta = (long) Math.Round(delta * smallValueItemPoints * Multiplier.Value * multiplier);
         AddScore(scoreDelta);
         foreach (var f in Inst.Features)
             f.OnItemSmallValue(delta, multiplier);
@@ -84,7 +91,7 @@ public class ScoreFeature : BaseInstanceFeature, IScoreFeature {
         return scoreDelta;
     }
     public void AddPointPlusItems(int delta, double multiplier) {
-        PIV.Value += delta * pivPerPPP * multiplier;
+        Multiplier.Value += delta * pivPerPPP * multiplier;
         foreach (var f in Inst.Features)
             f.OnItemPointPP(delta, multiplier);
     }
@@ -92,11 +99,16 @@ public class ScoreFeature : BaseInstanceFeature, IScoreFeature {
     public void OnContinueOrCheckpoint() {
         Score.Value = 0;
         VisibleScore.HardReset();
-        PIV.Value = 1;
+        Multiplier.Value = 1;
     }
 
     public void OnRegularUpdate() {
         VisibleScore.Update(ETime.FRAME_TIME);
+    }
+
+    void IDisposable.Dispose() {
+        Multiplier.OnCompleted();
+        Tokens.DisposeAll();
     }
 }
 

@@ -595,5 +595,16 @@ public static partial class ExM {
     /// </summary>
     [BDSL2Operator]
     public static TEx<T> ArrayIndex<T>(TEx<T[]> arr, TEx<int> index) => arr.ex.Index(index);
+    
+    private static readonly ExFunction modIndex = 
+        ExFunction.WrapAny(typeof(BagoumLib.ArrayExtensions), nameof(BagoumLib.ArrayExtensions.ModIndex));
+
+    /// <summary>
+    /// Index into the provided array, treating the index as an integer and looping around to the front
+    ///  if it goes out of bounds.
+    /// </summary>
+    public static TEx<T> MIndex<T>(TEx<T[]> arr, TEx<float> index) =>
+        Ex.Call(null, modIndex.Mi.MakeGenericMethod(typeof(T)), arr, index.ex.Cast<int>());
+
 }
 }

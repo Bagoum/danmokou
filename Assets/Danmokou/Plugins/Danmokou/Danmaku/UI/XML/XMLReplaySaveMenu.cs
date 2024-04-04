@@ -20,7 +20,8 @@ namespace Danmokou.UI.XML {
 public class XMLReplaySaveMenu : UIController {
     public override void FirstFrame() {
         MainScreen = new UIScreen(this, "GAME RESULTS") { Builder = GameResultsScreenBuilder };
-        if (InstanceRequest.InstanceCompleted.LastPublished.Try(out var inst)) {
+        if (InstanceRequest.InstanceCompleted.HasValue) {
+            var inst = InstanceRequest.InstanceCompleted.Value;
             var options = new List<UINode>() {
                 new FuncNode(to_menu, GameManagement.GoToMainMenu)
             };

@@ -95,6 +95,10 @@ public partial class PlayerController {
     /// </summary>
     public static readonly Event<Unit> PlayerDeactivatedMeter = new();
     /// <summary>
+    /// Called when the player tried to use meter, but failed.
+    /// </summary>
+    public static readonly Event<Unit> PlayerMeterFailed = new();
+    /// <summary>
     /// Called every frame during meter activation.
     /// </summary>
     public static readonly IBSubject<Color> MeterIsActive = new Event<Color>();

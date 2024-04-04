@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using BagoumLib;
 using BagoumLib.Expressions;
 using BagoumLib.Functional;
@@ -373,14 +374,25 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                             imp.Ef.Scope) { ImportedScript = imp, IsImportedScriptMember = true };
                     }
                 } else if (Parser.TypeFromString(id.Name).TryL(out var typ)) {
-                    var methods = typ.GetMember(Member.Name)
-                        .SelectNotNull(TypeMember.MaybeMake)
+                    var (memName, typArgs) = Parser.TypeArgsFromString(Member.Name);
+                    var methods = typ.GetMember(memName)
+                        .Where(m => typArgs.Length == 0 || m is MethodInfo { IsGenericMethodDefinition: true } mi 
+                                && mi.GetGenericArguments().Length == typArgs.Length)
+                        .SelectNotNull(m => {
+                            if (typArgs.Length > 0 && m is MethodInfo mi)
+                                m = mi.MakeGenericMethod(typArgs);
+                            return TypeMember.MaybeMake(m);
+                        })
                         .Where(m => m.Static && m.Params.Length == Args.Count)
                         .ToList();
-                    if (methods.Count == 0)
-                        return new AST.Failure(Member.Name.Length == 0 ? emptyMemberErr : new(Position, 
-                                $"No method {Member.Name} with {Args.Count} arguments was found on type {typ.RName()}"), ann.Scope) 
+                    if (methods.Count == 0) {
+                        return new AST.Failure(Member.Name.Length == 0 ?
+                                    emptyMemberErr :
+                                    new(Position,
+                                        $"No method {Member.Name} with {Args.Count} arguments was found on type {typ.RName()}"),
+                                ann.Scope)
                             { Completions = (typ, Member.Name) };
+                    }
                     var ast = AST.MethodCall.Make(Position, Member.Position, ann,
                         methods.Select(m => MethodSignature.Get(m).Call(Member.Name)).ToArray(), Args);
                     ast.AddTokens(new[] { Type(id.Position) });
@@ -476,14 +488,20 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             //If we're directly calling a *static method*, then we already know the signatures
             if (Fn is FnIdent fn) {
                 return AST.MethodCall.Make(Position, fn.Position, ann, fn.Func, Args, OverloadsInterchangeable);
-            } else if (Fn is Ident id) { 
+            } else if (Fn is Ident id) {
+                var (name, targs) = Parser.TypeArgsFromString(id.Name);
                 if (LoadScriptFnDecl(Position, id, null, ann, Args) is {} sfn) {
                     return sfn;
-                } else if (ann.Scope.FindStaticMethodDeclaration(id.Name.ToLower()) is { } decls) {
-                    var argFilter = decls.Where(d => d.Params.Length == Args.Length).ToList();
-                    if (argFilter.Count > 0)
-                        return AST.MethodCall.Make(Position, id.Position, ann,
-                            argFilter.Select(d => d.Call(id.Name)).ToArray(), Args, OverloadsInterchangeable);
+                } else if (ann.Scope.FindStaticMethodDeclaration(name.ToLower()) is { } decls) {
+                    var argFilter = decls.SelectNotNull(d => {
+                        if (d.Params.Length != Args.Length) return null;
+                        if (targs.Length == 0) return d;
+                        if (d is not GenericMethodSignature gm || gm.TypeParams != targs.Length) return null;
+                        return gm.Specialize(targs);
+                    }).Select(d => d.Call(name)).ToArray();
+                    if (argFilter.Length > 0)
+                        return AST.MethodCall.Make(Position, id.Position, ann, argFilter, 
+                            Args, OverloadsInterchangeable);
                     else {
                         var prms = Args.Select(a => a.Annotate(ann)).ToArray();
                         if (prms.Length == 0) {
@@ -866,7 +884,10 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
         protected override IAST _AnnotateInner(STAnnotater ann) {
             bool hoist = Kw.Content == "hfunction";
             var localScope = LexicalScope.Derive(hoist ? ann.Scope.HoistedScope : ann.Scope);
-            localScope.Type = LexicalScopeType.ExpressionEF;
+            //There isn't a special scope type for functions, but they're basically standard scopes.
+            //Even though they are ultimately compiled to expressions, the context in which they are run
+            // is closest to standard scopes, and not comparable to the delayed execution of GCXF (ExpressionEF type).
+            localScope.Type = LexicalScopeType.Standard;
             localScope.IsConstScope = ConstKwPos != null;
             var krt = Parser.TypeFromToken(ReturnType, ann.Scope, allowVoid:true);
             if (!krt.TryL(out var retTyp))

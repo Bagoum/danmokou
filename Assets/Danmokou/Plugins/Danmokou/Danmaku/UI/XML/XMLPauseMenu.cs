@@ -47,8 +47,9 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
         OptionsScreen.MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity;
         var advMan = ServiceLocator.FindOrNull<ADVManager>();
         if (GameManagement.Instance.Replay == null && advMan != null) {
-            SaveLoadScreen = this.SaveLoadVNScreen(inst => advMan.ExecAdv?.Inst.Request.Restart(inst.GetData()) ?? false, slot => new(advMan.GetSaveReadyADVData(), DateTime.Now, lastSaveLoadSS!.IntoTex(), slot,
-                ServiceLocator.Find<IVNWrapper>().TrackedVNs.First().backlog.LastPublished.Value.readableSpeech));
+            var backlog = ServiceLocator.Find<IVNWrapper>().TrackedVNs.First().backlog;
+            var lastMessage = backlog.HasValue ? backlog.Value.readableSpeech : "(No dialogue)";
+            SaveLoadScreen = this.SaveLoadVNScreen(inst => advMan.ExecAdv?.Inst.Request.Restart(inst.GetData()) ?? false, slot => new(advMan.GetSaveReadyADVData(), DateTime.Now, lastSaveLoadSS!.IntoTex(), slot, lastMessage));
             SaveLoadScreen.BackgroundOpacity = 1f;
             SaveLoadScreen.MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity;
         }

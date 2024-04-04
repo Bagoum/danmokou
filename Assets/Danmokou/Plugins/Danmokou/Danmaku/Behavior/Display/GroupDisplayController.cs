@@ -27,6 +27,9 @@ public class GroupDisplayController : DisplayController {
         for (int ii = 0; ii < all.Length; ++ii) all[ii].UpdateStyle(style);
     }
 
+    public override void Show() {
+        for (int ii = 0; ii < all.Length; ++ii) all[ii].Show();
+    }
     public override void Hide() {
         for (int ii = 0; ii < all.Length; ++ii) all[ii].Hide();
     }

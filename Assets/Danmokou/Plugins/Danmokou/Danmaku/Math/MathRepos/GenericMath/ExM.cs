@@ -562,6 +562,10 @@ public static partial class ExM {
     public static TEx<InstanceData> Instance() => 
         Ex.Property(null, typeof(GameManagement), nameof(GameManagement.Instance));
 
+    /// <summary>
+    /// Get the custom feature of type T from the instance data.
+    /// </summary>
+    public static TEx<T> CFeature<T>() => inst.Field(nameof(InstanceData.CustomDataF)).Cast<T>();
 
     /// <summary>
     /// Returns the amount of time for which the player has *not* been focusing.
@@ -723,6 +727,8 @@ public static partial class ExM {
             return fctx.Field(nameof(PIData.OptionFirer));
         } else if (t == typeof(BehaviorEntity)) {
             return fctx.Field(nameof(PIData.Firer));
+        } else if (t == typeof(Enemy)) {
+            return fctx.Field(nameof(PIData.Firer)).Field(nameof(BehaviorEntity.Enemy));
         }
         throw new Exception($"FCTX has no handling for `Mine` constructor of type {t.RName()}");
     };

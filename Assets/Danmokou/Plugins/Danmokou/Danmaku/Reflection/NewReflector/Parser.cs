@@ -38,6 +38,27 @@ public static class Parser {
         return typ.Left;
     }
 
+    public static Either<(string meth, Type[] args), string> MaybeTypeArgsFromString(string content) {
+        var tDef = ParseType(content);
+        if (tDef.IsRight)
+            return tDef.Right;
+        if (tDef.Left is TypeDef.Atom at)
+            return (at.Type, Array.Empty<Type>());
+        if (tDef.Left is not TypeDef.Generic gen)
+            return $"Cannot parse as type-args: {tDef.Left}";
+        var args = new Type[gen.Args.Count];
+        for (int ii = 0; ii < gen.Args.Count; ++ii) {
+            var arg = gen.Args[ii].TryCompile();
+            if (arg.IsRight)
+                return arg.Right;
+            args[ii] = arg.Left;
+        }
+        return (gen.Type, args);
+    }
+
+    public static (string meth, Type[] args) TypeArgsFromString(string content) =>
+        MaybeTypeArgsFromString(content).TryL(out var res) ? res : (content, Array.Empty<Type>());
+
     public static Either<Type?, AST.Failure> TypeFromToken(Token? mtypStr, LexicalScope scope, bool allowVoid = false) {
         if (!mtypStr.Try(out var typStr))
             return null as Type;
@@ -298,12 +319,14 @@ public static class Parser {
 
     private static readonly ParserError termMemberFollowErr =
         new ParserError.Expected("member access x.y and/or function application f(x, y)");
+    private static readonly ParserError termMemberGenericErr =
+        new ParserError.Expected("generic function x.y<T>()");
     private static readonly Parser<Token, Token> period = op(".");
     private static readonly Parser<Token, Token> termMember = inp => {
         var rp = period(inp);
         if (!rp.Result.Try(out var p))
             return rp;
-        var rid = Lexer.Ident(inp);
+        var rid = IdentOrType(inp);
         //Allow empty identifier here-- it will fail during annotation, but it permits better errors
         if (rid.Status == ResultStatus.ERROR)
             return new(new Token(TokenType.Identifier, p.Position.End.CreateEmptyRange(), ""), rp.MergeErrors(in rid), rp.Start,
@@ -318,6 +341,8 @@ public static class Parser {
             if (follow.Result.Try(out var lr)) {
                 if (!lr.Item1.Valid && !lr.Item2.Valid)
                     return follow.AsSameError(termMemberFollowErr);
+                if (lr.Item1.Try(out var mem) && mem.Type is TokenType.TypeIdentifier && !lr.Item2.Valid)
+                    return follow.AsSameError(termMemberGenericErr, false);
             }
             return follow;
         };

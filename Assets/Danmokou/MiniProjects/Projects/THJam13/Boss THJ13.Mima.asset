@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9a92301f86b4dd690557658c7243e8b, type: 3}
+  m_Name: Boss THJ13.Mima
+  m_EditorClassIdentifier: 
+  boss: {fileID: 6393584073741447978, guid: 657674e2b66b1c441b2f7096cb9a48ff, type: 3}
+  localizationBaseKey: simp.boss.mima
+  m_casualName:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  m_bossPracticeName:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  replayNameOverride:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  bottomTrackerNameOverride:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  stateMachine: {fileID: 2811297602134710623, guid: e19a2e03b884fe042bf5c68b8c749206,
+    type: 3}
+  key: thj13.mima
+  colors: {fileID: 11400000, guid: b02eb45a240428e43b57b533c82a30fa, type: 2}
+  cardRotator: 
+  spellRotator: 
+  profile:
+    leftSidebar: {fileID: 2800000, guid: 83710bc061a8bd54493f96b31c55a3fe, type: 3}
+    rightSidebar: {fileID: 2800000, guid: dc3144c9f7e603e43a460d2dae32b8a8, type: 3}
+  defaultNonBG: {fileID: 5180723301924424041, guid: 0502f791826cbb34d868fcb64bd35a91,
+    type: 3}
+  defaultSpellBG: {fileID: 5180723301924424041, guid: 0502f791826cbb34d868fcb64bd35a91,
+    type: 3}
+  defaultIntoSpellTransition: {fileID: 11400000, guid: 9b0abf82e07299741a4d64ecd57ff7e6,
+    type: 2}
+  defaultIntoNonTransition: {fileID: 11400000, guid: ee89dae89d15f34418474c82d6d3a3ba,
+    type: 2}
+  bossCutin: {fileID: 1213205297921912414, guid: 4567b6e9f51e17540b742f40d13a760e,
+    type: 3}
+  spellCutins:
+  - {fileID: 160725723660692450, guid: edecf6aacb3e56a4cb45c99149a63c18, type: 3}
+  practiceable: 0

@@ -25,13 +25,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 173016450731746047}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
-  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &872786355935527883
 SpriteRenderer:
@@ -50,6 +50,8 @@ SpriteRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -105,25 +107,19 @@ MonoBehaviour:
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
-  collisionInfo:
-    collisionRadius: 0
-    CollisionActiveOnInit: 0
-    destructible: 0
-    grazeEveryFrames: 0
-    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
   powerOffsetFree:
   - zero
   - zero
-  - cr(1, 270)
-  - cr(1, 250)
+  - cr(1, 270)*0.8
+  - cr(1, 250)*0.8
   powerOffsetFocus:
   - zero
   - zero
-  - cr(1, 90)
-  - cr(1, 106)
+  - cr(1, 90)*0.6
+  - cr(1, 106)*0.6
   freeOffsetMul: 0.8
   focusOffsetMul: 0.6
   opacityFree: 'ifpowergtp 1
@@ -160,13 +156,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1822033754454970717}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6063146920654304739
 MonoBehaviour:
@@ -187,12 +183,6 @@ MonoBehaviour:
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
-  collisionInfo:
-    collisionRadius: 0
-    CollisionActiveOnInit: 0
-    destructible: 0
-    grazeEveryFrames: 0
-    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
@@ -233,13 +223,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2253364986523527864}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
-  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &5902847560425896839
 SpriteRenderer:
@@ -258,6 +248,8 @@ SpriteRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -313,25 +305,19 @@ MonoBehaviour:
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
-  collisionInfo:
-    collisionRadius: 0
-    CollisionActiveOnInit: 0
-    destructible: 0
-    grazeEveryFrames: 0
-    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
   powerOffsetFree:
   - zero
-  - cr(1, 0)
-  - cr(1, 320)
-  - cr(1, 340)
+  - cr(1, 0)*0.8
+  - cr(1, 320)*0.8
+  - cr(1, 340)*0.8
   powerOffsetFocus:
   - zero
-  - cr(1, 60)
-  - cr(1, 50)
-  - cr(1, 40)
+  - cr(1, 60)*0.6
+  - cr(1, 50)*0.6
+  - cr(1, 40)*0.6
   freeOffsetMul: 0.8
   focusOffsetMul: 0.6
   opacityFree: 'ifpowergtp 1
@@ -369,13 +355,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4069358846316868745}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2403855781658133114
 SpriteRenderer:
@@ -394,6 +380,8 @@ SpriteRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -449,25 +437,19 @@ MonoBehaviour:
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
-  collisionInfo:
-    collisionRadius: 0
-    CollisionActiveOnInit: 0
-    destructible: 0
-    grazeEveryFrames: 0
-    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
   powerOffsetFree:
-  - cr(1, 90)
-  - cr(1, 180)
-  - cr(1, 220)
-  - cr(1, 200)
+  - cr(1, 90)*0.8
+  - cr(1, 180)*0.8
+  - cr(1, 220)*0.8
+  - cr(1, 200)*0.8
   powerOffsetFocus:
-  - cr(1, 90)
-  - cr(1, 120)
-  - cr(1, 130)
-  - cr(1, 140)
+  - cr(1, 90)*0.6
+  - cr(1, 120)*0.6
+  - cr(1, 130)*0.6
+  - cr(1, 140)*0.6
   freeOffsetMul: 0.8
   focusOffsetMul: 0.6
   opacityFree: 'ifpowergtp 1
@@ -505,13 +487,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4599970512501366041}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8564540549256565143}
-  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &4184383171339029857
 SpriteRenderer:
@@ -530,6 +512,8 @@ SpriteRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -585,12 +569,6 @@ MonoBehaviour:
   cullableRadius:
     cullable: 0
     cullRadius: {fileID: 0}
-  collisionInfo:
-    collisionRadius: 0
-    CollisionActiveOnInit: 0
-    destructible: 0
-    grazeEveryFrames: 0
-    allowGraze: 0
   displayer: {fileID: 0}
   offsetFree: zero
   offsetFocus: zero
@@ -598,12 +576,12 @@ MonoBehaviour:
   - zero
   - zero
   - zero
-  - cr(1, 290)
+  - cr(1, 290)*0.8
   powerOffsetFocus:
   - zero
   - zero
   - zero
-  - cr(1, 74)
+  - cr(1, 74)*0.6
   freeOffsetMul: 0.8
   focusOffsetMul: 0.6
   opacityFree: 'ifpowergtp 1
@@ -639,6 +617,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6169168473649848314}
+  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -650,5 +629,4 @@ Transform:
   - {fileID: 4615905980880222370}
   - {fileID: 4430576724930684516}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

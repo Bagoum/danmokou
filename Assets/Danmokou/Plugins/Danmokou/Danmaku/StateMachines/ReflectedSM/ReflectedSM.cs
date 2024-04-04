@@ -108,10 +108,10 @@ t > fadein ?
         anim.AssignScales(0, scale(smh.GCX), 0);
         anim.AssignRatios(t1r?.Invoke(smh.GCX), t2r?.Invoke(smh.GCX));
         anim.Initialize(smh.cT, t);
-        using var token = ServiceLocator.FindAll<PlayerController>().SelectDisposable(p => {
-            p.MakeInvulnerable((int)(t * 120), false);
-            return p.DisableInput();
-        });
+        using var token = PlayerController.AllControlEnabled.AddConst(false);
+        foreach (var pc in ServiceLocator.FindAll<PlayerController>()) {
+            pc.MakeInvulnerable((int)(t * 120), false);
+        };
         await RUWaitingUtils.WaitFor(smh.Exec, smh.cT, t, false);
     });
 
@@ -147,6 +147,27 @@ t > fadein ?
             return ev(smh);
         });
     }
+
+    /// <summary>
+    /// Spawn an effect at the given location.
+    /// </summary>
+    public static ReflectableLASM Effect(string effect, GCXF<Vector2> loc) {
+        var eff = ResourceManager.GetEffect(effect);
+        return new(smh => {
+            eff.Proc(loc(smh.GCX));
+            return Task.CompletedTask;
+        });
+    }
+
+    /// <summary>
+    /// (For debugging use) Skip forward in time in the engine. The player will be invulnerable during this time.
+    /// </summary>
+    public static ReflectableLASM SkipTime(float seconds) => new(smh => {
+        foreach (var player in ServiceLocator.FindAll<PlayerController>())
+            player.MakeInvulnerable((int)(seconds * 120) + 200, false);
+        ETime.SkipTime(seconds);
+        return Task.CompletedTask;
+    });
 
     #region ScreenManip
     
@@ -306,8 +327,9 @@ t > fadein ?
     /// <param name="scriptId">Description of the script used when printing debug messages.</param>
     /// <returns></returns>
     public static ReflectableLASM ExecuteVN([LookupMethod] Func<DMKVNState, Task> vnTask, string scriptId) => new(async smh => {
-        using var _ = ServiceLocator.FindAll<PlayerController>()
-            .SelectDisposable(p => p.DisableInput(true));
+        using var _ = PlayerController.AllControlEnabled.AddConst(false);
+        foreach (var pc in ServiceLocator.FindAll<PlayerController>())
+            pc.ResetInput();
         var vn = new DMKVNState(smh.cT, scriptId, GameManagement.Instance.VNData);
         var exec = ServiceLocator.Find<IVNWrapper>().TrackVN(vn);
         Logs.Log($"Starting VN script {vn}");
@@ -587,9 +609,23 @@ t > fadein ?
         return Task.CompletedTask;
     });
 
+    /// <summary>
+    /// Set the enemy to be vulnerable if the condition returns true, otherwise set it to be invulnerable.
+    /// </summary>
     public static ReflectableLASM Vulnerable(GCXF<bool> isVulnerable) => new(smh => {
         smh.Exec.Enemy.SetVulnerable(isVulnerable(smh.GCX) ? Vulnerability.VULNERABLE : Vulnerability.NO_DAMAGE);
         return Task.CompletedTask;
+    });
+
+    /// <summary>
+    /// Set the enemy invulnerable, wait for a synchronization event, and then set it vulnerable.
+    /// (This SM is blocking.)
+    /// </summary>
+    public static ReflectableLASM VulnerableAfter(Synchronizer sync) => new(async smh => {
+        smh.Exec.Enemy.SetVulnerable(Vulnerability.NO_DAMAGE);
+        await sync(smh);
+        smh.ThrowIfCancelled();
+        smh.Exec.Enemy.SetVulnerable(Vulnerability.VULNERABLE);
     });
     
     public static ReflectableLASM FadeSprite(BPY fader, GCXF<float> time) => new(smh => {

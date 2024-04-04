@@ -487,29 +487,31 @@ public partial class BulletManager {
         }
         private void UpdateVelocityAndControlsNonBucketed() {
             PruneControlsCancellation();
-            var state = new VelocityUpdateState(this,
-                controls.FirstPriorityGT(BulletControl.POST_VEL_PRIORITY),
-                controls.FirstPriorityGT(BulletControl.POST_DIR_PRIORITY));
-            Profiler.BeginSample("Core velocity step");
-            if (!PARALLELISM_ENABLED || temp_last < PARALLEL_CUTOFF)
-                VelocityProcessBatch(0, temp_last, state);
-            else
-                VelocityParallelize(state);
-            Profiler.EndSample();
-
-            //Post-dir controls can't be parallelized, so they need to be moved out of the parallel loop
-            if (PARALLELISM_ENABLED) {
-                int numPcs = controls.Count;
-                Profiler.BeginSample("Non-parallelizable controls update");
-                if (state.postDirPcs < numPcs) {
-                    for (state.ii = 0; state.ii < temp_last; ++state.ii) {
-                        ref var sb = ref Data[state.ii];
-                        //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
-                        for (int pi = state.postDirPcs; pi < numPcs && !Deleted[state.ii]; ++pi)
-                            controls[pi].action(in state, sb.bpi, controls[pi].cT);
-                    }
-                }
+            if (Count > 0) {
+                var state = new VelocityUpdateState(this,
+                    controls.FirstPriorityGT(BulletControl.POST_VEL_PRIORITY),
+                    controls.FirstPriorityGT(BulletControl.POST_DIR_PRIORITY));
+                Profiler.BeginSample("Core velocity step");
+                if (!PARALLELISM_ENABLED || temp_last < PARALLEL_CUTOFF)
+                    VelocityProcessBatch(0, temp_last, state);
+                else
+                    VelocityParallelize(state);
                 Profiler.EndSample();
+
+                //Post-dir controls can't be parallelized, so they need to be moved out of the parallel loop
+                if (PARALLELISM_ENABLED) {
+                    int numPcs = controls.Count;
+                    Profiler.BeginSample("Non-parallelizable controls update");
+                    if (state.postDirPcs < numPcs) {
+                        for (state.ii = 0; state.ii < temp_last; ++state.ii) {
+                            ref var sb = ref Data[state.ii];
+                            //Post-vel controls may destroy the bullet. As soon as this occurs, stop iterating
+                            for (int pi = state.postDirPcs; pi < numPcs && !Deleted[state.ii]; ++pi)
+                                controls[pi].action(in state, sb.bpi, controls[pi].cT);
+                        }
+                    }
+                    Profiler.EndSample();
+                }
             }
             PruneControls();
         }
@@ -523,22 +525,23 @@ public partial class BulletManager {
         }
         
         public void CompactAndSort() {
-            Profiler.BeginSample("Compact");
             //This must be done at end of frame because bucketed collisions rely on index being consistent
-            if (NullElements > Math.Min(2000, Count / 10) || BC.UseZCompare)
+            if (NullElements > Math.Min(2000, Count / 10) || BC.UseZCompare) {
+                Profiler.BeginSample("Compact");
                 Compact();
-            Profiler.EndSample();
-            Profiler.BeginSample("Z-sort");
+                Profiler.EndSample();
+            }
             EmptyBuckets();
             if (BC.UseZCompare) {
+                Profiler.BeginSample("Z-sort");
                 var reqLen = (count + 1) / 2;
                 if (zSortBuffer == null || zSortBuffer.Length < reqLen)
                     zSortBuffer = new SimpleBullet[(Data.Length + 1) / 2];
                 //Since the array is sorted every frame, it is always "mostly sorted"
                 //This makes CombMergeSort good
                 CombMergeSorter<SimpleBullet>.Sort(Data, 0, count, ZCompare, zSortBuffer);
+                Profiler.EndSample();
             }
-            Profiler.EndSample();
         }
 
         public void CheckCollisions(ISimpleBulletCollisionReceiver recv) {

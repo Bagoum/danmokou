@@ -108,7 +108,13 @@ public class InstanceData {
     
     public ActiveTeamConfig? TeamCfg { get; private set; }
 
-    public ActiveTeamConfig GetOrSetTeam(ActiveTeamConfig deflt) => TeamCfg ??= deflt;
+    public ActiveTeamConfig GetOrSetTeam(ActiveTeamConfig deflt) {
+        if (TeamCfg is null) {
+            TeamCfg = deflt;
+            TeamUpdated.OnNext(default);
+        }
+        return TeamCfg;
+    }
 
     /// <summary>
     /// If this is true, then time-based features (like faith or combo) should not tick.
@@ -204,7 +210,7 @@ public class InstanceData {
 
     public void SwapLifeScore(long score, bool usePIVMultiplier) {
         BasicF.AddLives(-1, false);
-        if (usePIVMultiplier) score = (long) (score * ScoreF.PIV);
+        if (usePIVMultiplier) score = (long) (score * ScoreF.Multiplier);
         ScoreF.AddScore(score);
         LifeSwappedForScore.OnNext(default);
     }

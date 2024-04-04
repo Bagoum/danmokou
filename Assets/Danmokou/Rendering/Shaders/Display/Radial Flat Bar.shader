@@ -74,7 +74,7 @@
                 float ang = fmod(a + 1.75, 1); // 0 to 1, starting at 90
                 ang = 1 - 2 * abs(0.5 - ang); // 90 = 0; -90 = 1; 0,180 = 0.5
                 ang = 0.5 + _PMDir * (ang - 0.5);
-                float4 c = f.color * _CF;
+                float4 c = _CF;
                 c = lerp(_CFI, c, smoothstep(0, 0.002, ang - _FI));
                 c = lerp(c, _CE, 
                     smoothstep(-rsmth, rsmth, abs(r + _OutwardsPush - _R) - _Subradius));
@@ -82,7 +82,7 @@
                 c = lerp(c, _CE, smoothstep(0, 0.002, ang - _F));
                 c.a *= tex2D(_MainTex, f.uv).a;
                 c.a *= 1-smoothstep(_Subradius2-rsmth, _Subradius2+rsmth, abs(r - _R));
-                return c;
+                return c * f.color;
             }
             ENDCG
         }

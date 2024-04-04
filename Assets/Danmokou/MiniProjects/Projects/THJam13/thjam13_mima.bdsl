@@ -1,0 +1,302 @@
+
+const var mimac = { "yellow", "orange", "pink", "green", "teal", "blue" }
+const var mimac1 = { "yellow", "orange", "pink" }
+const var mimac2 = { "green", "teal", "blue" }
+var w = mindex(mimac2, 4.5);
+
+macro data() {
+	cfeature<THJam13CustomDataFeature>()
+}
+macro tintRetro() {
+	rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 0.5, 1))
+}
+macro tintModern() {
+	rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 1, 0.5))
+}
+function setColors()::StateMachine {
+	return paction 0 {
+		poolcontrol "*black*" tint tintRetro()
+		poolcontrol { "*purple*", "*teal*", "*green*", "*orange*", "*yellow*", "*red*", "*pink*", "*blue*" } tint 
+			tintModern()
+	}
+}
+
+function doSwitch(index::int)::StateMachine {
+	return exec b{
+		(mine<BehaviorEntity>().displayer as OneOfDisplayController).SelIndex = index
+		if (index == 1) {
+			mine<Enemy>().ReceivedDamageMult = bpy(data().RetroMode01)
+			mine<Enemy>().HealthbarOpacityFunc = bpy(data().RetroMode01Smooth)
+		} else {
+			mine<Enemy>().ReceivedDamageMult = bpy(1 - data().RetroMode01)
+			mine<Enemy>().HealthbarOpacityFunc = bpy(1 - data().RetroMode01Smooth)
+		}
+	}
+}
+
+function switchToMode(index::int)::StateMachine {
+	return paction 0 {
+		sync "powerup1" <> poweraura { 
+			boss1(lerp 0 1 t green blue, teal) 
+		}
+		delay 1.6 effect "splurge-1" loc
+		delay 1.6 doSwitch(index)
+	}
+}
+
+var sm = pattern({
+		boss "thj13.mima"
+		mixer {
+			(1, { 
+				("thj13.stage_retro", BPY(data().RetroMode01))
+				("thj13.stage_modern", BPY(1-data().RetroMode01))
+			})
+		}
+	}, {
+	phase 0 { } {
+		paction 0 {
+			position 0 9
+			doSwitch(0)
+			shiftphaseto 1
+		}
+	}
+
+	phase 0 {
+		dialogue
+	} {
+		saction 0 {
+			movetarget 3 $(eoutsine) cxy(0, 2.5)
+			executevn $(thj13dialogue2) "d2"
+			shiftphase
+		}
+	}
+
+	phase 30 { 
+		type non "Vortex of Night, Vortex of Stars"
+		hpi 19000 5
+		root 0 2.5
+	} {
+		paction 0 {
+			setColors()
+			gtr {
+				times(inf)
+				waitchild
+				preloop b{
+					hvar modelr = pm1(i)
+					hvar mode = z1(i) as int
+				}
+			} {
+				saction 0 {
+					wrap(switchToMode(mode))
+					sync "inode" <> gsr {
+						times(2)
+						bindlr
+					} summons
+						tprot(pxy(1.7 * lr, 0.4 + -3.2 * t ^ 1.2))
+						async "*" <;:> gir {
+							colorx(lr < 0 ? "dot-*/w" : "star-*/") 
+						} gcr2 (20/sqrt(dl)) inf angle(4 * lr) {
+							colorx(lr < 0 ? "black" : null)
+							color(mimac2)
+							cancel(loc.y < -3)
+							sfx "x-fire-star-2"
+						} gsr2c (10 * sqrt(dl)) {
+						} simple tprot(
+							t < 0.7 ?
+								px(2 * lr) :
+								(t > 1.4 ?
+									cy 2 :
+									pxy(-2 * lr, -2))) {
+										dir starrot1
+									}
+					wait 3
+					~ async "" <> gcr2 60 4 <> {
+						p this
+					} gsr2 3 <15> {
+						preloop b{
+							hvar pathi = i;
+						}
+						colorx(pm1(pathi) == modelr ? "black/w" : "green/")
+						center
+						sfx "x-fire-burst-1"
+						target ang Lplayer
+						p add
+						sfx	"x-fire-tech-6"
+					} guideempty2 p { ("ploc", code(loc)), ("pdir", code(dir)) }
+						tprot px(lerpt3(0.2, 0.5, 0.7, 1.4, 4, 0.9, 6)) {
+						colorr "lightning-*" pather 3 0.5 nroffset @ "ploc" p {
+							s 2
+							tint(pm1(pathi) == modelr ? tintRetro() : tintModern())
+						}
+						colorr "lstar-*" simple dtpoffset "ploc" "pdir" p zero {
+							dir starrotb3
+						}
+					}
+					movetarget(3, $(eoutsine), pxy(modelr * 2, rand(2, 3)))
+					wait 0.5
+					~ gtr {
+					} {
+						async "" <> gcr2 30 10 <> {
+							bindlr
+							colorx(i % 2 == 0 ? "star-teal/" : "dot-black/w")
+							frv2(nx(pm1(i)))
+						} gsr2c (40*dl) {
+						} simple polar(logsumshiftt(-2, 1, 4 * t, 2 * t), 16 * lr * t) { dir starrotb2 }
+						async "gdlaser-*" <3.6;5:;:-90> gcr2 30 10 <-0.8;:;:> {
+							root zero
+							color { "blue/b", "black/b" }
+							preloop b{
+								hvar li = z1(i)
+							}
+						} gsr {
+							start b{
+								if (mode == 1) {
+									rv2.nx *= -1
+								}
+							}
+						} laser(null, 1.5, 0.5, { 
+							s 3
+							dsfx
+							tint(li == 0 ? tintModern() : tintRetro())
+						})
+					}
+					movetarget(3, $(eiosine), pxy(0, rand(2, 3)))
+
+				}
+			}
+			
+		}
+	}
+
+	phase 43 {
+		type spell "The Hole in the Center of the Galaxy"
+		hpi 20000 8
+		root 0 3
+	} {
+		saction 0 {
+			exec b{
+				var bhe = new BlackHoleEffect(4, 0.5, 1.5);
+				ServiceLocator.Find<IShaderCamera>().ShowBlackHole(bhe);
+				ISFXService.SFXService.Request("mima-blackhole");
+			}
+			wait(4.5)
+			doSwitch(0)
+			position(0, 2.5)
+			exec b{
+				var bg = ResourceManager.GetBackground("space.sun");
+				ServiceLocator.Find<IBackgroundOrchestrator>().ConstructTarget(bg, false, false);
+				ServiceLocator.Find<PlayerController>().SetLocation(py(-1.5));
+			}
+		}
+		paction 0 {
+			setColors()
+			bulletcontrol true "star-*" softcull("", mag(loc) < 0.2)
+			bulletcontrol true "dot-*" softcull("", mag(loc) < 0.2)
+			poolcontrol "dcircle-*" allowdelete false
+			poolcontrol "dcircle-*" destructible false
+			poolcontrol "dcircle-red/b" setrenderqueue 4999
+			poolcontrol "dcircle-black/b" setrenderqueue 5000
+
+			sync "dcircle-*" <> gsr2 2 <;:> {
+				root zero
+				sfx "x-metal"
+				color { "red/b", "black/b" }
+			} simple rvelocity zero {
+				scale 4
+			}
+
+			async "dot-black/w" <5;:> gcr2 240 inf <360h> {
+				delay 120
+				root zero
+			} gsr2c (30 * dl ^ 0.6) {
+
+			} simple rvelocity cx -1 {
+				
+			}
+			async "star-*/" <5;:> gcr2 240 inf <> {
+				color mimac1
+				root zero
+				sfx "x-fire-burst-1"
+				start b{
+					hvar cancel = -90.0
+				}
+				postloop b{
+					cancel = mod(360, cancel + rand(100, 160) * randpm1)
+				}
+			} gsr2c 80 {
+			} gsr {
+				clip(abs(degintorange(mod(360, rv2.angle) - cancel)) < lerpd(40, 20))
+			} simple rvelocity cx -1 {
+				dir starrotb2
+			}
+			async "lstar-*/" <3.6;:> gir2 640 inf <360h> {
+				delay 4s
+				color mimac2
+				root zero
+			} gcr2 10 (5 + dc) <6> {
+				colorx(z1(pi) == 0 ? "lcircle-black/w" : null)
+				sfx "x-fire-star-2"
+				preloop b{
+					hvar itr = i
+				}
+			} gsr2c 2 {
+
+			} simple nrvelocity(b{
+				var ta = t - 1.8 - 0.1 * itr;
+				ta < 0 ? zero :
+				(lerp(0, 0.5, ta, 0, 1) * ss0(vhome(2, Lplayer)))
+			}) {
+				dir starrotb1
+			}
+
+			gtr {
+				delay 6s
+				wait 8s
+				waitchild
+				times inf
+				preloop b{
+					hvar modelr = pm1(i + 1)
+					hvar mode = z1(i + 1) as int
+				}
+			} {
+				saction 0 {
+					wrap(switchToMode(mode))
+					~ movetarget(3, $(eoutsine), pxy(2 * modelr, y))
+					async "gdlaser-*" <-5;:> gir2 120 (3 + d3d1) <> { 
+						colorf({ "red/b", "black/b" }, mode as float)
+					} gir {
+						target ang Lplayer
+						root(loc)
+					} {
+						gcr {
+						} laser(null, 2, 0, { dsfx, 
+							tint(witha(1 - t/2, mode == 1 ? tintRetro() : tintModern())), 
+							s 2 })
+						gcr {
+							delay 30
+							colorf({ "lightning-red/b", "lightning-black/w" }, mode as float)
+							sfx "x-lightning"
+						} pather(1, 0.8, rvelocity px(lerpt3(0.2, 0.5, 0.8, 1.4, 13, 4, 9)), { 
+							s 2 
+							tint(mode == 1 ? tintRetro() : tintModern())
+						})
+					}
+				}
+			}
+		}
+
+	}
+
+	phase 0 {
+		dialogue
+		root 0 2.5
+	} {
+		saction 0 {
+			executevn $(thj13dialogue3) "d3"
+			movetarget 2 $(einsine) cxy(0, 6)
+			shiftphase
+		}
+	}
+
+})
+sm;

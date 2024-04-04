@@ -1,0 +1,154 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &3855151649835690958
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1062581215778985920, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: healthbarOpacity
+      value: cfeature<THJam13CustomDataFeature>().RetroMode01Smooth
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985920, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: unfilledColor.constVal.b
+      value: 0.24705882
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985920, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: unfilledColor.constVal.g
+      value: 0.11664096
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985920, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: unfilledColor.constVal.r
+      value: 0.05098039
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985920, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: nonspellColor.constVal.color1.b
+      value: 0.8443396
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985920, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: nonspellColor.constVal.color1.g
+      value: 0.78422946
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985920, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: nonspellColor.constVal.color1.r
+      value: 0.67308205
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985920, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: nonspellColor.constVal.color2.b
+      value: 0.7122642
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985920, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: nonspellColor.constVal.color2.g
+      value: 0.6188816
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985920, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: nonspellColor.constVal.color2.r
+      value: 0.5577163
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985921, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: deathEffect
+      value: 
+      objectReference: {fileID: 11400000, guid: ded93beba55022a439308cf37b13d360,
+        type: 2}
+    - target: {fileID: 1062581215778985923, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985923, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985923, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985923, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985923, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985923, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985923, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985923, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985923, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985923, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1062581215778985924, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: m_Name
+      value: retro bake
+      objectReference: {fileID: 0}
+    - target: {fileID: 6965881142770714440, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 60e0df0bab97b254297600ccd2b2ef7e,
+        type: 3}
+    - target: {fileID: 8780984711843616186, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8780984711843616186, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8780984711843616186, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 60e0df0bab97b254297600ccd2b2ef7e,
+        type: 3}
+    - target: {fileID: 8780984711843616186, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 26663a0b612dcdc4d974f69ca90a1b5a,
+        type: 3}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7bf25ad8ebe4c9e47a4772d43415315d, type: 3}

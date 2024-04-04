@@ -612,12 +612,15 @@ public struct LoopControl<T> {
         //
         ch.gcx.UpdateRules(props.preloop);
         if (IsCancelled) return false;
+        string? ncolor = props.colorFunc?.Invoke(GCX);
         if (props.colors != null) {
             int index = (props.colorsIndexer == null) ? GCX.i : (int) props.colorsIndexer(GCX);
-            ch.bc.style = props.colorsReverse ?
-                    BulletManager.StyleSelector.MergeStyles(props.colors.ModIndex(index), parent_style) :
-                    BulletManager.StyleSelector.MergeStyles(parent_style, props.colors.ModIndex(index));
+            ncolor ??= props.colors.ModIndex(index);
         }
+        if (ncolor != null)
+            ch.bc.style = props.colorsReverse ?
+                BulletManager.StyleSelector.MergeStyles(ncolor, parent_style) :
+                BulletManager.StyleSelector.MergeStyles(parent_style, ncolor);
         if (props.sah != null) {
             GCX.RV2 = GCX.BaseRV2 + V2RV2.Rot(props.sah.Locate(GCX));
             var simp_gcx = GCX.Copy(null);

@@ -70,6 +70,10 @@ public class GameManagement : CoroutineRegularUpdater {
     public static void NewInstance(InstanceMode mode, InstanceFeatures features, InstanceRequest? req = null, ReplayActor? replay = null) {
         DeactivateInstance();
         var inst = new InstanceData(mode, features, req, replay);
+#if UNITY_EDITOR
+        if (mode == InstanceMode.DEBUG)
+            inst.GetOrSetTeam(EvInstance.Value?.TeamCfg);
+#endif
         Logs.Log($"Creating new game instance with mode {mode} on difficulty {inst.Difficulty.Describe()}.", true);
         EvInstance.OnNext(inst);
     }

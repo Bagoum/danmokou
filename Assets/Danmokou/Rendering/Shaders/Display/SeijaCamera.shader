@@ -6,6 +6,11 @@
 		_RotateZ("Z Rotate", Range(0, 6.3)) = 0
 		_XBound("X Bound", Float) = 4
 		_YBound("Y Bound", Float) = 4
+		[Toggle(FT_PIXELIZE)] _DoPixelize("Show Pixellation?", Float) = 0
+		_PixelizeX("Pixelize X Blocks", Float) = 640
+		_PixelizeRO("Pixelize Outer Radius", Float) = 100
+		_PixelizeRI("Pixelize Inner Radius", Float) = -1
+		_PixelizeCenter("Pixelize Center", Vector) = (0, -3, 0, 0)
 		[Toggle(FT_BLACKHOLE)] _DoBlackHole("Show Black Hole?", Float) = 0
 		_BlackHoleT("Black Hole Time", Range(0, 10)) = 0
 		_BlackHoleAbsorbT("Black Hole Absorb Time", Float) = 5
@@ -32,6 +37,7 @@
 			#pragma fragment frag
 			#pragma multi_compile __ AYA_CAPTURE
 			#pragma multi_compile __ FT_BLACKHOLE
+			#pragma multi_compile __ FT_PIXELIZE
 			#include "UnityCG.cginc"
             #include "Assets/Danmokou/CG/Noise.cginc"
 
@@ -93,13 +99,18 @@
 				return f;
 			}
 			
-			sampler2D _MainTex;
 
 			float easer(float x01) {
 				return x01 * (1-x01) + (1-pow(x01, 5)) * x01;
 			}
 
 			
+			sampler2D _MainTex;
+			float4 _MainTex_TexelSize;
+			float _PixelizeX;
+			float _PixelizeRO;
+			float _PixelizeRI;
+			float4 _PixelizeCenter;
 			float _BlackHoleT;
 			float _BlackHoleAbsorbT;
 			float _BlackHoleBlackT;
@@ -139,7 +150,17 @@
 				return lerp(float4(0, 0, 0, 1), c_, blackness * (1 - smoothstep(-0.4, 0, _BlackHoleT - _BlackHoleAbsorbT)));
 				
 			#endif
-				float4 c = tex2D(_MainTex, f.uv);
+				float2 uv = f.uv;
+			#if FT_PIXELIZE
+				float _Px = _PixelizeX;
+				float _Py = _Px * (_MainTex_TexelSize.w / _MainTex_TexelSize.z);
+				float2 puv = float2((floor(f.uv.x * _Px) + 0.5)/_Px,
+						(floor(f.uv.y * _Py) + 0.5)/_Py);
+				float dist = length(f.rloc - _PixelizeCenter.xy);
+				float enable = smoothstep(0.1, -0.1, dist - _PixelizeRO) * smoothstep(-0.1, 0.1, dist - _PixelizeRI);
+				uv = lerp(uv, puv, enable);
+			#endif
+				float4 c = tex2D(_MainTex, uv);
 				return c;
 			}
 			ENDCG

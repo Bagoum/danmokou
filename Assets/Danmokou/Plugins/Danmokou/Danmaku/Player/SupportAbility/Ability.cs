@@ -14,7 +14,12 @@ public abstract partial record Ability {
     public LString Title { get; init; } = LString.Empty;
     public LString ShortTitle { get; init; } = LString.Empty;
 
-    public record Null : Ability;
+    public record Null : Ability {
+        public static readonly Null Default = new() {
+            Title = "No ability",
+            ShortTitle = "No ability"
+        };
+    }
     public abstract record Bomb : Ability {
         public GameObject? Cutin { get; init; }
         public GameObject? SpellTitle { get; init; }

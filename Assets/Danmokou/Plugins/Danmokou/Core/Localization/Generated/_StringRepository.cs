@@ -86,6 +86,8 @@ public static partial class LocalizedStrings {
 		{ "boss.elly.galileo", BossCards.elly_galileo },
 		{ "boss.elly.thief", BossCards.elly_thief },
 		{ "boss.elly.dark", BossCards.elly_dark },
+		{ "boss.marisa.tracker", BossMetadata.marisa_tracker },
+		{ "boss.marisa", BossMetadata.marisa },
 		{ "boss.tokiko.tracker", BossMetadata.tokiko_tracker },
 		{ "boss.tokiko", BossMetadata.tokiko },
 		{ "boss.sagume.tracker", BossMetadata.sagume_tracker },

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
 using BagoumLib;
@@ -36,7 +37,6 @@ public abstract class BaseCampaignConfig : ScriptableObject, ICampaignMeta {
     /// </summary>
     [FormerlySerializedAs("practiceBosses")] 
     public BossConfig[] bosses = null!;
-
     public string Key => key;
     public bool Replayable => replayable;
     public bool AllowDialogueSkip => allowDialogueSkip;
@@ -71,6 +71,13 @@ public abstract class BaseCampaignConfig : ScriptableObject, ICampaignMeta {
         req.CompileAndSaveRecord(req.MakeGameRecord(null, endingKey));
 }
 
+[Serializable]
+public struct FixedShotPart {
+    public ShipConfig ship;
+    public ShotConfig shot;
+    public AbilityCfg? ability;
+}
+
 /// <summary>
 /// Basic handler for campaign execution with support for endings.
 /// <br/>For more complex campaign logic, subclass <see cref="BaseCampaignConfig"/> for the specific campaign,
@@ -79,15 +86,21 @@ public abstract class BaseCampaignConfig : ScriptableObject, ICampaignMeta {
 [CreateAssetMenu(menuName = "Data/Campaign Configuration")]
 public class CampaignConfig : BaseCampaignConfig {
     public EndingConfig[] endings = null!;
+    public FixedShotPart[] fixedShot = null!;
 
     public bool HasOneShotConfig(out TeamConfig team) {
         team = default;
+        if (fixedShot != null && fixedShot.Length > 0) {
+            team = new(0, Subshot.TYPE_D, 
+                fixedShot.Select(x => (x.ship, x.shot, x.ability as IAbilityCfg)).ToArray());
+            return true;
+        }
+        
         if (players.Length != 1) return false;
         if (players[0].shots2.Length != 1 || players[0].supports.Length != 1) return false;
         if (players[0].shots2[0].shot.isMultiShot) return false;
         team = new(0, Subshot.TYPE_D,
-            players[0].supports[0].ability,
-            (players[0], players[0].shots2[0].shot));
+            (players[0], players[0].shots2[0].shot, players[0].supports[0].ability));
         return true;
     }
 

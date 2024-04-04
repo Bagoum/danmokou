@@ -35,6 +35,9 @@ MonoBehaviour:
     - name: strip
       prefab: {fileID: 4623879621751819397, guid: f67731f26baa05f41bae7a82ac01d63a,
         type: 3}
+    - name: dcircle
+      prefab: {fileID: 8826661218356648476, guid: 59e6c4838864d274599e5e9dd60c3ddd,
+        type: 3}
     - name: gcircle
       prefab: {fileID: 5118737884568401888, guid: 82bce57f53a948d4fa843d035d63ad6a,
         type: 3}
@@ -46,6 +49,9 @@ MonoBehaviour:
         type: 3}
     - name: sakura
       prefab: {fileID: 4623879621751819397, guid: 1f9ac88ff2d9de441bc37a5b95d37bde,
+        type: 3}
+    - name: flasharrow
+      prefab: {fileID: 4623879621751819397, guid: 1b8a36b86726a3e42bf791ca8c146848,
         type: 3}
     - name: amulet2
       prefab: {fileID: 4623879621751819397, guid: e0f00fc172e1a4f4c9b8faa3d64c2a71,

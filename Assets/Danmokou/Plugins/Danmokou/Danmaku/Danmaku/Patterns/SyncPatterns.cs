@@ -181,7 +181,7 @@ public static partial class SyncPatterns {
 
     private static (string, UncompiledCode<Vector2>)[] AutoSaveV2(string loc, string dir) => 
         new(string, UncompiledCode<Vector2>)[] {
-        (loc, SBV2Repo.Loc()),
+        (loc, Parametrics.Loc()),
         (dir, SBV2Repo.Dir())
     };
 

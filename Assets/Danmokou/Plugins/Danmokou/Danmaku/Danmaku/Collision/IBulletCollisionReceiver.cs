@@ -40,12 +40,12 @@ public interface ICircularPlayerBulletCollisionReceiver : IPlayerBulletCollision
     float CollisionRadius { get; }
     
     /// <summary>
-    /// True if the collidee can receive collisions.
+    /// True if the collidee can receive collisions from the given style.
     /// </summary>
-    bool ReceivesBulletCollisions { get; }
+    bool ReceivesBulletCollisions(string? style);
 
     CollisionResult IPlayerBulletCollisionReceiver.Process(Bullet bullet, PlayerBullet plb) {
-        if (ReceivesBulletCollisions &&
+        if (ReceivesBulletCollisions(bullet.myStyle.style) &&
             bullet.ComputeCircleCollision(Location, CollisionRadius, out var loc)) {
             TakeHit(bullet, loc, plb);
             return new(true, false);
@@ -69,15 +69,15 @@ public interface ICircularGrazableEnemyBulletCollisionReceiver: IEnemyBulletColl
     /// The collision information of the collidee.
     /// </summary>
     Hurtbox Hurtbox { get; }
-    
+
     /// <summary>
-    /// True if the collidee can receive collisions.
+    /// True if the collidee can receive collisions from the given style.
     /// </summary>
-    bool ReceivesBulletCollisions { get; }
+    bool ReceivesBulletCollisions(string? style);
     
     
     CollisionResult IEnemyBulletCollisionReceiver.Process(Bullet bullet) {
-        if (ReceivesBulletCollisions) {
+        if (ReceivesBulletCollisions(bullet.myStyle.style)) {
             var coll = bullet.ComputeGrazeCollision(Hurtbox, out var loc);
             if (coll.graze || coll.collide)
                 TakeHit(bullet, loc, coll);

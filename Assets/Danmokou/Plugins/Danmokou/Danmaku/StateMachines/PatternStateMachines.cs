@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Functional;
 using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
 using Danmokou.Behavior;
@@ -101,20 +102,37 @@ public class PatternSM : SequentialSM, EnvFrameAttacher {
             (subbosses, subsummons) = ConfigureAllBosses(ui, jsmh, Props.boss, Props.bosses);
         }
         bool firstBoss = true;
+        AudioTrackSet? trackset = null;
         try {
-
             for (var next = jsmh.Exec.phaseController.GoToNextPhase(); 
                     next > -1 && next < Phases.Length; 
                     next = jsmh.Exec.phaseController.GoToNextPhase(next + 1)) {
                 if (Phases[next].props.skip)
                     continue;
                 jsmh.ThrowIfCancelled();
-                ServiceLocator.Find<IAudioTrackService>().InvokeBGM(Props.bgms?.GetBounded(next, null));
+                if (Props.bgms is { } bgms) {
+                    var nextTracks = bgms.GetAtPriority(next).ValueOrNull();
+                    if (trackset is null)
+                        nextTracks ??= bgms.GetBounded(next).ValueOrNull();
+                    if (nextTracks is {} tracks) {
+                        var pi = jsmh.GCX.DeriveFCTX();
+                        AudioTrackSet? ntrackset = null;
+                        ntrackset = ServiceLocator.Find<IAudioTrackService>().FindTrackset(tracks.Select(x => x.track))
+                            ?? ServiceLocator.Find<IAudioTrackService>().AddTrackset(null, pi);
+                        if (ntrackset != trackset) {
+                            trackset?.FadeOut(null, AudioTrackState.DestroyReady);
+                            trackset = ntrackset;
+                        }
+                        foreach (var (t, vol) in tracks) {
+                            trackset.AddTrack(t)?.SetLocalVolume(vol);
+                        }
+                    }
+                }
                 if (Props.boss != null && next >= Props.setUIFrom) {
                     SetUniqueBossUI(ui, firstBoss, jsmh,
                         Props.bosses == null ?
                             Props.boss :
-                            Props.bosses[Props.bossUI?.GetBounded(next, 0) ?? 0]);
+                            Props.bosses[Props.bossUI?.GetBounded(next).ValueOrSNull() ?? 0]);
                     firstBoss = false;
                     //don't show lives on setup phase
                     if (next > 0)
@@ -204,8 +222,8 @@ public class PhaseSM : SequentialSM {
             _PrepareBackgroundGraphics(ctx, bgo);
         }
     }
-    private void PreparePhase(PhaseContext ctx, IUIManager? ui, SMHandoff smh, out Task cutins, 
-        IBackgroundOrchestrator? bgo) {
+    private void PreparePhase(PhaseContext ctx, IUIManager? ui, SMHandoff smh, IReadOnlyList<Enemy> subbosses, 
+        out Task cutins, IBackgroundOrchestrator? bgo) {
         cutins = Task.CompletedTask;
         if (GameManagement.Instance.mode == InstanceMode.CAMPAIGN)
             if (ctx.Boss == null) 
@@ -233,7 +251,7 @@ public class PhaseSM : SequentialSM {
             }
             smh.Exec.Enemy.SetHPBar(props.hpbar ?? props.phaseType?.HPBarLength(), props.phaseType);
             //Bosses are by default invulnerable on unmarked phases
-            smh.Exec.Enemy.SetVulnerable(props.phaseType?.DefaultVulnerability() ?? 
+            smh.SetAllVulnerable(subbosses, props.phaseType?.DefaultVulnerability() ?? 
                                          (ctx.Boss == null ? Vulnerability.VULNERABLE : Vulnerability.NO_DAMAGE));
         }
         bool forcedBG = false;
@@ -271,7 +289,7 @@ public class PhaseSM : SequentialSM {
         //Note that the <!> HP(hp) sets invulnTime=0.
         if (props.invulnTime != null && props.phaseType != PhaseType.Timeout)
             RUWaitingUtils.WaitThenCB(smh.Exec, smh.cT, props.invulnTime.Value, false,
-                () => smh.Exec.Enemy.SetVulnerable(Vulnerability.VULNERABLE));
+                () => smh.SetAllVulnerable(subbosses, Vulnerability.VULNERABLE));
         RUWaitingUtils.WaitThenCancel(smh.Exec, smh.cT, timeout, true, toCancel);
         if (props.phaseType?.IsSpell() is true && ctx.Boss != null) {
             smh.Exec.Enemy.RequestSpellCircle(timeout, smh.cT);
@@ -289,7 +307,7 @@ public class PhaseSM : SequentialSM {
         foreach (var dispGenerator in props.phaseObjectGenerators)
             ctx.PhaseObjects.Add(dispGenerator());
         var bgo = ServiceLocator.FindOrNull<IBackgroundOrchestrator>();
-        PreparePhase(ctx, ui, smh, out Task cutins, bgo);
+        PreparePhase(ctx, ui, smh, subbosses, out Task cutins, bgo);
         var photoBoardToken = ctx.BossPhotoHP.Try(out var pins) ?
             ServiceLocator.FindOrNull<IAyaPhotoBoard>()?.SetupPins(pins) :
             null;
@@ -315,8 +333,7 @@ public class PhaseSM : SequentialSM {
             if (smh.Exec.PhaseShifter == pcTS)
                 smh.Exec.PhaseShifter = null;
             //This is critical to avoid boss destruction during the two-frame phase buffer
-            if (smh.Exec.isEnemy)
-                smh.Exec.Enemy.SetVulnerable(Vulnerability.NO_DAMAGE);
+            smh.SetAllVulnerable(subbosses, Vulnerability.NO_DAMAGE);
             float finishDelay = 0f;
             var finishTask = Task.CompletedTask;
             if (smh.Exec.AllowFinishCalls) {

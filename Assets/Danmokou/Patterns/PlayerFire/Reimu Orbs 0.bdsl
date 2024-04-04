@@ -1,0 +1,33 @@
+<#> bdsl1
+gtr {
+	wt 12 _
+	wait-child
+} fire
+	## free fire
+	async blast-red <> gcrepeat { 
+		wait(8)
+		times(_)
+		sfx(x-pc-fire-1)
+	} gsrepeat {
+		times(2)
+		center
+		rv2incr(<0.4;:>)
+	} simple tprot py(17) {
+		player(25, 25, oh1-red)
+	}
+	## free cancellation
+	noop
+	## focus
+	async blast-purple <> gcrepeat { 
+		wait(8)
+		times(_)
+		sfx(x-pc-fire-1)
+	}  gsrepeat {
+		times(2)
+		center
+		rv2incr(<0.3;:>)
+	} simple tprot py(20) {
+		player(26, 26, oh1-purple)
+	}
+	## focus cancellation
+	noop

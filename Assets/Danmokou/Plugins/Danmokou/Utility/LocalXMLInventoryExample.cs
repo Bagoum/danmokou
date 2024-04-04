@@ -312,14 +312,14 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
                         //We don't need to fire MovedToIndex on the other item since
                         // the movement of this item will make the other once naturally have the correct index
                         MovedToIndex.OnNext(idx - 1);
-                        return new UIResult.GoToNode(node.Group, node.IndexInGroup - 1);
+                        return node.ReturnToGroup;
                     }) : null,
                     (idx < Src.LookupLayers.Count - 1 && !Src.LookupLayers[idx+1].Hidden) ? new FuncNode("Move down", () => {
                         (Src.LookupLayers[idx], Src.LookupLayers[idx + 1]) =
                             (Src.LookupLayers[idx + 1], Src.LookupLayers[idx]);
                         Src.RecompileLookup();
                         MovedToIndex.OnNext(idx + 1);
-                        return new UIResult.GoToNode(node.Group, node.IndexInGroup + 1);
+                        return node.ReturnToGroup;
                     }) : null,
                     new FuncNode("Delete", () => {
                         Layer.Destroy();

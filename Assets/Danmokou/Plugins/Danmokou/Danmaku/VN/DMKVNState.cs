@@ -60,10 +60,10 @@ public class DMKVNState : UnityVNState {
     }
 
     public class RunningAudioTrackProxy : IDisposable {
-        private readonly IRunningAudioTrack track;
+        private readonly AudioTrackSet track;
         private readonly DMKVNState vn;
 
-        public RunningAudioTrackProxy(IRunningAudioTrack track, DMKVNState vn) {
+        public RunningAudioTrackProxy(AudioTrackSet track, DMKVNState vn) {
             this.track = track;
             this.vn = vn;
         }
@@ -83,11 +83,12 @@ public class DMKVNState : UnityVNState {
     }
 
     public RunningAudioTrackProxy RunBGM(string key, float fadeIn = 2f) {
-        var track = ServiceLocator.Find<IAudioTrackService>().InvokeBGM(key, 
-                        new BGMInvokeFlags(SkippingMode != null ? 0 : 2, fadeIn), CToken) ?? 
-                    throw new Exception($"No track for key {key}");
+        var ts = ServiceLocator.Find<IAudioTrackService>()
+            .AddTrackset(new BGMInvokeFlags(SkippingMode != null ? 0 : 2, fadeIn), cT: CToken);
+        if (ts.AddTrack(key) is null)
+            throw new Exception($"No track for key {key}");
         //don't need to add to Tokens since lifetime is bound by CToken
-        return new RunningAudioTrackProxy(track, this);
+        return new RunningAudioTrackProxy(ts, this);
     }
 
     public RunningAudioTrackProxy RunBGMFast(string key) => RunBGM(key, 0.5f);

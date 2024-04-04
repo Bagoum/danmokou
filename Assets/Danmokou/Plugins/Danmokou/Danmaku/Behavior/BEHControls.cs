@@ -254,7 +254,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [CreatesInternalScope(AutoVarMethod.None, true)]
-        public static cBEHControl Effect(string target, Pred cond) => new((b, cT) => {
+        public static cBEHControl SpawnOn(string target, Pred cond) => new((b, cT) => {
             if (cond(b.rBPI)) b.SpawnSimple(target);
         }, BulletControl.P_RUN);
         

@@ -1,6 +1,7 @@
 ﻿Shader "_Misc/Radial2" {
 	Properties{
 		[PerRendererData] _MainTex("Texture", 2D) = "white" {}
+		_Alpha("Opacity", float) = 1.0
 		_R("Radius", Float) = 0.5
 		_Subradius("Subradius", Float) = 0.1
 		_DarkenRatio("Darken Ratio", Float) = 0.9
@@ -56,6 +57,7 @@
             float _F;
             float _P1;
             float _P2;
+            float _Alpha;
             
             fragment vert(vertex v) {
                 fragment f;
@@ -63,6 +65,7 @@
                 f.uv = float2(v.uv.x - 0.5, v.uv.y - 0.5);
                 f.effF = _P2 + (_P1 - _P2) * _F;
             	f.color = v.color;
+            	f.color.a *= _Alpha;
                 return f;
             }
 

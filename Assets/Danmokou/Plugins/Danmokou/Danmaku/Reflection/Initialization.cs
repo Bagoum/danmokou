@@ -20,6 +20,7 @@ using Danmokou.Graphics;
 using Danmokou.Scriptables;
 using Danmokou.SM;
 using UnityEngine;
+using DictExtensions = Danmokou.Core.DictExtensions;
 using Vector3 = UnityEngine.Vector3;
 
 namespace Danmokou.Reflection {
@@ -48,7 +49,12 @@ public static partial class Reflector {
                 ReflectionData.RecordPublic(type, ra.returnType);
         }
 
-        foreach (var type in new[]{ typeof(Enumerable), typeof(ObservableExtensions) }) {
+        foreach (var type in new[] {
+                     typeof(Enumerable), typeof(ObservableExtensions),
+                     typeof(BagoumLib.Extensions), typeof(ArrayExtensions), typeof(IEnumExtensions),
+                     typeof(ListExtensions), typeof(DictExtensions), typeof(BagoumLib.DictExtensions),
+                     typeof(NullableExtensions), typeof(EventExtensions)
+                 }) {
             ReflectionData.RecordExtensionMethodsInClass(type);
         }
 

@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fa22e423a3842e1b90ce62d0372178a, type: 3}
+  m_Name: Reimu Orbs
+  m_EditorClassIdentifier: 
+  key: reimu-retro-orbs
+  title:
+    useReference: 1
+    reference: players.shot_reimu_ddcb
+    hardcoded:
+      en: 
+      jp: 
+  description: In another universe, this technique is called "Ultimate Reimu".
+  type: Familiar
+  prefab: {fileID: 6169168473649848314, guid: 99acc64993ad8944b8a055bab3aa3114, type: 3}
+  playerChild: 0
+  demoReplay: {fileID: 11400000, guid: cb661392b80571a4789ee38880206435, type: 2}
+  demoSetupSM: {fileID: 2811297602134710623, guid: e1a29e14b8444434fa65f98540b4b07d,
+    type: 3}
+  shotDifficulty: 0
+  isMultiShot: 0
+  multiD: {fileID: 0}
+  multiM: {fileID: 0}
+  multiK: {fileID: 0}
+  onSwap: {fileID: 11400000, guid: a823a4823d3ade949b4ddfa60d865c11, type: 2}

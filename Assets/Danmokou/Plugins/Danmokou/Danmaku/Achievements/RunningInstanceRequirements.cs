@@ -106,9 +106,9 @@ public class CampaignPIVReq : Requirement {
 
     public CampaignPIVReq(double piv) {
         this.piv = piv;
-        Listen(EvInstance, i => i.ScoreF.PIV);
+        Listen(EvInstance, i => i.ScoreF.Multiplier);
     }
-    public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.ScoreF.PIV >= piv).ToACVState();
+    public override State EvalState() => (Instance.IsAtleastNormalCampaign && Instance.ScoreF.Multiplier >= piv).ToACVState();
 }
 
 

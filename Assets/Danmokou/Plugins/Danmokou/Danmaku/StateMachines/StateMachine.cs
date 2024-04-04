@@ -202,6 +202,14 @@ public readonly struct SMHandoff : IDisposable {
         if (CanPrepend) Exec.RunTryPrependRIEnumerator(cor);
         else RunRIEnumerator(cor);
     }
+
+    public void SetAllVulnerable(IReadOnlyList<Enemy> subbosses, Vulnerability v) {
+        if (Exec.isEnemy)
+            Exec.Enemy.SetVulnerable(v);
+        for (int ii = 0; ii < subbosses.Count; ++ii) {
+            subbosses[ii].SetVulnerable(v);
+        }
+    }
 }
 
 // WARNING: StateMachines must NOT store any state. As in, you must be able to call the same SM twice concurrently,
@@ -624,7 +632,7 @@ public class NoBlockUSM : UniversalSM {
     public NoBlockUSM(StateMachine state) : base(state) { }
 
     public override Task Start(SMHandoff smh) {
-        _ = ExecuteBlocking(smh);
+        _ = ExecuteBlocking(smh).ContinueWithSync();
         return Task.CompletedTask;
     }
 

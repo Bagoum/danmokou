@@ -1,0 +1,139 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &5760518496848614862
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 866249623225213412, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: -2182622433948752608, guid: b890303404bdb584e8abcde7ed341209,
+        type: 3}
+    - target: {fileID: 1698725585243566442, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1698725585243566442, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1698725585243566442, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1698725585243566442, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: -2182622433948752608, guid: b890303404bdb584e8abcde7ed341209,
+        type: 3}
+    - target: {fileID: 1698725585243566442, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: -6526597336363400846, guid: b890303404bdb584e8abcde7ed341209,
+        type: 3}
+    - target: {fileID: 1698725585243566442, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 5348214566728501794, guid: b890303404bdb584e8abcde7ed341209,
+        type: 3}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplay.b
+      value: 0.15814108
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplay.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplay.r
+      value: 0.6886792
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplayInner.b
+      value: 0.2524821
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplayInner.g
+      value: 0.082769655
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplayInner.r
+      value: 0.43867922
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497640, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_Name
+      value: Player - Modern Reimu
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fde376048de61e241998f004239cd358, type: 3}

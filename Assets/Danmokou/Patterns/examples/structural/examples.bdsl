@@ -2,7 +2,7 @@
 pattern { }
 phase 0
 	paction 0
-		shift-phase-to 2
+		shift-phase-to 4
 	
 !!{ allc { black purple teal green orange yellow red pink blue }	
 ##1. Draw-circular bank:nest circular

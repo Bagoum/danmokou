@@ -24,6 +24,11 @@ namespace Danmokou.DMath.Functions {
 /// </summary>
 [Reflect]
 public static partial class ExMV2 {
+    /// <summary>
+    /// Pointwise-multiply two vectors.
+    /// </summary>
+    public static tv2 PtMul(tv2 a, tv2 b) => TEx.ResolveV2AsXY(a, (x, y) =>
+        TEx.ResolveV2AsXY(b, (x2, y2) => V2(x.Mul(x2), y.Mul(y2)), singleUse: true), singleUse: true);
     
     public static tv2 Circle(tfloat period, tfloat radius, tfloat time) =>
         radius.Mul(CosSin(time.Mul(tau).Div(period)));

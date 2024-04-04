@@ -229,9 +229,9 @@ public class Tutorial : BehaviorEntity {
         yield return confirm();
         yield return shift();
         Prompt(text10, scoremult42);
-        yield return waitlf(() => Instance.ScoreF.PIV >= 1.11);
+        yield return waitlf(() => Instance.ScoreF.Multiplier >= 1.11);
         yield return shift();
-        yield return waitlf(() => Instance.ScoreF.PIV <= 1.0);
+        yield return waitlf(() => Instance.ScoreF.Multiplier <= 1.0);
         Message(text10, scoreext43);
         yield return confirm();
         yield return shift();

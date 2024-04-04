@@ -54,7 +54,9 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     public BehaviorEntity Beh { get; private set; } = null!;
     public Vector2 Location => Beh.Location;
     public bool takesBossDamage;
-    private (bool _, Enemy to)? divertHP = null;
+    private Maybe<Enemy> divertHP = Maybe<Enemy>.None;
+    public (BulletManager.StyleSelector sel, bool exclude)? VulnerableStyles { get; private set; }
+    public BPY? ReceivedDamageMult { get; set; }
     public double HP { get; private set; }
     public int maxHP = 1000;
     public int PhotoHP { get; private set; } = 1;
@@ -62,9 +64,19 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     public int PhotosTaken { get; private set; } = 0;
     //public bool Vulnerable { get; private set; }= true;
 
-    public Vulnerability Vulnerable { get; private set; }
+    private Vulnerability _vulnerable;
+    public Vulnerability Vulnerable(bool bypassDamageMult = false) => 
+        (!bypassDamageMult && receivedDamageMult <= 0) 
+        ? Vulnerability.PASS_THROUGH : 
+        _vulnerable;
     //Updated every frame based on Vulnerability
-    public bool ReceivesBulletCollisions { get; private set; } = false;
+    private bool receivesBulletCollisions;
+    private double receivedDamageMult;
+
+    public bool ReceivesBulletCollisions(string? style) =>
+        receivesBulletCollisions && (style is null || VulnerableStyles is not { } coll ||
+                                     coll.sel.Matches(style) != coll.exclude);
+    
     //private static int enemyIndexCtr = 0;
     //private int enemyIndex;
 
@@ -106,6 +118,10 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     private MaterialPropertyBlock scPB = null!;
     private float healthbarStart; // 0-1
     private float healthbarSize; //As fraction of total bar, 0-1
+
+    [ReflectInto(typeof(BPY))]
+    public string healthbarOpacity = "1";
+    public BPY HealthbarOpacityFunc { get; set; } = null!;
 
     public RColor2 nonspellColor = null!;
     public RColor2 spellColor = null!;
@@ -169,8 +185,9 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         tokens.Add(orderedEnemies.Add(this));
         HP = maxHP;
         queuedDamage = 0;
-        Vulnerable = Vulnerability.VULNERABLE;
-        ReceivesBulletCollisions = false;
+        _vulnerable = Vulnerability.VULNERABLE;
+        receivesBulletCollisions = false;
+        receivedDamageMult = 0;
         target = ServiceLocator.MaybeFind<PlayerController>();
         hpPB = new MaterialPropertyBlock();
         distortPB = new MaterialPropertyBlock();
@@ -179,6 +196,8 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         if (healthbarSprite != null) {
             healthbarSprite.enabled = true;
             healthbarSprite.GetPropertyBlock(hpPB);
+            HealthbarOpacityFunc = ReflWrap<BPY>.Wrap(healthbarOpacity);
+            hpPB.SetFloat(PropConsts.alpha, HealthbarOpacityFunc(Beh.BPI));
             hpPB.SetFloat(PropConsts.radius, hpRadius);
             hpPB.SetFloat(PropConsts.subradius, hpThickness);
             healthbarStart = 0f;
@@ -224,8 +243,12 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     }
 
     public void Initialized(RealizedBehOptions? options) {
+        VulnerableStyles = null;
+        ReceivedDamageMult = null;
         if (options.Try(out var o)) {
             if (o.hp.Try(out var hp)) SetHP(hp, hp);
+            VulnerableStyles = o.vulnerable;
+            ReceivedDamageMult = o.receivedDamage;
         }
     }
     
@@ -298,14 +321,17 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         RecheckGraphicsSettings();
     }
 
-    public void DivertHP(Enemy to) => divertHP = (false, to);
+    public void DivertHP(Enemy to) {
+        divertHP = to == this ? Maybe<Enemy>.None : to;
+    }
+
     private float HPRatio => (float)(HP / maxHP);
     private float PhotoRatio => (float) PhotoHP / maxPhotoHP;
     private float BarRatio => Math.Min(PhotoRatio, HPRatio);
     [UsedImplicitly]
-    public float EffectiveBarRatio => divertHP?.to.EffectiveBarRatio ?? BarRatio;
+    public float EffectiveBarRatio => divertHP.Try(out var d) ? d.EffectiveBarRatio : BarRatio;
     private float _displayBarRatio;
-    public float DisplayBarRatio => divertHP?.to.DisplayBarRatio ?? _displayBarRatio;
+    public float DisplayBarRatio => divertHP.Try(out var d) ? d.DisplayBarRatio : _displayBarRatio;
 
     private Color HPColor => currPhaseType == PhaseType.Timeout ?
             unfilledColor :
@@ -315,8 +341,9 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         Color.clear : HPColor;
 
     public override void RegularUpdate() {
-        ReceivesBulletCollisions =
-            LocationHelpers.OnPlayableScreen(Beh.GlobalPosition()) && Vulnerable.HitsLand();
+        receivedDamageMult = ReceivedDamageMult?.Invoke(Beh.rBPI) ?? 1;
+        receivesBulletCollisions =
+            LocationHelpers.OnPlayableScreenBy(-0.3f, Beh.GlobalPosition()) && Vulnerable().HitsLand();
         _displayBarRatio = M.Lerp(_displayBarRatio, BarRatio, HPLerpRate * ETime.FRAME_TIME);
         if (hasDistorter) {
             distortPB.SetFloat(PropConsts.time, Beh.rBPI.t);
@@ -377,6 +404,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
             labelAccDmg = 0;
         }
         if (healthbarSprite != null) {
+            hpPB.SetFloat(PropConsts.alpha, HealthbarOpacityFunc(Beh.BPI));
             hpPB.SetFloat(PropConsts.fillRatio, DisplayBarRatio);
             hpPB.SetColor(PropConsts.fillColor, HPColor);
             hpPB.SetFloat(PropConsts.time, Beh.rBPI.t);
@@ -389,7 +417,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         orderedEnemies.Compact();
         for (int ii = 0; ii < orderedEnemies.Count; ++ii) {
             var enemy = orderedEnemies[ii];
-            if (LocationHelpers.OnPlayableScreen(enemy.Beh.GlobalPosition()) && enemy.Vulnerable.HitsLand()) {
+            if (LocationHelpers.OnPlayableScreen(enemy.Beh.GlobalPosition()) && enemy.Vulnerable().HitsLand()) {
                 frozenEnemies.Add(new FrozenCollisionInfo(enemy));
             }
         }
@@ -432,29 +460,43 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     public void QueuePlayerDamage(int bossDmg, int stageDmg, PlayerController firer) => 
         QueuePlayerDamage(takesBossDamage ? bossDmg : stageDmg, firer);
 
-    private void QueuePlayerDamage(int dmg, PlayerController firer) {
-        if (divertHP != null) {
-            divertHP.Value.to.QueuePlayerDamage(dmg, firer);
-            return;
+    private double QueuePlayerDamage(double dmg, PlayerController firer, bool bypassDamageMult = false, bool addToLabel = true) {
+        if (!Vulnerable(bypassDamageMult).TakesDamage()) return 0;
+        if (!bypassDamageMult)
+            dmg *= receivedDamageMult;
+        if (dmg <= 0)
+            return 0;
+        if (divertHP.Try(out var divert)) {
+            var divertedDmg = divert.QueuePlayerDamage(dmg, firer, true, false);
+            if (addToLabel)
+                AddDmgToLabel(divertedDmg);
+            return divertedDmg;
         }
-        if (!Vulnerable.TakesDamage()) return;
         float dstToFirer = (firer.Location - Beh.rBPI.LocV2).magnitude;
         float shotgun = (SHOTGUN_MIN - dstToFirer) / (SHOTGUN_MIN - SHOTGUN_MAX);
         double multiplier = GameManagement.Instance.PlayerDamageMultiplier *
                             M.Lerp(0, 1, shotgun, 1, SHOTGUN_MULTIPLIER);
-        queuedDamage += dmg * multiplier * GameManagement.Difficulty.playerDamageMod;
+        dmg *= multiplier * GameManagement.Difficulty.playerDamageMod;
+        queuedDamage += dmg;
+        if (addToLabel)
+            AddDmgToLabel(queuedDamage);
         Counter.DoShotgun(shotgun);
+        return queuedDamage;
     }
+
+    private void AddDmgToLabel(double dmg) {
+        labelAccDmg += (long)dmg;
+        if (dmgLabelBuffer <= 0) dmgLabelBuffer = DMG_LABEL_BUFFER;
+    }
+    
     private void PollDamage() {
-        if (!Vulnerable.TakesDamage()) queuedDamage = 0;
+        if (!Vulnerable(true).TakesDamage()) queuedDamage = 0;
         if (queuedDamage < 1) return;
         HP = M.Clamp(0f, maxHP, HP - queuedDamage);
-        labelAccDmg += (long)queuedDamage;
-        if (dmgLabelBuffer <= 0) dmgLabelBuffer = DMG_LABEL_BUFFER;
         queuedDamage = 0;
         if (HP <= 0) {
             Beh.OutOfHP();
-            Vulnerable = Vulnerability.NO_DAMAGE; //Wait for new hp value to be declared
+            _vulnerable = Vulnerability.NO_DAMAGE; //Wait for new hp value to be declared
         } else if (modifyDamageSound) {
             if ((float) HP / maxHP < LOW_HP_THRESHOLD) {
                 Counter.AlertLowEnemyHP();
@@ -481,7 +523,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         queuedPhotoDamage = 0;
         if (PhotoHP == 0) {
             Beh.OutOfHP();
-            Vulnerable = Vulnerability.NO_DAMAGE;
+            _vulnerable = Vulnerability.NO_DAMAGE;
         }
     }
 
@@ -495,7 +537,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         PhotosTaken = 0;
     }
 
-    public void SetVulnerable(Vulnerability v) => Vulnerable = v;
+    public void SetVulnerable(Vulnerability v) => _vulnerable = v;
 
     private Color2 currPhase;
     private PhaseType? currPhaseType = null;
@@ -542,7 +584,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     public void ProcOnHit(EffectStrategy effect, Vector2 hitLoc) => effect.Proc(hitLoc, Beh.GlobalPosition(), collisionRadius);
 
     private bool ViewfinderHits(CRect viewfinder) => 
-        Vulnerable.TakesDamage() && ayaCameraRadius != null && 
+        Vulnerable().TakesDamage() && ayaCameraRadius != null && 
         CollisionMath.CircleInRect(Beh.rBPI.loc.x, Beh.rBPI.loc.y, ayaCameraRadius, viewfinder);
     public void ShowCrosshairIfViewfinderHits(CRect viewfinder) {
         if (cameraCrosshair != null) {

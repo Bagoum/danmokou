@@ -371,11 +371,7 @@ public static class Lexer {
             brace.Update(in t);
             bracket.Update(in t);
             
-            if (firstNonWSTokenOnLine) {
-                t = t.WithFlags(TokenFlags.PrecededByNewline);
-                if (indent <= blockIndent)
-                    t = t.WithFlags(TokenFlags.ImplicitBreak);
-            }
+            
             //set new layout rule indent
             if (processed.Count > 0 && processed[^1].Type == TokenType.OpenBrace) 
                 blockIndent = indent;
@@ -390,6 +386,13 @@ public static class Lexer {
                 firstNonWSTokenOnLine = true;
                 indent = 0;
             } else {
+                if (firstNonWSTokenOnLine) {
+                    t = t.WithFlags(TokenFlags.PrecededByNewline);
+                    if (indent <= blockIndent) {
+                        t = t.WithFlags(TokenFlags.ImplicitBreak);
+                        blockIndent = indent;
+                    }
+                }
                 firstNonWSTokenOnLine = false;
                 processed.Add(t);
             }

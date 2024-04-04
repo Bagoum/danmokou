@@ -40,8 +40,11 @@ public class GenCtx : IDisposable {
         get => _i;
         set {
             _i = value;
-            if (AutoVars is AutoVars.GenCtx g)
+            if (AutoVars is AutoVars.GenCtx g) {
                 EnvFrame.Value<float>(g.i) = value;
+                var times = EnvFrame.Value<float>(g.times);
+                EnvFrame.Value<float>(g.ir) = times > 1 ? value / (times - 1) : 0;
+            }
         }
     }
     
@@ -61,10 +64,17 @@ public class GenCtx : IDisposable {
     /// Firing index
     /// </summary>
     public int index = 0;
+    private BehaviorEntity _exec = null!;
     /// <summary>
     /// Firing BEH (copied from DelegatedCreator)
     /// </summary>
-    public BehaviorEntity exec = null!;
+    public BehaviorEntity exec {
+        get => _exec;
+        set {
+            _exec = value;
+            fctx?.UpdateFirer(this);
+        }
+    }
     /// <summary>
     /// Used in deeply nested player fires for keeping track of the parent.
     /// </summary>
@@ -132,6 +142,7 @@ public class GenCtx : IDisposable {
         //Logs.Log($"Disposing GCX {_itr}", true, LogLevel.DEBUG1);
         _isInCache = true;
         fctx.Dispose();
+        fctx = null!;
         exec = null!;
         playerController = null;
         idOverride = null;

@@ -21,8 +21,6 @@ public class FireOption : BehaviorEntity {
     [ReflectInto(typeof(TP3))] [TextArea(3, 8)] public string offsetFocus = null!;
     [ReflectInto(typeof(TP3))] public string[] powerOffsetFree = null!;
     [ReflectInto(typeof(TP3))] public string[] powerOffsetFocus = null!;
-    public float freeOffsetMul = 1f;
-    public float focusOffsetMul = 1f; 
     [ReflectInto(typeof(BPY))] [TextArea(3, 8)] public string opacityFree = null!;
     [ReflectInto(typeof(BPY))] [TextArea(3, 8)] public string opacityFocus = null!;
     /// <summary>
@@ -112,19 +110,19 @@ public class FireOption : BehaviorEntity {
         StateMachineManager.FromText(behaviorScript);
     }
 
-    private Vector3 SelectByPower(TP3[] powers, TP3 otherwise) {
-        if (powers.Length == 0) return otherwise(bpi);
+    private Vector3 SelectByPower(TP3[] powers, TP3 common) {
+        if (powers.Length == 0) return common(bpi);
         int index = Math.Min(powers.Length - 1, GameManagement.Instance.PowerF.PowerIndex);
         if (index != currPower) {
             lastPower = currPower;
             currPower = index;
             powerLerp = 0;
         }
-        return Vector3.Lerp(powers[lastPower](bpi), powers[currPower](bpi), powerLerp);
+        return Vector3.Lerp(powers[lastPower](bpi), powers[currPower](bpi), powerLerp) + common(bpi);
     }
 
-    private Vector3 FreeOffset => SelectByPower(freeOffsetPower, freeOffset) * freeOffsetMul;
-    private Vector3 FocusOffset => SelectByPower(focusOffsetPower, focusOffset) * focusOffsetMul;
+    private Vector3 FreeOffset => SelectByPower(freeOffsetPower, freeOffset);
+    private Vector3 FocusOffset => SelectByPower(focusOffsetPower, focusOffset);
 
     private void SetLocation() {
         powerLerp = Mathf.Clamp01(powerLerp + ETime.FRAME_TIME / powerLerpTime);

@@ -66,6 +66,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private int maxCollisionLength;
     private bool nonpiercing;
     public float LastActiveTime { get; private set; }
+    public string? Style => Laser.myStyle.style;
     
     private AABB bounds;
 

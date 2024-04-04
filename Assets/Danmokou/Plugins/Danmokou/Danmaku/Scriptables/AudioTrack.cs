@@ -20,7 +20,6 @@ public class AudioTrack : ScriptableObject, IAudioTrackInfo {
     public LocalizedStringReference musicRoomDescription = null!;
     public float volume = .2f;
     public float pitch = 1f;
-    public bool stopOnPause;
 
     public AudioTrackLoopMode loopMode = AudioTrackLoopMode.Timed;
     public Vector2 loopSeconds;
@@ -32,14 +31,13 @@ public class AudioTrack : ScriptableObject, IAudioTrackInfo {
     public AudioClip Clip => clip;
     public float Volume => volume;
     public float Pitch => pitch;
-    public bool StopOnPause => stopOnPause;
     public AudioTrackLoopMode Loop => loopMode;
     public Vector2 LoopSeconds => loopSeconds;
     public float StartTime => startWithTime;
     public string Title => title.Or(key) ?? "";
     public string TrackPlayLocation => trackPlayLocation;
 
-    public LString MusicRoomDescription => musicRoomDescription.Value;
+    public LString MusicRoomDescription => musicRoomDescription.MaybeValue ?? ("No description");
     public bool? DisplayInMusicRoom =>
         showInMusicRoom ?
             (bool?)(ReflWrap<Pred>.MaybeWrap(musicRoomRequirement)

@@ -1,4 +1,4 @@
-﻿﻿Shader "Custom/PatherLightning" {
+﻿Shader "Custom/PatherLightning" {
 	Properties {
 		[PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
 		_LNTex("Lightning Texture", 2D) = "white" {}
@@ -86,7 +86,10 @@
 		    Blend SrcAlpha One, OneMinusDstAlpha One
 			CGPROGRAM
 		    float4 frag(fragment f) : SV_Target {
-		        return fragLightning(f, 0);
+		    	//lightning effect doesn't receive tint, but it does receive opacity
+		        float4 c= fragLightning(f, 0);
+		    	c.a *= f.c.a;
+		    	return c;
 		    }
 		    ENDCG
 		}
@@ -115,7 +118,9 @@
 		    Blend SrcAlpha One, OneMinusDstAlpha One
 			CGPROGRAM
 		    float4 frag(fragment f) : SV_Target {
-		        return fragLightning(f, 1);
+		        float4 c= fragLightning(f, 1);
+		    	c.a *= f.c.a;
+		    	return c;
 		    }
 		    ENDCG
 		}

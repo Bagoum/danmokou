@@ -470,8 +470,9 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
 
         public override Either<Unifier, TypeUnifyErr> WillSelectOverload(Reflector.InvokedMethod mi, IImplicitTypeConverterInstance? cast, Unifier u) {
             //Only static methods can be converted to constants
-            AllowInvokeAsConst = mi.Mi is { IsStatic: true, Member: TypeMember.Method }
-                                 && mi.Mi.GetAttribute<NonConstableAttribute>() == null;
+            //TODO fix this
+            /*AllowInvokeAsConst = mi.Mi is { IsStatic: true, Member: TypeMember.Method }
+                                 && mi.Mi.GetAttribute<NonConstableAttribute>() == null;*/
             return base.WillSelectOverload(mi, cast, u).FMapL(u => {
                 //Handles cases where compilation is done inside functions (eg. MoveTarget)
                 if (mi.Mi.GetAttribute<ExpressionBoundaryAttribute>() != null && LocalScope == null) {

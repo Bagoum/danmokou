@@ -29,3 +29,8 @@ MonoBehaviour:
     - name: example3d_2
       prefab: {fileID: 4292011629249164648, guid: 0bb1aa336ceec084198bdd9b5761f74b,
         type: 3}
+  - groupTitle: Backgrounds
+    prefabs:
+    - name: space.sun
+      prefab: {fileID: 5180723301924424041, guid: 07cab9910f9f9cf4c9fe48ca50a3ad85,
+        type: 3}

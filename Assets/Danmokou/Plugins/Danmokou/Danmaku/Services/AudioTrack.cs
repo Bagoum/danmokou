@@ -14,34 +14,18 @@ using Object = System.Object;
 namespace Danmokou.Services {
 public interface IRunningAudioTrack {
     IAudioTrackInfo Track { get; }
-    bool IsRunningAsBGM { get; }
-    bool _RegularUpdate();
-    void FadeIn(float time);
+    public void SetLocalVolume(BPY? volume);
+    void RegularUpdateSrc();
     
-    /// <summary>
-    /// Fade out a track and then set it to the provided state (either <see cref="AudioTrackState.Paused"/> or
-    ///     <see cref="AudioTrackState.DestroyReady"/>)
-    /// <br/>Should be safe to run twice.
-    /// </summary>
-    void FadeOut(float time, AudioTrackState next);
-
-    void Pause();
-    void UnPause();
-    
-    ICancellee cT { get; set; }
-    Evented<AudioTrackState> State { get; }
+    void PauseSrc();
+    void UnPauseSrc();
     
     /// <summary>
     /// Destroy the track's resources on the next update.
     /// </summary>
-    void Cancel();
+    void CancelSrc();
 
-    /// <summary>
-    /// Used to instantly destroy the track's resources.
-    /// </summary>
-    void CancelAndDestroy();
-
-    void AddScopedToken(IDisposable token);
+    void DestroySrc();
 }
 
 /// <summary>
@@ -72,150 +56,85 @@ public enum AudioTrackState {
 
 public abstract class BaseRunningAudioTrack : IRunningAudioTrack {
     public IAudioTrackInfo Track { get; }
-    public bool IsRunningAsBGM { get; init; }
-    public Evented<AudioTrackState> State { get; } = new(AudioTrackState.Active);
-    public ICancellee cT { get; set; }
-    protected bool BreakCoroutine => State == AudioTrackState.DestroyReady;
-    protected bool UpdateCoroutine =>
-        State.Value is AudioTrackState.Active or AudioTrackState.Pausing or AudioTrackState.DestroyPrepare;
-    /// <summary>
-    /// The result state after a fade-out, if a fade-out is being processed
-    /// (DestroyReady or Paused or null).
-    /// </summary>
-    protected AudioTrackState? FadeOutNextState { get; private set; } = null;
 
-    protected readonly AudioTrackService host;
-    protected readonly List<IDisposable> tokens = new();
+    protected readonly AudioTrackSet host;
+    protected PushLerper<float> LocalVolume { get; } = new(0.3f);
+    public BPY? Volume { get; private set; }
     protected DisturbedProduct<float> Src1Volume { get; }
-    protected PushLerper<float> Fader { get; } = new(2);
     protected AudioSource currSrc;
 
-    public BaseRunningAudioTrack(IAudioTrackInfo track, AudioTrackService host, float initialVolume = 0, ICancellee? cT = null) {
+    public BaseRunningAudioTrack(IAudioTrackInfo track, AudioTrackSet host) {
         Src1Volume = new DisturbedProduct<float>(track.Volume);
-        tokens.Add(Src1Volume.AddDisturbance(SaveData.s.BGMVolume));
-        Fader.Push(initialVolume);
-        tokens.Add(Src1Volume.AddDisturbance(Fader));
+        LocalVolume.Push(1);
+        host.Tokens.Add(Src1Volume.AddDisturbance(LocalVolume));
+        host.Tokens.Add(Src1Volume.AddDisturbance(SaveData.s.BGMVolume));
+        host.Tokens.Add(Src1Volume.AddDisturbance(host.Fader));
         Track = track;
         this.host = host;
-        this.cT = cT ?? Cancellable.Null;
-        var src1 = currSrc = host.gameObject.AddComponent<AudioSource>();
+        var src1 = currSrc = host.Srv.gameObject.AddComponent<AudioSource>();
         src1.clip = Track.Clip;
         src1.pitch = Track.Pitch;
-        tokens.Add(Src1Volume.Subscribe(v => src1.volume = v));
+        host.Tokens.Add(Src1Volume.Subscribe(v => src1.volume = v));
         Logs.Log($"Created audio track: {Track.Title}");
-        PlayDelayed();
+        host.Tracks.Add(this);
+        if (host.State.Value >= AudioTrackState.Active)
+            PlayDelayed();
     }
     
     //Delay initial audio source play. This is useful to avoid Unity bugs where the volume doesn't update
     // properly after creating a new source.
     protected void PlayDelayed(int frames=2) {
         IEnumerator _Inner() {
-            if (BreakCoroutine) yield break;
+            if (host.BreakCoroutine) yield break;
             for (int ii = 0; ii < frames;) {
                 yield return null;
-                if (BreakCoroutine) yield break;
-                if (UpdateCoroutine) ++ii;
+                if (host.BreakCoroutine) yield break;
+                if (host.UpdateCoroutine) ++ii;
             }
             Logs.Log($"Playing {this.GetType()} audio track {Track.Title} (delayed by {frames} frames)");
             currSrc.Play();
         }
-        host.Run(_Inner());
+        host.Srv.Run(_Inner());
     }
 
-    protected bool? __RegularUpdate() {
-        if (cT.Cancelled && State < AudioTrackState.DestroyReady)
-            Cancel();
-        if (State == AudioTrackState.DestroyReady) {
-            Destroy();
-            return false;
+    public void SetLocalVolume(BPY? vol) {
+        Volume = vol;
+        if (vol != null) {
+            LocalVolume.Unset();
+            LocalVolume.Push(vol(host.Pi));
         }
-        if (UpdateCoroutine) {
-            Fader.Update(ETime.FRAME_TIME);
-            if (Fader.IsSteadyState && Fader.Value <= 0)
-                FinalizeFadeOut();
-        }
-        //TODO simplify this override handling by simply checking AudioTrackState in the override of _RegularUpdate
-        if (EngineStateManager.State != EngineState.RUN && Track.StopOnPause)
-            return true;
-        return null;
     }
 
-    public virtual bool _RegularUpdate() => __RegularUpdate() ?? true;
-    
-    
-    public void FadeIn(float time) {
-        //We can fade in if we're running a fadeout to pause, but not if we're running a fadeout to destroy
-        if (FadeOutNextState == AudioTrackState.DestroyReady) return;
-        Logs.Log($"Fading in audio track: {Track.Title}", level: LogLevel.DEBUG1);
-        Fader.Push(1);
-        Fader.ChangeLerpTime((a, b) => time);
-    }
-    
-    public void FadeOut(float time, AudioTrackState next) {
-        if (next is not (AudioTrackState.Paused or AudioTrackState.DestroyReady))
-            throw new Exception($"Fade out must end in either PAUSED or DESTROYREADY, not {next}");
-        if (FadeOutNextState.Try(out var f)) {
-            if (f < next)
-                FadeOutNextState = next;
-            return;
+    public virtual void RegularUpdateSrc() {
+        if (host.UpdateCoroutine) {
+            if (Volume != null)
+                LocalVolume.PushIfNotSame(Volume(host.Pi));
+            LocalVolume.Update(ETime.FRAME_TIME);
         }
-        Logs.Log($"Fading out audio track: {Track.Title}");
-        FadeOutNextState = next;
-        State.Value = next - 1;
-        Fader.Push(0);
-        Fader.ChangeLerpTime((a, b) => time);
-    }
-
-    public void FinalizeFadeOut() {
-        var next = FadeOutNextState ?? throw new Exception("No fadeout finalizer exists");
-        FadeOutNextState = null;
-        if (next == AudioTrackState.Paused)
-            Pause();
-        else if (next == AudioTrackState.DestroyReady)
-            Cancel();
-        else
-            throw new Exception($"No audiotrack finalize handling for {next}");
     }
     
-    public virtual void Pause() {
+    
+    public virtual void PauseSrc() {
         Logs.Log($"Paused audio track: {Track.Title}", level: LogLevel.DEBUG1);
         currSrc.Pause();
-        if (State.Value == AudioTrackState.Active)
-            State.Value = AudioTrackState.Pausing;
-        State.Value = AudioTrackState.Paused;
     }
-    public virtual void UnPause() {
+    public virtual void UnPauseSrc() {
         Logs.Log($"Unpaused audio track: {Track.Title}", level: LogLevel.DEBUG1);
         currSrc.UnPause();
-        State.Value = AudioTrackState.Active;
     }
     
-    public virtual void Cancel() {
-        if (State < AudioTrackState.DestroyReady) {
-            Logs.Log($"Cancelling audio track: {Track.Title}. It will be destroyed on the next frame.");
-            Src1Volume.OnCompleted();
-            currSrc.Stop();
-            if (State.Value < AudioTrackState.DestroyPrepare)
-                State.Value = AudioTrackState.DestroyPrepare;
-            State.Value = AudioTrackState.DestroyReady;
-        }
+    public virtual void CancelSrc() {
+        Logs.Log($"Cancelling audio track: {Track.Title}. It will be destroyed on the next frame.");
+        Src1Volume.OnCompleted();
+        currSrc.Stop();
     }
     
-    protected virtual void Destroy() {
+    public virtual void DestroySrc() {
         UnityEngine.Object.Destroy(currSrc);
-        foreach (var t in tokens)
-            t.Dispose();
     }
-
-    public void CancelAndDestroy() {
-        Cancel();
-        Destroy();
-    }
-
-    public void AddScopedToken(IDisposable token) => tokens.Add(token);
 }
 public class NaiveLoopRAT : BaseRunningAudioTrack {
-    public NaiveLoopRAT(IAudioTrackInfo track, AudioTrackService host, ICancellee? cT) : base(track, host, cT: cT) {
+    public NaiveLoopRAT(IAudioTrackInfo track, AudioTrackSet host) : base(track, host) {
         currSrc.loop = true;
         currSrc.time = Track.StartTime;
     }
@@ -229,28 +148,25 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
     private DisturbedProduct<float> Src2Volume { get; }
     private AudioSource nextSrc;
 
-    public TimedLoopRAT(IAudioTrackInfo track, AudioTrackService host, ICancellee? cT) : base(track, host, cT: cT) {
+    public TimedLoopRAT(IAudioTrackInfo track, AudioTrackSet host) : base(track, host) {
         currSrcFadeVol.Push(1);
-        tokens.Add(Src1Volume.AddDisturbance(currSrcFadeVol));
+        host.Tokens.Add(Src1Volume.AddDisturbance(currSrcFadeVol));
         nextSrcFadeVol.Push(0);
         Src2Volume = new DisturbedProduct<float>(track.Volume);
-        tokens.Add(Src2Volume.AddDisturbance(SaveData.s.BGMVolume));
-        tokens.Add(Src2Volume.AddDisturbance(nextSrcFadeVol));
-        tokens.Add(Src2Volume.AddDisturbance(Fader));
+        host.Tokens.Add(Src2Volume.AddDisturbance(LocalVolume));
+        host.Tokens.Add(Src2Volume.AddDisturbance(SaveData.s.BGMVolume));
+        host.Tokens.Add(Src2Volume.AddDisturbance(nextSrcFadeVol));
+        host.Tokens.Add(Src2Volume.AddDisturbance(host.Fader));
         
         currSrc.time = Track.StartTime;
-        var src2 = nextSrc = host.gameObject.AddComponent<AudioSource>();
+        var src2 = nextSrc = host.Srv.gameObject.AddComponent<AudioSource>();
         src2.clip = Track.Clip;
         src2.pitch = Track.Pitch;
-        tokens.Add(Src2Volume.Subscribe(v => src2.volume = v));
+        host.Tokens.Add(Src2Volume.Subscribe(v => src2.volume = v));
     }
 
-    /// <summary>
-    /// Returns false iff this object should be removed (Destroy will already have been run).
-    /// </summary>
-    /// <returns></returns>
-    public override bool _RegularUpdate() {
-        if (__RegularUpdate().Try(out var b)) return b;
+    public override void RegularUpdateSrc() {
+        base.RegularUpdateSrc();
         currSrcFadeVol.Update(ETime.FRAME_TIME);
         nextSrcFadeVol.Update(ETime.FRAME_TIME);
         if (nextSrcFadeVol.Value <= 0 && nextSrc.time > Track.LoopSeconds.y)
@@ -264,28 +180,25 @@ public class TimedLoopRAT : BaseRunningAudioTrack {
             (currSrc, nextSrc) = (nextSrc, currSrc);
             (currSrcFadeVol, nextSrcFadeVol) = (nextSrcFadeVol, currSrcFadeVol);
         }
-        return true;
     }
 
-    public override void Pause() {
-        base.Pause();
+    public override void PauseSrc() {
+        base.PauseSrc();
         nextSrc.Pause();
     }
 
-    public override void UnPause() {
-        base.Pause();
+    public override void UnPauseSrc() {
+        base.UnPauseSrc();
         nextSrc.UnPause();
     }
 
-    public override void Cancel() {
-        if (State < AudioTrackState.DestroyReady) {
-            base.Cancel();
-            Src2Volume.OnCompleted();
-            nextSrc.Stop();
-        }
+    public override void CancelSrc() {
+        base.CancelSrc();
+        Src2Volume.OnCompleted();
+        nextSrc.Stop();
     }
-    protected override void Destroy() {
-        base.Destroy();
+    public override void DestroySrc() {
+        base.DestroySrc();
         UnityEngine.Object.Destroy(nextSrc);
     }
 }

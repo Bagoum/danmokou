@@ -332,7 +332,8 @@ public class LexicalScope {
                 Declare<V2RV2>("rv2", "Rotational coordinates"), 
                 Declare<V2RV2>("brv2", "Rotational coordinates provided by parent function"), 
                 Declare<float>("st", "Summon Time - the time in all repeaters that has passed since the last TimeReset GCXProp"), 
-                Declare<float>("times", "Number of times this repeater will execute for")),
+                Declare<float>("times", "Number of times this repeater will execute for"),
+                Declare<float>("ir", "Iteration ratio = i / (times - 1)")),
             _ => new AutoVars.None()
         };
     }

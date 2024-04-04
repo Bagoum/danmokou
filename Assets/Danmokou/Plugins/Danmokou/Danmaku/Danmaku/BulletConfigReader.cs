@@ -205,6 +205,7 @@ public partial class BulletManager : RegularUpdater {
     /// This collection is only updated when pools are created, or copy-pools are deleted.
     /// </summary>
     private static readonly Dictionary<string, SimpleBulletCollection> simpleBulletPools = new();
+    public static ICollection<string> SIMPLEBULLETKEYS => simpleBulletPools.Keys;
     private static void AddSimpleStyle(SimpleBulletCollection sbc) {
         simpleBulletPools[sbc.Style] = sbc;
     }

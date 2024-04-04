@@ -5,17 +5,13 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 119424116493882366, guid: 82bce57f53a948d4fa843d035d63ad6a,
         type: 3}
       propertyPath: radius
       value: 0.09
-      objectReference: {fileID: 0}
-    - target: {fileID: 119424116493882366, guid: 82bce57f53a948d4fa843d035d63ad6a,
-        type: 3}
-      propertyPath: colliderType
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 282208975308647621, guid: 82bce57f53a948d4fa843d035d63ad6a,
         type: 3}
@@ -37,11 +33,6 @@ PrefabInstance:
         type: 2}
     - target: {fileID: 5118737884568401677, guid: 82bce57f53a948d4fa843d035d63ad6a,
         type: 3}
-      propertyPath: deletable
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5118737884568401677, guid: 82bce57f53a948d4fa843d035d63ad6a,
-        type: 3}
       propertyPath: spriteSheet
       value: 
       objectReference: {fileID: 21300000, guid: 536b7e90880b5024ca6364bcf0f3b30f,
@@ -59,12 +50,12 @@ PrefabInstance:
     - target: {fileID: 5118737884568401677, guid: 82bce57f53a948d4fa843d035d63ad6a,
         type: 3}
       propertyPath: displacement.displaceXMul
-      value: 0.6
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5118737884568401677, guid: 82bce57f53a948d4fa843d035d63ad6a,
         type: 3}
       propertyPath: displacement.displaceSpeed
-      value: 0.54
+      value: -0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5118737884568401677, guid: 82bce57f53a948d4fa843d035d63ad6a,
         type: 3}
@@ -74,7 +65,7 @@ PrefabInstance:
     - target: {fileID: 5118737884568401677, guid: 82bce57f53a948d4fa843d035d63ad6a,
         type: 3}
       propertyPath: displacement.displaceMagnitude
-      value: 0.07
+      value: 0.045
       objectReference: {fileID: 0}
     - target: {fileID: 5118737884568401883, guid: 82bce57f53a948d4fa843d035d63ad6a,
         type: 3}
@@ -137,4 +128,7 @@ PrefabInstance:
       value: dynamic-circle-glow
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 82bce57f53a948d4fa843d035d63ad6a, type: 3}

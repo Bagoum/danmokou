@@ -29,6 +29,16 @@ public class SpriteDisplayController: DisplayController {
         }
     }
 
+    public override void Show() {
+        sprite.enabled = true;
+        base.Show();
+    }
+
+    public override void Hide() {
+        sprite.enabled = false;
+        base.Hide();
+    }
+
     public override void SetSortingOrder(int x) {
         sprite.sortingOrder = x;
     }

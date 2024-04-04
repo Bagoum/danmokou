@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13762918244a65249ab50d0bb376f974, type: 3}
+  m_Name: BossColor THJ13.Marisa
+  m_EditorClassIdentifier: 
+  uiColor: {r: 0.8537736, g: 0.6445769, b: 0.0926264, a: 1}
+  uiHPColor: {r: 0.9669811, g: 0.70927626, b: 0.21893913, a: 1}
+  powerAuraColor: {r: 0.9528302, g: 0.9528302, b: 0.9528302, a: 1}
+  cardColorR: {r: 0.9622642, g: 0.9622642, b: 0.9622642, a: 1}
+  cardColorG: {r: 0.41509432, g: 0.41509432, b: 0.41509432, a: 1}
+  cardColorB: {r: 0, g: 0.072839774, b: 0.6156863, a: 1}
+  spellColor1: {r: 0.9056604, g: 0.7487343, b: 0.14097545, a: 1}
+  spellColor2: {r: 0.04049486, g: 0.28601706, b: 0.6603774, a: 0.43137255}
+  spellColor3: {r: 0, g: 0.7924528, b: 0.7551609, a: 0.39215687}

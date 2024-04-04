@@ -40,12 +40,12 @@ public interface ICircularPlayerPatherCollisionReceiver : IPlayerPatherCollision
     float CollisionRadius { get; }
     
     /// <summary>
-    /// True if the collidee can receive collisions.
+    /// True if the collidee can receive collisions from the given style.
     /// </summary>
-    bool ReceivesBulletCollisions { get; }
+    bool ReceivesBulletCollisions(string? style);
 
     CollisionResult IPlayerPatherCollisionReceiver.Process(CurvedTileRenderPather pather, PlayerBullet plb, int cutTail, int cutHead) {
-        if (ReceivesBulletCollisions &&
+        if (ReceivesBulletCollisions(pather.Style) &&
             pather.ComputeCircleCollision(Location, CollisionRadius, cutTail, cutHead, out var loc)) {
             TakeHit(pather, loc, plb);
             return new(true, false);
@@ -71,13 +71,13 @@ public interface ICircularGrazableEnemyPatherCollisionReceiver: IEnemyPatherColl
     Hurtbox Hurtbox { get; }
     
     /// <summary>
-    /// True if the collidee can receive collisions.
+    /// True if the collidee can receive collisions from the given style.
     /// </summary>
-    bool ReceivesBulletCollisions { get; }
+    bool ReceivesBulletCollisions(string? style);
     
     
     CollisionResult IEnemyPatherCollisionReceiver.Process(CurvedTileRenderPather pather, int cutTail, int cutHead) {
-        if (ReceivesBulletCollisions) {
+        if (ReceivesBulletCollisions(pather.Style)) {
             var coll = pather.ComputeGrazeCollision(Hurtbox, cutTail, cutHead, out var loc);
             if (coll.graze || coll.collide)
                 TakeHit(pather, loc, coll);

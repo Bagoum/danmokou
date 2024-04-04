@@ -19,7 +19,6 @@ public interface IAudioTrackInfo {
     AudioClip Clip { get; }
     float Volume { get; }
     float Pitch { get; }
-    bool StopOnPause { get; }
     AudioTrackLoopMode Loop { get; }
     Vector2 LoopSeconds { get; }
     float StartTime { get; }

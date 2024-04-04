@@ -162,7 +162,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         Listen(EvInstance, i => i.Graze, g => graze.text = string.Format(grazeFormat, g));
         Listen(EvInstance, i => i.ScoreF.VisibleScore, s => score.text = string.Format(scoreFormat, s));
         Listen(EvInstance, i => i.ScoreF.MaxScore, s => maxScore.text = string.Format(scoreFormat, s));
-        Listen(EvInstance, i => i.ScoreF.PIV, p => pivMult.text = string.Format(pivMultFormat, p));
+        Listen(EvInstance, i => i.ScoreF.Multiplier, p => pivMult.text = string.Format(pivMultFormat, p));
         Listen(EvInstance, i => i.PowerF.Power, p => power.text = string.Format(powerFormat, p, EvInstance.Value.PowerF.PowerMax));
         Listen(EvInstance, i => i.BasicF.Lives, l => {
             for (int ii = 0; ii < healthPoints.Length; ++ii) healthPoints[ii].sprite = healthEmpty;
@@ -372,8 +372,11 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         }
         spellnameText.text = title ?? "";
         spellnameController?.Cancel();
-        RunDroppableRIEnumerator(FadeSpellname(spellnameFadeIn, spellColorTransparent, spellColor, 
-            spellnameController = new Cancellable()));
+        Run(FadeSpellname(spellnameFadeIn, spellColorTransparent, spellColor, 
+            spellnameController = new Cancellable()), new() {
+            Droppable = true,
+            ExecType = CoroutineType.StepTryPrepend
+        });
     }
 
     public Material bossColorizer = null!;

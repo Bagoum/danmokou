@@ -93,7 +93,7 @@ PrefabInstance:
     - target: {fileID: 2677688450528803925, guid: db3f2c44901c06743b9d508148757cc6,
         type: 3}
       propertyPath: displacement.displaceMagnitude
-      value: 0.01
+      value: 0.02
       objectReference: {fileID: 0}
     - target: {fileID: 2677688450528803971, guid: db3f2c44901c06743b9d508148757cc6,
         type: 3}
@@ -121,6 +121,7 @@ PrefabInstance:
       value: gcircle-large
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: db3f2c44901c06743b9d508148757cc6, type: 3}

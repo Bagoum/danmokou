@@ -27,6 +27,8 @@ public class EffectStrategy : ScriptableObject {
 
     public void Proc(Vector2 source, Vector2 target, float targetPerimeterRadius) =>
         ProcGO(source, target, targetPerimeterRadius);
+    
+    public void Proc(Vector2 source) => ProcGO(source, source, 0);
 
     private GameObject? ProcGO(Vector2 source, Vector2 target, float targetPerimeterRadius) {
         ProcMinors();

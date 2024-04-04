@@ -320,7 +320,8 @@ public record AutoVars {
     /// <param name="brv2">Base rotation provided by parent</param>
     /// <param name="st">Summon time</param>
     /// <param name="times">Maximum number of loops</param>
-    public record GenCtx(VarDecl i, VarDecl pi, VarDecl rv2, VarDecl brv2, VarDecl st, VarDecl times) : AutoVars {
+    /// <param name="ir">Loop ratio i/(times-1)</param>
+    public record GenCtx(VarDecl i, VarDecl pi, VarDecl rv2, VarDecl brv2, VarDecl st, VarDecl times, VarDecl ir) : AutoVars {
         public VarDecl? bindItr;
         public VarDecl? bindAngle;
         public (VarDecl lr, VarDecl rl)? bindLR;

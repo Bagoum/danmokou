@@ -10,13 +10,18 @@ using ProtoBuf;
 namespace Danmokou.Player {
 public class ActiveTeamConfig {
     private readonly TeamConfig team;
+    private int _selIndex;
     //Index/subshot in team are initial values, which may be overriden here by eg. powerups.
-    public int SelectedIndex { get; set; }
+    public int SelectedIndex { get => _selIndex;
+        set {
+            _selIndex = value;
+            Support = team.ships[_selIndex].support?.Value;
+        } }
     public Subshot Subshot { get; set; }
-    public Ability Support { get; }
-    public (ShipConfig ship, ShotConfig shot)[] Ships => team.ships;
+    public (ShipConfig ship, ShotConfig shot, IAbilityCfg? support)[] Ships => team.ships;
     public ShipConfig Ship => team.ships[SelectedIndex].ship;
     public ShotConfig Shot => team.ships[SelectedIndex].shot;
+    public Ability? Support { get; private set; }
     public bool HasMultishot => team.HasMultishot;
 
 
@@ -24,39 +29,34 @@ public class ActiveTeamConfig {
         this.team = team;
         SelectedIndex = team.selectedIndex;
         Subshot = team.subshot;
-        Support = team.supportAbility?.Value ?? new Ability.Null();
     }
 }
 public readonly struct TeamConfig {
-    public readonly (ShipConfig ship, ShotConfig shot)[] ships;
+    public readonly (ShipConfig ship, ShotConfig shot, IAbilityCfg? support)[] ships;
     public readonly int selectedIndex;
-    public readonly IAbilityCfg? supportAbility;
     public readonly Subshot subshot;
     public bool HasMultishot => ships.Any(s => s.shot.isMultiShot);
     
-    public TeamConfig(int which, Subshot sub, IAbilityCfg? support, params (ShipConfig, ShotConfig)[] ships) {
+    public TeamConfig(int which, Subshot sub, params (ShipConfig, ShotConfig, IAbilityCfg?)[] ships) {
         this.ships = ships;
-        this.supportAbility = support;
         selectedIndex = which;
         subshot = sub;
     }
     public TeamConfig(Saveable saved, IDanmakuGameDef game) : this(saved.SelectedIndex, saved.Subshot, 
-        game.FindSupportAbility(saved.SupportAbilityKey), saved.Players.Select(p => (
+        saved.Players.Select(p => (
             game.FindPlayer(p.playerKey), 
-            game.FindShot(p.shotKey))).ToArray()) { }
+            game.FindShot(p.shotKey), game.FindSupportAbility(p.abilityKey))).ToArray()) { }
 
     [Serializable]
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public struct Saveable {
-        public (string playerKey, string shotKey)[] Players { get; set; }
+        public (string playerKey, string shotKey, string abilityKey)[] Players { get; set; }
         public int SelectedIndex { get; set; }
-        public string SupportAbilityKey { get; set; }
         public Subshot Subshot { get; set; }
 
         public Saveable(TeamConfig team) {
-            Players = team.ships.Select(p => (p.ship.key, p.shot.key)).ToArray();
+            Players = team.ships.Select(p => (p.ship.key, p.shot.key, p.support?.Key ?? "")).ToArray();
             SelectedIndex = team.selectedIndex;
-            SupportAbilityKey = team.supportAbility?.Key ?? "";
             Subshot = team.subshot;
         }
     }

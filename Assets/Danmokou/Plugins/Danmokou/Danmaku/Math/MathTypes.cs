@@ -244,16 +244,20 @@ public class PIData {
             data.envFrame = EnvFrame.Create(p.scope, p.gcx.EnvFrame);
         } else
             data.envFrame = EnvFrame.Empty;
-        data.firer = parent?.gcx.exec;
-        data.playerController = data.firer switch {
+        data.UpdateFirer(parent?.gcx);
+        return data;
+    }
+
+    public void UpdateFirer(GenCtx? gcx) {
+        firer = gcx?.exec;
+        playerController = firer switch {
             PlayerController pi => pi,
             FireOption fo => fo.Player,
             Bullet b => b.Player?.firer,
             _ => null
         };
-        if (data.playerController == null)
-            data.playerController = parent?.gcx.playerController;
-        return data;
+        if (playerController == null)
+            playerController = gcx?.playerController;
     }
     
     /// <summary>
@@ -269,7 +273,7 @@ public class PIData {
 /// A struct containing the input required for a parametric equation.
 /// </summary>
 public struct ParametricInfo {
-    public static ParametricInfo Zero = new(Vector2.zero, 0, 0, 0);
+    public static ParametricInfo Zero = new(PIData.Empty, Vector2.zero, 0, 0, 0);
     /// <summary>Random ID</summary>
     public readonly uint id;
     /// <summary>Firing index</summary>

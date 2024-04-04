@@ -12,6 +12,7 @@ using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.GameInstance;
 using Danmokou.Player;
+using Danmokou.Scriptables;
 using UnityEngine;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
@@ -771,9 +772,11 @@ public static class Scene1 {
         AreEqual("TestPractice", SceneManager.GetActiveScene().name);
     }
     private static SharedInstanceMetadata FixedDfc(FixedDifficulty fd) => 
-        new SharedInstanceMetadata(new TeamConfig(0, Subshot.TYPE_D, null, 
+        new SharedInstanceMetadata(new TeamConfig(0, Subshot.TYPE_D,
                 (ServiceLocator.Find<PlayerController>().defaultPlayers[0], 
-                    ServiceLocator.Find<PlayerController>().defaultShots[0])),
+                    ServiceLocator.Find<PlayerController>().defaultShots[0],
+                    ServiceLocator.Find<PlayerController>().defaultSupports.Try(0)
+                    )),
             new DifficultySettings(fd));
     [UnityTest]
     public static IEnumerator TestDifficultySelect() {

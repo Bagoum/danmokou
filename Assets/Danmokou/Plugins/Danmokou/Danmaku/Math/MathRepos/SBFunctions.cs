@@ -147,10 +147,6 @@ public static class SBFRepo {
 [Reflect]
 public static class SBV2Repo {
     /// <summary>
-    /// Return the global location of the bullet.
-    /// </summary>
-    public static ExTP Loc() => sb => sb.LocV2;
-    /// <summary>
     /// Return the direction of the bullet as a (cos, sin) vector.
     /// </summary>
     public static ExTP Dir() => sb => sb.SB.direction;

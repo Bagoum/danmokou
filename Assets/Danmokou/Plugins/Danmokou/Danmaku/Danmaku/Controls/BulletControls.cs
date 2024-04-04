@@ -128,8 +128,6 @@ public partial class BulletManager {
         private string[]? all;
         public string[] Simple => simple ??= Styles(Mode.SimpleBullets).ToArray();
         public string[] Complex => complex ??= Styles(Mode.BEHBullets).ToArray();
-        public string[] All =>
-            all ??= Styles(Mode.SimpleBullets, false).Concat(Styles(Mode.BEHBullets, false)).ToArray();
 
         public StyleSelector(string[][] selections) {
             this.enumerated = Resolve(selections);
@@ -138,6 +136,42 @@ public partial class BulletManager {
         public StyleSelector(string one) : this(new[] {new[] {one}}) { }
         
         public static implicit operator StyleSelector(string s) => new(s);
+        
+        public bool RegexMatches(string rgx, string style) {
+            var thompson1 = ListCache<int>.Get();
+            thompson1.Add(0);
+            var thompson2 = ListCache<int>.Get();
+            for (int si = 0; si < style.Length; ++si) {
+                for (int thi = 0; thi < thompson1.Count; ++thi) {
+                    var ri = thompson1[thi];
+                    if (ri >= rgx.Length) continue;
+                    if (rgx[ri] == '*') {
+                        //can repeat or consume
+                        thompson2.Add(ri);
+                        thompson2.Add(ri + 1);
+                    } else if (style[si] == rgx[ri]) {
+                        //can consume
+                        thompson2.Add(ri + 1);
+                    }
+                }
+                thompson1.Clear();
+                (thompson1, thompson2) = (thompson2, thompson1);
+                if (thompson1.Count == 0) break;
+            }
+            var success = thompson1.Contains(rgx.Length);
+            ListCache<int>.Consign(thompson1);
+            ListCache<int>.Consign(thompson2);
+            return success;
+        }
+        
+
+        public bool Matches(string style) {
+            for (int ii = 0; ii < enumerated.Count; ++ii) {
+                if (RegexMatches(enumerated[ii], style))
+                    return true;
+            }
+            return false;
+        }
 
         //each string[] is a list of `repeatcolorp`-type styles. 
         //we enumerate the entire selection by enumerating the cartesian product of selections,

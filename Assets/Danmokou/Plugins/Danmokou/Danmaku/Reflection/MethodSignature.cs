@@ -298,6 +298,7 @@ namespace Danmokou.Reflection {
 
     /// <inheritdoc cref="MethodSignature"/>
     public record GenericMethodSignature(TypeMember.Method Minf, Reflector.NamedParam[] Params) : MethodSignature(Minf, Params), IGenericMethodSignature {
+        public int TypeParams { get; } = Minf.Mi.GetGenericArguments().Length;
         public static readonly Dictionary<(FreezableArray<Type>, MethodSignature), MethodSignature> specializeCache = new();
         
         public override object Invoke(MethodCall? ast, params object?[] prms) {

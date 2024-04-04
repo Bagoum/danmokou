@@ -53,7 +53,7 @@ public static class Statistics {
             arr.GroupBy(ir => ir.Date.DayOfWeek).MaxByGroupSize();
         public (ShipConfig, InstanceRecord[]) FavoriteShip => 
             arr.GroupBy(ir => ir.SharedInstanceMetadata.team.ships[0].ship).MaxByGroupSize();
-        public ((ShipConfig, ShotConfig), InstanceRecord[]) FavoriteShot => 
+        public ((ShipConfig, ShotConfig, IAbilityCfg?), InstanceRecord[]) FavoriteShot => 
             arr.GroupBy(ir => ir.SharedInstanceMetadata.team.ships[0]).MaxByGroupSize();
         public long MaxScore => arr.Max(ir => ir.Score);
 

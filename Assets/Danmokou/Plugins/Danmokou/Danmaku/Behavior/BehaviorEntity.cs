@@ -109,11 +109,15 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public EffectStrategy? deathEffect;
 
     private string NameMe => string.IsNullOrWhiteSpace(ID) ? gameObject.name : ID;
-    public Enemy Enemy => 
-        (enemy == null) ?
-            throw new Exception($"BEH {NameMe} is not an Enemy, " +
-                                $"but you are trying to access the Enemy component.")
-            : enemy;
+    public Enemy Enemy {
+        get {
+            if (enemy == null)
+                throw new Exception($"BEH {NameMe} is not an Enemy, " +
+                                    $"but you are trying to access the Enemy component.");
+            else
+                return enemy;
+        }
+    }
     public bool isEnemy => enemy != null;
 
     public bool TryAsEnemy(out Enemy e) {
@@ -380,15 +384,12 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 
     /// <summary>
     /// Call this from hp-management scripts when you are out of HP.
-    /// Returns True iff the BEH is now going to cull.
     /// </summary>
     public void OutOfHP() {
         if (PhaseShifter != null) {
             ShiftPhase();
-            //return false;
         } else {
             Poof(true);
-            //return true;
         }
     }
 

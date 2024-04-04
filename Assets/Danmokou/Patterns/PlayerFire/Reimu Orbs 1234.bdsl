@@ -1,0 +1,38 @@
+<#> bdsl1
+gtr {
+	wt 12 _
+	wait-child
+} fire
+	## free fire
+	async blast-red <> gcrepeat { 
+		wait(12)
+		times(_)
+		sfx(x-pc-fire-1)
+		frv2(angle(select(powerIndex, { 
+			0
+			code(10 * pm1(p))
+			code(if(= p 2, 0, 10 * pm1(p)))
+			code(10 * pm1(p) * if(> p 1, 0.4, 1))
+		})))
+	} gsr {
+		clip(<= powerf p)
+	} simple(rvelocity py(12), { 
+			player(12, 12, oh1-red)
+		})
+	## free cancellation
+	noop
+	## focus
+	async needle2-purple <> gcrepeat { 
+		wait(8)
+		times(_)
+		sfx(x-pc-fire-1)
+	} gsr {
+		clip(<= powerf p)
+		times(1)
+	} simple tprot py(17) {
+		player(10, 10, oh1-purple)
+	}
+	## focus cancellation
+	noop
+##TODO: improve sfx controls
+

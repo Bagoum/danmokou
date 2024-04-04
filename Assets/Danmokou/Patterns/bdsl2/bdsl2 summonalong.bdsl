@@ -3,7 +3,7 @@ pattern { } {
 phase 0 { } {
 	paction 0 {
         position 0 0
-		shiftphaseto 3
+		shiftphaseto 4
 	}
 }
 phase 0 {} {

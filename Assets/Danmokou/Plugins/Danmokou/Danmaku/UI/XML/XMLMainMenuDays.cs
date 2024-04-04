@@ -60,7 +60,7 @@ public class XMLMainMenuDays : XMLMainMenu {
         var defaultShot = defaultPlayer.shots2[0];
         var defaultSupport = defaultPlayer.supports[0];
 
-        TeamConfig Team() => new(0, Subshot.TYPE_D, defaultSupport.ability, (defaultPlayer, defaultShot.shot));
+        TeamConfig Team() => new(0, Subshot.TYPE_D, (defaultPlayer, defaultShot.shot, defaultSupport.ability));
         SharedInstanceMetadata Meta() => new(Team(), new(dfc));
 
         var photoBoard = ServiceLocator.FindOrNull<IAyaPhotoBoard>();

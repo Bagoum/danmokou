@@ -145,7 +145,7 @@ public class TExRV2 : TEx<V2RV2> {
 }
 public class TExGCX : TEx<GenCtx> {
     public MemberExpression bpi => Ex.Property(ex, nameof(GenCtx.AsBPI));
-    public MemberExpression exec => Ex.Field(ex, "exec");
+    public MemberExpression exec => Ex.Field(ex, nameof(GenCtx.exec));
     public Expression EnvFrame => ex.Field(nameof(GenCtx.EnvFrame));
     public TExGCX(Expression ex_) : base(ex_) {
     }

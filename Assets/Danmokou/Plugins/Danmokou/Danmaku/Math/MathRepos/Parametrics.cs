@@ -34,6 +34,11 @@ public static partial class Parametrics {
     /// The zero vector.
     /// </summary>
     public static ExTP Zero() => CXY(0, 0);
+    
+    /// <summary>
+    /// Return the global location of the entity.
+    /// </summary>
+    public static ExTP Loc() => sb => sb.LocV2;
 
     /// <summary>
     /// The starting position of a bullet.

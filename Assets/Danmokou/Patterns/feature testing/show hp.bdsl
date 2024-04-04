@@ -1,17 +1,15 @@
 <#> bdsl1
 pattern { 
-	boss simp.kasen
 }
 phase 0
 	paction 0
 		shift-phase-to 1
 
 <!> type non `Helloワールド`
-<!> hp 10000
-<!> bg black
+<!> hp 100000
 phase 30
 	paction 0
-		position 0 0
+		position 0 2
 ///
 		gtr {
 			wait 1

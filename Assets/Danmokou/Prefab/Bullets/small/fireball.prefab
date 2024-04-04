@@ -26,13 +26,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2677688450528804024}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1.9797757, y: -1.0307782, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2677688450528803925
 MonoBehaviour:
@@ -51,7 +51,7 @@ MonoBehaviour:
   deletable: 1
   grazeEveryFrames: 60
   screenCullRadius: 2
-  renderPriority: 300
+  renderPriority: 350
   renderMode: 0
   fadeIn: {fileID: 11400000, guid: 698800a8652ce124ba88163a87c8a42f, type: 2}
   fadeOut: {fileID: 11400000, guid: 57f3ed8d277ba0e4d8c859a232865f32, type: 2}
@@ -133,6 +133,8 @@ SpriteRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:

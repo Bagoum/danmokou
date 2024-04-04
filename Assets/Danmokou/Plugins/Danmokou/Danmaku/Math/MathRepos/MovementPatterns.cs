@@ -86,7 +86,7 @@ public static class MovementPatterns {
     public static RootedVTP DipUp1(ExBPY xmul, ExBPY time) => new(b => xmul(b).Mul(LeftMinus1), b => 1.5f, 
         SetupTime(time, NROffset(PXY(
                 b => xmul(b).Mul(t(b)),
-                b => Pow(t(b), 1.4f).Sub(t(b).Mul(1.9f))
+                b => Pow(t(b), 1.4f).Sub(t(b).Mul(2.1f))
             ))));
     
     [ExpressionBoundary]

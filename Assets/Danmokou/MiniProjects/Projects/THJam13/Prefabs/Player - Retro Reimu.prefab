@@ -1,0 +1,145 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &5940206533414980219
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplay.b
+      value: 0.7935447
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplay.g
+      value: 0.67639726
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplay.r
+      value: 0.8962264
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplayInner.b
+      value: 0.5254902
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplayInner.g
+      value: 0.14509802
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplayInner.r
+      value: 0.43745112
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplayShadow.b
+      value: 0.24056602
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplayShadow.g
+      value: 0.16567282
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: meterDisplayShadow.r
+      value: 0.2326799
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: speedLineColor.m_ColorMax.b
+      value: 0.4575472
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: speedLineColor.m_ColorMax.g
+      value: 0.017265918
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: speedLineColor.m_ColorMax.r
+      value: 0.3897003
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: speedLineColor.m_ColorMin.b
+      value: 0.43909553
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: speedLineColor.m_ColorMin.g
+      value: 0.14293343
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: speedLineColor.m_ColorMin.r
+      value: 0.6886792
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497640, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_Name
+      value: Player - Retro Reimu
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497642, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fde376048de61e241998f004239cd358, type: 3}

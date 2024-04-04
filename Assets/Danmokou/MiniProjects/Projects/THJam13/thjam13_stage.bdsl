@@ -1,0 +1,305 @@
+macro data() {
+	cfeature<THJam13CustomDataFeature>()
+}
+macro tintRetro() {
+	rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 0.5, 1))
+}
+macro tintModern() {
+	rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 1, 0.5))
+}
+
+function setColors()::StateMachine {
+	return paction 0 {
+		poolcontrol "*black*" tint rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 0.5, 1))
+		poolcontrol { "*purple*", "*teal*", "*green*", "*orange*", "*yellow*", "*red*", "*pink*", "*blue*" } tint rgba(1, 1, 1, lerp01(cfeature<THJam13CustomDataFeature>().RetroMode01Smooth, 1, 0.5))
+	}
+}
+
+function fairySui(mult = 1, itrs = 1) {
+	return saction 0 {
+		sync "lcircle-black/w" <> gsr2c (16 * dl * mult) {
+			start b{ rv2.angle = rand(0, 360); }
+		} gsr2 itrs <360h> {
+			preloop b{ hvar itr = i; }
+		} simple rvelocity px(3 - 0.8 * itr) {
+			dir(40 * t)
+		}
+		poof
+	}
+}
+function bakeSui(mult = 1) {
+	return saction 0 {
+		sync "lstar-purple/" <> gsr2c (16 * dl * mult) {
+			start b{ rv2.angle = rand(0, 360); }
+		} simple rvelocity px 3 {
+			dir(starrotb2)
+		}
+		poof
+	}
+}
+
+function obj1(lr) {
+	return async "mfairy" <> gcr2 30 6 <> {
+		preloop b{ 
+			hvar loop = i
+		 }
+	} summonr(none(pxy(lr * (-4 + 1 * loop), 5)), saction 0 {
+		movetarget(1.5, $(eoutsine), pxy(lr * (-3 + loop), 1 + loop * 0.3))
+		async "amulet-red/" <> gcr2 300 2 <> {
+			delay (lerpd(90, 0))
+		} gsr2 (2 + dc) <> {
+			target ang Lplayer
+			preloop b{ hvar aloop = ir; }
+			sfx "x-fire-burst-2"
+		} s rvelocity px(lerp01(aloop, 3, 1))
+		wait(2)
+		fairySui()
+	}, { hp 140, receivedamage(1-data().RetroMode01) })
+}
+
+function obj2(x1) {
+	return sync "mfairy" <> summonr(none(pxy(x1, 5)), saction 0 {
+		~ vulnerableafter 1.4
+		movetarget(1.5, $(eoutsine), pxy(x1, rand(2, 3)))
+		async "sakura-green/" <> gcr2 180 3 <> {
+			delay (lerpd(90, 0))
+			sfx "x-fire-burst-1"
+		} gsr2 (3 + d3d2) angle(14 - d3d2) {
+			center
+		} gsr2 (4 + d3d1) <-0.2;:> {
+			target ang Lplayer
+		} s rvelocity px(lerpd(2.7, 3.5))
+		movetarget(2, $(einsine), Lplayer)
+		fairySui(1.6)
+	}, { hp 800, receivedamage(1-data().RetroMode01) })
+}
+
+function obj3(x1) {
+	return sync "mfairy" <> summonr(none(pxy(sign(x1) * 5, 3)), saction 0 {
+		~ vulnerableafter 1.4
+		movetarget(1.5, $(eoutsine), pxy(x1, rand(1, 2)))
+		async "fireball-orange/" <> gir2 240 2 <> {
+			delay (lerpd(90, 0))
+			waitchild
+		} gir2 40 4 <> {
+			waitchild
+			bindlr
+		} gcr2 (10/sqrt(dl)) (4+d3d1) angle(lr * 50/(4+d3d1)) {
+			target ang Lplayer
+			center
+			sfx "x-keine"
+		} s rvelocity px(lerpd(3, 3.5))
+		movetarget(2, $(einsine), Lplayer)
+		fairySui(1.6)
+	}, { hp 800, receivedamage(1-data().RetroMode01) })
+}
+
+function obj4(x1) {
+	return sync "rbake" <> summonr(none(pxy(x1 * 1.4, 4.4)), saction 0 {
+		~ vulnerableafter 1.2
+		movetarget(1.5, $(eoutsine), pxy(x1, rand(2, 3)))
+		~ async "dcircle-black/w" <> gcr2 (80/sqrt(dl)) inf <360h> {
+			sfx "x-fire-keys-1"
+		} gsr2c (12 * sqrt(dl)) {
+		} s rvelocity px(lerpt(0.8, 1.2, 3, 1.1))
+		delay 2.2
+			move(4, nrvelocity(vhome(1.2, Lplayer)))
+		bakeSui(2.5)
+	}, { hp 1900, receivedamage(data().RetroMode01) })
+}
+
+function obj5(lr) {
+	return async "rbake" <> gcr2 30 6 <> {
+		preloop b{ 
+			hvar loop = i
+		 }
+	} summonr(none(pxy(lr * (-4 + 1 * loop), 5)), saction 0 {
+		movetarget(1.5, $(eoutsine), pxy(lr * (-3.2 + 0.8 * loop), 2.3 - loop ^ 1.4 * 0.24))
+		async "flasharrow-black/" <> gcr2 170 3 <> {
+			delay (lerpd(90, 0))
+		} gsr2 (dc > 1 ? 3 : 1) <40> {
+			center
+			target ang Lplayer
+			sfx "x-bubble"
+		} s rvelocity px(lerpt(0.4, 1, 1.2, lerpd(3, 4)))
+		wait(1)
+		move(2, nrvelocity(vhome(1 + 0.1 * loop, Lplayer)))
+		bakeSui()
+	}, { hp 110, receivedamage(data().RetroMode01) })
+}
+
+
+function obj6(lr) {
+	return async "rbake" <> gcr2 60 9 <> {
+		preloop b{ 
+			hvar loop = i
+		 }
+	} summonr(none(pxy(lr * -4, 4)), saction 0 {
+		~ async "dot-black/w" rot(0, -0.4, 10 * loop) gcr2 (120/dl) inf <36h> {
+			delay(80 + 20 * loop)
+			sfx "x-fire-small-3"
+		} gsr2c (10 * sqrt(dl)) {
+		} s rvelocity cx 2
+		move(4.6, nrvelocity(pxy(lr * lerp3(0.4, 0.8, 2, 2.8, t, 1.5, 2, 0.9), 
+						lerp(1, 1.8, t, -2, 0.4))))
+		bakeSui()
+	}, { hp 140, receivedamage(data().RetroMode01) })
+}
+
+
+function obj7(x1) {
+	return sync "mfairy" <> summonr(none(pxy(x1, 5)), saction 0 {
+		~ vulnerableafter 3
+		movetarget(1.5, $(eoutsine), pxy(x1, 3))
+		sync "powerup1" <> poweraura { boss1
+			lerp 0 1 t purple green
+			purple 
+		}
+		wait 1.3
+		~ async "triangle-*" <20> gcr {
+			times inf
+			wait(10)
+		} gsr2 2 <-50> {
+			color { "blue/", "purple/" }
+			clip(i % 10 < 7 - dc)
+		} gsr {
+			times(2)
+			postloop b{
+				rv2.angle = 180 - rv2.angle
+			}
+		} s tprot cx 2
+		movewhile(inf, onscreen loc, rvelocity(py(-1.5 * t ^ 0.8)))
+		fairySui(2)
+	}, { hp 800, receivedamage(1-data().RetroMode01) })
+}
+
+const var t8 = 15.0
+function obj8(x1) {
+	return sync "mlfairy" <> summonr(none(pxy(x1, 5)), saction 0 {
+		~ vulnerableafter 1.3
+		movetarget(1.5, $(eoutsine), pxy(x1, 2.7))
+		async "gem-pink/" <> gcr2 (110/(dl^0.2)) 6 angle(180/t8) {
+			sfx "x-fire-burst-1"
+		} gsr2c t8 {
+
+		} gsr2 (13 * dl ^ 0.8) <1> {
+			center
+		} s tprot px lerpt(0.5, 1.2, 3, 1.7)
+		wait(0.4)
+		fairySui(2, 2)
+	}, { hp 2100, receivedamage(1-data().RetroMode01) })
+
+}
+
+
+pattern({ mixer {
+		(1, { 
+			("thj13.stage_retro", BPY(data().RetroMode01))
+			("thj13.stage_modern", BPY(1-data().RetroMode01))
+		})
+	} }, {
+	phase 0 { } {
+		paction 0 {
+			shiftphaseto 1
+		}
+	}
+
+	phase 0 { announce } { 
+		saction 0 {
+			stageannounce
+			shiftphase
+		}
+	}
+
+	phase 41 { stage } {
+		saction 0 {
+			setColors()
+			//skiptime 20
+			//event playerinvuln(100000)
+			obj1(1)
+			wait 1
+			obj5(-1)
+			wait 1
+			obj2(-2.5)
+			wait 1.5
+			obj5(1)
+			wait 1
+			obj1(-1)
+			wait 1
+			obj6(1)
+			wait 1
+			obj5(-1)
+			wait 0.5
+			obj7(0.5)
+			wait 2
+			obj4(-1)
+			wait 2
+			obj1(-1)
+			wait 1
+			obj8(0)
+			wait 1.4
+			obj5(1)
+			wait 2
+			obj6(1)
+			wait 1
+			obj1(1)
+			wait 1
+			obj1(-1)
+		}
+	}
+	
+	//3 Mima
+	phase 0 { midboss } {
+		saction 0 {
+			boss "thj13.mima"
+			shiftphase
+		}
+	}
+
+	phase 43 { stage } {
+		saction 0 {
+			setColors()
+			obj2(-1)
+			obj6(-1)
+			obj3(-2)
+			wait 1.5
+			obj5(1)
+			wait 1.2
+			obj4(2.5)
+			wait 0.5
+			obj3(1.4)
+			wait 1.5
+			obj6(-1)
+			wait 1.6
+			obj8(-1.6)
+			wait 2.6
+			obj2(2)
+			wait 2
+			obj1(-1)
+			wait 0.8
+			obj5(1)
+			wait 1
+			obj3(-1)
+			wait 1.4
+			obj4(1.4)
+			wait 0.4
+			obj7(-2)
+			wait 3.2
+			obj3(2)
+			wait 1.2
+			obj1(-1)
+			wait 1
+			obj4(-2)
+		}
+	}
+
+	
+	//5 Marisa
+	phase 0 { endboss } {
+		saction 0 {
+			boss "thj13.marisa"
+			shiftphase
+		}
+	}
+	
+})

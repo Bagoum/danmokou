@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using BagoumLib.Cancellation;
 using BagoumLib.Events;
 using BagoumLib.Mathematics;
 using Danmokou.Behavior;
@@ -15,8 +16,24 @@ public interface IShaderCamera {
     IDisposable AddXRotation(float dx, float t);
     IDisposable AddYRotation(float dy, float t);
     void ShowBlackHole(BlackHoleEffect bhe);
+    void ShowPixelation(Pixelation pix);
 }
 
+public readonly struct Pixelation {
+    public readonly float time;
+    public readonly TP center;
+    public readonly BPY radius;
+    public readonly BPY? xBlocks;
+    public readonly bool pixelize;
+    
+    public Pixelation(float time, TP center, BPY radius, BPY? xBlocks, bool pixelize = true) {
+        this.time = time;
+        this.center = center;
+        this.radius = radius;
+        this.xBlocks = xBlocks;
+        this.pixelize = pixelize;
+    }
+}
 public readonly struct BlackHoleEffect {
     public readonly float absorbT;
     public readonly float hideT;
@@ -48,6 +65,8 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
     private float lastXRot = 0f;
     private float lastYRot = 0f;
 
+    private Cancellable? pixelizeOnCt;
+    private Cancellable? pixelizeOffCt;
 
     public Shader seijaShader = null!;
     private Material seijaMaterial = null!;
@@ -120,8 +139,6 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
         RunDroppableRIEnumerator(BlackHole(bhe));
     }
 
-    [ContextMenu("Black hole")]
-    public void debugBlackHole() => ShowBlackHole(new BlackHoleEffect(5, 1, 2));
     private IEnumerator BlackHole(BlackHoleEffect bhe) {
         seijaMaterial.EnableKeyword("FT_BLACKHOLE");
         seijaMaterial.SetFloat("_BlackHoleAbsorbT", bhe.absorbT);
@@ -135,6 +152,35 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
         seijaMaterial.DisableKeyword("FT_BLACKHOLE");
     }
 
+    public void ShowPixelation(Pixelation pix) {
+        if (!pix.pixelize && !seijaMaterial.IsKeywordEnabled("FT_PIXELIZE"))
+            return;
+        pixelizeOffCt?.Cancel();
+        var cT = pix.pixelize ?
+            Cancellable.Replace(ref pixelizeOnCt) :
+            (pixelizeOnCt = new());
+        RunRIEnumerator(Pixelize(pix, cT));
+    }
+
+    private IEnumerator Pixelize(Pixelation pix, ICancellee cT) {
+        seijaMaterial.EnableKeyword("FT_PIXELIZE");
+        if (pix.pixelize)
+            seijaMaterial.SetFloat("_PixelizeRI", -1);
+        var pi = ParametricInfo.Zero;
+        for (var t = 0f; t < pix.time; t += ETime.FRAME_TIME) {
+            if (cT.Cancelled) break;
+            pi.t = t;
+            if (pix.xBlocks != null)
+                seijaMaterial.SetFloat("_PixelizeX", pix.xBlocks(pi));
+            seijaMaterial.SetFloat(pix.pixelize ? "_PixelizeRO" : "_PixelizeRI", pix.radius(pi));
+            var center = pix.center(pi);
+            seijaMaterial.SetVector("_PixelizeCenter", new(center.x, center.y, 0, 0));
+            yield return null;
+        }
+        if (!cT.Cancelled && !pix.pixelize)
+            seijaMaterial.DisableKeyword("FT_PIXELIZE");
+    }
+
     private void OnPreRender() {
         cam.targetTexture = DMKMainCamera.RenderTo;
     }
@@ -144,6 +190,17 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
         //dest.GLClear();
         UnityEngine.Graphics.Blit(src, dest, seijaMaterial);
     }
+
+    [ContextMenu("Black hole")]
+    public void debugBlackHole() => ShowBlackHole(new BlackHoleEffect(5, 1, 2));
+
+    [ContextMenu("Pixelize")]
+    public void debugPixelize() => ShowPixelation(new(5, _ => LocationHelpers.TruePlayerLocation, 
+        pi => 2 * pi.t, null, true));
+    
+    [ContextMenu("UnPixelize")]
+    public void debugUnPixelize() => ShowPixelation(new(5, _ => LocationHelpers.TruePlayerLocation, 
+        pi => 2 * pi.t, null, false));
 
 }
 }

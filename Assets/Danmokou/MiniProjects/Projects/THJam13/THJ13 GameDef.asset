@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1238cfd4aa6427bb38aaf0a568ccaa5, type: 3}
+  m_Name: THJ13 GameDef
+  m_EditorClassIdentifier: 
+  m_key: THJam13
+  m_version:
+    major: 0
+    minor: 1
+    patch: 0
+  m_tutorial: {fileID: 0}
+  m_miniTutorial: {fileID: 0}
+  m_replaySaveMenu: {fileID: 11400000, guid: 4eb8b66bd76d4d94fa90176835284503, type: 2}
+  m_bounds:
+    left: -3.6
+    right: 3.6
+    top: 4.1
+    bot: -4.5
+    center: {x: -1.9, y: 0}
+  m_playerMovementBounds:
+    left: -3.5
+    right: 3.5
+    top: 4
+    bot: -4.08
+    center: {x: -1.9, y: 0}
+  m_endcard: {fileID: 0}
+  m_campaign: {fileID: 11400000, guid: 830b7887aa5cb86429440fac698d118e, type: 2}
+  m_extraCampaign: {fileID: 0}

@@ -343,6 +343,12 @@ public record GenCtxProperty {
     /// Reset the color to `_` on entry. Ignores wildcards.
     /// </summary>
     public static GenCtxProperty ResetColor() => new ResetColorTag();
+
+    /// <summary>
+    /// Use a function to retrieve a color on every invocation.
+    /// </summary>
+    public static GenCtxProperty ColorX(GCXF<string> color) => new GCXColorProp(color);
+    
     /// <summary>
     /// Cycle between colors on every invocation.
     /// </summary>
@@ -577,6 +583,7 @@ public record GenCtxProperty {
         }
     }
 
+    public record GCXColorProp(GCXF<string> color) : ValueProp<GCXF<string>>(color);
     public record ColorProp : ValueProp<string[]> {
         public readonly GCXF<float>? indexer;
         public readonly bool reverse;
@@ -695,6 +702,7 @@ public class GenCtxProperties<T> : GenCtxProperties {
     public readonly Parametrization p = Parametrization.DEFER;
     public readonly GCXF<float>? p_mutater;
     public readonly bool resetColor = false;
+    public readonly GCXF<string?>? colorFunc;
     public readonly string[]? colors;
     public readonly GCXF<float>? colorsIndexer;
     public readonly bool colorsReverse;
@@ -808,6 +816,8 @@ public class GenCtxProperties<T> : GenCtxProperties {
             else if (prop is ParametrizationProp pp) {
                 p = pp.value;
                 p_mutater = pp.mutater;
+            } else if (prop is GCXColorProp gcp) {
+                colorFunc = gcp.color;
             } else if (prop is ColorProp cp) {
                 colors = cp.value;
                 colorsIndexer = cp.indexer;

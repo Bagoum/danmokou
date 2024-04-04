@@ -4,7 +4,7 @@ pattern {
 }
 phase 0
 	paction 0
-		shift-phase-to 4
+		shift-phase-to 2
 		
 !!{ colors { black blue purple pink red orange yellow green teal black  }
 !!{ csuff { /w /b /  }
@@ -38,7 +38,7 @@ phase 0
 ## 2 amulets
 phase 0 #{
 	paction 0
-		position 0 3
+		position 0 4
 		sync * <;-1:> gsr2 3 <0.4;:> {
 			center
 			color { amuletreimu2-* amulet-* amuletreimu-* }
@@ -46,10 +46,8 @@ phase 0 #{
 			center
 			color { */b */ */w }
 		} gsr2 9 <;-0.3:> color $colors s tprot zero
-		sync amulet2-* <;-5:> gsr2 9 <0.4;:> {
-			center
-			color { reimu }
-		} s tprot zero
+		
+		async flasharrow-* <-2;-3.8:> gir2 15 3 <0.9;:> color { */w */ */b }  gcr2 10 9 <;-0.45:> color $colors s null
 		
 
 
@@ -59,12 +57,11 @@ phase 0 #{
 phase 0 #{
 	paction 0
 		position 3 3
-		pool-control glcircle* tint rgba(1.3, 1.3, 1.3, 1)
-		sync gcircle-* <-4.3;-4.6:> gsr2 3 <0.3;:> color { */  */w */b }  gsr2 9 <;-0.3:> color $colors s null
-		sync sakura-* <-6;-4.4:> gsr2 3 <0.5;:> color { */  */w */b }  gsr2 9 <;-0.3:> color $colors s null
-		async fireball-* <-6.1;0.5:> gir2 15 3 <0.6;:> color { */ */w */b }  gcr2 10 9 <;-0.5:> color $colors s null
+		sync sakura-* <-6.2;-3.8:> gsr2 3 <0.6;:> color { */  */w */b }  gsr2 9 <;-0.36:> color $colors s null
+		async fireball-* <-6.1;0.7:> gir2 15 3 <0.6;:> color { */ */w */b }  gcr2 10 9 <;-0.5:> color $colors s null
 		##sync fireball-ppr <-7.3;-5:> s tprot zero
-		async glcircle-* <-4.4;0.7:> gir2 15 3 <0.6;:> color { */  */w */b }  gcr2 10 9 <;-0.6:> color $colors s tprot zero
+		async gdcircle-* <-4.4;0.7:> gir2 15 3 <0.6;:> color { */  */w */b }  gcr2 10 9 <;-0.45:> color $colors s tprot zero
+		async dcircle-* <-4.4;-3.3:> gir2 15 3 <0.6;:> color { */  */w */b }  gcr2 10 9 <;-0.45:> color $colors s tprot zero
 		sync scircle-* <-2.3;0.4:> gsr2 2 <1.4;:> color { */w */b }  gsr2 9 <;-0.85:> {
 			bank <>
 			color $colors
@@ -107,9 +104,11 @@ phase 0 #{
 phase 0 #{
 	paction 0
 		position 4 0
-		sync lcircle-** <-3;3.5:> gsr2 9 <;-0.6:> { root zero color $colors } gsr2 3 <0.6;:> { color $csuff1 } simple null { dir starrot4 }
-		sync stelldecagon-** <-1;3.5:> gsr2 9 <;-0.8:> { root zero color $colors } gsr2 3 <0.8;:> { color $csuff1 } simple null { dir starrotb2 }
-		sync lellipse-** <1.5;3.5:> gsr2 9 <;-0.7:> { root zero color $colors } gsr2 3 <0.8;:> { color $csuff1 } simple null { dir starrotb2 }
+		sync lcircle-** <-3;3.7:> gsr2 9 <0.75;:> { root zero color $colors } gsr2 3 <;-0.6:> { color $csuff1 } simple null { dir starrot4 }
+		sync stelldecagon-** <-3;1.8:> gsr2 9 <0.75;:> { root zero color $colors } gsr2 3 <;-0.6:> { color $csuff1 } simple null { dir starrotb2 }
+		sync lellipse-** <-3;0.2:> gsr2 9 <0.75;:> { root zero color $colors } gsr2 3 <;-0.5:> { color $csuff1 } simple null { dir starrotb2 }
+		sync glcircle-** <-3;-1.3:> gsr2 9 <0.75;:> { root zero color $colors } gsr2 3 <;-0.6:> { color $csuff1 } simple null { dir starrotb2 }
+		sync gglcircle-** <-3;-3:> gsr2 9 <0.75;:> { root zero color $colors } gsr2 3 <;-0.5:> { color $csuff1 } simple null { dir starrotb2 }
 #}
 		
 

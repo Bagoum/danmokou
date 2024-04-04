@@ -68,8 +68,8 @@ public class FaithFeature : BaseInstanceFeature, IFaithFeature {
             } else if (Faith > 0) {
                 Faith = Math.Max(0, Faith - ETime.FRAME_TIME *
                     faithDecayRate * FaithDecayRateMultiplier * Inst.Difficulty.faithDecayMultiplier);
-            } else if (Inst.ScoreF.PIV > 1) {
-                Inst.ScoreF.PIV.Value = Math.Max(1, Inst.ScoreF.PIV - faithPivFallStep);
+            } else if (Inst.ScoreF.Multiplier > 1) {
+                Inst.ScoreF.Multiplier.Value = Math.Max(1, Inst.ScoreF.Multiplier - faithPivFallStep);
                 Faith = 0.5f;
                 FaithLenience = faithLenienceFall;
             }

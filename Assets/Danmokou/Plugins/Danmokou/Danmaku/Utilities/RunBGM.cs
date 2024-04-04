@@ -15,7 +15,7 @@ public class RunBGM : MonoBehaviour {
     
     [ContextMenu("Rerun")]
     private void Rerun() {
-        ServiceLocator.Find<IAudioTrackService>().InvokeBGM(bgm);
+        ServiceLocator.Find<IAudioTrackService>().AddTrackset().AddTrack(bgm);
     }
 }
 }

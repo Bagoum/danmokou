@@ -113,13 +113,13 @@ MonoBehaviour:
   powerOffsetFree:
   - zero
   - zero
-  - cr(1, 90)
-  - cr(1, 110)
+  - cr(1, 90)*0.8
+  - cr(1, 110)*0.8
   powerOffsetFocus:
   - zero
   - zero
-  - cxy(0, 0.8)
-  - cxy(-0.2, 0.8)
+  - cxy(0, 0.8)*0.8
+  - cxy(-0.2, 0.8)*0.8
   freeOffsetMul: 0.8
   focusOffsetMul: 0.8
   opacityFree: 'ifpowergtp 1
@@ -310,14 +310,14 @@ MonoBehaviour:
   offsetFocus: zero
   powerOffsetFree:
   - zero
-  - cr(1, 70)
-  - cr(1, 50)
-  - cr(1, 30)
+  - cr(1, 70)*0.8
+  - cr(1, 50)*0.8
+  - cr(1, 30)*0.8
   powerOffsetFocus:
   - zero
-  - cxy(0.2, 0.8)
-  - cxy(0.4, 0.8)
-  - cxy(0.6, 0.8)
+  - cxy(0.2, 0.8)*0.8
+  - cxy(0.4, 0.8)*0.8
+  - cxy(0.6, 0.8)*0.8
   freeOffsetMul: 0.8
   focusOffsetMul: 0.8
   opacityFree: 'ifpowergtp 1
@@ -441,15 +441,15 @@ MonoBehaviour:
   offsetFree: zero
   offsetFocus: zero
   powerOffsetFree:
-  - cr(1, 90)
-  - cr(1, 110)
-  - cr(1, 130)
-  - cr(1, 150)
+  - cr(1, 90)*0.8
+  - cr(1, 110)*0.8
+  - cr(1, 130)*0.8
+  - cr(1, 150)*0.8
   powerOffsetFocus:
-  - cxy(0, 0.8)
-  - cxy(-0.2, 0.8)
-  - cxy(-0.4, 0.8)
-  - cxy(-0.6, 0.8)
+  - cxy(0, 0.8)*0.8
+  - cxy(-0.2, 0.8)*0.8
+  - cxy(-0.4, 0.8)*0.8
+  - cxy(-0.6, 0.8)*0.8
   freeOffsetMul: 0.8
   focusOffsetMul: 0.8
   opacityFree: 'ifpowergtp 1
@@ -576,12 +576,12 @@ MonoBehaviour:
   - zero
   - zero
   - zero
-  - cr(1, 70)
+  - cr(1, 70)*0.8
   powerOffsetFocus:
   - zero
   - zero
   - zero
-  - cxy(0.2, 0.8)
+  - cxy(0.2, 0.8)*0.8
   freeOffsetMul: 0.8
   focusOffsetMul: 0.8
   opacityFree: 'ifpowergtp 1

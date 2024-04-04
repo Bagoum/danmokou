@@ -174,7 +174,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0ad5898c3351494468a4cd358d676fd4, type: 2}
   - {fileID: 11400000, guid: 78487260bb2833846a11a012c40191cf, type: 2}
   defaultSubshot: 0
-  defaultSupport: {fileID: 11400000, guid: 229e243b674c46642952faa5cee4a80b, type: 2}
+  defaultSupports:
+  - {fileID: 11400000, guid: 55ba8ec33d158e04c99115a5a6eacaf2, type: 2}
+  - {fileID: 11400000, guid: 1f286afffd919744cbff11d9176ad854, type: 2}
   unityCollider: {fileID: 2022081467278738157}
   hitboxSprite: {fileID: 3290238122766512372}
   meter: {fileID: 3290238123035701155}

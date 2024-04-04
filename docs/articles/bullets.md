@@ -30,6 +30,8 @@ Note: if a bullet name starts with "G", that means it is a glowy style (usually 
 | LCircle                                     |                                                              |
 | LEllipse                                    |                                                              |
 | LStar                                       |                                                              |
+| FlashArrow                                  | Animated                                                     |
+| DCircle                                     |                                                              |
 | Fireball                                    |                                                              |
 | Sakura                                      |                                                              |
 | Apple                                       |                                                              |

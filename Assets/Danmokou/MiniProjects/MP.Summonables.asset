@@ -21,3 +21,14 @@ MonoBehaviour:
     - name: namecard-yuuka
       prefab: {fileID: 4801741592690297299, guid: ac807f9482f9ab043bc39ab055b68ff6,
         type: 3}
+  - groupTitle: retro
+    prefabs:
+    - name: mfairy
+      prefab: {fileID: 1062581215778985924, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+    - name: mlfairy
+      prefab: {fileID: 2143129112351344243, guid: 1d4703b8aafce4742bbdb2af03500c21,
+        type: 3}
+    - name: rbake
+      prefab: {fileID: 4269214519155620874, guid: a0be776bf3430b24a8b4f134e93b0a10,
+        type: 3}

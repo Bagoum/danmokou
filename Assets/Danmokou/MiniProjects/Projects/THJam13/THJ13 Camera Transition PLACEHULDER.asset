@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2cda3e0fe1645a43baac47f4aada44a, type: 3}
+  m_Name: THJ13 Camera Transition PLACEHULDER
+  m_EditorClassIdentifier: 
+  fadeToTex: {fileID: 2800000, guid: c199f04a099050e45a1bdb7d714ac5c2, type: 3}
+  fadeIn:
+    sfx: {fileID: 11400000, guid: a8d588e4ecf99294db25e7e2e7e7ae7b, type: 2}
+    material: {fileID: 2100000, guid: 4d9c949e2368b4f409f6e1718a49cabe, type: 2}
+    transitionTexture: {fileID: 2800000, guid: 826ec254b75d43a4ea2d79ec60c7e808, type: 3}
+    time: 0.62
+    reverseFillRatio: 0
+    reverseKeyword: 0
+    fixedType: 0
+  fadeOut:
+    sfx: {fileID: 11400000, guid: 38961db18e14521448a0b074b6df2509, type: 2}
+    material: {fileID: 2100000, guid: 4d9c949e2368b4f409f6e1718a49cabe, type: 2}
+    transitionTexture: {fileID: 2800000, guid: 826ec254b75d43a4ea2d79ec60c7e808, type: 3}
+    time: 0.62
+    reverseFillRatio: 1
+    reverseKeyword: 0
+    fixedType: 0
