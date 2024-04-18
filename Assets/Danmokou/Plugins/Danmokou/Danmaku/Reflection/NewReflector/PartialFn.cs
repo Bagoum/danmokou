@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using BagoumLib;
 using BagoumLib.Expressions;
@@ -13,8 +14,23 @@ using Ex = System.Linq.Expressions.Expression;
 
 namespace Danmokou.Reflection2 {
 public static class PartialFn {
-    public static Ex Execute(Ex func, IEnumerable<Ex> args) {
-        return Ex.Call(func, func.Type.GetMethod("Invoke")!, args);
+    public static Ex Execute(Ex func, IEnumerable<Ex> args, bool allowConst = false) {
+        var meth = func.Type.GetMethod("Invoke")!;
+        var argArr = args.ToArray();
+        if (!allowConst) goto deflt;
+    #if !EXBAKE_SAVE && !EXBAKE_LOAD
+        var consArr = new object[argArr.Length];
+        if (func is not ConstantExpression cf)
+            goto deflt;
+        for (int ii = 0; ii < argArr.Length; ++ii) {
+            if (argArr[ii] is not ConstantExpression cex)
+                goto deflt;
+            consArr[ii] = cex.Value;
+        }
+        return Ex.Constant(meth.Invoke(cf.Value, consArr));
+    #endif
+        deflt: ;
+        return Ex.Call(func, meth, argArr);
     }
 
     public static Ex Execute(Ex func, params Ex[] args) => Execute(func, args as IEnumerable<Ex>);
@@ -37,6 +53,7 @@ public static class PartialFn {
             args[ii] = new DelegateArg($"$parg{ii}", delTypes[ii]);
         var delFnType = ReflectionUtils.MakeFuncType(delTypes);
         Func<TExArgCtx, TEx> body = tac => {
+            tac.Ctx.CompileToField = true;
             var delayedArgs =  origFnTypes
                 .Skip(applied.Length)
                 .Take(origFnTypes.Length - 1 - applied.Length)
@@ -50,7 +67,7 @@ public static class PartialFn {
                 delayedArgs);
         };
         var helper = CompilerHelpers.CompileDelegateMeth.Specialize(delFnType).Invoke(null, body, args)!;
-        return Execute(Ex.Constant(helper), applied.Prepend(func));
+        return Execute(Ex.Constant(helper), applied.Prepend(func), true);
     }
     
     /// <summary>

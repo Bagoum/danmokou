@@ -13,8 +13,8 @@ Secrets
 .psd
 Assets/raw
 Assets/Danmokou/Sprites/.py/SpriteUtils/img
+Assets/Danmokou/MiniProjects/Plugins/Danmokou/Generated
 Assets/Danmokou/Plugins/Danmokou/Danmaku/Expressions/Generated
-Assets/Danmokou/Plugins/Danmokou/Danmaku/AoTHelper_CG.cs
 
 *.csproj
 *.sln

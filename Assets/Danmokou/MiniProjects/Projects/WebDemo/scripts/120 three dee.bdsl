@@ -1,0 +1,28 @@
+pattern { } {
+phase 0 {
+	type(non, "3D")
+	roott(1, 0, 0.5)
+} {
+	paction 0 {
+		// Smaller Z is on top
+		poolcontrol "lellipse-blue/w" sortz
+		poolcontrol "lellipse-blue/w" tint(b{
+			// Make the nearer bullets redder
+			var a = lerp(-2, 2, z, 0.5, 1)
+			rgba(1, a, a, 1)
+		})
+		sync "lellipse-blue/w" <> gsr2 10 <> {
+			preloop b{ hvar loop1 = i; }
+		} gsr2 15 <> {
+			preloop b{ hvar loop2 = i; }
+		} simple offset3d 
+			qrotate(circle(20, 20 + 7 * loop1, t), 
+				circle(7, 0.5 + 0.3 * loop1, 
+					t + 7 * loop2 / 15))
+			zero {
+		    	// Make the nearer bullets larger
+				scale (0.8 - 0.2 * z) 
+			}
+	}
+}
+}

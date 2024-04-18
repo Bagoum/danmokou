@@ -770,7 +770,7 @@ PrefabInstance:
         type: 3}
       propertyPath: MainBackground
       value: 
-      objectReference: {fileID: 5180723301924424041, guid: 5c47e529139b2184e8f6df7b27cce9e0,
+      objectReference: {fileID: 5180723301924424041, guid: ece885f1581409a4099003a1544a1e58,
         type: 3}
     - target: {fileID: 2157362365230339333, guid: d84654d0440e6bf4eb014a62d20a756d,
         type: 3}
@@ -861,7 +861,7 @@ PrefabInstance:
         type: 3}
       propertyPath: bgm
       value: 
-      objectReference: {fileID: 11400000, guid: 9bbb09ba1e8200344a171f1ed922cf3d,
+      objectReference: {fileID: 11400000, guid: 4f8a317068f566a4a927e259c0b46139,
         type: 2}
     - target: {fileID: 5365018383905480166, guid: d84654d0440e6bf4eb014a62d20a756d,
         type: 3}
@@ -899,7 +899,7 @@ PrefabInstance:
         type: 3}
       propertyPath: defaultBGCPrefab
       value: 
-      objectReference: {fileID: 5180723301924424041, guid: 5c47e529139b2184e8f6df7b27cce9e0,
+      objectReference: {fileID: 5180723301924424041, guid: ece885f1581409a4099003a1544a1e58,
         type: 3}
     - target: {fileID: 1017966838409782185, guid: fef64f83245e2b448a27bd388149c8f6,
         type: 3}

@@ -44,19 +44,22 @@ public static class AtomicBPYRepo {
     /// The starting angle of rotation of a bullet.
     /// </summary>
     public static ExBPY Angle() => tac => ReflectEx.GetAliasFromStack(Aliases.MOV_ANGLE_ALIAS, tac) ?? 
-                                          throw new Exception($"The function {nameof(Angle)} only works in VTP contexts.");
+                                          tac.MaybeSB?.movement.angle ??
+                                          throw new Exception($"The function {nameof(Angle)} only works in VTP/SB contexts.");
     
     /// <summary>
     /// The starting cosine of rotation of a bullet.
     /// </summary>
     public static ExBPY CosRot() => tac =>ReflectEx.GetAliasFromStack(Aliases.MOV_COS_ALIAS, tac) ?? 
-                                          throw new Exception($"The function {nameof(CosRot)} only works in VTP contexts.");
+                                          tac.MaybeSB?.movement.cos ??
+                                          throw new Exception($"The function {nameof(CosRot)} only works in VTP/SB contexts.");
     
     /// <summary>
     /// The starting cosine of rotation of a bullet.
     /// </summary>
     public static ExBPY SinRot() => tac => ReflectEx.GetAliasFromStack(Aliases.MOV_SIN_ALIAS, tac) ?? 
-                                           throw new Exception($"The function {nameof(SinRot)} only works in VTP contexts.");
+                                           tac.MaybeSB?.movement.sin ??
+                                           throw new Exception($"The function {nameof(SinRot)} only works in VTP/SB contexts.");
     
     /// <summary>
     /// Return the parametric firing index.

@@ -127,8 +127,13 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 6533973065347094816, guid: 66f3162a005c38540bf91e4eb91304ea,
+      objectReference: {fileID: 21300000, guid: 2db8749cb495ecf49b585803f0a00783,
         type: 3}
+    - target: {fileID: 5274603300772143566, guid: 567949ea02f82894482d1922e940c492,
+        type: 3}
+      propertyPath: animate.LRRelation
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5274603300772143566, guid: 567949ea02f82894482d1922e940c492,
         type: 3}
       propertyPath: animate.UDRelation
@@ -141,8 +146,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5274603300772143566, guid: 567949ea02f82894482d1922e940c492,
         type: 3}
+      propertyPath: animate.frames.idleAnim.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5274603300772143566, guid: 567949ea02f82894482d1922e940c492,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5274603300772143566, guid: 567949ea02f82894482d1922e940c492,
+        type: 3}
       propertyPath: animate.frames.attackAnim.Array.size
-      value: 6
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5274603300772143566, guid: 567949ea02f82894482d1922e940c492,
         type: 3}
@@ -178,7 +193,7 @@ PrefabInstance:
         type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[0].sprite
       value: 
-      objectReference: {fileID: 6533973065347094816, guid: 66f3162a005c38540bf91e4eb91304ea,
+      objectReference: {fileID: 21300000, guid: 2db8749cb495ecf49b585803f0a00783,
         type: 3}
     - target: {fileID: 5274603300772143566, guid: 567949ea02f82894482d1922e940c492,
         type: 3}
@@ -214,7 +229,7 @@ PrefabInstance:
         type: 3}
       propertyPath: animate.frames.rightAnim.Array.data[0].sprite
       value: 
-      objectReference: {fileID: 1837837465232861102, guid: 66f3162a005c38540bf91e4eb91304ea,
+      objectReference: {fileID: 21300000, guid: 8e6857d31ea4b2b4c8ea0cea20ee2120,
         type: 3}
     - target: {fileID: 5274603300772143566, guid: 567949ea02f82894482d1922e940c492,
         type: 3}

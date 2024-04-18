@@ -6,9 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
-    path: Assets/SiMP/Scenes/Working Scene.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
-  - enabled: 0
     path: Assets/Danmokou/MiniProjects/Projects/FlappyBird/FB MainMenu.unity
     guid: e9a3b59bd41be9842a077413d605b033
   - enabled: 0
@@ -96,9 +93,6 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/LuA/LuA.SceneLevel.unity
     guid: e1480753093a7cd43afb2b458aef2f74
-  - enabled: 0
-    path: Assets/Danmokou/MiniProjects/Scenes/WebGL Demo.unity
-    guid: d40ce5d4fad807647a9d963e929f9315
   - enabled: 0
     path: Assets/Danmokou/Scenes/Testing/TestMainMenu.unity
     guid: 886b7f78af1f2414b9ebe8f58314f3ed

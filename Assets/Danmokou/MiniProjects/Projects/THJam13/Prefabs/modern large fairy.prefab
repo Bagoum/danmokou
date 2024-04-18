@@ -8,6 +8,12 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1062581215778985920, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: collisionRadius.refVal
+      value: 
+      objectReference: {fileID: 11400000, guid: e5e86376678e6fb4392d039068a578a2,
+        type: 2}
     - target: {fileID: 1062581215778985923, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
         type: 3}
       propertyPath: m_LocalPosition.x

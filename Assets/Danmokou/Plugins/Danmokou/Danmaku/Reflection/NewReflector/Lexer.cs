@@ -17,7 +17,7 @@ public record LexerMetadata {
 
     public void AddComment(Lexer.Token comment) {
         var c = comment.Content;
-        if (c.StartsWith("///") && c.EndsWith("///"))
+        if (c.StartsWith("///") && c.EndsWith("///") && c.Length >= 6)
             c = c.Substring(3, c.Length - 6);
         else if (c.StartsWith("//"))
             c = c.Substring(2);

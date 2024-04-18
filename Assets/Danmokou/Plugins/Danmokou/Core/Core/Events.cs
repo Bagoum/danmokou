@@ -13,6 +13,7 @@ using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using JetBrains.Annotations;
+using UnityEngine.SceneManagement;
 
 namespace Danmokou.Core {
 /// <summary>
@@ -128,9 +129,8 @@ public static class Events {
             exProcRuntimeEventCache[typeof(T)] = 
                 new ExFunction(typeof(Events).GetMethod("ProcRuntimeEvent")!.MakeGenericMethod(typeof(T)));
     
-    public static readonly Event<Unit> SceneCleared = new Event<Unit>();
 #if UNITY_EDITOR || ALLOW_RELOAD
-    public static readonly Event<Unit> LocalReset = new Event<Unit>();
+    public static readonly Event<Unit> LocalReset = new();
 #endif
 }
 }

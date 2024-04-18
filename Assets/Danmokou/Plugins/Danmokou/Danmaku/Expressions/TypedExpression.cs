@@ -14,6 +14,7 @@ using JetBrains.Annotations;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
+using AST = Danmokou.Reflection2.AST;
 
 namespace Danmokou.Expressions {
 
@@ -50,17 +51,20 @@ public class TExArgCtx {
         public string NameWithSuffix(string s) => $"{s}CG{CtxIndex}_{suffixNum++}";
        
 #if EXBAKE_SAVE || EXBAKE_LOAD
-        private static uint proxyArgNum = 0;
-        public string NextProxyArg() => $"proxy{proxyArgNum}";
+        private uint proxyArgNum = 0;
+        public string NextProxyArg() => $"proxy{proxyArgNum++}";
 #endif
 #if EXBAKE_SAVE
+        private Ex args = Ex.Variable(typeof(object[]), "args");
         public List<string> HoistedVariables { get; } = new List<string>();
-        public Dictionary<Expression, Expression> HoistedReplacements { get; } =
-            new Dictionary<Expression, Expression>();
-        public List<Type> ProxyTypes { get; } = new List<Type>();
+        public Dictionary<Expression, Expression> HoistedReplacements { get; } = new();
+        public Dictionary<object, Expression> HoistedConstants { get; } = new();
+        public List<(Type, string)> ProxyTypes { get; } = new();
 #elif EXBAKE_LOAD
         public List<object> ProxyArguments { get; } = new List<object>();
 #endif
+        public bool CompileToField { get; set; } = false;
+        public AST.ScriptFunctionDef? ScriptFunctionDef { get; set; }
 
         /// <summary>
         /// Handle baking/loading an argument to an expression-reflected function that is not itself an expression
@@ -68,9 +72,15 @@ public class TExArgCtx {
         /// <br/>Returns the argument for chaining convenience.
         /// </summary>
         public T Proxy<T>(T replacee) {
+            Proxy(replacee, typeof(T));
+            return replacee;
+        }
+
+        public object Proxy(object replacee, Type t) {
 #if EXBAKE_SAVE
-            ProxyTypes.Add(typeof(T));
-            HoistedReplacements[Ex.Constant(replacee)] = Ex.Variable(typeof(T), NextProxyArg());  
+            var name = NextProxyArg();
+            HoistedConstants[replacee] = args.Index(Ex.Constant(ProxyTypes.Count)).Cast(t);  
+            ProxyTypes.Add((t, name));
 #elif EXBAKE_LOAD
             ProxyArguments.Add(replacee);
 #endif
@@ -80,6 +90,9 @@ public class TExArgCtx {
 
     /// <inheritdoc cref="RootCtx.Proxy{T}"/>
     public T Proxy<T>(T replacee) => Ctx.Proxy(replacee);
+    
+    /// <inheritdoc cref="RootCtx.Proxy{T}"/>
+    public object Proxy(object replacee) => Ctx.Proxy(replacee, replacee.GetType());
     public readonly struct Arg {
         public readonly string name;
         //typeof(TExPI)
@@ -157,6 +170,7 @@ public class TExArgCtx {
     public Ex t => BPI.t;
     public TEx<float> FloatVal => GetByExprType<TEx<float>>();
     public TExSB SB => GetByExprType<TExSB>();
+    public TExSB? MaybeSB => MaybeGetByExprType<TExSB>(out _);
     public TExGCX GCX => GetByExprType<TExGCX>();
     public TEx EnvFrame => GetByType<EnvFrame>();
 

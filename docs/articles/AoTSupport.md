@@ -46,7 +46,7 @@ public TP3 SpellRotator =>
 private const string defaultSpellRotator = "pxyz(0,0,lerpback(3, 4, 7, 8, mod(8, t), -220, -160))";
 ```
 
-Second, make sure that all pattern/dialogue scripts have the extension `.txt` (or change the filter in BakeCodeGenerator:BakeExpressions).
+Second, make sure that all pattern/dialogue scripts have the extension `.bdsl` or `.txt` (or change the filter in BakeCodeGenerator:BakeExpressions).
 
 Third, put all pattern/dialogue scripts in either the `Assets/Danmokou/Patterns` folder, or a folder that has been added to the `Script Folders` field for the Game Unique References object for your game. Below is an image of how the `Script Folders` property is filled out for Spirits in Memetic Paradise.
 
@@ -57,7 +57,8 @@ Finally, do the following immediately before exporting a build:.
 - Set TeleportAtPhaseStart and any other editor-only features off.
 - In Project Settings/Player, add the compile flag `EXBAKE_SAVE` to the current platform.
 - In the editor, run any scene with the GameManagement object active, with the References field set to the Game Unique References for the game you will export.
-- Right-click the GameManagement object and select "Bake Expressions" in the context menu. This may freeze Unity for several seconds. When it is finished, Playmode will stop, and you should see entries in the folder `Assets/Danmokou/Plugins/Danmokou/Danmaku/Expressions/Generated/`, as well as a file `Assets/Danmokou/Plugins/Danmokou/Danmaku/AoTHelper_CG.cs`. 
+- At the top of the CookingContext class, put the output path for the generated code in the variable `outputPath`.
+- Right-click the GameManagement object and select "Bake Expressions" in the context menu. This may freeze Unity for several seconds. When it is finished, Playmode will stop, and you should see generated code in the output path set above.
 - Remove the compile flag `EXBAKE_SAVE`. Add the compile flag `EXBAKE_LOAD`. You should now be able to run through the game in Editor mode, and it will only use the precompiled expressions. When this compile flag is present, an exception will be thrown when a requested precompiled expression does not exist.
   - **If there are errors in the generated code, or there are missing expressions during the game, please file a ticket or otherwise contact me.**
 - You can now build/export the game with the compile flag `EXBAKE_LOAD` on the IL2CPP backend.

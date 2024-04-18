@@ -21,7 +21,7 @@ phase 2.5
 		} s tprot cx 2
 
 <!> type non `foo bar`
-phase 2.5
+phase 12.5
     paction 0
         position 0 0
 		##New

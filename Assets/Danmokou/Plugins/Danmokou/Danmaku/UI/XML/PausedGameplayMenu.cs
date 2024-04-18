@@ -20,21 +20,21 @@ public class PausedGameplayMenu : UIController {
     protected override bool OpenOnInit => false;
 
     [ContextMenu("Animate show menu")]
-    protected virtual void ShowMe() {
+    protected virtual void ShowMe(float? time = null) {
         if (!MenuActive) {
             tokens.Add(pauseToken = EngineStateManager.RequestState(EngineState.MENU_PAUSE));
             var disable = UpdatesEnabled.AddConst(false);
-            _ = UIRoot.FadeTo(1, 0.3f, x=>x).Run(this).ContinueWithSync(disable.Dispose);
+            _ = UIRoot.FadeTo(1, time ?? 0.3f, x=>x).Run(this).ContinueWithSync(disable.Dispose);
             ISFXService.SFXService.Request(openPauseSound);
             Open().ContinueWithSync();
         }
     }
 
-    protected void ShowMeAfterFrames(int frames = 1) {
+    protected void ShowMeAfterFrames(int frames, float? time = null) {
         IEnumerator WaitThenShow() {
             for (int ii = 0; ii < frames; ++ii)
                 yield return null;
-            ShowMe();
+            ShowMe(time);
         }
         RunDroppableRIEnumerator(WaitThenShow());
     }

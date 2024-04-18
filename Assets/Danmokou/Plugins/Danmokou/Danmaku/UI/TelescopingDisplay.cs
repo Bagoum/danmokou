@@ -45,9 +45,9 @@ public class TelescopingDisplay : FancyDisplay {
             tr.localScale = new Vector3(scale, scale, scale);
             sr.color = color;
         } else {
-            tr.GoTo(myLoc, time, Easers.EOutSine, canceller).Run(this, new CoroutineOptions(true));
-            tr.ScaleTo(scale, time, Easers.EOutSine, canceller).Run(this, new CoroutineOptions(true));
-            sr.ColorTo(color, time, Easers.EOutSine, canceller).Run(this, new CoroutineOptions(true));
+            tr.GoTo(myLoc, time, Easers.EOutSine, canceller).Run(this, CoroutineOptions.DroppableDefault);
+            tr.ScaleTo(scale, time, Easers.EOutSine, canceller).Run(this, CoroutineOptions.DroppableDefault);
+            sr.ColorTo(color, time, Easers.EOutSine, canceller).Run(this, CoroutineOptions.DroppableDefault);
         }
     }
 }

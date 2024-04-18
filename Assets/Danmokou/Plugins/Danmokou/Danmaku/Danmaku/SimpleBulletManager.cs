@@ -67,7 +67,10 @@ public partial class BulletManager {
     private const int batchSize = 2047;
     //Note: while 1023 is the maximum shader array length,
     // the legacy renderer will (dangerously) split calls of batches greater than 511.
-    private const int legacyBatchSize = 511;
+    //In addition, WebGL will create lag spikes when using batch sizes greater than 127,
+    // and WebGPU will (dangerously) split calls of batches greater than 127.
+    //(These numbers are approximate and may actually be driven more by material PB size than count.)
+    private const int legacyBatchSize = 127;
     private MaterialPropertyBlock pb = null!;
     private readonly RenderProperties[] renderPropsArr = new RenderProperties[batchSize];
     //Compute buffers make rendering 20-30% faster over directly using shader arrays
@@ -175,17 +178,24 @@ public partial class BulletManager {
             /// Empty bullets (no display or collision, used for guiding; player variants and copies included)
             /// </summary>
             Empty,
+            
+            /// <summary>
+            /// Normal bullets that move and collide. Includes player variants and copied pools.
+            /// </summary>
             Normal,
+            
             /// <summary>
             /// Bullets created to represent trivial items when normal bullets are cleared via bombs or photos. These home to the player and add points when they collide with the player.
             /// </summary>
             BulletClearFlake,
+            
             /// <summary>
-            /// Bullets such as cwheel representing animations played when a normal bullet is destroyed
+            /// Bullets such as cwheel representing animations played when a normal bullet is destroyed.
             /// </summary>
             Softcull,
+            
             /// <summary>
-            /// Afterimages resulting when a normal bullet is destroyed
+            /// Afterimages resulting when a normal bullet is destroyed.
             /// </summary>
             Culled
         }
@@ -742,6 +752,7 @@ public partial class BulletManager {
             MeshGenerator.RenderInfo ri = GetOrLoadRI();
             var scaleMin = Fade.scaleInStart;
             var scaleTime = Fade.scaleInTime;
+            if (IsPlayer) scaleTime *= PLAYER_SB_SCALEIN_MUL;
             for (int ii = 0; ii < count;) {
                 int ib = 0;
                 for (; ib < legacyBatchSize && ii < count; ++ii) {
@@ -765,7 +776,7 @@ public partial class BulletManager {
                 }
                 if (hasTint) bm.pb.SetVectorArray(tintPropertyId, bm.tintArrLegacy);
                 bm.pb.SetFloatArray(timePropertyId, bm.timeArr);
-                bm.CallLegacyRender(ri, c, layer, ib);
+                bm.CallLegacyRender(ri, bm.MakeRenderParams(ri, c, layer), ib);
             }
         }
         
@@ -803,7 +814,7 @@ public partial class BulletManager {
                 bm.pb.SetVectorArray(recolorWPropertyId, bm.recolorWArr);
                 if (hasTint) bm.pb.SetVectorArray(tintPropertyId, bm.tintArrLegacy);
                 bm.pb.SetFloatArray(timePropertyId, bm.timeArr);
-                bm.CallLegacyRender(ri, c, layer, ib);
+                bm.CallLegacyRender(ri, bm.MakeRenderParams(ri, c, layer), ib);
             }
         }
 
@@ -833,7 +844,7 @@ public partial class BulletManager {
                 bm.pb.SetBufferFromArray(renderPropsId, bm.renderPropsCBP, bm.renderPropsArr, ib);
                 if (hasTint)
                     bm.pb.SetBufferFromArray(renderPropsTintId, bm.renderPropsTintCBP, bm.tintArr, ib);
-                bm.CallRender(ri, c, layer, ib);
+                bm.CallRender(ri, bm.MakeRenderParams(ri, c, layer), ib);
             }
         }
 
@@ -863,7 +874,7 @@ public partial class BulletManager {
                 bm.pb.SetBufferFromArray(renderPropsRecolorId, bm.renderPropsRecolorCBP, bm.recolorArr, ib);
                 if (hasTint)
                     bm.pb.SetBufferFromArray(renderPropsTintId, bm.renderPropsTintCBP, bm.tintArr, ib);
-                bm.CallRender(ri, c, layer, ib);
+                bm.CallRender(ri, bm.MakeRenderParams(ri, c, layer), ib);
             }
         }
 
@@ -1044,28 +1055,19 @@ public partial class BulletManager {
         }
         RNG.RNG_ALLOWED = true;
     }
-
-    private void CallLegacyRender(MeshGenerator.RenderInfo ri, Camera c, int layer, int ct) {
+    private RenderParams MakeRenderParams(in MeshGenerator.RenderInfo ri, Camera c, int layer) => 
+        new RenderParams(ri.Material) {
+        layer = layer,
+        camera = c,
+        matProps = pb
+    };
+    private void CallLegacyRender(in MeshGenerator.RenderInfo ri, in RenderParams rp, int ct) {
         if (ct == 0) return;
-        UnityEngine.Graphics.DrawMeshInstanced(ri.Mesh, 0, ri.Material,
-            matArr,
-            count: ct,
-            properties: pb,
-            castShadows: ShadowCastingMode.Off,
-            receiveShadows: false,
-            layer: layer,
-            camera: c);
+        UnityEngine.Graphics.RenderMeshInstanced(in rp, ri.Mesh, 0, matArr, ct);
     }
-    private void CallRender(MeshGenerator.RenderInfo ri, Camera c, int layer, int ct) {
+    private void CallRender(in MeshGenerator.RenderInfo ri, in RenderParams rp, int ct) {
         if (ct == 0) return;
-        UnityEngine.Graphics.DrawMeshInstancedProcedural(ri.Mesh, 0, ri.Material,
-          bounds: drawBounds,
-          count: ct,
-          properties: pb,
-          castShadows: ShadowCastingMode.Off,
-          receiveShadows: false,
-          layer: layer,
-          camera: c);
+        UnityEngine.Graphics.RenderMeshPrimitives(in rp, ri.Mesh, 0, ct);
     }
 
 #if UNITY_EDITOR

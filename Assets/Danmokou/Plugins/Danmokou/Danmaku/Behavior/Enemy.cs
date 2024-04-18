@@ -55,7 +55,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     public Vector2 Location => Beh.Location;
     public bool takesBossDamage;
     private Maybe<Enemy> divertHP = Maybe<Enemy>.None;
-    public (BulletManager.StyleSelector sel, bool exclude)? VulnerableStyles { get; private set; }
+    public StyleSelector? VulnerableStyles { get; private set; }
     public BPY? ReceivedDamageMult { get; set; }
     public double HP { get; private set; }
     public int maxHP = 1000;
@@ -74,8 +74,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     private double receivedDamageMult;
 
     public bool ReceivesBulletCollisions(string? style) =>
-        receivesBulletCollisions && (style is null || VulnerableStyles is not { } coll ||
-                                     coll.sel.Matches(style) != coll.exclude);
+        receivesBulletCollisions && (style is null || VulnerableStyles?.Matches(style) is not false);
     
     //private static int enemyIndexCtr = 0;
     //private int enemyIndex;

@@ -1,0 +1,32 @@
+pattern { } {
+phase 0 {
+	type(non, "Circle of Circles")
+	roott(1, 0, 1)
+} {
+	paction 0 {
+	async "triangle-*/" <1.2;:> girepeat {
+			wait(4s)
+			times(inf)
+		} gcrepeat {
+			wait(20)
+			times(8)
+			circle
+			sfx("x-fire-keys-1")
+			color({ "red", "pink", "purple", "blue", 
+					"teal", "green", "yellow", "orange" })
+			preloop b{
+				hvar loop = i
+				hvar parentAngle = rv2.angle
+			}
+		} gsrepeat {
+			bank(<0.4;:>)
+			times(12)
+			circle
+		} simple(nrvelocity(polartoxy(
+				lerp(0.5, 1, t, 0, 1 + 0.17 * loop), 
+				parentAngle)), {
+			dir(angle)
+		})
+	}
+}
+}

@@ -152,7 +152,7 @@ gtr {
 
 
 
-The `preloop` property runs arbitrary script code by compiling the provided code block into a delegate (similar to VTP and GCXF) and executing it. It runs this delegate once before each repeater loop. Similarly, there also exist `start` (run once before all repeater loops), `postloop` (run once after each repeater loop), and `end` (run after all repeater loops). In addition, we can also use the `exec` StateMachine to run arbitrary code at any point. (`exec` can also be an AsyncPattern or SyncPattern.) The argument type of all of these methods is `ErasedGCXF`, which is similar to `GCXF<T>` except its return value is ignored.
+The `preloop` property runs arbitrary script code by compiling the provided code block into a delegate (similar to VTP and GCXF) and executing it. It runs this delegate once before each repeater loop. Similarly, there also exist `start` (run before all repeater loops), `postloop` (run once after each repeater loop), and `end` (run after all repeater loops). In addition, we can also use the `exec` StateMachine to run arbitrary code at any point. (`exec` can also be an AsyncPattern or SyncPattern.) The argument type of all of these methods is `ErasedGCXF`, which is similar to `GCXF<T>` except its return value is ignored.
 
 ```c#
 gtr {
@@ -198,7 +198,7 @@ As with VTP and GCXF, the second argument to `softcull` is compiled into a deleg
 
 Let's say we also want to restrict the bullet control so it only affects bullets that have a certain value of `loop`. While we ideally should be able to do this, `loop` is not lexically visible to the bullet control function. Also, even if `loop` *was* lexically visible, there isn't a guarantee that it would be the correct `loop`, since bullet controls can affect bullets fired by other scripts. To resolve this, DMK allows *dynamic scoping* within bullet controls. We dynamically access the variable by writing it as `&loop`, and the backend will crawl up the bullet's environment frame to look for any occurrence of the variable.
 
-```
+```c#
 paction 0 {
     bulletcontrol persist "circle-green/w" softcull(null, t > 1 & &loop == 8.0)
     async "circle-green/w" <> gcr2 30 inf <> {
@@ -242,7 +242,7 @@ In this example, the bullet control modifies the `size` variable, which is decla
 
 If we move the declaration of `size` down to the `gsr` preloop property, then it will no longer be shared by the red and green bullets, and only the green bullet will get larger.
 
-(Note that in BDSL2, 1f is 1/120. `f` is a multiplier for the seconds-per-frame of the engine, which is 1/120, since the engine internally runs at 120 FPS. The bullet control is run once per frame, so it increases size by 1 per second.)
+(Note that in BDSL, 1f is 1/120. `f` is a multiplier for the seconds-per-frame of the engine, which is 1/120, since the engine internally runs at 120 FPS. The bullet control is run once per frame, so it increases size by 1 per second.)
 
 Within a dynamic scope like bullet controls, functions must also be dynamically accessed by prefixing them with `&`. The function must be lexically visible to the bullet control. If by some chance the control is executed on a bullet to which the function is not lexically visible, then it will throw a runtime exception.
 

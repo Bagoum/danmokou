@@ -537,9 +537,17 @@ public partial class BehaviorEntity {
     
     public static void ControlBullets(GenCtx caller, GCXF<bool> persist, StyleSelector styles, cBEHControl control, ICancellee cT) {
         BEHControl pc = new BEHControl(caller, control, persist, cT);
-        for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            GetPool(styles.Complex[ii]).AddBulletControlEOF(pc.Mirror());
-        }
+        styles.TryMakeComplexCopies();
+        foreach (var pool in BulletManager.BEHPools)
+            if (styles.Matches(pool.style!))
+                pool.AddBulletControlEOF(pc.Mirror());
+    }
+    
+    public static void LoadTextures(StyleSelector styles) {
+        foreach (var pool in BulletManager.BEHPools)
+            if (styles.Matches(pool.style!)) {
+                pool.recolor?.GetOrLoadRecolor();
+            }
     }
 
     /// <summary>
@@ -584,10 +592,11 @@ public partial class BehaviorEntity {
     }
     
     public static IDisposable ControlPool(StyleSelector styles, BehPF control, ICancellee cT) {
-        var tokens = new IDisposable[styles.Complex.Length];
-        for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            tokens[ii] = control(styles.Complex[ii], cT);
-        }
+        var tokens = new List<IDisposable>();
+        styles.TryMakeComplexCopies();
+        foreach (var pool in BulletManager.BEHPools)
+            if (styles.Matches(pool.style!))
+                tokens.Add(control(pool.style!, cT));
         return new JointDisposable(null, tokens);
     }
 

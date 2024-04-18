@@ -6,6 +6,7 @@ using BagoumLib.DataStructures;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Danmokou.Scenes;
 using Ex = System.Linq.Expressions.Expression;
 using UnityEngine;
 using Random = System.Random;
@@ -14,7 +15,7 @@ namespace Danmokou.DataHoist {
 public static class PublicDataHoisting {
     private static readonly Dictionary<string, SafeResizableArray<Vector2>> v2Data = new();
     private static readonly Dictionary<string, SafeResizableArray<float>> fData = new();
-
+    static PublicDataHoisting() => SceneIntermediary.SceneUnloaded.Subscribe(_ => ClearAllValues());
 
     public static void ClearAllValues() {
         ClearValues(v2Data);

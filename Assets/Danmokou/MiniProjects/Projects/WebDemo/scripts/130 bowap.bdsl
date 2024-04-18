@@ -1,0 +1,25 @@
+pattern { } {
+phase 0 {
+	type(non, "Border of Wave and Particle")
+	roott(1, 0, 2)
+} {
+	paction 0 {
+		async "gem-*/w" <> gcrepeat {
+			wait(8)
+			times(inf)
+			start b{
+				hvar increment = 0
+			}
+			preloop b{
+				increment += 0.4
+				rv2.angle += increment
+			}
+		} gsrepeat {
+			times(5)
+			color({ "yellow", "orange", "red", 
+				"pink", "purple" })
+			circle
+		} s(rvelocity(px(4)))
+	}
+}
+}

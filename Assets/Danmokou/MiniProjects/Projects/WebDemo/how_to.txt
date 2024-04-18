@@ -1,0 +1,2 @@
+Compile to Web target with keywords WEBGL, EXBAKE_LOAD, ALLOW_RELOAD
+Requires AOT precompilation with EXBAKE_SAVE

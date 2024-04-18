@@ -36,6 +36,8 @@ MonoBehaviour:
     ability: {fileID: 11400000, guid: 3a0c5b4cb7a173245835d11e28585c65, type: 2}
   - ordinal: Witch Time
     ability: {fileID: 11400000, guid: 13157d81a8a5ff646accca16a0311ad8, type: 2}
+  - ordinal: Null
+    ability: {fileID: 11400000, guid: 229e243b674c46642952faa5cee4a80b, type: 2}
   uiColor: {r: 0.6509434, g: 0, b: 0.046450462, a: 1}
   shotDisplay: {fileID: 8782343778102116289, guid: 37d24709e73ba524a90e1680f96f3f3f,
     type: 3}

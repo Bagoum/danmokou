@@ -12,14 +12,11 @@ To get the newest version from git, run:
 
 The following features are planned for future releases. 
 
-- [Backlog] Safeguards around control rebinding
 - [Backlog] UI improvements: custom cursors
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
-
-
-# v11.1.0
+# v11.1.0 (2024/04/17)
 
 In this version, I've removed the `.csproj` and `.sln` files from the repository. These are required for normal C# projects, but Unity autogenerates them. When upgrading via `git pull --rebase`, this may cause merges error like the following:
 
@@ -29,7 +26,11 @@ CONFLICT (modify/delete): SuzunoyaUnity.csproj deleted in HEAD and modified in d
 
  If you get this error, then manually delete the `*.csproj` and `*.sln` files in the base directory, then run `git add . ` and `git rebase --continue`. The files will be regenerated when you reopen Unity.
 
-### UI Changes
+I've moved the engine version to 2023.2.17f1, but I've also run some testing on Unity 6. Unity 6 introduces support for WebGPU, which is a more consistent web framework than WebGL. DMK supports both WebGPU and WebGL using [Script Precompilation](AoTSupport.md), which you can see in action on the [interactive web demo](https://dmk.bagoum.com/demo/). (If you open your console and scroll to the top, you'll see some debug messages about which web framework your browser is using. At the moment, Chrome generally supports WebGPU, but Firefox support is nightly-only.) There were several issues with script precompilation that had accumulated over the past few versions, but they should all be fixed now. If you want to build for WebGPU, you'll need to upgrade to Unity 6 beta, but there are currently a lot of bugs in the beta.
+
+This version includes code under MiniProjects/Projects/THJam13 for [Touhou Kaimaroku](https://bagoum.itch.io/kaimaroku), a game jam project based around an Ikaruga-like mode switch mechanic. The logic for the special mechanic is built out in the `THJam13CustomDataFeature` class. The game was also built for WebGPU/WebGL support in Unity 6.
+
+#### UI Changes
 
 This version introduces a significant overhaul to the internal handling for Danmokou's UI utilities (built on top of UIToolkit). In previous versions, any change to the UI (such as the cursor moving from one node to another) resulted in the entire visible UI being redrawn. In order to reduce this overhead, dynamic UI rendering is now handled in a [MVVM pattern](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel) where Views write to the UI whenever they detect changes in the View-Model. As an example, consider a case where we have a string that might change, and we want to render this string to screen. We can implement a basic view model as follows (abbreviated for simplicity):
 
@@ -69,24 +70,57 @@ The benefit of this approach is that a view makes changes to the UI HTML— whic
 
 Along with this, the handling for OptionNodeLR has been updated to simplify creation and fix a lot of lingering issues. Instead of taking a getter and setter as arguments, OptionNodeLR now takes an `ITwoWayBinder`, which allows source data to be modified by the OptionNodeLR View or by backend services, and for those modifications to be visible in both directions.
 
-### Features
+You can see various usages of this new architecture in the `LocalXML*` scripts in the Assets/Danmokou/Plugins/Danmokou/Utility folder. These scripts are loaded on the XMLTesting object in the `Working Scene VN` scene.
+
+#### Features
 
 - When holding the L/R/U/D directions on a menu, the input will begin repeating after a short delay, mirroring standard input handling in most programs. This is configurable as `InputTriggerMethod.OnceRefire`.
-- The color theming for DMK's UITK support has been standardized, and supports overriding theming via classes. For example, dropdown menus use the CSS class `.theme-blue`, which gives them a blue background instead of a purple one. See the CSS configuration in `UINode.uss`. 
-- In SuzunoyaUnity, text now scales in (in addition to fading in) in the text box. This can be configured as "Char Scale In Time" and "Char Scale In From" on ADV Dialogue Box Mimic.
-- UI nodes can now have context menus (viewable by pressing C while selecting a node) that show up to the lower-right of the node. You can create such a context menu by binding a view model to the node that implements `IUIViewModel.OnContextMenu` (eg. `ContextMenuViewModel`). See Assets/Danmokou/Plugins/Danmokou/Utility/LocalXMLUIFreeformExample for an example. (Note that context menus are interactable, as opposed to tooltips, which are not.)
-  - Similarly, in order to implement a tooltip, you can binding a view model that implements `IUIViewModel.Tooltip` (eg. `TooltipViewModel`).
 
-### Breaking Changes
+- The color theming for DMK's UITK support has been standardized, and supports overriding theming via classes. For example, dropdown menus use the CSS class `.theme-blue`, which gives them a blue background instead of a purple one. See the CSS configuration at the top of `UINode.uss`. 
+
+- In SuzunoyaUnity, text now scales in (in addition to fading in) in the text box. This can be configured as "Char Scale In Time" and "Char Scale In From" on ADV Dialogue Box Mimic.
+
+- UI nodes can now have context menus (viewable by pressing C while selecting a node) that show up to the lower-right of the node. You can create such a context menu by binding a view model to the node that implements `IUIViewModel.OnContextMenu` (eg. `ContextMenuViewModel`). See Assets/Danmokou/Plugins/Danmokou/Utility/LocalXMLUIFreeformExample for an example. (Note that context menus are interactable, as opposed to tooltips, which are not.)
+  
+  - Similarly, in order to implement a tooltip, you can binding a view model that implements `IUIViewModel.Tooltip` (eg. `TooltipViewModel`).
+  
+- You can now control the opacity of enemies' healthbars as `enemy.HealthbarOpacityFunc`, and you can control the received damage multiplier for individual enemies as `enemy.ReceivedDamageMult`. (If the damage multiplier is 0, then bullets will pass through the enemy.)
+
+- Added two new bullet types: `flasharrow` and `dcircle`.
+
+- Support for executing audio tracks during gameplay has been extended to allow multiple simultaneous tracks playing at the same time under one "audio track set". This can be configured directly via the `mixer` PatternProperty (similar to the `BGM` PatternProperty). For example:
+
+  ```
+  mixer {
+  	(1, { 
+  		("thj13.stage_retro", BPY(r.data().RetroMode01))
+  		("thj13.stage_modern", BPY(1-r.data().RetroMode01))
+  	})
+  }
+  ```
+
+  This code plays the "thj13.stage_retro" and "thj13.stage_modern" tracks at the same time, and applies complementary volume modifiers based on the game data. 
+
+- Added a pixelize filter that can be applied via `IShaderCamera.ShowPixelation`.
+
+- Added the function `InputManager.PlayerInput.Interrupt`, which interrupts all currently-held input. This is used when executing VN code in a danmaku game to prevent arrow-key player movement from affecting VN menu navigation.
+
+#### Breaking Changes
 
 - `UINode.NodeHTML` has been removed. (It was the same as `UINode.HTML`,  so please use that instead.)
+- The `Events.SceneCleared` event has been removed. You can use `SceneIntermediary.SceneUnloaded` instead.
 
-### Fixes
+#### Fixes
 
 - Fixed an issue where controller menu navigation with the joystick/DPad could occasionally result in double movement. 
 - Fixed an old issue where menu navigation would not be correct when moving from the Records screen to the Replay screen to watching a replay, then back to the Records screen.
 - Fixed an issue where the default dialogue box could allow clicking buttons that were not visible.
 - Fixed issues that could arise when the Backgrounds setting was turned on and off repeatedly. Also adjusted internal logic so menu backgrounds always appear regardless of the Backgrounds setting.
+- `StyleSelector`, which is used to select bullet styles affected by bullet controls or pool controls, has been rewritten to fix edge cases where copied pools would not be affected correctly. It also now supports *excluding* styles. For example, `include({"*blue*"})` selects all styles using the color blue, and `exclude({"*blue*"})` selects all styles using any other color. Just writing `{"*blue*"}` will include the styles.
+- Fixed edge cases where coroutines running on the player controller or the camera shot object would not be disposed correctly on scene end.
+- Fixed an issue where not using a transition when changing backgrounds would sometimes cause future background transitions to be ignored.
+- Removed some redundant calculations in BDSL2 script compilation. This should increase script compilation speed.
+- Improved the VSCode extension handling for macros.
 
 # v11.0.0 (2024/02/17)
 

@@ -46,7 +46,7 @@ var sm = new PatternSM({ }, {
 					s(2)
 				}
 			}
-			sync("gdlaser-green/w", <270>, laser(null, 2, 20, {
+			sync("gdlaser-green/w", <270>, laser(none, 2, 20, {
 				dynamic(roffset(pxy(t, sine(3, 0.8 + sine(3p, 0.6, lt), t))))
 			}))
 			

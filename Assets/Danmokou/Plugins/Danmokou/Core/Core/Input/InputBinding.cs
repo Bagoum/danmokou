@@ -296,15 +296,21 @@ public interface IInputHandler {
     /// Description of what the input does in-game (eg. 'Confirm', 'Move left')
     /// </summary>
     public LString Purpose { get; }
+    
     /// <summary>
     /// Update the state of the input method.
     /// </summary>
     /// <returns>
     /// True iff the input method is receiving input.
     /// This does not mean that <see cref="Active"/> is true - for example, a key that is held down will continue
-    ///  to return true here, but <see cref="Active"/> will be set true only once (for <see cref="InputTriggerMethod.ONCE"/>).
+    ///  to return true here, but <see cref="Active"/> will be set true only once (for <see cref="InputHandler.InputTriggerMethod.Once"/>).
     /// </returns>
     bool OncePerUnityFrameUpdate();
+
+    /// <summary>
+    /// Interrupt any currently held input.
+    /// </summary>
+    void Interrupt();
 }
 
 /// <summary>
@@ -358,6 +364,12 @@ public class InputHandler : IInputHandler {
         /// The key is currently being pressed and the handler will repeatedly fire at short intervals.
         /// </summary>
         AfterSecondaryInput = 2,
+        
+        /// <summary>
+        /// The key may or may not be currently being pressed. It must be released and pressed again
+        ///  to fire.
+        /// </summary>
+        Interrupted = 3,
     }
 
     private RecoveryStage stage = RecoveryStage.ReadyForInput;
@@ -397,11 +409,21 @@ public class InputHandler : IInputHandler {
         new InputHandler(new InputTriggerMethod.OnceRefire(), check, 
             purpose ?? (check as IPurposefulInputBinding)?.Purpose ?? 
             "(This key handler has no defined purpose. This should not display.)");
-
+    
     public bool OncePerUnityFrameUpdate() {
         var keyDown = binding.Active;
         var time = Time.realtimeSinceStartup;
-        if (stage is RecoveryStage.ReadyForInput && keyDown) {
+        void SetActiveOff() {
+            if (trigger is InputTriggerMethod.OnceToggle)
+                _active = toggledValue;
+            else
+                _active = false;
+        }
+        if (stage is RecoveryStage.Interrupted) {
+            SetActiveOff();
+            if (!keyDown)
+                stage = RecoveryStage.ReadyForInput;
+        } else if (stage is RecoveryStage.ReadyForInput && keyDown) {
             if (trigger is InputTriggerMethod.Once or InputTriggerMethod.OnceToggle)
                 stage = RecoveryStage.AfterInitialInput;
             if (trigger is InputTriggerMethod.OnceToggle) 
@@ -413,10 +435,7 @@ public class InputHandler : IInputHandler {
             if (stage > RecoveryStage.ReadyForInput && !keyDown) {
                 stage = RecoveryStage.ReadyForInput;
             }
-            if (trigger is InputTriggerMethod.OnceToggle)
-                _active = toggledValue;
-            else
-                _active = false;
+            SetActiveOff();
             if (trigger is InputTriggerMethod.OnceRefire rf && keyDown) {
                 if (stage is RecoveryStage.AfterInitialInput && time > lastFireTime + rf.LongPause) {
                     stage = RecoveryStage.AfterSecondaryInput;
@@ -429,6 +448,10 @@ public class InputHandler : IInputHandler {
             }
         }
         return keyDown;
+    }
+    
+    public void Interrupt() {
+        stage = RecoveryStage.Interrupted;
     }
 }
 }

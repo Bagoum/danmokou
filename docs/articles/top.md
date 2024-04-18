@@ -4,13 +4,13 @@ Welcome to the website for **Danmokou** (DMK), a free and open source 2D bullet 
 
 DMK allows you to efficiently create games that look something like this:
 
-![image1](../images/Unity_MvNemqYyDO.jpg)
+![image1](../images/game02.jpg)
 
 (Screenshot from [Spirits in Memetic Paradise](https://www.bulletforge.org/u/bagoum/p/dong-fang-yin-yang-zang-spirits-in-memetic-paradise))
 
-![Unity_dTItUZvSOf](../images/Unity_dTItUZvSOf.jpg)
+![Unity_dTItUZvSOf](../images/game04.jpg)
 
-(Screenshot from [Fantastic Poetry Festival](https://bagoum.itch.io/fantastic-poetry-festival))
+(Screenshot from [Return of Sealed Demon](https://bagoum.itch.io/kaimaroku))
 
 ![Unity_cPqgj6VYwv](../images/Unity_cPqgj6VYwv.jpg)
 

@@ -1,6 +1,5 @@
 <#> strict(comma)
 pattern({
-	boss simp.aya
 })
 phase(0)
 	paction(0)

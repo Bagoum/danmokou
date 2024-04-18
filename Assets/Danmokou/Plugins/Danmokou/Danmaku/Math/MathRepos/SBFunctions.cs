@@ -63,7 +63,7 @@ public class TExSB : TEx<SimpleBullet> {
     public readonly TExPI bpi;
     public readonly TEx<float> scale;
     public readonly TExV2 direction;
-    public readonly TExMov velocity;
+    public readonly TExMov movement;
     public TExV2 accDeltaV3 => new(Ex.Field(ex, "accDelta"));
     public TExV2 accDelta => new(Ex.Property(ex, "AccDeltaV2"));
 
@@ -71,14 +71,14 @@ public class TExSB : TEx<SimpleBullet> {
         bpi = TExPI.Box(Ex.Field(ex, "bpi"));
         scale = Ex.Field(ex, "scale");
         direction = new TExV2(Ex.Field(ex, "direction"));
-        velocity = new TExMov(Ex.Field(ex, "movement"));
+        movement = new TExMov(Ex.Field(ex, "movement"));
     }
 
     protected TExSB(ExMode m, string? name) : base(m, name) {
         bpi = TExPI.Box(Ex.Field(ex, "bpi"));
         scale = Ex.Field(ex, "scale");
         direction = new TExV2(Ex.Field(ex, "direction"));
-        velocity = new TExMov(Ex.Field(ex, "movement"));
+        movement = new TExMov(Ex.Field(ex, "movement"));
     }
 }
 

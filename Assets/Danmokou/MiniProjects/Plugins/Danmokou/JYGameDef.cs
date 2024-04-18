@@ -5,7 +5,7 @@ using Danmokou.Danmaku;
 using Danmokou.GameInstance;
 using UnityEngine;
 
-namespace Danmokou.Miniprojects {
+namespace MiniProjects {
 [CreateAssetMenu(menuName = "Data/GameDef/JY")]
 public class JYGameDef : CampaignDanmakuGameDef {
     public override InstanceFeatures MakeFeatures(DifficultySettings d, InstanceMode m, long? highScore) => new() {

@@ -108,13 +108,13 @@ MonoBehaviour:
     cullable: 0
     cullRadius: {fileID: 0}
   displayer: {fileID: 0}
-  offsetFree: ss0 PlayerPastPos(mine, 0)
-  offsetFocus: ss0 PlayerPastPos(mine, 0)
+  offsetFree: "zero\t"
+  offsetFocus: zero
   powerOffsetFree:
   - zero
   - zero
-  - cr(1, 90)*0.6
-  - cr(1, 106)*0.6
+  - cr(1, 270)*0.8
+  - cr(1, 250)*0.8
   powerOffsetFocus:
   - zero
   - zero
@@ -182,8 +182,8 @@ MonoBehaviour:
     cullable: 0
     cullRadius: {fileID: 0}
   displayer: {fileID: 0}
-  offsetFree: PlayerPastPos(mine, 0)
-  offsetFocus: PlayerPastPos(mine, 0)
+  offsetFree: "zero\t"
+  offsetFocus: zero
   powerOffsetFree: []
   powerOffsetFocus: []
   opacityFree: 
@@ -302,13 +302,13 @@ MonoBehaviour:
     cullable: 0
     cullRadius: {fileID: 0}
   displayer: {fileID: 0}
-  offsetFree: ss0 PlayerPastPos(mine, 0)
-  offsetFocus: ss0 PlayerPastPos(mine, 0)
+  offsetFree: "zero\t"
+  offsetFocus: zero
   powerOffsetFree:
   - zero
-  - cr(1, 60)*0.6
-  - cr(1, 50)*0.6
-  - cr(1, 40)*0.6
+  - cr(1, 0)*0.8
+  - cr(1, 320)*0.8
+  - cr(1, 340)*0.8
   powerOffsetFocus:
   - zero
   - cr(1, 60)*0.6
@@ -432,13 +432,13 @@ MonoBehaviour:
     cullable: 0
     cullRadius: {fileID: 0}
   displayer: {fileID: 0}
-  offsetFree: ss0 PlayerPastPos(mine, 0)
-  offsetFocus: ss0 PlayerPastPos(mine, 0)
+  offsetFree: "zero\t"
+  offsetFocus: zero
   powerOffsetFree:
-  - cr(1, 90)*0.6
-  - cr(1, 120)*0.6
-  - cr(1, 130)*0.6
-  - cr(1, 140)*0.6
+  - cr(1, 90)*0.8
+  - cr(1, 180)*0.8
+  - cr(1, 220)*0.8
+  - cr(1, 200)*0.8
   powerOffsetFocus:
   - cr(1, 90)*0.6
   - cr(1, 120)*0.6
@@ -562,13 +562,13 @@ MonoBehaviour:
     cullable: 0
     cullRadius: {fileID: 0}
   displayer: {fileID: 0}
-  offsetFree: ss0 PlayerPastPos(mine, 0)
-  offsetFocus: ss0 PlayerPastPos(mine, 0)
+  offsetFree: "zero\t"
+  offsetFocus: zero
   powerOffsetFree:
   - zero
   - zero
   - zero
-  - cr(1, 74)*0.6
+  - cr(1, 290)*0.8
   powerOffsetFocus:
   - zero
   - zero

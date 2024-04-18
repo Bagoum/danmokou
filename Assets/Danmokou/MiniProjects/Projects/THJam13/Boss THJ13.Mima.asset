@@ -45,7 +45,7 @@ MonoBehaviour:
   cardRotator: 
   spellRotator: 
   profile:
-    leftSidebar: {fileID: 2800000, guid: 83710bc061a8bd54493f96b31c55a3fe, type: 3}
+    leftSidebar: {fileID: 2800000, guid: 60341f4dcb5a7154bbf52e8306b91b37, type: 3}
     rightSidebar: {fileID: 2800000, guid: dc3144c9f7e603e43a460d2dae32b8a8, type: 3}
   defaultNonBG: {fileID: 5180723301924424041, guid: 0502f791826cbb34d868fcb64bd35a91,
     type: 3}
@@ -58,5 +58,5 @@ MonoBehaviour:
   bossCutin: {fileID: 1213205297921912414, guid: 4567b6e9f51e17540b742f40d13a760e,
     type: 3}
   spellCutins:
-  - {fileID: 160725723660692450, guid: edecf6aacb3e56a4cb45c99149a63c18, type: 3}
-  practiceable: 0
+  - {fileID: 160725723660692450, guid: 22998aeda3a9eb949bafa86e34c65e22, type: 3}
+  practiceable: 1

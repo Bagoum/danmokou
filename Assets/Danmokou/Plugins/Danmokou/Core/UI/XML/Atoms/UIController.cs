@@ -95,7 +95,6 @@ public abstract record UIResult {
 }
 
 public abstract class UIController : CoroutineRegularUpdater {
-    public static readonly CoroutineOptions AnimOptions = new(true, CoroutineType.StepTryPrepend);
     public static readonly Event<Unit> UIEventQueued = new();
     public abstract record CacheInstruction {
         public record ToOption(int OptionIndex) : CacheInstruction;
@@ -678,7 +677,7 @@ public abstract class UIController : CoroutineRegularUpdater {
             return false;
     }
 
-    public Task PlayAnimation(ITransition anim) => anim.Run(this, UIController.AnimOptions);
+    public Task PlayAnimation(ITransition anim) => anim.Run(this, CoroutineOptions.DroppableDefault);
     
     public override int UpdatePriority => UpdatePriorities.UI;
 

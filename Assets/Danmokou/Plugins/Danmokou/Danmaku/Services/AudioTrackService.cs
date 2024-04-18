@@ -12,6 +12,7 @@ using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.GameInstance;
+using Danmokou.Scenes;
 using JetBrains.Annotations;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -46,7 +47,7 @@ public interface IAudioTrackService {
 public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
     private static readonly Dictionary<string, IAudioTrackInfo> trackInfo = new();
     //Many tracks may run simultaneously
-    private readonly DMCompactingArray<AudioTrackSet> tracks = new();
+    private readonly DMCompactingArray<AudioTrackSet> runningTracks = new();
     //Only one BGM may run at a time, the rest are paused
     // All bgm are included in tracks
     private readonly LinkedList<AudioTrackSet> bgm = new();
@@ -64,7 +65,7 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
         base.BindListeners();
         RegisterService<IAudioTrackService>(this);
 
-        Listen(Events.SceneCleared, () => {
+        Listen(SceneIntermediary.SceneUnloaded, _ => {
             if (preserveBGMOnNextScene)
                 preserveBGMOnNextScene = false;
             else
@@ -79,13 +80,13 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
 
     public override void RegularUpdate() {
         base.RegularUpdate();
-        for (int ii = 0; ii < tracks.Count; ++ii) {
-            if (tracks.ExistsAt(ii)) {
-                if (!tracks[ii]._RegularUpdate())
-                    tracks.Delete(ii);
+        for (int ii = 0; ii < runningTracks.Count; ++ii) {
+            if (runningTracks.ExistsAt(ii)) {
+                if (!runningTracks[ii]._RegularUpdate())
+                    runningTracks.Delete(ii);
             }
         }
-        tracks.Compact();
+        runningTracks.Compact();
     }
 
     public override EngineState UpdateDuring => EngineState.LOADING_PAUSE;
@@ -115,7 +116,7 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
 
     public AudioTrackSet AddTrackset(BGMInvokeFlags? flags = null, PIData? pi = null, ICancellee? cT = null) {
         var trackset = new AudioTrackSet(this, flags, pi, cT);
-        trackset.Tokens.Add(tracks.Add(trackset));
+        trackset.Tokens.Add(runningTracks.Add(trackset));
         var rnode = bgm.AddLast(trackset);
         trackset.Tokens.Add(trackset.State.Subscribe(s => RecheckTracks(rnode, s)));
         trackset.Tokens.Add(new JointDisposable(() => {
@@ -172,25 +173,25 @@ public class AudioTrackService : CoroutineRegularUpdater, IAudioTrackService {
     }
 
     private void HandleEngineStateChange(EngineState state) {
-        for (int ii = 0; ii < tracks.Count; ++ii) {
-            if (tracks.GetIfExistsAt(ii, out var t)) {
-                //Handle bgm separately
-                if (t.IsRunningAsBGM) continue;
-                if (state == EngineState.RUN && t.State.Value is AudioTrackState.Pausing or AudioTrackState.Paused)
-                    tracks[ii].UnPause();
+        for (int ii = 0; ii < runningTracks.Count; ++ii) {
+            if (runningTracks.GetIfExistsAt(ii, out var t)) {
+                //TODO: there are currently no use-cases for BGM that starts or stops on pause,
+                // though theoretically we might want something like this in the future.
+                //if (t.IsRunningAsBGM) continue;
+                //if (state == EngineState.RUN && t.State.Value is AudioTrackState.Pausing or AudioTrackState.Paused)
+                //    tracks[ii].UnPause();
                 //else if (t.State.Value is AudioTrackState.Active && t.Track.StopOnPause)
                 //    tracks[ii].Pause();
             }
         }
-        //TODO handle menu-pause for BGM
     }
 
     public void ClearAllAudio() {
-        for (int ii = 0; ii < tracks.Count; ++ii) {
-            if (tracks.ExistsAt(ii))
-                tracks[ii].CancelAndDestroy();
+        for (int ii = 0; ii < runningTracks.Count; ++ii) {
+            if (runningTracks.ExistsAt(ii))
+                runningTracks[ii].CancelAndDestroy();
         }
-        tracks.Empty();
+        runningTracks.Empty();
     }
 
     [ContextMenu("Pause topmost")]

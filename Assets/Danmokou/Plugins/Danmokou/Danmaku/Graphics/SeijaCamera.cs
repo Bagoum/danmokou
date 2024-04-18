@@ -159,7 +159,7 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
         var cT = pix.pixelize ?
             Cancellable.Replace(ref pixelizeOnCt) :
             (pixelizeOnCt = new());
-        RunRIEnumerator(Pixelize(pix, cT));
+        RunDroppableRIEnumerator(Pixelize(pix, cT));
     }
 
     private IEnumerator Pixelize(Pixelation pix, ICancellee cT) {

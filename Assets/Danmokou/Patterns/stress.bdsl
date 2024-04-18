@@ -10,11 +10,12 @@ phase 0
 ##Basic stress tester (50k)
 <!> type non hello
 <!> hp 50000
-phase 0
+<!> photo 1
+phase 100
     paction 0
         #bullet-control persist circle-green/w restyle circle-blue/w (> &.var2 100)
-        async circle-*/w <0.8;0:0> gcr2 1 _ <0;0:.11386> {
-		} gsr2c 120 { 
+        async circle-*/w <0.8;0:0> gcr2 20 _ <0;0:.11386> {
+		} gsr2c 60 { 
             p this
             color green
 		} simple rvelocity(norm(pxy(2 + t * 0.01, sine(4, 2, p + t)))) { 

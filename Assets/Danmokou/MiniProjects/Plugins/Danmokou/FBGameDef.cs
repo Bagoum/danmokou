@@ -55,6 +55,7 @@ public class FlappyDanmakuInputExtractor : IInputSource {
 
     //handled by replay player's step function
     public bool OncePerUnityFrameToggleControls() => false;
+    public void Interrupt() { }
 }
 
 }

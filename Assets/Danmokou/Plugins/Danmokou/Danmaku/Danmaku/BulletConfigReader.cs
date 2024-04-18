@@ -31,7 +31,7 @@ public partial class BulletManager : RegularUpdater {
     //It's necessary to scale in player bullets faster since they move faster.
     // In some cases, such as firing slow-moving sun bullets, this may make
     // the shot look awkward, in which case please add a scale option to the bullet.
-    private const float PLAYER_SB_SCALEIN_MUL = 0.1f;
+    private const float PLAYER_SB_SCALEIN_MUL = 0.12f;
     private const float PLAYER_FB_OPACITY_MUL = 0.65f;
     public readonly struct CollidableInfo {
         public readonly GenericColliderInfo.ColliderType colliderType;
@@ -192,6 +192,7 @@ public partial class BulletManager : RegularUpdater {
     /// Complex bullets (lasers, pathers). Active pools are stored on BehaviorEntity.activePools.
     /// </summary>
     private static readonly Dictionary<string, BehaviorEntity.BEHStyleMetadata> behPools = new();
+    public static IEnumerable<BehaviorEntity.BEHStyleMetadata> BEHPools => behPools.Values;
 
     private static void AddComplexStyle(BehaviorEntity.BEHStyleMetadata bsm) {
         behPools[bsm.style ?? throw new Exception("Complex BEHMetadata must have non-null style values")] = bsm;
@@ -205,7 +206,9 @@ public partial class BulletManager : RegularUpdater {
     /// This collection is only updated when pools are created, or copy-pools are deleted.
     /// </summary>
     private static readonly Dictionary<string, SimpleBulletCollection> simpleBulletPools = new();
-    public static ICollection<string> SIMPLEBULLETKEYS => simpleBulletPools.Keys;
+
+    public static IEnumerable<SimpleBulletCollection> StylesForSelector(StyleSelector sel) =>
+        simpleBulletPools.Values.Where(x => sel.Matches(x.Style));
     private static void AddSimpleStyle(SimpleBulletCollection sbc) {
         simpleBulletPools[sbc.Style] = sbc;
     }
@@ -522,7 +525,7 @@ public partial class BulletManager : RegularUpdater {
             if (!loaded) {
                 Profiler.BeginSample("Frame-anim bullet recolor loading");
                 var fb = b as FrameAnimBullet;
-                var frames = fb != null ? fb.Frames : new FrameAnimBullet.BulletAnimSprite[0];
+                var frames = fb != null ? fb.Frames : Array.Empty<FrameAnimBullet.BulletAnimSprite>();
                 var sprites = new FrameAnimBullet.BulletAnimSprite[frames.Length];
                 for (int si = 0; si < frames.Length; ++si) {
                     sprites[si] = frames[si];
@@ -592,7 +595,8 @@ public partial class BulletManager : RegularUpdater {
         foreach (var style in ResourceManager.AllSummonableNames) {
             AddComplexStyle(new BehaviorEntity.BEHStyleMetadata(style, null));
         }
-        
+
+        SceneIntermediary.SceneUnloaded.Subscribe(_ => OrphanAll()); //also clears pool controls
         SceneIntermediary.SceneLoaded.Subscribe(_ => StartScene());
         Camera.onPreCull += RenderBullets;
     }

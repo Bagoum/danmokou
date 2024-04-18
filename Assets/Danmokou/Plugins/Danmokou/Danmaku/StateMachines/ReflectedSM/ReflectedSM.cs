@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.DataStructures;
 using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using BagoumLib.Tasks;
 using Danmokou.Behavior;
 using Danmokou.Behavior.Functions;
 using Danmokou.Core;
+using Danmokou.Core.DInput;
 using Danmokou.Danmaku;
 using Danmokou.Danmaku.Options;
 using Danmokou.Danmaku.Patterns;
@@ -328,6 +331,7 @@ t > fadein ?
     /// <returns></returns>
     public static ReflectableLASM ExecuteVN([LookupMethod] Func<DMKVNState, Task> vnTask, string scriptId) => new(async smh => {
         using var _ = PlayerController.AllControlEnabled.AddConst(false);
+        InputManager.PlayerInput.Interrupt();
         foreach (var pc in ServiceLocator.FindAll<PlayerController>())
             pc.ResetInput();
         var vn = new DMKVNState(smh.cT, scriptId, GameManagement.Instance.VNData);
@@ -338,8 +342,8 @@ t > fadein ?
             await vnTask(vn);
             vn.UpdateInstanceData();
         } catch (OperationCanceledException e) {
-            Logs.LogException(e);
-            //Don't throw upwards if the VN was cancelled locally
+            Logs.Log($"Cancellation occurred within a VN: {e}", true, LogLevel.WARNING);
+            //Don't throw upwards if the VN was cancelled locally (eg. via Full Skip)
             if (smh.Cancelled)
                 throw;
         } finally {
@@ -354,7 +358,7 @@ t > fadein ?
     /// </summary>
     public static ReflectableLASM Async(string style, GCXF<V2RV2> rv2, AsyncPattern ap) => new(smh => {
         var abh = new AsyncHandoff(new DelegatedCreator(smh.Exec, 
-                BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style)), GetAwaiter(out Task t), smh,
+                StyleSelector.MergeStyles(smh.ch.bc.style, style)), GetAwaiter(out Task t), smh,
                 rv2(smh.GCX) + (smh.ch.rv2Override.Try(out var o) ? o : 
                     (smh.GCX.AutoVars is AutoVars.GenCtx ? smh.GCX.RV2 : V2RV2.Zero))
                 );
@@ -368,7 +372,7 @@ t > fadein ?
     /// </summary>
     public static ReflectableLASM Sync(string style, GCXF<V2RV2> rv2, SyncPattern sp) => new(smh => {
         var sbh = new SyncHandoff(new DelegatedCreator(smh.Exec,
-            BulletManager.StyleSelector.MergeStyles(smh.ch.bc.style, style), null), smh,
+            StyleSelector.MergeStyles(smh.ch.bc.style, style), null), smh,
             rv2(smh.GCX) + (smh.ch.rv2Override.Try(out var o) ? o : 
                 (smh.GCX.AutoVars is AutoVars.GenCtx ? smh.GCX.RV2 : V2RV2.Zero))
             );
@@ -414,7 +418,7 @@ t > fadein ?
     /// <summary>
     /// Apply bullet controls to simple bullet pools.
     /// </summary>
-    public static ReflectableLASM BulletControl(GCXF<bool> persist, BulletManager.StyleSelector style,
+    public static ReflectableLASM BulletControl(GCXF<bool> persist, StyleSelector style,
         BulletManager.cBulletControl control) => new(smh => {
         BulletManager.ControlBullets(smh.GCX, persist, style, control, smh.cT.Root);
         return Task.CompletedTask;
@@ -423,7 +427,7 @@ t > fadein ?
     /// <summary>
     /// Apply bullet controls to BEH bullet pools.
     /// </summary>
-    public static ReflectableLASM BEHControl(GCXF<bool> persist, BulletManager.StyleSelector style,
+    public static ReflectableLASM BEHControl(GCXF<bool> persist, StyleSelector style,
         BehaviorEntity.cBEHControl control) => new(smh => {
         BehaviorEntity.ControlBullets(smh.GCX, persist, style, control, smh.cT.Root);
         return Task.CompletedTask;
@@ -432,7 +436,7 @@ t > fadein ?
     /// <summary>
     /// Apply laser-specific bullet controls to lasers.
     /// </summary>
-    public static ReflectableLASM LaserControl(GCXF<bool> persist, BulletManager.StyleSelector style,
+    public static ReflectableLASM LaserControl(GCXF<bool> persist, StyleSelector style,
         CurvedTileRenderLaser.cLaserControl control) => new(smh => {
         CurvedTileRenderLaser.ControlLasers(smh.GCX, persist, style, control, smh.cT.Root);
         return Task.CompletedTask;
@@ -444,7 +448,7 @@ t > fadein ?
     [GAlias("PoolControl", typeof(SPCF), reflectOriginal:false)]
     [GAlias("BEHPoolControl", typeof(BehPF), reflectOriginal:false)]
     [GAlias("LaserPoolControl", typeof(LPCF), reflectOriginal:false)]
-    public static ReflectableLASM PoolControl<CF>(BulletManager.StyleSelector style, CF control) => new(smh => {
+    public static ReflectableLASM PoolControl<CF>(StyleSelector style, CF control) => new(smh => {
         if      (control is BehPF bc) 
             smh.Context.PhaseObjects.Add(BehaviorEntity.ControlPool(style, bc, smh.cT.Root));
         else if (control is LPCF lc) 
@@ -452,6 +456,33 @@ t > fadein ?
         else if (control is SPCF pc) 
             smh.Context.PhaseObjects.Add(BulletManager.ControlPool(style, pc, smh.cT.Root));
         else throw new Exception("Couldn't realize pool-control type");
+        return Task.CompletedTask;
+    });
+
+    /// <summary>
+    /// Load textures for the provided styles. Textures are normally loaded the first time a bullet
+    ///  is instantiated, but this may cause lag spikes on some platforms, in which case loading them ahead
+    ///  of time may be better.
+    /// <br/>For simple bullets, also instantiate the bullet for a few frames to trigger a shader compile.
+    /// </summary>
+    public static ReflectableLASM LoadSBTextures(StyleSelector styles) => new(async smh => {
+        var pools = BulletManager.LoadTextures(styles).ToList();
+        using var pinv = ServiceLocator.FindAll<PlayerController>().SelectDisposable(x => x.HitInvuln.AddConst(true));
+        using var disp = new JointDisposable(null, pools.Select((p, i) => {
+            BulletManager.RequestNullSimple(p.Style, 
+                    new(-2f, -4 + 8f*i/pools.Count), Vector2.right);
+            return p.BC.AllowCameraCull.AddConst(false);
+        }).ToArray());
+        await RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, () => ETime.LastUpdateForScreen);
+        smh.cT.ThrowIfCancelled();
+        await RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, 0.03f, false);
+        foreach (var p in pools)
+            p.Reset();
+    });
+    
+    /// <inheritdoc cref="LoadSBTextures"/>
+    public static ReflectableLASM LoadBEHTextures(StyleSelector styles) => new(smh => {
+        BehaviorEntity.LoadTextures(styles);
         return Task.CompletedTask;
     });
     
@@ -790,7 +821,7 @@ t > fadein ?
     /// This is done with SFX over time and will not return immediately.
     /// </summary>
     public static ReflectableLASM LifeToScore(int value) => new(smh => {
-        smh.RunRIEnumerator(_LifeToScore(value, smh.cT, GetAwaiter(out Task t)));
+        smh.Exec.RunRIEnumerator(_LifeToScore(value, smh.cT, GetAwaiter(out Task t)));
         return t;
     });
 

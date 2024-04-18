@@ -45,7 +45,8 @@ public static partial class Parametrics {
     /// </summary>
     [Atomic]
     public static ExTP Root() => tac => ReflectEx.GetAliasFromStack(Aliases.MOV_ROOT_ALIAS, tac) ?? 
-                                        throw new Exception($"The function {nameof(Root)} only works in VTP contexts.");
+                                        tac.MaybeSB?.movement.root ??
+                                        throw new Exception($"The function {nameof(Root)} only works in VTP/SB contexts.");
 
     #region ConstantVectors
 

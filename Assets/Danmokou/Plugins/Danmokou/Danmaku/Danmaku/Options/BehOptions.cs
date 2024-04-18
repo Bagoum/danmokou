@@ -115,7 +115,7 @@ public record BehOption {
     /// <summary>
     /// Set the bullet styles to which this entity is vulnerable (Enemy only).
     /// </summary>
-    public static BehOption Vuln(BulletManager.StyleSelector styles, bool exclude = false) => new VulnProp((styles, exclude));
+    public static BehOption Vuln(StyleSelector styles) => new VulnProp(styles);
     
     /// <summary>
     /// Set a per-frame multiplier for the amount of damage this entity recieves (Enemy only).
@@ -178,8 +178,8 @@ public record BehOption {
         public DeleteProp(Pred f) : base(f) { }
     }
 
-    public record VulnProp : ValueProp<(BulletManager.StyleSelector, bool)> {
-        public VulnProp((BulletManager.StyleSelector, bool) value) : base(value) { }
+    public record VulnProp : ValueProp<StyleSelector> {
+        public VulnProp(StyleSelector value) : base(value) { }
     }
     
     public record ReceivedDamageProp : ValueProp<BPY> {
@@ -215,7 +215,7 @@ public readonly struct RealizedBehOptions {
     public readonly Pred? delete;
     public readonly PlayerBullet? playerBullet;
     public readonly bool grazeAllowed;
-    public readonly (BulletManager.StyleSelector, bool)? vulnerable;
+    public readonly StyleSelector? vulnerable;
     public readonly BPY? receivedDamage;
 
     public RealizedBehOptions(BehOptions opts, GenCtx gcx, PIData fctx, Vector2 parentOffset, V2RV2 localOffset, ICancellee cT) {
@@ -278,7 +278,7 @@ public class BehOptions {
     public readonly BPY? rotator;
     public readonly (TP4 black, TP4 white)? recolor;
     public readonly PlayerBulletCfg? playerBullet;
-    public readonly (BulletManager.StyleSelector, bool)? vulnerable;
+    public readonly StyleSelector? vulnerable;
     public readonly BPY? receivedDamage;
     public readonly bool grazeAllowed = true;
     private readonly string? id = null;

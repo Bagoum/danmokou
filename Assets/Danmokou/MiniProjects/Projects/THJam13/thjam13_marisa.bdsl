@@ -1,31 +1,17 @@
+import ref at "./thjam13_ref.bdsl" as r
 
 const var me = "thj13.marisa";
 const var other = "thj13.marisa-retro";
 const var modernc1 = { "blue", "pink", "yellow", "green" };
 
-macro data() {
-	cfeature<THJam13CustomDataFeature>()
-}
-macro tintRetro() {
-	rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 0.5, 1))
-}
-macro tintModern() {
-	rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 1, 0.5))
-}
-function setColors()::StateMachine {
-	return paction 0 {
-		poolcontrol "*black*" tint tintRetro()
-		poolcontrol { "*purple*", "*teal*", "*green*", "*orange*", "*yellow*", "*red*", "*pink*", "*blue*" } tint 
-			tintModern()
-	}
-}
+
 var sm = pattern({
 		bosses({"thj13.marisa", other}, {(1, 0)})
 		setuifrom 2
 		mixer {
 			(2, { 
-				("thj13.boss_retro", BPY(data().RetroMode01))
-				("thj13.boss_modern", BPY(1-data().RetroMode01))
+				("thj13.boss_retro", BPY(r.data().RetroMode01))
+				("thj13.boss_modern", BPY(1-r.data().RetroMode01))
 			})
 		} 
 	}, {
@@ -34,17 +20,17 @@ var sm = pattern({
 			position 2 9
 			@ other position -2 9
 			exec b{
-				mine<Enemy>().ReceivedDamageMult = bpy(1-data().RetroMode01)
-				mine<Enemy>().HealthbarOpacityFunc = bpy(1-data().RetroMode01Smooth)
+				mine<Enemy>().ReceivedDamageMult = bpy(1-r.data().RetroMode01)
+				mine<Enemy>().HealthbarOpacityFunc = bpy(1-r.data().RetroMode01Smooth)
 			}
 			@ other
 				exec b{
-					mine<Enemy>().ReceivedDamageMult = bpy(data().RetroMode01)
-					mine<Enemy>().HealthbarOpacityFunc = bpy(data().RetroMode01Smooth)
+					mine<Enemy>().ReceivedDamageMult = bpy(r.data().RetroMode01)
+					mine<Enemy>().HealthbarOpacityFunc = bpy(r.data().RetroMode01Smooth)
 				}
 			@ other
 				diverthp(fromid(me))
-			shiftphaseto 2
+			shiftphaseto 3
 		}
 	}
 
@@ -58,25 +44,28 @@ var sm = pattern({
 		}
 	}
 
-	phase 30 { 
+	phase 32 { 
 		type non "Endless Paths Crossing in the Aether"
-		hpi 12000 3
-		root 2 2
+		hpi 12000 4
+		roott 3 2 2
 		rootother other -2 2
 	} {
 		paction 0 {
-			setColors()
+			r.setColors()
 			gtrepeat({
-				wait(1s)
+				wait(lerpd(3.8s, 3s) * lerpt(0, 4, 1.2, 1))
 				times(inf)
 				preloop b{
 					hvar loop = i;
 				}
-				waitchild
 				rv2incr(<360h>)
 			}, { 
-				move(2, nroffset(pxy(sine(pm1(loop) * -2, 4, t / 4), 0)))
-				async("star-*/w", <>, gcrepeat({
+				sync "powerup1" <> poweraura { 
+					boss1(lerp 0 1 t yellow rgba(1,0.9,1,1), yellow) 
+				}
+				delay 1.5
+					move(2, nroffset(pxy(sine(pm1(loop) * -2, 4, t / 4), 0)))
+				delay 1.5 async("star-*/w", <>, gcrepeat({
 					wait(15 / dl ^ 0.4)
 					times(inf)
 					fortime(2s)
@@ -92,15 +81,19 @@ var sm = pattern({
 			})
 			@ other
 				gtrepeat({
-				wait(1s)
+				wait(lerpd(3.8s, 3s) * lerpt(0, 4, 1.2, 1))
 				times(inf)
 				preloop b{
 					hvar loop = i;
 				}
-				waitchild
+				rv2incr(<360h>)
 			}, { 
-				move(2, nroffset(pxy(sine(pm1(loop) * 2, 4, t / 4), 0)))
-				async("dcircle-black/w", <>, gcrepeat({
+				sync "powerup1" <> poweraura { 
+					boss1(lerp 0 1 t yellow purple, pink) 
+				}
+				delay 1.5
+					move(2, nroffset(pxy(sine(pm1(loop) * 2, 4, t / 4), 0)))
+				delay 1.5 async("dcircle-black/w", <>, gcrepeat({
 					wait(20 / dl ^ 0.4)
 					times(inf)
 					fortime(2s)
@@ -118,14 +111,14 @@ var sm = pattern({
 		type spell "Hakkero: Undodgeable Laser!"
 		hpi 22000 8
 		root 0 3
-		rootother other 2 1.5
+		rootother other 2.5 1.5
 	} {
 		paction 0 {
 			poolcontrol "dcircle-*" allowdelete false
 			poolcontrol "dcircle-*" destructible false
 			//skiptime 4
 			//event(playerinvuln(10000))
-			setColors()
+			r.setColors()
 			sync "powerup1" <> poweraura { 
 				boss2(lerp 0 1 t yellow rgba(1,0.9,1,1), yellow) 
 			}
@@ -136,45 +129,45 @@ var sm = pattern({
 				preloop b{
 					hvar itr = i
 				}
-			} laser(null, 2.5, inf, {
+			} laser(none, 2.5, inf, {
 				sfx("x-metal")
 				s 4
 				rotate(0, lssht(0.1, 2.5, 0, (15 + 2 * itr) * t) * pm1(itr))
-				tint tintModern()
+				tint r.tintModern()
 			})
 			delay 3 sync "dcircle-*/b" <> gsr2 2 <> {
 				color { "yellow", "black" }
 			} simple(none, { scale 3 })
 			async "x-boom" <> gcr2 24 12 <> { } sfx
-			delay 5 async "star-*/w" <;1.2:> gir2 (150 / dl ^ 0.4) inf <360h> {
+			delay 5 async "star-*/w" <;1.2:> gir2 (200 / dl ^ 0.4) inf <360h> {
 				bindlr
-			} gcr2 5 (9 + d3d1) <> {
+			} gcr2 5 (8 + d3d1) <> {
 				preloop b{ hvar loop = ir; }
 				sfx "x-fire-star-2"
 			} gsr2c (20 * dl ^ 0.7) {
 				color modernc1
-			}  simple rvelocity polartoxy(lr * lerp01(loop, 3, 1.7), 0) {
+			}  simple rvelocity polartoxy(lr * lerp01(loop, 2.9, 1.8), 0) {
 				dir(lr * starrot3)
 			}
 
 			delay 4 @ other paction 0 {
-				async "flasharrow-black/w" <0.2;:90> gir2 (360/dl^0.8) inf <360h> {
+				async "flasharrow-black/w" <0.2;:90> gir2 (300/dl^0.8) inf <360h> {
 					bindlr
 				} gcr2 (2/dl^0.8) 120 <0.005;:6> {
 					fortime(2s)
 					sfxif("x-fire-small-1", i % 7 == 0)
 				} s tpnrot polartoxy(lerpt(0, 0.9, 1, 3.6), lr * 14 * i)
-				async "dot-black/w" <0.2;:90> gir2 (360/dl^0.8) inf <360h> {
+				async "dot-black/w" <0.2;:90> gir2 (300/dl^0.8) inf <360h> {
 					bindlr
 				} gcr2 (3/dl^0.8) 90 <0.005;:9> {
 				} s tpnrot polartoxy(lerpt(0, 0.9, 3, 1), lr * 17 * i)
 				gtrepeat({
 					delay 1s
 					times(inf)
-					wait(6s)
+					wait(4.6s)
 					bindlr
 				}, {
-					movetarget(4, $(eiosine), pxy(-2.4 * lr, rand(1.5, 2.5)))
+					movetarget(3.5, $(eiosine), pxy(-3 * lr, rand(1.5, 2.5)))
 				})
 			}
 		}
@@ -191,7 +184,7 @@ var sm = pattern({
 			//skiptime 4
 			//event(playerinvuln(10000))
 			poolcontrol "lcircle-*" allowdelete false
-			setColors()
+			r.setColors()
 			exec b{
 				hfunction close() {
 					return sqrt(0.5 + cosine(8, 0.5, namedtimer("phaset").Seconds))
@@ -221,9 +214,9 @@ var sm = pattern({
 					rv2.nx *= -1
 					rv2.angle = atan(lbeh(fromid(other)) - pxy(rv2.nx, rv2.ny))
 				}
-			} laser(null, 3, 0.5, { 
+			} laser(none, 3, 0.5, { 
 				sfx2("x-fire-star-3", "x-laser-on")
-				tint tintModern()
+				tint r.tintModern()
 				s 2
 			})
 
@@ -269,7 +262,7 @@ var sm = pattern({
 		rootother other 0 3.6
 	} {
 		paction 0 {
-			setColors()
+			r.setColors()
 			exec b{
 				hvar mvper = 20
 				hfunction updateRot(t, y) {
@@ -295,7 +288,7 @@ var sm = pattern({
 				rotate(0, b{
 					rot += updateRot(t, y)
 				})
-				tint tintModern()
+				tint r.tintModern()
 			})
 			sync "gdlaser-black*" <> gsr2c (4+d3d1) {
 				root zero
@@ -308,7 +301,7 @@ var sm = pattern({
 				rotate(0, b{
 					rot += updateRot(t, y)
 				})
-				tint tintRetro()
+				tint r.tintRetro()
 			})
 			delay 2.9 move inf nroffset(ptmul pxy(1, 1.2) circle(mvper, 3, t - mvper/4) - py(-3.6))
 			delay 2.9 @ other

@@ -11,6 +11,7 @@ using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.GameInstance;
 using Danmokou.Player;
+using Danmokou.Scenes;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using JetBrains.Annotations;
@@ -71,7 +72,7 @@ public class SFXService : RegularUpdater, ISFXService {
 #if UNITY_EDITOR || ALLOW_RELOAD
         Listen(Events.LocalReset, ClearConstructed);
 #endif
-        Listen(Events.SceneCleared, ClearConstructed);
+        Listen(SceneIntermediary.SceneUnloaded, ClearConstructed);
         Listen(EngineStateManager.EvState, HandleEngineStateChange);
 
         Listen(PlayerController.PlayerActivatedMeter, () => Request(meterActivated));

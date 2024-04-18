@@ -77,7 +77,7 @@ public static partial class Reflector {
 
 
     private static readonly Type tint = typeof(int);
-    private static readonly Type type_stylesel = typeof(BulletManager.StyleSelector);
+    private static readonly Type type_stylesel = typeof(StyleSelector);
     private static readonly Type type_alias = typeof(ReflectEx.Alias);
     private static readonly Type type_gcrule = typeof(GCRule);
     private static readonly Type gtype_ienum = typeof(IEnumerable<>);
@@ -139,8 +139,8 @@ public static partial class Reflector {
             } else 
                 return new AST.Preconstructed<LString>(pos, str);
         } else if (targetType == type_stylesel) {
-            return new ASTFmap<Array, BulletManager.StyleSelector>(
-                s => new BulletManager.StyleSelector(s as string[][] ?? throw new StaticException("")),
+            return new ASTFmap<Array, StyleSelector>(
+                s => new StyleSelector(s as string[][] ?? throw new StaticException(""), false),
                 ResolveAsArray(typeof(string[]), p)
             );
         } else if (targetType == type_gcrule) {

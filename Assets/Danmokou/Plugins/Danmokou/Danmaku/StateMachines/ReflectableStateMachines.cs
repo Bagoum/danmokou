@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using System;
+using System.Linq;
 using System.Reactive;
 using BagoumLib;
 using BagoumLib.Tasks;
@@ -208,11 +209,8 @@ public class BxBCollideLASM : ReflectableLASM {
     /// <returns></returns>
     public static ColliderFn SBOnSB(StyleSelector left, StyleSelector right, Pred leftPred, Pred rightPred, cBulletControl[] leftCtrls,
         cBulletControl[] rightCtrls) => smh => {
-        var leftPools = left.Simple.MapIntoCachedList(BulletManager.GetMaybeCopyPool);
-        var rightPools = right.Simple.MapIntoCachedList(BulletManager.GetMaybeCopyPool);
-        _ = new BxBCollisionSBOnSB(smh.cT, leftPools, rightPools, leftPred, rightPred, leftCtrls, rightCtrls);
-        ListCache<SimpleBulletCollection>.Consign(leftPools);
-        ListCache<SimpleBulletCollection>.Consign(rightPools);
+        _ = new BxBCollisionSBOnSB(smh.cT, BulletManager.StylesForSelector(left), 
+            BulletManager.StylesForSelector(right).ToList(), leftPred, rightPred, leftCtrls, rightCtrls);
         return Task.CompletedTask;
     };
 }

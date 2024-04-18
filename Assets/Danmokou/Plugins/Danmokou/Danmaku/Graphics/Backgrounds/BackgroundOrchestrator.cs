@@ -124,6 +124,8 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
             DoTransition(nextRequestedTransition.Value);
             nextRequestedTransition = null;
         } else {
+            if (FromBG != null)
+                FromBG.Hide();
             FromBG = bgc;
         }
         ShowHide();

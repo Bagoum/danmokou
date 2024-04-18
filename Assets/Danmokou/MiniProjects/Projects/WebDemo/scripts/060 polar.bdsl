@@ -1,0 +1,25 @@
+pattern { } {
+phase 0 {
+	type(non, "Polar Movement")
+	roott(1, 0, 1.5)
+} {
+	paction 0 {
+	async "sakura-**" <> gcrepeat {
+			wait(40)
+			times(inf)
+			colorf({ "red", "pink", "purple", "blue", 
+				"teal", "green", "yellow", "orange" }, 
+					i / 2)
+			bindLR
+			sfx("x-fire-burst-1")
+		} gsrepeat {
+			times(15)
+			circle
+			colorf({ "/", "/b" }, pi)
+		} s(polar(
+			2 * t,
+			lr * 20 * t
+		))
+	}
+}
+}

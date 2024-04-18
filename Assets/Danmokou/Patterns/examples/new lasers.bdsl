@@ -63,7 +63,7 @@ phase 0 {} {
 phase 0 {} {
 	paction 0 {
 		position -1 -2
-		sync "laser-red/" <1.5;:90> gsr { face derot } laser null 2 2 {
+		sync "laser-red/" <1.5;:90> gsr { face derot } laser none 2 2 {
 			sm	async "gem-green/w" <90> gcr2 6 inf <> {
 			} gsr { onlaser(0.1 * i) } s tprot cx 1
 			rotate(-50, -40 * t)
@@ -125,7 +125,7 @@ phase 0 {} {
 	paction 0 {
 		position -3 0
 		sync "gdlaser-green/b" <1;:> gsr  {
-		} laser null 1 1 {
+		} laser none 1 1 {
 			stagger 0.4
 			dynamic polar(
 				2 * t,
@@ -134,7 +134,7 @@ phase 0 {} {
 	}
 	paction 3 {
 		sync "gdlaser-green/b" <1;:> gsr  {
-		} laser null 2 2 {
+		} laser none 2 2 {
 			dynamic polar(
 				2 * t,
 				sine(2.1, 44, 1.1 * lt + t))

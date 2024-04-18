@@ -155,14 +155,11 @@ public static class FragmentRendering {
     }
 
     private static void CallInstancedDraw(Camera c, Mesh m, Material mat, MaterialPropertyBlock pb, int ct, int layer) {
-        UnityEngine.Graphics.DrawMeshInstanced(m, 0, mat,
-            matArr,
-            count: ct,
-            properties: pb,
-            castShadows: ShadowCastingMode.Off,
-            receiveShadows: false,
-            layer: layer,
-            camera: c);
+        UnityEngine.Graphics.RenderMeshInstanced(new(mat) {
+            camera = c,
+            layer = layer,
+            matProps = pb
+        }, m, 0, matArr, ct);
     }
     
     
@@ -170,7 +167,7 @@ public static class FragmentRendering {
     private static readonly int uvPropertyId = Shader.PropertyToID("uvRBuffer");
     private static readonly Vector4[] uvArr = new Vector4[batchSize];
     private static readonly Matrix4x4[] matArr = new Matrix4x4[batchSize];
-    private const int batchSize = 511;
+    private const int batchSize = 127;
     
 }
 }

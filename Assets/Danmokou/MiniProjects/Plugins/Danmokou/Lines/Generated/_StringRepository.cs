@@ -11,6 +11,7 @@ using Danmokou.Core;
 using static BagoumLib.Culture.LocalizationRendering;
 
 namespace MiniProjects.VN {
+[LocalizationStringsRepo]
 public static partial class ScriptLocalization {
 	private static readonly Dictionary<string, LString> _allDataMap = new Dictionary<string, LString>() {
 	};

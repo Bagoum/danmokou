@@ -33,14 +33,21 @@ public interface IUIView {
     Func<VisualElement, VisualElement>? Builder { get; }
     
     /// <summary>
-    /// Attach this view to a VisualElement (called during UI instantiation).
+    /// Attach this view to a VisualElement.
+    /// <br/>Called during UI instantiation, before <see cref="OnBuilt"/>.
+    /// All views on a given node receive <see cref="Bind"/>, and then all of them receive <see cref="OnBuilt"/>.
     /// </summary>
-    void Bind(VisualElement ve);
+    void Bind(UINode node, VisualElement ve);
     
     /// <summary>
     /// Called when the node using this view was built.
     /// </summary>
     void OnBuilt(UINode node);
+
+    /// <summary>
+    /// Called when the display language or other global display setting changes.
+    /// </summary>
+    void ReprocessForLanguageChange();
     
     /// <summary>
     /// Called when navigation entered this node.
@@ -107,11 +114,14 @@ public abstract class UIView : CustomBinding, IUIView, ITokenized {
         UpdateTrigger = BindingUpdateTrigger.OnSourceChanged;
     }
 
-    public void Bind(VisualElement ve) => ve.SetBinding(BindingId, this);
-
-    public virtual void OnBuilt(UINode node) {
+    public virtual void Bind(UINode node, VisualElement ve) {
         Node = node;
+        ve.SetBinding(BindingId, this);
     }
+
+    public virtual void OnBuilt(UINode node) { }
+
+    public virtual void ReprocessForLanguageChange() => Update(default);
 
     public virtual void OnDestroyed(UINode node) {
         (this as IDisposable).Dispose();

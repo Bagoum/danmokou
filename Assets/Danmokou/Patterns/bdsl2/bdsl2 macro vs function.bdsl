@@ -7,7 +7,6 @@ macro DoPrintMacro(x) {
 }
 
 var sm = pattern({
-	boss "simp.kasen"
 }, {
 phase 0 { } {
 	paction 0 {
@@ -17,7 +16,7 @@ phase 0 { } {
 //Of the four alternatives, #2 (function call) is the only one that works "incorrectly".
 //This is because the script function DoPrintFn is called once with the value of FrameNumber 
 // when the script is compiled, and is never called again.
-phase 30 { 
+phase 10 { 
 	type non "Print Time Directly"
 	hp 10000
 } {
@@ -27,7 +26,7 @@ phase 30 {
 			times(inf)
 		} print(ETime.FrameNumber)
 }
-phase 30 { 
+phase 10 { 
 	type non "Print Time Using Function Call"
 	hp 10000
 } {
@@ -37,7 +36,7 @@ phase 30 {
 			times(inf)
 		} DoPrintFn(ETime.FrameNumber)
 }
-phase 30 { 
+phase 10 { 
 	type non "Print Time Using Wrap Function Call"
 	hp 10000
 } {
@@ -47,7 +46,7 @@ phase 30 {
 			times(inf)
 		} wrap(DoPrintFn(ETime.FrameNumber))
 }
-phase 30 { 
+phase 10 { 
 	type non "Print Time Using Macro"
 	hp 10000
 } {

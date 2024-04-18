@@ -5,7 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Danmokou.Core;
+using Danmokou.Expressions;
 using Danmokou.Reflection2;
+using Danmokou.Scenes;
 using Danmokou.Services;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -45,6 +47,7 @@ public static class StateMachineManager  {
                     Locales.AllLocales.Contains(lc.locale) ? (lc.locale ?? "") : ""] = lc.file;
             }
         }
+        SceneIntermediary.SceneUnloaded.Subscribe(_ => ClearCachedSMs());
     }
 
     public static StateMachine LoadDialogue(string file, string? lc = null) {
@@ -143,6 +146,7 @@ public static class StateMachineManager  {
             }
             importStack.Push(name);
             try {
+                using var _ = BakeCodeGenerator.OpenContext(CookingContext.KeyType.SM_IMPORT, txt.text);
                 lsm.ScriptEF = Helpers.ParseAndCompileErased(txt.text);
             } catch (Exception e) {
                 Logs.DMKLogs.Error(e, $"Failed to parse import from text file `{name}`.");

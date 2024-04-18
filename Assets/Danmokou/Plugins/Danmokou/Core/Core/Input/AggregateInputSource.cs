@@ -53,7 +53,15 @@ public class AggregateInputSource : IInputHandlerInputSource, IInputSource {
         AnyKeyPressed |= ((IInputHandlerInputSource)this).OncePerUnityFrameUpdateHandlers();
         return AnyKeyPressedThisFrame = AnyKeyPressed;
     }
-    
+
+    public void Interrupt() {
+        IInputHandlerInputSource.Interrupt(this);
+        MainSource.Current.Interrupt();
+        for (int ii = 0; ii < Sources.Count; ++ii)
+            if (Sources.ExistsAt(ii))
+                Sources[ii].Interrupt();
+    }
+
     public IInputHandler GetKeyTrigger(KeyCode key) {
         if (!KeyTriggers.TryGetValue(key, out var v))
             AddHandler(v = KeyTriggers[key] = InputHandler.Trigger(new KBMKeyInputBinding(key)));

@@ -1,0 +1,25 @@
+pattern { } {
+phase 0 {
+	type(non, "Spread")
+	roott(1, 0, 1)
+} {
+	paction 0 {
+	async("arrow-*/w", <90>, girepeat({
+			wait(70)
+			times(inf)
+			color({ "red", "green", "blue" })
+			rv2incr(<120>)
+		},  gcrepeat({
+				times(8)
+				wait(10)
+				spread(<40>)
+				preloop b{
+					hvar loop = i;
+				}
+				sfxf({ "x-fire-burst-1", "x-fire-burst-2", 
+						"x-fire-star-1" }, pi)
+			}, s(rvelocity(px(2 + 0.3 * loop)))
+		)))
+	}
+}
+}

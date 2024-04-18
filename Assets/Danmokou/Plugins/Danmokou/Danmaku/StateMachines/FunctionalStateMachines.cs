@@ -181,7 +181,7 @@ public class GTRepeat : UniversalSM {
             cb(this, waitFrames);
         }
         public void Wait(float waitFrames, Action<SMExecutionTracker, float> continuation) =>
-            looper.GCX.exec.RunRIEnumerator(_WaitIEnum(waitFrames, continuation));
+            looper.GCX.exec.RunAppendRIEnumerator(_WaitIEnum(waitFrames, continuation));
 
         public float InitialDelay() => looper.props.delay(looper.GCX);
         public float WaitFrames() => looper.props.wait(looper.GCX);

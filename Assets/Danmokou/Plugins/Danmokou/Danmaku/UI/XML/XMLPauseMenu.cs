@@ -47,8 +47,8 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
         OptionsScreen.MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity;
         var advMan = ServiceLocator.FindOrNull<ADVManager>();
         if (GameManagement.Instance.Replay == null && advMan != null) {
-            var backlog = ServiceLocator.Find<IVNWrapper>().TrackedVNs.First().backlog;
-            var lastMessage = backlog.HasValue ? backlog.Value.readableSpeech : "(No dialogue)";
+            var backlog = ServiceLocator.Find<IVNWrapper>().TrackedVNs.FirstOrDefault()?.backlog;
+            var lastMessage = backlog is {HasValue:true} ? backlog.Value.readableSpeech : "(No dialogue)";
             SaveLoadScreen = this.SaveLoadVNScreen(inst => advMan.ExecAdv?.Inst.Request.Restart(inst.GetData()) ?? false, slot => new(advMan.GetSaveReadyADVData(), DateTime.Now, lastSaveLoadSS!.IntoTex(), slot, lastMessage));
             SaveLoadScreen.BackgroundOpacity = 1f;
             SaveLoadScreen.MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity;
@@ -79,7 +79,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
         RegisterService<IPauseMenu>(this);
     }
 
-    protected override void ShowMe() {
+    protected override void ShowMe(float? time = null) {
         if (SaveLoadScreen != null) {
             ServiceLocator.Find<IVNWrapper>().UpdateAllVNSaves();
             SaveData.SaveRecord();
@@ -91,7 +91,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
                 new CRect(-LocationHelpers.PlayableBounds.center.x, 0, MainCamera.ScreenWidth / 2f, 
                     MainCamera.ScreenHeight / 2f, 0), new[] { DMKMainCamera.CamType.UI });
         }
-        base.ShowMe();
+        base.ShowMe(time);
     }
 
     protected override Task HideMe() {

@@ -70,8 +70,8 @@ public class FancyShotDisplay : FancyDisplay {
             tr.localPosition = myLoc;
             tr.localScale = new Vector3(scale, scale, scale);
         } else {
-            tr.GoTo(myLoc, time, Easers.EOutSine, canceller).Run(this, new CoroutineOptions(true));
-            tr.ScaleTo(scale, time, Easers.EOutSine, canceller).Run(this, new CoroutineOptions(true));
+            tr.GoTo(myLoc, time, Easers.EOutSine, canceller).Run(this, CoroutineOptions.DroppableDefault);
+            tr.ScaleTo(scale, time, Easers.EOutSine, canceller).Run(this, CoroutineOptions.DroppableDefault);
         }
     }
 }

@@ -8,6 +8,45 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 866249623225213412, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 6432296409889860399, guid: 5a9dfd3f40b28b24895ef17e3e552eae,
+        type: 3}
+    - target: {fileID: 1698725585243566442, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1698725585243566442, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1698725585243566442, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1698725585243566442, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 6432296409889860399, guid: 5a9dfd3f40b28b24895ef17e3e552eae,
+        type: 3}
+    - target: {fileID: 1698725585243566442, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: -4680090467918427938, guid: 5a9dfd3f40b28b24895ef17e3e552eae,
+        type: 3}
+    - target: {fileID: 1698725585243566442, guid: fde376048de61e241998f004239cd358,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 8866697818382028652, guid: 5a9dfd3f40b28b24895ef17e3e552eae,
+        type: 3}
     - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
         type: 3}
       propertyPath: meterDisplay.b
@@ -25,18 +64,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
         type: 3}
+      propertyPath: meterDisplayInner.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
       propertyPath: meterDisplayInner.b
-      value: 0.5254902
+      value: 0.7921569
       objectReference: {fileID: 0}
     - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
         type: 3}
       propertyPath: meterDisplayInner.g
-      value: 0.14509802
+      value: 0.6745098
       objectReference: {fileID: 0}
     - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
         type: 3}
       propertyPath: meterDisplayInner.r
-      value: 0.43745112
+      value: 0.8980392
       objectReference: {fileID: 0}
     - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
         type: 3}

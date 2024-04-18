@@ -44,8 +44,8 @@ MonoBehaviour:
   cardRotator: 
   spellRotator: 
   profile:
-    leftSidebar: {fileID: 2800000, guid: 83710bc061a8bd54493f96b31c55a3fe, type: 3}
-    rightSidebar: {fileID: 2800000, guid: dc3144c9f7e603e43a460d2dae32b8a8, type: 3}
+    leftSidebar: {fileID: 2800000, guid: b01a3f7f1a4a70a4dbeeb0bba4d96300, type: 3}
+    rightSidebar: {fileID: 2800000, guid: 69d088de58f1e9c41b024046a71264dc, type: 3}
   defaultNonBG: {fileID: 5180723301924424041, guid: 0502f791826cbb34d868fcb64bd35a91,
     type: 3}
   defaultSpellBG: {fileID: 5180723301924424041, guid: 07cab9910f9f9cf4c9fe48ca50a3ad85,

@@ -32,3 +32,6 @@ MonoBehaviour:
     - name: rbake
       prefab: {fileID: 4269214519155620874, guid: a0be776bf3430b24a8b4f134e93b0a10,
         type: 3}
+    - name: rlbake
+      prefab: {fileID: 3983521917085663222, guid: ec7d30523e138744ea6b7d33ec20c481,
+        type: 3}

@@ -204,7 +204,7 @@ public static partial class Reflector {
     /// <br/>May throw an exception if parsing fails.
     /// </summary>
     public static T Into<T>(this string argstring) {
-        using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.INTO, argstring);
+        using var _ = BakeCodeGenerator.OpenContext(CookingContext.KeyType.INTO, argstring);
         try {
             Profiler.BeginSample("Generic Into AST (BDSL2) Parsing/Compilation");
             var (val, ef) = Reflection2.Helpers.ParseAndCompileValue<T>(argstring);
@@ -216,7 +216,7 @@ public static partial class Reflector {
     }
 
     public static Func<TExArgCtx, TEx<T>> IntoDelayed<T>(this string argstring) {
-        var bake = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.INTO, argstring);
+        var bake = BakeCodeGenerator.OpenContext(CookingContext.KeyType.INTO, argstring);
         try {
             var (ast, gs) = Helpers.ParseAnnotate(ref argstring);
             var typechecked = ast.Typecheck(gs, typeof(T), out _);
@@ -257,7 +257,7 @@ public static partial class Reflector {
     public static T Into<T>(this IParseQueue q) => ((T) q.IntoAST(typeof(T)).EvaluateObject()!);
 
     public static T IntoBDSL1<T>(this string argstring) {
-        using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.INTO, argstring);
+        using var _ = BakeCodeGenerator.OpenContext(CookingContext.KeyType.INTO, argstring);
         try {
             var p = IParseQueue.Lex(argstring);
             var ast = p.IntoAST(typeof(T));

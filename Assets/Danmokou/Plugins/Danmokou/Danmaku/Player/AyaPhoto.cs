@@ -5,6 +5,7 @@ using System.Linq;
 using BagoumLib;
 using Danmokou.Core;
 using Danmokou.DMath;
+using Danmokou.Scenes;
 using Danmokou.VN;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -53,7 +54,7 @@ public class AyaPhoto {
         ScreenWidth = rect.halfW * 2;
         ScreenHeight = rect.halfH * 2;
         Angle = rect.angle;
-        Events.SceneCleared.SubscribeOnce(_ => Image.UnloadTex());
+        SceneIntermediary.SceneUnloaded.SubscribeOnce(_ => Image.UnloadTex());
     }
 
 

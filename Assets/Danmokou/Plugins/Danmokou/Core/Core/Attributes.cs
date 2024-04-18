@@ -28,10 +28,10 @@ public class FallthroughAttribute : Attribute {
 public class ExpressionBoundaryAttribute : Attribute { }
 
 /// <summary>
-/// Mark that this function should not be converted into a constant expression in BDSL2 reflection.
+/// Mark that this function can be converted into a constant expression in BDSL2 reflection.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
-public class NonConstableAttribute : Attribute { }
+public class ConstableAttribute : Attribute { }
 
 [AttributeUsage(AttributeTargets.All)]
 public class DontReflectAttribute : Attribute { }
@@ -257,6 +257,9 @@ public class ReflectIntoAttribute : Attribute {
         this.resultType = resultType;
     }
 }
+
+[AttributeUsage(AttributeTargets.Class)]
+public class GeneratedExpressionsAttribute : Attribute { }
 
 [AttributeUsage(AttributeTargets.Class)]
 public class LocalizationStringsRepoAttribute : Attribute { }

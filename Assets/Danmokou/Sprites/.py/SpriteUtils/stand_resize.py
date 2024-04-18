@@ -9,17 +9,17 @@ from PIL import Image
 
 src = "img/stand-source/"
 out = "img/stand-output/"
-root = "normal.png"
+root = "reimu_neutral.png"
 
-root_left = 52
-root_left2 = 744
-root_top = 40
-root_top2 = 1160
+root_left = 0
+root_left2 = 740
+root_top = 0
+root_top2 = 1296
 
-left = 320
-left2 = 600
-top = 40
-top2 = 324
+left = 152
+left2 = 480
+top = 0
+top2 = 384
 
 def root_convert(fromfile, tofile):
     img = Image.open(fromfile)

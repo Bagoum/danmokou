@@ -386,10 +386,6 @@ public record InstanceRequest {
 
     public const float WaitBeforeReturn = 2f;
 
-    private static void WaitThenReturn(SceneRequest toScene) => 
-        RUWaitingUtils.WaitThenCB(GameManagement.Main, ServiceLocator.Find<ISceneIntermediary>().SceneBoundedToken, 
-            WaitBeforeReturn, false, () => ServiceLocator.Find<ISceneIntermediary>().LoadScene(toScene));
-
     private static SceneRequest DefaultReturnScene(InstanceRequest req) => ReturnScene(
         MaybeSaveReplayScene(req.replay is ReplayMode.RecordingReplay, req.lowerRequest.Game));
     public static SceneRequest ReturnScene(SceneConfig sc) => new(sc, SceneRequest.Reason.FINISH_RETURN);

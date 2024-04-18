@@ -1,4 +1,6 @@
-﻿using System.Reactive;
+﻿using System;
+using System.Reactive;
+using BagoumLib.Cancellation;
 using BagoumLib.Events;
 using Danmokou.Behavior.Display;
 using Danmokou.DMath;
@@ -10,12 +12,6 @@ public partial class PlayerController {
     public enum BombContext {
         NORMAL,
         DEATHBOMB
-    }
-    public enum PlayerState {
-        NORMAL,
-        WITCHTIME,
-        RESPAWN,
-        NULL
     }
 
     public enum DeathbombState {
@@ -41,19 +37,19 @@ public partial class PlayerController {
     
     private static bool StateAllowsInput(PlayerState s) =>
         s switch {
-            PlayerState.RESPAWN => false,
+            PlayerState.Respawn => false,
             _ => true
         };
 
     private static bool StateAllowsPlayerMovement(PlayerState s) =>
         s switch {
-            PlayerState.RESPAWN => false,
+            PlayerState.Respawn => false,
             _ => true
         };
 
     private static float StateSpeedMultiplier(PlayerState s) {
         return s switch {
-            PlayerState.WITCHTIME => WitchTimeSpeedMultiplier,
+            PlayerState.WitchTime => WitchTimeSpeedMultiplier,
             _ => 1f
         };
     }

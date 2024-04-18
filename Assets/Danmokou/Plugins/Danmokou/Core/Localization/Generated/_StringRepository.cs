@@ -12,6 +12,7 @@ using static BagoumLib.Culture.LocalizationRendering;
 using static Danmokou.Core.LocalizationRendering;
 
 namespace Danmokou.Core {
+[LocalizationStringsRepo]
 public static partial class LocalizedStrings {
 	private static readonly Dictionary<string, LString> _allDataMap = new Dictionary<string, LString>() {
 		{ "dialogue.luna", DialogueMetadata.luna },

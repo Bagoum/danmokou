@@ -1,0 +1,29 @@
+import myRefFile at "./bdsl2 reference file.bdsl" as mrf
+
+var myx = 5.0;
+function addToX(y) {
+	return myx + y;
+}
+
+
+pattern({
+	boss "thj13.mima"
+}, {
+	phase 0 { } {
+		paction 0 {
+			shiftphaseto 1
+		}
+	}
+	phase 30 {
+		type non "Vortex of Night, Vortex of Stars"
+		root 2 2
+	} {
+		saction 0 {
+			print(mrf.myFloat)
+			print(mrf.doMath(100))
+			//print(addToX(100))
+			sync "arrow-red/w" <> mrf.mySp
+			shiftphase
+		}
+	}
+})

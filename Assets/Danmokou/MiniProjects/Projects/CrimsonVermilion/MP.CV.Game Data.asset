@@ -12,29 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d7768018aff40589017a165e079b3c1, type: 3}
   m_Name: MP.CV.Game Data
   m_EditorClassIdentifier: 
-  gameIdentifier: CV
-  gameVersion:
-    major: 1
-    minor: 1
-    patch: 1
+  gameDefinition: {fileID: 11400000, guid: c969f53bfb84301428a21c0c16a5d55b, type: 2}
   mainMenu: {fileID: 11400000, guid: 341199991785876498ff8791fd82d593, type: 2}
-  replaySaveMenu: {fileID: 11400000, guid: 4eb8b66bd76d4d94fa90176835284503, type: 2}
   defaultUIFrame: {fileID: 21300000, guid: fd60a7ae3ce4be640b9b311d9d70969e, type: 3}
   unitScene: {fileID: 11400000, guid: f6d073d9562719741ac86ec620f65354, type: 2}
-  tutorial: {fileID: 0}
-  miniTutorial: {fileID: 0}
-  endcard: {fileID: 0}
-  campaign: {fileID: 0}
-  exCampaign: {fileID: 0}
-  dayCampaign: {fileID: 0}
   defaultTransition: {fileID: 11400000, guid: 517222e0dbe56264a8bcd878fc9e4e27, type: 2}
-  bounds:
-    left: -3.6
-    right: 3.6
-    top: 4.1
-    bot: -4.5
-    center: {x: -1.9, y: 0}
-  achievements: {fileID: 0}
   dialogue: []
   bossMetadata: []
   tracks:
@@ -48,6 +30,7 @@ MonoBehaviour:
   items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
   prefabReferences: {fileID: 11400000, guid: 842bcc7c616103e4c9880c49f9735bb4, type: 2}
   suzunoyaReferences: {fileID: 11400000, guid: a936563f4e58b294db033ff8ee6be6f8, type: 2}
+  advReferences: {fileID: 0}
   uxmlDefaults: {fileID: 11400000, guid: b4213b3830762944fbcb9250a4b73463, type: 2}
   SFX:
   - {fileID: 11400000, guid: 2765638c24dcd6f4684c2acbc07800c4, type: 2}
@@ -56,5 +39,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cdee2c8a4694b2148b6bff090233f211, type: 2}
   fileStateMachines: []
   licenses: []
+  importableScripts: []
   scriptFolders: []
   fastParsing: 0

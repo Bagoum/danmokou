@@ -52,12 +52,14 @@ class FlattenVisitor : ExpressionVisitor {
 
     private readonly bool reduceMethod;
     private readonly bool reduceField;
-    public FlattenVisitor(bool reduceMethod, bool reduceField) {
+    private readonly Func<object, bool>? reduceObject;
+    public FlattenVisitor(bool reduceMethod, bool reduceField, Func<object, bool>? reduceObject = null) {
         this.reduceMethod = reduceMethod;
         this.reduceField = reduceField;
+        this.reduceObject = reduceObject;
     }
-    public static Ex Flatten(Ex ex, bool reduceMethod = true, bool reduceField = true) {
-        var fv = new FlattenVisitor(reduceMethod, reduceField);
+    public static Ex Flatten(Ex ex, bool reduceMethod = true, bool reduceField = true, Func<object, bool>? reduceObject = null) {
+        var fv = new FlattenVisitor(reduceMethod, reduceField, reduceObject);
         ex = fv.Visit(ex);
         return ex;
     }
@@ -102,7 +104,8 @@ class FlattenVisitor : ExpressionVisitor {
         if (AssignTypes.Contains(node.NodeType)) {
             new DeactivateConstantVisitor(ConstValPrmsMap).Visit(l);
             if (node.NodeType == ExpressionType.Assign && l is ParameterExpression pex && 
-                r.IsSimplifiable() && VariableReductionAllowed.Count == 0) {
+                r.IsSimplifiable() && (r is not ConstantExpression cex || reduceObject?.Invoke(cex.Value) is not false) 
+                && VariableReductionAllowed.Count == 0) {
                 ConstValPrmsMap[pex] = r;
                 //You can't return empty here. Consider this case:
                 //y = 5

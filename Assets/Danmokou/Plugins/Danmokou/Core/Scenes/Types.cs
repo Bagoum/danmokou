@@ -6,8 +6,13 @@ using BagoumLib.Tasks;
 using Danmokou.Scriptables;
 
 namespace Danmokou.Scenes {
+public interface ISceneConfig {
+    string SceneName { get; }
+    CameraTransitionConfig? TransitionIn { get; }
+
+    public record SC(string SceneName, CameraTransitionConfig? TransitionIn = null) : ISceneConfig;
+}
 public interface ISceneIntermediary {
-    ICancellee SceneBoundedToken { get; }
     /// <summary>
     /// Start loading the provided scene.
     /// </summary>
@@ -32,7 +37,7 @@ public record SceneLoading(TaskCompletionSource<Unit> Preloading, TaskCompletion
 /// <param name="onPreLoad">Executed when the screen is hidden by the transition effect, before the scene is loaded.</param>
 /// <param name="onLoaded">Executed immediately after the scene is loaded. Probably does not precede Awake calls.</param>
 /// <param name="onFinished">Executed when standard control flow is reenabled. Note that this may happen at any time during the visual detransition.</param>
-public record SceneRequest(SceneConfig scene, SceneRequest.Reason reason, Action? onPreLoad = null, Action? onLoaded = null, 
+public record SceneRequest(ISceneConfig scene, SceneRequest.Reason reason, Action? onPreLoad = null, Action? onLoaded = null, 
     Action? onFinished = null) {
     public enum Reason {
         START_ONE,
@@ -44,13 +49,13 @@ public record SceneRequest(SceneConfig scene, SceneRequest.Reason reason, Action
 
     //we can't directly return onLoaded() since onLoaded will get executed at a later point, that's why we 
     // use a TCS for indirection
-    public static SceneRequest TaskFromOnLoad<T>(SceneConfig sc, Reason reason, Action? onPreLoad, Func<Task<T>> onLoaded,
+    public static SceneRequest TaskFromOnLoad<T>(ISceneConfig sc, Reason reason, Action? onPreLoad, Func<Task<T>> onLoaded,
         Action? onFinished, out TaskCompletionSource<T> awaiter) {
         var tcs = awaiter = new TaskCompletionSource<T>();
         return new SceneRequest(sc, reason, onPreLoad, () => onLoaded().Pipe(tcs), onFinished);
     }
 
-    public static SceneRequest TaskFromOnFinish<T>(SceneConfig sc, Reason reason, Action? onPreLoad, Action? onLoaded,
+    public static SceneRequest TaskFromOnFinish<T>(ISceneConfig sc, Reason reason, Action? onPreLoad, Action? onLoaded,
         Func<Task<T>> onFinished, out TaskCompletionSource<T> awaiter) {
         var tcs = awaiter = new TaskCompletionSource<T>();
         return new SceneRequest(sc, reason, onPreLoad, onLoaded, () => onFinished().Pipe(tcs));
@@ -61,6 +66,6 @@ public record SceneRequest(SceneConfig scene, SceneRequest.Reason reason, Action
         return this with { Transition = transition };
     }
 
-    public override string ToString() => $"{scene.sceneName} ({reason})";
+    public override string ToString() => $"{scene.SceneName} ({reason})";
 }
 }

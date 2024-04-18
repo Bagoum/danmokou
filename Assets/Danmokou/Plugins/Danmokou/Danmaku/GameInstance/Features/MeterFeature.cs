@@ -38,7 +38,7 @@ public class MeterFeature : BaseInstanceFeature, IMeterFeature {
     public const double meterUseInstantCost = 0.042;
     public Event<Unit> MeterBecameUsable { get; }= new();
     public double MeterUseThreshold => meterUseThreshold;
-    public double MeterForSwap =>  M.Lerp(0, 3, Inst.Difficulty.Counter, 0.06, 0.12);
+    public double MeterForSwap => M.Lerp(0, 3, Inst.Difficulty.Counter, 0.08, 0.16);
 
     public Lerpifier<float> VisibleMeter { get; }
     private InstanceData Inst { get; }
@@ -46,7 +46,7 @@ public class MeterFeature : BaseInstanceFeature, IMeterFeature {
 
     public bool AllowGemDrops => true;
     public bool EnoughMeterToUse => Meter >= meterUseThreshold;
-    private double MeterBoostGraze => M.Lerp(0, 3, Inst.Difficulty.Counter, 0.010, 0.006);
+    private double MeterBoostGraze => 0.006 / Inst.Difficulty.ValueRelLunatic;
     public int MeterFrames { get; private set; }
     private DMCompactingArray<Unit> consumers = new();
 
@@ -111,9 +111,9 @@ public class MeterFeature : BaseInstanceFeature, IMeterFeature {
     }
 
     public void OnPlayerFrame(bool lenient, PlayerController.PlayerState state) {
-        if (state == PlayerController.PlayerState.NORMAL)
+        if (state is PlayerController.PlayerState.Normal)
             AddMeter(meterRefillRate * ETime.FRAME_TIME);
-        else if (state == PlayerController.PlayerState.WITCHTIME)
+        else if (state is PlayerController.PlayerState.WitchTime)
             ++MeterFrames;
     }
 

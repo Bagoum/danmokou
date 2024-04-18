@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reactive;
 using System.Runtime.CompilerServices;
+using System.Text;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
@@ -95,7 +96,7 @@ public partial class PlayerController : BehaviorEntity,
     public DisturbedAnd FiringEnabled { get; } = new();
     public DisturbedAnd BombsEnabled { get; } = new();
     public static DisturbedAnd AllControlEnabled { get; } = new();
-    public static OverrideEvented<(BulletManager.StyleSelector sel, bool exclude)?> CollisionsForPool { get; } = new(null);
+    public static OverrideEvented<StyleSelector?> CollisionsForPool { get; } = new(null);
 
     private ushort shotItr = 0;
     [UsedImplicitly]
@@ -112,12 +113,13 @@ public partial class PlayerController : BehaviorEntity,
     
     private float focusRingDisplayLerp = 0f;
     private MaterialPropertyBlock meterPB = null!;
-    
-    public PlayerState State { get; private set; }
-    private GCancellable<PlayerState>? stateCanceller;
+
+    public PlayerStateFlow StateFlow { get; private set; } = null!;
+    public PlayerState State => StateFlow.State;
     private DeathbombState deathbomb = DeathbombState.NULL;
+
+    public DisturbedOr HitInvuln { get; } = new(false);
     
-    private int hitInvulnerabilityCounter = 0;
     private IChallengeManager? challenge;
     
     #endregion
@@ -129,16 +131,16 @@ public partial class PlayerController : BehaviorEntity,
     ///  state (ie. has an indeterminate position).
     /// </summary>
     public bool ReceivesBulletCollisions(string? style) =>
-        State != PlayerState.RESPAWN &&
-            (style is null or BulletManager.BulletFlakeName || CollisionsForPool.Value is not {} coll ||
-             coll.sel.Matches(style) != coll.exclude);
+        State is not PlayerState.Respawn &&
+        (style is null or BulletManager.BulletFlakeName ||
+         CollisionsForPool.Value?.Matches(style) is not false);
 
     /// <summary>
     /// True iff obstacle collisions can occur against the player.
     ///  This is only false when the player is in the RESPAWN state (ie. has an indeterminate position).
     /// </summary>
     public bool ReceivesWallCollisions =>
-        State != PlayerState.RESPAWN && InputInControl != InputInControlMethod.NONE_SINCE_RESPAWN;
+        State is not PlayerState.Respawn && InputInControl != InputInControlMethod.NONE_SINCE_RESPAWN;
     public ICancellee BoundingToken => Instance.Request?.InstTracker ?? Cancellable.Null;
     public bool AllowPlayerInput => AllControlEnabled && StateAllowsInput(State);
     private ActiveTeamConfig Team { get; set; } = null!;
@@ -168,8 +170,8 @@ public partial class PlayerController : BehaviorEntity,
         InputManager.IsBomb && AllowPlayerInput && BombsEnabled && Team.Support is Ability.Bomb;
     public bool IsTryingWitchTime => InputManager.IsMeter && AllowPlayerInput && Team.Support is Ability.WitchTime;
 
-    public float MeterScorePerValueMultiplier => State == PlayerState.WITCHTIME ? 2 : 1;
-    public float MeterPIVPerPPPMultiplier => State == PlayerState.WITCHTIME ? 2 : 1;
+    public float MeterScorePerValueMultiplier => State is PlayerState.WitchTime ? 2 : 1;
+    public float MeterPIVPerPPPMultiplier => State is PlayerState.WitchTime ? 2 : 1;
     
     private ChallengeManager.Restrictions Restrictions => 
         challenge?.Restriction ?? ChallengeManager.Restrictions.Default;
@@ -222,6 +224,7 @@ public partial class PlayerController : BehaviorEntity,
 
     protected override void Awake() {
         base.Awake();
+        StateFlow = new PlayerStateFlow(this);
         obstacleCollisionLayer = LayerMask.NameToLayer("Wall");
         var dfltTeams = new (ShipConfig, ShotConfig, IAbilityCfg?)[defaultPlayers.Length];
         for (int ii = 0; ii < defaultPlayers.Length; ++ii)
@@ -254,9 +257,8 @@ public partial class PlayerController : BehaviorEntity,
         UpdatePB();
         
         RealizeTeam();
-        
-        RunNextState(PlayerState.NORMAL);
-        
+
+        StateFlow.Start();
     }
 
     private void UpdatePB() {
@@ -308,6 +310,7 @@ public partial class PlayerController : BehaviorEntity,
         UpdateTeam(pind, nsubshot, force);
     }
     private void RealizeTeam() {
+        var sb = new StringBuilder();
         if (Team.Ship != Ship) {
             bool fromNull = Ship == null;
             Ship = Team.Ship;
@@ -316,7 +319,7 @@ public partial class PlayerController : BehaviorEntity,
                 Ship.movementHandler.Value;
             Hurtbox = new(Hurtbox.location, Ship.hurtboxRadius, Ship.grazeboxRadius);
             unityCollider.radius = Ship.hurtboxRadius;
-            Logs.Log($"Setting team player to {Ship.key}");
+            sb.Append($"Set ship to {Ship.key}\n");
             if (SpawnedShip != null) {
                 //animate "destruction"
                 SpawnedShip.InvokeCull();
@@ -332,7 +335,7 @@ public partial class PlayerController : BehaviorEntity,
             shotItr = ++shotItrCounter;
             shot = Team.Shot;
             subshot = Team.Subshot;
-            Logs.Log($"Setting shot to {shot.key}:{subshot}");
+            sb.Append($"Set shot to {shot.key}:{subshot}\n");
             if (DestroyExistingShot())
                 ISFXService.SFXService.Request(Team.Shot.onSwap);
             var realized = Team.Shot.GetSubshot(Team.Subshot);
@@ -344,6 +347,7 @@ public partial class PlayerController : BehaviorEntity,
             spawnedCamera = spawnedShot.GetComponent<AyaCamera>();
             if (spawnedCamera != null) spawnedCamera.Initialize(this);
         }
+        Logs.Log($"Updated player team:\n{sb}");
         _UpdateTeamColors();
     }
 
@@ -458,7 +462,7 @@ public partial class PlayerController : BehaviorEntity,
         if (AllControlEnabled) 
             Instance.UpdatePlayerFrame(State);
         if (AllowPlayerInput) {
-            if (InputManager.IsSwap) {
+            if (InputManager.IsSwap && Team.Ships.Length > 1) {
                 var meterReq = Instance.MeterF.MeterForSwap;
                 if (Instance.MeterF.TryConsumeMeterDiscrete(meterReq)) {
                     UpdateTeam((Team.SelectedIndex + 1) % Team.Ships.Length);
@@ -621,7 +625,7 @@ public partial class PlayerController : BehaviorEntity,
     }
     
     protected override void OnDisable() {
-        RequestNextState(PlayerState.NULL);
+        StateFlow.SetNext(new PlayerState.NULL());
         base.OnDisable();
     }
 
@@ -637,7 +641,7 @@ public partial class PlayerController : BehaviorEntity,
     }
     
     public void AddGraze(int graze) {
-        if (graze <= 0 || hitInvulnerabilityCounter > 0) return;
+        if (graze <= 0 || HitInvuln) return;
         GameManagement.Instance.AddGraze(graze);
     }
     
@@ -648,7 +652,7 @@ public partial class PlayerController : BehaviorEntity,
             _DoLoseLives(livesLost, forceTraditionalRespawn);
         }
         else {
-            if (hitInvulnerabilityCounter > 0 || deathbomb != DeathbombState.NULL) 
+            if (HitInvuln || deathbomb != DeathbombState.NULL) 
                 return;
             var frames = (Team.Support as Ability.Bomb)?.DeathbombFrames ?? 0;
             if (frames > 0) {
@@ -675,7 +679,7 @@ public partial class PlayerController : BehaviorEntity,
         Invuln(HitInvulnFrames);
         if (forceTraditionalRespawn || RespawnOnHit) {
             SpawnedShip.DrawGhost(2f);
-            RequestNextState(PlayerState.RESPAWN);
+            StateFlow.SetNext(new PlayerState.Respawn());
         }
         else InvokeParentedTimedEffect(SpawnedShip.OnHitEffect, hitInvuln);
     }
@@ -704,19 +708,19 @@ public partial class PlayerController : BehaviorEntity,
     }
     
     private void Invuln(int frames) {
-        ++hitInvulnerabilityCounter;
-        RunDroppableRIEnumerator(WaitOutInvuln(frames));
+        var token = HitInvuln.AddConst(true);
+        RunDroppableRIEnumerator(WaitOutInvuln(frames, token));
     }
     
-    private IEnumerator WaitOutInvuln(int frames) {
+    private IEnumerator WaitOutInvuln(int frames, IDisposable token) {
         var bombDisable = BombsEnabled.AddConst(false);
+        using var _ = token;
         int ii = frames;
         for (; ii > 60; --ii)
             yield return null;
         bombDisable.Dispose();
         for (; ii > 0; --ii)
             yield return null;
-        --hitInvulnerabilityCounter;
     }
 
     public void MakeInvulnerable(int frames, bool showEffect) {
@@ -732,111 +736,7 @@ public partial class PlayerController : BehaviorEntity,
     }
     
     #endregion
-
-    #region StateMethods
     
-    public void RequestNextState(PlayerState s) => stateCanceller?.Cancel(s);
-    
-    private IEnumerator ResolveState(PlayerState next, ICancellee<PlayerState> canceller) {
-        return next switch {
-            PlayerState.NORMAL => StateNormal(canceller),
-            PlayerState.WITCHTIME => throw new Exception($"Cannot generically request {nameof(PlayerState.WITCHTIME)} state"),
-            PlayerState.RESPAWN => StateRespawn(canceller),
-            _ => throw new Exception($"Unhandled player state: {next}")
-        };
-    }
-
-    private void RunNextState(PlayerState next) {
-        stateCanceller = null;
-        if (next == PlayerState.NULL) return;
-        var canceller = stateCanceller = new GCancellable<PlayerState>();
-        RunDroppableRIEnumerator(ResolveState(next, canceller));
-    }
-
-    private bool MaybeCancelState(ICancellee<PlayerState> cT) {
-        if (cT.Cancelled(out var next)) {
-            RunNextState(next);
-            return true;
-        } else return false;
-    }
-    //Assumption for state enumerators is that the token is not initially cancelled.
-    private IEnumerator StateNormal(ICancellee<PlayerState> cT) {
-        State = PlayerState.NORMAL;
-        while (true) {
-            if (MaybeCancelState(cT)) yield break;
-            if (IsTryingWitchTime) {
-                if (GameManagement.Instance.MeterF.TryStartMeter() is { } meterToken) {
-                    RunDroppableRIEnumerator(StateWitchTime(cT, meterToken));
-                    yield break;
-                } else
-                    PlayerMeterFailed.OnNext(default);
-            }
-            yield return null;
-        }
-    }
-    private IEnumerator StateRespawn(ICancellee<PlayerState> cT) {
-        State = PlayerState.RESPAWN;
-        SpawnedShip.RespawnOnHitEffect.Proc(Hurtbox.location, Hurtbox.location, 0f);
-        InputInControl = InputInControlMethod.NONE_SINCE_RESPAWN;
-        PastDirections.Clear();
-        PastPositions.Clear();
-        MarisaADirections.Clear();
-        MarisaAPositions.Clear();
-        PastDirections.Add(Vector2.down);
-        MarisaADirections.Add(Vector2.down);
-        for (float t = 0; t < RespawnFreezeTime; t += ETime.FRAME_TIME) yield return null;
-        //Don't update the hitbox location
-        tr.position = new Vector2(0f, 100f);
-        InvokeParentedTimedEffect(SpawnedShip.RespawnAfterEffect, hitInvuln - RespawnFreezeTime);
-        //Respawn doesn't respect state cancellations
-        for (float t = 0; t < RespawnDisappearTime; t += ETime.FRAME_TIME) yield return null;
-        for (float t = 0; t < RespawnMoveTime; t += ETime.FRAME_TIME) {
-            var nxtPos = Vector2.Lerp(RespawnStartLoc, RespawnEndLoc, t / RespawnMoveTime);
-            tr.position = nxtPos;
-            LocationHelpers.UpdateTruePlayerLocation(nxtPos);
-            PastPositions.Add(nxtPos);
-            MarisaAPositions.Add(nxtPos);
-            yield return null;
-        }
-        SetLocation(RespawnEndLoc);
-        
-        if (!MaybeCancelState(cT)) RunDroppableRIEnumerator(StateNormal(cT));
-    }
-    private IEnumerator StateWitchTime(ICancellee<PlayerState> cT, IDisposable meterToken) {
-        GameManagement.Instance.LastMeterStartFrame = ETime.FrameNumber;
-        State = PlayerState.WITCHTIME;
-        speedLines.Play();
-        using var t = ETime.Slowdown.AddConst(WitchTimeSlowdown);
-        using var _mt = meterToken;
-        var displayCt = new Cancellable();
-        RunDroppableRIEnumerator(ShowMeterDisplay(null, displayCt, 0.25f));
-        PlayerActivatedMeter.OnNext(default);
-        for (int f = 0; !MaybeCancelState(cT) &&
-            IsTryingWitchTime && Instance.MeterF.TryUseMeterFrame(); ++f) {
-            SpawnedShip.MaybeDrawWitchTimeGhost(f);
-            MeterIsActive.OnNext(Instance.MeterF.EnoughMeterToUse ? meterDisplay : meterDisplayInner);
-            yield return null;
-        }
-        displayCt.Cancel();
-        PlayerDeactivatedMeter.OnNext(default);
-        speedLines.Stop();
-        //MaybeCancelState already run in the for loop
-        if (!cT.Cancelled(out _)) RunDroppableRIEnumerator(StateNormal(cT));
-    }
-
-    private IEnumerator ShowMeterDisplay(float? maxTime, ICancellee cT, float fadeInOver=0) {
-        meterDisplayOpacity.Push(1);
-        for (float t = 0; t < (maxTime ?? float.PositiveInfinity) && !cT.Cancelled; t += ETime.FRAME_TIME) {
-            float meterDisplayRatio = fadeInOver <= 0 ? 1 : Easers.EOutSine(Mathf.Clamp01(t / fadeInOver));
-            meterPB.SetFloat(PropConsts.fillRatio, Instance.MeterF.VisibleMeter.Value * meterDisplayRatio);
-            meter.SetPropertyBlock(meterPB);
-            yield return null;
-        }
-        meterDisplayOpacity.Push(0);
-    }
-    
-    
-    #endregion
 
     private void OnTriggerEnter2D(Collider2D other) {
         Console.WriteLine(other.gameObject.name);

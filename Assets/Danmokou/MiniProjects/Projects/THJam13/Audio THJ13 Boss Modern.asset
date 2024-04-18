@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c3d462728373fa4db771cd7986b7536, type: 3}
   m_Name: Audio THJ13 Boss Modern
   m_EditorClassIdentifier: 
-  clip: {fileID: 8300000, guid: ee7c1ffe69fa2eb40afb8dd2d2e4ffed, type: 3}
+  clip: {fileID: 8300000, guid: 5e6da3eec24e6c349963d2342c39afbd, type: 3}
   key: thj13.boss_modern
   trackPlayLocation: 
   title: boss modern
@@ -22,7 +22,7 @@ MonoBehaviour:
     hardcoded:
       en: 
       jp: 
-  volume: 0.3
+  volume: 0.25
   pitch: 1
   loopMode: 1
   loopSeconds: {x: 0, y: 163}

@@ -11,7 +11,7 @@ using Danmokou.GameInstance;
 using Danmokou.Player;
 using Danmokou.Services;
 
-namespace Danmokou.MiniProjects {
+namespace MiniProjects {
 public class THJam13CustomDataFeature : BaseInstanceFeature, ICustomDataFeature, IDisposable {
     public InstanceData Inst { get; }
     public float TimeInMode { get; private set; }
@@ -21,8 +21,7 @@ public class THJam13CustomDataFeature : BaseInstanceFeature, ICustomDataFeature,
     public float RetroMode01Smooth => RetroMode01SmoothEv;
     private PushLerper<float> RetroMode01SmoothEv { get; } = new(0.5f);
     public Evented<bool> RetroModeEv { get; } = new(false);
-    public BulletManager.StyleSelector Vuln { get; } = new("*black*");
-    public ICObservable<(BulletManager.StyleSelector, bool)?> PlayerVulnEv { get; }
+    public ICObservable<StyleSelector?> PlayerVulnEv { get; }
 
     private void UpdateRetroMode() {
         RetroModeEv.PublishIfNotSame((Inst.TeamCfg?.SelectedIndex ?? 0) == 1);
@@ -39,7 +38,9 @@ public class THJam13CustomDataFeature : BaseInstanceFeature, ICustomDataFeature,
                 new(2f, _ => LocationHelpers.TruePlayerLocation, pi => 16 * pi.t, 
                     retro ? pi => BMath.Lerp(640, 960, pi.t/2f) : null, retro));
         }));
-        PlayerVulnEv = RetroModeEv.Select(retro => (Vuln, !retro) as (BulletManager.StyleSelector, bool)?);
+        var retroVuln = new StyleSelector("*black*", false);
+        var modernVuln = new StyleSelector("*black*", true);
+        PlayerVulnEv = RetroModeEv.Select(retro => retro ? retroVuln : modernVuln);
         Tokens.Add(PlayerController.CollisionsForPool.AddDisturbance(PlayerVulnEv));
     }
 

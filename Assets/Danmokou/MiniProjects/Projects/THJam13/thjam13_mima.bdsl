@@ -1,35 +1,20 @@
+import ref at "./thjam13_ref.bdsl" as r
 
 const var mimac = { "yellow", "orange", "pink", "green", "teal", "blue" }
 const var mimac1 = { "yellow", "orange", "pink" }
 const var mimac2 = { "green", "teal", "blue" }
 var w = mindex(mimac2, 4.5);
 
-macro data() {
-	cfeature<THJam13CustomDataFeature>()
-}
-macro tintRetro() {
-	rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 0.5, 1))
-}
-macro tintModern() {
-	rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 1, 0.5))
-}
-function setColors()::StateMachine {
-	return paction 0 {
-		poolcontrol "*black*" tint tintRetro()
-		poolcontrol { "*purple*", "*teal*", "*green*", "*orange*", "*yellow*", "*red*", "*pink*", "*blue*" } tint 
-			tintModern()
-	}
-}
 
 function doSwitch(index::int)::StateMachine {
 	return exec b{
 		(mine<BehaviorEntity>().displayer as OneOfDisplayController).SelIndex = index
 		if (index == 1) {
-			mine<Enemy>().ReceivedDamageMult = bpy(data().RetroMode01)
-			mine<Enemy>().HealthbarOpacityFunc = bpy(data().RetroMode01Smooth)
+			mine<Enemy>().ReceivedDamageMult = bpy(r.data().RetroMode01)
+			mine<Enemy>().HealthbarOpacityFunc = bpy(r.data().RetroMode01Smooth)
 		} else {
-			mine<Enemy>().ReceivedDamageMult = bpy(1 - data().RetroMode01)
-			mine<Enemy>().HealthbarOpacityFunc = bpy(1 - data().RetroMode01Smooth)
+			mine<Enemy>().ReceivedDamageMult = bpy(1 - r.data().RetroMode01)
+			mine<Enemy>().HealthbarOpacityFunc = bpy(1 - r.data().RetroMode01Smooth)
 		}
 	}
 }
@@ -48,8 +33,8 @@ var sm = pattern({
 		boss "thj13.mima"
 		mixer {
 			(1, { 
-				("thj13.stage_retro", BPY(data().RetroMode01))
-				("thj13.stage_modern", BPY(1-data().RetroMode01))
+				("thj13.stage_retro", BPY(r.data().RetroMode01))
+				("thj13.stage_modern", BPY(1-r.data().RetroMode01))
 			})
 		}
 	}, {
@@ -57,7 +42,7 @@ var sm = pattern({
 		paction 0 {
 			position 0 9
 			doSwitch(0)
-			shiftphaseto 1
+			shiftphaseto 2
 		}
 	}
 
@@ -71,13 +56,13 @@ var sm = pattern({
 		}
 	}
 
-	phase 30 { 
+	phase 34 { 
 		type non "Vortex of Night, Vortex of Stars"
 		hpi 19000 5
-		root 0 2.5
+		roott 1 0 2.5
 	} {
 		paction 0 {
-			setColors()
+			r.setColors()
 			gtr {
 				times(inf)
 				waitchild
@@ -88,27 +73,29 @@ var sm = pattern({
 			} {
 				saction 0 {
 					wrap(switchToMode(mode))
-					sync "inode" <> gsr {
+					sync "rbake" <> gsr {
 						times(2)
 						bindlr
-					} summons
-						tprot(pxy(1.7 * lr, 0.4 + -3.2 * t ^ 1.2))
-						async "*" <;:> gir {
-							colorx(lr < 0 ? "dot-*/w" : "star-*/") 
-						} gcr2 (20/sqrt(dl)) inf angle(4 * lr) {
-							colorx(lr < 0 ? "black" : null)
-							color(mimac2)
-							cancel(loc.y < -3)
-							sfx "x-fire-star-2"
-						} gsr2c (10 * sqrt(dl)) {
-						} simple tprot(
-							t < 0.7 ?
-								px(2 * lr) :
-								(t > 1.4 ?
-									cy 2 :
-									pxy(-2 * lr, -2))) {
-										dir starrot1
-									}
+					} summon(
+						tprot(pxy(1.7 * lr, 0.4 + -3.2 * t ^ 1.2)),
+						thendelay 4
+							async "*" <;:> gir {
+								colorx(lr < 0 ? "dot-*/w" : "star-*/") 
+							} gcr2 (20/sqrt(dl)) inf angle(4 * lr) {
+								colorx(lr < 0 ? "black" : null)
+								color(mimac2)
+								cancel(loc.y < -3)
+								sfx "x-fire-star-2"
+							} gsr2c (10 * sqrt(dl)) {
+							} simple tprot(
+								t < 0.7 ?
+									px(2 * lr) :
+									(t > 1.4 ?
+										cy 2 :
+										pxy(-2 * lr, -2))) {
+											dir starrot1
+										},
+						{ hp 10000000 })
 					wait 3
 					~ async "" <> gcr2 60 4 <> {
 						p this
@@ -126,7 +113,7 @@ var sm = pattern({
 						tprot px(lerpt3(0.2, 0.5, 0.7, 1.4, 4, 0.9, 6)) {
 						colorr "lightning-*" pather 3 0.5 nroffset @ "ploc" p {
 							s 2
-							tint(pm1(pathi) == modelr ? tintRetro() : tintModern())
+							tint(pm1(pathi) == modelr ? r.tintRetro() : r.tintModern())
 						}
 						colorr "lstar-*" simple dtpoffset "ploc" "pdir" p zero {
 							dir starrotb3
@@ -138,6 +125,7 @@ var sm = pattern({
 					} {
 						async "" <> gcr2 30 10 <> {
 							bindlr
+							sfx "x-fire-star-1"
 							colorx(i % 2 == 0 ? "star-teal/" : "dot-black/w")
 							frv2(nx(pm1(i)))
 						} gsr2c (40*dl) {
@@ -154,10 +142,10 @@ var sm = pattern({
 									rv2.nx *= -1
 								}
 							}
-						} laser(null, 1.5, 0.5, { 
+						} laser(none, 1.5, 0.5, { 
 							s 3
 							dsfx
-							tint(li == 0 ? tintModern() : tintRetro())
+							tint(li == 0 ? r.tintModern() : r.tintRetro())
 						})
 					}
 					movetarget(3, $(eiosine), pxy(0, rand(2, 3)))
@@ -189,7 +177,7 @@ var sm = pattern({
 			}
 		}
 		paction 0 {
-			setColors()
+			r.setColors()
 			bulletcontrol true "star-*" softcull("", mag(loc) < 0.2)
 			bulletcontrol true "dot-*" softcull("", mag(loc) < 0.2)
 			poolcontrol "dcircle-*" allowdelete false
@@ -269,8 +257,8 @@ var sm = pattern({
 						root(loc)
 					} {
 						gcr {
-						} laser(null, 2, 0, { dsfx, 
-							tint(witha(1 - t/2, mode == 1 ? tintRetro() : tintModern())), 
+						} laser(none, 2, 0, { dsfx, 
+							tint(witha(1 - t/2, mode == 1 ? r.tintRetro() : r.tintModern())), 
 							s 2 })
 						gcr {
 							delay 30
@@ -278,7 +266,7 @@ var sm = pattern({
 							sfx "x-lightning"
 						} pather(1, 0.8, rvelocity px(lerpt3(0.2, 0.5, 0.8, 1.4, 13, 4, 9)), { 
 							s 2 
-							tint(mode == 1 ? tintRetro() : tintModern())
+							tint(mode == 1 ? r.tintRetro() : r.tintModern())
 						})
 					}
 				}
@@ -286,7 +274,6 @@ var sm = pattern({
 		}
 
 	}
-
 	phase 0 {
 		dialogue
 		root 0 2.5

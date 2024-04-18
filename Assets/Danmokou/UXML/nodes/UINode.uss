@@ -1,8 +1,15 @@
-:root {
+:root, .theme-goldaccent, .theme-goldaccent * {
     --accent-text: rgb(238, 170, 24);
     --accent-pure: rgb(207, 139, 0);
     --accent-pure-0: rgba(207, 139, 0, 0);
     --accent-dark1: rgb(147, 92, 29);
+}
+
+.theme-goldaccent .disabled {
+    --accent-pure: rgb(129, 128, 106);
+}
+
+:root, .theme-purple, .theme-purple * {
     --main-pure: rgb(108, 21, 121);
     --main-dark1-80: rgba(74, 16, 84, 0.8);
     --main-dark2-90: rgba(33, 4, 39, 0.9);
@@ -11,15 +18,11 @@
     --gray: rgb(95, 85, 95);
 }
 
-.disabled {
-    --accent-pure: rgb(129, 128, 106);
-}
-
-.theme-blue {
+.theme-blue, .theme-blue * {
     --main-pure: rgb(28, 62, 147);
     --main-dark1-80: rgba(22, 35, 84, 0.8);
     --main-dark2-90: rgba(16, 16, 48, 0.9);
-    --highlighter-70: rgba(65, 72, 158, 0.7);
+    --highlighter-70: rgba(68, 88, 189, 0.7);
     --liner: rgb(91, 167, 234);
     --gray: rgb(82, 83, 99);
 }
@@ -311,10 +314,10 @@
 
 .node.saveentry .body {
     border-color: var(--accent-dark1);
-    background-image: url("project://database/Assets/Danmokou/Sprites/util/1u-square-featherlr-90pct.png?fileID=2800000&guid=20a7ca53c3ccd9b4ebf9b8745c32a5f6&type=3#1u-square-featherlr-90pct");
 }
 
 .node.saveentry.focus .body {
+    background-image: url("project://database/Assets/Danmokou/Sprites/util/1u-square-featherlr-90pct.png?fileID=2800000&guid=20a7ca53c3ccd9b4ebf9b8745c32a5f6&type=3#1u-square-featherlr-90pct");
     border-color: var(--accent-pure);
 }
 

@@ -1,0 +1,28 @@
+pattern { } {
+phase 0 {
+	type(non, "Squidward Dance")
+	roott(1, 0, 3)
+} {
+	paction 0 {
+		sync("gdlaser-teal/w", <1;:270>, gsrepeat({
+			times(6)
+			rv2incr(<24>)
+			center
+			preloop b{
+				hvar itr = i
+			}
+		}, laser(none, 2, inf, {
+				stagger(0.5)
+				s(2)
+				varlength(10, 8 + sine(5, 3, t))
+				start(2 + sine(5h, 2, t))
+				dynamic(roffset(pxy(
+					0.5 * t,  
+					sine(5, 0.2, t + 2.5 * itr +  8 * lt)
+				)))
+			})
+		)
+	)
+	}
+}
+}

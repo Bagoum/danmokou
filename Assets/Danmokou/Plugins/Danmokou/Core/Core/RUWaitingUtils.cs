@@ -17,7 +17,7 @@ public static class RUWaitingUtils {
         cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
         if (time < float.Epsilon) return;
-        Exec.RunRIEnumerator(WaitFor(time, cT, GetAwaiter(out Task t)));
+        Exec.RunAppendRIEnumerator(WaitFor(time, cT, GetAwaiter(out Task t)));
         await t;
         //I do want this throw here, which is why I don't 'return t'
         cT.ThrowIfCancelled();
@@ -31,7 +31,7 @@ public static class RUWaitingUtils {
         cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
         if (time < float.Epsilon) return Task.CompletedTask;
-        Exec.RunRIEnumerator(WaitFor(time, cT, GetAwaiter(out Task t)));
+        Exec.RunAppendRIEnumerator(WaitFor(time, cT, GetAwaiter(out Task t)));
         return t;
     }
     /// <summary>
@@ -42,7 +42,7 @@ public static class RUWaitingUtils {
     public static Task WaitForUnchecked(CoroutineRegularUpdater Exec, ICancellee cT, Func<bool> condition) {
         cT.ThrowIfCancelled();
         var tcs = new TaskCompletionSource<Unit>();
-        Exec.RunRIEnumerator(WaitFor(condition, cT, tcs));
+        Exec.RunAppendRIEnumerator(WaitFor(condition, cT, tcs));
         return tcs.Task;
     }
 
@@ -53,7 +53,7 @@ public static class RUWaitingUtils {
         Action? cb) {
         cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
-        Exec.RunRIEnumerator(WaitFor(time, cT, () => {
+        Exec.RunAppendRIEnumerator(WaitFor(time, cT, () => {
             if (!cT.Cancelled) cb?.Invoke();
         }));
     }
@@ -64,7 +64,7 @@ public static class RUWaitingUtils {
         Action cb) {
         cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
-        Exec.RunRIEnumerator(WaitFor(time, cT, cb));
+        Exec.RunAppendRIEnumerator(WaitFor(time, cT, cb));
     }
     /// <summary>
     /// Outer waiter-- Will not cb if cancelled
@@ -72,7 +72,7 @@ public static class RUWaitingUtils {
     public static void WaitThenCB(CoroutineRegularUpdater Exec, ICancellee cT, float time, Func<bool> condition,
         Action cb) {
         cT.ThrowIfCancelled();
-        Exec.RunRIEnumerator(WaitForBoth(time, condition, cT, () => {
+        Exec.RunAppendRIEnumerator(WaitForBoth(time, condition, cT, () => {
             if (!cT.Cancelled) cb();
         }));
     }
@@ -81,7 +81,7 @@ public static class RUWaitingUtils {
     /// </summary>
     public static void WaitThenCBEvenIfCancelled(CoroutineRegularUpdater Exec, ICancellee cT, float time, Func<bool> condition, Action cb) {
         cT.ThrowIfCancelled();
-        Exec.RunRIEnumerator(WaitForBoth(time, condition, cT, cb));
+        Exec.RunAppendRIEnumerator(WaitForBoth(time, condition, cT, cb));
     }
     
     /// <summary>
@@ -89,7 +89,7 @@ public static class RUWaitingUtils {
     /// </summary>
     public static void WaitThenCBEvenIfCancelled(CoroutineRegularUpdater Exec, ICancellee cT, Func<bool> condition, Action cb) {
         cT.ThrowIfCancelled();
-        Exec.RunRIEnumerator(WaitFor(condition, cT, cb));
+        Exec.RunAppendRIEnumerator(WaitFor(condition, cT, cb));
     }
 
     /// <summary>
@@ -101,7 +101,7 @@ public static class RUWaitingUtils {
         if (zeroToInfinity && time < float.Epsilon) {
             time = float.MaxValue;
         }
-        Exec.RunRIEnumerator(WaitFor(time, cT, () => {
+        Exec.RunAppendRIEnumerator(WaitFor(time, cT, () => {
             if (!cT.Cancelled) toCancel.Cancel();
         }));
     }

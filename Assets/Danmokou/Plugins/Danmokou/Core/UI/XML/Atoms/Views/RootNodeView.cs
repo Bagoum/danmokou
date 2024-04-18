@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Culture;
 using BagoumLib.Functional;
 using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
@@ -22,11 +23,13 @@ namespace Danmokou.UI.XML {
 /// </summary>
 public class RootNodeViewModel : UIViewModel {
     public UINode Node { get; }
+    public LString? Description { get; }
     public Func<long>? NodeIsVisibleHash { get; set; }
     public Func<long>? NodeIsEnabledHash { get; set; }
     
-    public RootNodeViewModel(UINode node) {
+    public RootNodeViewModel(UINode node, LString? description) {
         Node = node;
+        Description = description;
     }
     public override long GetViewHash() {
         Profiler.BeginSample("RootNodeView hash computation");
@@ -56,14 +59,19 @@ public class RootNodeView : UIView<RootNodeViewModel>, IUIView {
     /// Animation played when the node is first rendered. Defaults to null.
     /// </summary>
     public Func<UINode, ICancellee, Task>? OnFirstRenderAnimation { get; set; }
-    public RootNodeView(UINode node) : base(new(node)) { }
+    public RootNodeView(UINode node, LString? description = null) : base(new(node, description)) { }
 
     //Normally we don't need to apply update CSS immediately after building the node,
     // but since there's a transitio on on node.opacity, a "fade in" effect will occur if we allow
     // UITK to apply the initial visibility class at the end of the frame.
     public override void OnBuilt(UINode node) {
         base.OnBuilt(node);
+        ReprocessForLanguageChange();
+    }
+
+    public override void ReprocessForLanguageChange() {
         Update(default);
+        UpdateLabel();
     }
 
     void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
@@ -95,6 +103,14 @@ public class RootNodeView : UIView<RootNodeViewModel>, IUIView {
         }
         return base.Update(in context);
     }
+
+    public void UpdateLabel() {
+        if (VM.Description?.Value is {} desc) {
+            var label = Node.HTML.Q<Label>();
+            if (label != null)
+                label.text = desc;
+        }
+    }
     
     /// <summary>
     /// Turn off enter and leave animations on this node.
@@ -105,7 +121,8 @@ public class RootNodeView : UIView<RootNodeViewModel>, IUIView {
     /// Set an animation to be played when the node first renders.
     /// </summary>
     public void OnFirstRender(Func<UINode, ICancellee, ITransition> tweener) =>
-        OnFirstRenderAnimation = (n, cT) => tweener(n, cT).Run(Node.Controller, UIController.AnimOptions);
+        OnFirstRenderAnimation = (n, cT) => 
+            Node.Controller.PlayAnimation(tweener(n, cT));
     
     public static readonly Func<UINode, ICancellee, Task?> DefaultEnterAnimation = (n, cT) =>
         n.Controller.PlayAnimation(

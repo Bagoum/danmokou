@@ -1,0 +1,26 @@
+
+//Custom data feature.
+macro data() {
+	cfeature<THJam13CustomDataFeature>()
+}
+ 
+//Tint settings for retro bullets.
+function tintRetro() {
+	return rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 0.5, 1))
+}
+
+//Tint settings for modern bullets.
+function tintModern() {
+	return rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 1, 0.5))
+}
+
+///
+Call this to set the tint controls for simple bullet pools.
+This must be called every phase.
+///
+function setColors()::StateMachine {
+	return paction 0 {
+		poolcontrol include({"*black*"}) tint tintRetro()
+		poolcontrol exclude({"*black*"}) tint tintModern()
+	}
+}

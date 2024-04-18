@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Danmokou.Behavior {
 public class ContinuousAudio : ProcReader {
     private AudioSource src = null!;
-    private float baseVolume;
+    public float baseVolume = 0.09f;
 
     [ReflectInto(typeof(FXY))]
     public string VolumeScaler = "";
@@ -19,7 +19,6 @@ public class ContinuousAudio : ProcReader {
 
     protected virtual void Awake() {
         src = GetComponent<AudioSource>();
-        baseVolume = src.volume;
         VolScale = new ReflWrap<FXY>(VolumeScaler);
         speedScale = new ReflWrap<FXY>(SpeedScaler);
     }

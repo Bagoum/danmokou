@@ -98,7 +98,7 @@ public static partial class ExM {
     /// <param name="inner">Code to execute within the scope of the variables</param>
     [BDSL2Only]
     public static Func<TExArgCtx, TEx<T>> LetBDSL2<T,V>((string, UncompiledCode<V>)[] aliases, Func<TExArgCtx, TEx<T>> inner) => bpi => 
-        ReflectEx.Let(aliases.Select(a => (a.Item1, a.Item2.code)).ToArray(), () => inner(bpi), bpi);
+        ReflectEx.Let(aliases.Select(a => (a.Item1, code: a.Item2.Code)).ToArray(), () => inner(bpi), bpi);
     
     /// <summary>
     /// Assign local variables that can be repeatedly used without reexecution via the Reference (&amp;) function.
@@ -335,7 +335,7 @@ public static partial class ExM {
         var exp = V<double>();
         List<Ex> stmts = new() { num.Is(denom.Is(ExC(0.0))) };
         for (int ii = 0; ii < against.Length; ++ii) {
-            stmts.Add(x.Is(against[ii].code(bpi)));
+            stmts.Add(x.Is(against[ii].Code(bpi)));
             stmts.Add(exp.Is(ExpDb(x.Mul(sharp))));
             stmts.Add(ExUtils.AddAssign(num, x.Cast<double>().Mul(exp)));
             stmts.Add(ExUtils.AddAssign(denom, exp));
@@ -354,7 +354,7 @@ public static partial class ExM {
         var num = V<double>();
         List<Ex> stmts = new() { num.Is(ExC(0.0)) };
         for (int ii = 0; ii < against.Length; ++ii) {
-            stmts.Add(ExUtils.AddAssign(num, ExpDb(sharp.Mul(against[ii].code(bpi)))));
+            stmts.Add(ExUtils.AddAssign(num, ExpDb(sharp.Mul(against[ii].Code(bpi)))));
         }
         stmts.Add(((Ex)LnDb(num)).Cast<float>().Div(sharp));
         return Ex.Block(new[] {num}, stmts);
@@ -533,8 +533,7 @@ public static partial class ExM {
     
     #region External
 
-    [DontReflect]
-    public static Ex FrameNumber => Ex.Property(null, typeof(ETime), nameof(ETime.FrameNumber));
+    public static TEx<int> FrameNumber => Ex.Property(null, typeof(ETime), nameof(ETime.FrameNumber));
     
     private static Ex BEHEnemy(this TEx<BehaviorEntity> beh) => beh.Field(nameof(BehaviorEntity.Enemy));
 

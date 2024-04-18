@@ -43,8 +43,8 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: e33f7321c083e984c9bee0073c1f4058, type: 3}
-  m_Resource: {fileID: 8300000, guid: e33f7321c083e984c9bee0073c1f4058, type: 3}
+  m_audioClip: {fileID: 8300000, guid: fda1335dc1223e2478b65bee7b7d814d, type: 3}
+  m_Resource: {fileID: 8300000, guid: fda1335dc1223e2478b65bee7b7d814d, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.09
   m_Pitch: 1
@@ -144,6 +144,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   checkEveryFrames: 10
   method: 0
+  baseVolume: 0.09
   VolumeScaler: min(5, 1 + 0.7 * sqrt (submax0 x 2))
   SpeedScaler: max(1, 1.6 / 90 * atan2((submax0 x 2), 1))
 --- !u!1 &915687382
@@ -610,6 +611,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:

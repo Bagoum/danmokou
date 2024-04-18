@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using BagoumLib.Expressions;
 using BagoumLib.Functional;
 using BagoumLib.Reflection;
 using BagoumLib.Unification;
@@ -109,6 +110,8 @@ public static class Helpers {
         fn(out var ef);
         return ef;
     }
+    
+    public static string DocCommentDisplay(this IDeclaration x) => x.DocComment is { } c ? $"  \n*{c}*" : "";
 
     /// <summary>
     /// If this type is of the form TEx&lt;R&gt; or TExArgCtx->TEx&lt;R&gt;, then return true and set inner to R.
@@ -180,18 +183,6 @@ public static class Helpers {
     public static Func<TExArgCtx, TEx> MakeTypedLambda(this Type t, Func<TExArgCtx, TEx> f) =>
         TExLambdaTyper.ConvertForType(t, f);
 
-    public static class TExLambdaTyper {
-        private static readonly Dictionary<Type, MethodInfo> converters = new();
-        private static readonly MethodInfo mi = typeof(TExLambdaTyper).GetMethod(nameof(Convert))!;
-
-        public static Func<TExArgCtx, TEx<T>> Convert<T>(Func<TExArgCtx, TEx> f) => tac => (Ex)f(tac);
-        public static Func<TExArgCtx, TEx> ConvertForType(Type t, Func<TExArgCtx, TEx> f) {
-            if (t == typeof(void)) return f;
-            var conv = converters.TryGetValue(t, out var c) ? c : converters[t] = mi.MakeGenericMethod(t);
-            return (conv.Invoke(null, new object[] { f }) as Func<TExArgCtx, TEx>)!;
-        }
-    }
-    
     public class NotWriteableException : Exception {
         public int ArgIndex { get; }
 
@@ -245,4 +236,17 @@ public static class Helpers {
     }
     
 }
+
+public static class TExLambdaTyper {
+    private static readonly Dictionary<Type, MethodInfo> converters = new();
+    private static readonly MethodInfo cmi = typeof(TExLambdaTyper).GetMethod(nameof(Convert))!;
+
+    public static Func<TExArgCtx, TEx<T>> Convert<T>(Func<TExArgCtx, TEx> f) => tac => (Ex)f(tac);
+    public static Func<TExArgCtx, TEx> ConvertForType(Type t, Func<TExArgCtx, TEx> f) {
+        if (t == typeof(void)) return f;
+        var conv = converters.TryGetValue(t, out var c) ? c : converters[t] = cmi.MakeGenericMethod(t);
+        return (conv.Invoke(null, new object[] { f }) as Func<TExArgCtx, TEx>)!;
+    }
+}
+
 }

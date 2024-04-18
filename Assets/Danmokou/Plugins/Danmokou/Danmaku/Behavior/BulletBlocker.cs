@@ -21,9 +21,9 @@ public class BulletBlocker : CoroutineRegularUpdater, IBehaviorEntityDependent,
     private RectCollider? rectCollider;
     public Collider2D? unityCollider;
     private BehaviorEntity beh = null!;
-    [ReflectInto(typeof(BulletManager.StyleSelector))]
+    [ReflectInto(typeof(StyleSelector))]
     public string affectedStyles = "";
-    private BulletManager.StyleSelector Styles = null!;
+    private StyleSelector Styles = null!;
 
     public Vector2 Location => beh.Location + M.RotateVector(colliderOffset, Direction);
     private Vector2 colliderOffset = Vector2.zero;
@@ -35,7 +35,7 @@ public class BulletBlocker : CoroutineRegularUpdater, IBehaviorEntityDependent,
         beh.LinkDependentUpdater(this);
         Collider = GetCollider(this, unityCollider, ref colliderOffset);
         rectCollider = Collider as RectCollider;
-        Styles = affectedStyles.Into<BulletManager.StyleSelector>();
+        Styles = affectedStyles.Into<StyleSelector>();
     }
 
     public static ICollider GetCollider(MonoBehaviour go, Collider2D? unityCollider, ref Vector2 colliderOffset) {
@@ -94,14 +94,5 @@ public class BulletBlocker : CoroutineRegularUpdater, IBehaviorEntityDependent,
         Vector2 collLoc) {
         if (coll.collide || coll.graze)
             TakeHit(1, in laser.BPI, 0);
-    }
-
-    [ContextMenu("Debug matches")]
-    public void DebugMatches() {
-        var ss = affectedStyles.Into<BulletManager.StyleSelector>();
-        var sb = new StringBuilder();
-        foreach (var s in BulletManager.SIMPLEBULLETKEYS.OrderBy(x => RNG.GetInt(0, 100)).Take(50))
-            sb.Append($"{s}: {ss.Matches(s)}\n");
-        Logs.Log(sb.ToString());
     }
 }

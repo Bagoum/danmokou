@@ -1,0 +1,188 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &669828513927261987
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 41652041246999765, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.814285
+      objectReference: {fileID: 0}
+    - target: {fileID: 41652041246999765, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2.5428572
+      objectReference: {fileID: 0}
+    - target: {fileID: 1627578724711655887, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 2c6400ecb649c694e8dd8399ee316b4e,
+        type: 3}
+    - target: {fileID: 2291325347389896490, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: offsetPx.x
+      value: 254
+      objectReference: {fileID: 0}
+    - target: {fileID: 2291325347389896490, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: offsetPx.y
+      value: 356
+      objectReference: {fileID: 0}
+    - target: {fileID: 2291325347389896490, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: emotes.Array.size
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2291325347389896490, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: emotes.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d217d183d0991dd42883b3535120a481,
+        type: 3}
+    - target: {fileID: 2291325347389896490, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: emotes.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 0b2257cbbb5f12a4fb443593b186406a,
+        type: 3}
+    - target: {fileID: 2291325347389896490, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: emotes.Array.data[2].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 2c6400ecb649c694e8dd8399ee316b4e,
+        type: 3}
+    - target: {fileID: 2291325347389896490, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: emotes.Array.data[3].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: e634201ad8fc33445adc5f9680f39af3,
+        type: 3}
+    - target: {fileID: 2291325347389896490, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: emotes.Array.data[4].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: da2a9f0fe213e3b4baea44b3bab7dffe,
+        type: 3}
+    - target: {fileID: 3938963659613347399, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: emotes.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 19cb09307cc248d4b905ca4f147265de,
+        type: 3}
+    - target: {fileID: 5179137271507438359, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5179137271507438359, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841180810607, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 19cb09307cc248d4b905ca4f147265de,
+        type: 3}
+    - target: {fileID: 5466135841841681088, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681093, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: m_Name
+      value: THJ13 Marisa VN
+      objectReference: {fileID: 0}
+    - target: {fileID: 6957559066487649824, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: advIcons.Array.size
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6957559066487649824, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: advIcons.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d217d183d0991dd42883b3535120a481,
+        type: 3}
+    - target: {fileID: 6957559066487649824, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: advIcons.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 0b2257cbbb5f12a4fb443593b186406a,
+        type: 3}
+    - target: {fileID: 6957559066487649824, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: advIcons.Array.data[2].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 2c6400ecb649c694e8dd8399ee316b4e,
+        type: 3}
+    - target: {fileID: 6957559066487649824, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: advIcons.Array.data[3].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: e634201ad8fc33445adc5f9680f39af3,
+        type: 3}
+    - target: {fileID: 6957559066487649824, guid: ba48c8633944ce847ae7b686e8b24e8c,
+        type: 3}
+      propertyPath: advIcons.Array.data[4].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: da2a9f0fe213e3b4baea44b3bab7dffe,
+        type: 3}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ba48c8633944ce847ae7b686e8b24e8c, type: 3}

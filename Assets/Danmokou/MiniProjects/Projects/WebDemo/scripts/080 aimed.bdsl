@@ -1,0 +1,25 @@
+pattern { } {
+phase 0 {
+	type(non, "Aimed Bullets")
+	roott(1, 0, 0)
+} {
+	paction 0 {
+		async "amulet-*" <-7;:> gcrepeat {
+			wait(2.5s)
+			times(inf)
+			sfx("x-fire-burst-1")
+			color({ "*/", "*/w", "*/b" })
+		} gsrepeat {
+			target(ang, Lplayer)
+			times(7)
+			bindArrow
+			colorf({ "purple", "blue", "yellow", "red" }, aixd)
+			frv2(rxy(-1 * aixd, 0.5 * aiyd))
+		} gsrepeat {
+			times(9)
+			bindArrow
+			frv2(rxy(-0.15 * aixd, 0.08 * aiyd))
+		} s(rvelocity(px(lerp(0.4, 0.8, t, 12, 2))))
+	}
+}
+}

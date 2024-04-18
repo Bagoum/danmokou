@@ -49,16 +49,15 @@ public class BxBCollisionSBOnSB : BxBCollision {
     private readonly cBulletControl[] rightControls;
     private readonly Pred leftPred;
     private readonly Pred rightPred;
-    public BxBCollisionSBOnSB(ICancellee cT, List<SimpleBulletCollection> left, List<SimpleBulletCollection> right,
+    public BxBCollisionSBOnSB(ICancellee cT, IEnumerable<SBC> left, List<SBC> right,
         Pred leftPred, Pred rightPred, cBulletControl[] leftControls, cBulletControl[] rightControls) : base(cT) {
         this.leftPred = leftPred;
         this.rightPred = rightPred;
         this.leftControls = leftControls;
         this.rightControls = rightControls;
-        pairs = ListCache<(SBC, List<(SBC, bool)>)>.Get();
-        var senders = DictCache<SBC, List<(SBC, bool)>>.Get();
-        for (int il = 0; il < left.Count; ++il) {
-            var l = left[il];
+        pairs = new List<(SBC, List<(SBC, bool)>)>();
+        var senders = new Dictionary<SBC, List<(SBC, bool)>>();
+        foreach (var l in left) {
             if (l is NoCollSBC)
                 continue;
             for (int ir = 0; ir < right.Count; ++ir) {
@@ -70,7 +69,7 @@ public class BxBCollisionSBOnSB : BxBCollision {
                 if (!senders.ContainsKey(send)) {
                     //only the sender is bucketed
                     send.RequestBucketing(lifetimeToken);
-                    senders[send] = ListCache<(SBC, bool)>.Get();
+                    senders[send] = new();
                     pairs.Add((send, null!));
                 }
                 senders[send].Add((recv, rIsLeft));
@@ -78,7 +77,6 @@ public class BxBCollisionSBOnSB : BxBCollision {
         }
         for (int ip = 0; ip < pairs.Count; ++ip)
             pairs[ip] = (pairs[ip].sender, senders[pairs[ip].sender]);
-        DictCache<SBC, List<(SBC, bool)>>.Consign(senders);
     }
     
     public override void RegularUpdateCollision() {
@@ -151,8 +149,8 @@ public class BxBCollisionSBOnSB : BxBCollision {
 
     public override void Destroy() {
         for (int ii = 0; ii < pairs.Count; ++ii)
-            ListCache<(SBC, bool)>.Consign(pairs[ii].receivers);
-        ListCache<(SBC, List<(SBC, bool)>)>.Consign(pairs);
+            pairs[ii].receivers.Clear();
+        pairs.Clear();
         base.Destroy();
     }
 }

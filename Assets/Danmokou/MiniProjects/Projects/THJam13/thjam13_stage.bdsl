@@ -1,19 +1,4 @@
-macro data() {
-	cfeature<THJam13CustomDataFeature>()
-}
-macro tintRetro() {
-	rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 0.5, 1))
-}
-macro tintModern() {
-	rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 1, 0.5))
-}
-
-function setColors()::StateMachine {
-	return paction 0 {
-		poolcontrol "*black*" tint rgba(1, 1, 1, lerp01(data().RetroMode01Smooth, 0.5, 1))
-		poolcontrol { "*purple*", "*teal*", "*green*", "*orange*", "*yellow*", "*red*", "*pink*", "*blue*" } tint rgba(1, 1, 1, lerp01(cfeature<THJam13CustomDataFeature>().RetroMode01Smooth, 1, 0.5))
-	}
-}
+import ref at "./thjam13_ref.bdsl" as r
 
 function fairySui(mult = 1, itrs = 1) {
 	return saction 0 {
@@ -44,6 +29,7 @@ function obj1(lr) {
 			hvar loop = i
 		 }
 	} summonr(none(pxy(lr * (-4 + 1 * loop), 5)), saction 0 {
+		~ vulnerableafter 0.5
 		movetarget(1.5, $(eoutsine), pxy(lr * (-3 + loop), 1 + loop * 0.3))
 		async "amulet-red/" <> gcr2 300 2 <> {
 			delay (lerpd(90, 0))
@@ -54,7 +40,7 @@ function obj1(lr) {
 		} s rvelocity px(lerp01(aloop, 3, 1))
 		wait(2)
 		fairySui()
-	}, { hp 140, receivedamage(1-data().RetroMode01) })
+	}, { hp 140, receivedamage(1-r.data().RetroMode01) })
 }
 
 function obj2(x1) {
@@ -71,7 +57,7 @@ function obj2(x1) {
 		} s rvelocity px(lerpd(2.7, 3.5))
 		movetarget(2, $(einsine), Lplayer)
 		fairySui(1.6)
-	}, { hp 800, receivedamage(1-data().RetroMode01) })
+	}, { hp 800, receivedamage(1-r.data().RetroMode01) })
 }
 
 function obj3(x1) {
@@ -91,11 +77,11 @@ function obj3(x1) {
 		} s rvelocity px(lerpd(3, 3.5))
 		movetarget(2, $(einsine), Lplayer)
 		fairySui(1.6)
-	}, { hp 800, receivedamage(1-data().RetroMode01) })
+	}, { hp 800, receivedamage(1-r.data().RetroMode01) })
 }
 
 function obj4(x1) {
-	return sync "rbake" <> summonr(none(pxy(x1 * 1.4, 4.4)), saction 0 {
+	return sync "rlbake" <> summonr(none(pxy(x1 * 1.4, 4.4)), saction 0 {
 		~ vulnerableafter 1.2
 		movetarget(1.5, $(eoutsine), pxy(x1, rand(2, 3)))
 		~ async "dcircle-black/w" <> gcr2 (80/sqrt(dl)) inf <360h> {
@@ -105,7 +91,7 @@ function obj4(x1) {
 		delay 2.2
 			move(4, nrvelocity(vhome(1.2, Lplayer)))
 		bakeSui(2.5)
-	}, { hp 1900, receivedamage(data().RetroMode01) })
+	}, { hp 1900, receivedamage(r.data().RetroMode01) })
 }
 
 function obj5(lr) {
@@ -114,6 +100,7 @@ function obj5(lr) {
 			hvar loop = i
 		 }
 	} summonr(none(pxy(lr * (-4 + 1 * loop), 5)), saction 0 {
+		~ vulnerableafter 0.5
 		movetarget(1.5, $(eoutsine), pxy(lr * (-3.2 + 0.8 * loop), 2.3 - loop ^ 1.4 * 0.24))
 		async "flasharrow-black/" <> gcr2 170 3 <> {
 			delay (lerpd(90, 0))
@@ -125,7 +112,7 @@ function obj5(lr) {
 		wait(1)
 		move(2, nrvelocity(vhome(1 + 0.1 * loop, Lplayer)))
 		bakeSui()
-	}, { hp 110, receivedamage(data().RetroMode01) })
+	}, { hp 120, receivedamage(r.data().RetroMode01) })
 }
 
 
@@ -143,13 +130,13 @@ function obj6(lr) {
 		move(4.6, nrvelocity(pxy(lr * lerp3(0.4, 0.8, 2, 2.8, t, 1.5, 2, 0.9), 
 						lerp(1, 1.8, t, -2, 0.4))))
 		bakeSui()
-	}, { hp 140, receivedamage(data().RetroMode01) })
+	}, { hp 140, receivedamage(r.data().RetroMode01) })
 }
 
 
 function obj7(x1) {
 	return sync "mfairy" <> summonr(none(pxy(x1, 5)), saction 0 {
-		~ vulnerableafter 3
+		~ vulnerableafter 2.8
 		movetarget(1.5, $(eoutsine), pxy(x1, 3))
 		sync "powerup1" <> poweraura { boss1
 			lerp 0 1 t purple green
@@ -170,7 +157,7 @@ function obj7(x1) {
 		} s tprot cx 2
 		movewhile(inf, onscreen loc, rvelocity(py(-1.5 * t ^ 0.8)))
 		fairySui(2)
-	}, { hp 800, receivedamage(1-data().RetroMode01) })
+	}, { hp 800, receivedamage(1-r.data().RetroMode01) })
 }
 
 const var t8 = 15.0
@@ -187,20 +174,35 @@ function obj8(x1) {
 		} s tprot px lerpt(0.5, 1.2, 3, 1.7)
 		wait(0.4)
 		fairySui(2, 2)
-	}, { hp 2100, receivedamage(1-data().RetroMode01) })
+	}, { hp 2000, receivedamage(1-r.data().RetroMode01) })
 
 }
 
 
 pattern({ mixer {
 		(1, { 
-			("thj13.stage_retro", BPY(data().RetroMode01))
-			("thj13.stage_modern", BPY(1-data().RetroMode01))
+			("thj13.stage_retro", BPY(r.data().RetroMode01))
+			("thj13.stage_modern", BPY(1-r.data().RetroMode01))
 		})
 	} }, {
 	phase 0 { } {
-		paction 0 {
-			shiftphaseto 1
+		saction 0 {
+			r.setColors()
+			paction 0 {
+				loadsbtextures({{ "lcircle-black/w", "amulet-red/", "sakura-green/", "fireball-orange/", "dcircle-black/w", "flasharrow-black*", "dot-black*", "triangle-*/", "gem-pink/", "star-*/", "lstar-*", "dcircle-*/b", "lcircle-black/" }})
+				loadbehtextures({{"lightning-black/w", "lightning-*/", "gdlaser-black/w", "gdlaser-*/b", "gdlaser-*/" }})
+				//from shot
+				loadsbtextures({{ "amuletdd-red", " amuletdd-blue", " needle-orange" }})
+				loadsbtextures({{"blast-red", "blast-purple", "needle2-purple" }})
+			}
+			shiftphaseto 4
+		}
+	}
+
+	phase 0 { stage, silent } {
+		saction 0 {
+			executevn $(thj13dialogue1) "d1"
+			shiftphase
 		}
 	}
 
@@ -213,7 +215,7 @@ pattern({ mixer {
 
 	phase 41 { stage } {
 		saction 0 {
-			setColors()
+			r.setColors()
 			//skiptime 20
 			//event playerinvuln(100000)
 			obj1(1)
@@ -243,7 +245,7 @@ pattern({ mixer {
 			obj6(1)
 			wait 1
 			obj1(1)
-			wait 1
+			wait 1.5
 			obj1(-1)
 		}
 	}
@@ -258,7 +260,7 @@ pattern({ mixer {
 
 	phase 43 { stage } {
 		saction 0 {
-			setColors()
+			r.setColors()
 			obj2(-1)
 			obj6(-1)
 			obj3(-2)

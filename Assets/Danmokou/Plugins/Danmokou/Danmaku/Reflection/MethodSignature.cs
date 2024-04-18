@@ -106,7 +106,10 @@ namespace Danmokou.Reflection {
             for (int ii = 0; ii < args.Length; ++ii)
                 if (args[ii] is not ConstantExpression)
                     return InvokeEx(ast, args);
-            return Expression.Constant(Invoke(ast, args.Select(a => ((ConstantExpression)a).Value).ToArray()));
+            var cargs = new object[args.Length];
+            for (int ii = 0; ii < args.Length; ++ii)
+                cargs[ii] = ((ConstantExpression)args[ii]).Value;
+            return Expression.Constant(Invoke(ast, cargs));
         }
 
         /// <summary>
@@ -267,7 +270,7 @@ namespace Danmokou.Reflection {
         public virtual LiftedMethodSignature<T> Lift<T>() => LiftedMethodSignature<T>.Lift(this);
 
         private object? _asFunc;
-        public object AsFunc() {
+        public object AsFunc(bool compileAsField = false) {
             if (_asFunc != null) return _asFunc;
             if (SharedGenericTypes.Length > 0)
                 throw new Exception("Cannot convert a generic method to a partial function");
@@ -276,9 +279,16 @@ namespace Danmokou.Reflection {
             for (int ii = 0; ii < Params.Length; ++ii)
                 args[ii] = new DelegateArg($"$parg{ii}", fTypes[ii]);
             var fnType = ReflectionUtils.MakeFuncType(fTypes);
-            Func<TExArgCtx, TEx> body = tac => MethodCall.RealizeMethod(null, this, tac, 
-                (i, tac) => tac.GetByName(fTypes[i], $"$parg{i}"));
-            return _asFunc = CompilerHelpers.CompileDelegateMeth.Specialize(fnType).Invoke(null, body, args)!;
+            Func<TExArgCtx, TEx> body = tac => {
+                tac.Ctx.CompileToField = compileAsField;
+                return MethodCall.RealizeMethod(null, this, tac,
+                    (i, tac) => tac.GetByName(fTypes[i], $"$parg{i}"));
+            };
+            var result = _asFunc = CompilerHelpers.CompileDelegateMeth.Specialize(fnType).Invoke(null, body, args)!;
+        #if EXBAKE_LOAD || EXBAKE_SAVE
+            _asFunc = null; //can't cache this since it might be called by different scripts in any order
+        #endif
+            return result;
         }
     }
     

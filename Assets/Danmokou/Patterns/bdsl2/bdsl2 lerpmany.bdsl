@@ -1,6 +1,5 @@
 
 var sm = pattern({
-		boss "simp.kasen"
 	}, {
 	phase 0 { } {
 		paction 0 {
@@ -8,7 +7,7 @@ var sm = pattern({
 		}
 	}
 	phase 30 { 
-		type non :simp.boss.mima.keine1
+		type non "hello world"
 		hp 10000
 	} {
 		paction 0 {

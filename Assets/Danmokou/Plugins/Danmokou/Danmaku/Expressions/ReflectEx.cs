@@ -143,17 +143,19 @@ public static class ReflectEx {
 
     public static Func<TExArgCtx, TEx<T>> ReferenceExpr<T>(string alias) => bpi => ReferenceExpr<T>(alias, bpi);
 
+    public interface IHoist {
+        public string Name { get; }
+    }
     
     //TODO consider replacing SafeResizeable here with a dictionary
-    
     /// <summary>
     /// A variable that can be saved and read between different bullets in public data hoisting as long as they use the same indexer value.
     /// </summary>
-    public readonly struct Hoist<T> {
-        private readonly string name;
+    public readonly struct Hoist<T> : IHoist {
+        public string Name { get; }
         private readonly SafeResizableArray<T> data;
         public Hoist(string name) {
-            data = PublicDataHoisting.Register<T>(this.name = name);
+            data = PublicDataHoisting.Register<T>(this.Name = name);
         }
 
         public void Save(int index, T value) => data.SafeAssign(index, value);
@@ -163,9 +165,9 @@ public static class ReflectEx {
 #if EXBAKE_SAVE
             var key_name = tac.Ctx.NameWithSuffix("pubHoist");
             var key_assign = FormattableString.Invariant(
-                $"var {key_name} = PublicDataHoisting.Register<{typeof(T)}>(\"{name}\");");
+                $"var {key_name} = PublicDataHoisting.Register<{typeof(T)}>(\"{Name}\");");
             tac.Ctx.HoistedVariables.Add(key_assign);
-            tac.Ctx.HoistedReplacements[Ex.Constant(data)] = Ex.Variable(typeof(SafeResizableArray<T>), key_name);
+            tac.Ctx.HoistedConstants[data] = Ex.Variable(typeof(SafeResizableArray<T>), key_name);
 #endif
         }
 
@@ -183,7 +185,7 @@ public static class ReflectEx {
             return safeGet.InstanceOf(Ex.Constant(data), Ex.Convert(index, tint));
         }
 
-        public override string ToString() => $"{name}<{typeof(T).RName()}>";
+        public override string ToString() => $"{Name}<{typeof(T).RName()}>";
     }
 }
 

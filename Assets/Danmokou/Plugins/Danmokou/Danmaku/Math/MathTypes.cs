@@ -20,6 +20,7 @@ using Danmokou.Graphics;
 using Danmokou.Player;
 using Danmokou.Reflection;
 using Danmokou.Reflection2;
+using Danmokou.Scenes;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
 using Mizuhashi;
@@ -37,6 +38,9 @@ namespace Danmokou.DMath {
 /// </summary>
 public class PIData {
     public static readonly PIData Empty = new();
+    private static readonly Stack<PIData> cache = new();
+    static PIData() => SceneIntermediary.SceneUnloaded.Subscribe(_ => cache.Clear());
+    
     //For dictionary variables, such as those created for state control in SS0 or onlyonce
     private static readonly Dictionary<(Type type, string name), int> dynamicKeyNames = new();
     private static readonly Dictionary<Type, int> lastVarID = new();
@@ -45,7 +49,6 @@ public class PIData {
         lastVarID.TryAdd(t, 0);
         return dynamicKeyNames[(t, name)] = lastVarID[t]++;
     }
-    private static Stack<PIData> Cache { get; } = new();
     public static int Allocated { get; private set; } 
     public static int Popped { get; private set; } //Popped and recached should be about equal
     public static int Recached { get; private set; }
@@ -156,7 +159,7 @@ public class PIData {
         bullet = null;
         playerBullet = null;
         ++Recached;
-        Cache.Push(this);
+        cache.Push(this);
     }
     
 
@@ -195,11 +198,13 @@ public class PIData {
         //Don't duplicate hoisted references
         var key_name = "_hoisted" + name;
         var key_assign = FormattableString.Invariant(
-            $"var {key_name} = PICustomData.GetDynamicKey(typeof({CSharpTypePrinter.Default.Print(typ)}), \"{name}\");");
+            $"var {key_name} = PIData.GetDynamicKey(typeof({CSharpTypePrinter.Default.Print(typ)}), \"{name}\");");
         if (!tac.Ctx.HoistedVariables.Contains(key_assign)) {
             tac.Ctx.HoistedVariables.Add(key_assign);
             tac.Ctx.HoistedReplacements[key] = Expression.Variable(typeof(int), key_name);
-        }
+        } else
+            tac.Ctx.HoistedReplacements[key] =
+                tac.Ctx.HoistedReplacements.Values.First(x => x is ParameterExpression pex && pex.Name == key_name);
 #endif
         return ex;
     }
@@ -233,8 +238,8 @@ public class PIData {
 
     public static PIData New((LexicalScope scope, GenCtx gcx)? parent = null) {
         PIData data;
-        if (Cache.Count > 0) {
-            data = Cache.Pop();
+        if (cache.Count > 0) {
+            data = cache.Pop();
             ++Popped;
         } else {
             data = new();

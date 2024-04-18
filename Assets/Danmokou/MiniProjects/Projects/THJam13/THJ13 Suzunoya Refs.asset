@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e87ab70b3d8149c0861cb6fd8068c3fa, type: 3}
+  m_Name: THJ13 Suzunoya Refs
+  m_EditorClassIdentifier: 
+  renderGroupMimic: {fileID: 836292319904304369, guid: ad089b1aca3d7bb4a9edead2f2fb9b95,
+    type: 3}
+  entityMimics:
+  - {fileID: 8236975217580243255, guid: 09778f2d7b7306340a39ab0ea5b1c76d, type: 3}
+  - {fileID: 5479177951365304822, guid: 1ffad462ee10c6240850ee6a57a3b2e5, type: 3}
+  - {fileID: 4796378590013750758, guid: 13abcd5f9e1f24342bdcb4b086d237e6, type: 3}
+  - {fileID: 2166019667109125230, guid: 39df847f72b124e4888ed1f659abcf6e, type: 3}
+  - {fileID: 3523231025197609462, guid: 664a8236e7e99994b9dba6e77902a2e3, type: 3}
+  - {fileID: 8827858540358489548, guid: dffb33db787bb794885bddca10d6fbf8, type: 3}

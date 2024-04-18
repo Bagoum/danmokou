@@ -141,11 +141,12 @@ public class ETime : MonoBehaviour {
     public static float dT => GameTimeIsPaused ? 0 : (ASSUME_SCREEN_FRAME_TIME * Slowdown.Value);
     private static float EngineStepTime =>
         GameTimeIsPaused ? ASSUME_SCREEN_FRAME_TIME : (ASSUME_SCREEN_FRAME_TIME * Slowdown.Value);
-    public static int FrameNumber { get; private set; }
+    public static int FrameNumber => FrameNumberEv;
+    public static Evented<int> FrameNumberEv { get; } = new(0);
 
     public static void ResetFrameNumber() {
         Logs.Log("Resetting frame counter");
-        FrameNumber = 0;
+        FrameNumberEv.Value = 0;
     }
 
     public static bool FirstUpdateForScreen { get; private set; }
@@ -174,6 +175,7 @@ public class ETime : MonoBehaviour {
             (Color.clear, (x, y) => x + y), (Color.white, (x, y) => x * y));
 
         SceneIntermediary.Attach();
+        SceneIntermediary.SceneUnloaded.Subscribe(_ => Timer.DeleteUnnamed());
         SceneIntermediary.SceneLoaded.Subscribe(_ => untilNextRegularFrame = 0f);
 
         UnityTimeRate.AddDisturbance(Slowdown);
@@ -318,7 +320,7 @@ public class ETime : MonoBehaviour {
                 //Note: The updaters array is only modified by this command. 
                 FlushUpdaterAdds();
                 if (EngineStateManager.State == EngineState.RUN)
-                    FrameNumber++;
+                    FrameNumberEv.Value++;
                 FirstUpdateForScreen = false;
             }
             UntilNextFrame += EngineStepTime;
@@ -500,11 +502,10 @@ public class ETime : MonoBehaviour {
         /// <summary>
         /// Stop all executing timers.
         /// </summary>
-        public static void StopAll() {
-            foreach (var v in timerMap.Values)
-                v.Stop();
+        public static void DeleteUnnamed() {
             foreach (var v in unnamedTimers)
                 v.Stop();
+            unnamedTimers.Clear();
         }
 
 

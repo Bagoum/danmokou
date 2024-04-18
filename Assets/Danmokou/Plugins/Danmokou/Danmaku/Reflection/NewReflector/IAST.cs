@@ -115,8 +115,13 @@ public interface IAST : ITypeTree, IDebugAST {
                     return err;
             return new TypeUnifyErr.TooManyPossibleTypes(root, cu1s.Select(t => t.Item2).ToList());
         }
-        
-        var tDes = root.ResolveUnifiers(cu1s[0].Item1, resolver, cu1s[0].Item3, cu1s[0].Item4, true);
+
+        Either<(TypeDesignation, Unifier), TypeUnifyErr> tDes;
+        if (root is AST.Block block && block.Overloads[0].Last is TypeDesignation.Variable vT) {
+            block.FinalCast = cu1s[0].Item4;
+            tDes = root.ResolveUnifiers(cu1s[0].Item1, resolver, cu1s[0].Item3.Without(vT), false, true);
+        } else
+            tDes = root.ResolveUnifiers(cu1s[0].Item1, resolver, cu1s[0].Item3, cu1s[0].Item4, true);
         if (tDes.IsRight)
             return tDes.Right;
         root.FinalizeUnifiers(tDes.Left.Item2);

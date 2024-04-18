@@ -57,7 +57,6 @@ public class TestCoroutines {
     public static IEnumerator TestSelfDestroy() {
         CoroutineRegularUpdater cru = new GameObject().AddComponent<CoroutineRegularUpdater>();
         cru.RunRIEnumerator(SelfDestroy(cru));
-        cru.RegularUpdate();
         Assert.AreEqual(cru.NumRunningCoroutines, 1);
         cru.RegularUpdate();
         Assert.AreEqual(cru.NumRunningCoroutines, 0);
@@ -67,7 +66,6 @@ public class TestCoroutines {
     public static IEnumerator TestSelfDestroy2() {
         CoroutineRegularUpdater cru = new GameObject().AddComponent<CoroutineRegularUpdater>();
         cru.RunRIEnumerator(SelfDestroy2(cru));
-        cru.RegularUpdate();
         Assert.AreEqual(cru.NumRunningCoroutines, 1);
         cru.RegularUpdate();
         Assert.AreEqual(cru.NumRunningCoroutines, 0);

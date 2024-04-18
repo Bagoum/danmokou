@@ -11,6 +11,7 @@ using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
+using Danmokou.Scenes;
 using JetBrains.Annotations;
 using UnityEngine.Profiling;
 using Ex = System.Linq.Expressions.Expression;
@@ -251,6 +252,9 @@ public abstract class FrameVars {
 
 public class FrameVars<T> : FrameVars {
     private static readonly Stack<FrameVars<T>> cache = new();
+    
+    static FrameVars() => SceneIntermediary.SceneUnloaded.Subscribe(_ => cache.Clear());
+    
     public override Type Type { get; } = typeof(T);
     public static FrameVars<T> Create() => cache.Count > 0 ? cache.Pop() : new();
 
@@ -291,6 +295,12 @@ public static class EFArrayPool<T> {
     //One bucket for each length up to 8.
     //From there, one bucket for each exponent [8+2^n, 8+2*2^n).
     private static readonly List<Queue<T[]>> buckets = new();
+
+    static EFArrayPool() => SceneIntermediary.SceneUnloaded.Subscribe(_ => {
+        foreach (var q in buckets)
+            q.Clear();
+        buckets.Clear();
+    });
 
     private static void AssertBucket(int bucket) {
         while (buckets.Count <= bucket)

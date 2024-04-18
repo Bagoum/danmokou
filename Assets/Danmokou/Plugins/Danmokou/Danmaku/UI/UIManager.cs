@@ -373,10 +373,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         spellnameText.text = title ?? "";
         spellnameController?.Cancel();
         Run(FadeSpellname(spellnameFadeIn, spellColorTransparent, spellColor, 
-            spellnameController = new Cancellable()), new() {
-            Droppable = true,
-            ExecType = CoroutineType.StepTryPrepend
-        });
+            spellnameController = new Cancellable()), CoroutineOptions.DroppableDefault);
     }
 
     public Material bossColorizer = null!;
@@ -497,7 +494,7 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         new Tweener<Color>(m0, m1, timeIn, c => tmp.color = c, null, cT)
             .Then(new Tweener<float>(0, 0, timeStay, _ => { }, null, cT))
             .Then(new Tweener<Color>(m1, m0, timeOut, c => tmp.color = c, null, cT))
-            .Run(this, new CoroutineOptions(true))
+            .Run(this, CoroutineOptions.DroppableDefault)
             .ContinueWithSync(done);
     }
     private void FadeMessage(string msg, ICancellee cT, float timeIn = 1f, float timeStay = 4f,

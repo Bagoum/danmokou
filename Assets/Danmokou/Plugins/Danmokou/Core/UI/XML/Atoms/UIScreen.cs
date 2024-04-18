@@ -134,7 +134,8 @@ public class UIScreen : ITokenized {
         if (HeaderText == null)
             Header.parent.Remove(Header);
         else
-            Header.text = HeaderText.CSpace();
+            ServiceLocator.Find<IDMKLocaleProvider>().TextLocale
+                .Subscribe(_ => Header.text = HeaderText.CSpace());
         if (Type.HasFlag(Display.Unlined))
             HTML.AddToClassList("unlined");
         if (Type.HasFlag(Display.WithTabs))

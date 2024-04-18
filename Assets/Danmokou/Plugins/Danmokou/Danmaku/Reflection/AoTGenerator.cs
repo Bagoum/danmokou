@@ -6,12 +6,12 @@ using BagoumLib;
 using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.DMath;
+using Danmokou.Expressions;
 using UnityEngine;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
 #if UNITY_EDITOR
-    private const string AOT_GEN = "Assets/Danmokou/Plugins/Danmokou/Danmaku/Expressions/Generated/AoTHelper_CG.cs";
     private static readonly Type[] autogenGenerics = {
         typeof(float), typeof(bool), typeof(Vector2), typeof(Vector3),
         typeof(Vector4), typeof(V2RV2)
@@ -43,19 +43,20 @@ public static class AoTHelper_CG {{
         var typePrinter = new CSharpTypePrinter { PrintTypeNamespace = _ => true };
         void AddConstructedMethod(MethodInfo mi, Type[] typArgs) {
             var type_prms = string.Join(", ", typArgs.Select(typePrinter.Print));
-            var args = string.Join(", ", mi.GetParameters().Length.Range().Select(_ => "default"));
+            var args = string.Join(", ", mi.GetParameters()
+                .Select(p => p.ParameterType == typeof(string) ? "\"\"" : "default"));
             funcs.Add($"{typePrinter.Print(mi.DeclaringType!)}.{mi.Name}<{type_prms}>({args});");
         }
         foreach (var (gmib, ts) in GenericMethodSignature.specializeCache
                      .Select(kv => (Mi: kv.Key.Item2.Member, kv.Key.Item1))
                      .Distinct()
                      .OrderBy(g => g.Mi.Name)) {
-            if (gmib is TypeMember.Method gmi)
+            if (gmib is TypeMember.Method gmi) {
                 AddConstructedMethod(gmi.Mi, ts.Data);
-            else
+            } else
                 throw new Exception($"Can't bake {gmib.GetType()}");
         }
-        FileUtils.WriteString(AOT_GEN, GenerateFile(funcs));
+        FileUtils.WriteString(CookingContext.outputPath + "AoTHelper_CG.cs", GenerateFile(funcs));
     }
     
 #endif

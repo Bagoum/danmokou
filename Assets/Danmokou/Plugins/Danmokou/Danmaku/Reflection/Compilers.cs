@@ -163,26 +163,32 @@ public static class Compilers {
     
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static TP TP(ExTP ex) => PrepareDelegateBPI<TP>(ex).Compile();
 
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static SBV2 SBV2(ExTP ex) => PrepareDelegateRSB<SBV2>(ex).Compile();
 
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static TP3 TP3(ExTP3 ex) => PrepareDelegateBPI<TP3>(ex).Compile();
 
     [DontReflect]
     [ExpressionBoundary]
+    [Constable]
     public static TP3 TP3FromVec2(ExTP ex) => PrepareDelegateBPI<TP3>(tac => ExMV3.TP3(ex(tac))).Compile();
 
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static TP4 TP4(ExTP4 ex) => PrepareDelegateBPI<TP4>(ex).Compile();
-    
+
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static VTP VTP(ExVTP ex) {
         if (ex == VTPRepo.ExNoVTP) return new(VTPRepo.NoVTP);
         return PrepareDelegate<VTP>(ex,
@@ -195,6 +201,7 @@ public static class Compilers {
     
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static LVTP LVTP(ExVTP ex) =>
         PrepareDelegate<LVTP>(ex,
             new DelegateArg<LaserMovement>("vtp_mov", true, true),
@@ -206,33 +213,40 @@ public static class Compilers {
 
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static FXY FXY(ExBPY ex) => PrepareDelegate<FXY>(ex, 
         TExArgCtx.Arg.Make<float>("x", true)).Compile();
     
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static Easer Easer(ExBPY ex) => PrepareDelegate<Easer>(ex, 
         TExArgCtx.Arg.Make<float>("x", true)).Compile();
 
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static BPY BPY(ExBPY ex) => PrepareDelegateBPI<BPY>(ex).Compile();
 
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static SBF SBF(ExBPY ex) => PrepareDelegateRSB<SBF>(ex).Compile();
     
 
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static BPRV2 BPRV2(ExBPRV2 ex) => PrepareDelegateBPI<BPRV2>(ex).Compile();
 
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static Pred Pred(ExPred ex) => PrepareDelegateBPI<Pred>(ex).Compile();
 
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static LPred LPred(ExPred ex) => PrepareDelegate<LPred>(ex,
         new DelegateArg<ParametricInfo>("lpred_bpi", priority: true),
         new DelegateArg<float>(LASER_TIME_ALIAS)
@@ -240,6 +254,7 @@ public static class Compilers {
 
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static SBCF SBCF(ExSBCF ex) =>
         PrepareDelegate<SBCF>(tac => {
                 var st = tac.GetByExprType<TExSBCUpdater>();
@@ -257,17 +272,20 @@ public static class Compilers {
     
     [Fallthrough]
     [ExpressionBoundary]
+    [Constable]
     public static GCXF<T> GCXF<T>(Func<TExArgCtx, TEx<T>> ex) {
         return PrepareDelegate<GCXF<T>>(ex, GCXFArgs).Compile();
     }
     
     [ExpressionBoundary]
+    [Constable]
     public static ErasedGCXF ErasedGCXF(Func<TExArgCtx, TEx> ex) {
         return PrepareDelegate<ErasedGCXF>(ex, GCXFArgs).Compile();
     }
     
     
     [ExpressionBoundary]
+    [Constable]
     public static ErasedParametric ErasedParametric(Func<TExArgCtx, TEx> ex) => 
         PrepareDelegateBPI<ErasedParametric>(ex).Compile();
 
@@ -277,20 +295,24 @@ public static class Compilers {
     /// <summary>
     /// Mark that some code should not be compiled in a script.
     /// </summary>
-    [UsedImplicitly]
+    [Constable]
     public static UncompiledCode<T> Code<T>(Func<TExArgCtx, TEx<T>> ex) => new(ex);
     
+}
+
+public interface IUncompiledCode {
+    public Func<TExArgCtx, TEx> Code { get; }
 }
 
 /// <summary>
 /// Code that has not yet been compiled in a script.
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public struct UncompiledCode<T> {
-    [DontReflect]
-    public readonly Func<TExArgCtx, TEx<T>> code;
+public readonly struct UncompiledCode<T> : IUncompiledCode {
+    public Func<TExArgCtx, TEx<T>> Code { get; }
+    Func<TExArgCtx, TEx> IUncompiledCode.Code => Code;
     public UncompiledCode(Func<TExArgCtx, TEx<T>> code) {
-        this.code = code;
+        this.Code = code;
     }
 
     public static implicit operator UncompiledCode<T>(Func<TExArgCtx, TEx<T>> code) => new(code);

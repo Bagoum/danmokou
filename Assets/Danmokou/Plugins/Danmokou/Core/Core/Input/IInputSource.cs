@@ -45,6 +45,9 @@ public interface IInputSource {
     /// </summary>
     /// <returns>True iff any input was pressed this frame.</returns>
     bool OncePerUnityFrameToggleControls();
+
+    /// <inheritdoc cref="IInputHandler.Interrupt"/>
+    void Interrupt();
 }
 
 /// <summary>
@@ -75,6 +78,7 @@ public class NullInputSource : IInputSource {
     public bool OncePerUnityFrameToggleControls() {
         return false;
     }
+    public void Interrupt() { }
 }
 
 }

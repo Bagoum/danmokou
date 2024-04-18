@@ -2,7 +2,7 @@
 // This is a script variable.
 var myFloat = 9.0;
 var myV2::Vector2 = pxy(5, 6.4);
-var mySp = gsr {
+var mySp = gsr2c myFloat {
 	preloop b{
 		hvar itr = i
 	}

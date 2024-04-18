@@ -106,7 +106,7 @@ public abstract class Item : Pooled<Item> {
         if (State == HomingState.WAITING && time > MinTimeBeforeHome) {
             State = HomingState.HOMING;
         }
-        bool playerIsValid = target != null && target.State != PlayerController.PlayerState.RESPAWN;
+        bool playerIsValid = target != null && target.State is not PlayerController.PlayerState.Respawn;
         if (playerIsValid && CollisionMath.CircleOnPoint(loc, target!.Ship.itemCollectRadius + CollectRadiusBonus, target.Location)) {
             CollectMe(target);
             return;

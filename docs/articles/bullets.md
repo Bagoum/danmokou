@@ -46,6 +46,7 @@ Note: if a bullet name starts with "G", that means it is a glowy style (usually 
 | Dot                                         |                                                              |
 | Strip                                       |                                                              |
 | Sun                                         | Additive rendering, nonrotational                            |
+| GGLCircle                                   | Additive rendering, basically the same as GLCircle but slightly smaller. |
 | GLCircle                                    | Additive rendering                                           |
 | Keine                                       | Additive rendering                                           |
 | GCircle                                     | Additive rendering                                           |

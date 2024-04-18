@@ -33,6 +33,7 @@ public class RenderablePane {
     /// If provided, UIBuilderRenderer will render the contents of the renderTex to the sprite renderer.
     /// <br/>If multiple panes share the same group, only one needs to include this.
     /// <br/>Alternatively, consumers can manually render panes by listening to <see cref="UIBuilderRenderer.RTGroups"/>.
+    /// (ADV UI rendering uses manual pane rendering in order to render the UI as "part of the world" rather than on the UI layer.)
     /// </summary>
     public SpriteRenderer? renderer;
     [NonSerialized] public MaterialPropertyBlock? pb;
@@ -45,13 +46,11 @@ public class RenderablePane {
 }
 public class UIBuilderRenderer : RegularUpdater {
     public const int ADV_INTERACTABLES_GROUP = 1;
-    
     //Resolution at which UI resources are designed.
     public static readonly (int w, int h) UIResolution = (3840, 2160);
     public static readonly Vector2 UICenter = new(1920, 1080);
     private static Vector2 globalTransform;
     private readonly DMCompactingArray<UIController> controllers = new(8);
-    
     public RenderablePane[] settings = null!;
     public RenderTexture unsetRT = null!;
 

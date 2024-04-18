@@ -4,7 +4,7 @@ pattern {
 }
 phase 0
 	paction 0
-		shift-phase-to 2
+		shift-phase-to 7
 		
 !!{ colors { black blue purple pink red orange yellow green teal black  }
 !!{ csuff { /w /b /  }

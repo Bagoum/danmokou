@@ -712,11 +712,12 @@ public class CurvedTileRenderLaser : CurvedTileRender {
             }
         }, BulletManager.BulletControl.P_RUN);
     }
-    public static void ControlLasers(GenCtx caller, GCXF<bool> persist, BulletManager.StyleSelector styles, cLaserControl control, ICancellee cT) {
+    public static void ControlLasers(GenCtx caller, GCXF<bool> persist, StyleSelector styles, cLaserControl control, ICancellee cT) {
         LaserControl lc = new LaserControl(caller, control, persist, cT);
-        for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            CollectionForStyle(styles.Complex[ii]).AddLaserControlEOF(lc.Mirror());
-        }
+        styles.TryMakeComplexCopies();
+        foreach (var pool in BulletManager.BEHPools)
+            if (styles.Matches(pool.style!))
+                CollectionForStyle(pool.style!).AddLaserControlEOF(lc.Mirror());
     }
     
     /// <summary>
@@ -735,11 +736,12 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         };
     }
     
-    public static IDisposable ControlPool(BulletManager.StyleSelector styles, LPCF control, ICancellee cT) {
-        var tokens = new IDisposable[styles.Complex.Length];
-        for (int ii = 0; ii < styles.Complex.Length; ++ii) {
-            tokens[ii] = control(styles.Complex[ii], cT);
-        }
+    public static IDisposable ControlPool(StyleSelector styles, LPCF control, ICancellee cT) {
+        var tokens = new List<IDisposable>();
+        styles.TryMakeComplexCopies();
+        foreach (var pool in BulletManager.BEHPools)
+            if (styles.Matches(pool.style!))
+                tokens.Add(control(pool.style!, cT));
         return new JointDisposable(null, tokens);
     }
     public static void PrunePoolControls() {

@@ -187,7 +187,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             else {
                 ast = new AST.DefaultValue(Position, ann.Scope, typeof(void)) {
                     TokenType = null,
-                    Description = $"Import {File.Content}" + (Name is { } n ? $" as {n.Desc.Content}" : null)
+                    Description = () => $"Import {File.Content}" + (Name is { } n ? $" as {n.Desc.Content}" : null)
                 };
             }
             ast.AddTokens(new[] { Keyword(KwPos), Keyword(Location?.At), 
@@ -365,6 +365,10 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                     if (FunctionCall.LoadScriptFnDecl(Position, Member, imp, ann, Args) is { } sfn) {
                         (sfn as AST)?.AddTokens(new[] { Keyword(Object.Position) });
                         return sfn;
+                    } else if (imp.Ef.Scope.MacroDecls.TryGetValue(Member.Name, out var macro)) {
+                        var ast = MacroDef.AnnotateAtCallsite(Position, Member.Position, macro, ann, Args);
+                        (ast as AST)?.AddTokens(new[] { Keyword(Object.Position) });
+                        return ast;
                     } else {
                         return new AST.Failure(Member.Name.Length > 0 ?
                                 new(Position,
@@ -828,7 +832,8 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                     $"The macro {decl.Name} has already been declared at {prev.Position}."), ann.Scope);
             var ast = new AST.DefaultValue(Position, ann.Scope, typeof(void)) {
                 TokenType = null,
-                Description = $"Macro definition {Name.Content}"
+                //doc comment is not filled out until after annotation, so we use Func<string>
+                Description = () => $"Macro definition {Name.Content}{decl.DocCommentDisplay()}"
             };
             ast.AddTokens(new[]
                 { Keyword(Kw.Position), new SemanticToken(Name.Position, SemanticTokenTypes.Function) }
@@ -836,15 +841,15 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             return ast;
         }
 
-        public static IAST AnnotateAtCallsite(PositionRange pos, PositionRange meth, MacroDecl decl, STAnnotater ann, ST[] args) {
-            if (args.Length > decl.Args.Length)
+        public static IAST AnnotateAtCallsite(PositionRange pos, PositionRange meth, MacroDecl decl, STAnnotater ann, IReadOnlyList<ST> args) {
+            if (args.Count > decl.Args.Length)
                 return new AST.Failure(new(pos, $"Too many arguments provided to macro {decl.Name}"),
                     ann.Scope);
                 
             var repl = ann.VarReplace is null ? new() : new Dictionary<string, ST>(ann.VarReplace);
             for (int ii = 0; ii < decl.Args.Length; ++ii) {
                 ST target;
-                if (ii >= args.Length || args[ii] is ST.DefaultValue { asFunctionArg: true }) {
+                if (ii >= args.Count || args[ii] is DefaultValue { asFunctionArg: true }) {
                     if (decl.Defaults[ii] is { } dflt)
                         target = dflt;
                     else
@@ -856,8 +861,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             }
             //a macro has exactly one line. we want that line, not the body as a block.
             var ast = decl.Tree.Body.Args[0].Annotate(ann with { VarReplace = repl });
-            (ast as AST)!.AddTokens(new[] { new SemanticToken(meth, SemanticTokenTypes.Function) });
-            return ast;
+            return new AST.InvokedMacro(pos, meth, decl, ast);
         }
 
         public override IEnumerable<PrintToken> DebugPrint() {
@@ -915,7 +919,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                 return new AST.Failure(new(Position, 
                     $"The function {decl.Name} has already been declared at {prev.Position}."), ann.Scope);
             //due to return statements, the block content itself may have any type
-            var _block = Body.AnnotateWithParameters(ann with { Scope = localScope }, null, args);
+            var _block = Body.AnnotateWithParameters(ann with { Scope = localScope }, args);
             if (!_block.TryL(out var block))
                 return _block.Right;
             var ast = new AST.ScriptFunctionDef(Position, Name.Content, ann.Scope, localScope, decl, block);
@@ -965,7 +969,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
         
         protected override IAST _AnnotateInner(STAnnotater ann) {
             var localScope = LexicalScope.Derive(ann.Scope);
-            return new AST.Block(Position, ann.Scope, localScope, null, AnnotateStmts(ann with {Scope = localScope}));
+            return new AST.Block(Position, ann.Scope, localScope, AnnotateStmts(ann with {Scope = localScope}));
         }
 
         //note: these functions requires localScope to be passed in instead of enclosingScope
@@ -974,10 +978,10 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
             for (int ii = 0; ii < arguments.Length; ++ii) {
                 decls[ii] = arguments[ii].MakeImplicitArgDecl();
             }
-            return AnnotateWithParameters(ann, null, decls);
+            return AnnotateWithParameters(ann, decls);
         }
         
-        public Either<AST.Block, AST.Failure> AnnotateWithParameters(STAnnotater ann, TypeDesignation? retType, ImplicitArgDecl[] arguments) {
+        public Either<AST.Block, AST.Failure> AnnotateWithParameters(STAnnotater ann, ImplicitArgDecl[] arguments) {
             var localScope = ann.Scope;
             var decls = new (VarDecl, ImplicitArgDecl)[arguments.Length];
             for (int ii = 0; ii < arguments.Length; ++ii) {
@@ -988,7 +992,7 @@ public abstract record ST(PositionRange Position) : IDebugPrint {
                         $"The variable {arguments[ii].Name} has already been declared at {r.Right.Position}."), localScope);
                 }
             }
-            return new AST.Block(Position, localScope.Parent!, localScope, retType, AnnotateStmts(ann))
+            return new AST.Block(Position, localScope.Parent!, localScope, AnnotateStmts(ann))
                 .WithFunctionParams(decls);
         }
 

@@ -619,8 +619,8 @@ public struct LoopControl<T> {
         }
         if (ncolor != null)
             ch.bc.style = props.colorsReverse ?
-                BulletManager.StyleSelector.MergeStyles(ncolor, parent_style) :
-                BulletManager.StyleSelector.MergeStyles(parent_style, ncolor);
+                StyleSelector.MergeStyles(ncolor, parent_style) :
+                StyleSelector.MergeStyles(parent_style, ncolor);
         if (props.sah != null) {
             GCX.RV2 = GCX.BaseRV2 + V2RV2.Rot(props.sah.Locate(GCX));
             var simp_gcx = GCX.Copy(null);

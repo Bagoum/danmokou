@@ -22,7 +22,7 @@ MonoBehaviour:
   description: In another universe, this technique is called "Ultimate Reimu".
   type: Familiar
   prefab: {fileID: 6169168473649848314, guid: 99acc64993ad8944b8a055bab3aa3114, type: 3}
-  playerChild: 0
+  playerChild: 1
   demoReplay: {fileID: 11400000, guid: cb661392b80571a4789ee38880206435, type: 2}
   demoSetupSM: {fileID: 2811297602134710623, guid: e1a29e14b8444434fa65f98540b4b07d,
     type: 3}

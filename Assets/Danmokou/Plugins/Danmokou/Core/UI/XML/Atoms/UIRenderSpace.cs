@@ -109,7 +109,7 @@ public abstract class UIRenderSpace {
 
     public Task MakeTask(params ITransition[] tweens) =>
         //stepTryPrepend is important so first-frame cancellation takes place immediately
-        Task.WhenAll(tweens.Select(t => t.Run(Controller, new(true, CoroutineType.StepTryPrepend))));
+        Task.WhenAll(tweens.Select(t => t.Run(Controller)));
 
     public Task AddSource(UIGroup grp) {
         if (!Sources.Contains(grp)) {

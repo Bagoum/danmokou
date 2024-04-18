@@ -54,8 +54,7 @@ public enum UINodeSelection {
     Default = 0
 }
 public class UINode {
-    public LString? Description { get; }
-    public LString DescriptionOrEmpty => Description ?? LString.Empty;
+    public LString DescriptionOrEmpty => RootView.VM.Description ?? LString.Empty;
     private UIGroup _group = null!;
     public UIGroup Group {
         get => _group;
@@ -214,8 +213,7 @@ public class UINode {
     public UIResult ReturnToGroup => new UIResult.ReturnToTargetGroupCaller(this);
 
     public UINode(LString? description) {
-        this.Description = description;
-        Views.Add(RootView = new RootNodeView(this));
+        Views.Add(RootView = new RootNodeView(this, description));
     }
     
     public UINode() : this(null as LString) { }
@@ -232,7 +230,7 @@ public class UINode {
     public UINode Bind<T>(T view) where T : IUIView {
         Views.Add(view);
         if (Built) {
-            view.Bind(HTML);
+            view.Bind(this, HTML);
             view.OnBuilt(this);
         }
         return this;
@@ -357,18 +355,17 @@ public class UINode {
             ContainerHTML.Add(HTML);
         }
         AddCSSClasses();
-        if (Description != null) {
-            var label = HTML.Q<Label>();
-            if (label != null)
-                label.text = Description;
-        }
         foreach (var view in Views)
-            view.Bind(HTML);
+            view.Bind(this, HTML);
         Built = true;
         RegisterEvents();
         foreach (var view in Views)
             view.OnBuilt(this);
         OnBuilt?.Invoke(this);
+        AddToken(ServiceLocator.Find<IDMKLocaleProvider>().TextLocale.OnChange.Subscribe(_ => {
+            foreach (var view in Views)
+                view.ReprocessForLanguageChange();
+        }));
     }
 
     public UINode AddToken(IDisposable token) {
@@ -541,12 +538,6 @@ public class PassthroughNode : UINode {
     }
 }
 public class TwoLabelUINode : UINode {
-    public TwoLabelUINode(LString description1, Func<LString> description2, IObservable<Unit>? updater) : base(description1) {
-        var view = new LabelView<LString>(new(description2, x => x.Value), "Label2");
-        if (updater != null)
-            view.DirtyOn(updater);
-        Bind(view);
-    }
     public TwoLabelUINode(LString description1, Func<string> description2, IObservable<Unit>? updater) : base(description1) {
         var view = new SimpleLabelView(description2, "Label2");
         if (updater != null)
@@ -599,10 +590,9 @@ public class ConfirmFuncNode : UINode {
     private bool isConfirm = false;
     public Func<ConfirmFuncNode, UIResult> Command { get; }
 
-    public ConfirmFuncNode(LString description, Func<ConfirmFuncNode, UIResult> command) : base(description) {
+    public ConfirmFuncNode(LString description, Func<ConfirmFuncNode, UIResult> command) : base() {
         this.Command = command;
-        if (Description != null)
-            Bind(new FlagView(new(() => isConfirm, LocalizedStrings.UI.are_you_sure, Description)));
+        Bind(new FlagView(new(() => isConfirm, LocalizedStrings.UI.are_you_sure, description)));
     }
     public ConfirmFuncNode(LString description, Func<UIResult> command) : this(description, _ => command()) { }
     public ConfirmFuncNode(LString description, Action command) : this(description, () => {
@@ -724,9 +714,9 @@ public class LROptionNode<T> : BaseLROptionNode<T>, ILROptionNode {
         this(description, new EventedBinder<T>(ev, null), () => values) { }
 
     private void ScaleEndpoint(VisualElement ep) {
-        ep.ScaleTo(1.35f, 0.06f, Easers.EOutSine)
-            .Then(() => ep.ScaleTo(1f, 0.15f))
-            .Run(Controller, UIController.AnimOptions);
+        Controller.PlayAnimation(
+            ep.ScaleTo(1.35f, 0.06f, Easers.EOutSine)
+            .Then(() => ep.ScaleTo(1f, 0.15f)));
     }
     protected override UIResult Left() {
         var v = values();
@@ -819,6 +809,7 @@ public class ComplexLROptionNode<T> : BaseLROptionNode<T>, IComplexLROptionNode 
 }
 
 public class KeyRebindInputNode : UINode, IUIViewModel {
+    private readonly LString? title;
     public BindingUpdateTrigger UpdateTrigger { get; set; }
     public Func<long>? OverrideHashHandler { get; set; }
     public long GetViewHash() => 0;
@@ -829,7 +820,7 @@ public class KeyRebindInputNode : UINode, IUIViewModel {
         }
         protected override BindingResult Update(in BindingContext context) {
             var n = ViewModel;
-            string t = n.DescriptionOrEmpty;
+            string t = n.title ?? "";
             n.HTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
             n.HTML.Q("FadedBack").style.display = !n.isEntryEnabled ? DisplayStyle.Flex : DisplayStyle.None;
             n.HTML.Q<Label>("Label").text = n.isEntryEnabled ?
@@ -851,7 +842,8 @@ public class KeyRebindInputNode : UINode, IUIViewModel {
     private IInspectableInputBinding[]? lastHeld = null;
     private bool isEntryEnabled = false;
 
-    public KeyRebindInputNode(LString title, Action<IInspectableInputBinding[]?> applier, Mode mode) : base(title) {
+    public KeyRebindInputNode(LString title, Action<IInspectableInputBinding[]?> applier, Mode mode) : base() {
+        this.title = title;
         this.applier = applier;
         this.mode = mode;
         WithCSS(fontControlsClass);
@@ -914,6 +906,7 @@ public class KeyRebindInputNode : UINode, IUIViewModel {
 }
 
 public class TextInputNode : UINode, IUIViewModel {
+    private readonly LString? title;
     public BindingUpdateTrigger UpdateTrigger { get; set; }
     public Func<long>? OverrideHashHandler { get; set; }
     public long GetViewHash() => (isEntryEnabled, DataWIP, bdCursorIdx).GetHashCode();
@@ -921,7 +914,7 @@ public class TextInputNode : UINode, IUIViewModel {
         public TextInputNodeView(TextInputNode data) : base(data) { }
         protected override BindingResult Update(in BindingContext context) {
             var n = ViewModel;
-            string t = n.DescriptionOrEmpty;
+            string t = n.title ?? "";
             n.HTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
             n.HTML.Q("FadedBack").style.display = n.DisplayWIP.Length == 0 ? DisplayStyle.Flex : DisplayStyle.None;
             n.HTML.Q<Label>("Label").text = n.DisplayWIP;
@@ -936,6 +929,7 @@ public class TextInputNode : UINode, IUIViewModel {
 
 
     public TextInputNode(LString title) : base(title) {
+        this.title = title;
         Bind(new TextInputNodeView(this));
     }
 

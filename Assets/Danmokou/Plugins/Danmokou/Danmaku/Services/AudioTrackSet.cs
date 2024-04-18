@@ -30,7 +30,6 @@ public class AudioTrackSet : ITokenized {
     public string TrackNames => Tracks.Count > 0 ? string.Join(", ", Tracks.Select(x => x.Track.Title))
         : $"(No tracks for ID {GetHashCode()})";
     public ICancellee cT { get; set; }
-    public bool IsRunningAsBGM { get; init; }
     public List<IRunningAudioTrack> Tracks { get; } = new();
     public BGMInvokeFlags? Flags { get; }
 
@@ -50,6 +49,11 @@ public class AudioTrackSet : ITokenized {
         }
     }
 
+    public AudioTrackSet ExtendCancellation(ICancellee? ncT) {
+        cT = Cancellable.Extend(cT, ncT);
+        return this;
+    }
+
 
     public void FadeIn(float? time) {
         Logs.Log($"Fading in audio mixer with tracks: {TrackNames}");
@@ -63,7 +67,7 @@ public class AudioTrackSet : ITokenized {
     public void FadeOut(float? time, AudioTrackState next) {
         if (next is not (AudioTrackState.Paused or AudioTrackState.DestroyReady))
             throw new Exception($"Fade out must end in either PAUSED or DESTROYREADY, not {next}");
-        Logs.Log($"Fading out audio mixer to {next} with tracks: {TrackNames}");
+        Logs.Log($"Fading out audio mixer to {next} with tracks: {TrackNames}", true);
         if (FadeOutNextState.Try(out var f)) {
             if (f < next)
                 FadeOutNextState = next;

@@ -47,9 +47,9 @@ Open up `MiniProjects/Scenes/MiniprojectLevel`  and take a look at the GameManag
 Take a look at the following fields:
 
 - Bounds describes the bounds of the playable field. The Touhou standard is `LR=±3.6` and `center=(-1.9, 0)`. You can build a widescreen game with `LR=±5` and `center=(0, 0)`. 
-- Dialogue links all the dialogue storage objects used by the game. Normally you will only have one dialogue storage object. A dialogue storage object is a list of keys, and for each key a list of translated dialogue files. 
+- Dialogue links all the dialogue storage objects used by the game. Normally you will only have one dialogue storage object. A dialogue storage object is a list of keys, and for each key a list of translated dialogue files. (Note that this has been deprecated in favor of [Suzunoya](szy/intro.md).)
 - Any bosses must have their boss metadata object added to Boss Metadata (see the [boss tutorial](tbosses.md)).
-- Any characters that appear in dialogue must have their dialogue profile added to Dialogue Profiles. There is currently no dialogue tutorial.
+- Any characters that appear in dialogue must have their dialogue profile added to Dialogue Profiles. There is currently no dialogue tutorial. (Note that this has been deprecated in favor of [Suzunoya](szy/intro.md).)
 - Tracks contains all the metadata for music played in the game.
 - Items links to an ItemReferences object, which links to prefabs for each of the item types that exist by default in the game. To visually change items, simply change the prefabs linked here. To add new item types, you should subclass Danmokou.Behavior.Items.Item (see the folder Danmaku/Behavior/Items), add an entry to the Danmokou.Core.ItemType enum, and add handling for that entry in ItemPooler.RequestItem.
 - Summonables links all the summonable storage objects used by the game. Normally you will have the Default Summonable Styles object, which links summonables such as enemies and screen effects, as well as a game-specific summonables object for game-specific enemies or game-specific screen effects. 

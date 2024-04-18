@@ -1,4 +1,4 @@
-
+//AOT:SKIP
 var data = instance.CustomDataF as SiMPCustomDataFeature;
 
 function printGraze(graze::long)::void {

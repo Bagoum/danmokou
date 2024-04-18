@@ -1,0 +1,23 @@
+pattern { } {
+phase 0 {
+	type(non, "Synchronous Repeat")
+	roott(1, 0, 1)
+} {
+	paction 0 {
+		sync("scircle-blue/b", <>, gsrepeat({
+				times(14)
+				circle
+				sfx("x-fire-burst-1")
+			}, s(rvelocity(px(2))))
+		)
+	}
+	paction 1 {
+		sync("scircle-red/w", <>, gsrepeat({
+				times(10)
+				circle
+				sfx("x-fire-burst-2")
+			}, s(rvelocity(px(3))))
+		)
+	}
+}
+}

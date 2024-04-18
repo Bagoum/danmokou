@@ -10,7 +10,7 @@ These are verbose instructions on how to set up Danmokou on your first run.
   - Run `git init`.
   - Run `git remote add super https://github.com/Bagoum/danmokou.git`. This will allow you to reference the project repository via the alias "super".
   - Run `git pull super master`.
-    - `master` is the latest version. You can also pick any version available [on the tags page](https://github.com/Bagoum/danmokou/tags) and run eg. `git pull super v11.0.0`.
+    - `master` is the latest version. You can also pick any version available [on the tags page](https://github.com/Bagoum/danmokou/tags) and run eg. `git pull super v11.1.0`.
   - Run `git submodule update --init --recursive`. This will import code from several submodules, including SiMP, which is a fully structured game, and SuzunoyaUnity, which is a visual novel engine that powers the dialogue system.
     - If you do not want code from the extra submodules, then you can run `git submodule update --init --recursive Assets/SZYU` to only handle SuzunoyaUnity, which is required for the engine to work.
 - If you already have a git repository with Danmokou, you can update it as follows:

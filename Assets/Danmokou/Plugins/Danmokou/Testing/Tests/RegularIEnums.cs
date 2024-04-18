@@ -13,7 +13,8 @@ using UnityEngine.TestTools;
 namespace Danmokou.Testing {
 
     public static class RegularIEnums {
-        private static IEnumerator Add(List<string> msgs, string msg) {
+        private static IEnumerator YieldAdd(List<string> msgs, string msg) {
+            yield return null;
             msgs.Add(msg);
             yield return null;
         }
@@ -34,8 +35,8 @@ namespace Danmokou.Testing {
         public static void TestCorrectness() {
             CoroutineRegularUpdater cru = new GameObject().AddComponent<CoroutineRegularUpdater>();
             List<string> msgs = new List<string>();
-            cru.RunRIEnumerator(Add(msgs, "0"));
-            cru.RunRIEnumerator(Add(msgs, "1"));
+            cru.RunRIEnumerator(YieldAdd(msgs, "0"));
+            cru.RunRIEnumerator(YieldAdd(msgs, "1"));
             Assert.AreEqual(msgs, new List<string>());
             cru.RegularUpdate();
             Assert.AreEqual(msgs, new List<string>() {"0", "1"});
@@ -45,10 +46,10 @@ namespace Danmokou.Testing {
             
             
             msgs = new List<string>();
-            cru.RunRIEnumerator(
+            cru.Run(
                 AddYieldAdd(msgs, "0", 
                 AddYieldAdd(msgs, "1", 
-                    AddYieldAdd(msgs, "2", null))));
+                    AddYieldAdd(msgs, "2", null))), new(CoroutineType.AppendToEnd));
             Assert.AreEqual(cru.NumRunningCoroutines, 1);
             Assert.AreEqual(msgs, new List<string>());
             cru.RegularUpdate();
@@ -60,10 +61,10 @@ namespace Danmokou.Testing {
             
             
             msgs = new List<string>();
-            cru.RunRIEnumerator(
+            cru.Run(
                 AddYieldAddNull(msgs, "0", 
                     AddYieldAddNull(msgs, "1", 
-                        AddYieldAddNull(msgs, "2", null))));
+                        AddYieldAddNull(msgs, "2", null))), new(CoroutineType.AppendToEnd));
             Assert.AreEqual(cru.NumRunningCoroutines, 1);
             Assert.AreEqual(msgs, new List<string>());
             cru.RegularUpdate();
@@ -102,7 +103,7 @@ namespace Danmokou.Testing {
         public static void TestTimingParenting() {
             CoroutineRegularUpdater cru = new GameObject().AddComponent<CoroutineRegularUpdater>();
             cru.RunRIEnumerator(OnePlusTwoFrames(Cancellable.Null));
-            cru.RegularUpdate();
+            Assert.AreEqual(cru.NumRunningCoroutines, 1);
             cru.RegularUpdate();
             Assert.AreEqual(cru.NumRunningCoroutines, 1);
             cru.RegularUpdate();
@@ -124,7 +125,7 @@ namespace Danmokou.Testing {
         [Test]
         public static void TestConversion() {
             Coroutines cors = new Coroutines();
-            cors.Run(OnePlusTwoFrames(Cancellable.Null));
+            cors.Run(OnePlusTwoFrames(Cancellable.Null), new(CoroutineType.AppendToEnd));
             cors.Step();
             Assert.AreEqual(cors.Count, 1);
             IEnumerator ienum = cors.AsIEnum();

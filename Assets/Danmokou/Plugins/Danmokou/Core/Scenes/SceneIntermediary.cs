@@ -26,16 +26,10 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
     public static bool LOADING { get; private set; } = false;
 
     public CameraTransitionConfig defaultTransition = null!;
-    private Cancellable sceneToken = new Cancellable();
-    public ICancellee SceneBoundedToken => sceneToken;
 
     protected override void BindListeners() {
         base.BindListeners();
         RegisterService<ISceneIntermediary>(this, new ServiceLocator.ServiceOptions { Unique = true });
-        Listen(PreSceneUnload, () => {
-            sceneToken.Cancel();
-            sceneToken = new Cancellable();
-        });
     }
 
     public SceneLoading? LoadScene(SceneRequest req) {
@@ -56,21 +50,20 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
     private IEnumerator WaitForSceneLoad(IDisposable stateToken, SceneRequest req, SceneLoading loader, bool transitionOnSame) {
         var currScene = SceneManager.GetActiveScene().name;
         float waitOut = 0f;
-        if (transitionOnSame || currScene != req.scene.sceneName) {
-            var transition = req.Transition ?? (req.scene.transitionIn == null ? defaultTransition : req.scene.transitionIn);
+        if (transitionOnSame || currScene != req.scene.SceneName) {
+            var transition = req.Transition ?? (req.scene.TransitionIn == null ? defaultTransition : req.scene.TransitionIn);
             ServiceLocator.Find<ICameraTransition>().Fade(transition, out var waitIn, out waitOut);
             Logs.Log($"Performing fade transition for {waitIn}s before loading scene.");
             for (; waitIn > ETime.FRAME_YIELD; waitIn -= ETime.FRAME_TIME) yield return null;
         }
         //Logs.Log($"Scene loading for {req} started.", level: LogLevel.DEBUG1);
-        PreSceneUnload.OnNext(default);
         req.onPreLoad?.Invoke();
         loader.Preloading.SetResult(default);
-        var op = SceneManager.LoadSceneAsync(req.scene.sceneName);
+        var op = SceneManager.LoadSceneAsync(req.scene.SceneName);
         while (!op.isDone) {
             yield return null;
         }
-        Logs.Log($"Unity finished loading scene {req}. " +
+        Logs.Log($"The scene loader has finished loading scene {req}. " +
                  $"The out transition will take {waitOut}s, but the scene will start immediately.",
             level: LogLevel.DEBUG3);
         req.onLoaded?.Invoke();
@@ -87,18 +80,30 @@ public class SceneIntermediary : CoroutineRegularUpdater, ISceneIntermediary {
     public override int UpdatePriority => UpdatePriorities.SOF;
     
 
-    //Static stuff
-    public static Event<Unit> PreSceneUnload { get; } = new Event<Unit>();
+    /// <summary>
+    /// Called when the Unity scene has been unloaded.
+    /// <br/>GC.Collect is called right after this.
+    /// <br/>This is a good time to clear caches.
+    /// </summary>
     public static Event<Unit> SceneUnloaded { get; } = new Event<Unit>();
+    
+    /// <summary>
+    /// Called when the Unity scene has been loaded, after all Awake calls.
+    /// <br/>This is called on the first scene load as well.
+    /// </summary>
     public static Event<Scene> SceneLoaded { get; } = new();
 
+    //this is easier to handle than a static constructor due to rules against accessing
+    // unity APIs in static constructors
     public static void Attach() {
         SceneManager.sceneUnloaded += s => {
-            Logs.Log($"Unity scene {s.name} was unloaded");
+            Logs.Log($"Unity scene {s.name} was unloaded. Now calling {nameof(SceneUnloaded)} on all listeners.");
             SceneUnloaded.OnNext(default);
+            GC.Collect();
         };
         SceneManager.sceneLoaded += (s, m) => {
-            Logs.Log($"Unity scene {s.name} was loaded via mode {m.ToString()}");
+            Logs.Log($"Unity scene {s.name} was loaded via mode {m.ToString()}. Awake has been called on all live " +
+                     $"objects. Now calling {nameof(SceneLoaded)} on all listeners.");
             SceneLoaded.OnNext(s);
         };
     }

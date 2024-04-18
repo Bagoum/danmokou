@@ -116,16 +116,15 @@ public class PatternSM : SequentialSM, EnvFrameAttacher {
                         nextTracks ??= bgms.GetBounded(next).ValueOrNull();
                     if (nextTracks is {} tracks) {
                         var pi = jsmh.GCX.DeriveFCTX();
-                        AudioTrackSet? ntrackset = null;
-                        ntrackset = ServiceLocator.Find<IAudioTrackService>().FindTrackset(tracks.Select(x => x.track))
-                            ?? ServiceLocator.Find<IAudioTrackService>().AddTrackset(null, pi);
+                        var srv = ServiceLocator.Find<IAudioTrackService>();
+                        var ntrackset = srv.FindTrackset(tracks.Select(x => x.track))
+                            ?? srv.AddTrackset(null, pi);
                         if (ntrackset != trackset) {
                             trackset?.FadeOut(null, AudioTrackState.DestroyReady);
                             trackset = ntrackset;
                         }
-                        foreach (var (t, vol) in tracks) {
+                        foreach (var (t, vol) in tracks)
                             trackset.AddTrack(t)?.SetLocalVolume(vol);
-                        }
                     }
                 }
                 if (Props.boss != null && next >= Props.setUIFrom) {
@@ -332,7 +331,7 @@ public class PhaseSM : SequentialSM {
         } catch (OperationCanceledException) {
             if (smh.Exec.PhaseShifter == pcTS)
                 smh.Exec.PhaseShifter = null;
-            //This is critical to avoid boss destruction during the two-frame phase buffer
+            //Don't allow damage until the next phase starts
             smh.SetAllVulnerable(subbosses, Vulnerability.NO_DAMAGE);
             float finishDelay = 0f;
             var finishTask = Task.CompletedTask;
@@ -355,6 +354,7 @@ public class PhaseSM : SequentialSM {
                     GameManagement.ClearPhaseAutocull(
                         props.SoftcullProps(smh.Exec), 
                         props.SoftcullPropsBeh(smh.Exec));
+                    //note that this will generally be a 0-2 frame delay to allow autocull to go through
                     await finishTask;
                 }
             }
@@ -374,13 +374,15 @@ public class PhaseSM : SequentialSM {
     private const float defaultShakeTime = 0.6f;
     private static readonly FXY defaultShakeMult = x => M.Sin(BMath.PI * (x + 0.4f));
 
-    private (float estDelayTime, Task) OnFinish(PhaseContext ctx, SMHandoff smh, ICancellee prepared, 
+    private (float estDelayTime, Task) OnFinish(PhaseContext ctx, SMHandoff smh, JointCancellable prepared, 
         CampaignSnapshot start_campaign, IBackgroundOrchestrator? bgo) {
         if (ctx.BgTransitionOut != null) {
             bgo?.QueueTransition(ctx.BgTransitionOut);
         }
-        //The shift-phase token is cancelled by timeout or by HP. 
-        var completedBy = prepared.Cancelled ?
+        //The shift-phase token is locally cancelled by timeout or by HP. 
+        //Since it's dependent on parent tokens as well, just checking `prepared.Cancelled`
+        // would also include cases like object destruction or local reset.
+        var completedBy = prepared.LocallyCancelled ?
             (smh.Exec.isEnemy ?
                 (smh.Exec.Enemy.PhotoHP <= 0 && (props.photoHP ?? 0) > 0) ? 
                     PhaseClearMethod.PHOTO :
@@ -413,7 +415,8 @@ public class PhaseSM : SequentialSM {
                 .GetComponent<PhasePerformance>().Initialize($"{ctx.Boss.CasualName} / Boss Card", pc);
             return (EndOfCardDelayTime, RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, EndOfCardDelayTime, false));
         }
-        return (0, Task.CompletedTask);
+        //wait for 1-2 frames to allow autoculls to go through
+        return (0, RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, ETime.FRAME_TIME, false));
     }
 
     private const float EndOfCardAutocullTime = 0.7f;

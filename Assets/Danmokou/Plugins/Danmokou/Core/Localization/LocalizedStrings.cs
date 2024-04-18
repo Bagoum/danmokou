@@ -8,7 +8,6 @@ using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Danmokou.Core {
-[LocalizationStringsRepo]
 public static partial class LocalizedStrings {
     static LocalizedStrings() {
     #if UNITY_EDITOR
@@ -19,9 +18,9 @@ public static partial class LocalizedStrings {
             .Where(a => a.GetCustomAttribute<LocalizationStringsRepoAttribute>() != null)) {
             if (t == typeof(LocalizedStrings)) continue;
             var map = t._StaticField<Dictionary<string, LString>>(nameof(_allDataMap));
-            foreach (var k in map.Keys) {
+            foreach (var k in map.Keys)
                 _allDataMap[k] = map[k];
-            }
+            map.Clear();
         }
     }
     

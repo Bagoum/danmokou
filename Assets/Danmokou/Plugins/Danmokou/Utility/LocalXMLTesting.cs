@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Mathematics;
 using BagoumLib.Transitions;
@@ -69,7 +70,7 @@ public class LocalXMLTesting : CoroutineRegularUpdater {
                 new Tweener<float>(0, 0.6f, 1f, a => {
                     ve.style.backgroundColor = new Color(0.32f, 0.22f, 0.26f, a);
                     ve.SetBorder(new Color(0.35f, 0.26f, 0.33f, a), 7);
-                }).Run(menu, new(true));
+                }).Run(menu, CoroutineOptions.DroppableDefault);
             }).ColumnRender(0), nodes
         ) {
             Interactable = false

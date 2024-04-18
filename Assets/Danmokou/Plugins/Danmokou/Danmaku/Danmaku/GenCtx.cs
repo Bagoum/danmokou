@@ -10,6 +10,8 @@ using Danmokou.Expressions;
 using Danmokou.Player;
 using Danmokou.Reflection;
 using Danmokou.Reflection2;
+using Danmokou.Scenes;
+using Danmokou.Services;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -22,6 +24,9 @@ namespace Danmokou.Danmaku {
 /// </summary>
 public class GenCtx : IDisposable {
     public static readonly GenCtx Empty = new();
+    private static readonly Stack<GenCtx> cache = new();
+    static GenCtx() => SceneIntermediary.SceneUnloaded.Subscribe(_ => cache.Clear());
+    
     public EnvFrame EnvFrame { get; private set; } = EnvFrame.Empty;
     public LexicalScope Scope => EnvFrame.Scope;
     public bool AutovarsAreInherited { get; private set; } = false;
@@ -92,7 +97,6 @@ public class GenCtx : IDisposable {
     /// </summary>
     [UsedImplicitly]
     public ParametricInfo AsBPI => new(fctx, Loc, index, idOverride ?? exec.rBPI.id, i);
-    private static readonly Stack<GenCtx> cache = new();
     private bool _isInCache = false;
 
     /*

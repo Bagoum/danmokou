@@ -3,11 +3,15 @@ using System;
 using System.Collections.Generic;
 using BagoumLib.Reflection;
 using Danmokou.Expressions;
+using Danmokou.Scenes;
 using JetBrains.Annotations;
 
 namespace Danmokou.Reflection {
 public abstract class ReflWrap {
     private static readonly List<ReflWrap> wrappers = new();
+
+    static ReflWrap() => SceneIntermediary.SceneUnloaded.Subscribe(_ => ClearWrappers());
+    
     /// <summary>
     /// True iff the value should not be reset on scene change.
     /// </summary>
@@ -53,7 +57,7 @@ public class ReflWrap<T> : ReflWrap where T : class {
     
     public static ReflWrap<T> FromFunc(string uniqueKey, Func<T> constructor) => 
         new(() => {
-            using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.MANUAL, uniqueKey);
+            using var _ = BakeCodeGenerator.OpenContext(CookingContext.KeyType.MANUAL, uniqueKey);
             return constructor();
         });
 

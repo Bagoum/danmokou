@@ -168,12 +168,12 @@ public static class ExMLerps {
     public static Func<TExArgCtx, TEx<T>> LerpMany<T>((UncompiledCode<float> bd, UncompiledCode<T> val)[] points, 
         Func<TExArgCtx, TEx<float>> controller) => tac => 
         TEx.Resolve(controller(tac), x => {
-            Ex ifLt = points[0].val.code(tac);
+            Ex ifLt = points[0].val.Code(tac);
             for (int ii = 0; ii < points.Length - 1; ++ii) {
-                ifLt = Ex.Condition(x.LT(points[ii].bd.code(tac)), ifLt,
-                    LerpU(points[ii].bd.code(tac), points[ii + 1].bd.code(tac), x, points[ii].val.code(tac), points[ii + 1].val.code(tac)));
+                ifLt = Ex.Condition(x.LT(points[ii].bd.Code(tac)), ifLt,
+                    LerpU(points[ii].bd.Code(tac), points[ii + 1].bd.Code(tac), x, points[ii].val.Code(tac), points[ii + 1].val.Code(tac)));
             }
-            return Ex.Condition(x.LT(points[^1].bd.code(tac)), ifLt, points[^1].val.code(tac));
+            return Ex.Condition(x.LT(points[^1].bd.Code(tac)), ifLt, points[^1].val.Code(tac));
         });
 
     /// <summary>
@@ -183,9 +183,9 @@ public static class ExMLerps {
     /// </summary>
     public static Func<TExArgCtx, TEx<T>> Select<T>(Func<TExArgCtx, TEx<float>> index, UncompiledCode<T>[] points) => 
         tac => TEx.Resolve((TEx<int>) ((Ex) index(tac)).Cast<int>(), i => {
-            Ex ifNeq = points[^1].code(tac);
+            Ex ifNeq = points[^1].Code(tac);
             for (int ii = points.Length - 2; ii >= 0; --ii) {
-                ifNeq = Ex.Condition(Ex.Equal(i, ExC(ii)), points[ii].code(tac), ifNeq);
+                ifNeq = Ex.Condition(Ex.Equal(i, ExC(ii)), points[ii].Code(tac), ifNeq);
             }
             return ifNeq;
         });

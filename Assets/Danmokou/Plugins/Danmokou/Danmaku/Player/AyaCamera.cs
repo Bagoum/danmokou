@@ -17,14 +17,7 @@ using TMPro;
 using UnityEngine;
 
 namespace Danmokou.Player {
-public class AyaCamera : BehaviorEntity {
-
-    public enum State {
-        NORMAL = 0,
-        CHARGE = 1,
-        FIRING = 2,
-        REFRACTORY = 3
-    }
+public partial class AyaCamera : BehaviorEntity {
 
     public enum Orientation {
         HORIZONTAL = 0,
@@ -36,13 +29,13 @@ public class AyaCamera : BehaviorEntity {
         ? Orientation.VERTICAL
         : Orientation.HORIZONTAL;
 
-    public static State CameraState { get; private set; } = State.NORMAL;
+    public AyaCameraStateFlow StateFlow { get; private set; }
     public static Orientation CameraOrientation { get; private set; } = Orientation.HORIZONTAL;
     private float CameraOrientationAngleOffset => (CameraOrientation == Orientation.HORIZONTAL) ? 0f : 90f;
 
     public float CameraSpeedMultiplier =>
-        CameraState == State.FIRING ? 0f :
-        (CameraState == State.CHARGE && player.IsFocus) ? 
+        StateFlow.State is State.Firing ? 0f :
+        (StateFlow.State is State.Charge && player.IsFocus) ? 
             0.5f :
             1f;
     
@@ -53,7 +46,7 @@ public class AyaCamera : BehaviorEntity {
     public TextMeshPro text = null!;
     public Color textUnfilledColor;
     public Color textFilledColor;
-    private Color TextColor => (ChargeFull || CameraState == State.FIRING) ? textFilledColor : textUnfilledColor;
+    private Color TextColor => (ChargeFull || StateFlow.State is State.Firing) ? textFilledColor : textUnfilledColor;
     public float viewfinderRadius;
     public SFXConfig? onOrientationSwitch;
     public SFXConfig? whileCharge;
@@ -100,13 +93,9 @@ public class AyaCamera : BehaviorEntity {
     private int lowCameraLayer;
     private int highCameraLayer;
 
-    private static void ResetCameraState() {
-        CameraState = State.NORMAL;
-    }
     protected override void Awake() {
         base.Awake();
-        ResetCameraState();
-        RunDroppableRIEnumerator(UpdateNormal());
+        StateFlow = new(this);
         lowCameraLayer = LayerMask.NameToLayer("LowEffects");
         highCameraLayer = LayerMask.NameToLayer("TransparentFX");
         viewfinderSR = viewfinder.GetComponent<SpriteRenderer>();
@@ -120,6 +109,10 @@ public class AyaCamera : BehaviorEntity {
         tr.position = new Vector2(0, -100); //hide it offscreen for the first frame
     }
 
+    public override void FirstFrame() {
+        StateFlow.Start();
+    }
+
     protected override void RegularUpdateMove() {
         orientationSwitchWaiting -= ETime.FRAME_TIME;
         if (player.IsTryingBomb && orientationSwitchWaiting < 0f) {
@@ -128,7 +121,7 @@ public class AyaCamera : BehaviorEntity {
             ISFXService.SFXService.Request(onOrientationSwitch);
         }
         //while firing, the angle is static and the position is controlled by the coroutine
-        if (CameraState != State.FIRING) {
+        if (StateFlow.State is not State.Firing) {
             angle = M.Lerp(angle, BaseViewfinderAngle, lerpToAngleRate * ETime.FRAME_TIME);
             tr.position = location = Vector2.Lerp(location, TargetPosition, lerpToPositionRate * ETime.FRAME_TIME);
             viewfinder.eulerAngles = new Vector3(0f, 0f, angle + CameraOrientationAngleOffset);
@@ -139,7 +132,7 @@ public class AyaCamera : BehaviorEntity {
         if (player.AllowPlayerInput) {
             bool full = ChargeFull;
             var prevCharge = charge;
-            charge = M.Clamp(chargeMin, chargeMax, charge + GetChargeRate(CameraState) * ETime.FRAME_TIME);
+            charge = M.Clamp(chargeMin, chargeMax, charge + GetChargeRate(StateFlow.State) * ETime.FRAME_TIME);
             if (!full && ChargeFull) {
                 ISFXService.SFXService.Request(onFullCharge);
             }
@@ -153,8 +146,8 @@ public class AyaCamera : BehaviorEntity {
 
     private static double GetChargeRate(State s) =>
         s switch {
-            State.NORMAL => 12,
-            State.CHARGE => 42,
+            State.Normal => 12,
+            State.Charge => 42,
             _ => 0
         };
 
@@ -164,64 +157,10 @@ public class AyaCamera : BehaviorEntity {
     private double charge = 50;
     public bool ChargeFull => charge >= chargeMax;
     public bool InputCharging => player.IsFocus && player.IsFiring;
-    private IEnumerator UpdateNormal() {
-        viewfinder.gameObject.layer = lowCameraLayer;
-        CameraState = State.NORMAL;
-        bool alreadyCharging = player.IsFiring;
-        while (true) {
-            alreadyCharging &= player.IsFiring;
-            if (ChargeFull && !player.IsFocus && player.IsFiring && !alreadyCharging) {
-                RunDroppableRIEnumerator(UpdateFire());
-                yield break;
-            } else if (InputCharging) {
-                RunDroppableRIEnumerator(UpdateCharge());
-                yield break;
-            }
-            yield return null;
-        }
-    }
 
     private CRect ViewfinderRect(float scale) =>
         new(location.x, location.y, CameraHalfBounds.x * scale, CameraHalfBounds.y * scale, angle);
-    private IEnumerator UpdateFire() {
-        CameraState = State.FIRING;
-        using var slowdownToken = ETime.Slowdown.AddConst(0.5f);
-        viewfinder.gameObject.layer = highCameraLayer;
-        using var cToken = new Cancellable();
-        ISFXService.SFXService.RequestSource(whileFire, cToken);
-        for (float t = 0f; t < cameraLerpDownTime; t += ETime.FRAME_TIME) {
-            float scale = M.Lerp(cameraFireSize, 1f, Easers.EInSine(t / cameraLerpDownTime));
-            charge = 100 * (1 - Easers.EInSine(t / cameraLerpDownTime));
-            viewfinder.localScale = new Vector3(scale, scale, scale);
-            tr.position = location += cameraFireControlSpeed * ETime.FRAME_TIME * player.DesiredMovement01;
-            var vf = ViewfinderRect(scale);
-            //take shot by letting go of fire key
-            if (!player.IsFiring) {
-                RunDroppableRIEnumerator(TakePictureAndRefractor(scale));
-                yield break;
-            } else {
-                var enemies = Enemy.FrozenEnemies;
-                for (int ii = 0; ii < enemies.Count; ++ii) {
-                    enemies[ii].enemy.ShowCrosshairIfViewfinderHits(vf);
-                }
-            }
-            yield return null;
-        }
-        var _enemies = Enemy.FrozenEnemies;
-        for (int ii = 0; ii < _enemies.Count; ++ii) {
-            _enemies[ii].enemy.HideViewfinderCrosshair();
-        }
-        ISFXService.SFXService.Request(onTimeout);
-        RunDroppableRIEnumerator(UpdateNormal());
-    }
-    private IEnumerator UpdateCharge() {
-        CameraState = State.CHARGE;
-        using var cToken = new Cancellable();
-        ISFXService.SFXService.RequestSource(whileCharge, cToken);
-        while (InputCharging) yield return null;
-        RunDroppableRIEnumerator(UpdateNormal());
-    }
-
+    
     private bool TakePicture_Enemies(float scale) {
         var vf = ViewfinderRect(scale);
         var enemies = Enemy.FrozenEnemies;
@@ -240,40 +179,6 @@ public class AyaCamera : BehaviorEntity {
 
     public static readonly IBSubject<(AyaPhoto photo, bool success)> PhotoTaken 
         = new Event<(AyaPhoto, bool)>();
-    private IEnumerator TakePictureAndRefractor(float scale) {
-        var success = TakePicture_Enemies(scale);
-        viewfinderSR.enabled = false;
-        text.enabled = false;
-        var photoRect = ViewfinderRect(scale);
-        var photoTex = ServiceLocator.Find<IScreenshotter>().Screenshot(photoRect);
-        var photo = new AyaPhoto(photoTex.IntoTex(), photoRect, success && GameManagement.Instance.Request?.replay is null);
-        PhotoTaken.OnNext((photo, success));
-        photoTex.Release();
-        var pphoto = GameObject.Instantiate(pinnedPhotoPrefab).GetComponent<AyaPinnedPhoto>();
-        pphoto.Initialize(photo, location, success ? 
-            ServiceLocator.FindOrNull<IAyaPhotoBoard>()?.NextPinLoc(pphoto) : 
-            null);
-        viewfinderSR.enabled = true;
-        text.enabled = true;
-        var freezer = ServiceLocator.Find<FreezeFrameHelper>();
-        freezer.CreateFreezeFrame(freezeTime);
-        freezer.RunDroppableRIEnumerator(DoFlash(flashTime, success));
-        //Wait until after the freeze to delete bullets
-        yield return null;
-        TakePicture_Delete(scale);
-        RunDroppableRIEnumerator(UpdateRefractory(success));
-    }
-    private IEnumerator UpdateRefractory(bool shotHit) {
-        viewfinder.gameObject.layer = lowCameraLayer;
-        float t = shotHit ? 1.2f : 0.4f;
-        CameraState = State.REFRACTORY;
-        charge = Math.Min(charge, shotHit ? 0 : 50);
-        viewfinder.localScale = new Vector3(1f, 1f, 1f);
-        for (float elapsed = 0f; elapsed < t; elapsed += ETime.FRAME_TIME) {
-            yield return null;
-        }
-        RunDroppableRIEnumerator(UpdateNormal());
-    }
 
     private IEnumerator DoFlash(float time, bool success) {
         ISFXService.SFXService.Request(onFlash);
@@ -291,11 +196,10 @@ public class AyaCamera : BehaviorEntity {
         flash.enabled = false;
         ISFXService.SFXService.Request(success ? onPictureSuccess : onPictureMiss);
     }
-    
 
     protected override void OnDisable() {
+        StateFlow.SetNext(new State.NULL());
         base.OnDisable();
-        ResetCameraState();
     }
 }
 }

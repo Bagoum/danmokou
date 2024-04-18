@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using BagoumLib;
+using UnityEngine.XR;
 
 namespace Danmokou.Core.DInput {
 
 /// <summary>
 /// An input source that makes use of the <see cref="IInputHandler"/> abstraction for its provided keys.
 /// </summary>
-public interface IInputHandlerInputSource {
+public interface IInputHandlerInputSource : IInputSource {
     List<IInputHandler> Handlers { get; }
     public bool AnyKeyPressedThisFrame { get; protected set; }
 
@@ -19,6 +20,14 @@ public interface IInputHandlerInputSource {
         for (int ii = 0; ii < Handlers.Count; ++ii)
             anyActive |= Handlers[ii].OncePerUnityFrameUpdate();
         return AnyKeyPressedThisFrame = anyActive;
+    }
+
+    void IInputSource.Interrupt() => Interrupt(this);
+
+    /// <inheritdoc cref="IInputHandler.Interrupt"/>
+    public static void Interrupt(IInputHandlerInputSource me) {
+        for (int ii = 0; ii < me.Handlers.Count; ++ii)
+            me.Handlers[ii].Interrupt();
     }
 }
 

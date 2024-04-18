@@ -45,7 +45,7 @@ phase 0
 		} { 
 		}
 		collide sbonsb circle-green/ keine-blue/w (> (t - &.localt) 0.1) _ {
-			restyleeffect(circle-blue/, _, > (t - &.localt) 0.1)
+			restyleeffect(circle-blue/, _, _)
 		} { 
 		}
 
@@ -53,11 +53,11 @@ phase 0
 			root cy 1
 			center
 			p this
-			start { localt =f 0 }
 		} gsr2 40 <;0.2:> {
 			center
 			p mod
 			maxtimes 20
+			start { localt =f 0 }
 		} simple nroffset(circle(2, 0.00, t + p * 1.4h)) {
 		}
 

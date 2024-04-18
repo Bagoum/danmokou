@@ -1,0 +1,205 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &563634705548247859
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 41652041246999765, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.32926828
+      objectReference: {fileID: 0}
+    - target: {fileID: 41652041246999765, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2.780489
+      objectReference: {fileID: 0}
+    - target: {fileID: 1627578724711655887, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 2a44af06ab0449347b2fca7cde6efbe7,
+        type: 3}
+    - target: {fileID: 2291325347389896490, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: offsetPx.x
+      value: -54
+      objectReference: {fileID: 0}
+    - target: {fileID: 2291325347389896490, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: offsetPx.y
+      value: 456
+      objectReference: {fileID: 0}
+    - target: {fileID: 2291325347389896490, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: emotes.Array.size
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2291325347389896490, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: emotes.Array.data[5].emote
+      value: ded
+      objectReference: {fileID: 0}
+    - target: {fileID: 2291325347389896490, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: emotes.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: dac95fa93cfc9b84d8d097f302f533b4,
+        type: 3}
+    - target: {fileID: 2291325347389896490, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: emotes.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 8636d2fc301b90f4db8cb8cddc8dddc6,
+        type: 3}
+    - target: {fileID: 2291325347389896490, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: emotes.Array.data[2].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: ef7f0512edd9a08458604eec56a657c1,
+        type: 3}
+    - target: {fileID: 2291325347389896490, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: emotes.Array.data[3].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 5b7c8ef30d8392648aac24e937df5dce,
+        type: 3}
+    - target: {fileID: 2291325347389896490, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: emotes.Array.data[4].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 98a1184b4f254704b94efead072c72a5,
+        type: 3}
+    - target: {fileID: 2291325347389896490, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: emotes.Array.data[5].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 2a44af06ab0449347b2fca7cde6efbe7,
+        type: 3}
+    - target: {fileID: 3073069532273980263, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: advIcons.Array.size
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3073069532273980263, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: advIcons.Array.data[5].emote
+      value: ded
+      objectReference: {fileID: 0}
+    - target: {fileID: 3073069532273980263, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: advIcons.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: dac95fa93cfc9b84d8d097f302f533b4,
+        type: 3}
+    - target: {fileID: 3073069532273980263, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: advIcons.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 8636d2fc301b90f4db8cb8cddc8dddc6,
+        type: 3}
+    - target: {fileID: 3073069532273980263, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: advIcons.Array.data[2].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: ef7f0512edd9a08458604eec56a657c1,
+        type: 3}
+    - target: {fileID: 3073069532273980263, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: advIcons.Array.data[3].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 5b7c8ef30d8392648aac24e937df5dce,
+        type: 3}
+    - target: {fileID: 3073069532273980263, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: advIcons.Array.data[4].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 98a1184b4f254704b94efead072c72a5,
+        type: 3}
+    - target: {fileID: 3073069532273980263, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: advIcons.Array.data[5].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 2a44af06ab0449347b2fca7cde6efbe7,
+        type: 3}
+    - target: {fileID: 3938963659613347399, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: emotes.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 368d6c2128dc93a41bcd24cad7ea08a8,
+        type: 3}
+    - target: {fileID: 5179137271507438359, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.65
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841180810607, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 368d6c2128dc93a41bcd24cad7ea08a8,
+        type: 3}
+    - target: {fileID: 5466135841841681088, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681088, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466135841841681093, guid: 969a8a9943be2d6439e82d5a15d605ba,
+        type: 3}
+      propertyPath: m_Name
+      value: THJ13 Reimu VN
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 969a8a9943be2d6439e82d5a15d605ba, type: 3}

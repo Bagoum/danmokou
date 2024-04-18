@@ -10,7 +10,6 @@ function makeRotator(itr)::Func<Vector2,Vector2> {
 }
 
 var sm = pattern({
-		boss "simp.kasen"
 	}, {
 	phase 0 { } {
 		paction 0 {

@@ -1,27 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using Danmokou.Reflection;
+using Danmokou.Reflection2;
 
 namespace Danmokou.Expressions {
 
 public class ReplaceExVisitor : ExpressionVisitor {
     private readonly Dictionary<Expression, Expression> map;
-    private readonly Dictionary<object, Expression> constMap;
+    public readonly Dictionary<object, Expression> constMap;
     private readonly Func<Dictionary<object, Expression>, object, Expression> fallbackConstHandling;
     
-    public ReplaceExVisitor(Dictionary<Expression, Expression> map, Dictionary<object, Expression> defaultObjMap,
+    public ReplaceExVisitor(Dictionary<Expression, Expression> map, Dictionary<object, Expression> objMap,
         Func<Dictionary<object, Expression>, object, Expression> fallbackConstHandling) {
         this.map = map;
         this.fallbackConstHandling = fallbackConstHandling;
-        constMap = new Dictionary<object, Expression>();
-        foreach (var key in defaultObjMap.Keys) {
-            constMap[key] = defaultObjMap[key];
-        }
-        foreach (var key in map.Keys) {
-            if (key is ConstantExpression cx) {
-                constMap[cx.Value] = map[key];
-            }
-        }
+        constMap = objMap;
     }
 
     public override Expression Visit(Expression? node) => 
@@ -32,9 +26,11 @@ public class ReplaceExVisitor : ExpressionVisitor {
     protected override Expression VisitConstant(ConstantExpression node) {
         if (node.Value == null)
             return base.VisitConstant(node);
-        return constMap.TryGetValue(node.Value, out var repl) ? 
-            repl : 
-            fallbackConstHandling(constMap, node.Value);
+        if (constMap.TryGetValue(node.Value, out var repl))
+            return repl;
+        if (node.Value == ExMHelpers.LookupTable)
+            return ExMHelpers.exLookupTable;
+        return fallbackConstHandling(constMap, node.Value);
     }
 }
 }

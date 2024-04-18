@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2cda3e0fe1645a43baac47f4aada44a, type: 3}
   m_Name: THJ13 Camera Transition PLACEHULDER
   m_EditorClassIdentifier: 
-  fadeToTex: {fileID: 2800000, guid: c199f04a099050e45a1bdb7d714ac5c2, type: 3}
+  fadeToTex: {fileID: 2800000, guid: 4a993956c63320444a8430c0be97d457, type: 3}
   fadeIn:
     sfx: {fileID: 11400000, guid: a8d588e4ecf99294db25e7e2e7e7ae7b, type: 2}
     material: {fileID: 2100000, guid: 4d9c949e2368b4f409f6e1718a49cabe, type: 2}

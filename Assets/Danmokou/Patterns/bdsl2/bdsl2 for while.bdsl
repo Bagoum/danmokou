@@ -6,7 +6,6 @@ function myFn1(x::float, y):: float {
 }
 
 var sm = pattern({
-		boss "simp.kasen"
 	}, {
 	phase 0 { } {
 		paction 0 {

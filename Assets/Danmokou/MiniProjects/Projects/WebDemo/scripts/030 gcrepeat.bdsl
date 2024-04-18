@@ -1,0 +1,20 @@
+pattern { } {
+phase 0 {
+	type(non, "Asynchronous Repeat")
+	roott(1, 0, 1)
+} {
+	paction 0 {
+	async("", <>, gcrepeat({
+			wait(70)
+			times(inf)
+			color({ "dcircle-green/b", "flasharrow-yellow/" })
+			sfx({ "x-fire-burst-1", "x-fire-burst-2" })
+			rv2incr(<2>)
+		},  gsrepeat({
+				times(14)
+				circle
+			}, s(rvelocity(px(2))))
+		))
+	}
+}
+}

@@ -31,6 +31,7 @@ using UnityEditor;
 using static Danmokou.SM.SMAnalysis;
 using Danmokou.Core.DInput;
 using Danmokou.UI.XML;
+using UnityEngine.SceneManagement;
 
 namespace Danmokou.Services {
 /// <summary>
@@ -129,7 +130,6 @@ public class GameManagement : CoroutineRegularUpdater {
         ETime.RegisterPersistentSOFInvoke(Enemy.FreezeEnemies);
         ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PrunePoolControls);
         ETime.RegisterPersistentEOFInvoke(CurvedTileRenderLaser.PrunePoolControls);
-        SceneIntermediary.SceneUnloaded.Subscribe(_ => ClearScene());
         
         RegisterService<IUXMLReferences>(UXMLPrefabs);
 
@@ -171,24 +171,9 @@ public class GameManagement : CoroutineRegularUpdater {
 
     public static bool CanRestart => Instance.Request is { CanRestart: true };
 
-    public static void ClearScene() {
-        //TODO: this is necessary because PlayerController/AyaCamera can add tokens to Slowdown in droppable coroutines.
-        // Ideally we shouldn't allow that.
-        ETime.Slowdown.ClearDisturbances();
-        ETime.Timer.StopAll();
-        BulletManager.OrphanAll(); //Also clears pool controls
-        PublicDataHoisting.ClearAllValues();
-        //PICustomData.ClearNames();
-        ReflWrap.ClearWrappers();
-        StateMachineManager.ClearCachedSMs();
-        Events.SceneCleared.OnNext(default);
-    }
-
 #if UNITY_EDITOR || ALLOW_RELOAD
 
     public static void LocalReset() {
-        ETime.Slowdown.ClearDisturbances();
-        ETime.Timer.StopAll();
         BehaviorEntity.DestroyAllSummons();
         PublicDataHoisting.ClearAllValues();
         //PICustomData.ClearNames();
@@ -219,6 +204,13 @@ public class GameManagement : CoroutineRegularUpdater {
         LocalReset();
         return true;
     }
+
+    [ContextMenu("Reload this scene")]
+    public void ReloadThisScene() {
+        ServiceLocator.Find<ISceneIntermediary>().LoadScene(
+            new SceneRequest(new ISceneConfig.SC(SceneManager.GetActiveScene().name), SceneRequest.Reason.START_ONE));
+    }
+    
 #endif
 
     public static void ClearPhaseAutocull(SoftcullProperties propsSimple, SoftcullProperties propsBeh) {
@@ -362,6 +354,13 @@ public class GameManagement : CoroutineRegularUpdater {
     [ContextMenu("Verify Expressions")]
     public void VerifyExpressions() {
         BakeCodeGenerator.BakeExpressions(true);
+    }
+
+    [ContextMenu("Export Current Expressions (Testing)")]
+    public void _ExportExistingExpressions() {
+        BakeCodeGenerator.ExportGeneratedCode();
+        Reflector.GenerateAoT();
+        EditorApplication.ExitPlaymode();
     }
     
 //#endif

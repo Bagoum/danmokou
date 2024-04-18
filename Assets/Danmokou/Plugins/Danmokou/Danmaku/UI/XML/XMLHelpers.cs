@@ -1041,7 +1041,7 @@ public static partial class XMLHelpers {
             new TwoLabelUINode(stats_favshot, Show(() => {
                 if (stats.TotalRuns == 0) return generic_na;
                 var ((pc, sc, ab), recs) = stats.FavoriteShot;
-                return LString.Format("{0} {1} ({1})", 
+                return LString.Format("{0} {1} ({2})", 
                     ShotConfig.PlayerShotDescription(pc, sc),
                     ab?.Value.ShortTitle ?? new(null, "No ability"),
                     $"{recs.Length}"

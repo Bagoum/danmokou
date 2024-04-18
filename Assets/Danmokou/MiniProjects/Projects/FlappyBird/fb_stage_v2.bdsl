@@ -34,7 +34,7 @@ macro obj3(y = 2, x = 5) {
                     //print("y2" + y.ToString())
                     thendelay 3 async "gdlaser-purple/w" <-2;:180> gcr {
                         delay(180)
-                    } laser(null, 1, 1 + 0.2 * dc, {
+                    } laser(none, 1, 1 + 0.2 * dc, {
                         dsfx
                     })
                 })

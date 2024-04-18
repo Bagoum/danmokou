@@ -27,5 +27,6 @@ public class StandardDanmakuInputExtractor : IInputSource {
 
     //handled by replay player's step function
     public bool OncePerUnityFrameToggleControls() => false;
+    public void Interrupt() { }
 }
 }

@@ -53,7 +53,7 @@ public class AchievementDisplay : CoroutineRegularUpdater {
         baseLoc = (Vector2)tr.localPosition - 
                   (uiParent.autoShiftCamera ? LocationHelpers.PlayableBounds.center : Vector2.zero);
         
-    #if WEBGL && !EXBAKE_LOAD
+    #if WEBGL && !EXBAKE_LOAD && !EXBAKE_SAVE
         InLerp = t => Easers.CEOutBack(2.2f, t);
         OutLerp = Easers.EInSine;
     #else

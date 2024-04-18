@@ -29,7 +29,7 @@ MonoBehaviour:
   fixedShot:
   - ship: {fileID: 11400000, guid: 9f27b34e64733c64e9e98c93439075f8, type: 2}
     shot: {fileID: 11400000, guid: e89357d08e40831458970df574a4eb13, type: 2}
-    ability: {fileID: 11400000, guid: 13157d81a8a5ff646accca16a0311ad8, type: 2}
+    ability: {fileID: 11400000, guid: 229e243b674c46642952faa5cee4a80b, type: 2}
   - ship: {fileID: 11400000, guid: e0671fcda14610e4d9f45e930404aa43, type: 2}
     shot: {fileID: 11400000, guid: 229f847abcf377b49a7fa3c1d58152c0, type: 2}
-    ability: {fileID: 11400000, guid: 13157d81a8a5ff646accca16a0311ad8, type: 2}
+    ability: {fileID: 11400000, guid: 229e243b674c46642952faa5cee4a80b, type: 2}

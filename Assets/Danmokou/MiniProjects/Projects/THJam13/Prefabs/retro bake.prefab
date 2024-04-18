@@ -123,11 +123,21 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 60e0df0bab97b254297600ccd2b2ef7e,
+      objectReference: {fileID: 21300000, guid: 862159e9673c0014b9acbaf17e56ca96,
         type: 3}
     - target: {fileID: 8780984711843616186, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
         type: 3}
+      propertyPath: animate.LRRelation
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8780984711843616186, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
       propertyPath: animate.frames.idleAnim.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8780984711843616186, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.size
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8780984711843616186, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
@@ -137,15 +147,26 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8780984711843616186, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
         type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[0].time
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8780984711843616186, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
       propertyPath: animate.frames.idleAnim.Array.data[0].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 60e0df0bab97b254297600ccd2b2ef7e,
+      objectReference: {fileID: 21300000, guid: 862159e9673c0014b9acbaf17e56ca96,
+        type: 3}
+    - target: {fileID: 8780984711843616186, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 0af193909cd34b54bab7db57f233fae0,
         type: 3}
     - target: {fileID: 8780984711843616186, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
         type: 3}
       propertyPath: animate.frames.rightAnim.Array.data[0].sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 26663a0b612dcdc4d974f69ca90a1b5a,
+      objectReference: {fileID: 21300000, guid: f2884ca2ab52a0a46ae1a066d1ccc960,
         type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

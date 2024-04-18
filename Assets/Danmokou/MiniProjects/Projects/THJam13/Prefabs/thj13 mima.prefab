@@ -76,13 +76,12 @@ SpriteRenderer:
   m_SortingLayerID: -9288337
   m_SortingLayer: 8
   m_SortingOrder: 0
-  m_Sprite: {fileID: 6949950310475035180, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
-    type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0c4d87173febc7b4290fe84f10cf84b3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.2, y: 1.2}
+  m_Size: {x: 1.7454545, y: 1.4272727}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -131,22 +130,16 @@ MonoBehaviour:
     refVal: {fileID: 0}
   sprite: {fileID: 546207758662337953}
   animate:
-    LRRelation: 4
+    LRRelation: 0
     UDRelation: 5
     frames:
       idleAnim:
-      - sprite: {fileID: 6949950310475035180, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
-          type: 3}
+      - sprite: {fileID: 21300000, guid: 0c4d87173febc7b4290fe84f10cf84b3, type: 3}
         time: 0.2
         skipLoop: 0
-      rightAnim:
-      - sprite: {fileID: 7659275484720238951, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
-          type: 3}
-        time: 0.2
-        skipLoop: 0
+      rightAnim: []
       leftAnim:
-      - sprite: {fileID: -2096312558618100486, guid: 6b6c9cdfffd032f46b84a568f7adcdec,
-          type: 3}
+      - sprite: {fileID: 21300000, guid: 9939cb7a19d24ac44af464b1a243caeb, type: 3}
         time: 0.2
         skipLoop: 0
       upAnim: []
@@ -227,8 +220,8 @@ MonoBehaviour:
     constVal: 
     refVal: {fileID: 0}
   all:
-  - {fileID: 3954492030500367931}
   - {fileID: 8540454231878695358}
+  - {fileID: 3954492030500367931}
   baseSelIndex: 0
 --- !u!1001 &861435806996906224
 PrefabInstance:
@@ -248,6 +241,59 @@ PrefabInstance:
       propertyPath: displayer
       value: 
       objectReference: {fileID: 6556687160000943840}
+    - target: {fileID: 4401497610235162315, guid: 0623db11f1c15fc409072cf3af7a2a95,
+        type: 3}
+      propertyPath: animate.LRRelation
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4401497610235162315, guid: 0623db11f1c15fc409072cf3af7a2a95,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4401497610235162315, guid: 0623db11f1c15fc409072cf3af7a2a95,
+        type: 3}
+      propertyPath: animate.frames.rightAnim.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4401497610235162315, guid: 0623db11f1c15fc409072cf3af7a2a95,
+        type: 3}
+      propertyPath: animate.frames.idleAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: e17e56e7efb17c6448152739a714d61f,
+        type: 3}
+    - target: {fileID: 4401497610235162315, guid: 0623db11f1c15fc409072cf3af7a2a95,
+        type: 3}
+      propertyPath: animate.frames.leftAnim.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: dbd8a17e4e5f6784d90ddce10a475963,
+        type: 3}
+    - target: {fileID: 4823259105108341091, guid: 0623db11f1c15fc409072cf3af7a2a95,
+        type: 3}
+      propertyPath: m_Size.x
+      value: 1.7954545
+      objectReference: {fileID: 0}
+    - target: {fileID: 4823259105108341091, guid: 0623db11f1c15fc409072cf3af7a2a95,
+        type: 3}
+      propertyPath: m_Size.y
+      value: 1.5363636
+      objectReference: {fileID: 0}
+    - target: {fileID: 4823259105108341091, guid: 0623db11f1c15fc409072cf3af7a2a95,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: e17e56e7efb17c6448152739a714d61f,
+        type: 3}
+    - target: {fileID: 4823259105108341091, guid: 0623db11f1c15fc409072cf3af7a2a95,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4823259105108341091, guid: 0623db11f1c15fc409072cf3af7a2a95,
+        type: 3}
+      propertyPath: m_WasSpriteAssigned
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6003014192476353470, guid: 0623db11f1c15fc409072cf3af7a2a95,
         type: 3}
       propertyPath: m_LocalPosition.x

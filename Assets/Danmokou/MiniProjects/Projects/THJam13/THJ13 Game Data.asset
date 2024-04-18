@@ -29,7 +29,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3499ff5c30d1f404a8d7ec5ccb5e2f60, type: 2}
   items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
   prefabReferences: {fileID: 11400000, guid: 842bcc7c616103e4c9880c49f9735bb4, type: 2}
-  suzunoyaReferences: {fileID: 11400000, guid: a936563f4e58b294db033ff8ee6be6f8, type: 2}
+  suzunoyaReferences: {fileID: 11400000, guid: 6209e010acb923a4dbd4be921600252b, type: 2}
   advReferences: {fileID: 0}
   uxmlDefaults: {fileID: 11400000, guid: b4213b3830762944fbcb9250a4b73463, type: 2}
   SFX:
@@ -38,8 +38,20 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
   - {fileID: 11400000, guid: cdee2c8a4694b2148b6bff090233f211, type: 2}
   fileStateMachines: []
-  licenses: []
-  importableScripts: []
+  licenses:
+  - name: Binary
+    file: {fileID: 4900000, guid: fbfd30baeb7f39c429778cc98bb86b2a, type: 3}
+  - name: Danmokou
+    file: {fileID: 4900000, guid: 72e87dc68a2c9f340b55e6a3020489a9, type: 3}
+  - name: Suzunoya
+    file: {fileID: 4900000, guid: 6084a1326dccb4f409163c7bee129244, type: 3}
+  - name: SuzunoyaUnity
+    file: {fileID: 4900000, guid: a16e43d784102664e80cec9f25cb52c6, type: 3}
+  importableScripts:
+  - name: ref
+    file: {fileID: 2811297602134710623, guid: f6e30050494c16a41b90798e0126a506, type: 3}
+  - name: myRefFile
+    file: {fileID: 2811297602134710623, guid: 6c0263d2bbc23514faec11e5e08df079, type: 3}
   scriptFolders:
   - Assets/Danmokou/MiniProjects/Projects/THJam13
   fastParsing: 0

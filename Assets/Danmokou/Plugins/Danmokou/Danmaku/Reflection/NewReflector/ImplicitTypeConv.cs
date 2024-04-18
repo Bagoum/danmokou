@@ -107,15 +107,17 @@ public class FixedImplicitTypeConv<T, R> : FixedImplicitTypeConv {
 
     private record ConvMethod {
         public record DirectFunc(Expression<Func<T, R>> Conv) : ConvMethod {
-            public Func<T, R> ConstConv { get; } = Conv.Compile();
+            public bool AllowConstConversion { get; set; } = false;
+            private Func<T, R>? _constConv = null;
+            public Func<T, R> ConstConv => _constConv ??= Conv.Compile();
         }
 
         public record TacGeneratedFunc(Func<Func<TExArgCtx, TEx>, Func<TExArgCtx, TEx<R>>> Conv) : ConvMethod;
     }
     private readonly ConvMethod convMethod;
 
-    protected FixedImplicitTypeConv(Expression<Func<T, R>> converter) {
-        this.convMethod = new ConvMethod.DirectFunc(converter);
+    protected FixedImplicitTypeConv(Expression<Func<T, R>> converter, bool allowConst) {
+        this.convMethod = new ConvMethod.DirectFunc(converter) { AllowConstConversion = allowConst };
         NextInstance = new ITypeConvWithInstance.Instance(this);
     }
     public FixedImplicitTypeConv(Func<Func<TExArgCtx, TEx>, Func<TExArgCtx, TEx<R>>> converter) {
@@ -124,15 +126,15 @@ public class FixedImplicitTypeConv<T, R> : FixedImplicitTypeConv {
     }
 
     public static FixedImplicitTypeConv<T,R> FromFn(Expression<Func<T, R>> converter, 
-        ScopedConversionKind kind = ScopedConversionKind.Trivial) =>
-        new(converter) { Kind = kind };
+        ScopedConversionKind kind = ScopedConversionKind.Trivial, bool allowConst = false) =>
+        new(converter, allowConst) { Kind = kind };
     public override TEx Convert(IAST ast, Func<TExArgCtx, TEx> castee, TExArgCtx tac) {
         if (convMethod is ConvMethod.DirectFunc dc) {
             var content = castee(tac);
-            if ((Ex)content is ConstantExpression { Value: T obj })
+            if ((Ex)content is ConstantExpression { Value: T obj } && dc.AllowConstConversion)
                 return (TEx<R>)Ex.Constant(dc.ConstConv(obj), typeof(R));
             else
-                return (TEx<R>)new ReplaceParameterVisitor(dc.Conv.Parameters[0], castee(tac)).Visit(dc.Conv.Body);
+                return (TEx<R>)new ReplaceParameterVisitor(dc.Conv.Parameters[0], content).Visit(dc.Conv.Body);
         } else if (convMethod is ConvMethod.TacGeneratedFunc tgf) {
             return tgf.Conv(castee)(tac);
         } else
@@ -177,7 +179,7 @@ public record SingletonToArrayConv() : GenericTypeConv1(SharedType) {
         if ((Ex)content is ConstantExpression { Value: T obj })
             return Ex.Constant(new[] { obj });
         else
-            return Ex.NewArrayInit(typeof(T), castee(tac));
+            return Ex.NewArrayInit(typeof(T), content);
     }
 }
 

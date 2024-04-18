@@ -183,13 +183,13 @@ public readonly struct SMHandoff : IDisposable {
     /// <summary>
     /// Derive a joint-token SMHandoff. Mirrors the GCX.
     /// </summary>
-    private SMHandoff(SMHandoff parent, SMContext? context, out ICancellable cts) {
+    private SMHandoff(SMHandoff parent, SMContext? context, out JointCancellable cts) {
         this.ch = new CommonHandoff(cts = new JointCancellable(parent.cT), parent.ch.bc, parent.ch.gcx.Mirror(), null);
         CanPrepend = parent.CanPrepend;
         Context = context ?? DerivedSMContext.DeriveFrom(parent.Context);
     }
 
-    public SMHandoff CreateJointCancellee(out ICancellable cts, SMContext? innerContext) => 
+    public SMHandoff CreateJointCancellee(out JointCancellable cts, SMContext? innerContext) => 
         new(this, innerContext, out cts);
 
     public void Dispose() {
@@ -197,10 +197,9 @@ public readonly struct SMHandoff : IDisposable {
         Context.CleanupObjects();
     }
 
-    public void RunRIEnumerator(IEnumerator cor) => Exec.RunRIEnumerator(cor);
     public void RunTryPrependRIEnumerator(IEnumerator cor) {
         if (CanPrepend) Exec.RunTryPrependRIEnumerator(cor);
-        else RunRIEnumerator(cor);
+        else Exec.RunAppendRIEnumerator(cor);
     }
 
     public void SetAllVulnerable(IReadOnlyList<Enemy> subbosses, Vulnerability v) {
@@ -492,7 +491,7 @@ public abstract class StateMachine {
 
     public static StateMachine CreateFromDump(string dump) => CreateFromDump(dump, out _);
     public static StateMachine CreateFromDump(string dump, out EnvFrame scriptFrame) {
-        using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, dump);
+        using var _ = BakeCodeGenerator.OpenContext(CookingContext.KeyType.SM, dump);
         if (!dump.TrimStart().StartsWith("<#>")) {
             Profiler.BeginSample("SM AST (BDSL2) Parsing/Compilation");
             var (sm, ef) = Helpers.ParseAndCompileValue<StateMachine>(dump);
@@ -523,7 +522,7 @@ public abstract class StateMachine {
     
 
     public static List<PhaseProperties> ParsePhases(string dump) {
-        using var _ = BakeCodeGenerator.OpenContext(BakeCodeGenerator.CookingContext.KeyType.SM, "phase_" + dump);
+        using var _ = BakeCodeGenerator.OpenContext(CookingContext.KeyType.SM, "phase_" + dump);
         var ps = new List<PhaseProperties>();
         var p = IParseQueue.Lex(dump);
         while (!p.Empty) {

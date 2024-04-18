@@ -54,7 +54,7 @@ public class XMLDeathMenu : PausedGameplayMenu {
     protected override void BindListeners() {
         base.BindListeners();
         
-        Listen(GameManagement.EvInstance, i => i.GameOver, () => ShowMeAfterFrames(5));
+        Listen(GameManagement.EvInstance, i => i.GameOver, () => ShowMeAfterFrames(5, 1f));
     }
 }
 }

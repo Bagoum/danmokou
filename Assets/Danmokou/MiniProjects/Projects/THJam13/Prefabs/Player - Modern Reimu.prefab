@@ -64,18 +64,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
         type: 3}
+      propertyPath: meterDisplayInner.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
+        type: 3}
       propertyPath: meterDisplayInner.b
-      value: 0.2524821
+      value: 0.15686275
       objectReference: {fileID: 0}
     - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
         type: 3}
       propertyPath: meterDisplayInner.g
-      value: 0.082769655
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2884352696324497620, guid: fde376048de61e241998f004239cd358,
         type: 3}
       propertyPath: meterDisplayInner.r
-      value: 0.43867922
+      value: 0.6901961
       objectReference: {fileID: 0}
     - target: {fileID: 2884352696324497640, guid: fde376048de61e241998f004239cd358,
         type: 3}

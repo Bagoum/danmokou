@@ -134,7 +134,7 @@ public static class SaveData {
         public Evented<(int w, int h)> Resolution { get; } = new(GraphicsUtils.BestResolution);
         (int, int) IGraphicsSettings.Resolution => Resolution;
 #if UNITY_EDITOR && !EXBAKE_SAVE && !EXBAKE_LOAD
-        public static bool TeleportAtPhaseStart => false;
+        public static bool TeleportAtPhaseStart => true;
 #else
         //Don't change this! TeleportAtPhaseStart is a editor utility and should not be enabled in builds.
         public const bool TeleportAtPhaseStart = false;

@@ -1,0 +1,30 @@
+pattern { } {
+phase 0 {
+	type(non, "Exploding Stars")
+	roott(1, 0, 1.5)
+} {
+	paction 0 {
+		sync "lstar-blue/w" <> gsr {
+			times(8)
+			circle
+			preloop b{ hvar nStar = i; }
+		} simple
+			rvelocity(px(lerp(0.2, 1, t, 3, 0)))
+			{ dir2(cossindeg(200 * t)) }
+		bulletcontrol(persist, "lstar-blue/w", 
+			batch(t > 0.6 + 0.3 * &nStar, {
+				sm(_, sync "star-*/w" <> gsrepeat {
+						circle
+						times(22)
+						sfx("x-fire-burst-1")
+						colorf({ "red", "pink", "purple", 
+							"blue", "teal", "green", 
+							"yellow", "orange" }, &nStar)
+					} simple
+						rvelocity(px(lerp(0.2, 1, t, 0, 4))) 
+						{ dir2(cossindeg(300 * t)) })
+				softcull("", _)
+			}))
+	}
+}
+}
