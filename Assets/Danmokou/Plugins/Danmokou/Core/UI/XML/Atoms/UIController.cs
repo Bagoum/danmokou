@@ -114,6 +114,8 @@ public abstract class UIController : CoroutineRegularUpdater {
     protected VisualElement UIRoot { get; private set; } = null!;
     protected VisualElement UIContainer { get; private set; } = null!;
     protected PanelSettings UISettings { get; private set; } = null!;
+    
+    protected virtual bool CaptureFallthroughInteraction => true;
     protected virtual UIScreen?[] Screens => new[] {MainScreen};
     /// <summary>
     /// Event issued when the UI receives a visual update. Screens may subscribe to this
@@ -141,8 +143,10 @@ public abstract class UIController : CoroutineRegularUpdater {
     public UIPointerCommand? QueuedEvent { get; private set; }
 
     public void QueueEvent(UIPointerCommand cmd) {
-        QueuedEvent = cmd;
-        UIEventQueued.OnNext(default);
+        if (UpdatesEnabled) {
+            QueuedEvent = cmd;
+            UIEventQueued.OnNext(default);
+        }
     }
 
     protected virtual UINode? StartingNode => null;
@@ -249,6 +253,13 @@ public abstract class UIController : CoroutineRegularUpdater {
         UIRoot.style.opacity = OpenOnInit ? 1 : 0;
         UIRoot.style.width = new Length(100, LengthUnit.Percent);
         UIRoot.style.height = new Length(100, LengthUnit.Percent);
+        if (!CaptureFallthroughInteraction) {
+            //Normally, the UI container will capture any pointer events not on nodes,
+            //but for the persistent interactive menu, we want such events to fall through
+            //to canvas/etc.
+            UIRoot.pickingMode = PickingMode.Ignore;
+            UIContainer.pickingMode = PickingMode.Ignore;
+        }
         tokens.Add(BackgroundOpacity.Subscribe(f => UIContainer.style.unityBackgroundImageTintColor = 
             BackgroundTint.WithA(f)));
         BackgroundOpacity.Push(0);
@@ -324,7 +335,7 @@ public abstract class UIController : CoroutineRegularUpdater {
             states[n] = UINodeSelection.GroupFocused;
         states[Current] = UINodeSelection.Focused;
         //Other screens don't need to be redrawn
-        var dependentGroups = Current.Group.Hierarchy.SelectMany(g => g.DependentGroups).ToHashSet();
+        var dependentGroups = Current.Group.Hierarchy.SelectMany(g => (g as CompositeUIGroup)?.Components ?? (IEnumerable<UIGroup>)Array.Empty<CompositeUIGroup>()).ToHashSet();
         foreach (var g in Current.Screen.Groups) {
             var fallback = dependentGroups.Contains(g) ? UINodeSelection.GroupFocused : UINodeSelection.Default;
             foreach (var n in g.Nodes)
@@ -424,17 +435,27 @@ public abstract class UIController : CoroutineRegularUpdater {
                 case UIResult.ReturnToTargetGroupCaller rtg:
                     if (prev == null) throw new Exception("Current must be present for return-to-target op");
                     var pn = (prev.Group, prev);
+                    var shortCircuit = false;
+                    stepup: ;
                     while (GroupCall.TryPop(out var n)) {
                         LeftCalls.Add(pn);
                         pn = n!;
                         next = n.node;
-                        if (n.group == rtg.Target)
+                        if (n.group == rtg.Target || shortCircuit)
                             break;
                     }
                     if (next == null)
                         throw new Exception("Return-to-target resulted in a null node");
-                    if (next.Destroyed)
-                        next = pn.Group.EntryNode;
+                    if (next.Destroyed) {
+                        if (pn.Group.HasEntryNode)
+                            next = pn.Group.EntryNode;
+                        else {
+                            //if the group is now empty due to node deletion,
+                            // move navigation upwards
+                            shortCircuit = true;
+                            goto stepup;
+                        }
+                    }
                     break;
                 case UIResult.ReturnToScreenCaller sc:
                     if (prev == null) throw new Exception("Current must be present for return-to-screen op");
@@ -455,19 +476,35 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
 
         var leftGroups = new List<UIGroup>();
-        foreach (var (g, n) in LeftCalls) {
+        foreach (var (gl, nl) in LeftCalls) {
             foreach (var (ge, ne) in EntryCalls) {
-                if (g == ge) {
-                    if (n != ne)
-                        n?.RemovedFromGroupStack();
+                if (gl == ge) {
+                    if (nl != ne)
+                        nl?.RemovedFromNavHierarchy();
                     goto end;
                 }
             }
-            n?.RemovedFromGroupStack();
-            leftGroups.Add(g);
+            nl?.RemovedFromNavHierarchy();
+            leftGroups.Add(gl);
             end: ;
         }
-        var entryGroups = EntryCalls.Select(c => c.group).Except(LeftCalls.Select(c => c.group)).ToList();
+        var entryGroups = new List<UIGroup>();
+        foreach (var (ge, ne) in EntryCalls) {
+            foreach (var (gl, nl) in LeftCalls) {
+                if (gl == ge) {
+                    if (nl != ne)
+                        ne?.AddedToNavHierarchy();
+                    goto end;
+                }
+            }
+            ne?.AddedToNavHierarchy();
+            entryGroups.Add(ge);
+            end: ;
+        }
+        if (LeftCalls.Count == 0 && EntryCalls.Count == 0 && next != Current) {
+            Current?.RemovedFromNavHierarchy();
+            next?.AddedToNavHierarchy();
+        }
         //Logs.Log($"Left: {string.Join(",", LeftCalls.Select(x => x.ToString()))}, Entered: {string.Join(",", EntryCalls.Select(x => x.ToString()))}");
         //Logs.Log($"Left: {string.Join(",", leftGroups.Select(x => x.ToString()))}, Entered: {string.Join(",", entryGroups.Select(x => x.ToString()))}");
         return TransitionToNode(next, opts, leftGroups, entryGroups)
@@ -573,9 +610,12 @@ public abstract class UIController : CoroutineRegularUpdater {
         using var token = TransitionEnabled.AddConst(false);
         prev?.Leave(opts.Animate, CursorState.Value, leftGroups.Count == 0 && enteredGroups.Try(0) is PopupUIGroup);
         var tasks = new List<Task>();
-        foreach (var g in leftGroups)
-            if (g.LeaveGroup() is { IsCompletedSuccessfully: false} task)
+        foreach (var g in leftGroups) {
+            if (g.LeaveGroup() is { IsCompletedSuccessfully: false } task)
                 tasks.Add(task);
+            if (g.Parent?.ReturnFromChild() is { IsCompletedSuccessfully: false } ptask)
+                tasks.Add(ptask);
+        }
         if (tasks.Count > 0)
             await Task.WhenAll(tasks);
         if (screenChanged) {
@@ -583,10 +623,13 @@ public abstract class UIController : CoroutineRegularUpdater {
             next?.Screen.EnterStart(prev == null);
         }
         tasks.Clear();
-        foreach (var g in enteredGroups)
-            if (g.EnterGroup() is { IsCompletedSuccessfully: false} task)
+        foreach (var g in enteredGroups) {
+            if (g.Parent?.DescendToChild() is { IsCompletedSuccessfully: false } ptask)
+                tasks.Add(ptask);
+            if (g.EnterGroup() is { IsCompletedSuccessfully: false } task)
                 tasks.Add(task);
-        
+        }
+
         Current = next;
         next?.Enter(opts.Animate, CursorState.Value);
         Redraw();

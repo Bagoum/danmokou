@@ -16,7 +16,7 @@ public class TooltipViewModel : IConstUIViewModel {
     public TooltipViewModel(LString text) : this(() => text) { }
     
     UIGroup? IUIViewModel.Tooltip(UINode node, ICursorState cs, bool prevExists) {
-        return node.MakeTooltip(node.SimpleTTGroup(Text()));
+        return node.MakeTooltip(UINode.SimpleTTGroup(Text()));
     }
 }
 

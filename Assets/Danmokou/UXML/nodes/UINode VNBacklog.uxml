@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/Danmokou/UXML/nodes/UINode.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#UINode" />
+    <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
     <ui:VisualElement name="Borderer" class="node vnbacklog" style="border-top-color: rgb(183, 34, 34); border-top-width: 12px; border-left-width: 12px; border-left-color: rgb(132, 31, 31); margin-top: 0; margin-bottom: 0;">
         <ui:VisualElement name="Selector" class="pointer prefix" />
         <ui:VisualElement name="Speaker" class="prefix" style="opacity: 1; width: 250px; height: 250px; max-height: 100%; min-height: 250px;" />

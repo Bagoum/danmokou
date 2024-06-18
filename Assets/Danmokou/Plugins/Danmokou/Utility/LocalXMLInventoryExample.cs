@@ -48,11 +48,7 @@ public class MyInventorySwapCS : CustomCursorState, ICursorState {
 
     public override void Destroy() {
         base.Destroy();
-        if (Tooltip is null) return;
-        _ = Tooltip.LeaveGroup().ContinueWithSync(() => {
-            Tooltip.Destroy();
-            (Tooltip.Render as UIRenderConstructed)?.Destroy();
-        });
+        _ = Tooltip?.LeaveGroup();
     }
 
 
@@ -115,20 +111,30 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
     public XMLDynamicMenu Menu { get; private set; } = null!;
     public Sprite[] ItemTypes = new Sprite[6];
     public InvItem?[] _inventory { get; } = new InvItem?[60];
+    private int? CurrentIndex;
     public List<Lookup<InvItem>> LookupLayers { get; } = new();
     public CompiledLookup<InvItem> Lookup { get; private set; } = null!;
     private Lookup<InvItem>? TabFilter;
     private UIFreeformGroup LayersGrp { get; set; } = null!;
 
     public void AddLookup(Lookup<InvItem> layer) {
-        if (LookupLayers.Count > 0 && LookupLayers[^1].Hidden)
-            LookupLayers.Insert(LookupLayers.Count - 1, layer);
-        else
+        //Add constructed object to model
+        if (LookupLayers.Count > 0 && LookupLayers[^1].Hidden) {
+            for (int ii = LookupLayers.Count - 1; ii >= 0; --ii) {
+                if (ii == 0 || !LookupLayers[ii - 1].Hidden) {
+                    LookupLayers.Insert(ii, layer);
+                    goto added;
+                }
+            }
+        } else
             LookupLayers.Add(layer);
+        added: ;
+        //Listen to lifetime event for removing constructed object from model
         AddToken(layer.WhenDestroyed(() => {
             LookupLayers.Remove(layer);
             RecompileLookup();
         }));
+        //Create view
         LayersGrp.AddNodeDynamic(new UINode(new LayerView(new(this, layer))));
         RecompileLookup();
     }
@@ -153,11 +159,15 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
         var w = 10;
         var h = 6;
         var dim = 250f;
-        var details = new UIRenderExplicit(s, _ => {
+        Menu.FreeformGroup.AddGroupDynamic(new UIColumn(new UIRenderExplicit(s, _ => {
             var ve = s.Container.AddColumn().ConfigureAbsolute()
                 .WithAbsolutePosition(3840 - 700, 1080 - 550).SetWidthHeight(new(900, 900));
             ve.style.backgroundColor = new Color(0.3f, 0.223f, 0.3f, 0.8f);
             return ve;
+        }), new UINode(new CurrentItemView(new(this))) {
+            Prefab = XMLUtils.Prefabs.PureTextNode
+        }.WithCSS(XMLUtils.small1Class, XMLUtils.fontBiolinumClass)) {
+            Interactable = false
         });
         Menu.FreeformGroup.AddGroupDynamic(LayersGrp = new UIFreeformGroup(new UIRenderExplicit(s, _ => {
             var ve = s.Container.AddColumn().ConfigureAbsolute()
@@ -182,23 +192,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
             return row;
         }), w.Range().Select(ic => {
             var index = ir * w + ic;
-            return new UINode(new InventorySlotView(new(this, index))) {
-                Prefab = itemVTA,
-                ShowHideGroup = new UIColumn(details, new UINode(
-                    new LabelView<InvItem?>(new(() => this[index], item => {
-                        if (item != null) {
-                            var s = $"Item type: {item.Name}\nCount: {item.Count}\nColor: {item.Color}";
-                            foreach (var t in item.Traits)
-                                s += $"\nTrait: {t}";
-                            return s;
-                        } else
-                            return "No item at this index";
-                    }))) {
-                    Prefab = XMLUtils.Prefabs.PureTextNode
-                }.WithCSS(XMLUtils.small1Class, XMLUtils.fontBiolinumClass)) {
-                    Interactable = false
-                }
-            };
+            return new UINode(new InventorySlotView(new(this, index))) { Prefab = itemVTA };
         }))).Cast<UIGroup>().ToArray();
 
         var gridGroup = new VGroup(rows);
@@ -281,8 +275,11 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
             VM.Src.TabFilter?.Destroy();
-            VM.Src.TabFilter = new Lookup<InvItem>.Filter(x => x.Color == (VM.Filter ?? x.Color), "", "", false) { Hidden = true };
-            VM.Src.AddLookup(VM.Src.TabFilter);
+            if (VM.Filter is { } color) {
+                VM.Src.TabFilter = new Lookup<InvItem>.Filter(x => x.Color == color, "", "", false) { Hidden = true };
+                VM.Src.AddLookup(VM.Src.TabFilter);
+            } else
+                VM.Src.TabFilter = null;
         }
     }
 
@@ -367,7 +364,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
                 if (swap.FromIndex == Index)
                     return new UIResult.StayOnNode(UIResult.StayOnNodeType.NoOp);
                 if (Src.Lookup is not CompiledLookup<InvItem>.SourceData inv) {
-                    n.SetTooltip(n.MakeTooltip(n.SimpleTTGroup("Cannot reorder items when sort/filter is active")));
+                    n.SetTooltip(n.MakeTooltip(UINode.SimpleTTGroup("Cannot reorder items when sort/filter is active")));
                     return null;
                 }
                 ref var swapFrom = ref inv.Data[swap.FromIndex];
@@ -405,7 +402,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
 
         public UIGroup? Tooltip(UINode node, ICursorState cs, bool prevExists) {
             if (Src[Index] is { } item)
-                return node.MakeTooltip(node.SimpleTTGroup($"{item.Name} x{item.Count}"));
+                return node.MakeTooltip(UINode.SimpleTTGroup($"{item.Name} x{item.Count}"));
             return null;
         }
     }
@@ -421,6 +418,9 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
             if (cs is MyInventorySwapCS swap)
                 swap.UpdateTooltipPosition(node);
         }
+
+        void IUIView.OnAddedToNavHierarchy(UINode node) => VM.Src.CurrentIndex = VM.Index;
+        void IUIView.OnRemovedFromNavHierarchy(UINode node) => VM.Src.CurrentIndex = null;
 
         protected override BindingResult Update(in BindingContext context) {
             var title = Node.HTML.Q<Label>("Content");
@@ -444,6 +444,40 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
                 new Color(0.2f, 0.4f, 0.6f) :
                 new StyleColor(StyleKeyword.Null);
             */
+            return base.Update(in context);
+        }
+    }
+
+    private class CurrentItemViewModel : UIViewModel, IUIViewModel {
+        public LocalXMLInventoryExample Src { get; }
+
+        public CurrentItemViewModel(LocalXMLInventoryExample src) {
+            this.Src = src;
+        }
+
+        public override long GetViewHash() {
+            if (Src.CurrentIndex is { } c)
+                return Src[c]?.GetHashCode() ?? 0;
+            return 1;
+        }
+    }
+
+    private class CurrentItemView : UIView<CurrentItemViewModel>, IUIView {
+        public CurrentItemView(CurrentItemViewModel viewModel) : base(viewModel) { }
+
+        protected override BindingResult Update(in BindingContext context) {
+            var txt = "";
+            if (VM.Src.CurrentIndex is { } i) {
+                if (VM.Src[i] is not { } item) {
+                    txt = "No item at this index";
+                } else {
+                    txt = $"Item type: {item.Name}\nCount: {item.Count}\nColor: {item.Color}";
+                    foreach (var t in item.Traits)
+                        txt += $"\nTrait: {t}";
+                }
+            }
+            Node.HTML.Q<Label>().text = txt;
+            
             return base.Update(in context);
         }
     }

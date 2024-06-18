@@ -26,10 +26,16 @@ public interface ICursorState {
     UIResult Navigate(UINode current, UICommand cmd);
 }
 
+/// <summary>
+/// A cursor that has no functionality.
+/// </summary>
 public class NullCursorState : ICursorState {
     public UIResult Navigate(UINode current, UICommand cmd) => current.Navigate(cmd, this);
 }
 
+/// <summary>
+/// Helper base class for implementing <see cref="ICursorState"/>.
+/// </summary>
 public abstract class CustomCursorState : ICursorState, ITokenized {
     public List<IDisposable> Tokens { get; } = new();
     public UIController Controller { get; }

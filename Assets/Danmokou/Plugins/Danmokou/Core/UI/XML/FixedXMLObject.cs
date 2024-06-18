@@ -30,7 +30,7 @@ public interface IFixedXMLObject {
 }
 
 /// <summary>
-/// A freeform UITK menu that contains dynamically added/removed nodes.
+/// A freeform UITK menu/group that contains dynamically added/removed nodes.
 /// </summary>
 public interface IFixedXMLObjectContainer {
     void AddNodeDynamic(UINode n);

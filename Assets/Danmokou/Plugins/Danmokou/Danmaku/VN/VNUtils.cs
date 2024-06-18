@@ -10,9 +10,9 @@ using UnityEngine.UIElements;
 
 namespace Danmokou.VN {
 public static class VNUtils {
-    public static SelectionRequest<C> SetupSelector<C>(IVNState vn, XMLDynamicMenu menu, Func<C, LString> displayer,
+    public static OptionSelector<C> SetupSelector<C>(IVNState vn, XMLDynamicMenu menu, Func<C, LString> displayer,
         out IDisposable token) {
-        var selector = new SelectionRequest<C>(vn);
+        var selector = new OptionSelector<C>(vn);
         
         var (optsScreen, freeform) = menu.MakeScreen(null, (s, ve) => {
                 //don't let events fall-through
@@ -28,7 +28,6 @@ public static class VNUtils {
         optsScreen.AllowsPlayerExit = false;
         var optGroup = new UIColumn(optsScreen, null);
         freeform.AddGroupDynamic(optGroup);
-        //optsScreen.SetFirst(optGroup);
         
         UINode[]? optNodes = null;
         void DestroyOptionNodes() {
@@ -38,12 +37,12 @@ public static class VNUtils {
                     n.Remove();
             optNodes = null;
         }
-        token = selector.RequestChanged.Subscribe(opts => {
-            if (opts != null) {
+        token = selector.CurrentRequest.Subscribe(req => {
+            if (req != null) {
                 DestroyOptionNodes();
-                optNodes = opts.Select((o, i) => {
+                optNodes = req.Options.Select((o, i) => {
                     var n = new FuncNode(displayer(o), () => {
-                        selector.MakeSelection(i);
+                        req.Select(i);
                         return new UIResult.ReturnToScreenCaller() { OnPostTransition = DestroyOptionNodes };
                     }) { Prefab = GameManagement.UXMLPrefabs.OptionsColumnUINode };
                     optGroup.AddNodeDynamic(n);

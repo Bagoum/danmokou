@@ -59,10 +59,11 @@ public interface IUIView {
     /// </summary>
     void OnLeave(UINode node, ICursorState cs, bool animate, bool isEnteringPopup) { }
     
-    /// <summary>
-    /// Called when this node is being removed from the group call stack.
-    /// </summary>
-    void OnCloseDependencies(UINode node) { }
+    /// <inheritdoc cref="UINode.AddedToNavHierarchy"/>
+    void OnAddedToNavHierarchy(UINode node) { }
+    
+    /// <inheritdoc cref="UINode.RemovedFromNavHierarchy"/>
+    void OnRemovedFromNavHierarchy(UINode node) { }
 
     /// <summary>
     /// Called when the mouse is pressed over this node.

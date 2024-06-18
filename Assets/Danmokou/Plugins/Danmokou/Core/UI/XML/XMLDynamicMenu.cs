@@ -26,7 +26,7 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
         public ICObservable<bool> IsInteractable { get; } = new ConstantObservable<bool>(true);
     }
 
-    protected virtual bool CaptureFallthroughInteraction => false;
+    protected override bool CaptureFallthroughInteraction => false;
     protected override UIScreen?[] Screens => dynamicScreens.Prepend(MainScreen).ToArray();
     
     public UINode Unselect { get; private set; } = null!;
@@ -84,49 +84,15 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
         return (s, gr);
     }
 
-    public override void FirstFrame() {
-        base.FirstFrame();
-        
-        if (!CaptureFallthroughInteraction) {
-            //Normally, the UI container will capture any pointer events not on nodes,
-            //but for the persistent interactive menu, we want such events to fall through
-            //to canvas/etc.
-            UIRoot.pickingMode = PickingMode.Ignore;
-            UIContainer.pickingMode = PickingMode.Ignore;
-        }
-
-        //testing
-        /*
-        g.AddNodeDynamic(new EmptyNode(new FixedXMLObject(500, 0) {
-            OnConfirm = n => {
-                Logs.Log("hello");
-                return new UIResult.StayOnNode();
-            }
-        }));
-        g.AddNodeDynamic(new EmptyNode(new FixedXMLObject(1900, 40) {
-            OnConfirm = n => {
-                Logs.Log("world");
-                return new UIResult.StayOnNode();
-            }
-        }));
-        g.AddNodeDynamic(new EmptyNode(new FixedXMLObject(3200, 80)));
-        g.AddNodeDynamic(new EmptyNode(new FixedXMLObject(600, 900)));
-        g.AddNodeDynamic(new EmptyNode(new FixedXMLObject(1500, 1000)));
-        g.AddNodeDynamic(new EmptyNode(new FixedXMLObject(3300, 1050)));
-        g.AddNodeDynamic(new EmptyNode(new FixedXMLObject(300, 1900)));
-        g.AddNodeDynamic(new EmptyNode(new FixedXMLObject(1900, 1700)));
-        g.AddNodeDynamic(new EmptyNode(new FixedXMLObject(3400, 1800)));*/
-
-    }
-
     public void AddNodeDynamic(UINode n) {
         FreeformGroup.AddNodeDynamic(n);
     }
 
-    public void AddScreen(UIScreen s) {
+    public UIScreen AddScreen(UIScreen s) {
         dynamicScreens.Add(s);
         if (Built)
             BuildLate(s);
+        return s;
     }
 
     protected UIResult UnselectorConfirm(UINode n, ICursorState _) =>

@@ -18,6 +18,9 @@ public static class ModelHelpers {
                 cb();
         });
 
+    /// <summary>
+    /// Returns the current value of <see cref="IModelObject.Destroyed"/>.
+    /// </summary>
     public static bool IsDestroyed(this IModelObject obj) => obj.Destroyed.Value;
 }
 }

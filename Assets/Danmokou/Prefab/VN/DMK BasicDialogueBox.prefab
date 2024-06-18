@@ -357,6 +357,7 @@ GameObject:
   - component: {fileID: 8236975217350822647}
   - component: {fileID: 8236975217350822641}
   - component: {fileID: 8236975217350822640}
+  - component: {fileID: 6613263307070448018}
   m_Layer: 0
   m_Name: Ruby Main Text
   m_TagString: Untagged
@@ -496,6 +497,20 @@ MonoBehaviour:
     with fallback fonts. <r=ruby text>is also supported</r>. Text-wrap is supported,
     but ruby blocks will not be wrapped. The font size will auto-shrink slightly
     to accomodate overrun."
+--- !u!114 &6613263307070448018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8236975217350822646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67878061e58b4bcc8493a21e4800bcbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  canvas: {fileID: 8236975217580243248}
+  text: {fileID: 8236975217350822640}
 --- !u!1 &8236975217580243255
 GameObject:
   m_ObjectHideFlags: 0

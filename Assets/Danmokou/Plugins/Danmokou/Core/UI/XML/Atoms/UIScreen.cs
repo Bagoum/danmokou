@@ -35,9 +35,9 @@ public class UIScreen : ITokenized {
     private LString? HeaderText { get; }
     public List<UIGroup> Groups { get; } = new();
     public VisualElement HTML { get; private set; } = null!;
-    public UIRenderScreen ScreenRender { get; private set; }
-    public UIRenderScreenContainer ContainerRender { get; private set; }
-    public UIRenderAbsoluteTerritory AbsoluteTerritory { get; private set; } = null!;
+    public UIRenderScreen ScreenRender { get; }
+    public UIRenderScreenContainer ContainerRender { get; }
+    public UIRenderAbsoluteTerritory AbsoluteTerritory { get; private set; }
     /// <summary>
     /// Whether or not the screen can be exited via the player clicking the "back" button.
     /// </summary>
@@ -98,9 +98,9 @@ public class UIScreen : ITokenized {
     /// Link to the UXML object to which screen-specific columns, rows, etc. can be added.
     /// <br/>By default, this is padded 480 left and right.
     /// </summary>
-    public VisualElement Container => HTML.Q("Container");
+    public VisualElement Container => HTML.Q("Container") ?? HTML;
     public Label Header => HTML.Q<Label>("Header");
-    public VisualElement Margin => HTML.Q("MarginContainer");
+    public VisualElement Margin => HTML.Q("MarginContainer") ?? HTML;
 
     //public UIRenderDirect Renderer { get; }
 
@@ -132,7 +132,8 @@ public class UIScreen : ITokenized {
         buildMap = map;
         HTML = (Prefab != null ? Prefab : map.SearchByType(this, true)).CloneTreeNoContainer();
         if (HeaderText == null)
-            Header.parent.Remove(Header);
+            // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+            Header?.parent.Remove(Header);
         else
             ServiceLocator.Find<IDMKLocaleProvider>().TextLocale
                 .Subscribe(_ => Header.text = HeaderText.CSpace());
@@ -205,10 +206,23 @@ public class UIScreen : ITokenized {
                 StringBuffer.JoinPooled("    ", AsControl(inp.uiConfirm), AsControl(inp.uiBack));
     }
 
+    /// <summary>
+    /// Mark all nodes on this screen as destroyed.
+    /// <br/>Does not affect HTML (call <see cref="DestroyScreen"/> instead to destroy HTML).
+    /// Call this method when the menu containing this screen is being destroyed.
+    /// </summary>
     public void MarkScreenDestroyed() {
         foreach (var g in Groups)
             g.MarkNodesDestroyed();
         Tokens.DisposeAll();
+    }
+
+    /// <summary>
+    /// Mark all nodes on this screen as destroyed, and delete this screen's HTML.
+    /// </summary>
+    public void DestroyScreen() {
+        MarkScreenDestroyed();
+        HTML.RemoveFromHierarchy();
     }
 
     public static implicit operator UIRenderSpace(UIScreen s) => s.ContainerRender;

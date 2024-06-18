@@ -320,6 +320,12 @@ Copyright (c) 2011 by Anna Giedryś (http://ancymonic.com), with Reserved Font N
 
 See the OFL license above.
 
+### RockNRoll One: OFL
+
+Copyright 2020 The RocknRoll Project Authors (https://github.com/fontworks-fonts/RocknRoll)
+
+See the OFL license above.
+
 ### Yasashisa Gothic
 
 ```

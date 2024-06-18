@@ -56,7 +56,7 @@ public class LabelView<T> : BaseLabelView<LabelViewModel<T>> {
 /// <summary>
 /// A view/model that binds a text field in UXML based on a string value.
 /// </summary>
-public class SimpleLabelView : BaseLabelView<LabelViewModel<string>> {
+public class SimpleLabelView : LabelView<string> {
     public SimpleLabelView(Func<string> data, string? labelName = null) : 
         base(new LabelViewModel<string>(data, x=>x), labelName) { }
 }

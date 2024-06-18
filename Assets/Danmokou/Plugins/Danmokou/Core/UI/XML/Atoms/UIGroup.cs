@@ -7,8 +7,10 @@ using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Culture;
 using BagoumLib.DataStructures;
+using BagoumLib.Events;
 using BagoumLib.Functional;
 using BagoumLib.Mathematics;
+using BagoumLib.Reflection;
 using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -34,6 +36,9 @@ public record UIGroupHierarchy(UIGroup Group, UIGroupHierarchy? Parent) : IEnume
 
     public bool IsStrictPrefix(UIGroupHierarchy? prefix) =>
         prefix == null || prefix == Parent || (Parent?.IsStrictPrefix(prefix) == true);
+
+    public bool IsWeakPrefix(UIGroupHierarchy? prefix) =>
+        this == prefix || IsStrictPrefix(prefix);
 
     public IEnumerable<UIGroup> StrictPrefixRemainder(UIGroupHierarchy? prefix) {
         if (Parent?.IsStrictPrefix(prefix) == true) {
@@ -83,10 +88,85 @@ public record UIGroupHierarchy(UIGroup Group, UIGroupHierarchy? Parent) : IEnume
     public static bool CanTraverse(UINode? from, UINode to) => CanTraverse(from?.Group.Hierarchy, to.Group.Hierarchy);
 }
 
+public record GroupVisibility(UIGroup Group) {
+    public bool ParentVisibleInTree { get; private set; } = true;
+    protected bool LocalVisible { get; set; } = true;
+    public bool VisibleInTree => LocalVisible && ParentVisibleInTree;
+
+    public virtual Task? OnEnterGroup() => null;
+    public virtual Task? OnLeaveGroup() => null;
+
+    public Task ParentVisibilityUpdated(bool? parentVisibleInTree, bool notifyRender = true) {
+        var prevVisInTree = VisibleInTree;
+        ParentVisibleInTree = parentVisibleInTree ?? true;
+        return UpdatedVisibility(prevVisInTree, notifyRender);
+    }
+
+    private Task UpdatedVisibility(bool prevVisInTree, bool notifyRender = true) {
+        var task0 = Task.CompletedTask;
+        var changed = true;
+        if (VisibleInTree && !prevVisInTree) {
+            if (notifyRender)
+                task0 = Group.Render.SourceBecameVisible(Group);
+            else Group.Render.FastUpdateVisibility();
+        } else if (!VisibleInTree && prevVisInTree) {
+            if (notifyRender)
+                task0 = Group.Render.SourceBecameHidden(Group);
+            else Group.Render.FastUpdateVisibility();
+        } else
+            changed = false;
+        
+        if (Group.Children.Count == 0 || !changed)
+            return task0;
+        var tasks = new Task[Group.Children.Count + 1];
+        tasks[^1] = task0;
+        for (int ii = 0; ii < Group.Children.Count; ++ii)
+            tasks[ii] = Group.Children[ii].Visibility.ParentVisibilityUpdated(VisibleInTree, notifyRender);
+        return Task.WhenAll(tasks);
+    }
+
+    public void ApplyToChildren() {
+        for (int ii = 0; ii < Group.Children.Count; ++ii)
+            Group.Children[ii].Visibility.ParentVisibilityUpdated(VisibleInTree, false);
+    }
+
+    public override string ToString() => $"{this.GetType().RName()}({LocalVisible}, {ParentVisibleInTree})";
+
+    public record UpdateOnLeaveHide : GroupVisibility {
+        public UpdateOnLeaveHide(UIGroup Group) : base(Group) {
+            LocalVisible = false;
+        }
+
+        public override Task? OnEnterGroup() {
+            var prevVisInTree = VisibleInTree;
+            LocalVisible = true;
+            return UpdatedVisibility(prevVisInTree);
+        }
+        public override Task? OnLeaveGroup() {
+            var prevVisInTree = VisibleInTree;
+            LocalVisible = false;
+            return UpdatedVisibility(prevVisInTree);
+        }
+
+        public override string ToString() => base.ToString();
+    }
+}
+
 public abstract class UIGroup {
     public static readonly UIResult NoOp = new StayOnNode(true);
     public static readonly UIResult SilentNoOp = new StayOnNode(StayOnNodeType.Silent);
-    public bool Visible { get; private set; } = false;
+    private GroupVisibility _visibility = null!;
+    public GroupVisibility Visibility { 
+        get => _visibility;
+        set {
+            var prev = _visibility;
+            _visibility = value;
+            value.ApplyToChildren();
+            if (prev != null!)
+                Render.FastUpdateVisibility();
+        } 
+    }
+    public bool Visible => Visibility.VisibleInTree;
     
     /// <summary>
     /// Whether or not user focus can leave this group via mouse/keyboard control. (True by default, except for popups.)
@@ -107,27 +187,26 @@ public abstract class UIGroup {
             OnBuilt = OnBuilt.Then(act);
         return this;
     }
-    
+
+    private UIGroup? _parent;
     /// <summary>
     /// The UI group that contains this UI group, and to which navigation delegates if internal navigation fails.
-    /// <br/>Note that the parent does not neccessarily know about the child's existence,
-    ///  unless it is set via <see cref="DependentParent"/>.
     /// </summary>
-    public UIGroup? Parent { get; set; }
+    public UIGroup? Parent { get => _parent;
+        set {
+            _parent?.Children.Remove(this);
+            _parent = value;
+            _parent?.Children.Add(this);
+            _ = Visibility.ParentVisibilityUpdated(_parent?.Visibility.VisibleInTree, false);
+        } }
     
     /// <summary>
-    /// Groups that should share the same display behavior as this group; ie.
-    ///  if this group is visible, then listed groups here should be visible.
-    /// <br/>Used by composite groups and show/hide handling in Node.
+    /// The set of UI groups contained by this group.
+    /// Encompasses component groups for <see cref="CompositeUIGroup"/>,
+    /// as well as show/hide groups and popups.
     /// </summary>
-    public List<UIGroup> DependentGroups { get; } = new();
-    private bool IsDependentGroup = false;
-    public UIGroup DependentParent {
-        set {
-            IsDependentGroup = true;
-            (Parent = value).DependentGroups.Add(this);
-        }
-    }
+    public List<UIGroup> Children { get; } = new();
+    
     public Func<IEnumerable<UINode?>>? LazyNodes { get; set; }
     private List<UINode> nodes;
     public List<UINode> Nodes {
@@ -167,6 +246,9 @@ public abstract class UIGroup {
     public int? ExitIndexOverride { get; init; }
     public Func<UIGroup, Task?>? OnEnter { private get; init; }
     public Func<UIGroup, Task?>? OnLeave { private get; init; }
+    public Func<UIGroup, Task?>? OnReturnFromChild { private get; init; }
+    public Func<UIGroup, Task?>? OnGoToChild { private get; init; }
+    public bool DestroyOnLeave { get; set; } = false;
     
     
     private Dictionary<Type, VisualTreeAsset>? buildMap;
@@ -232,6 +314,7 @@ public abstract class UIGroup {
     public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? nodes) {
         Screen = container;
         Render = render ?? container.ColumnRender(0);
+        Visibility = new GroupVisibility(this);
         this.nodes = nodes?.FilterNone().ToList() ?? new();
         foreach (var n in this.nodes)
             n.Group = this;
@@ -245,6 +328,9 @@ public abstract class UIGroup {
         buildMap = map;
         foreach (var n in nodes)
             n.Build(map);
+        //Ensure that renderer HTML is created even if this group is empty
+        // (occurs occasionally with UIFreeformGroup)
+        _ = Render.HTML;
     }
 
     public void AddNodeDynamic(UINode n) {
@@ -253,41 +339,6 @@ public abstract class UIGroup {
         if (buildMap != null)
             n.Build(buildMap);
         Controller.Redraw();
-    }
-
-
-    /// <summary>
-    /// Make the group visible (it is being entered).
-    /// </summary>
-    /// <param name="callIfDependent">If false, this will noop for dependent groups
-    /// (their enterShow should be controlled by the parent).</param>
-    public void EnterShow(bool callIfDependent = false) {
-        if (IsDependentGroup && !callIfDependent) return;
-        if (Visible) return;
-        Visible = true;
-        _ = Render.SourceBecameVisible(this).ContinueWithSync();
-        EnterShowDependents();
-    }
-
-    protected virtual void EnterShowDependents() {
-        foreach (var g in DependentGroups)
-            g.EnterShow(true);
-    }
-
-    /// <summary>
-    /// Make the group invisible (it is being left).
-    /// </summary>
-    /// <param name="callIfDependent">If false, this will noop for dependent groups
-    /// (their leaveHide should be controlled by the parent).</param>
-    public Task LeaveHide(bool callIfDependent = false) {
-        if (IsDependentGroup && !callIfDependent) return Task.CompletedTask;
-        if (!Visible) return Task.CompletedTask;
-        Visible = false;
-        var tasks = new Task[DependentGroups.Count + 1];
-        tasks[^1] = Render.SourceBecameHidden(this);
-        for (int ii = 0; ii < DependentGroups.Count; ++ii)
-            tasks[ii] = DependentGroups[ii].LeaveHide(true);
-        return Task.WhenAll(tasks);
     }
 
     /// <summary>
@@ -370,30 +421,57 @@ public abstract class UIGroup {
     /// </summary>
     public abstract UIResult Navigate(UINode node, UICommand req);
 
-    public virtual void EnteredNode(UINode node, bool animate) { }
-
-
+    /// <summary>
+    /// Called when navigation moves from a *parent* of this group to this group.
+    /// (Moving from a child does not trigger this.)
+    /// </summary>
     public Task? EnterGroup() {
-        EnterShow();
+        //don't await visibility animations (eg. popup scale-in) during enter group;
+        // this allows the user to navigate the new group while the animation is still playing,
+        // which is marginally more responsive.
+        _ = Visibility.OnEnterGroup()?.ContinueWithSync();
         return OnEnter?.Invoke(this);
     }
 
-    public virtual Task LeaveGroup() {
-        return (OnLeave?.Invoke(this) ?? Task.CompletedTask).And(LeaveHide());
+    /// <summary>
+    /// Called when navigation returns from this group to a *parent* of this group.
+    /// (Moving to a child does not trigger this.)
+    /// </summary>
+    public Task LeaveGroup() {
+        var task = Visibility.OnLeaveGroup().And(OnLeave?.Invoke(this));
+        if (DestroyOnLeave)
+            return task.ContinueWithSync(Destroy);
+        return task;
     }
 
+    public Task? ReturnFromChild() => OnReturnFromChild?.Invoke(this);
+
+    public Task? DescendToChild() => OnGoToChild?.Invoke(this);
+
+    /// <summary>
+    /// Remove all nodes in this group. (The group is still valid and can still be used.)
+    /// </summary>
     public void ClearNodes() {
         foreach (var n in Nodes.ToList())
             n.Remove();
         Nodes.Clear();
     }
 
+    /// <summary>
+    /// Remove all nodes in this group, then remove the group from the screen and render config.
+    /// </summary>
     public void Destroy() {
         Screen.Groups.Remove(this);
-        _ = Render.RemoveSource(this).ContinueWithSync();
-        foreach (var g in DependentGroups)
-            g.Destroy();
+        if (Render is UIRenderConstructed uirc && Render.AllSourcesDescendFrom(this)) {
+            uirc.Destroy();
+        } else {
+            _ = Render.RemoveSource(this).ContinueWithSync();
+        }
         ClearNodes();
+        Parent = null;
+        if (this is CompositeUIGroup cuig)
+            foreach (var g in cuig.Components.ToList())
+                g.Destroy();
     }
 
     /// <summary>
@@ -559,12 +637,8 @@ public class PopupUIGroup : CompositeUIGroup {
     }
 
     private static UIRenderConstructed MakeRenderer(UIRenderAbsoluteTerritory at, VisualTreeAsset prefab, Action<UIRenderConstructed, VisualElement>? builder = null) {
-        var render = new UIRenderConstructed(at, prefab, builder) {
-            IsVisibleAnimation = (rs, cT) => 
-                rs.MakeTask(rs.HTML.transform.ScaleTo(new Vector3(1, 1, 1), .2f, Easers.EOutSine, cT: cT)),
-            IsNotVisibleAnimation = (rs, cT) =>
-                rs.MakeTask(rs.HTML.transform.ScaleTo(new Vector3(1, 0, 1), .12f, Easers.EIOSine, cT: cT))
-        };
+        var render = new UIRenderConstructed(at, prefab, builder);
+        render.WithPopupAnim();
         //Don't allow pointer events to hit the underlying Absolute Territory
         render.HTML.RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
         return render;
@@ -573,9 +647,11 @@ public class PopupUIGroup : CompositeUIGroup {
     public PopupUIGroup(UIRenderConstructed r, LString? header, UINode source, UIGroup body) :
         base(r, body) {
         this.render = r;
+        this.Visibility = new GroupVisibility.UpdateOnLeaveHide(this);
         this.Source = source;
         this.Parent = source.Group;
         this.NavigationCanLeaveGroup = false;
+        this.DestroyOnLeave = true;
         WithOnBuilt(_ => {
             var h = Render.HTML.Q<Label>("Header");
             if (header is null) {
@@ -592,19 +668,13 @@ public class PopupUIGroup : CompositeUIGroup {
         UICommand.Back => EasyExit ? Source.ReturnToGroup : NoOp,
         _ => null
     };
-
-    public override async Task LeaveGroup() {
-        await base.LeaveGroup();
-        Destroy();
-        render.Destroy();
-    }
 }
 
 /// <summary>
 /// A UIGroup that is a wrapper around other UIGroups. May also have nodes of its own.
 /// </summary>
 public abstract class CompositeUIGroup : UIGroup {
-    public List<UIGroup> Groups { get; } = new();
+    public List<UIGroup> Components { get; } = new();
     public CompositeUIGroup(IReadOnlyList<UIGroup> groups) : this(groups[0].Screen, groups) { }
     public CompositeUIGroup(UIRenderSpace render, IEnumerable<UIGroup> groups, IEnumerable<UINode?>? nodes = null) : base(render, nodes) {
         foreach (var g in groups)
@@ -613,21 +683,19 @@ public abstract class CompositeUIGroup : UIGroup {
     public CompositeUIGroup(UIRenderSpace render, params UIGroup[] groups) : this(render,(IEnumerable<UIGroup>) groups) { }
 
     private void AddGroup(UIGroup g) {
-        Groups.Add(g);
-        g.DependentParent = this;
+        Components.Add(g);
+        g.Parent = this;
         EntryNodeOverride ??= g.EntryNodeOverride;
         ExitNodeOverride ??= g.ExitNodeOverride;
     }
 
     public void AddGroupDynamic(UIGroup g) {
         AddGroup(g);
-        if (Visible)
-            g.EnterShow(true);
         Controller.Redraw();
     }
 
     public override IEnumerable<UINode> NodesAndDependentNodes => 
-        Nodes.Concat(Groups.SelectMany(g => g.NodesAndDependentNodes));
+        Nodes.Concat(Components.SelectMany(g => g.NodesAndDependentNodes));
 
     public override UIResult Navigate(UINode node, UICommand req) => req switch {
         UICommand.Confirm => NoOp,
@@ -651,7 +719,7 @@ public abstract class CompositeUIGroup : UIGroup {
     protected UIResult? FinalizeTransition(UINode current, UINode? next) {
         if (next == null || next == current) return null;
         var g = next.Group;
-        while (g != current.Group && g != null && !Groups.Contains(g))
+        while (g != current.Group && g != null && !Components.Contains(g))
             g = g.Parent;
         return (g != current.Group && g?.PreferredEntryNode is {} entry) ? entry : next;
     }

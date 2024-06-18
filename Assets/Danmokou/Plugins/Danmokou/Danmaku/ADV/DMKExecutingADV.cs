@@ -120,8 +120,8 @@ public abstract class DMKExecutingADV<I, D> : BaseExecutingADV<I, D>, IRegularUp
     /// <inheritdoc/>
     public override void ADVDataFinalized() { }
 
-    protected SelectionRequest<string> SetupSelector() => SetupSelector<string>(x => x);
-    protected SelectionRequest<C> SetupSelector<C>(Func<C, LString> displayer) {
+    protected OptionSelector<string> SetupSelector() => SetupSelector<string>(x => x);
+    protected OptionSelector<C> SetupSelector<C>(Func<C, LString> displayer) {
         var selector = VNUtils.SetupSelector(VN, menu, displayer, out var token);
         tokens.Add(token);
         return selector;

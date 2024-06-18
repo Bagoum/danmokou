@@ -15,6 +15,9 @@ using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
 
+/// <summary>
+/// *Shared* view model for UI elements scrolling along an axis.
+/// </summary>
 public class AxisViewModel : UIViewModel {
     public Vector2 BaseLoc { get; init; } = new(-3.1f, 0);
     public Vector2 Axis { get; init; } = new(0, -.5f);

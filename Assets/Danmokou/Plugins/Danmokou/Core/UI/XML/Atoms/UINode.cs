@@ -39,7 +39,7 @@ public enum UINodeSelection {
     PopupSource = 3,
     
     /// <summary>
-    /// The node is in the same group as the Focused or Active node.
+    /// The node is in the same group as the Focused node.
     /// </summary>
     GroupFocused = 2,
     
@@ -79,6 +79,10 @@ public class UINode {
     /// Whether or not the node's HTML has been built yet.
     /// </summary>
     public bool Built { get; private set; }
+    
+    /// <summary>
+    /// #Body: the interactable area of the node.
+    /// </summary>
     public VisualElement? BodyHTML => HTML.Q("Body");
     public VisualElement BodyOrNodeHTML => BodyHTML ?? HTML;
 
@@ -189,8 +193,10 @@ public class UINode {
     public UIGroup? ShowHideGroup {
         get => _showHideGroup;
         init {
-            if (value != null)
+            if (value != null) {
+                value.Visibility = new GroupVisibility.UpdateOnLeaveHide(value);
                 value.Parent = Group;
+            }
             _showHideGroup = value;
         } 
     }
@@ -209,6 +215,7 @@ public class UINode {
     public UIController Controller => Group.Controller;
     /// <summary>
     /// Creates a ReturnToTargetGroupCaller targeting this node's group.
+    /// <br/>Use this from a popup to return navigation to this node.
     /// </summary>
     public UIResult ReturnToGroup => new UIResult.ReturnToTargetGroupCaller(this);
 
@@ -267,19 +274,19 @@ public class UINode {
         return null;
     }
 
-    public Func<UIRenderSpace, UIColumn> SimpleTTGroup(UINode node) =>
+    public static Func<UIRenderSpace, UIColumn> SimpleTTGroup(UINode node) =>
         rs => new UIColumn(rs, node);
-    public Func<UIRenderSpace, UIColumn> SimpleTTGroup(LString text) =>
+    public static Func<UIRenderSpace, UIColumn> SimpleTTGroup(LString text) =>
         rs => new UIColumn(rs, SimpleTTNode(text));
     
-    public UINode SimpleTTNode(LString text) =>
+    public static UINode SimpleTTNode(LString text) =>
         new UINode(text) { Prefab = XMLUtils.Prefabs.PureTextNode }.WithCSS(XMLUtils.highVisClass);
     
 
     protected virtual void RegisterEvents() {
         bool isInElement = false;
         bool startedClickHere = false;
-        //It's a bit more mouse-friendly to use BodyHTML when possible so empty space on rows doesn't draw events
+        //It's more mouse-friendly to use BodyHTML when possible so empty space on rows doesn't draw events
         var evtBinder = BodyOrNodeHTML;
         evtBinder.RegisterCallback<PointerEnterEvent>(evt => {
         #if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IOS)
@@ -287,7 +294,8 @@ public class UINode {
             if (evt.pressure <= 0)
                 return;
         #endif
-            if (AllowInteraction) {
+            //don't fire pointer enter events if the renderer is animating out
+            if (AllowInteraction && Render.ShouldBeVisibleInTree) {
                 Controller.QueueEvent(new UIPointerCommand.Goto(this));
                 evt.StopPropagation();
             }
@@ -374,6 +382,7 @@ public class UINode {
     }
 
     public void MarkDestroyed() {
+        if (Destroyed) return;
         Destroyed = true;
         foreach (var view in Views)
             view.OnDestroyed(this);
@@ -384,6 +393,7 @@ public class UINode {
         MarkDestroyed();
         Group.Nodes.Remove(this);
         HTML.RemoveFromHierarchy();
+        ShowHideGroup?.Destroy();
         Controller.MoveCursorAwayFromNode(this);
     }
 
@@ -463,11 +473,10 @@ public class UINode {
     
     public void Enter(bool animate, ICursorState cs) {
         if (CacheOnEnter) Controller.TentativeCache(this);
-        ShowHideGroup?.EnterShow();
+        _ = ShowHideGroup?.Visibility.OnEnterGroup();
         RemakeTooltip(cs);
         foreach (var view in Views)
             view.OnEnter(this, cs, animate);
-        Group.EnteredNode(this, animate);
     }
 
     public virtual void Leave(bool animate, ICursorState cs, bool isEnteringPopup) {   
@@ -477,15 +486,28 @@ public class UINode {
             view.OnLeave(this, cs, animate, isEnteringPopup);
     }
 
-    public void RemovedFromGroupStack() {
+    /// <summary>
+    /// Called when the navigation is moved to a descendant of this node (and was not previously so).
+    /// Call order: RemovedFromNavHierarchy > AddedToNavHierarchy > Leave > Enter
+    /// </summary>
+    public void AddedToNavHierarchy() {
+        foreach (var view in Views)
+            view.OnAddedToNavHierarchy(this);
+    }
+    
+    /// <summary>
+    /// Called when the group stack is moved outside a descendant of this node (and was not previously so).
+    /// Call order: RemovedFromNavHierarchy > AddedToNavHierarchy > Leave > Enter
+    /// </summary>
+    public void RemovedFromNavHierarchy() {
         CloseDependencies(true);
+        foreach (var view in Views)
+            view.OnRemovedFromNavHierarchy(this);
     }
 
     private void CloseDependencies(bool animate) {
-        ShowHideGroup?.LeaveHide();
+        _ = ShowHideGroup?.Visibility.OnLeaveGroup();
         CloseTooltip(animate);
-        foreach (var view in Views)
-            view.OnCloseDependencies(this);
     }
 
     public void CloseTooltip(bool animate) {
@@ -493,13 +515,9 @@ public class UINode {
         var ctt = currentTooltip;
         currentTooltip = null;
         if (animate) {
-            _ = ctt.LeaveHide().ContinueWithSync(Finish);
+            _ = ctt.LeaveGroup().ContinueWithSync();
         } else
-            Finish();
-        void Finish() {
             ctt.Destroy();
-            (ctt.Render as UIRenderConstructed)?.Destroy();
-        }
     }
     public void RemakeTooltip(ICursorState cs) {
         var prevExists = currentTooltip is not null;
@@ -580,6 +598,8 @@ public class OpenUrlNode : FuncNode {
 }
 
 public class TransferNode : FuncNode {
+    public TransferNode(LString description, UINode target) : 
+        base(description, () => new UIResult.GoToNode(target)) { }
     public TransferNode(LString description, UIGroup target) : 
         base(description, () => new UIResult.GoToNode(target)) { }
     public TransferNode(LString description, UIScreen target) : 

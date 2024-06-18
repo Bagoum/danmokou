@@ -24,7 +24,7 @@ public class FixedXMLViewModel : IConstUIViewModel {
 
     UIGroup? IUIViewModel.Tooltip(UINode node, ICursorState cs, bool prevExists) {
         if (Recv?.Tooltip is { } tt)
-            return node.MakeTooltip(node.SimpleTTGroup(tt));
+            return node.MakeTooltip(UINode.SimpleTTGroup(tt));
         return null;
     }
 }

@@ -12,12 +12,14 @@ using UnityEngine.UI;
 
 namespace Danmokou.VN.Mimics {
 public class DMKADVDialogueBoxMimic : ADVDialogueBoxMimic {
+    public bool useDialogueBoxOpacitySetting = true;
     public Image background = null!;
 
     public override void Initialize(ADVDialogueBox db) {
         base.Initialize(db);
 
-        Listen(SaveData.SettingsEv, s => background.color = background.color.WithA(s.VNDialogueOpacity));
+        if (useDialogueBoxOpacitySetting)
+            Listen(SaveData.SettingsEv, s => background.color = background.color.WithA(s.VNDialogueOpacity));
         
         if (ServiceLocator.FindOrNull<IPauseMenu>() == null)
             if (pauseButton != null)

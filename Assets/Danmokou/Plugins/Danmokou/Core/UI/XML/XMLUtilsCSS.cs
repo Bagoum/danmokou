@@ -5,6 +5,7 @@ using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Events;
 using BagoumLib.Reflection;
+using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.Scriptables;
 using Danmokou.Services;
@@ -28,7 +29,6 @@ public static class XMLUtils {
     }
     
     public const string highVisClass = "highvis";
-    public const string nodeClass = "node";
     public const string noPointerClass = "nopointer";
     public const string disabledClass = "disabled";
     public const string fontUbuntuClass = "font-ubuntu";
@@ -218,7 +218,7 @@ public static class XMLUtils {
 
     /// <summary>
     /// Reposition an absolute-positioned tooltip relative to a node.
-    /// <br/>The relative positioning of the toolip (eg. top right or top left of the node)
+    /// <br/>The relative positioning of the tooltip (eg. top right or top left of the node)
     ///  depends on the CSS classes of the tooltip.
     /// </summary>
     public static void SetTooltipAbsolutePosition(this VisualElement node, VisualElement? tooltip) {
@@ -241,18 +241,36 @@ public static class XMLUtils {
             .WithTooltipAnim();
 
     /// <summary>
-    /// Instantiate a UIGroup and RenderSpace representing a tooltip, and make it show on the screen.
+    /// Instantiate a UIGroup and RenderSpace representing a tooltip, and make it show on the screen under a provided node.
     /// </summary>
     public static T MakeTooltip<T>(this UINode n, Func<UIRenderSpace, T> ttGroup, Action<UIRenderConstructed, VisualElement>? builder = null, bool animateEntry = true) where T : UIGroup {
-        var tt = ttGroup(n.Screen.TooltipRender(builder));
+        var tt = MakeTooltipInner(n.Screen, ttGroup, builder, animateEntry);
         tt.Parent = n.Group;
+        n.HTML.SetTooltipAbsolutePosition(tt.Render.HTML);
+        return tt;
+    }
+
+    /// <summary>
+    /// Instantiate a UIGroup and RenderSpace representing a tooltip. The location must be manually set.
+    /// </summary>
+    public static T MakeTooltip<T>(this XMLDynamicMenu menu, Func<UIRenderSpace, T> ttGroup,
+        Action<UIRenderConstructed, VisualElement>? builder = null, bool animateEntry = true) where T : UIGroup {
+        var tt = MakeTooltipInner(menu.MainScreen, ttGroup, builder, animateEntry);
+        tt.Parent = menu.FreeformGroup;
+        return tt;
+    }
+
+    private static T MakeTooltipInner<T>(UIScreen s, Func<UIRenderSpace, T> ttGroup,
+        Action<UIRenderConstructed, VisualElement>? builder = null, bool animateEntry = true) where T : UIGroup {
+        var tt = ttGroup(s.TooltipRender(builder));
+        tt.Visibility = new GroupVisibility.UpdateOnLeaveHide(tt);
         tt.Interactable = false;
+        tt.DestroyOnLeave = true;
         //can't put this in render.OnBuilt since it needs to run after the tooltip group HTML is constructed
         tt.Render.HTML.SetRecursivePickingMode(PickingMode.Ignore);
-        n.HTML.SetTooltipAbsolutePosition(tt.Render.HTML);
         if (!animateEntry)
             tt.Render.IsFirstRender = true;
-        tt.EnterShow();
+        _ = tt.EnterGroup()?.ContinueWithSync();
         return tt;
     }
 

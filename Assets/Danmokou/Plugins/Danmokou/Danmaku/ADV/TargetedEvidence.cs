@@ -9,6 +9,9 @@ using Suzunoya.Entities;
 
 namespace Danmokou.ADV {
 
+/// <summary>
+/// A specific object at which evidence can be targeted. 
+/// </summary>
 public interface IEvidenceTarget {
     public LString? Tooltip { get; }
 }

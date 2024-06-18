@@ -1,0 +1,9 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/pj24%20css.uss?fileID=7433441132597879392&amp;guid=9d3df72b6a1977447b2a4823c6a62599&amp;type=3#pj24 css" />
+    <engine:VisualElement name="LongWindow" style="width: 1144px; height: 1248px; background-image: url(&quot;project://database/Assets/Danmokou/MiniProjects/raw/pj24/long%20rect.png?fileID=4120901811166270815&amp;guid=dc4389c984cb86f40810ea81d8d02e78&amp;type=3#long rect_0&quot;); color: rgb(107, 49, 27);">
+        <engine:Label text="...recipes" name="Title" style="-unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-R%20SDF.asset?fileID=11400000&amp;guid=a4ca5d8a7e0241f41b58c69f59b3bca2&amp;type=2#Ubuntu-R SDF&quot;); font-size: 90px; -unity-text-align: upper-right; margin-top: 150px; color: rgb(150, 79, 54); margin-right: 200px; margin-bottom: 20px;" />
+        <engine:VisualElement class="column" style="flex-grow: 1; margin-right: 160px; margin-left: 160px; margin-bottom: 160px;">
+            <engine:ScrollView focusable="true" name="Content" class="columnList" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

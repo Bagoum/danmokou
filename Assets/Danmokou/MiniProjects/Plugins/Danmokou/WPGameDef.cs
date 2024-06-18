@@ -45,7 +45,7 @@ public class WPGameDef : ADVGameDef {
     
     private class Executing : DMKExecutingADV<Executing.WPIdealizedState, WPADVData> {
         private readonly WPGameDef gdef;
-        private readonly SelectionRequest<string> selector;
+        private readonly OptionSelector<string> selector;
         private readonly EvidenceTargetProxy<Evidence, Target> targetEvReq;
         private readonly UIScreen targetScreen;
         private readonly IFixedXMLObjectContainer evTargets;

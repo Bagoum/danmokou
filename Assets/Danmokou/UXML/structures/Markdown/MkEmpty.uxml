@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/Danmokou/UXML/UIScreen.uss?fileID=7433441132597879392&amp;guid=6f4a2bd40c2da0143a9f109ca63431b9&amp;type=3#UIScreen" />
+    <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
     <Style src="project://database/Assets/Danmokou/UXML/structures/Markdown/Markdown.uss?fileID=7433441132597879392&amp;guid=0c9045c8a8e714e4b8f7f6dc23f2a08b&amp;type=3#Markdown" />
     <ui:VisualElement name="Empty" style="margin-top: 15px; margin-bottom: 15px; width: 100%; font-size: 60px;" />
 </ui:UXML>

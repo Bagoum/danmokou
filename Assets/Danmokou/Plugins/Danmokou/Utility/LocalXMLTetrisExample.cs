@@ -108,8 +108,8 @@ public class LocalXMLTetrisExample : CoroutineRegularUpdater {
 
     /// <summary>
     /// Standard pattern for handling model object creation/destruction:
-    /// <br/>The model object (<see cref="Block"/>) has a lifetime event (<see cref="Block.Destroyed"/>).
-    /// <br/>A model method (<see cref="AddBlock"/>) receives any created object,
+    /// <br/>The model object (<see cref="Block"/>) has a lifetime event (<see cref="IModelObject.Destroyed"/>).
+    /// <br/>A model method (this method <see cref="AddBlock"/>) receives any created object,
     ///  adds it to the model, listens to the Destroyed event for removing it from the model,
     ///  and creates a view for it.
     /// <br/>The view listens to the Destroyed event to dispose itself (<see cref="BlockView.OnBuilt"/>).
@@ -118,7 +118,7 @@ public class LocalXMLTetrisExample : CoroutineRegularUpdater {
         //Add constructed object to model
         Blocks.Add(b);
         //Listen to lifetime event for removing constructed object from model
-        b.WhenDestroyed(() => Blocks.Remove(b));
+        AddToken(b.WhenDestroyed(() => Blocks.Remove(b)));
         //Create view
         BlocksGrp.AddNodeDynamic(new EmptyNode(new BlockView(new(this, b))));
         return b;
@@ -183,11 +183,11 @@ public class LocalXMLTetrisExample : CoroutineRegularUpdater {
                 return new UIResult.GoToNode(Source, NoOpIfSameNode:false);
             } else if (cmd == UICommand.Confirm) {
                 if (Block.OverlapsAny(Menu.Blocks)) {
-                    current.SetTooltip(current.MakeTooltip(current.SimpleTTGroup("Can't place a block here :(")));
+                    current.SetTooltip(current.MakeTooltip(UINode.SimpleTTGroup("Can't place a block here :(")));
                     return new UIResult.StayOnNode(true);
                 } else {
                     Block.Status = BlockStatus.Confirmed;
-                    current.SetTooltip(current.MakeTooltip(current.SimpleTTGroup("Block placed!")));
+                    current.SetTooltip(current.MakeTooltip(UINode.SimpleTTGroup("Block placed!")));
                     Destroy();
                     return new UIResult.StayOnNode();
                 }
