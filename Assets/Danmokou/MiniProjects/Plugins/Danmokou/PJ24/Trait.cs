@@ -33,6 +33,9 @@ public abstract class Trait {
     public class Sweet : Trait { 
         private Sweet() { }
         public static Sweet S { get; } = new();
+        
+        public override Trait? TryMergeWith(Trait other) =>
+            other is Sour ? SweetAndSour.S : null;
     }
     public class Sour : Trait {
         private Sour() { }

@@ -1,23 +1,61 @@
 .pj24node {
     max-width: 100%;
-    height: 90px;
+    /*height: 90px;*/
     -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/RocknRollOne-Regular.ttf?fileID=12800000&guid=dad637643ac27d44f94bd64003a3100d&type=3#RocknRollOne-Regular");
     font-size: 48px;
     color: rgb(96, 71, 62);
     transition: all 0.2s ease;
+    flex-direction: row;
+    align-content: center;
+    white-space: normal;
+}
+.synthComponent, .synthComponent #Banner {
+    transition: all 0.2s ease;
+}
+.pj24node, .synthComponent #Banner {
+    -unity-background-image-tint-color: rgb(218, 211, 208);
+}
+.pj24node.large {
+    height: 130px;
+    font-size: 80px;
+    margin-top: 20px;
+}
+
+.invisible {
+    display: none;
 }
 
 .pj24node.recipe {
     background-image: url("project://database/Assets/Danmokou/MiniProjects/raw/pj24/node.png?fileID=577195655271376678&guid=c5775ab322a5f6149a14b5f2c96c9485&type=3#node_0");
-    -unity-background-image-tint-color: rgb(218, 211, 208);
 }
 
-.pj24node.recipe.focus {
+.pj24node.focus, .synthComponent.focus #Banner {
     -unity-background-image-tint-color: rgb(241, 237, 236);
+}
+.pj24node.recipe.focus, .synthComponent.focus #Banner {
     translate: 20px -5px;
 }
-.pj24node.recipe.uncraftable {
+
+.pj24node.recipe.uncraftable, .underlinetext.uncraftable {
     color: #af1f22;
+}
+
+.pj24node.pbutton {
+    max-width: none;
+    width: auto;
+    scale: 0.9 0.9;
+}
+.pj24node.pbutton.focus {
+    scale: 1.2 1.2;
+}
+.pj24node.pbutton.disabled {
+    opacity: 0.52;
+}
+
+.pj24node .text {
+    white-space: normal;
+    flex-grow: 0;
+    flex-shrink: 1;
 }
 
 .underlinetext {
@@ -33,7 +71,13 @@
 #Time {
     color: rgb(96, 71, 62);
 }
-
+.pj24node #Meter {
+    width: 320px;
+    height: 40px;
+}
+.narrowmeter .pj24node #Meter {
+    width: 200px;
+}
 .underlinetext #Count, .underlinetext #Meter {
     display: none;
 }
@@ -105,4 +149,30 @@
 
 .unity-scroller__low-button {
     display: none;
+}
+
+.popup {
+    transition-property: opacity;
+    transition-duration: 0.2s;
+    width: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 140px;
+    padding-right: 130px;
+    padding-top: 120px;
+    padding-bottom: 140px;
+    background-color: rgba(0,0,0,0);
+    border-color: var(--liner);
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-top-width: 0px;
+    border-bottom-width: 0px;
+    position: absolute;
+    max-width: 1650px;
+    -unity-text-align: upper-center;
+    flex-direction: column;
+    align-items: center;
+    min-width: 1000px;
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/RocknRollOne-Regular.ttf?fileID=12800000&guid=dad637643ac27d44f94bd64003a3100d&type=3#RocknRollOne-Regular");
+    background-image: url("project://database/Assets/Danmokou/MiniProjects/raw/pj24/wide%20rect.png?fileID=-855298285791758126&amp;guid=d7ce0a306424beb41af625423678d5d5&amp;type=3#wide rect_0");
 }

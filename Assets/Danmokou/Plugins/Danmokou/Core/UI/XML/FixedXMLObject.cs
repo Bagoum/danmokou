@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Danmokou.UI.XML {
 /// <summary>
-/// A data source for the configuration of a <see cref="EmptyNode"/> created within a freeform <see cref="IFixedXMLObjectContainer"/>.
+/// A data source for the configuration of a <see cref="EmptyNode"/> created within a freeform <see cref="IFreeformContainer"/>.
 /// </summary>
 public interface IFixedXMLObject {
     string Descriptor { get; }
@@ -32,7 +32,7 @@ public interface IFixedXMLObject {
 /// <summary>
 /// A freeform UITK menu/group that contains dynamically added/removed nodes.
 /// </summary>
-public interface IFixedXMLObjectContainer {
+public interface IFreeformContainer {
     void AddNodeDynamic(UINode n);
     UIScreen Screen { get; }
 } 

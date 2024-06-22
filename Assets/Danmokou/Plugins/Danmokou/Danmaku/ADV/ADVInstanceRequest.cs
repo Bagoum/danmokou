@@ -84,7 +84,8 @@ public class ADVInstanceRequest : IADVInstanceRequest {
         var Tracker = new Cancellable();
         var vn = new DMKVNState(Tracker, Game.Key, ADVData.VNData);
         var evn = ServiceLocator.Find<IVNWrapper>().TrackVN(vn);
-        ServiceLocator.Find<IVNBacklog>().TryRegister(evn);
+        if (Game.BacklogFeatures != ADVBacklogFeatures.NO_BACKLOG)
+            ServiceLocator.Find<IVNBacklog>().TryRegister(evn);
         if (Game.BacklogFeatures == ADVBacklogFeatures.ALLOW_BACKJUMP)
             evn.doBacklog = loc => {
                 vn.UpdateInstanceData().Location = loc;

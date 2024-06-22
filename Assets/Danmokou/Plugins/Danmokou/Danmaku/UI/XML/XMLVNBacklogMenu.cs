@@ -117,11 +117,11 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
         if (RegularUpdateGuard) {
             if (IsActiveCurrentMenu && (InputManager.VNBacklogPause || InputManager.Pause || InputManager.UIBack || 
                                (Input.mouseScrollDelta.y < 0 && logScroll.verticalScroller.value >= logScroll.verticalScroller.highValue))) {
-                ProtectHide();
+                CloseWithAnimationV();
             } else if (!MenuActive && (InputManager.VNBacklogPause || openQueued || Input.mouseScrollDelta.y > 0) &&
                        EngineStateManager.State == EngineState.RUN && CurrVN?.backlog.Published.Count > 0) {
                 ReconstructScreen();
-                ShowMe();
+                OpenWithAnimationV();
             }
             openQueued = false;
         }

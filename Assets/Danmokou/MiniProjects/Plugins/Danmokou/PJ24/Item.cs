@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Events;
+using Danmokou.UI.XML;
 using Newtonsoft.Json;
 
 namespace MiniProjects.PJ24 {
@@ -21,10 +23,11 @@ public abstract class Item {
     /// </summary>
     public virtual int? CategoryScore(Category c) => null;
 
+    private static Item[]? _items = null;
     /// <summary>
     /// All items, listed in the order they should be displayed in the inventory or crafting menu.
     /// </summary>
-    public static Item[] Items { get; } = {
+    public static Item[] Items => _items ??= new Item[] {
         //raw
         Water.S,
         Alcohol.S,
@@ -49,6 +52,7 @@ public abstract class Item {
         LinenCloth.S,
         DragonscaleCloth.S,
         Rope.S,
+        RopeTEST.S,
         SteelYarn.S,
         DragonHarness.S,
         NutOil.S,
@@ -185,6 +189,12 @@ public abstract class Item {
             Recipe = new(this, 0.25m, FlaxFiber.S);
         }
         public static Rope S { get; } = new();
+    }
+    public class RopeTEST : Item {
+        private RopeTEST() {
+            Recipe = new(this, 0.25m, FlaxFiber.S, FlaxFiber.S);
+        }
+        public static RopeTEST S { get; } = new();
     }
     public class SteelYarn : Item {
         private SteelYarn() {
@@ -339,7 +349,8 @@ public enum Category {
     OIL
 }
 
-public class ItemInstance {
+public class ItemInstance : IModelObject {
+    Evented<bool> IModelObject._destroyed { get; } = new(false);
     public Item Type { get; }
     public List<EffectInstance> Effects { get; }
     public List<TraitInstance> Traits { get; }

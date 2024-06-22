@@ -35,7 +35,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
     private UIScreen OptionsScreen = null!;
     private UIScreen? SaveLoadScreen;
     private RenderTexture? lastSaveLoadSS;
-    protected override UINode? StartingNode => unpause;
+    protected override UINode StartingNode => unpause;
     
     protected override UIScreen?[] Screens => new[] {MainScreen, OptionsScreen, SaveLoadScreen};
 
@@ -47,13 +47,15 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
         OptionsScreen.MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity;
         var advMan = ServiceLocator.FindOrNull<ADVManager>();
         if (GameManagement.Instance.Replay == null && advMan != null) {
-            var backlog = ServiceLocator.Find<IVNWrapper>().TrackedVNs.FirstOrDefault()?.backlog;
-            var lastMessage = backlog is {HasValue:true} ? backlog.Value.readableSpeech : "(No dialogue)";
-            SaveLoadScreen = this.SaveLoadVNScreen(inst => advMan.ExecAdv?.Inst.Request.Restart(inst.GetData()) ?? false, slot => new(advMan.GetSaveReadyADVData(), DateTime.Now, lastSaveLoadSS!.IntoTex(), slot, lastMessage));
+            SaveLoadScreen = this.SaveLoadVNScreen(inst => advMan.ExecAdv?.Inst.Request.Restart(inst.GetData()) ?? false, slot => {
+                var backlog = ServiceLocator.Find<IVNWrapper>().TrackedVNs.FirstOrDefault()?.backlog;
+                var lastMessage = backlog is {HasValue:true} ? backlog.Value.readableSpeech : "(No dialogue)";
+                return new(advMan.GetSaveReadyADVData(), DateTime.Now, lastSaveLoadSS!.IntoTex(), slot, lastMessage);
+            });
             SaveLoadScreen.BackgroundOpacity = 1f;
             SaveLoadScreen.MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity;
         }
-        unpause = new FuncNode(LocalizedStrings.UI.unpause, ProtectHide);
+        unpause = new FuncNode(LocalizedStrings.UI.unpause, CloseWithAnimationV);
         MainScreen = new UIScreen(this, pause_header, UIScreen.Display.OverlayTH)  { Builder = (s, ve) => {
             ve.AddColumn();
         }, MenuBackgroundOpacity = UIScreen.DefaultMenuBGOpacity };
@@ -79,7 +81,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
         RegisterService<IPauseMenu>(this);
     }
 
-    protected override void ShowMe(float? time = null) {
+    protected override void OnWillOpen() {
         if (SaveLoadScreen != null) {
             ServiceLocator.Find<IVNWrapper>().UpdateAllVNSaves();
             SaveData.SaveRecord();
@@ -91,23 +93,21 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
                 new CRect(-LocationHelpers.PlayableBounds.center.x, 0, MainCamera.ScreenWidth / 2f, 
                     MainCamera.ScreenHeight / 2f, 0), new[] { DMKMainCamera.CamType.UI });
         }
-        base.ShowMe(time);
+        base.OnWillOpen();
     }
 
-    protected override Task HideMe() {
-        if (MenuActive) {
-            SaveData.AssignSettingsChanges();
-        }
-        return base.HideMe();
+    protected override void OnClosed() {
+        SaveData.AssignSettingsChanges();
+        base.OnClosed();
     }
 
     private bool openQueued = false;
     public override void RegularUpdate() {
         if (RegularUpdateGuard) {
             if (IsActiveCurrentMenu && (InputManager.Pause || InputManager.UIBack && Current == unpause))
-                ProtectHide();
+                CloseWithAnimationV();
             else if (!MenuActive && (InputManager.Pause || openQueued) && EngineStateManager.State == EngineState.RUN)
-                ShowMe();
+                OpenWithAnimationV();
             openQueued = false;
         }
         base.RegularUpdate();

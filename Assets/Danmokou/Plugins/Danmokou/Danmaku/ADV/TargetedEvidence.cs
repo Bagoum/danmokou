@@ -31,7 +31,7 @@ public record EvidenceTargetProxy<E, T>(ADVEvidenceRequest<(E, T)> Request) wher
         return new UIResult.ReturnToScreenCaller(2);
     }
 
-    public InteractableEvidenceTargetA<E, T> MakeTarget(T target, IFixedXMLObjectContainer? container, 
+    public InteractableEvidenceTargetA<E, T> MakeTarget(T target, IFreeformContainer? container, 
         Vector3 location = default) => 
         new(Request.ADV ?? throw new Exception("EvidenceTargetProxy cannot be used without a bound ADV"), 
             this, target) { XMLContainer = container, Location = location };

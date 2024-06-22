@@ -42,7 +42,7 @@ public class XMLPracticeSuccessMenu : PausedGameplayMenu {
         base.BindListeners();
         Listen(GameManagement.EvInstance, i => i.PracticeSuccess, ir => {
             game = ir.Game;
-            ShowMe();
+            OpenWithAnimationV();
         });
     }
 

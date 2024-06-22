@@ -1,0 +1,11 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <engine:Template name="PJ24 Calendar" src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/PJ24%20Calendar.uxml?fileID=9197481963319205126&amp;guid=465675a53607fe747a149b84ca531720&amp;type=3#PJ24 Calendar" />
+    <engine:Template name="PJ24 Long Window" src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/PJ24%20Recipe%20Select%20Window.uxml?fileID=9197481963319205126&amp;guid=37eb0702b47318b408ad6ac76a20330b&amp;type=3#PJ24 Recipe Select Window" />
+    <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/pj24%20css.uss?fileID=7433441132597879392&amp;guid=9d3df72b6a1977447b2a4823c6a62599&amp;type=3#pj24 css" />
+    <engine:VisualElement picking-mode="Ignore" class="uiScreen" style="width: 100%; height: 100%;">
+        <engine:Instance template="PJ24 Calendar" style="position: absolute; left: 200px; bottom: 80px;" />
+        <engine:Instance template="PJ24 Long Window" name="MainMenuOptions" style="position: absolute; left: 220px; top: 270px;">
+            <AttributeOverrides element-name="Title" text="...main menu" />
+        </engine:Instance>
+    </engine:VisualElement>
+</engine:UXML>

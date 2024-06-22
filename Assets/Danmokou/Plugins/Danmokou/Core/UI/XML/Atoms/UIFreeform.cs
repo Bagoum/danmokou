@@ -2,16 +2,26 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Events;
 using Danmokou.DMath;
 using UnityEngine;
 
 namespace Danmokou.UI.XML {
+public class UnselectorFixedXML : IFixedXMLObject {
+    public string Descriptor => "Unselector";
+    public ICObservable<float> Top { get; } = new ConstantObservable<float>(0);
+    public ICObservable<float> Left { get; } = new ConstantObservable<float>(0);
+    public ICObservable<float?> Width { get; } = new ConstantObservable<float?>(0);
+    public ICObservable<float?> Height { get; } = new ConstantObservable<float?>(0);
+    public ICObservable<bool> IsVisible { get; } = new ConstantObservable<bool>(true);
+    public ICObservable<bool> IsInteractable { get; } = new ConstantObservable<bool>(true);
+}
 
 /// <summary>
 /// A group of arbitrarily positioned nodes and groups with an special "unselector" node that is used to remove selection from any other node.
 /// <br/>Used with <see cref="XMLDynamicMenu"/>.
 /// </summary>
-public class UIFreeformGroup : CompositeUIGroup, IFixedXMLObjectContainer {
+public class UIFreeformGroup : CompositeUIGroup, IFreeformContainer {
     private readonly UINode? unselector;
     public UIFreeformGroup(UIRenderSpace container, UINode? unselector = null) : base(container, Array.Empty<UIGroup>(), new[] { unselector }) {
         this.unselector = unselector;

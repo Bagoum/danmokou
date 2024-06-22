@@ -1,0 +1,6 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/pj24%20css.uss?fileID=7433441132597879392&amp;guid=9d3df72b6a1977447b2a4823c6a62599&amp;type=3#pj24 css" />
+    <engine:VisualElement name="Node" class="pj24node" style="flex-direction: row; justify-content: space-between;">
+        <engine:Label text="Monochrome Dragon Statue" name="Content" style="-unity-text-align: upper-left; white-space: normal;" />
+    </engine:VisualElement>
+</engine:UXML>

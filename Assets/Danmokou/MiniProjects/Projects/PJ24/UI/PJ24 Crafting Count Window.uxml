@@ -1,0 +1,39 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/pj24%20css.uss?fileID=7433441132597879392&amp;guid=9d3df72b6a1977447b2a4823c6a62599&amp;type=3#pj24 css" />
+    <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
+    <engine:VisualElement name="LongWindow" style="width: 1144px; height: 1248px; background-image: url(&quot;project://database/Assets/Danmokou/MiniProjects/raw/pj24/long%20rect.png?fileID=4120901811166270815&amp;guid=dc4389c984cb86f40810ea81d8d02e78&amp;type=3#long rect_0&quot;); color: rgb(107, 49, 27);">
+        <engine:Label text="...crafting" name="Title" style="-unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-R%20SDF.asset?fileID=11400000&amp;guid=a4ca5d8a7e0241f41b58c69f59b3bca2&amp;type=2#Ubuntu-R SDF&quot;); font-size: 90px; -unity-text-align: upper-right; margin-top: 150px; color: rgb(150, 79, 54); margin-right: 200px; margin-bottom: 20px;" />
+        <engine:VisualElement class="column" style="flex-grow: 1; margin-right: 300px; margin-left: 250px; margin-bottom: 160px; margin-top: 40px; -unity-font-definition: url(&quot;project://database/Assets/Danmokou/Fonts/RocknRollOne-Regular.ttf?fileID=12800000&amp;guid=dad637643ac27d44f94bd64003a3100d&amp;type=3#RocknRollOne-Regular&quot;); font-size: 60px; color: rgb(82, 52, 41);">
+            <engine:VisualElement name="TargetLv" style="flex-grow: 0; justify-content: space-between; flex-direction: row;">
+                <engine:Label text="Target Lv" name="Left" />
+                <engine:Label text="8" name="Right" />
+            </engine:VisualElement>
+            <engine:VisualElement name="AlchemyLv" style="flex-grow: 0; justify-content: space-between; flex-direction: row;">
+                <engine:Label text="Alchemy Lv" name="Left" />
+                <engine:Label text="42" name="Right" />
+            </engine:VisualElement>
+            <engine:VisualElement name="SuccessRate" style="flex-grow: 0; justify-content: space-between; flex-direction: row;">
+                <engine:Label text="Success Rate" name="Left" />
+                <engine:Label text="94%" name="Right" style="margin-right: -60px;" />
+            </engine:VisualElement>
+            <engine:VisualElement name="CountSelector" style="background-image: url(&quot;project://database/Assets/Danmokou/MiniProjects/raw/pj24/node.png?fileID=2800000&amp;guid=c5775ab322a5f6149a14b5f2c96c9485&amp;type=3#node&quot;); -unity-background-image-tint-color: rgb(231, 221, 210); margin-top: 40px; margin-bottom: 40px; color: rgb(107, 49, 27);">
+                <engine:VisualElement name="Body" class="body" style="flex-grow: 1; flex-direction: row; justify-content: center; height: 180px;">
+                    <engine:Label text="Keyname" name="Key" class="text" style="display: none;" />
+                    <engine:VisualElement name="ValueContainer" class="optionsCont" style="width: 80%;">
+                        <engine:Label text="&lt;" name="Left" class="text" />
+                        <engine:Label text="1 / 9" name="Value" class="text centertext" style="font-size: 100px;" />
+                        <engine:Label text="&gt;" name="Right" class="text" />
+                    </engine:VisualElement>
+                </engine:VisualElement>
+            </engine:VisualElement>
+            <engine:VisualElement name="DaysElapsed" style="flex-grow: 0; justify-content: space-between; flex-direction: row;">
+                <engine:Label text="Days Elapsed" name="Left" />
+                <engine:Label text="1" name="Right" />
+            </engine:VisualElement>
+            <engine:VisualElement name="Finish" style="flex-grow: 0; justify-content: space-between; flex-direction: row;">
+                <engine:Label text="Finish" name="Left" />
+                <engine:Label text="6月10日" name="Right" />
+            </engine:VisualElement>
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

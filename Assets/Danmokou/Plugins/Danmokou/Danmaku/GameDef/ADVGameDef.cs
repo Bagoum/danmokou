@@ -18,13 +18,15 @@ using UnityEngine;
 namespace Danmokou.ADV {
 
 public enum ADVBacklogFeatures {
-    NONE,
+    SHOW_BACKLOG = 0,
     /// <summary>
     /// True iff the player should be allowed to go to a previous
     ///  point in the game by using the dialogue log menu.
     /// <br/>This should only be allowed for linear games.
     /// </summary>
-    ALLOW_BACKJUMP
+    ALLOW_BACKJUMP = 1,
+    
+    NO_BACKLOG = 2,
 }
 
 
@@ -51,7 +53,7 @@ public interface IADVGameDef : IGameDef {
 /// </summary>
 public abstract class ADVGameDef : GameDef, IADVGameDef {
     public SceneConfig sceneConfig = null!;
-    public ADVBacklogFeatures backlogFeatures = ADVBacklogFeatures.NONE;
+    public ADVBacklogFeatures backlogFeatures = ADVBacklogFeatures.SHOW_BACKLOG;
     
     /// <summary>
     /// Instantiate a process responsible for running the ADV game.

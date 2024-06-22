@@ -237,7 +237,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
                     this.AddLookup(selectType.FirstSelected.Value.Item2.Realize());
                     return n.ReturnToGroup;
                 }) { EnabledIf = () => selectType.FirstSelected.Try(out var sel) && sel.Item2.Extract().IsAnySelected }
-            }), (_, ve) => ve.SetWidth(1200));
+            }), builder: (_, ve) => ve.SetWidth(1200));
             
         }) {
             OnBuilt = n => n.HTML.ConfigureAbsolute().WithAbsolutePosition(1800, 200)
@@ -261,7 +261,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
                     this.AddLookup(selector.FirstSelected.Value with { Reverse = reverse.Value });
                     return n.ReturnToGroup;
                 }) { EnabledIf = () => selector.FirstSelected.Valid }
-            }), (_, ve) => ve.SetWidth(1200));
+            }), builder: (_, ve) => ve.SetWidth(1200));
         }) {
             OnBuilt = n => n.HTML.ConfigureAbsolute().WithAbsolutePosition(2200, 200)
         });

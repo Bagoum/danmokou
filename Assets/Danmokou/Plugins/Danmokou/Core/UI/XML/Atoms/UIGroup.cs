@@ -167,6 +167,11 @@ public abstract class UIGroup {
         } 
     }
     public bool Visible => Visibility.VisibleInTree;
+
+    public UIGroup WithLeaveHideVisibility() {
+        Visibility = new GroupVisibility.UpdateOnLeaveHide(this);
+        return this;
+    }
     
     /// <summary>
     /// Whether or not user focus can leave this group via mouse/keyboard control. (True by default, except for popups.)
@@ -248,6 +253,12 @@ public abstract class UIGroup {
     public Func<UIGroup, Task?>? OnLeave { private get; init; }
     public Func<UIGroup, Task?>? OnReturnFromChild { private get; init; }
     public Func<UIGroup, Task?>? OnGoToChild { private get; init; }
+    
+    /// <summary>
+    /// If true, will run <see cref="Render"/>.<see cref="UIRenderSpace.OverrideVisibilityV"/>(false)
+    ///  when descending to a child group.
+    /// </summary>
+    public UIRenderSpace? OverrideRenderVisibilityOnGoToChild { get; set; }
     public bool DestroyOnLeave { get; set; } = false;
     
     
@@ -444,9 +455,17 @@ public abstract class UIGroup {
         return task;
     }
 
-    public Task? ReturnFromChild() => OnReturnFromChild?.Invoke(this);
+    public Task? ReturnFromChild() {
+        if (OverrideRenderVisibilityOnGoToChild is {} rs)
+            rs.OverrideVisibilityV(null);
+        return OnReturnFromChild?.Invoke(this);
+    }
 
-    public Task? DescendToChild() => OnGoToChild?.Invoke(this);
+    public Task? DescendToChild() {
+        if (OverrideRenderVisibilityOnGoToChild is {} rs)
+            rs.OverrideVisibilityV(false);
+        return OnGoToChild?.Invoke(this);
+    }
 
     /// <summary>
     /// Remove all nodes in this group. (The group is still valid and can still be used.)
@@ -569,11 +588,12 @@ public class PopupUIGroup : CompositeUIGroup {
     /// <param name="header">Popup header (optional)</param>
     /// <param name="bodyInner">Constructor for the UIGroup containing the popup messages, entry box, etc</param>
     /// <param name="buttons">Configuration for action buttons</param>
+    /// <param name="prefab">Prefab to use for the popup</param>
     /// <param name="builder">Extra on-build configuration for the popup HTML</param>
     /// <returns></returns>
     public static PopupUIGroup CreatePopup(UINode source, LString? header, Func<UIRenderSpace, UIGroup> bodyInner,
-        PopupButtonOpts buttons, Action<UIRenderConstructed, VisualElement>? builder = null) {
-        var render = MakeRenderer(source.Screen.AbsoluteTerritory, XMLUtils.Prefabs.Popup, builder);
+        PopupButtonOpts buttons, VisualTreeAsset? prefab = null, Action<UIRenderConstructed, VisualElement>? builder = null) {
+        var render = MakeRenderer(source.Screen.AbsoluteTerritory, prefab != null ? prefab : XMLUtils.Prefabs.Popup, builder);
         var bodyGroup = bodyInner(new UIRenderExplicit(render, html => html.Q("BodyHTML")));
         UINode?[] opts;
         if (buttons is PopupButtonOpts.LeftRightFlush lr) {

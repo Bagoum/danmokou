@@ -36,7 +36,7 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
 
     public MonoBehaviour actionHandler = null!;
     
-    public IFixedXMLObjectContainer? Container { get; set; }
+    public IFreeformContainer? Container { get; set; }
     private IFixedXMLReceiver Receiver => 
         (actionHandler as IFixedXMLReceiver) ??
         throw new Exception($"Action handler {actionHandler} is not an IFixedXMLReceiver");

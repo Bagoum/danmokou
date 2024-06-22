@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reactive;
+using System.Reactive.Subjects;
 using BagoumLib.Events;
 using UnityEngine.UIElements;
 
@@ -87,24 +88,51 @@ public interface IConstUIViewModel : IUIViewModel {
 }
 
 /// <summary>
-/// A view model that explicitly tracks changes via <see cref="Publish"/>.
+/// A view model that explicitly tracks changes via <see cref="ViewUpdated"/> and <see cref="ModelUpdated"/>.
 /// </summary>
 public interface IVersionedUIViewModel : IUIViewModel {
     /// <summary>
     /// Current version of the view model. This is incremented whenever a change is made.
     /// </summary>
     Evented<long> ViewVersion { get; }
+
+    /// <summary>
+    /// Observable for when <see cref="ModelUpdated"/> is called.
+    /// </summary>
+    IObservable<Unit> EvModelUpdated => _evModelUpdated;
+    protected ISubject<Unit> _evModelUpdated { get; }
     
+    //Don't allow recursive calls of ModelChanged and Publish
+    //This can occur in normal usage when modifying one value from the view
+    // results in the options for another value being reset from the model.
+    //eg. on the "player select" screen, changing the Player from the view
+    // changes the available Shots from the model.
+    protected bool IsModelUpdating { get; set; }
+
     /// <summary>
     /// Notify that a field on the view model was changed due to a model-side change,
     ///  which may require remapping the view.
+    /// <br/>Bumps <see cref="ViewVersion"/>.
     /// </summary>
-    IObservable<Unit> UpdatedFromModel { get; }
+    void ModelUpdated() => ModelUpdated(this);
+    
+    protected static void ModelUpdated(IVersionedUIViewModel me) {
+        if (!me.IsModelUpdating) {
+            me.IsModelUpdating = true;
+            me._evModelUpdated.OnNext(default);
+            ++me.ViewVersion.Value;
+            me.IsModelUpdating = false;
+        }
+    }
 
     /// <summary>
-    /// Notify that a field on the view model was changed, either due to a view-side change or a model-side change.
+    /// Notify that a field on the view model was changed due to a view-side change.
+    /// <br/>Bumps <see cref="ViewVersion"/>.
     /// </summary>
-    void Publish();
+    void ViewUpdated() {
+        if (!IsModelUpdating)
+            ++ViewVersion.Value;
+    }
 
     long IUIViewModel.GetViewHash() => ViewVersion;
 }
@@ -114,29 +142,22 @@ public class VersionedUIViewModel : IVersionedUIViewModel {
     public BindingUpdateTrigger UpdateTrigger { get; set; }
     public Func<long>? OverrideHashHandler { get; set; }
     public Evented<long> ViewVersion { get; } = new(0);
-    public IObservable<Unit> UpdatedFromModel => _updModel;
-    private readonly Event<Unit> _updModel = new();
-    
-    /// <inheritdoc cref="UpdatedFromModel"/>
-    public void ModelChanged() {
-        if (!isModelUpdating) {
-            isModelUpdating = true;
-            _updModel.OnNext(default);
-            ++ViewVersion.Value;
-            isModelUpdating = false;
-        }
-    }
+    ISubject<Unit> IVersionedUIViewModel._evModelUpdated { get; } = new Event<Unit>();
+    bool IVersionedUIViewModel.IsModelUpdating { get; set; }
+    public void ModelUpdated() => 
+        IVersionedUIViewModel.ModelUpdated(this);
+}
 
-    //Don't allow recursive calls of ModelChanged and Publish
-    //This can occur in normal usage when modifying one value from the view
-    // results in the options for another value being reset from the model.
-    //eg. on the "player select" screen, changing the Player from the view
-    // changes the available Shots from the model.
-    private bool isModelUpdating = false;
+/// <summary>
+/// <see cref="VersionedUIViewModel"/> for a single value.
+/// </summary>
+public class VersionedUIViewModel<T> : VersionedUIViewModel {
+    public T Value { get; private set; }
+    public ManualBinder<T> Binder { get; }
     
-    public void Publish() {
-        if (!isModelUpdating)
-            ++ViewVersion.Value;
+    public VersionedUIViewModel(T value) {
+        Value = value;
+        Binder = new(() => Value, x => Value = x, this);
     }
 }
 

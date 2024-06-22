@@ -48,7 +48,7 @@ public class WPGameDef : ADVGameDef {
         private readonly OptionSelector<string> selector;
         private readonly EvidenceTargetProxy<Evidence, Target> targetEvReq;
         private readonly UIScreen targetScreen;
-        private readonly IFixedXMLObjectContainer evTargets;
+        private readonly IFreeformContainer evTargets;
         private readonly EvidenceRequest<Evidence> evidenceRequest;
         private bool CanEvidence => targetEvReq.Request.CanPresentAny || evidenceRequest.CanPresent;
         private bool CanSpecificEvidence => targetEvReq.Request.CanPresent || evidenceRequest.CanPresent;
@@ -69,7 +69,7 @@ public class WPGameDef : ADVGameDef {
                 Data.DelayedState = Data.State;
             }));
 
-            (targetScreen, evTargets) = menu.MakeScreen(_ => null);
+            (targetScreen, evTargets) = menu.MakeScreen(null);
             var targetInfo = new UINode("Select a target to present evidence to") {
                 Prefab = XMLUtils.Prefabs.PureTextNode,
                 Passthrough = true,

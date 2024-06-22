@@ -19,10 +19,10 @@ public class VNUpdater : RegularUpdater {
     }
 
     public override void FirstFrame() {
-        ServiceLocator.Find<XMLDynamicMenu>().HandleUnselectConfirm = _ => {
+        AddToken(ServiceLocator.Find<XMLDynamicMenu>().HandleDefaultUnselectConfirm.AddConst((n, cs) => {
             nextFrameIsConfirm = true;
             return null;
-        };
+        }));
     }
 
     public override void RegularUpdate() {

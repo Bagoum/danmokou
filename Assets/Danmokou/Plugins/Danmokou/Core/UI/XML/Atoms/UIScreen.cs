@@ -206,6 +206,11 @@ public class UIScreen : ITokenized {
                 StringBuffer.JoinPooled("    ", AsControl(inp.uiConfirm), AsControl(inp.uiBack));
     }
 
+    public UIFreeformGroup AddFreeformGroup(Func<UINode, ICursorState, UIResult?>? unselectConfirm = null) {
+        var unselect = EmptyNode.MakeUnselector(unselectConfirm);
+        return new UIFreeformGroup(this, unselect);
+    }
+
     /// <summary>
     /// Mark all nodes on this screen as destroyed.
     /// <br/>Does not affect HTML (call <see cref="DestroyScreen"/> instead to destroy HTML).

@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
+    <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/pj24%20css.uss?fileID=7433441132597879392&amp;guid=9d3df72b6a1977447b2a4823c6a62599&amp;type=3#pj24 css" />
+    <ui:VisualElement class="pbutton pj24node" style="-unity-font-definition: url(&quot;project://database/Assets/Danmokou/Fonts/TextCore%20SDF%20Assets/RocknRollOne-Regular%20SDF.asset?fileID=11400000&amp;guid=0527ac2f49047bd469798517c138f05e&amp;type=2#RocknRollOne-Regular SDF&quot;); padding-top: 20px; padding-right: 40px; padding-bottom: 15px; padding-left: 40px; margin-top: 10px; margin-right: 10px; margin-bottom: 10px; margin-left: 10px; background-image: url(&quot;project://database/Assets/Danmokou/MiniProjects/raw/pj24/button.png?fileID=2800000&amp;guid=b03426495ef73c3459a6e067ae93c5d0&amp;type=3#button&quot;);">
+        <ui:VisualElement name="Body" class="body" style="background-image: none;">
+            <ui:Label text="Label" display-tooltip-when-elided="true" class="text" style="font-size: 75px; color: rgb(96, 71, 62); background-color: rgba(95, 85, 95, 0); padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

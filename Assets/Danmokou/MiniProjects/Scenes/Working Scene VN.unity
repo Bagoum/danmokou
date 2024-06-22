@@ -234,7 +234,7 @@ GameObject:
   - component: {fileID: 52487956}
   - component: {fileID: 52487955}
   m_Layer: 0
-  m_Name: XMLTesting with Menu
+  m_Name: PJ24 Crafting XML
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -273,16 +273,35 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiRenderer: {fileID: 789892989}
-  upDownSound: {fileID: 0}
-  leftRightSound: {fileID: 0}
-  confirmSound: {fileID: 0}
-  failureSound: {fileID: 0}
-  backSound: {fileID: 0}
-  showOptsSound: {fileID: 0}
-  screenSynth1: {fileID: 9197481963319205126, guid: cefd70267c9b08d428c1294adac8e148,
+  upDownSound: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092, type: 2}
+  leftRightSound: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4, type: 2}
+  confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
+  failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
+  backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
+  showOptsSound: {fileID: 11400000, guid: 069c9c964b7962e48a1293683803bbb5, type: 2}
+  screenMainVTA: {fileID: 9197481963319205126, guid: 05aab446c91478043a2a071c12b9ce5e,
     type: 3}
-  nodeRecipe: {fileID: 9197481963319205126, guid: a9f725a7697dacc42b0d01f4ce4a7169,
+  screenInventoryVTA: {fileID: 9197481963319205126, guid: 56315bacb851c0545b0b32f5cbac3431,
     type: 3}
+  screenSynth1VTA: {fileID: 9197481963319205126, guid: cefd70267c9b08d428c1294adac8e148,
+    type: 3}
+  screenSynth2VTA: {fileID: 9197481963319205126, guid: 3bfc306940ed89b4e9bcb40060573aaa,
+    type: 3}
+  screenSynth3VTA: {fileID: 9197481963319205126, guid: 69012332a033e874181b46cdc0f20e5e,
+    type: 3}
+  nodeMainMenuOptionVTA: {fileID: 9197481963319205126, guid: c6ccbfdf3d99a2649aff0bd01713a54a,
+    type: 3}
+  nodeItemVTA: {fileID: 9197481963319205126, guid: a9f725a7697dacc42b0d01f4ce4a7169,
+    type: 3}
+  nodeTextOnlyVTA: {fileID: 9197481963319205126, guid: 472719eb0c2f62446ab37a0ca0fe48c6,
+    type: 3}
+  nodeSynthComponentVTA: {fileID: 9197481963319205126, guid: ea54270249499984b9d85474214edab8,
+    type: 3}
+  popupVTA: {fileID: 9197481963319205126, guid: d1cbc9d91290f004e896f9175590a326,
+    type: 3}
+  popupButtonVTA: {fileID: 9197481963319205126, guid: 330313120264fb94ca43b3300acea42d,
+    type: 3}
+  craftSFX: {fileID: 11400000, guid: 73f0e61bd473b3241b122492d0adcd38, type: 2}
 --- !u!4 &52487957
 Transform:
   m_ObjectHideFlags: 0
@@ -324,8 +343,8 @@ Transform:
   m_GameObject: {fileID: 327470219}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 16, y: 9, z: 1}
+  m_LocalPosition: {x: 1, y: 0, z: 0}
+  m_LocalScale: {x: -1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -374,8 +393,9 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 001024098b6c2264ea398d43a2067f4c, type: 3}
-  m_Color: {r: 0.18396229, g: 0.124184184, b: 0.10326185, a: 1}
+  m_Sprite: {fileID: -4364034832326165938, guid: e22801335dc7abe4c959fe2cceb6e56f,
+    type: 3}
+  m_Color: {r: 1, g: 0.8788728, b: 0.8726415, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -874,7 +894,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1044200806
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -887,7 +907,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd594754dd526c14d88942cd645fad0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  saveSlot: 11
+  saveSlot: 0
 --- !u!4 &1044200807
 Transform:
   m_ObjectHideFlags: 0
@@ -1841,9 +1861,9 @@ SceneRoots:
   - {fileID: 360509424075748755}
   - {fileID: 677497350}
   - {fileID: 1044200807}
+  - {fileID: 52487957}
   - {fileID: 1726079225}
   - {fileID: 864619525}
   - {fileID: 327470220}
   - {fileID: 1647104558}
-  - {fileID: 52487957}
   - {fileID: 920306703}

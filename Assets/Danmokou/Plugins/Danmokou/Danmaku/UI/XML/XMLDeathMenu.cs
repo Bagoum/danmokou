@@ -25,7 +25,7 @@ public class XMLDeathMenu : PausedGameplayMenu {
             #if UNITY_EDITOR
                 new FuncNode("Force continue (EDITOR ONLY)", () => {
                     if (GameManagement.Instance.BasicF.ForceContinue()) {
-                        ProtectHide();
+                        CloseWithAnimationV();
                         return new UIResult.StayOnNode();
                     } else return new UIResult.StayOnNode(true);
                 }),
@@ -33,11 +33,11 @@ public class XMLDeathMenu : PausedGameplayMenu {
             (GameManagement.Instance.BasicF.ContinuesAllowed) ?
                 new FuncNode(null, () => {
                     if (GameManagement.Instance.BasicF.TryContinue()) {
-                        ProtectHide();
+                        CloseWithAnimationV();
                         return new UIResult.StayOnNode();
                     } else return new UIResult.StayOnNode(true);
-                }) {EnabledIf = () => GameManagement.Instance.BasicF.ContinuesRemaining}
-                .Bind(new LabelView<int>(new(() => GameManagement.Instance.BasicF.Continues, x => death_continue_ls(x))))
+                    }) {EnabledIf = () => GameManagement.Instance.BasicF.ContinuesRemaining}
+                    .Bind(new LabelView<int>(new(() => GameManagement.Instance.BasicF.Continues, x => death_continue_ls(x))))
                 : null,
             new ConfirmFuncNode(checkpoint_restart, GameManagement.Instance.RestartFromCheckpoint)
                 {EnabledIf = () => GameManagement.CanRestart && GameManagement.Instance.CanRestartCheckpoint},

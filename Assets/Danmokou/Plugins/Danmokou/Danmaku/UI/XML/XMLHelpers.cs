@@ -35,8 +35,6 @@ using static Danmokou.UI.XML.XMLUtils;
 namespace Danmokou.UI.XML {
 public static partial class XMLHelpers {
     public static UXMLReferences Prefabs => GameManagement.UXMLPrefabs;
-
-    public static EventedBinder<T> Binder<T>(this Evented<T> ev) => new(ev, null);
     
     /// <summary>
     /// Configure a DMK prefab-based background for use with a <see cref="UIScreen"/>.
@@ -515,7 +513,7 @@ public static partial class XMLHelpers {
             get => _mode;
             set {
                 _mode = value;
-                ModelChanged();
+                ModelUpdated();
             } 
         }
         private int _cmpIndex;
@@ -529,7 +527,7 @@ public static partial class XMLHelpers {
                     Boss = campaigns[_cmpIndex].bosses[0].boss.key;
                 else
                     throw new Exception("No high score handling for days menu implemented yet"); //AssignBoss(days!.bosses[]);
-                ModelChanged();
+                ModelUpdated();
             }
         }
         public string campaign = null!;
@@ -539,7 +537,7 @@ public static partial class XMLHelpers {
             set {
                 _boss = value;
                 bphase = 0;
-                ModelChanged();
+                ModelUpdated();
             }
         }
         public int bphase;
@@ -549,7 +547,7 @@ public static partial class XMLHelpers {
             set {
                 _stage = value;
                 sphase = 0;
-                ModelChanged();
+                ModelUpdated();
             }
         }
         public int sphase;
@@ -600,7 +598,7 @@ public static partial class XMLHelpers {
                 new FuncNode(g.AsDisplay(true, false), n => PopupUIGroup.CreatePopup(
                         n, record_header, 
                         r => new UIColumn(r,new UINode(record_what_do(g.CustomNameOrPartial)) 
-                            { Prefab = Prefabs.PureTextNode} ) { Interactable = false },
+                            { Prefab = Prefabs.PureTextNode } ) { Interactable = false },
                         new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
                             new UIButton(view_details, UIButton.ButtonType.Confirm, _ =>
                                 n.ReturnToGroup.Then(CreateGameResultsView(g, detailsScreen))),
@@ -668,7 +666,7 @@ public static partial class XMLHelpers {
             get => _player;
             set {
                 _player = value; 
-                ModelChanged(); //changes the available supports/shots
+                ModelUpdated(); //changes the available supports/shots
             }
         }
         public (LString, IAbilityCfg)[] PlayerSupports =>
@@ -838,7 +836,7 @@ public static partial class XMLHelpers {
         void SetNewDFC(DifficultySettings? newDfc) {
             if (newDfc == null) return;
             dfc = FileUtils.CopyJson(newDfc);
-            viewModel.ModelChanged();
+            viewModel.ModelUpdated();
         }
         double[] _pctMods = {
             0.31, 0.45, 0.58, 0.7, 0.85, 1, 1.2, 1.4, 1.6, 1.8, 2
@@ -958,7 +956,7 @@ public static partial class XMLHelpers {
             set {
                 _cmpIndex = value;
                 boss = null;
-                ModelChanged();
+                ModelUpdated();
             }
         }
         public string? boss;

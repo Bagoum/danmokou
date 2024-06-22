@@ -57,7 +57,7 @@ public abstract record InteractableInfo {
 /// </summary>
 public class Interactable : Rendered {
     public ADVManager Manager { get; set; } = null!;
-    public IFixedXMLObjectContainer? XMLContainer { get; set; } = null;
+    public IFreeformContainer? XMLContainer { get; set; } = null;
     public Func<UINode, UIResult?> OnClick { get; set; } = null!;
     public Evented<bool> Exhausted { get; set; } = new(false);
     public InteractableInfo Metadata { get; set; } = null!;
@@ -218,7 +218,7 @@ public record InteractableAssertion(ADVManager Manager, Func<UINode, UIResult?> 
         return null;
     }, id) { }
     
-    public IFixedXMLObjectContainer? XMLContainer { get; set; } = null;
+    public IFreeformContainer? XMLContainer { get; set; } = null;
     public InteractableInfo Info { get; set; } = new InteractableInfo.Dialogue();
     public bool Exhausted { get; init; }
     public Interactable.HoverAction? Hover { get; init; }

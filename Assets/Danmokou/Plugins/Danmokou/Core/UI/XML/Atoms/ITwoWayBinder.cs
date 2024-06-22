@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reactive;
 using BagoumLib.Events;
+using SuzunoyaUnity;
 
 namespace Danmokou.UI.XML {
 /// <summary>
@@ -15,10 +16,10 @@ public interface ITwoWayBinder<T> {
         set {
             SetInner(value);
             if (ViewModel is IVersionedUIViewModel vers)
-                vers.Publish();
+                vers.ViewUpdated();
         }
     }
-    public IObservable<Unit> ValueUpdatedFromModel { get; }
+    public IObservable<Unit> EvModelUpdated { get; }
     
     protected T GetInner();
     protected void SetInner(T value);
@@ -32,14 +33,14 @@ public interface ITwoWayBinder<T> {
 /// </summary>
 public abstract class TwoWayBinder<T> : ITwoWayBinder<T> {
     public IUIViewModel ViewModel { get; }
-    public IObservable<Unit> ValueUpdatedFromModel { get; } 
+    public IObservable<Unit> EvModelUpdated { get; } 
 
     public TwoWayBinder(IUIViewModel? vm) {
         ViewModel = vm ?? new VersionedUIViewModel();
         if (ViewModel is IVersionedUIViewModel vers)
-            ValueUpdatedFromModel = vers.UpdatedFromModel;
+            EvModelUpdated = vers.EvModelUpdated;
         else
-            ValueUpdatedFromModel = NullEvent<Unit>.Default;
+            EvModelUpdated = NullEvent<Unit>.Default;
     }
 
     T ITwoWayBinder<T>.GetInner() => GetInner();
@@ -50,6 +51,8 @@ public abstract class TwoWayBinder<T> : ITwoWayBinder<T> {
 
 /// <summary>
 /// Bind to an <see cref="Evented{T,U}"/> object on a view model.
+/// <br/>Note: the view will NOT automatically be rebound if you modify the Evented other than through the view,
+///  unless you manually call (EventedBinder.ViewModel as IVersionedUIViewModel).ModelChanged().
 /// </summary>
 public class EventedBinder<T> : TwoWayBinder<T> {
     private readonly Evented<T> ev;

@@ -18,15 +18,25 @@ using Helpers = SuzunoyaUnity.Helpers;
 namespace Danmokou.UI.XML {
 public abstract class UIRenderSpace {
     protected List<UIGroup> Sources { get; } = new();
-    protected VisualElement? _html = null;
-    public abstract VisualElement HTML { get; }
+    private VisualElement? _html = null;
+    protected abstract VisualElement LoadHTML();
+    public VisualElement HTML {
+        get {
+            if (_html is null) {
+                _html = LoadHTML() ?? throw new Exception("Couldn't load HTML");
+                FastUpdateVisibility();
+            }
+            return _html;
+        }
+    }
     public UIScreen Screen { get; }
     public UIRenderSpace? Parent { get; }
     public LazyEvented<bool> IsVisible { get; }
-    protected virtual bool ShouldBeVisibleBase => true;
+    protected virtual bool ShouldBeVisibleBase => !VisibleWhenSourcesVisible || HasVisibleSource;
     private bool? ShouldBeVisibleOverride { get; set; }
     protected bool ShouldBeVisible => ShouldBeVisibleOverride ?? ShouldBeVisibleBase;
     public bool ShouldBeVisibleInTree => ShouldBeVisible && (Parent?.ShouldBeVisible ?? true);
+    public bool VisibleWhenSourcesVisible { get; set; } = false;
     public bool HasVisibleSource {
         get {
             for (int ii = 0; ii < Sources.Count; ++ii)
@@ -91,9 +101,21 @@ public abstract class UIRenderSpace {
             animateToken = null;
     }
 
+    /// <summary>
+    /// Sets the local visiblity of this render space,
+    ///  overriding <see cref="ShouldBeVisible"/> and/or <see cref="HasVisibleSource"/>.
+    /// </summary>
     public Task OverrideVisibility(bool? visible) {
         ShouldBeVisibleOverride = visible;
         return UpdateVisibility();
+    }
+    
+    /// <summary>
+    /// <see cref="OverrideVisibility"/>, but returns a null task.
+    /// </summary>
+    public Task? OverrideVisibilityV(bool? visible) {
+        OverrideVisibility(visible);
+        return null;
     }
 
     public void FastUpdateVisibility() => UpdateVisibility(true);
@@ -162,13 +184,9 @@ public abstract class UIRenderSpace {
             return Task.CompletedTask;
     }
 
-    public Task SourceBecameVisible(UIGroup grp) {
-        return UpdateVisibility().And(Parent?.SourceBecameVisible(grp));
-    }
+    public Task SourceBecameVisible(UIGroup grp) => UpdateVisibility();
 
-    public Task SourceBecameHidden(UIGroup grp) {
-        return UpdateVisibility().And(Parent?.SourceBecameHidden(grp));
-    }
+    public Task SourceBecameHidden(UIGroup grp) => UpdateVisibility();
 
     public UIRenderConstructed Construct(VisualTreeAsset prefab,
         Action<UIRenderConstructed, VisualElement>? builder = null) => new UIRenderConstructed(this, prefab, builder);
@@ -181,7 +199,7 @@ public abstract class UIRenderSpace {
 /// </summary>
 public class UIRenderExplicit : UIRenderSpace {
     private readonly Func<VisualElement, VisualElement> htmlFinder;
-    public override VisualElement HTML => _html ??= htmlFinder(Parent!.HTML);
+    protected override VisualElement LoadHTML() => htmlFinder(Parent!.HTML);
 
     public UIRenderExplicit(UIRenderSpace parent, Func<VisualElement, VisualElement> htmlFinder) : base(parent.Screen, parent) {
         this.htmlFinder = htmlFinder;
@@ -192,7 +210,7 @@ public class UIRenderExplicit : UIRenderSpace {
 /// A render space that renders directly to the screen HTML.
 /// </summary>
 public class UIRenderScreen : UIRenderSpace {
-    public override VisualElement HTML => _html ??= Screen.HTML;
+    protected override VisualElement LoadHTML() => Screen.HTML;
     protected override bool ShouldBeVisibleBase => Screen.ScreenIsActive;
 
     public UIRenderScreen(UIScreen screen) : base(screen, null) {
@@ -205,7 +223,7 @@ public class UIRenderScreen : UIRenderSpace {
 /// A render space that renders directly to the screen container.
 /// </summary>
 public class UIRenderScreenContainer : UIRenderSpace {
-    public override VisualElement HTML => _html ??= Screen.Container;
+    protected override VisualElement LoadHTML() => Screen.Container;
     protected override bool ShouldBeVisibleBase => Screen.ScreenIsActive;
 
     public UIRenderScreenContainer(UIScreen screen) : base(screen, null) {
@@ -222,7 +240,8 @@ public class UIRenderScreenContainer : UIRenderSpace {
 /// <br/>Use this for popups and the like.
 /// </summary>
 public class UIRenderAbsoluteTerritory : UIRenderSpace {
-    public override VisualElement HTML => _html!;
+    private readonly VisualElement absTerr;
+    protected override VisualElement LoadHTML() => absTerr;
     /// <summary>
     /// Alpha of the darkened overlay when fully visible.
     /// Can be overriden by <see cref="PopupUIGroup.OverlayAlphaOverride"/>.
@@ -239,14 +258,14 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
     protected override bool ShouldBeVisibleBase => Screen.ScreenIsActive && HasVisibleSource;
 
     public UIRenderAbsoluteTerritory(UIScreen screen) : base(screen, null) {
-        _html = Screen.HTML.Query("AbsoluteContainer");
+        absTerr = Screen.HTML.Query("AbsoluteContainer");
         //TODO: opacity doesn't work correctly? so I'm setting the alpha value manually
-        var bgc = _html.style.backgroundColor.value;
-        _html.style.display = DisplayStyle.None;
-        _html.RegisterCallback<PointerUpEvent>(evt => {
+        var bgc = absTerr.style.backgroundColor.value;
+        absTerr.style.display = DisplayStyle.None;
+        absTerr.RegisterCallback<PointerUpEvent>(evt => {
             if (evt.button != 0 || screen.Controller.Current == null || animateToken?.Cancelled is false) return;
             Logs.Log("Clicked on absolute territory");
-            screen.Controller.QueueEvent(new UIPointerCommand.NormalCommand(UICommand.Back, null));
+            screen.Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Back, null));
             evt.StopPropagation();
         });
         IsVisibleAnimation = (rs, cT) => {
@@ -270,17 +289,13 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
 /// </summary>
 public class UIRenderColumn : UIRenderSpace {
     public int Index { get; }
-
-    private VisualElement Column {
-        get {
-            var col = Parent!.HTML.Query(className: "column").ToList()[Index];
-            var colScroll = col.Query<ScrollView>().ToList();
-            if (colScroll.Count > 0)
-                return colScroll[0];
-            return col;
-        }
+    protected override VisualElement LoadHTML() {
+        var col = Parent!.HTML.Query(className: "column").ToList()[Index];
+        var colScroll = col.Query<ScrollView>().ToList();
+        if (colScroll.Count > 0)
+            return colScroll[0];
+        return col;
     }
-    public override VisualElement HTML => _html ??= Column;
 
     public UIRenderColumn(UIScreen screen, int index) : this(screen.ContainerRender, index) { }
 
@@ -297,18 +312,14 @@ public class UIRenderConstructed : UIRenderSpace {
     private readonly UIRenderSpace parent;
     private readonly Either<VisualTreeAsset, Func<VisualElement, VisualElement>> prefab;
     private readonly Action<UIRenderConstructed, VisualElement>? builder;
-    public override VisualElement HTML {
-        get {
-            if (_html == null) {
-                if (prefab.TryL(out var vta))
-                    parent.HTML.Add(_html = vta.CloneTreeNoContainer());
-                else
-                    _html = prefab.Right(parent.HTML);
-                builder?.Invoke(this, _html);
-                _ = UpdateVisibility().ContinueWithSync();
-            }
-            return _html;
-        }
+    protected override VisualElement LoadHTML() {
+        VisualElement html;
+        if (prefab.TryL(out var vta))
+            parent.HTML.Add(html = vta.CloneTreeNoContainer());
+        else
+            html = prefab.Right(parent.HTML);
+        builder?.Invoke(this, html);
+        return html;
     }
     protected override bool ShouldBeVisibleBase => HasVisibleSource;
 

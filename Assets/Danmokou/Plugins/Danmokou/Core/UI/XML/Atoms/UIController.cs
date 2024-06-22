@@ -47,11 +47,13 @@ public abstract record UIPointerCommand {
 }
 
 public abstract record UIResult {
+    public UITransitionOptions? Options { get; init; }
+    
     /// <summary>
     /// If this UIResult results in a transition between nodes or between screens, then this callback is invoked
     ///  after the transition is complete.
     /// </summary>
-    public Action? OnPostTransition { get; init; } = null;
+    public Action? OnPostTransition { get; init; }
     
     public record DestroyMenu : UIResult;
 
@@ -130,23 +132,31 @@ public abstract class UIController : CoroutineRegularUpdater {
     public PushLerper<float> BackgroundOpacity { get; } = 
         new(0.5f, (a, b, t) => M.Lerp(a, b, Easers.EIOSine(t)));
     public UIScreen MainScreen { get; protected set; } = null!;
-    public DisturbedAnd UpdatesEnabled { get; } = new();
-    public DisturbedAnd TransitionEnabled { get; } = new();
+    
+    /// <summary>
+    /// Whether or not the UI should update based on player input in RegularUpdate.
+    /// </summary>
+    public DisturbedAnd PlayerInputEnabled { get; } = new();
+    
+    /// <summary>
+    /// Whether or not the UI should allow any update operations at all.
+    /// </summary>
+    public DisturbedAnd OperationsEnabled { get; } = new();
     public Stack<UINode> ScreenCall { get; } = new();
     public Stack<(UIGroup group, UINode? node)> GroupCall { get; } = new();
     
     public UINode? Current { get; private set; }
     public OverrideEvented<ICursorState> CursorState { get; } = new(new NullCursorState());
 
-    //Fields for event-based changes 
-    //Not sure if I want to generalize these to properly event-based...
-    public UIPointerCommand? QueuedEvent { get; private set; }
+    /// <summary>
+    /// Event-driven UI input (based on UITK bindings).
+    /// Stored temporarily and only read during <see cref="RegularUpdate"/>.
+    /// </summary>
+    public UIPointerCommand? QueuedInput { get; private set; }
 
-    public void QueueEvent(UIPointerCommand cmd) {
-        if (UpdatesEnabled) {
-            QueuedEvent = cmd;
-            UIEventQueued.OnNext(default);
-        }
+    public void QueueInput(UIPointerCommand cmd) {
+        QueuedInput = cmd;
+        UIEventQueued.OnNext(default);
     }
 
     protected virtual UINode? StartingNode => null;
@@ -168,6 +178,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     public SFXConfig? backSound;
     public SFXConfig? showOptsSound;
     
+    private readonly TaskQueue openClose = new();
     public bool MenuActive => Current != null;
     //TODO what happens if you screw with the 16x9 frame? how would you measure this in non-ideal conditions?
     public int XMLWidth => UISettings.referenceResolution.x;
@@ -215,7 +226,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     }
 
     public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
-    protected bool RegularUpdateGuard => ETime.FirstUpdateForScreen && UpdatesEnabled;
+    protected bool RegularUpdateGuard => ETime.FirstUpdateForScreen && PlayerInputEnabled;
     /// <summary>
     /// Returns true iff this menu is active and it is also the most high-priority active menu.
     /// Of all active menus, only the most high-priority one should handle input, so use this to gate input.
@@ -249,8 +260,8 @@ public abstract class UIController : CoroutineRegularUpdater {
         UISettings = uid.panelSettings;
         Build();
         uiRenderer.ApplyScrollHeightFix(UIRoot);
+        UIRoot.style.opacity = 0;
         UIRoot.style.display = OpenOnInit.ToStyle();
-        UIRoot.style.opacity = OpenOnInit ? 1 : 0;
         UIRoot.style.width = new Length(100, LengthUnit.Percent);
         UIRoot.style.height = new Length(100, LengthUnit.Percent);
         if (!CaptureFallthroughInteraction) {
@@ -263,7 +274,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         tokens.Add(BackgroundOpacity.Subscribe(f => UIContainer.style.unityBackgroundImageTintColor = 
             BackgroundTint.WithA(f)));
         BackgroundOpacity.Push(0);
-        tokens.Add(UpdatesEnabled.AddDisturbance(TransitionEnabled));
+        tokens.Add(PlayerInputEnabled.AddDisturbance(OperationsEnabled));
         if (OpenOnInit) {
             _ = ((Func<Task>)(async () => {
                 await Open();
@@ -425,9 +436,11 @@ public abstract class UIController : CoroutineRegularUpdater {
                     break;
                 case UIResult.ReturnToGroupCaller:
                     next = null;
+                    var prevgn = (prev!.Group, node: prev);
                     while (GroupCall.Count > 0 && next == null) {
-                        LeftCalls.Add((prev!.Group, prev));
-                        next = GroupCall.Pop().node;
+                        LeftCalls.Add(prevgn);
+                        prevgn = GroupCall.Pop()!;
+                        next = prevgn.node;
                     }
                     if (next == null)
                         throw new Exception("Return-to-group resulted in a null node");
@@ -512,7 +525,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     }
 
     public Task OperateOnResult(UIResult? result, UITransitionOptions? opts) {
-        if (uiOperations.Count == 0 && TransitionEnabled)
+        if (uiOperations.Count == 0 && OperationsEnabled)
             return _OperateOnResult(result, opts);
         var tcs = new TaskCompletionSource<Unit>();
         uiOperations.Enqueue(() => _OperateOnResult(result, opts).Pipe(tcs));
@@ -526,14 +539,14 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
 
         while (ETime.FirstUpdateForScreen) {
-            if (TransitionEnabled && uiOperations.TryDequeue(out var nxt))
+            if (OperationsEnabled && uiOperations.TryDequeue(out var nxt))
                 _ = nxt();
-            else if (UpdatesEnabled && IsActiveCurrentMenu && Current != null) {
+            else if (PlayerInputEnabled && IsActiveCurrentMenu && Current != null) {
                 bool doCustomSFX = false;
                 UICommand? command = null;
                 UIResult? result = null;
                 bool silence = false;
-                if (QueuedEvent is UIPointerCommand.Goto mgt) {
+                if (QueuedInput is UIPointerCommand.Goto mgt) {
                     if (!mgt.Target.Destroyed && mgt.Target.Screen == Current.Screen &&
                         mgt.Target != Current && UIGroupHierarchy.CanTraverse(Current, mgt.Target)) {
                         result = CursorState.Value.PointerGoto(Current, mgt.Target);
@@ -546,14 +559,14 @@ public abstract class UIController : CoroutineRegularUpdater {
                     doCustomSFX = true;
                 } else {
                     command =
-                        (QueuedEvent is UIPointerCommand.NormalCommand uic && QueuedEvent.ValidForCurrent(Current)) ?
+                        (QueuedInput is UIPointerCommand.NormalCommand uic && QueuedInput.ValidForCurrent(Current)) ?
                             uic.Command :
                             CurrentInputCommand;
                     if (command.Try(out var cmd))
                         result = CursorState.Value.Navigate(Current, cmd);
-                    silence = (QueuedEvent as UIPointerCommand.NormalCommand)?.Silent ?? silence;
+                    silence = (QueuedInput as UIPointerCommand.NormalCommand)?.Silent ?? silence;
                 }
-                QueuedEvent = null;
+                QueuedInput = null;
                 if (result is UIResult.GoToNode gTo && gTo.Target == Current)
                     result = new UIResult.StayOnNode(gTo.NoOpIfSameNode);
                 if (result != null && !silence) {
@@ -576,7 +589,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                     //Probably need to get this from the custom node handling? idk
                     ISFXService.SFXService.Request(leftRightSound);
                 if (result != null && result is not UIResult.StayOnNode)
-                    OperateOnResult(result, UITransitionOptions.Default).ContinueWithSync();
+                    OperateOnResult(result, result.Options ?? UITransitionOptions.Default).ContinueWithSync();
                 break;
             } else
                 break;
@@ -587,7 +600,11 @@ public abstract class UIController : CoroutineRegularUpdater {
 
     public void GoToNth(int grpIndex, int nodeIndex) =>
         OperateOnResult(new UIResult.GoToNode(MainScreen.Groups[grpIndex].Nodes[nodeIndex]), null);
+    
+    [ContextMenu("Open menu")]
     protected Task Open() {
+        if (MenuActive) return Task.CompletedTask;
+        UIRoot.style.opacity = 1;
         if (StartingNode != null)
             return OperateOnResult(new UIResult.GoToNode(StartingNode), null);
         else {
@@ -598,7 +615,48 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
     }
 
-    protected Task Close() => OperateOnResult(new UIResult.DestroyMenu(), null);
+    [ContextMenu("Close menu")]
+    protected async Task Close() {
+        if (!MenuActive) return;
+        UIRoot.style.opacity = 0;
+        await OperateOnResult(new UIResult.DestroyMenu(), null);
+        OnClosed();
+    }
+    
+    protected virtual void OnWillOpen() { }
+    protected virtual void OnWillClose() { }
+    protected virtual void OnClosed() { }
+    
+    protected Task OpenWithAnimation(Task? anim = null) {
+        return openClose.EnqueueTask(async () => {
+            if (MenuActive) return;
+            OnWillOpen();
+            UIRoot.style.opacity = 0;
+            anim ??= UIRoot.FadeTo(1, 0.3f, x => x).Run(this);
+            using var disable = PlayerInputEnabled.AddConst(false);
+            await Task.WhenAll(Open(), anim);
+        });
+    }
+    protected Task CloseWithAnimation(Task? anim = null) {
+        return openClose.EnqueueTask(async () => {
+            if (!MenuActive) return;
+            OnWillClose();
+            anim ??= UIRoot.FadeTo(0, 0.3f, x => x).Run(this);
+            using var disable = PlayerInputEnabled.AddConst(false);
+            await anim;
+            await Close();
+        });
+    }
+
+    [ContextMenu("Animate open menu")]
+    protected void OpenWithAnimationV() {
+        _ = OpenWithAnimation().ContinueWithSync();
+    }
+    
+    [ContextMenu("Animate close menu")]
+    protected void CloseWithAnimationV() {
+        _ = CloseWithAnimation().ContinueWithSync();
+    }
 
     private readonly Queue<Func<Task>> uiOperations = new();
     private async Task TransitionToNode(UINode? next, UITransitionOptions opts, List<UIGroup> leftGroups, List<UIGroup> enteredGroups) {
@@ -607,7 +665,7 @@ public abstract class UIController : CoroutineRegularUpdater {
             return;
         }
         var screenChanged = next?.Screen != prev?.Screen;
-        using var token = TransitionEnabled.AddConst(false);
+        using var token = OperationsEnabled.AddConst(false);
         prev?.Leave(opts.Animate, CursorState.Value, leftGroups.Count == 0 && enteredGroups.Try(0) is PopupUIGroup);
         var tasks = new List<Task>();
         foreach (var g in leftGroups) {
@@ -673,8 +731,8 @@ public abstract class UIController : CoroutineRegularUpdater {
             to.SceneObjects.transform.position = -eput;
         to.HTML.style.opacity = 0;
         async Task FadeIn() {
-            if (opts.DelayScreenFadeIn)
-                await RUWaitingUtils.WaitForUnchecked(this, Cancellable.Null, t / 2f, false);
+            if (opts.DelayScreenFadeInRatio > 0)
+                await RUWaitingUtils.WaitForUnchecked(this, Cancellable.Null, t * opts.DelayScreenFadeInRatio, false);
             await Task.WhenAll(
                 to.HTML.FadeTo(1, t, Easers.EIOSine).Run(this),
                 to.SceneObjects == null ?

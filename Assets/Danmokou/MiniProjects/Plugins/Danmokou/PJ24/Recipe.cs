@@ -4,37 +4,45 @@ using System.Linq;
 
 namespace MiniProjects.PJ24 {
 public record Recipe(Item Result, decimal Time, params RecipeComponent[] Components) {
-    public EffectRequirement[]?[] Effects { get; init; } = Array.Empty<EffectRequirement[]?>();
+    public EffectRequirement[]?[]? Effects { get; init; }
 
-    /// <summary>
-    /// Determine the traits that will be applied to the final result.
-    /// <br/>Can be called with incomplete inputs.
-    /// </summary>
-    public List<TraitInstance> CombineTraits(ItemInstance[][] inputs) =>
-        inputs.SelectMany(x => x).SelectMany(x => x.Traits).CombineTraits();
+    public int DaysTaken(int count) => (int)Math.Ceiling(Time * count);
+
+    public bool HasEffects(int index) => Effects?[index]?.Length > 0;
     
     /// <summary>
     /// Determine the effects that will be applied to the final result.
     /// <br/>Can be called with incomplete inputs.
     /// </summary>
-    public List<EffectInstance> DetermineEffects(ItemInstance[][] inputs) {
+    public List<EffectInstance> DetermineEffects(List<ItemInstance>[] inputs) {
         var outp = new List<EffectInstance>();
-        for (int ii = 0; ii < Effects.Length; ++ii) {
-            if (Effects[ii] is { } reqs && inputs[ii].Length > 0) {
-                if (Components[ii] is not RecipeComponent.ItemCategory cat)
-                    throw new Exception("Scoring for fixed item types not yet supported");
-                var score = (int) Math.Round(inputs[ii].Average(x => x.Type.CategoryScore(cat.Category)) ?? 0);
-                foreach (var req in reqs) {
-                    if (req.Evaluate(score) is { } eff)
-                        outp.Add(eff);
-                }
+        for (int ii = 0; ii < Effects?.Length; ++ii)
+            if (DetermineEffects(inputs[ii], ii, out _) is {} res)
+                outp.AddRange(res);
+        return outp;
+    }
+
+    /// <summary>
+    /// Determine the effects that will be applied from the `index`th recipe component.
+    /// <br/>Can be called with incomplete inputs.
+    /// </summary>
+    public List<EffectInstance>? DetermineEffects(List<ItemInstance> inputs, int index, out int score) {
+        List<EffectInstance>? outp = null;
+        score = 0;
+        if (Effects?[index] is { } reqs && inputs.Count > 0) {
+            if (Components[index] is not RecipeComponent.ItemCategory cat)
+                throw new Exception("Scoring for fixed item types not yet supported");
+            score = (int) Math.Round(inputs.Average(x => x.Type.CategoryScore(cat.Category)) ?? 0);
+            foreach (var req in reqs) {
+                if (req.Evaluate(score) is { } eff)
+                    (outp ??= new()).Add(eff);
             }
         }
         return outp;
     }
 
-    public ItemInstance Craft(ItemInstance[][] inputs) {
-        return new ItemInstance(Result, DetermineEffects(inputs), CombineTraits(inputs));
+    public ItemInstance Synthesize(List<ItemInstance>[] inputs) {
+        return new ItemInstance(Result, DetermineEffects(inputs), Alchemy.CombineTraits(inputs));
     }
 
     public override string ToString() => $"{Result.Name} Recipe";

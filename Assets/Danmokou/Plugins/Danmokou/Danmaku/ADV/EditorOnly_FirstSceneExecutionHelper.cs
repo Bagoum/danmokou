@@ -34,7 +34,9 @@ public class EditorOnly_FirstSceneExecutionHelper : CoroutineRegularUpdater {
             _ = new ADVInstanceRequest(advMan, adv, save).RunInScene().ContinueWithSync();
         }
     }
-    
-    
-    #endif
+
+    public override int UpdatePriority => UpdatePriorities.SYSTEM;
+
+
+#endif
 }

@@ -57,16 +57,19 @@
     -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Odibee-CorpSt-Joint%20SDF.asset?fileID=11400000&guid=cbda6169226e6d64bb00b80c0210330c&type=2#Odibee-CorpSt-Joint SDF");
 }
 
-.font-ubuntu {
+.font-ubuntu, .font-ubuntu .node {
     -unity-font-definition: url("project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-L%20SDF.asset?fileID=11400000&guid=98f4f451ca482fa4ebc8dd8dafe12b06&type=2#Ubuntu-L SDF");
 }
 
-.font-controls {
+.font-controls, .font-controls .node {
     -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Signika-Regular%20SDF.asset?fileID=11400000&guid=a59d94292a6917d4da3cf1a2f7ed675f&type=2#Signika-Regular SDF");
 }
 
-.font-biolinum {
+.font-biolinum, .font-biolinum .node {
     -unity-font-definition: url("project://database/Assets/SZYU/Fonts/Unity%20SDF/LinBiolinum_R_G%20SDF.asset?fileID=11400000&guid=7139a17b7319bb84494b6e01f410b0a2&type=2#LinBiolinum_R_G SDF");
+}
+.font-rocknroll, .font-rocknroll .node {
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/RocknRollOne-Regular.ttf?fileID=12800000&guid=dad637643ac27d44f94bd64003a3100d&type=3#RocknRollOne-Regular");
 }
 
 .hide {
@@ -498,13 +501,14 @@
     width: 100%;
 }
 
-.node .optionsCont #Value {
+.optionsCont #Value {
+    flex-shrink: 1;
     flex-grow: 1;
     overflow: hidden;
     white-space: nowrap;
 }
 
-.node .optionsCont #LR2ChildContainer {
+.optionsCont #LR2ChildContainer {
     flex-grow: 1;
     flex-direction: row;
     justify-content: center;

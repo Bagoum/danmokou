@@ -14,25 +14,16 @@ namespace Danmokou.UI.XML {
 ///  nodes representing on-screen targets can be dynamically added or removed.
 /// <br/>When there are no added nodes, any inputs will result in a silent no-op.
 /// </summary>
-public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
-    UIScreen IFixedXMLObjectContainer.Screen => MainScreen;
-    private class UnselectorFixedXML : IFixedXMLObject {
-        public string Descriptor => "Unselector";
-        public ICObservable<float> Top { get; } = new ConstantObservable<float>(0);
-        public ICObservable<float> Left { get; } = new ConstantObservable<float>(0);
-        public ICObservable<float?> Width { get; } = new ConstantObservable<float?>(0);
-        public ICObservable<float?> Height { get; } = new ConstantObservable<float?>(0);
-        public ICObservable<bool> IsVisible { get; } = new ConstantObservable<bool>(true);
-        public ICObservable<bool> IsInteractable { get; } = new ConstantObservable<bool>(true);
-    }
+public class XMLDynamicMenu : UIController, IFreeformContainer {
+    UIScreen IFreeformContainer.Screen => MainScreen;
 
     protected override bool CaptureFallthroughInteraction => false;
     protected override UIScreen?[] Screens => dynamicScreens.Prepend(MainScreen).ToArray();
     
     public UINode Unselect { get; private set; } = null!;
     private readonly List<UIScreen> dynamicScreens = new();
-    
-    public Func<UINode, UIResult?>? HandleUnselectConfirm { get; set; }
+
+    public OverrideEvented<Func<UINode, ICursorState, UIResult?>?> HandleDefaultUnselectConfirm { get; } = new(null);
     public UIFreeformGroup FreeformGroup { get; private set; } = null!;
 
 
@@ -44,9 +35,7 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
     //most menus are defined in FirstFrame, but since XMLDynamicMenu is consumed as a service, it's useful
     // to construct it in Awake
     private void Awake() {
-        Unselect = new EmptyNode(new FixedXMLView(new(new UnselectorFixedXML())
-                { OnConfirmer = UnselectorConfirm }) 
-            { AsEmpty = true });
+        Unselect = EmptyNode.MakeUnselector(DefaultUnselectorConfirm);
         MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => {
                 //Allow clicks to fallthrough if they don't hit any nodes on this menu
@@ -66,11 +55,7 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
     /// <br/>By default, the screen does not allow fallthrough clicks
     /// (this can be configured by setting `HTML.pickingMode` in `<paramref name="builder"/>`).
     /// </summary>
-    public (UIScreen, UIFreeformGroup) MakeScreen(Func<UINode, UIResult?>? unselectConfirm, Action<UIScreen, VisualElement>? builder = null) {
-        var unselect = 
-            new EmptyNode(new FixedXMLView(new(new UnselectorFixedXML())
-                    { OnConfirmer = (n, cs) => unselectConfirm?.Invoke(n) ?? UIGroup.SilentNoOp }) 
-                { AsEmpty = true });
+    public (UIScreen, UIFreeformGroup) MakeScreen(Func<UINode, ICursorState, UIResult?>? unselectConfirm, Action<UIScreen, VisualElement>? builder = null) {
         var s = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = builder ?? ((s, ve) => {
                 //Block fallthrough clicks
@@ -79,7 +64,7 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
             }),
             UseControlHelper = false
         };
-        var gr = new UIFreeformGroup(s, unselect);
+        var gr = s.AddFreeformGroup(unselectConfirm);
         AddScreen(s);
         return (s, gr);
     }
@@ -95,8 +80,8 @@ public class XMLDynamicMenu : UIController, IFixedXMLObjectContainer {
         return s;
     }
 
-    protected UIResult UnselectorConfirm(UINode n, ICursorState _) =>
-        HandleUnselectConfirm?.Invoke(n) ??
+    public UIResult DefaultUnselectorConfirm(UINode n, ICursorState cs) =>
+        HandleDefaultUnselectConfirm.Value?.Invoke(n, cs) ??
         UIGroup.SilentNoOp;
 }
 }

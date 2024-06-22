@@ -167,6 +167,9 @@ public class UINode {
     /// </summary>
     public VisualTreeAsset? Prefab { get; init; }
 
+    /// <inheritdoc cref="UIView.Builder"/>
+    public Func<VisualElement, VisualElement>? Builder { get; init; }
+
     /// <summary>
     /// View rendering configurations to bind to this node's HTML.
     /// </summary>
@@ -296,7 +299,7 @@ public class UINode {
         #endif
             //don't fire pointer enter events if the renderer is animating out
             if (AllowInteraction && Render.ShouldBeVisibleInTree) {
-                Controller.QueueEvent(new UIPointerCommand.Goto(this));
+                Controller.QueueInput(new UIPointerCommand.Goto(this));
                 evt.StopPropagation();
             }
             isInElement = true;
@@ -305,7 +308,7 @@ public class UINode {
             //Logs.Log($"Leave {Description()}");
             //For freeform groups ONLY, moving the cursor off a node should deselect it.
             if (AllowInteraction && Group is UIFreeformGroup && Controller.Current == this)
-                Controller.QueueEvent(new UIPointerCommand.NormalCommand(UICommand.Back, this) { Silent = true });
+                Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Back, this) { Silent = true });
             isInElement = false;
             startedClickHere = false;
         });
@@ -323,7 +326,7 @@ public class UINode {
             // on the current UINode), but click-to-confirm is done via callbacks specific to the UINode.
             if (AllowInteraction && evt.button == 0) {
                 if (isInElement && startedClickHere)
-                    Controller.QueueEvent(new UIPointerCommand.NormalCommand(UICommand.Confirm, this));
+                    Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Confirm, this));
                 foreach (var view in Views)
                     view.OnMouseUp(this, evt);
                 evt.StopPropagation();
@@ -354,8 +357,8 @@ public class UINode {
                 prefab = view.Prefab;
             }
         }
-        if (builder != null) {
-            HTML = builder(ContainerHTML);
+        if ((builder ??= Builder) != null) {
+            HTML = builder!(ContainerHTML);
         } else {
             prefab = Prefab != null ? Prefab : 
                 prefab != null ? prefab : map.SearchByType(this, true);
@@ -548,6 +551,11 @@ public class EmptyNode : UINode {
 
     public ICObservable<float> CreateCenterOffsetChildY(ICObservable<float> childY) =>
         Source!.CreateCenterOffsetChildY(childY);
+    
+    public static EmptyNode MakeUnselector(Func<UINode, ICursorState, UIResult?>? unselectConfirm) =>
+        new(new FixedXMLView(new(new UnselectorFixedXML())
+                { OnConfirmer = (n, cs) => unselectConfirm?.Invoke(n, cs) ?? UIGroup.SilentNoOp }) 
+            { AsEmpty = true });
 }
 
 public class PassthroughNode : UINode {
@@ -598,11 +606,11 @@ public class OpenUrlNode : FuncNode {
 }
 
 public class TransferNode : FuncNode {
-    public TransferNode(LString description, UINode target) : 
+    public TransferNode(LString? description, UINode target) : 
         base(description, () => new UIResult.GoToNode(target)) { }
-    public TransferNode(LString description, UIGroup target) : 
+    public TransferNode(LString? description, UIGroup target) : 
         base(description, () => new UIResult.GoToNode(target)) { }
-    public TransferNode(LString description, UIScreen target) : 
+    public TransferNode(LString? description, UIScreen target) : 
         base(description, () => new UIResult.GoToNode(target.Groups[0])) { }
 }
 
@@ -661,11 +669,11 @@ public abstract class BaseLROptionNode<T> : UINode, IDerivativeViewModel {
     protected override void RegisterEvents() {
         base.RegisterEvents();
         HTML.Q("Left").RegisterCallback<PointerUpEvent>(evt => {
-            Controller.QueueEvent(new UIPointerCommand.NormalCommand(UICommand.Left, this));
+            Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Left, this));
             evt.StopPropagation();
         });
         HTML.Q("Right").RegisterCallback<PointerUpEvent>(evt => {
-            Controller.QueueEvent(new UIPointerCommand.NormalCommand(UICommand.Right, this));
+            Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Right, this));
             evt.StopPropagation();
         });
     }
@@ -719,12 +727,14 @@ public class LROptionNode<T> : BaseLROptionNode<T>, ILROptionNode {
             }
         Update(ind, vals[ind]);
     }
+
+    public void OnModelUpdated() => SetIndexFromVal(Value);
     
     public LROptionNode(LString description, ITwoWayBinder<T> binder, Func<(LString, T)[]> values) : base(description, binder) {
         this.values = values;
         var view = new View(this);
         Bind(view);
-        (view as ITokenized).AddToken(binder.ValueUpdatedFromModel.Subscribe(_ => SetIndexFromVal(Value)));
+        (view as ITokenized).AddToken(binder.EvModelUpdated.Subscribe(_ => OnModelUpdated()));
         SetIndexFromVal(binder.Value);
     }
     public LROptionNode(LString description, ITwoWayBinder<T> binder, (LString, T)[] values) : 
@@ -804,7 +814,7 @@ public class ComplexLROptionNode<T> : BaseLROptionNode<T>, IComplexLROptionNode 
         this.realizer = realizer;
         var view = new View(this);
         Bind(view);
-        (view as ITokenized).AddToken(binder.ValueUpdatedFromModel.Subscribe(_ => SetIndexFromVal(Value)));
+        (view as ITokenized).AddToken(binder.EvModelUpdated.Subscribe(_ => SetIndexFromVal(Value)));
         SetIndexFromVal(binder.Value);
     }
 
@@ -847,7 +857,7 @@ public class KeyRebindInputNode : UINode, IUIViewModel {
                 n.lastHeld == null ?
                     "Press desired keys" :
                     string.Join("+", n.lastHeld.Select(l => l.Description)) :
-                "";
+                "\t";
             return base.Update(in context);
         }
     }
@@ -936,8 +946,9 @@ public class TextInputNode : UINode, IUIViewModel {
             var n = ViewModel;
             string t = n.title ?? "";
             n.HTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
-            n.HTML.Q("FadedBack").style.display = n.DisplayWIP.Length == 0 ? DisplayStyle.Flex : DisplayStyle.None;
-            n.HTML.Q<Label>("Label").text = n.DisplayWIP;
+            var disp = n.DisplayWIP;
+            n.HTML.Q("FadedBack").style.display = disp.Length == 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            n.HTML.Q<Label>("Label").text = disp.Length == 0 ? "\t" : n.DisplayWIP;
             return base.Update(in context);
         }
     }
@@ -1034,8 +1045,8 @@ public class UIButton : UINode {
     public static UIButton Cancel(UINode source) =>
         new(LocalizedStrings.Generic.generic_cancel, ButtonType.Cancel, GoBackCommand(source));
     
-    public static UIButton Back(UINode source) =>
-        new(LocalizedStrings.Generic.generic_back, ButtonType.Cancel, GoBackCommand(source));
+    public static UIButton Back(UINode source, LString? description = null) =>
+        new(description ?? LocalizedStrings.Generic.generic_back, ButtonType.Cancel, GoBackCommand(source));
 
     public static UIButton Delete(Func<bool> deleter, Func<UIResult> returner) =>
         new(LocalizedStrings.Generic.generic_delete, ButtonType.Danger, 
