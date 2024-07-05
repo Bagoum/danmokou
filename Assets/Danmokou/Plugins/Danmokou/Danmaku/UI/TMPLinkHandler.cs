@@ -27,7 +27,7 @@ public class TMPLinkHandler : MonoBehaviour, IPointerClickHandler, IPointerMoveH
         }
         var li = FindIntersectingLink(text, eventData.position, canvas == null ? null! : canvas.worldCamera,
             out _, out var tl, out _, out var tr);
-        Logs.Log($"Clicked on {gameObject.name}, {eventData.position}, li {li}");
+        //Logs.Log($"Clicked on {gameObject.name}, {eventData.position}, li {li}");
         if (li < 0) {
             ExecuteEvents.ExecuteHierarchy(transform.parent.gameObject, eventData, ExecuteEvents.pointerClickHandler);
             return;

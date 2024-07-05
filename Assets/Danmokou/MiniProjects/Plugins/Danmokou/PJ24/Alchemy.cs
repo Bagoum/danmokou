@@ -5,6 +5,7 @@ using System.Reactive;
 using System.Text;
 using BagoumLib.Events;
 using Danmokou.UI.XML;
+using Newtonsoft.Json;
 
 namespace MiniProjects.PJ24 {
 public static class Alchemy {
@@ -69,6 +70,43 @@ public static class Alchemy {
     }
 }
 
+public record RequestSubmit(Request Req) {
+    public int Version { get; private set; } = 0;
+
+    private void DidUpdate() {
+        ++Version;
+    }
+
+    public List<ItemInstance> Selected { get; } = new();
+
+    public bool Satisfied => Selected.Count == Req.ReqCount;
+    
+    public bool IsSelected(ItemInstance inst) => Selected.Contains(inst);
+    
+    /// <summary>
+    /// Select the item if it is currently unselected,
+    /// or unselect it if it is currently selected.
+    /// </summary>
+    /// <returns>True if the item was selected, false if it was unselected,
+    /// or null if the item could not be selected because enough items have already been selected.</returns>
+    public bool? ChangeSelection(ItemInstance inst) {
+        if (Selected.Remove(inst)) {
+            DidUpdate();
+            return false;
+        }
+        if (Satisfied)
+            return null;
+        Selected.Add(inst);
+        DidUpdate();
+        return true;
+    }
+    
+    public void CancelSelection() {
+        Selected.Clear();
+        DidUpdate();
+    }
+}
+
 public record CurrentSynth(Recipe Recipe, int Count) : IDisposable {
     public int Version { get; private set; } = 0;
     public Event<Unit> SelectionChanged { get; } = new();
@@ -77,7 +115,7 @@ public record CurrentSynth(Recipe Recipe, int Count) : IDisposable {
         ++Version;
         SelectionChanged.OnNext(default);
     }
-    public List<ItemInstance>[] Selected { get; set; } = 
+    public List<ItemInstance>[] Selected { get; } = 
         Recipe.Components
             .Select(x => new List<ItemInstance>())
             .ToArray();
@@ -141,7 +179,7 @@ public record CurrentSynth(Recipe Recipe, int Count) : IDisposable {
     public bool? ChangeSelectionForCurrent(ItemInstance inst) {
         var lis = Selected[CurrentSelectionOrThrow];
         if (lis.Remove(inst)) {
-            SelectionChanged.OnNext(default);
+            DidUpdate();
             return false;
         }
         if (CurrentComponentSatisfied)
@@ -164,11 +202,6 @@ public record CurrentSynth(Recipe Recipe, int Count) : IDisposable {
         DidUpdate();
     }
 
-    public (ItemInstance result, IEnumerable<ItemInstance> consumed) ExecuteSynthesis() {
-        var result = Recipe.Synthesize(Selected);
-        return (result, Selected.SelectMany(x => x));
-    }
-
     public void Dispose() => SelectionChanged.OnCompleted();
 }
 
@@ -177,7 +210,7 @@ public record Date(int Month, int Day) {
         var d = Day + days;
         if (Month == 5 && d > 31)
             return new Date(6, 1).Add(d - 32);
-        if (Month == 6 && d > 42)
+        if (Month == 6 && d > 43)
             return new(7, 1);
         return this with { Day = d };
     }
@@ -195,7 +228,7 @@ public record Date(int Month, int Day) {
 
     public override string ToString() => $"{Month}月{Day:00}日";
 
-    public string AsMDDate => $"{Month}/{Day:00}";
+    [JsonIgnore] public string AsMDDate => $"{Month}/{Day:00}";
     
     public static Date operator+(Date d, int days) => d.Add(days);
 }

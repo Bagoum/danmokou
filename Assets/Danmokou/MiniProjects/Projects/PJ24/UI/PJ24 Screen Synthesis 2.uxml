@@ -1,26 +1,28 @@
 <engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <engine:Template name="PJ24 Calendar" src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/PJ24%20Calendar.uxml?fileID=9197481963319205126&amp;guid=465675a53607fe747a149b84ca531720&amp;type=3#PJ24 Calendar" />
     <engine:Template name="PJ24 Long Window" src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/PJ24%20List%20Select%20Window.uxml?fileID=9197481963319205126&amp;guid=37eb0702b47318b408ad6ac76a20330b&amp;type=3#PJ24 List Select Window" />
+    <engine:Template name="PJ24 Synth Item Select Effect Info" src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/PJ24%20Synth%20Item%20Select%20Effect%20Info.uxml?fileID=9197481963319205126&amp;guid=2e4b4c8c3e3f899439178ab345d038c8&amp;type=3#PJ24 Synth Item Select Effect Info" />
     <engine:Template name="PJ24 Item Details Narrow Window" src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/PJ24%20Item%20Details%20Narrow%20Window.uxml?fileID=9197481963319205126&amp;guid=86814629a8e52a94291ebed6757dc681&amp;type=3#PJ24 Item Details Narrow Window" />
     <engine:Template name="PJ24 Text Underlined" src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/PJ24%20Text%20Underlined.uxml?fileID=9197481963319205126&amp;guid=97467da32bd205e409a5f3c2a80ad694&amp;type=3#PJ24 Text Underlined" />
     <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/pj24%20css.uss?fileID=7433441132597879392&amp;guid=9d3df72b6a1977447b2a4823c6a62599&amp;type=3#pj24 css" />
     <engine:VisualElement picking-mode="Ignore" class="uiScreen" style="width: 100%; height: 100%;">
-        <engine:Instance template="PJ24 Calendar" style="position: absolute; left: 200px; bottom: 80px;" />
-        <engine:VisualElement name="SynthBoard" style="flex-grow: 1; bottom: 100px; right: 120px; position: absolute; background-image: url(&quot;project://database/Assets/Danmokou/MiniProjects/raw/pj24/board.png?fileID=2800000&amp;guid=8296ef9f6fd932444b9967475a2d2071&amp;type=3#board&quot;); width: 2300px; height: 1680px;">
-            <engine:VisualElement name="SynthComponents" class="column" style="flex-grow: 1; margin-left: 180px; margin-right: 200px; margin-top: 120px; justify-content: center;" />
-            <engine:VisualElement name="ConfirmButton" style="flex-grow: 0; margin-bottom: 100px; height: 300px; flex-direction: row; align-items: center; justify-content: center;" />
+        <engine:VisualElement name="SynthBoard" style="flex-grow: 1; position: absolute; background-image: url(&quot;project://database/Assets/Danmokou/MiniProjects/raw/pj24/board.png?fileID=2800000&amp;guid=8296ef9f6fd932444b9967475a2d2071&amp;type=3#board&quot;); width: 2200px; height: 1500px; top: 60px; right: 150px;">
+            <engine:VisualElement name="SynthComponents" class="column" style="flex-grow: 1; margin-left: 180px; margin-right: 200px; margin-top: 40px; justify-content: center; margin-bottom: 40px;" />
+            <engine:VisualElement name="ConfirmButton" style="flex-grow: 0; margin-bottom: 60px; height: 300px; flex-direction: row; align-items: center; justify-content: center; margin-top: 10px;" />
         </engine:VisualElement>
-        <engine:VisualElement name="ItemInstanceList" style="flex-grow: 1; position: absolute; left: 1348px; top: 500px;">
-            <engine:Instance template="PJ24 Long Window">
-                <AttributeOverrides element-name="Title" text="...items" />
-            </engine:Instance>
-            <engine:VisualElement name="ConfirmButton" style="flex-grow: 1; height: 300px; margin-top: 60px; flex-direction: row; justify-content: center; align-items: flex-start;" />
+        <engine:VisualElement name="ItemListAndDetails" style="flex-grow: 1; position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
+            <engine:VisualElement name="ItemInstanceList" style="flex-grow: 1; position: absolute; left: 1348px; top: 60px;">
+                <engine:Instance template="PJ24 Long Window" style="height: 1200px;">
+                    <AttributeOverrides element-name="Title" text="...items" />
+                </engine:Instance>
+                <engine:Instance template="PJ24 Synth Item Select Effect Info" name="ConsolidatedEffectInfo" style="margin-top: -100px; margin-left: 20px;" />
+                <engine:VisualElement name="ConfirmButton" style="flex-grow: 1; height: 200px; margin-top: -20px; justify-content: center; align-items: flex-start; flex-direction: row;" />
+            </engine:VisualElement>
+            <engine:Instance template="PJ24 Item Details Narrow Window" name="PJ24 Item Details Narrow Window" style="position: absolute; top: 100px; right: 50px;" />
         </engine:VisualElement>
-        <engine:Instance template="PJ24 Item Details Narrow Window" name="PJ24 Item Details Narrow Window" style="position: absolute; top: 100px; right: 50px;" />
         <engine:VisualElement name="Traits" template="PJ24 List Select Window" style="position: absolute; left: 120px; top: 240px;">
             <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/pj24%20css.uss?fileID=7433441132597879392&amp;guid=9d3df72b6a1977447b2a4823c6a62599&amp;type=3#pj24 css" />
             <engine:VisualElement name="LongWindow" style="width: 1144px; height: 1248px; background-image: url(&quot;project://database/Assets/Danmokou/MiniProjects/raw/pj24/long%20rect.png?fileID=4120901811166270815&amp;guid=dc4389c984cb86f40810ea81d8d02e78&amp;type=3#long rect_0&quot;); color: rgb(107, 49, 27);">
-                <engine:Label text="...traits" name="Title" style="-unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-R%20SDF.asset?fileID=11400000&amp;guid=a4ca5d8a7e0241f41b58c69f59b3bca2&amp;type=2#Ubuntu-R SDF&quot;); font-size: 90px; -unity-text-align: upper-right; margin-top: 150px; color: rgb(150, 79, 54); margin-right: 200px; margin-bottom: 20px;" />
+                <engine:Label text="...synth traits" name="Title" style="-unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-R%20SDF.asset?fileID=11400000&amp;guid=a4ca5d8a7e0241f41b58c69f59b3bca2&amp;type=2#Ubuntu-R SDF&quot;); font-size: 90px; -unity-text-align: upper-right; margin-top: 150px; color: rgb(150, 79, 54); margin-right: 200px; margin-bottom: 20px;" />
                 <engine:VisualElement class="column" style="flex-grow: 1; margin-right: 160px; margin-left: 160px; margin-bottom: 160px;">
                     <engine:VisualElement name="TraitContainer" style="flex-grow: 0; margin-right: 30px;">
                         <engine:Instance template="PJ24 Text Underlined" class="trait" />

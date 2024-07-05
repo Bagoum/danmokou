@@ -268,6 +268,10 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         //Note: This pathway is used for player shots and minor summoned effects (such as cutins).
         //It is not used for bosses/stages, which call directly into RunBehaviorSM.
         if (behaviorScript != null) {
+            if (behaviorToken.Count > 0)
+                Logs.UnityError($"BEH {gameObject.name} has a behaviorScript attached, but is already executing" +
+                                $" another script. This is incorrect; you must either set up a script through code" +
+                                $" (eg. for bosses) or attach a behaviorScript (eg. for cutins), but not both.");
             try {
                 //TODO should this be bound by InstTracker?
                 _ = RunBehaviorSM(SMRunner.RunRoot(behaviorScript, Cancellable.Null));

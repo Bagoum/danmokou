@@ -5,6 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
+  - enabled: 1
+    path: Assets/Danmokou/MiniProjects/Projects/PJ24/PJ24 MainMenu VN.unity
+    guid: 8a3addd773f8d08488e28b561c2822e5
+  - enabled: 1
+    path: Assets/Danmokou/MiniProjects/Projects/PJ24/PJ24 MiniprojectLevel VN.unity
+    guid: c126706c82b6201489db2fec2357c044
   - enabled: 0
     path: Assets/Danmokou/MiniProjects/Projects/FlappyBird/FB MainMenu.unity
     guid: e9a3b59bd41be9842a077413d605b033
@@ -24,13 +30,13 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/SiMP/Scenes/SiMP.MainMenu.unity
     guid: 6b2d775f9661bd44da76415034461224
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/MiniProjects/Projects/THJam13/THJ13 Main Menu.unity
     guid: e72612d42895c6d4e98ae9a2131ce97f
   - enabled: 0
     path: Assets/Danmokou/MiniProjects/MP.MainMenu.unity
     guid: 6ce87ca5eeaeca643beda1e510b20d3b
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/MiniProjects/Projects/THJam13/THJ13 Level.unity
     guid: b1c73dafd54d71d4485949d0958807c9
   - enabled: 0

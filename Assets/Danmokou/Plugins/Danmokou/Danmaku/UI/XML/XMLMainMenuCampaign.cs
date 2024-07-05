@@ -120,8 +120,8 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             
         DifficultyScreen = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => ve.CenterElements(),
-        }.WithOnEnterStart(_ => { if (difficultyCommentator != null) difficultyCommentator.Appear(); })
-            .WithOnExitStart(_ => { if (difficultyCommentator != null) difficultyCommentator.Disappear(); });
+        }.WithOnEnterStart(() => { if (difficultyCommentator != null) difficultyCommentator.Appear(); })
+            .WithOnExitStart(() => { if (difficultyCommentator != null) difficultyCommentator.Disappear(); });
         
         DifficultyScreen.SetFirst(new UIColumn(new UIRenderConstructed(DifficultyScreen, new(x => x.AddVE(null))),
             CustomAndVisibleDifficulties.Select(MakeDifficultyNode).ToArray()) {
@@ -228,7 +228,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
 
         public override void OnBuilt(UINode node) {
             base.OnBuilt(node);
-            Node.HTML.ConfigureFloatingImage(VM.src.SpriteForDFC(VM.fd)!);
+            HTML.ConfigureFloatingImage(VM.src.SpriteForDFC(VM.fd)!);
         }
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {

@@ -30,7 +30,6 @@ public static class XMLUtils {
     
     public const string highVisClass = "highvis";
     public const string noPointerClass = "nopointer";
-    public const string disabledClass = "disabled";
     public const string fontUbuntuClass = "font-ubuntu";
     public const string fontControlsClass = "font-controls";
     public const string fontBiolinumClass = "font-biolinum";
@@ -49,11 +48,13 @@ public static class XMLUtils {
     public const string dropdownUnselect = "unchecked";
     public const string dropdownTarget = "dropdown-target";
     public static string CheckmarkClass(bool active) => active ? dropdownSelect : dropdownUnselect;
-
+    
     public static IUXMLReferences Prefabs => ServiceLocator.Find<IUXMLReferences>();
     public static LString CSpace(this LString s, int space = 12) =>
         LString.Format($"<cspace={space}>{{0}}</cspace>", s);
     public static Length Percent(this float f) => new Length(f, LengthUnit.Percent);
+
+    public static bool HTMLVisible(this GroupVisibility vis) => vis is GroupVisibility.TreeVisible;
 
     public static StyleLength ToLength(this float? f) =>
         f.Try(out var l) ? l : new StyleLength(StyleKeyword.Initial);
@@ -165,14 +166,16 @@ public static class XMLUtils {
     }
 
 
-    public static VisualElement SetWidth(this VisualElement n, float w) {
+    public static VisualElement SetWidth(this VisualElement n, float w, bool setMinMax = true) {
         n.style.width = w;
-        n.style.maxWidth = n.style.minWidth = new StyleLength(StyleKeyword.None);
+        if (setMinMax)
+            n.style.maxWidth = n.style.minWidth = w;
         return n;
     }
-    public static VisualElement SetHeight(this VisualElement n, float h) {
+    public static VisualElement SetHeight(this VisualElement n, float h, bool setMinMax = true) {
         n.style.height = h;
-        n.style.maxHeight = n.style.minHeight = new StyleLength(StyleKeyword.None);
+        if (setMinMax)
+            n.style.maxHeight = n.style.minHeight = h;
         return n;
     }
 
@@ -189,16 +192,24 @@ public static class XMLUtils {
         root.AddVE(child == null ? null : child.CloneTreeNoContainer());
 
     public static VisualElement AddColumn(this VisualElement root) => root.AddVTA(Prefabs.UIScreenColumn);
+
+    /// <summary>
+    /// Change the scrolling speed of UITK ScrollView (by default, it is too slow for actual use).
+    /// </summary>
+    public static ScrollView FixScrollSize(this ScrollView scroll) {
+        scroll.verticalPageSize = 1000;
+        scroll.mouseWheelScrollSize = 1000;
+        return scroll;
+    }
+    
     public static VisualElement AddScrollColumn(this VisualElement root) {
         var s = root.AddVTA(Prefabs.UIScreenScrollColumn);
-        s.Q<ScrollView>().verticalPageSize = 1000;
-        s.Q<ScrollView>().mouseWheelScrollSize = 1000;
+        s.Q<ScrollView>().FixScrollSize();
         return s;
     }
     public static VisualElement AddZeroPaddingScrollColumn(this VisualElement root) {
         var s = root.AddVTA(Prefabs.UIScreenScrollColumn);
-        s.Q<ScrollView>().verticalPageSize = 1000;
-        s.Q<ScrollView>().mouseWheelScrollSize = 1000;
+        s.Q<ScrollView>().FixScrollSize();
         s.style.width = new Length(100, LengthUnit.Percent);
         var scrollBox = s.Q(null, "unity-scroll-view__content-viewport");
         scrollBox.style.paddingLeft = 0;
@@ -263,7 +274,7 @@ public static class XMLUtils {
     private static T MakeTooltipInner<T>(UIScreen s, Func<UIRenderSpace, T> ttGroup,
         Action<UIRenderConstructed, VisualElement>? builder = null, bool animateEntry = true) where T : UIGroup {
         var tt = ttGroup(s.TooltipRender(builder));
-        tt.Visibility = new GroupVisibility.UpdateOnLeaveHide(tt);
+        tt.Visibility = new GroupVisibilityControl.UpdateOnLeaveHide(tt);
         tt.Interactable = false;
         tt.DestroyOnLeave = true;
         //can't put this in render.OnBuilt since it needs to run after the tooltip group HTML is constructed

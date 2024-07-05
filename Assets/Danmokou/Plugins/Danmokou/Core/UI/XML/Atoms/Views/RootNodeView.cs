@@ -21,16 +21,31 @@ namespace Danmokou.UI.XML {
 /// A view/model for basic node handling, such as turning the node display on/off, animating the node on focus,
 ///  and adding CSS classes based on the node focus.
 /// </summary>
-public class RootNodeViewModel : UIViewModel {
+public class RootNodeViewModel : UIViewModel, IUIViewModel {
     public UINode Node { get; }
     public LString? Description { get; }
+    public Func<bool>? VisibleIf { get; set; }
+    public Func<bool>? EnabledIf { get; set; }
+    
+    /// <summary>
+    /// If <see cref="UINode.IsVisible"/> is expensive to compute, this hash can be used instead.
+    /// </summary>
     public Func<long>? NodeIsVisibleHash { get; set; }
+    
+    /// <summary>
+    /// If <see cref="UINode.IsEnabled"/> is expensive to compute, this hash can be used instead.
+    /// </summary>
     public Func<long>? NodeIsEnabledHash { get; set; }
     
     public RootNodeViewModel(UINode node, LString? description) {
         Node = node;
         Description = description;
     }
+
+    public bool ShouldBeVisible(UINode node) => VisibleIf?.Invoke() ?? true;
+
+    public bool ShouldBeEnabled(UINode node) => EnabledIf?.Invoke() ?? true;
+
     public override long GetViewHash() {
         Profiler.BeginSample("RootNodeView hash computation");
         var hc = (Node.Selection, 
@@ -62,7 +77,7 @@ public class RootNodeView : UIView<RootNodeViewModel>, IUIView {
     public RootNodeView(UINode node, LString? description = null) : base(new(node, description)) { }
 
     //Normally we don't need to apply update CSS immediately after building the node,
-    // but since there's a transitio on on node.opacity, a "fade in" effect will occur if we allow
+    // but since there's a transition on on node.opacity, a "fade in" effect will occur if we allow
     // UITK to apply the initial visibility class at the end of the frame.
     public override void OnBuilt(UINode node) {
         base.OnBuilt(node);
@@ -86,17 +101,16 @@ public class RootNodeView : UIView<RootNodeViewModel>, IUIView {
 
 
     protected override BindingResult Update(in BindingContext context) {
-        var nh = Node.HTML;
-        nh.EnableInClassList("focus", Node.Selection is UINodeSelection.Focused or UINodeSelection.PopupSource);
-        nh.EnableInClassList("group", Node.Selection is UINodeSelection.GroupFocused);
-        nh.EnableInClassList("selected", Node.Selection is UINodeSelection.GroupCaller);
-        nh.EnableInClassList("visible", Node.Selection is UINodeSelection.Default);
-        nh.EnableInClassList(disabledClass, !Node.IsEnabled);
+        HTML.EnableInClassList("node-focus", Node.Selection is UINodeSelection.Focused or UINodeSelection.PopupSource);
+        HTML.EnableInClassList("node-group", Node.Selection is UINodeSelection.GroupFocused);
+        HTML.EnableInClassList("node-selected", Node.Selection is UINodeSelection.GroupCaller);
+        HTML.EnableInClassList("node-visible", Node.Selection is UINodeSelection.Default);
+        HTML.EnableInClassList("node-disabled", !Node.IsEnabled);
         //If the render target is going invisible, then don't update visibility
         // (important for tooltip scale-out and other animation effects)
         if (IsFirstRender() || Node.Render.ShouldBeVisibleInTree) {
             var vis = Node.IsVisible;
-            nh.EnableInClassList("invisible", !vis);
+            HTML.EnableInClassList("node-invisible", !vis);
             if (vis && IsFirstVisibleRender()) {
                 _ = OnFirstRenderAnimation?.Invoke(Node, Cancellable.Null).ContinueWithSync();
             }
@@ -106,7 +120,7 @@ public class RootNodeView : UIView<RootNodeViewModel>, IUIView {
 
     public void UpdateLabel() {
         if (VM.Description?.Value is {} desc) {
-            var label = Node.HTML.Q<Label>();
+            var label = HTML.Q<Label>();
             if (label != null)
                 label.text = desc;
         }

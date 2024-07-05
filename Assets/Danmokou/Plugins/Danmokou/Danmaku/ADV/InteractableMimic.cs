@@ -164,12 +164,15 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
         .Run(Controller, new CoroutineOptions(true))*/
     }
 
-    public UIResult OnConfirm(UINode n, ICursorState _) {
-        if (entity.InteractableStates.Contains(ServiceLocator.Find<ADVManager>().ADVState.Value)) {
-            //OnLeave(n); //Implicitly called through UpdatePassthrough > MoveCursorAwayFromNode
-            return entity.OnClick(n) ?? new UIResult.StayOnNode();
-        } else
-            return new UIResult.StayOnNode(UIResult.StayOnNodeType.Silent);
+    UIResult? IFixedXMLReceiver.Navigate(UINode n, ICursorState cs, UICommand req) {
+        if (req == UICommand.Confirm) {
+            if (entity.InteractableStates.Contains(ServiceLocator.Find<ADVManager>().ADVState.Value)) {
+                //OnLeave(n); //Implicitly called through UpdatePassthrough > MoveCursorAwayFromNode
+                return entity.OnClick(n) ?? new UIResult.StayOnNode();
+            } else
+                return new UIResult.StayOnNode(UIResult.StayOnNodeType.Silent);
+        }
+        return null;
     }
     
     protected override void DoUpdate(float dT) {

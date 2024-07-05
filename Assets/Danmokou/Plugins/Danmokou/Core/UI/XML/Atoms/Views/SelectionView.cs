@@ -146,8 +146,8 @@ public class SelectionView<T>: UIView<SelectionViewModel<T>> {
     
     protected override BindingResult Update(in BindingContext context) {
         var pass = VM.Selected();
-        Node.HTML.EnableInClassList(XMLUtils.dropdownSelect, pass);
-        Node.HTML.EnableInClassList(XMLUtils.dropdownUnselect, !pass);
+        HTML.EnableInClassList(XMLUtils.dropdownSelect, pass);
+        HTML.EnableInClassList(XMLUtils.dropdownUnselect, !pass);
         return base.Update(in context);
     }
 }

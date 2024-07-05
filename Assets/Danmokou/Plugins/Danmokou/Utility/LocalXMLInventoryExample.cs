@@ -327,23 +327,24 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
             return null;
         }
 
+        bool IUIViewModel.ShouldBeVisible(UINode node) => !Layer.Hidden;
+
         public override long GetViewHash() => Layer.GetHashCode();
     }
 
-    private class LayerView : UIView<LayerViewModel> {
+    private class LayerView : UIView<LayerViewModel>, IUIView {
         public LayerView(LayerViewModel viewModel) : base(viewModel) { }
 
         public override void OnBuilt(UINode node) {
             base.OnBuilt(node);
-            Node.WithCSS(XMLUtils.small1Class, XMLUtils.fontBiolinumClass);
-            Node.VisibleIf = () => !VM.Layer.Hidden;
-            Tokens.Add(VM.Layer.WhenDestroyed(() => Node.Remove()));
-            Tokens.Add(VM.MovedToIndex.Subscribe(idx => Node.MoveToIndex(idx)));
+            node.WithCSS(XMLUtils.small1Class, XMLUtils.fontBiolinumClass);
+            node.BindLifetime(VM.Layer);
+            node.AddToken(VM.MovedToIndex.Subscribe(idx => node.MoveToIndex(idx)));
         }
 
         protected override BindingResult Update(in BindingContext context) {
-            Node.HTML.Q<Label>().text = VM.Layer.Descr;
-            Node.HTML.style.color = VM.Layer.Enabled ? new Color(1, 1, 1, 1) : new Color(0.8f, 0.7f, 0.7f, 0.8f);
+            HTML.Q<Label>().text = VM.Layer.Descr;
+            HTML.style.color = VM.Layer.Enabled ? new Color(1, 1, 1, 1) : new Color(0.8f, 0.7f, 0.7f, 0.8f);
             return base.Update(in context);
         }
     }
@@ -423,7 +424,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
         void IUIView.OnRemovedFromNavHierarchy(UINode node) => VM.Src.CurrentIndex = null;
 
         protected override BindingResult Update(in BindingContext context) {
-            var title = Node.HTML.Q<Label>("Content");
+            var title = HTML.Q<Label>("Content");
             if (ViewModel.Item is { } item) {
                 title.style.display = DisplayStyle.Flex;
                 title.style.backgroundImage = new(item.s);
@@ -476,7 +477,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
                         txt += $"\nTrait: {t}";
                 }
             }
-            Node.HTML.Q<Label>().text = txt;
+            HTML.Q<Label>().text = txt;
             
             return base.Update(in context);
         }

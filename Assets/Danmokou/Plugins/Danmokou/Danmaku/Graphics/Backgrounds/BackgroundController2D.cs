@@ -59,7 +59,7 @@ public struct BackgroundTransition {
                 return WipeFromCenter.time + 1f;
             case EffectType.Shatter4:            
                 Action cb = WaitingUtils.GetCondition(out condition);
-                orch.FromBG!.Shatter4(Shatter4, false, cb);
+                orch.FromBG!.Shatter4(Shatter4, cb);
                 CombinerKeywords.Apply(mat, CombinerKeywords.TO_ONLY);
                 return 0;
             case EffectType.WipeY:

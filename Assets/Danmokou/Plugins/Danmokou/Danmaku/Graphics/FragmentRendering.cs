@@ -40,7 +40,15 @@ public static class FragmentRendering {
 
         public ParametricInfo bpi;
 
-        public Vector2 Location => baseLocation + offset(bpi);
+        //Use properties instead of updating in Update so we only need to run the delegates on render frames
+        public Vector2 Location {
+            get {
+                var nextLoc = baseLocation + offset(bpi);
+                //bpi.loc is used for culling
+                bpi.loc = nextLoc;
+                return nextLoc;
+            }
+        }
         public Vector3 Rotation => rotations?.Invoke(bpi.t) ?? Vector3.zero;
         public float Scale => scale?.Invoke(bpi) ?? 1f;
         
@@ -80,8 +88,8 @@ public static class FragmentRendering {
         public readonly Fragment[] fragments;
         public readonly MaterialPropertyBlock pb;
         private readonly Action? cb;
-        private readonly Vector2 xBounds = new(-9, 9);
-        private readonly Vector2 yBounds = new(-7, 7);
+        private readonly Vector2 xBounds = new(-14, 14);
+        private readonly Vector2 yBounds = new(-10, 10);
         public readonly int layer;
         public readonly int layerMask;
         private readonly float? aliveFor;
@@ -119,7 +127,7 @@ public static class FragmentRendering {
             for (int fi = 0; fi < fragments.Length; ++fi) {
                 var f = fragments[fi];
                 f.DoUpdate(ETime.FRAME_TIME);
-                if ((xBounds.x < f.bpi.loc.x && f.bpi.loc.x < xBounds.y) ||
+                if ((xBounds.x < f.bpi.loc.x && f.bpi.loc.x < xBounds.y) &&
                     (yBounds.x < f.bpi.loc.y && f.bpi.loc.y < yBounds.y))
                     cullAllFragments = false;
             }

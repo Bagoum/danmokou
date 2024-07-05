@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultName: vn-alchemy-effect
   clip: {fileID: 8300000, guid: 0814b2ab854948541810d9e6fc8005bd, type: 3}
-  volume: 0.14
+  volume: 0.3
   timeout: -1
   pausable: 0
   slowable: 0

@@ -146,12 +146,10 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
             if (!cts.Cancelled) FinishTransition();
             transitionCTS.Remove(cts);
         }
-        if (condition == null) {
-            if (timeout > 0) RUWaitingUtils.WaitThenCBEvenIfCancelled(this, cts, timeout, false, Finish);
-            else throw new Exception("Cannot wait for transition without a timeout or condition");
-        } else {
-            RUWaitingUtils.WaitThenCBEvenIfCancelled(this, cts, timeout, condition, Finish);
-        }
+        if (condition is null && timeout <= 0)
+            throw new Exception("Cannot wait for transition without a timeout or condition");
+        else
+            RUWaitingUtils.WaitThenCBEvenIfCancelled(this, cts, timeout, condition ?? (() => true), Finish);
     }
 
     protected override void OnDisable() {

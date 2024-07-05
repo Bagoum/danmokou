@@ -42,10 +42,10 @@ public static partial class XMLHelpers {
     public static UIScreen WithBG(this UIScreen screen,
         (GameObject prefab, BackgroundTransition transition)? background) {
         if (background.Try(out var bg)) {
-            screen.WithOnEnterStart(fromNull => {
+            screen.WithOnEnterStart(() => {
                 var bgo = ServiceLocator.FindOrNull<IBackgroundOrchestrator>();
                 bgo?.QueueTransition(bg.transition);
-                bgo?.ConstructTarget(bg.prefab, !fromNull);
+                bgo?.ConstructTarget(bg.prefab);
             });
         }
         return screen;
@@ -54,8 +54,8 @@ public static partial class XMLHelpers {
     public static UIScreen PlaymodeScreen(this UIController m, ICampaignDanmakuGameDef game, UIScreen bossPractice, UIScreen stagePractice, Dictionary<Mode, Sprite> sprites, PlayModeCommentator? commentator, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, ICursorState, UIResult>> getMetadata, out bool onlyOneMode) {
         var s = new UIScreen(m, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => ve.CenterElements()
-        }.WithOnEnterStart(_ => { if (commentator != null) commentator.Appear(); })
-            .WithOnExitStart(_ => { if (commentator != null) commentator.Disappear(); });
+        }.WithOnEnterStart(() => { if (commentator != null) commentator.Appear(); })
+            .WithOnExitStart(() => { if (commentator != null) commentator.Disappear(); });
         bool tutorialIncomplete = !SaveData.r.TutorialDone && game.Tutorial != null;
         PlayModeStatus Wrap(Mode m, bool locked) =>
             new(m, locked) { TutorialIncomplete = tutorialIncomplete };
@@ -115,7 +115,7 @@ public static partial class XMLHelpers {
 
         public override void OnBuilt(UINode node) {
             base.OnBuilt(node);
-            Node.HTML.ConfigureFloatingImage(sprites[VM.mode.Mode]);
+            HTML.ConfigureFloatingImage(sprites[VM.mode.Mode]);
         }
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
@@ -205,7 +205,7 @@ public static partial class XMLHelpers {
             Builder = (s, _) => {
                 s.HTML.Q("HeaderRow").SetLRMargin(-80, -80);
             }
-        }.WithOnExitEnd(_ => SaveData.AssignSettingsChanges());
+        }.WithOnExitEnd(SaveData.AssignSettingsChanges);
         //To support a setup where the top row does not scroll, we do as follows:
         //Controls container (column)
         // - Top row (row)
@@ -215,7 +215,7 @@ public static partial class XMLHelpers {
             new UIRenderConstructed(s, Prefabs.UIScreenColumn, (_, ve) => ve.style.width = 100f.Percent());
         var controlsHeader = new UIRenderConstructed(controlsContainer, Prefabs.UIScreenRow);
         var controlsSpace = new UIRenderConstructed(controlsContainer, 
-            new(parent => parent.AddZeroPaddingScrollColumn())).ColumnRender(0);
+            new(parent => parent.AddZeroPaddingScrollColumn())).Col(0);
         UINode NodeForBinding(RebindableInputBinding b, int index, KeyRebindInputNode.Mode mode) {
             return new FuncNode(null, n => {
                 if (b.ProtectedIndices.Contains(index))
@@ -613,7 +613,7 @@ public static partial class XMLHelpers {
                     )) {
                     VisibleIf = () => Matches(g.RequestKey)
                 }.WithCSS(monospaceClass, small2Class, centerTextClass)
-                 .WithRootView(v => v.ViewModel.NodeIsVisibleHash = () => m.ViewVersion));
+                 .WithRootView(v => v.VM.NodeIsVisibleHash = () => m.EvViewVersion));
         bool IsBossOrChallenge() => m.Mode is InstanceMode.BOSS_PRACTICE or InstanceMode.SCENE_CHALLENGE;
         bool IsStage() => m.Mode == InstanceMode.STAGE_PRACTICE;
         var optnodes = new UINode[] {
@@ -629,7 +629,7 @@ public static partial class XMLHelpers {
                     IsBossOrChallenge() ?
                         campaigns[m.CmpIndex].bosses.Select(b => (b.boss.BossPracticeName, b.boss.key)).ToArray() :
                         new (LString, string)[] {("", "")} //required to avoid errors with the option node
-                ){ VisibleIf = IsBossOrChallenge },
+                ) { VisibleIf = IsBossOrChallenge },
             new LROptionNode<int>(practice_m_whichstage, VM<int>(nameof(m.Stage)), () =>
                     IsStage() ?
                         campaigns[m.CmpIndex].stages.Select((s, i) => ((LString)s.stage.stageNumber, i)).ToArray() :
@@ -791,15 +791,15 @@ public static partial class XMLHelpers {
                     g.style.maxWidth = new Length(25, LengthUnit.Percent);
                     g.style.paddingTop = 720;
                 },
-            }.WithOnEnterStart(_ => ShowShot(true))
-            .WithOnEnterEnd(_ => UpdateDemo())
-            .WithOnExitStart(_ => {
+            }.WithOnEnterStart(() => ShowShot(true))
+            .WithOnEnterEnd(UpdateDemo)
+            .WithOnExitStart(() => {
                 CleanupDemo();
                 foreach (var (player, display) in displays) {
                     if (player != playerSelect.Value) display.Show(false);
                 }
             });
-        screen.Tokens.Add(p.ViewVersion.OnChange.Subscribe(_ => ShowShot(false)));
+        screen.Tokens.Add(p.EvViewVersion.OnChange.Subscribe(_ => ShowShot(false)));
         _ = new UIColumn(screen, null,
             new PassthroughNode(shotsel_player).WithCSS(centerTextClass),
             playerSelect.WithCSS(optionNoKeyClass),
@@ -988,7 +988,7 @@ public static partial class XMLHelpers {
                 (f.boss == null || (f.boss == cbp.Boss)));
         }
         ILabelViewModel Show(Func<string> stat) =>
-            new LabelViewModel<string>(stat, x=>x) { OverrideHashHandler = () => f.ViewVersion };
+            new LabelViewModel<string>(stat, x=>x) { OverrideViewHash = () => f.EvViewVersion };
 
         string AsPct(float f01) => $"{(int) (f01 * 100)}%";
         LString ShowCard((BossPracticeRequest card, float ratio) bpr) {
@@ -1066,7 +1066,7 @@ public static partial class XMLHelpers {
             scores.SetLRMargin(0, 60);
             scores.style.width = 100f.Percent();
         }};
-        screen.Tokens.Add(f.ViewVersion.Subscribe(_ => UpdateStats()));
+        screen.Tokens.Add(f.EvViewVersion.Subscribe(_ => UpdateStats()));
         screen.SetFirst(new VGroup(
                 new UIColumn(screen.ColumnRender(1), optNodes),
                 new UIColumn(screen.ColumnRender(2), statsNodes)
@@ -1085,20 +1085,20 @@ public static partial class XMLHelpers {
         public override long GetViewHash() => (Achv.VisibleDescription, Achv.Completed).GetHashCode();
     }
 
-    private class AchievementView : CssClassView {
+    private class AchievementView : CssClassView, IUIView {
         private readonly AchievementViewModel viewModel;
         public AchievementView(AchievementViewModel viewModel) : base(viewModel) {
             this.viewModel = viewModel;
         }
-
+        
         public override void OnBuilt(UINode node) {
             base.OnBuilt(node);
-            node.HTML.style.paddingLeft = 20;
-            node.HTML.style.paddingRight = 20;
+            HTML.style.paddingLeft = 20;
+            HTML.style.paddingRight = 20;
         }
 
         protected override BindingResult Update(in BindingContext context) {
-            Node.HTML.Q<Label>("Description").text = viewModel.Achv.VisibleDescription;
+            HTML.Q<Label>("Description").text = viewModel.Achv.VisibleDescription;
             return base.Update(in context);
         }
     }
@@ -1206,7 +1206,11 @@ public static partial class XMLHelpers {
             new UIRow(new UIRenderExplicit(resultsScreen, ve => ve.Q("Bottom")), options)
                 { ExitNodeOverride = options[0] }
         ) { ExitNodeOverride = options[0], EntryNodeOverride = options[0] };
-        resultsScreen.Tokens.Add(resultsScreen.OnExitEnd.SubscribeOnce(_ => details.Destroy()));
+        IDisposable? token = null;
+        token = resultsScreen.WithOnExitEnd(() => {
+            details.Destroy();
+            token!.Dispose();
+        });
         resultsScreen.SetFirst(details);
         return new UIResult.GoToNode(details);
     }

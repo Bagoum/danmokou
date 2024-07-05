@@ -81,7 +81,7 @@ public class BackgroundController : CoroutineRegularUpdater {
 
     //Note: while you can call Fragment multiple times, only one texture can be shared between all calls,
     //so it's generally not useful to do so. Also, it causes overlap flashing.
-    public void Shatter4(BackgroundTransition.ShatterConfig config, bool doCopy, Action cb) {
+    public void Shatter4(BackgroundTransition.ShatterConfig config, Action cb) {
         currentShatter?.Destroy();
         currentShatter =
             new FragmentRenderInstance(config, config.Tile4(), null, capturer.Captured, cb);

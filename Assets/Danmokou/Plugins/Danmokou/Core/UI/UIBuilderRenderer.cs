@@ -73,13 +73,6 @@ public class UIBuilderRenderer : RegularUpdater {
         return false;
     }
 
-    public void ApplyScrollHeightFix(VisualElement ve) {
-        //while (ve != null) {
-        //    ve.styleSheets.Add(scrollHeightFix);
-         //   ve = ve.parent;
-        //}
-    }
-
     private void Awake() {
         foreach (var s in settings)
             if (s.renderer != null) {

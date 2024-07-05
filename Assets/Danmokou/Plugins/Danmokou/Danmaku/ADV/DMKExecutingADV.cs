@@ -37,7 +37,7 @@ public abstract class DMKExecutingADV<I, D> : BaseExecutingADV<I, D>, IRegularUp
     private readonly UITKRerenderer rerenderer;
     protected readonly XMLDynamicMenu menu;
     //--- Common entities
-    protected readonly ADVDialogueBox md;
+    public ADVDialogueBox Md { get; }
     protected readonly Narrator narrator;
     protected readonly UnityRenderGroup rg;
     protected readonly UnityRenderGroup rgb;
@@ -55,9 +55,9 @@ public abstract class DMKExecutingADV<I, D> : BaseExecutingADV<I, D>, IRegularUp
         tokens.Add(ETime.RegisterRegularUpdater(this));
         
         //Create common entities
-        md = VN.Add(new ADVDialogueBox());
-        tokens.Add(md.ComputedLocation.AddDisturbance(dialogueShowOffset));
-        tokens.Add(md.ComputedTint.AddDisturbance(dialogueShowAlpha));
+        Md = VN.Add(new ADVDialogueBox());
+        tokens.Add(Md.ComputedLocation.AddDisturbance(dialogueShowOffset));
+        tokens.Add(Md.ComputedTint.AddDisturbance(dialogueShowAlpha));
         HideMD();
         narrator = VN.Add(new Narrator());
         rg = (UnityRenderGroup)VN.DefaultRenderGroup;
@@ -69,11 +69,11 @@ public abstract class DMKExecutingADV<I, D> : BaseExecutingADV<I, D>, IRegularUp
         //Listen to common events
         tokens.Add(VN.ContextStarted.Subscribe(c => {
             if (VN.Contexts.Count == 0) {
-                md.Clear(SpeakFlags.None);
+                Md.Clear(SpeakFlags.None);
                 showOnNextDialogue = true;
             }
         }));
-        tokens.Add(md.DialogueStarted.Subscribe(_ => {
+        tokens.Add(Md.DialogueStarted.Subscribe(_ => {
             if (showOnNextDialogue) {
                 showOnNextDialogue = false;
                 ShowMD();
@@ -95,14 +95,14 @@ public abstract class DMKExecutingADV<I, D> : BaseExecutingADV<I, D>, IRegularUp
     protected void HideMD() {
         dialogueShowOffset.Push(new(0f, -0.5f, 0));
         dialogueShowAlpha.Push(new FColor(1, 1, 1, 0));
-        md.Active.Value = false;
-        var lh = (md.Mimic as DMKADVDialogueBoxMimic)?.LinkHandler;
+        Md.Active.Value = false;
+        var lh = (Md.Mimic as DMKADVDialogueBoxMimic)?.LinkHandler;
         if (lh != null) lh.ClearTooltips();
     }
     protected void ShowMD() {
         dialogueShowOffset.Push(new(0,0,0));
         dialogueShowAlpha.Push(new FColor(1, 1, 1, 1));
-        md.Active.Value = true;
+        Md.Active.Value = true;
     }
 
     /// <inheritdoc cref="BaseExecutingADV{I,D}.GoToMap"/>

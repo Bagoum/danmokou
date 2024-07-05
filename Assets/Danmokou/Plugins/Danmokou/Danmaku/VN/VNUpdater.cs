@@ -19,8 +19,9 @@ public class VNUpdater : RegularUpdater {
     }
 
     public override void FirstFrame() {
-        AddToken(ServiceLocator.Find<XMLDynamicMenu>().HandleDefaultUnselectConfirm.AddConst((n, cs) => {
-            nextFrameIsConfirm = true;
+        AddToken(ServiceLocator.Find<XMLDynamicMenu>().HandleDefaultUnselectNav.AddConst((n, cs, req) => {
+            if (req == UICommand.Confirm)
+                nextFrameIsConfirm = true;
             return null;
         }));
     }

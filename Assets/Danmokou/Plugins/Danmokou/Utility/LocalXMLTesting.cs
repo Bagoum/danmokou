@@ -71,7 +71,7 @@ public class LocalXMLTesting : CoroutineRegularUpdater {
                     ve.style.backgroundColor = new Color(0.32f, 0.22f, 0.26f, a);
                     ve.SetBorder(new Color(0.35f, 0.26f, 0.33f, a), 7);
                 }).Run(menu, CoroutineOptions.DroppableDefault);
-            }).ColumnRender(0), nodes
+            }).Col(0), nodes
         ) {
             Interactable = false
         });

@@ -5,13 +5,17 @@ using BagoumLib.Events;
 using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
+//NB: we do not use records for implementing IUIViewModel because Unity internally uses equality/hash checks on 
+// view.dataSource, which points to the view model. We need class-based equality/hashing on the view model
+// in order to ensure proper behavior
+
 /// <summary>
 /// A set of data that will be rendered to screen by <see cref="IUIView"/>.
 /// <br/>Contains information about data changes via <see cref="IDataSourceViewHashProvider.GetViewHashCode"/>.
 /// </summary>
 public interface IUIViewModel : IDataSourceViewHashProvider {
     BindingUpdateTrigger UpdateTrigger { get; set; }
-    Func<long>? OverrideHashHandler { get; set; }
+    Func<long>? OverrideViewHash { get; set; }
 
     //UITK internals will recompute hash code even if the update trigger is WhenDirty.
     //In most cases when we set the update trigger to WhenDirty, we want to avoid allocations
@@ -21,7 +25,7 @@ public interface IUIViewModel : IDataSourceViewHashProvider {
         UpdateEvents(); //TODO put the UpdateEvents call in a better place
         return UpdateTrigger == BindingUpdateTrigger.WhenDirty ?
             0 :
-            OverrideHashHandler?.Invoke() ?? GetViewHash();
+            OverrideViewHash?.Invoke() ?? GetViewHash();
     }
 
     /// <summary>
@@ -32,7 +36,7 @@ public interface IUIViewModel : IDataSourceViewHashProvider {
     /// <summary>
     /// Get a hash code that changes whenever the view needs to be redrawn.
     /// <br/>This will not be called if <see cref="UpdateTrigger"/> is WhenDirty,
-    ///  and is overriden by <see cref="OverrideHashHandler"/>.
+    ///  and is overriden by <see cref="OverrideViewHash"/>.
     /// </summary>
     long GetViewHash();
 
@@ -50,9 +54,29 @@ public interface IUIViewModel : IDataSourceViewHashProvider {
     UIResult? OnConfirm(UINode node, ICursorState cs) => null;
 
     /// <summary>
+    /// Overrides <see cref="UINode"/>.<see cref="UINode.NavigateInternal"/> for all events.
+    /// <br/>Lower priority than <see cref="OnConfirm"/> or <see cref="OnContextMenu"/>.
+    /// </summary>
+    UIResult? Navigate(UINode node, ICursorState cs, UICommand req) => null;
+
+    /// <summary>
     /// Called when the node is entered in order to determine a tooltip to show next to the node.
     /// </summary>
     UIGroup? Tooltip(UINode node, ICursorState cs, bool prevExists) => null;
+
+    /// <summary>
+    /// Returns whether or not the node should be visible.
+    /// <br/>If ANY view model returns `false`, or if the node's containing group is not visible,
+    ///  then the node will not be visible.
+    /// </summary>
+    bool ShouldBeVisible(UINode node) => true;
+    
+    /// <summary>
+    /// Returns whether or not the node is enabled for confirm/edit operations.
+    /// <br/>Disabled nodes can still be navigated.
+    /// <br/>If ANY view model returns `false`, then the node will not be enabled.
+    /// </summary>
+    bool ShouldBeEnabled(UINode node) => true;
 }
 
 /// <summary>
@@ -60,7 +84,7 @@ public interface IUIViewModel : IDataSourceViewHashProvider {
 /// </summary>
 public abstract class UIViewModel : IUIViewModel {
     public BindingUpdateTrigger UpdateTrigger { get; set; }
-    public Func<long>? OverrideHashHandler { get; set; }
+    public Func<long>? OverrideViewHash { get; set; }
     
     public virtual void UpdateEvents() { }
     public abstract long GetViewHash();
@@ -77,7 +101,7 @@ public interface IConstUIViewModel : IUIViewModel {
                 throw new Exception($"Cannot set update trigger on {nameof(IConstUIViewModel)}");
         }
     }
-    Func<long>? IUIViewModel.OverrideHashHandler { 
+    Func<long>? IUIViewModel.OverrideViewHash { 
         get => null;
         set {
             if (value != null)
@@ -94,7 +118,7 @@ public interface IVersionedUIViewModel : IUIViewModel {
     /// <summary>
     /// Current version of the view model. This is incremented whenever a change is made.
     /// </summary>
-    Evented<long> ViewVersion { get; }
+    Evented<long> EvViewVersion { get; }
 
     /// <summary>
     /// Observable for when <see cref="ModelUpdated"/> is called.
@@ -112,7 +136,7 @@ public interface IVersionedUIViewModel : IUIViewModel {
     /// <summary>
     /// Notify that a field on the view model was changed due to a model-side change,
     ///  which may require remapping the view.
-    /// <br/>Bumps <see cref="ViewVersion"/>.
+    /// <br/>Bumps <see cref="EvViewVersion"/>.
     /// </summary>
     void ModelUpdated() => ModelUpdated(this);
     
@@ -120,28 +144,31 @@ public interface IVersionedUIViewModel : IUIViewModel {
         if (!me.IsModelUpdating) {
             me.IsModelUpdating = true;
             me._evModelUpdated.OnNext(default);
-            ++me.ViewVersion.Value;
+            ++me.EvViewVersion.Value;
             me.IsModelUpdating = false;
         }
     }
 
     /// <summary>
     /// Notify that a field on the view model was changed due to a view-side change.
-    /// <br/>Bumps <see cref="ViewVersion"/>.
+    /// <br/>Bumps <see cref="EvViewVersion"/>.
     /// </summary>
     void ViewUpdated() {
         if (!IsModelUpdating)
-            ++ViewVersion.Value;
+            ++EvViewVersion.Value;
     }
 
-    long IUIViewModel.GetViewHash() => ViewVersion;
+    long IUIViewModel.GetViewHash() => EvViewVersion;
 }
 
 /// <inheritdoc cref="IVersionedUIViewModel"/>
 public class VersionedUIViewModel : IVersionedUIViewModel {
     public BindingUpdateTrigger UpdateTrigger { get; set; }
-    public Func<long>? OverrideHashHandler { get; set; }
-    public Evented<long> ViewVersion { get; } = new(0);
+    public Func<long>? OverrideViewHash { get; set; }
+    public Evented<long> EvViewVersion { get; } = new(0);
+    
+    /// <inheritdoc cref="EvViewVersion"/>
+    public long ViewVersion => EvViewVersion;
     ISubject<Unit> IVersionedUIViewModel._evModelUpdated { get; } = new Event<Unit>();
     bool IVersionedUIViewModel.IsModelUpdating { get; set; }
     public void ModelUpdated() => 
@@ -172,9 +199,9 @@ public interface IDerivativeViewModel : IUIViewModel {
         get => Delegator.UpdateTrigger; 
         set => Delegator.UpdateTrigger = value;
     }
-    Func<long>? IUIViewModel.OverrideHashHandler {
-        get => Delegator.OverrideHashHandler; 
-        set => Delegator.OverrideHashHandler = value;
+    Func<long>? IUIViewModel.OverrideViewHash {
+        get => Delegator.OverrideViewHash; 
+        set => Delegator.OverrideViewHash = value;
     }
     long IUIViewModel.GetViewHash() => Delegator.GetViewHash();
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Tasks;
 using Danmokou.Services;
@@ -10,7 +11,7 @@ using UnityEngine.UIElements;
 
 namespace Danmokou.VN {
 public static class VNUtils {
-    public static OptionSelector<C> SetupSelector<C>(IVNState vn, XMLDynamicMenu menu, Func<C, LString> displayer,
+    public static OptionSelector<C> SetupSelector<C>(IVNState vn, XMLDynamicMenu menu, Func<C, LString?> displayer,
         out IDisposable token) {
         var selector = new OptionSelector<C>(vn);
         
@@ -41,13 +42,15 @@ public static class VNUtils {
             if (req != null) {
                 DestroyOptionNodes();
                 optNodes = req.Options.Select((o, i) => {
-                    var n = new FuncNode(displayer(o), () => {
+                    if (displayer(o) is not { } ls)
+                        return null; //treat node as hidden
+                    var n = new FuncNode(ls, () => {
                         req.Select(i);
                         return new UIResult.ReturnToScreenCaller() { OnPostTransition = DestroyOptionNodes };
                     }) { Prefab = GameManagement.UXMLPrefabs.OptionsColumnUINode };
                     optGroup.AddNodeDynamic(n);
                     return n as UINode;
-                }).ToArray();
+                }).FilterNone().ToArray();
                 menu.OperateOnResult(new UIResult.GoToScreen(optsScreen, menu.Unselect), new() {
                     ScreenTransitionTime = 0.7f, DelayScreenFadeInRatio = 0
                 }).ContinueWithSync();

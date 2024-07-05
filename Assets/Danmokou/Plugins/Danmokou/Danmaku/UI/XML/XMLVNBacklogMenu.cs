@@ -67,7 +67,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
 
         public override long GetViewHash() => Node.Selection.GetHashCode();
     }
-    private class BacklogEntryView : UIView<BacklogEntryVM> {
+    private class BacklogEntryView : UIView<BacklogEntryVM>, IUIView {
         public BacklogEntryView(BacklogEntryVM vm) : base(vm) { }
 
         public override void OnBuilt(UINode node) {
@@ -81,12 +81,12 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
         protected override BindingResult Update(in BindingContext context) {
             var entry = ViewModel.Entry;
             var vis = Node.Selection;
-            var b = Node.HTML.Q("Borderer");
+            var b = HTML.Q("Borderer");
             var smul = vis == UINodeSelection.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f);
             b.style.borderTopColor = entry.uiColor * smul;
             b.style.borderLeftColor = entry.uiColor * smul * new Color(0.65f, 0.65f, 0.65f);
-            Node.HTML.Q<Label>("Description").style.color =
-                Node.HTML.Q<Label>("Label").style.color =
+            HTML.Q<Label>("Description").style.color =
+                HTML.Q<Label>("Label").style.color =
                     entry.textColor * (vis == UINodeSelection.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f));
             return base.Update(in context);
         }

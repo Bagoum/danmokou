@@ -10,16 +10,17 @@ namespace Danmokou.UI.XML {
 ///  re-publish the linked view model (if it is <see cref="IVersionedUIViewModel"/>).
 /// </summary>
 public interface ITwoWayBinder<T> {
-    public IUIViewModel ViewModel { get; }
+    /// <summary>
+    /// The view model providing the underlying data for the binding.
+    /// </summary>
+    public IVersionedUIViewModel ViewModel { get; }
     public T Value {
         get => GetInner();
         set {
             SetInner(value);
-            if (ViewModel is IVersionedUIViewModel vers)
-                vers.ViewUpdated();
+            ViewModel.ViewUpdated();
         }
     }
-    public IObservable<Unit> EvModelUpdated { get; }
     
     protected T GetInner();
     protected void SetInner(T value);
@@ -32,15 +33,10 @@ public interface ITwoWayBinder<T> {
 ///  re-publish the linked view model (if it is <see cref="IVersionedUIViewModel"/>).
 /// </summary>
 public abstract class TwoWayBinder<T> : ITwoWayBinder<T> {
-    public IUIViewModel ViewModel { get; }
-    public IObservable<Unit> EvModelUpdated { get; } 
+    public IVersionedUIViewModel ViewModel { get; }
 
-    public TwoWayBinder(IUIViewModel? vm) {
+    public TwoWayBinder(IVersionedUIViewModel? vm) {
         ViewModel = vm ?? new VersionedUIViewModel();
-        if (ViewModel is IVersionedUIViewModel vers)
-            EvModelUpdated = vers.EvModelUpdated;
-        else
-            EvModelUpdated = NullEvent<Unit>.Default;
     }
 
     T ITwoWayBinder<T>.GetInner() => GetInner();
@@ -56,7 +52,7 @@ public abstract class TwoWayBinder<T> : ITwoWayBinder<T> {
 /// </summary>
 public class EventedBinder<T> : TwoWayBinder<T> {
     private readonly Evented<T> ev;
-    public EventedBinder(Evented<T> ev, IUIViewModel? vm = null) : base(vm) {
+    public EventedBinder(Evented<T> ev, IVersionedUIViewModel? vm = null) : base(vm) {
         this.ev = ev;
     }
 
@@ -72,7 +68,7 @@ public class ManualBinder<T> : TwoWayBinder<T> {
     private readonly Func<T> get;
     private readonly Action<T> set;
 
-    public ManualBinder(Func<T> get, Action<T> set, IUIViewModel? vm) : base(vm) {
+    public ManualBinder(Func<T> get, Action<T> set, IVersionedUIViewModel? vm) : base(vm) {
         this.get = get;
         this.set = set;
     }

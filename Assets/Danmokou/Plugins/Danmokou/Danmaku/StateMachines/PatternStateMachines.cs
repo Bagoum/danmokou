@@ -289,7 +289,7 @@ public class PhaseSM : SequentialSM {
         if (props.invulnTime != null && props.phaseType != PhaseType.Timeout)
             RUWaitingUtils.WaitThenCB(smh.Exec, smh.cT, props.invulnTime.Value, false,
                 () => smh.SetAllVulnerable(subbosses, Vulnerability.VULNERABLE));
-        RUWaitingUtils.WaitThenCancel(smh.Exec, smh.cT, timeout, true, toCancel);
+        RUWaitingUtils.WaitThenCB(smh.Exec, smh.cT, timeout, true, toCancel.Cancel);
         if (props.phaseType?.IsSpell() is true && ctx.Boss != null) {
             smh.Exec.Enemy.RequestSpellCircle(timeout, smh.cT);
             foreach (var subboss in subbosses)

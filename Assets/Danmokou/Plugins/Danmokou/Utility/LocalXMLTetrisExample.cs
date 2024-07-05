@@ -228,15 +228,15 @@ public class LocalXMLTetrisExample : CoroutineRegularUpdater {
     /// <summary>
     /// View for the Prototype blocks that can be pulled from the sidebar onto the grid.
     /// </summary>
-    private class ProtoView : UIView<ProtoViewModel> {
+    private class ProtoView : UIView<ProtoViewModel>, IUIView {
         private VisualElement shadow = null!;
         public ProtoView(ProtoViewModel viewModel) : base(viewModel) {}
 
         public override void OnBuilt(UINode node) {
             base.OnBuilt(node);
             var (item, shadowSpr) = VM.Src.SpriteForBlock(VM.Proto);
-            Node.HTML.ConfigureImage(item);
-            Node.HTML.Add(shadow = new VisualElement()
+            HTML.ConfigureImage(item);
+            HTML.Add(shadow = new VisualElement()
                 .ConfigureFloatingImage(shadowSpr, XMLUtils.Pivot.TopLeft)
                 .AddTransition("opacity", 0.3f));
             shadow.style.opacity = 0;
@@ -289,7 +289,7 @@ public class LocalXMLTetrisExample : CoroutineRegularUpdater {
     /// View for the blocks instantiated on the grid, spanning multiple slots.
     /// <br/>Blocks can be moved and rotated using <see cref="TetrisCS"/>.
     /// </summary>
-    private class BlockView : UIView<BlockViewModel> {
+    private class BlockView : UIView<BlockViewModel>, IUIView {
         private Cancellable? enterAnimCT;
         private Cancellable? flashAnimCT;
         private Cancellable? rotateCT;
@@ -299,54 +299,54 @@ public class LocalXMLTetrisExample : CoroutineRegularUpdater {
         public override void OnBuilt(UINode node) {
             base.OnBuilt(node);
             //Destroy view when model object is destroyed
-            Tokens.Add(VM.Block.WhenDestroyed(() => Node.Remove()));
+            node.BindLifetime(VM.Block);
             var (itemSprite, shadowSprite) = VM.Src.SpriteForBlock(VM.Block.Proto);
-            Node.HTML.Add(shadow = new VisualElement()
+            HTML.Add(shadow = new VisualElement()
                 .ConfigureFloatingImage(shadowSprite, XMLUtils.Pivot.TopLeft)
                 .AddTransition("opacity", 0.2f)
                 .AddTransition("-unity-background-image-tint-color", 0.4f));
-            Node.HTML.ConfigureFloatingImage(itemSprite)
+            HTML.ConfigureFloatingImage(itemSprite)
                 .SetRecursivePickingMode(PickingMode.Ignore)
                 .WithAbsolutePositionCentered()
                 .AddTransition("left", .2f)
                 .AddTransition("top", .2f);
             //We use events here because we can't just bind the data values directly to HTML - 
             // we need to play animations specifically when the underlying value *changes*. 
-            Tokens.Add(VM.BlockRotation.Subscribe(rot => {
+            node.AddToken(VM.BlockRotation.Subscribe(rot => {
                 //CSS transition:rotate is unreliable, so use event-based animations instead.
                 //Also, CSS rotation is CW by default.
                 var firstRender = rotateCT is null;
                 Cancellable.Replace(ref rotateCT);
-                var target = BMath.GetClosestAroundBound(360, Node.HTML.transform.rotation.eulerAngles.z,
+                var target = BMath.GetClosestAroundBound(360, HTML.transform.rotation.eulerAngles.z,
                     -rot);
                 if (firstRender) {
-                    Node.HTML.transform.rotation = Quaternion.Euler(0, 0, target);
+                    HTML.transform.rotation = Quaternion.Euler(0, 0, target);
                 } else {
-                    Node.Controller.PlayAnimation(Node.HTML.transform.RotateTo(new(0, 0, target),
+                    node.Controller.PlayAnimation(HTML.transform.RotateTo(new(0, 0, target),
                         0.15f, Easers.EOutSine, rotateCT));
                 }
             }));
-            Tokens.Add(VM.AnyComponentIsFocused.Subscribe(x => {
+            node.AddToken(VM.AnyComponentIsFocused.Subscribe(x => {
                 if (x) {
                     enterAnimCT?.SoftCancel();
                     enterAnimCT = new();
-                    Node.Controller.PlayAnimation(
-                        Node.HTML.transform.ScaleTo(1.04f, 0.14f, Easers.EOutSine, enterAnimCT)
-                        .Then(() => Node.HTML.transform.ScaleTo(1f, 0.13f, cT: enterAnimCT)));
+                    node.Controller.PlayAnimation(
+                        HTML.transform.ScaleTo(1.04f, 0.14f, Easers.EOutSine, enterAnimCT)
+                        .Then(() => HTML.transform.ScaleTo(1f, 0.13f, cT: enterAnimCT)));
                     
-                    Node.HTML.PlaceInFront(Node.HTML.parent.Children().Last());
+                    HTML.PlaceInFront(HTML.parent.Children().Last());
                 }
-                Node.HTML.EnableInClassList("focus", x);
-                Node.HTML.EnableInClassList("group", !x);
+                HTML.EnableInClassList("focus", x);
+                HTML.EnableInClassList("group", !x);
                 shadow.style.opacity = x ? 1 : 0;
             })); 
-            Tokens.Add(VM.BlockIsConfirmed.Subscribe(x => {
+            node.AddToken(VM.BlockIsConfirmed.Subscribe(x => {
                 flashAnimCT?.SoftCancel();
                 if (!x) {
                     flashAnimCT = new();
-                    Node.Controller.PlayAnimation(
-                        Node.HTML.FadeTo(0.6f, 1f, cT: flashAnimCT)
-                            .Then(() => Node.HTML.FadeTo(1f, 1f, cT: flashAnimCT))
+                    node.Controller.PlayAnimation(
+                        HTML.FadeTo(0.6f, 1f, cT: flashAnimCT)
+                            .Then(() => HTML.FadeTo(1f, 1f, cT: flashAnimCT))
                             .Loop()
                     );
                 }
@@ -358,7 +358,7 @@ public class LocalXMLTetrisExample : CoroutineRegularUpdater {
         private void RenderPosition() {
             var b = VM.Block;
             var slot = VM.Src.SlotAt(b.Position);
-            Node.HTML.WithAbsolutePosition(
+            HTML.WithAbsolutePosition(
                 slot.WorldLocation.center
                 + b.RotationCenterPosition
                     .PtMul(new(slot.WorldLocation.width, -slot.WorldLocation.height))

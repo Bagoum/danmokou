@@ -13,20 +13,18 @@ MonoBehaviour:
   m_Name: PJ24 Game Data
   m_EditorClassIdentifier: 
   gameDefinition: {fileID: 11400000, guid: 3d32be55ceef7a24da96b72bd2c97e22, type: 2}
-  mainMenu: {fileID: 11400000, guid: 3780f8b6ab3b1634eb5778b12637c4b6, type: 2}
+  mainMenu: {fileID: 11400000, guid: c59564d4d5839e44082742ffe9fc727b, type: 2}
   defaultUIFrame: {fileID: 21300000, guid: fd60a7ae3ce4be640b9b311d9d70969e, type: 3}
   unitScene: {fileID: 0}
-  defaultTransition: {fileID: 11400000, guid: 1c9c24ebebfcd504d9bcf96bbaa75e90, type: 2}
+  defaultTransition: {fileID: 11400000, guid: 928ba241fb5f3f5409dd9d7f7b903e70, type: 2}
   dialogue: []
   bossMetadata: []
   tracks:
-  - {fileID: 11400000, guid: 9d9586bf58042744aa6b8ed2c3c14827, type: 2}
-  - {fileID: 11400000, guid: ee23558615347934da7e51454294e0f9, type: 2}
-  - {fileID: 11400000, guid: 2196cac1dd0c01c4ba573d37fa5c6194, type: 2}
-  - {fileID: 11400000, guid: 57b44994773542d49b225e98987df8dc, type: 2}
-  - {fileID: 11400000, guid: eb40e118c5ff73348989f8197c60fb8e, type: 2}
-  - {fileID: 11400000, guid: 95a55accaa086aa4798d46640aa19ac8, type: 2}
-  - {fileID: 11400000, guid: b6b52c8aa3d85e84f9ce61a80ac13ab0, type: 2}
+  - {fileID: 11400000, guid: 2363a726af0d21c4c9ce0957cf865e9f, type: 2}
+  - {fileID: 11400000, guid: 4dd4ab3bc14d3794abb35fae82af82a8, type: 2}
+  - {fileID: 11400000, guid: 2e2cc2f6064dbea40ad99a5e105d44ee, type: 2}
+  - {fileID: 11400000, guid: 53e554779c1357c4794a4982a403c67a, type: 2}
+  - {fileID: 11400000, guid: 4b981a85cabb5204e9a8a538d6c50018, type: 2}
   items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
   prefabReferences: {fileID: 11400000, guid: 842bcc7c616103e4c9880c49f9735bb4, type: 2}
   suzunoyaReferences: {fileID: 11400000, guid: fdd0290a12340e243ba1955cd970d9b2, type: 2}

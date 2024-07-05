@@ -17,8 +17,9 @@ public static class RUWaitingUtils {
         cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
         if (time < float.Epsilon) return;
-        Exec.RunAppendRIEnumerator(WaitFor(time, cT, GetAwaiter(out Task t)));
-        await t;
+        var tcs = new TaskCompletionSource<Unit>();
+        Exec.RunAppendRIEnumerator(WaitFor(time, cT, tcs));
+        await tcs.Task;
         //I do want this throw here, which is why I don't 'return t'
         cT.ThrowIfCancelled();
     }
@@ -26,13 +27,13 @@ public static class RUWaitingUtils {
     /// Task style. Will return as soon as the time is up or cancellation is triggered.
     /// You must check cT.IsCancelled after awaiting this.
     /// </summary>
-    /// <returns></returns>
     public static Task WaitForUnchecked(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity) {
         cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
         if (time < float.Epsilon) return Task.CompletedTask;
-        Exec.RunAppendRIEnumerator(WaitFor(time, cT, GetAwaiter(out Task t)));
-        return t;
+        var tcs = new TaskCompletionSource<Unit>();
+        Exec.RunAppendRIEnumerator(WaitFor(time, cT, tcs));
+        return tcs.Task;
     }
     /// <summary>
     /// Task style. Will return as soon as the condition is satisfied or cancellation is triggered.
@@ -47,67 +48,39 @@ public static class RUWaitingUtils {
     }
 
     /// <summary>
-    /// Outer waiter-- Will not cb if cancelled
+    /// Wait for `wait_time` seconds or until the token is cancelled.
+    /// Will invoke `done` only if the token is *not* cancelled.
     /// </summary>
     public static void WaitThenCB(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity,
-        Action? cb) {
+        Action? done) {
         cT.ThrowIfCancelled();
         if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
         Exec.RunAppendRIEnumerator(WaitFor(time, cT, () => {
-            if (!cT.Cancelled) cb?.Invoke();
+            if (!cT.Cancelled) done?.Invoke();
         }));
-    }
-    /// <summary>
-    /// Outer waiter-- Will cb if cancelled
-    /// </summary>
-    public static void WaitThenCBEvenIfCancelled(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity,
-        Action cb) {
-        cT.ThrowIfCancelled();
-        if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
-        Exec.RunAppendRIEnumerator(WaitFor(time, cT, cb));
-    }
-    /// <summary>
-    /// Outer waiter-- Will not cb if cancelled
-    /// </summary>
-    public static void WaitThenCB(CoroutineRegularUpdater Exec, ICancellee cT, float time, Func<bool> condition,
-        Action cb) {
-        cT.ThrowIfCancelled();
-        Exec.RunAppendRIEnumerator(WaitForBoth(time, condition, cT, () => {
-            if (!cT.Cancelled) cb();
-        }));
-    }
-    /// <summary>
-    /// Outer waiter-- Will cb if cancelled
-    /// </summary>
-    public static void WaitThenCBEvenIfCancelled(CoroutineRegularUpdater Exec, ICancellee cT, float time, Func<bool> condition, Action cb) {
-        cT.ThrowIfCancelled();
-        Exec.RunAppendRIEnumerator(WaitForBoth(time, condition, cT, cb));
     }
     
     /// <summary>
-    /// Outer waiter-- Will cb if cancelled
+    /// Wait for `wait_time` seconds or until the token is cancelled.
+    /// Will invoke `done` regardless of cancellation.
     /// </summary>
-    public static void WaitThenCBEvenIfCancelled(CoroutineRegularUpdater Exec, ICancellee cT, Func<bool> condition, Action cb) {
+    public static void WaitThenCBEvenIfCancelled(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity,
+        Action done) {
+        if (zeroToInfinity && time < float.Epsilon) time = float.MaxValue;
+        Exec.RunAppendRIEnumerator(WaitFor(time, cT, done));
+    }
+    
+    /// <summary>
+    /// Wait until the condition is true AND the time is up, or the the token is cancelled.
+    /// Will invoke `done` regardless of cancellation.
+    /// </summary>
+    public static void WaitThenCBEvenIfCancelled(CoroutineRegularUpdater Exec, ICancellee cT, float time, Func<bool> condition, Action done) {
         cT.ThrowIfCancelled();
-        Exec.RunAppendRIEnumerator(WaitFor(condition, cT, cb));
+        Exec.RunAppendRIEnumerator(WaitForBoth(time, condition, cT, done));
     }
 
     /// <summary>
-    /// Outer waiter-- Will not cancel if cancelled
-    /// </summary>
-    public static void WaitThenCancel(CoroutineRegularUpdater Exec, ICancellee cT, float time, bool zeroToInfinity,
-        ICancellable toCancel) {
-        cT.ThrowIfCancelled();
-        if (zeroToInfinity && time < float.Epsilon) {
-            time = float.MaxValue;
-        }
-        Exec.RunAppendRIEnumerator(WaitFor(time, cT, () => {
-            if (!cT.Cancelled) toCancel.Cancel();
-        }));
-    }
-
-    /// <summary>
-    /// Inner waiter-- Will cb if cancelled. This is necessary so awaiters can be informed of errors.
+    /// Wait for `wait_time` seconds or until the token is cancelled. Will invoke `done` regardless of cancellation.
     /// </summary>
     public static IEnumerator WaitFor(float wait_time, ICancellee cT, Action done) {
         for (; wait_time > ETime.FRAME_YIELD && !cT.Cancelled; 
@@ -116,7 +89,16 @@ public static class RUWaitingUtils {
     }
     
     /// <summary>
-    /// Returns when the condition is true (or is cancelled)
+    /// Wait for `wait_time` seconds or until the token is cancelled. Will invoke `done` regardless of cancellation.
+    /// </summary>
+    private static IEnumerator WaitFor(float wait_time, ICancellee cT, TaskCompletionSource<Unit> done) {
+        for (; wait_time > ETime.FRAME_YIELD && !cT.Cancelled; 
+             wait_time -= ETime.FRAME_TIME) yield return null;
+        done.SetResult(default);
+    }
+    
+    /// <summary>
+    /// Wait until the condition is true or the token is cancelled. Will invoke `done` regardless of cancellation.
     /// </summary>
     private static IEnumerator WaitFor(Func<bool> condition, ICancellee cT, Action done) {
         while (!condition() && !cT.Cancelled) yield return null;
@@ -124,7 +106,7 @@ public static class RUWaitingUtils {
     }
     
     /// <summary>
-    /// Returns when the condition is true (or is cancelled)
+    /// Wait until the condition is true or the token is cancelled. Will invoke `done` regardless of cancellation.
     /// </summary>
     private static IEnumerator WaitFor(Func<bool> condition, ICancellee cT, TaskCompletionSource<Unit> done) {
         while (!condition() && !cT.Cancelled) yield return null;
@@ -132,23 +114,12 @@ public static class RUWaitingUtils {
     }
     
     /// <summary>
-    /// Returns when the condition is true AND time is up (or is cancelled)
+    /// Wait until the condition is true AND the time is up, or the the token is cancelled.
+    /// Will invoke `done` regardless of cancellation.
     /// </summary>
     private static IEnumerator WaitForBoth(float wait_time, Func<bool> condition, ICancellee cT, Action done) {
         for (; (wait_time > ETime.FRAME_YIELD || !condition()) && !cT.Cancelled; 
             wait_time -= ETime.FRAME_TIME) yield return null;
-        done();
-    }
-
-    public static IEnumerator WaitWhileWithCancellable(Func<bool> amIFinishedWaiting, ICancellable canceller, Func<bool> cancelIf, ICancellee cT, Action done, float delay=0f) {
-        while (!amIFinishedWaiting() && !cT.Cancelled) {
-            if (delay < ETime.FRAME_YIELD && cancelIf()) {
-                canceller.Cancel();
-                break;
-            }
-            yield return null;
-            delay -= ETime.FRAME_TIME;
-        }
         done();
     }
     

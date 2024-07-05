@@ -1,10 +1,50 @@
-<#> strict(comma)
-pattern({
-})
-phase(0)
-	paction(0)
-		shift-phase-to(1)
+pattern {
+	boss("simp.mima")
+} {
+phase 10 {
+    type(spell, "Miracle Mima")
+    hp(14000)
+    root(0, 2)
+} {
+    paction 0 {
+        async "lellipse-*/w" <> gcrepeat {
+            wait(3s)
+            times(inf)
+            sfx("x-fire-burst-1")
+        } gsrepeat {
+            times(8)
+            circle
+            color({ "red", "pink", "purple", "blue", "teal", "green", "yellow", "orange" })
+            preloop b{ 
+                hvar colorIndex = i;
+            }
+        } s(rvelocity(cx(3)))
 
+        bulletcontrol(persist, "lellipse-*/w", batch(t > 0.7, {
+            sm(_, async "ellipse-*/w" <> gcrepeat {
+                wait(12)
+                times(6)
+                rv2incr(<0.4;:>)
+                sfx("x-transform-1")
+                colorf({ "red", "pink", "purple", "blue", "teal", "green", "yellow", "orange" }, &colorIndex)
+            } gsrepeat {
+                times(20)
+                circle
+            } s(rvelocity(px(lerpt(0.3, 1.4, 0, 2.6)))))
+            cull(_)
+        }))
+    }
+}
+phase 30 {
+	type(non, "hello wlrd")
+	hp(10000)
+} {
+
+}
+
+}
+
+///
 !{ hello(x, y)
 %x + %y
 !}
@@ -23,13 +63,6 @@ async  %color <-2;:> gcr3 0.3 4s <> {
 !{ mimal()
 $lazor(lstar-teal/w, Lplayer)
 !}
-
-phase 0
-	paction 0
-		#move 2 nroffset px ease(eiosine, 2, sine 2 3 t)
-		move 2 nrvelocity px eased(eiosine, 2, cosine 2 3 t)
-
-///
 
 <!> type spell abc
 <!> hp 10000
@@ -109,7 +142,7 @@ phase 0
 		move-target 2 io-sine cxy(3, 2) 
 		
 
-<!> type(spell, `sc`)
+<!> type(spell, sc)
 <!> hp(1000)
 phase(0)
 	paction 0
@@ -275,7 +308,7 @@ phase 0
 			rvelocity(rx(
 			lerp(2.3, 4, t + &st, 0, 1), 
 			140 + 144 * &ind / $group))))
-///
+
 
 lerpmany({ 
 				0 1
@@ -308,7 +341,7 @@ phase 0
 					{ dir2 @(edir, p) })
 			}
 
-///
+
 
 <!> type non `hello world2`
 <!> hp 4000
@@ -374,3 +407,4 @@ phase 0
 		} gsr2c 30 {
 			color { green orange red yellow blue pink }
 		} s rvelocity cx 2
+///

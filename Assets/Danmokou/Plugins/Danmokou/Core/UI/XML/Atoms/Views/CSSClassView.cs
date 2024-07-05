@@ -27,9 +27,9 @@ public class CssClassView : UIView<CSSClassViewModel> {
     protected override BindingResult Update(in BindingContext context) {
         var pass = ViewModel.Switch();
         if (ViewModel.WhenTrue is { } trueClass)
-            Node.HTML.EnableInClassList(trueClass, pass);
+            HTML.EnableInClassList(trueClass, pass);
         if (ViewModel.WhenFalse is { } falseClass)
-            Node.HTML.EnableInClassList(falseClass, !pass);
+            HTML.EnableInClassList(falseClass, !pass);
         return base.Update(in context);
     }
 }

@@ -1,0 +1,80 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <engine:Template name="PJ24 Long Window" src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/PJ24%20List%20Select%20Window.uxml?fileID=9197481963319205126&amp;guid=37eb0702b47318b408ad6ac76a20330b&amp;type=3#PJ24 List Select Window" />
+    <engine:Template name="PJ24 Item Details Window" src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/PJ24%20Item%20Details%20Window.uxml?fileID=9197481963319205126&amp;guid=99a8bbd0d44a6294bb11a2eac2bf88f9&amp;type=3#PJ24 Item Details Window" />
+    <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/pj24%20css.uss?fileID=7433441132597879392&amp;guid=9d3df72b6a1977447b2a4823c6a62599&amp;type=3#pj24 css" />
+    <engine:VisualElement picking-mode="Ignore" class="uiScreen" style="width: 100%; height: 100%;">
+        <engine:VisualElement name="RequestListAndDetails" style="flex-grow: 1; position: absolute; left: 0; top: 0; right: 0; bottom: 0;">
+            <engine:Instance template="PJ24 Long Window" name="RequestList" style="position: absolute; left: 220px; top: 270px;">
+                <AttributeOverrides element-name="Title" text="...requests" />
+            </engine:Instance>
+            <engine:VisualElement name="RequestDetails" template="PJ24 Item Details Window" style="position: absolute; top: 120px; right: 120px;">
+                <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/pj24%20css.uss?fileID=7433441132597879392&amp;guid=9d3df72b6a1977447b2a4823c6a62599&amp;type=3#pj24 css" />
+                <engine:VisualElement name="LongWindow" style="width: 2094px; height: 1460px; background-image: url(&quot;project://database/Assets/Danmokou/MiniProjects/raw/pj24/wide%20rect.png?fileID=-855298285791758126&amp;guid=d7ce0a306424beb41af625423678d5d5&amp;type=3#wide rect_0&quot;); color: rgb(107, 49, 27);">
+                    <engine:VisualElement style="flex-grow: 1; margin-top: 120px; margin-right: 200px; margin-bottom: 120px; margin-left: 200px; flex-direction: column;">
+                        <engine:VisualElement style="flex-grow: 0; flex-direction: row;">
+                            <engine:VisualElement style="flex-grow: 0; background-image: url(&quot;project://database/Assets/Danmokou/MiniProjects/raw/pj24/square.png?fileID=2800000&amp;guid=3cc9a56748c4be842b7a4f1ffbf232e2&amp;type=3#square&quot;); width: 460px; height: 460px; margin-left: -50px; margin-top: -50px; margin-bottom: -20px; flex-shrink: 0;">
+                                <engine:VisualElement name="Image" style="flex-grow: 1; margin-top: 100px; margin-right: 100px; margin-bottom: 100px; margin-left: 100px;" />
+                            </engine:VisualElement>
+                            <engine:Label text="Reimu asked for some Refractive Magic Fuel. I can&apos;t imagine what she&apos;d want to use it for." name="Description" style="-unity-font-definition: url(&quot;project://database/Assets/Danmokou/Fonts/TextCore%20SDF%20Assets/RocknRollOne-Regular%20SDF.asset?fileID=11400000&amp;guid=0527ac2f49047bd469798517c138f05e&amp;type=2#RocknRollOne-Regular SDF&quot;); font-size: 55px; -unity-text-align: upper-left; margin-top: 40px; color: rgb(107, 49, 27); margin-right: 60px; padding-bottom: 0; white-space: normal; flex-shrink: 1;" />
+                        </engine:VisualElement>
+                        <engine:VisualElement name="TraitContainer" style="flex-grow: 0;">
+                            <engine:Label text="...requirement" style="-unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-R%20SDF.asset?fileID=11400000&amp;guid=a4ca5d8a7e0241f41b58c69f59b3bca2&amp;type=2#Ubuntu-R SDF&quot;); font-size: 70px; -unity-text-align: upper-left; margin-top: 0; color: rgb(150, 79, 54); margin-right: 0; padding-bottom: 0;" />
+                            <engine:VisualElement name="Requirement" class="pj24node underlinetext" style="height: 90px;">
+                                <engine:VisualElement name="Content" style="flex-grow: 1; flex-direction: row;">
+                                    <engine:Label text="1x Refractive Magic Fuel w/ effect Love-colored and trait Illuminating" name="Text" style="margin-left: 20px; text-overflow: ellipsis; -unity-text-align: upper-left; margin-top: 0; margin-right: -60px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; flex-shrink: 1; font-size: 48px; white-space: normal;" />
+                                </engine:VisualElement>
+                                <engine:VisualElement style="flex-grow: 1; position: absolute; bottom: 10px; width: 100%; height: 4px; background-image: url(&quot;project://database/Assets/Danmokou/Sprites/util/1u-square-featherlr-80pct.png?fileID=2800000&amp;guid=06ccdb42d2d62514c9c96270fc6ab823&amp;type=3#1u-square-featherlr-80pct&quot;); -unity-background-image-tint-color: rgb(21, 141, 118);" />
+                            </engine:VisualElement>
+                            <engine:Label text="...reward" style="-unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-R%20SDF.asset?fileID=11400000&amp;guid=a4ca5d8a7e0241f41b58c69f59b3bca2&amp;type=2#Ubuntu-R SDF&quot;); font-size: 70px; -unity-text-align: upper-left; margin-top: 10px; color: rgb(150, 79, 54); margin-right: 0; padding-bottom: 0;" />
+                            <engine:VisualElement class="pj24node underlinetext reward" style="height: 90px;">
+                                <engine:VisualElement name="Content" style="flex-grow: 1; flex-direction: row;">
+                                    <engine:Label text="1x Refractive Magic Fuel w/ effect Love-colored and trait Illuminating" name="Text" style="margin-left: 20px; text-overflow: ellipsis; -unity-text-align: upper-left; margin-top: 0; margin-right: -60px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; flex-shrink: 1; font-size: 48px; white-space: normal;" />
+                                </engine:VisualElement>
+                                <engine:VisualElement style="flex-grow: 1; position: absolute; bottom: 10px; width: 100%; height: 4px; background-image: url(&quot;project://database/Assets/Danmokou/Sprites/util/1u-square-featherlr-80pct.png?fileID=2800000&amp;guid=06ccdb42d2d62514c9c96270fc6ab823&amp;type=3#1u-square-featherlr-80pct&quot;); -unity-background-image-tint-color: rgb(21, 141, 118);" />
+                            </engine:VisualElement>
+                            <engine:VisualElement class="pj24node underlinetext reward" style="height: 90px;">
+                                <engine:VisualElement name="Content" style="flex-grow: 1; flex-direction: row;">
+                                    <engine:Label text="1x Refractive Magic Fuel w/ effect Love-colored and trait Illuminating" name="Text" style="margin-left: 20px; text-overflow: ellipsis; -unity-text-align: upper-left; margin-top: 0; margin-right: -60px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; flex-shrink: 1; font-size: 48px; white-space: normal;" />
+                                </engine:VisualElement>
+                                <engine:VisualElement style="flex-grow: 1; position: absolute; bottom: 10px; width: 100%; height: 4px; background-image: url(&quot;project://database/Assets/Danmokou/Sprites/util/1u-square-featherlr-80pct.png?fileID=2800000&amp;guid=06ccdb42d2d62514c9c96270fc6ab823&amp;type=3#1u-square-featherlr-80pct&quot;); -unity-background-image-tint-color: rgb(21, 141, 118);" />
+                            </engine:VisualElement>
+                            <engine:VisualElement class="pj24node underlinetext reward" style="height: 90px;">
+                                <engine:VisualElement name="Content" style="flex-grow: 1; flex-direction: row;">
+                                    <engine:Label text="1x Refractive Magic Fuel w/ effect Love-colored and trait Illuminating" name="Text" style="margin-left: 20px; text-overflow: ellipsis; -unity-text-align: upper-left; margin-top: 0; margin-right: -60px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; flex-shrink: 1; font-size: 48px; white-space: normal;" />
+                                </engine:VisualElement>
+                                <engine:VisualElement style="flex-grow: 1; position: absolute; bottom: 10px; width: 100%; height: 4px; background-image: url(&quot;project://database/Assets/Danmokou/Sprites/util/1u-square-featherlr-80pct.png?fileID=2800000&amp;guid=06ccdb42d2d62514c9c96270fc6ab823&amp;type=3#1u-square-featherlr-80pct&quot;); -unity-background-image-tint-color: rgb(21, 141, 118);" />
+                            </engine:VisualElement>
+                            <engine:VisualElement class="pj24node underlinetext reward" style="height: 90px;">
+                                <engine:VisualElement name="Content" style="flex-grow: 1; flex-direction: row;">
+                                    <engine:Label text="1x Refractive Magic Fuel w/ effect Love-colored and trait Illuminating" name="Text" style="margin-left: 20px; text-overflow: ellipsis; -unity-text-align: upper-left; margin-top: 0; margin-right: -60px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; flex-shrink: 1; font-size: 48px; white-space: normal;" />
+                                </engine:VisualElement>
+                                <engine:VisualElement style="flex-grow: 1; position: absolute; bottom: 10px; width: 100%; height: 4px; background-image: url(&quot;project://database/Assets/Danmokou/Sprites/util/1u-square-featherlr-80pct.png?fileID=2800000&amp;guid=06ccdb42d2d62514c9c96270fc6ab823&amp;type=3#1u-square-featherlr-80pct&quot;); -unity-background-image-tint-color: rgb(21, 141, 118);" />
+                            </engine:VisualElement>
+                            <engine:VisualElement class="pj24node underlinetext reward" style="height: 90px;">
+                                <engine:VisualElement name="Content" style="flex-grow: 1; flex-direction: row;">
+                                    <engine:Label text="1x Refractive Magic Fuel w/ effect Love-colored and trait Illuminating" name="Text" style="margin-left: 20px; text-overflow: ellipsis; -unity-text-align: upper-left; margin-top: 0; margin-right: -60px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; flex-shrink: 1; font-size: 48px; white-space: normal;" />
+                                </engine:VisualElement>
+                                <engine:VisualElement style="flex-grow: 1; position: absolute; bottom: 10px; width: 100%; height: 4px; background-image: url(&quot;project://database/Assets/Danmokou/Sprites/util/1u-square-featherlr-80pct.png?fileID=2800000&amp;guid=06ccdb42d2d62514c9c96270fc6ab823&amp;type=3#1u-square-featherlr-80pct&quot;); -unity-background-image-tint-color: rgb(21, 141, 118);" />
+                            </engine:VisualElement>
+                            <engine:VisualElement class="pj24node underlinetext reward" style="height: 90px;">
+                                <engine:VisualElement name="Content" style="flex-grow: 1; flex-direction: row;">
+                                    <engine:Label text="1x Refractive Magic Fuel w/ effect Love-colored and trait Illuminating" name="Text" style="margin-left: 20px; text-overflow: ellipsis; -unity-text-align: upper-left; margin-top: 0; margin-right: -60px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; flex-shrink: 1; font-size: 48px; white-space: normal;" />
+                                </engine:VisualElement>
+                                <engine:VisualElement style="flex-grow: 1; position: absolute; bottom: 10px; width: 100%; height: 4px; background-image: url(&quot;project://database/Assets/Danmokou/Sprites/util/1u-square-featherlr-80pct.png?fileID=2800000&amp;guid=06ccdb42d2d62514c9c96270fc6ab823&amp;type=3#1u-square-featherlr-80pct&quot;); -unity-background-image-tint-color: rgb(21, 141, 118);" />
+                            </engine:VisualElement>
+                        </engine:VisualElement>
+                    </engine:VisualElement>
+                </engine:VisualElement>
+            </engine:VisualElement>
+        </engine:VisualElement>
+        <engine:VisualElement name="ItemListAndDetails" style="flex-grow: 1; position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
+            <engine:Instance template="PJ24 Item Details Window" name="ItemDetails" style="position: absolute; top: 250px; right: 120px;" />
+            <engine:VisualElement name="ItemInstanceList" style="flex-grow: 1; position: absolute; left: 220px; top: 120px;">
+                <engine:Instance template="PJ24 Long Window">
+                    <AttributeOverrides element-name="Title" text="...items" />
+                </engine:Instance>
+                <engine:VisualElement name="ConfirmButton" style="flex-grow: 1; height: 200px; margin-top: -40px; justify-content: center; align-items: flex-start; flex-direction: row;" />
+            </engine:VisualElement>
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

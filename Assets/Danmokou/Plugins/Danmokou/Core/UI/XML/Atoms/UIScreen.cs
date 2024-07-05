@@ -16,10 +16,20 @@ using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
 
+public enum UIScreenState {
+    Inactive = 0, //exitEnd, HTML made invisible
+    ActiveGoingInactive = 1, //exitStart
+    ActiveWillGoInactive = 2, //set before exit starts; render spaces are set to ShouldBeVisibleInTree=false
+                              //and prohibited from animating out
+    InactiveWillGoActive = 3,
+    InactiveGoingActive = 4, //enterStart, HTML made visible
+    Active = 5, //enterEnd
+}
+
 public class UIScreen : ITokenized {
     [Flags]
     public enum Display {
-        Basic = 0,
+        Default = 0,
         WithTabs = 1 << 0,
         Unlined = 1 << 1,
         PauseThin = 1 << 2,
@@ -28,16 +38,37 @@ public class UIScreen : ITokenized {
         OverlayTH = PauseThin | PauseLined
     }
 
-    public bool ScreenIsActive { get; private set; } = false;
+    public Evented<UIScreenState> State { get; } = new(UIScreenState.Inactive);
     public List<IDisposable> Tokens { get; } = new();
     public UIController Controller { get; }
     public Display Type { get; set; }
     private LString? HeaderText { get; }
+    public List<UIRenderSpace> Renderers { get; } = new();
     public List<UIGroup> Groups { get; } = new();
     public VisualElement HTML { get; private set; } = null!;
     public UIRenderScreen ScreenRender { get; }
-    public UIRenderScreenContainer ContainerRender { get; }
+    public UIRenderSpace ContainerRender { get; }
     public UIRenderAbsoluteTerritory AbsoluteTerritory { get; private set; }
+
+    private bool _persistent = false;
+    /// <summary>
+    /// If true, this screen will always be visible, even if navigation is on a different screen.
+    /// <br/>Note that mouse events will not trigger on this screen's nodes unless it is the current screen,
+    ///  because UIController does not allow cross-screen UIPointerCommand.Goto events.
+    /// </summary>
+    public bool Persistent {
+        get => _persistent;
+        set {
+            // ReSharper disable once AssignmentInConditionalExpression
+            if (_persistent = value) {
+                if (Built)
+                    SetVisible(true);
+                State.PublishIfNotSame(UIScreenState.Active);
+            }
+            
+        }
+    }
+
     /// <summary>
     /// Whether or not the screen can be exited via the player clicking the "back" button.
     /// </summary>
@@ -50,31 +81,22 @@ public class UIScreen : ITokenized {
     /// Overrides the visualTreeAsset used to construct this screen's HTML.
     /// </summary>
     public VisualTreeAsset? Prefab { get; init; }
-    /// <summary>
-    /// Event fired when entering the screen.
-    /// <br/>bool- True iff this UIScreen is being entered "from null", ie. without a transition.
-    /// </summary>
-    public Event<bool> OnEnterStart { get; } = new();
-    public UIScreen WithOnEnterStart(Action<bool> cb) {
-        Tokens.Add(OnEnterStart.Subscribe(cb));
+
+    public UIScreen WithOnStateChange(UIScreenState state, Action cb) {
+        Tokens.Add(State.OnChange.Subscribe(s => {
+            if (s == state)
+                cb();
+        }));
         return this;
     }
-    public Event<Unit> OnEnterEnd { get; } = new();
-    public UIScreen WithOnEnterEnd(Action<Unit> cb) {
-        Tokens.Add(OnEnterEnd.Subscribe(cb));
-        return this;
+    public UIScreen WithOnEnterStart(Action cb) => WithOnStateChange(UIScreenState.InactiveGoingActive, cb);
+    public UIScreen WithOnEnterEnd(Action cb) => WithOnStateChange(UIScreenState.Active, cb);
+    public UIScreen WithOnExitStart(Action cb) => WithOnStateChange(UIScreenState.ActiveGoingInactive, cb);
+    public UIScreen WithOnExitEnd(Action cb) => WithOnStateChange(UIScreenState.Inactive, cb);
+    public void NextState(UIScreenState state) {
+        if (!Persistent)
+            State.PublishIfNotSame(state);
     }
-    public Event<Unit> OnExitStart { get; } = new();
-    public UIScreen WithOnExitStart(Action<Unit> cb) {
-        Tokens.Add(OnExitStart.Subscribe(cb));
-        return this;
-    }
-    public Event<Unit> OnExitEnd { get; } = new();
-    public UIScreen WithOnExitEnd(Action<Unit> cb) {
-        Tokens.Add(OnExitEnd.Subscribe(cb));
-        return this;
-    }
-    
     
     /// <summary>
     /// The opacity of the HTML background image of the menu containing the uiScreen.
@@ -105,8 +127,9 @@ public class UIScreen : ITokenized {
     //public UIRenderDirect Renderer { get; }
 
     private Dictionary<Type, VisualTreeAsset>? buildMap;
+    public bool Built => buildMap != null;
 
-    public UIScreen(UIController controller, LString? header, Display display = Display.Basic) {
+    public UIScreen(UIController controller, LString? header = null, Display display = Display.Default) {
         Controller = controller;
         HeaderText = header;
         Type = display;
@@ -129,7 +152,6 @@ public class UIScreen : ITokenized {
     }
 
     public VisualElement Build(Dictionary<Type, VisualTreeAsset> map) {
-        buildMap = map;
         HTML = (Prefab != null ? Prefab : map.SearchByType(this, true)).CloneTreeNoContainer();
         if (HeaderText == null)
             // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
@@ -148,16 +170,25 @@ public class UIScreen : ITokenized {
         HTML.Add(XMLUtils.Prefabs.AbsoluteTerritory.CloneTreeNoContainer());
         AbsoluteTerritory = new UIRenderAbsoluteTerritory(this);
         Builder?.Invoke(this, Container);
+        foreach (var render in Renderers)
+            _ = render.HTML;
         //Controls helper may be removed by builder for screens that don't need it
         ControlHelper = HTML.Q<Label>("ControlsHelper");
         if (!UseControlHelper) {
             ControlHelper?.RemoveFromHierarchy();
             ControlHelper = null;
         }
+        buildMap = map;
         //calling build may awaken lazy nodes, causing new groups to spawn
         for (int ii = 0; ii < Groups.Count; ++ii)
             Groups[ii].Build(map);
-        SetVisible(false);
+        Tokens.Add(State.OnChange.Subscribe(s => {
+            if (s == UIScreenState.Inactive)
+                SetVisible(false);
+            else if (s == UIScreenState.InactiveGoingActive)
+                SetVisible(true);
+        }));
+        SetVisible(State >= UIScreenState.InactiveGoingActive);
         Controller.AddToken(Controller.UIVisualUpdateEv.Subscribe(VisualUpdate));
         Controller.AddToken(backgroundOpacity.Subscribe(f => HTML.style.unityBackgroundImageTintColor = 
             new Color(1,1,1,f)));
@@ -170,28 +201,13 @@ public class UIScreen : ITokenized {
         if (SceneObjects != null)
             SceneObjects.SetActive(visible);
         SetControlText();
+        if (visible) {
+            Controller.BackgroundOpacity.Push(MenuBackgroundOpacity);
+            backgroundOpacity.Push(BackgroundOpacity);
+        }
     }
 
     public UIRenderColumn ColumnRender(int index) => new(this, index);
-
-    public void ExitStart() {
-        ScreenIsActive = false;
-        OnExitStart.OnNext(default);
-    }
-    public void ExitEnd() {
-        SetVisible(false);
-        OnExitEnd.OnNext(default);
-    }
-    public void EnterStart(bool fromNull) {
-        ScreenIsActive = true;
-        SetVisible(true);
-        Controller.BackgroundOpacity.Push(MenuBackgroundOpacity);
-        backgroundOpacity.Push(BackgroundOpacity);
-        OnEnterStart.OnNext(fromNull);
-    }
-    public void EnterEnd() {
-        OnEnterEnd.OnNext(default);
-    }
 
     public void VisualUpdate(float dT) {
         backgroundOpacity.Update(dT);
@@ -206,10 +222,17 @@ public class UIScreen : ITokenized {
                 StringBuffer.JoinPooled("    ", AsControl(inp.uiConfirm), AsControl(inp.uiBack));
     }
 
-    public UIFreeformGroup AddFreeformGroup(Func<UINode, ICursorState, UIResult?>? unselectConfirm = null) {
-        var unselect = EmptyNode.MakeUnselector(unselectConfirm);
-        return new UIFreeformGroup(this, unselect);
-    }
+    /// <summary>
+    /// Add a freeform group to this screen.
+    /// <br/>The provided delegate will be used for unselector navigation.
+    /// </summary>
+    public UIFreeformGroup AddFreeformGroup(Func<UINode, ICursorState, UICommand, UIResult?>? unselectNav = null) =>
+        new(this, EmptyNode.MakeUnselector(unselectNav));
+    
+    /// <summary>
+    /// Create a <see cref="UIRenderExplicit"/> that queries for the HTML subtree named `name`.
+    /// </summary>
+    public UIRenderExplicit Q(string name) => new(this, name);
 
     /// <summary>
     /// Mark all nodes on this screen as destroyed.
@@ -217,6 +240,8 @@ public class UIScreen : ITokenized {
     /// Call this method when the menu containing this screen is being destroyed.
     /// </summary>
     public void MarkScreenDestroyed() {
+        foreach (var r in Renderers)
+            r.MarkViewsDestroyed();
         foreach (var g in Groups)
             g.MarkNodesDestroyed();
         Tokens.DisposeAll();

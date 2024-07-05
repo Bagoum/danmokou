@@ -3,7 +3,7 @@ using BagoumLib.Reflection;
 using Newtonsoft.Json;
 
 namespace MiniProjects.PJ24 {
-[JsonConverter(typeof(SingletonSerializer<Trait>))]
+[JsonConverter(typeof(SingletonConverter<Trait>))]
 public abstract class Trait {
     public string Name { get; }
 
@@ -29,7 +29,11 @@ public abstract class Trait {
         private Glowing3() { }
         public static Glowing3 S { get; } = new();
     }
-    
+
+    public class Rotten : Trait {
+        private Rotten() { }
+        public static Rotten S { get; } = new();
+    }
     public class Sweet : Trait { 
         private Sweet() { }
         public static Sweet S { get; } = new();

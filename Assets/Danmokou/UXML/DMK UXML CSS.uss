@@ -6,7 +6,7 @@
     --accent-dark1: rgb(147, 92, 29);
 }
 
-.theme-goldaccent .disabled {
+.theme-goldaccent .node-disabled {
     --accent-pure: rgb(129, 128, 106);
 }
 
@@ -86,44 +86,44 @@
     flex-shrink: 1;
 }
 
-.node.invisible {
+.node.node-invisible {
     display: none;
     opacity: 0.7;
 }
 
-.node.visible {
+.node.node-visible {
     opacity: 0.7;
 }
 
-.node.visible.highvis {
+.node.node-visible.highvis {
     opacity: 0.8;
 }
 
-.node.group {
+.node.node-group {
     opacity: 0.85;
 }
 
-.node.selected {
+.node.node-selected {
     opacity: 0.85;
 }
 
-.node.group.highvis {
+.node.node-group.highvis {
     opacity: 0.92;
 }
 
-.node.group.select {
+.node.node-group.select {
     opacity: 0.92;
 }
 
-.node.disabled.group {
+.node.node-disabled.node-group {
     opacity: 0.52;
 }
 
-.node.disabled.focus {
+.node.node-disabled.node-focus {
     opacity: 0.6;
 }
 
-.node.disabled.visible {
+.node.node-disabled.node-visible {
     opacity: 0.48;
 }
 
@@ -178,9 +178,10 @@
 .pointer {
     background-image: url("project://database/Assets/Danmokou/Sprites/UI/ui%20arrow%20v2.png?fileID=21300000&guid=d2353f862cd1b1e46b20d4083f15d865&type=3#ui arrow v2");
     -unity-background-image-tint-color: var(--accent-pure);
+    opacity: 0;
 }
 
-.node.focus > .pointer {
+.node.node-focus > .pointer {
     opacity: 1;
 }
 
@@ -222,7 +223,7 @@
     white-space: normal;
 }
 
-.node.vnbacklog.focus #Speaker {
+.node.vnbacklog.node-focus #Speaker {
     -unity-background-image-tint-color: rgb(255, 255, 255);
 }
 
@@ -252,13 +253,13 @@
     border-bottom-width: 4px;
 }
 
-.node.focus > .body {
+.node.node-focus > .body {
     border-color: var(--accent-pure);
     background-image: url("project://database/Assets/Danmokou/Sprites/util/1u-square-featherlr-80pct-u-60pct.png?fileID=2800000&guid=630513b3f0593ae4bb16401ccea7e601&type=3#1u-square-featherlr-80pct-u-60pct");
     -unity-background-image-tint-color: var(--highlighter-70);
 }
 
-.node.header.selected > .body {
+.node.header.node-selected > .body {
     border-bottom-color: var(--accent-pure);
 }
 
@@ -316,7 +317,7 @@
     color: var(--accent-text);
 }
 
-.node.header.selected {
+.node.header.node-selected {
     opacity: 1;
 }
 
@@ -324,7 +325,7 @@
     border-color: var(--accent-dark1);
 }
 
-.node.saveentry.focus .body {
+.node.saveentry.node-focus .body {
     background-image: url("project://database/Assets/Danmokou/Sprites/util/1u-square-featherlr-90pct.png?fileID=2800000&guid=20a7ca53c3ccd9b4ebf9b8745c32a5f6&type=3#1u-square-featherlr-90pct");
     border-color: var(--accent-pure);
 }
@@ -390,7 +391,7 @@
     transition-duration: 0.3s;
 }
 
-.optionsselect.focus .body {
+.optionsselect.node-focus .body {
     text-overflow: ellipsis;
     background-image: url("project://database/Assets/Danmokou/Sprites/UI/UITK/optionsselectbox.png?fileID=21300000&guid=b45ebdf23b6201047bf3f6fe2d8d1ffa&type=3#optionsselectbox");
     -unity-background-image-tint-color: rgb(255, 255, 255);

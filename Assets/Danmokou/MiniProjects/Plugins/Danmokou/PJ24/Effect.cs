@@ -5,7 +5,7 @@ namespace MiniProjects.PJ24 {
 /// An type of effect, created when certain conditions are satisfied during crafting.
 /// <br/>Effect *types* are general. Individual items have <see cref="EffectInstance"/>.
 /// </summary>
-[JsonConverter(typeof(SingletonSerializer<Effect>))]
+[JsonConverter(typeof(SingletonConverter<Effect>))]
 public abstract class Effect {
     public string Name { get; }
 
@@ -62,8 +62,8 @@ public record EffectRequirement(int? MinScore, int? MaxScore, Effect Result) {
 public class EffectInstance {
     public Effect Type { get; }
 
-    public EffectInstance(Effect typ) {
-        Type = typ;
+    public EffectInstance(Effect type) {
+        Type = type;
     }
 }
 

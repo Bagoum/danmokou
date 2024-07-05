@@ -7,6 +7,7 @@ using System.Reactive.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using BagoumLib;
+using BagoumLib.Assertions;
 using BagoumLib.Culture;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
@@ -57,7 +58,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                 Data.DelayedState = Data.State;
             }));
             
-            var evidenceScreen = new UIScreen(menu, "EVIDENCE", UIScreen.Display.Basic) { 
+            var evidenceScreen = new UIScreen(menu, "EVIDENCE", UIScreen.Display.Default) { 
                 Builder = (s, ve) => {
                     //don't let events fall-through
                     s.HTML.pickingMode = PickingMode.Position;
@@ -300,7 +301,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                     ym.SayC(l109)
                 );
                 UpdateDataV(d => d.State = d.State with { IsStarting = false }, new() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
                 Yuyuko yu = null!;
                 await VN.Wait(() => (yu = VN.FindEntity<Yuyuko>()!) != null);
@@ -866,10 +867,10 @@ public class GhostOfThePastGameDef : ADVGameDef {
         }
         
         public record GOTPIdealizedState(Executing e) : ADVIdealizedState(e) {
-            protected override Task FadeIn() {
+            protected override Task FadeIn(ActualizeOptions options) {
                 return e.rgb.DoTransition(new RenderGroupTransition.Fade(e.rg, 0.7f)).Task;
             }
-            protected override Task FadeOut() {
+            protected override Task FadeOut(ActualizeOptions options) {
                 return e.rg.DoTransition(new RenderGroupTransition.Fade(e.rgb, 0.7f)).Task;
             }
         }

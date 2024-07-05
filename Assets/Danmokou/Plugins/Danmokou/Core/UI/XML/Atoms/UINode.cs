@@ -93,8 +93,17 @@ public class UINode {
 
     /// <summary>
     /// True iff the node is visible, regardless of whether the group is visible.
+    /// <br/>True by default, overridable by <see cref="IUIViewModel"/>.<see cref="IUIViewModel.ShouldBeVisible"/>.
     /// </summary>
-    public bool IsNodeVisible => (VisibleIf?.Invoke() ?? true);
+    public bool IsNodeVisible {
+        get {
+            for (int ii = 0; ii < Views.Count; ++ii)
+                if (!Views[ii].ViewModel.ShouldBeVisible(this))
+                    return false;
+            return true;
+        }
+    }
+        
     
     /// <summary>
     /// True iff the node is visible (as determined by <see cref="VisibleIf"/>) and the group is also visible.
@@ -102,9 +111,17 @@ public class UINode {
     public bool IsVisible => Group.Visible && IsNodeVisible;
     
     /// <summary>
-    /// True iff the node is enabled (true by default, overridable by <see cref="EnabledIf"/>).
+    /// True iff the node is enabled.
+    /// <br/>True by default, overridable by <see cref="IUIViewModel"/>.<see cref="IUIViewModel.ShouldBeEnabled"/>.
     /// </summary>
-    public bool IsEnabled => EnabledIf?.Invoke() ?? true;
+    public bool IsEnabled {
+        get {
+            for (int ii = 0; ii < Views.Count; ++ii)
+                if (!Views[ii].ViewModel.ShouldBeEnabled(this))
+                    return false;
+            return true;
+        }
+    }
     
     public bool AllowInteraction => (Passthrough != true) && Group.Interactable && IsNodeVisible;
     public int IndexInGroup => Group.Nodes.IndexOf(this);
@@ -142,19 +159,15 @@ public class UINode {
     /// </summary>
     public bool CacheOnEnter { private get; init; } = false;
     
-    /// <summary>
-    /// Provide a function that determines whether or not the node is visible.
-    ///  By default, a node is always visible.
-    /// <br/>Note that this does not override group visibility; if a group is not visible,
-    ///  none of its nodes will be visible.
-    /// </summary>
-    public Func<bool>? VisibleIf { private get; set; }
+    /// <inheritdoc cref="IUIViewModel.ShouldBeVisible"/>
+    public Func<bool>? VisibleIf {
+        set => RootView.VM.VisibleIf = value;
+    }
     
-    /// <summary>
-    /// Provide a function that determines whether or not the node is "enabled". A disabled node will
-    ///  not allow confirm or edit operations, but can still be navigated. By default, a node is always enabled.
-    /// </summary>
-    public Func<bool>? EnabledIf { get; init; }
+    /// <inheritdoc cref="IUIViewModel.ShouldBeEnabled"/>
+    public Func<bool>? EnabledIf {
+        set => RootView.VM.EnabledIf = value;
+    }
     /// <summary>
     /// Given the HTML of the RenderSpace, select the object under which to construct this node's HTML.
     /// <br/>If not overriden, uses h => h.
@@ -197,7 +210,8 @@ public class UINode {
         get => _showHideGroup;
         init {
             if (value != null) {
-                value.Visibility = new GroupVisibility.UpdateOnLeaveHide(value);
+                if (value.Visibility is not GroupVisibilityControl.UpdateOnLeaveHide)
+                    value.Visibility = new GroupVisibilityControl.UpdateOnLeaveHide(value);
                 value.Parent = Group;
             }
             _showHideGroup = value;
@@ -240,7 +254,7 @@ public class UINode {
     public UINode Bind<T>(T view) where T : IUIView {
         Views.Add(view);
         if (Built) {
-            view.Bind(this, HTML);
+            view.Bind(HTML);
             view.OnBuilt(this);
         }
         return this;
@@ -298,6 +312,7 @@ public class UINode {
                 return;
         #endif
             //don't fire pointer enter events if the renderer is animating out
+            //NB: UIController doesn't allow this command to cross screens, so any persistent screens are show-only
             if (AllowInteraction && Render.ShouldBeVisibleInTree) {
                 Controller.QueueInput(new UIPointerCommand.Goto(this));
                 evt.StopPropagation();
@@ -325,6 +340,8 @@ public class UINode {
             //Right click is handled as UIBack in InputManager. UIBack is global (it does not depend
             // on the current UINode), but click-to-confirm is done via callbacks specific to the UINode.
             if (AllowInteraction && evt.button == 0) {
+                //This event will not actually do anything unless the current node is this or null;
+                // see UIPointerCommand.ValidForCurrent
                 if (isInElement && startedClickHere)
                     Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Confirm, this));
                 foreach (var view in Views)
@@ -367,7 +384,7 @@ public class UINode {
         }
         AddCSSClasses();
         foreach (var view in Views)
-            view.Bind(this, HTML);
+            view.Bind(HTML);
         Built = true;
         RegisterEvents();
         foreach (var view in Views)
@@ -379,16 +396,25 @@ public class UINode {
         }));
     }
 
+    private List<IDisposable> Tokens { get; } = new();
     public UINode AddToken(IDisposable token) {
-        RootView.Tokens.Add(token);
+        Tokens.Add(token);
         return this;
     }
+
+    /// <summary>
+    /// Destroy this node when `obj` is destroyed.
+    /// </summary>
+    public void BindLifetime(IModelObject obj) => AddToken(obj.WhenDestroyed(this.Remove));
 
     public void MarkDestroyed() {
         if (Destroyed) return;
         Destroyed = true;
         foreach (var view in Views)
             view.OnDestroyed(this);
+        Views.Clear();
+        HTML.ClearBindings();
+        Tokens.DisposeAll();
     }
 
     public void Remove() {
@@ -459,21 +485,26 @@ public class UINode {
                 return new UIResult.StayOnNode(true);
             if (OnConfirm?.Invoke(this, cs) is { } cres)
                 return cres;
-            foreach (var view in Views)
-                if (view.ViewModel.OnConfirm(this, cs) is { } vmres)
+            for (int ii = 0; ii < Views.Count; ++ii)
+                if (Views[ii].ViewModel.OnConfirm(this, cs) is { } vmres)
                     return vmres;
         }
         if (req == UICommand.ContextMenu) {
-            foreach (var view in Views)
-                if (view.ViewModel.OnContextMenu(this, cs) is { } vmres)
+            for (int ii = 0; ii < Views.Count; ++ii)
+                if (Views[ii].ViewModel.OnContextMenu(this, cs) is { } vmres)
                     return vmres;
             return UIGroup.NoOp;
         }
         return NavigateInternal(req, cs);
     }
 
-    protected virtual UIResult NavigateInternal(UICommand req, ICursorState cs) => Group.Navigate(this, req);
-    
+    protected virtual UIResult NavigateInternal(UICommand req, ICursorState cs) {
+        for (int ii = 0; ii < Views.Count; ++ii)
+            if (Views[ii].ViewModel.Navigate(this, cs, req) is { } vmres)
+                return vmres;
+        return Group.Navigate(this, req);
+    }
+
     public void Enter(bool animate, ICursorState cs) {
         if (CacheOnEnter) Controller.TentativeCache(this);
         _ = ShowHideGroup?.Visibility.OnEnterGroup();
@@ -552,10 +583,14 @@ public class EmptyNode : UINode {
     public ICObservable<float> CreateCenterOffsetChildY(ICObservable<float> childY) =>
         Source!.CreateCenterOffsetChildY(childY);
     
-    public static EmptyNode MakeUnselector(Func<UINode, ICursorState, UIResult?>? unselectConfirm) =>
-        new(new FixedXMLView(new(new UnselectorFixedXML())
-                { OnConfirmer = (n, cs) => unselectConfirm?.Invoke(n, cs) ?? UIGroup.SilentNoOp }) 
-            { AsEmpty = true });
+    public static EmptyNode MakeUnselector(Func<UINode, ICursorState, UICommand, UIResult?>? unselectNav) =>
+        new(new FixedXMLView(new(new UnselectorFixedXML()) { 
+                Navigator = (n, cs, req) => {
+                    if (unselectNav?.Invoke(n, cs, req) is { } res)
+                        return res;
+                    return req == UICommand.Confirm ? UIGroup.SilentNoOp : null;
+                }
+            }) { AsEmpty = true });
 }
 
 public class PassthroughNode : UINode {
@@ -566,9 +601,9 @@ public class PassthroughNode : UINode {
 public class TwoLabelUINode : UINode {
     public TwoLabelUINode(LString description1, Func<string> description2, IObservable<Unit>? updater) : base(description1) {
         var view = new SimpleLabelView(description2, "Label2");
-        if (updater != null)
-            view.DirtyOn(updater);
         Bind(view);
+        if (updater != null)
+            AddToken(view.DirtyOn(updater));
     }
     public TwoLabelUINode(LString description1, ILabelViewModel vm) : base(description1) {
         Bind(new BaseLabelView<ILabelViewModel>(vm, "Label2"));
@@ -689,15 +724,15 @@ public abstract class BaseLROptionNode<T> : UINode, IDerivativeViewModel {
 }
 
 public class LROptionNode<T> : BaseLROptionNode<T>, ILROptionNode {
-    private class View : UIView<LROptionNode<T>> {
+    private class View : UIView<LROptionNode<T>>, IUIView {
         public View(LROptionNode<T> data) : base(data) { }
         public override void OnBuilt(UINode node) {
-            base.OnBuilt(node);
-            Node.HTML.Q<Label>("Key").text = Node.DescriptionOrEmpty;
+        base.OnBuilt(node);
+            HTML.Q<Label>("Key").text = node.DescriptionOrEmpty;
         }
 
         protected override BindingResult Update(in BindingContext context) {
-            Node.HTML.Q<Label>("Value").text = ViewModel.lastKey;
+            HTML.Q<Label>("Value").text = ViewModel.lastKey;
             return base.Update(in context);
         }
     }
@@ -732,9 +767,8 @@ public class LROptionNode<T> : BaseLROptionNode<T>, ILROptionNode {
     
     public LROptionNode(LString description, ITwoWayBinder<T> binder, Func<(LString, T)[]> values) : base(description, binder) {
         this.values = values;
-        var view = new View(this);
-        Bind(view);
-        (view as ITokenized).AddToken(binder.EvModelUpdated.Subscribe(_ => OnModelUpdated()));
+        Bind(new View(this));
+        AddToken(binder.ViewModel.EvModelUpdated.Subscribe(_ => OnModelUpdated()));
         SetIndexFromVal(binder.Value);
     }
     public LROptionNode(LString description, ITwoWayBinder<T> binder, (LString, T)[] values) : 
@@ -812,9 +846,8 @@ public class ComplexLROptionNode<T> : BaseLROptionNode<T>, IComplexLROptionNode 
         base(description, binder) {
         this.values = values;
         this.realizer = realizer;
-        var view = new View(this);
-        Bind(view);
-        (view as ITokenized).AddToken(binder.EvModelUpdated.Subscribe(_ => SetIndexFromVal(Value)));
+        Bind(new View(this));
+        AddToken(binder.ViewModel.EvModelUpdated.Subscribe(_ => SetIndexFromVal(Value)));
         SetIndexFromVal(binder.Value);
     }
 
@@ -841,7 +874,7 @@ public class ComplexLROptionNode<T> : BaseLROptionNode<T>, IComplexLROptionNode 
 public class KeyRebindInputNode : UINode, IUIViewModel {
     private readonly LString? title;
     public BindingUpdateTrigger UpdateTrigger { get; set; }
-    public Func<long>? OverrideHashHandler { get; set; }
+    public Func<long>? OverrideViewHash { get; set; }
     public long GetViewHash() => 0;
     private readonly KeyRebindInputNodeView view;
     private class KeyRebindInputNodeView : UIView<KeyRebindInputNode> {
@@ -938,7 +971,7 @@ public class KeyRebindInputNode : UINode, IUIViewModel {
 public class TextInputNode : UINode, IUIViewModel {
     private readonly LString? title;
     public BindingUpdateTrigger UpdateTrigger { get; set; }
-    public Func<long>? OverrideHashHandler { get; set; }
+    public Func<long>? OverrideViewHash { get; set; }
     public long GetViewHash() => (isEntryEnabled, DataWIP, bdCursorIdx).GetHashCode();
     private class TextInputNodeView : UIView<TextInputNode> {
         public TextInputNodeView(TextInputNode data) : base(data) { }
@@ -1020,10 +1053,10 @@ public class UIButton : UINode {
 
     private bool isConfirm = false;
     public ButtonType Type { get; }
-    private readonly Func<UIButton, UIResult> onClick;
+    private readonly Func<UIButton, UIResult>? onClick;
     private readonly bool requiresConfirm;
 
-    public UIButton(LString? descriptor, ButtonType type, Func<UIButton, UIResult> onClick) : base(descriptor) {
+    public UIButton(LString? descriptor, ButtonType type, Func<UIButton, UIResult>? onClick = null) : base(descriptor) {
         this.Type = type;
         RootView.EnterAnimation = ButtonEnterAnimation;
         RootView.LeaveAnimation = ButtonLeaveAnimation;
@@ -1061,11 +1094,13 @@ public class UIButton : UINode {
 
     protected override UIResult NavigateInternal(UICommand req, ICursorState cs) {
         if (req == UICommand.Confirm) {
-            if (requiresConfirm) {
-                // ReSharper disable once AssignmentInConditionalExpression
-                return (isConfirm = !isConfirm) ? new UIResult.StayOnNode(false) : onClick(this);
-            } else
-                return onClick(this);
+            if (requiresConfirm && !isConfirm) {
+                isConfirm = true;
+                return new UIResult.StayOnNode(false);
+            } else {
+                isConfirm = false;
+                return onClick?.Invoke(this) ?? base.NavigateInternal(req, cs);
+            }
         }
         return base.NavigateInternal(req, cs);
     }

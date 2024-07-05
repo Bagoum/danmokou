@@ -89,7 +89,7 @@ public class WPGameDef : ADVGameDef {
 
         /// <inheritdoc/>
         public override void ADVDataFinalized() {
-            var evidenceScreen = new UIScreen(menu, "EVIDENCE", UIScreen.Display.Basic) { 
+            var evidenceScreen = new UIScreen(menu, "EVIDENCE", UIScreen.Display.Default) { 
                 Builder = (s, ve) => {
                     //don't let events fall-through
                     s.HTML.pickingMode = PickingMode.Position;
@@ -917,10 +917,10 @@ public class WPGameDef : ADVGameDef {
             );
         
         public record WPIdealizedState(Executing e) : ADVIdealizedState(e) {
-            protected override Task FadeIn() {
+            protected override Task FadeIn(ActualizeOptions options) {
                 return e.rgb.DoTransition(new RenderGroupTransition.Fade(e.rg, 0.7f)).Task;
             }
-            protected override Task FadeOut() {
+            protected override Task FadeOut(ActualizeOptions options) {
                 return e.rg.DoTransition(new RenderGroupTransition.Fade(e.rgb, 0.7f)).Task;
             }
         }

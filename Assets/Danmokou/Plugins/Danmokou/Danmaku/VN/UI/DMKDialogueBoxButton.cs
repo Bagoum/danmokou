@@ -30,10 +30,13 @@ public class DMKDialogueBoxButton : DialogueBoxButton, IFixedXMLReceiver {
                 State.Value &= (ButtonState.All ^ ButtonState.Hide);
         });
     }
-    
-    public UIResult OnConfirm(UINode n, ICursorState _) {
-        OnPointerClick(null!);
-        return new UIResult.StayOnNode();
+
+    UIResult? IFixedXMLReceiver.Navigate(UINode n, ICursorState cs, UICommand req) {
+        if (req == UICommand.Confirm) {
+            OnPointerClick(null!);
+            return new UIResult.StayOnNode();
+        }
+        return null;
     }
 
     public void OnEnter(UINode n, ICursorState cs) => OnPointerEnter(null!);

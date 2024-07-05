@@ -9,6 +9,7 @@
     }
   ],
   "dependencies": {
+    "com.unity.2d.aseprite": "1.1.4",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.ext.nunit": "2.0.5",
     "com.unity.ide.rider": "3.0.28",

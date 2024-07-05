@@ -18,24 +18,67 @@ using Helpers = SuzunoyaUnity.Helpers;
 namespace Danmokou.UI.XML {
 public abstract class UIRenderSpace {
     protected List<UIGroup> Sources { get; } = new();
+    protected List<IUIView> Views { get; } = new();
     private VisualElement? _html = null;
-    protected abstract VisualElement LoadHTML();
+    protected abstract VisualElement _FirstLoadHTML();
     public VisualElement HTML {
         get {
             if (_html is null) {
-                _html = LoadHTML() ?? throw new Exception("Couldn't load HTML");
-                FastUpdateVisibility();
+                _html = _FirstLoadHTML() ?? throw new Exception("Couldn't load HTML");
+                LocalUpdateVisibility(true);
+                for (var ii = 0; ii < Views.Count; ii++)
+                    Views[ii].Bind(_html);
             }
             return _html;
         }
     }
     public UIScreen Screen { get; }
     public UIRenderSpace? Parent { get; }
-    public LazyEvented<bool> IsVisible { get; }
+    public LazyEvented<bool> IsHTMLVisible { get; }
     protected virtual bool ShouldBeVisibleBase => !VisibleWhenSourcesVisible || HasVisibleSource;
     private bool? ShouldBeVisibleOverride { get; set; }
     protected bool ShouldBeVisible => ShouldBeVisibleOverride ?? ShouldBeVisibleBase;
-    public bool ShouldBeVisibleInTree => ShouldBeVisible && (Parent?.ShouldBeVisible ?? true);
+    public bool ShouldBeVisibleInTree => ShouldBeVisible && (Parent?.ShouldBeVisibleInTree ?? true);
+    
+    /// <summary>
+    /// True if this render space is allowed to modify the HTML visibility. If false, will not run any
+    ///  updates to HTML when the value of <see cref="IsHTMLVisible"/> changes.
+    /// </summary>
+    protected virtual bool ControlsHTML => true;
+
+    /// <summary>
+    /// List of (descendant) render spaces who may run animations when this render's visibility changes.
+    /// </summary>
+    private List<UIRenderSpace> VisibilityDependents { get; } = new();
+
+    /// <summary>
+    /// By default, render spaces will not animate out if a parent space is already rendering out.
+    /// <br/>If this is set to true, then such animations will be allowed.
+    /// </summary>
+    public bool AnimateOutWithParent { get; set; } = false;
+
+    private bool _useTreeForHTMLVisibility = false;
+
+    /// <summary>
+    /// By default, the visibility of a render space's HTML is set and animated independently of its parent,
+    ///  though any ancestor HTML being invisible will also make any descendant HTML invisible.
+    /// <br/>When this is set, the local HTML visibility will only be set to true if all ancestors are also visible.
+    /// <br/>This is only really useful for animations, since in some cases we want to play animations
+    ///  on child render groups that are otherwise always visible based on when the parent's visibility changes.
+    /// <br/>This also sets <see cref="AnimateOutWithParent"/> to true.
+    /// </summary>
+    public UIRenderSpace UseTreeVisible() {
+        _useTreeForHTMLVisibility = true;
+        AnimateOutWithParent = true;
+        for (var p = Parent; p != null; p = p.Parent)
+            p.VisibilityDependents.Add(this);
+        return this;
+    }
+    
+    /// <summary>
+    /// If set to true, then the the HTML for a render group will be disabled unless at least one group
+    ///  that renders to this renderspace (or to a child renderspace) is visible.
+    /// </summary>
     public bool VisibleWhenSourcesVisible { get; set; } = false;
     public bool HasVisibleSource {
         get {
@@ -72,33 +115,67 @@ public abstract class UIRenderSpace {
     public Func<UIRenderSpace, ICancellee, Task>? IsNotVisibleAnimation { get; set; }
     public bool IsFirstRender { get; set; } = true;
     public bool IsAnimating => animateToken?.Cancelled is false;
-    protected ICancellable? animateToken;
+    protected Cancellable? animateToken;
 
     public UIRenderSpace(UIScreen screen, UIRenderSpace? parent) {
         this.Screen = screen;
         this.Parent = parent;
-        IsVisible = new(() => ShouldBeVisible);
+        IsHTMLVisible = new(() => _useTreeForHTMLVisibility ? ShouldBeVisibleInTree : ShouldBeVisible);
+        Screen.Renderers.Add(this);
     }
 
-    private async Task AnimateIn(bool first, Func<UIRenderSpace, ICancellee, Task> entry) {
-        animateToken?.Cancel();
-        var cT = animateToken = new Cancellable();
-        if (first) cT.SoftCancel();
+    private List<Task> UpdateVisibilityDependents() {
+        var tasks = new List<Task>();
+        for (int ii = 0; ii < VisibilityDependents.Count; ++ii)
+            if (VisibilityDependents[ii].LocalUpdateVisibility() is {IsCompletedSuccessfully:false} t)
+                tasks.Add(t);
+        return tasks;
+    }
+    private Task? AnimateIn(bool skip, Func<UIRenderSpace, ICancellee, Task>? entry) {
         HTML.style.display = DisplayStyle.Flex;
-        await entry(this, cT);
-        if (animateToken == cT)
-            animateToken = null;
+        if (!skip && VisibilityDependents.Count > 0) {
+            var tasks = UpdateVisibilityDependents();
+            if (entry is not null)
+                tasks.Add(entry(this, Cancellable.Replace(ref animateToken)));
+            return Task.WhenAll(tasks);
+        } else if (entry is not null) {
+            var cT = Cancellable.Replace(ref animateToken);
+            if (skip) 
+                cT.SoftCancel();
+            return entry(this, cT);
+        } else
+            return null;
+            
     }
 
-    private async Task AnimateOut(bool first, Func<UIRenderSpace, ICancellee, Task> exit) {
-        animateToken?.Cancel();
-        var cT = animateToken = new Cancellable();
-        if (first) cT.SoftCancel();
-        else HTML.style.display = DisplayStyle.Flex;
-        await exit(this, cT);
-        HTML.style.display = DisplayStyle.None;
-        if (animateToken == cT)
-            animateToken = null;
+    private Task? AnimateOut(bool skip, Func<UIRenderSpace, ICancellee, Task>? exit) {
+        //don't do anything if a parent renderer is disappearing
+        if (!skip && !AnimateOutWithParent && Parent?.ShouldBeVisibleInTree is false)
+            return null;
+        if (!skip && VisibilityDependents.Count > 0) {
+            HTML.style.display = DisplayStyle.Flex;
+            var tasks = UpdateVisibilityDependents();
+            var cT = Cancellable.Replace(ref animateToken);
+            if (exit is not null)
+                tasks.Add(exit(this, cT));
+            return Task.WhenAll(tasks).ContinueWithSync(() => {
+                if (!cT.IsHardCancelled())
+                    HTML.style.display = DisplayStyle.None;
+            });
+        } else if (exit is not null) {
+            var cT = Cancellable.Replace(ref animateToken);
+            if (skip) 
+                cT.SoftCancel();
+            else 
+                HTML.style.display = DisplayStyle.Flex;
+            return exit(this, cT).ContinueWithSync(() => {
+                if (!cT.IsHardCancelled())
+                    HTML.style.display = DisplayStyle.None;
+            });
+        } else {
+            HTML.style.display = DisplayStyle.None;
+            return null;
+        }
     }
 
     /// <summary>
@@ -107,7 +184,7 @@ public abstract class UIRenderSpace {
     /// </summary>
     public Task OverrideVisibility(bool? visible) {
         ShouldBeVisibleOverride = visible;
-        return UpdateVisibility();
+        return LocalUpdateVisibility();
     }
     
     /// <summary>
@@ -118,40 +195,61 @@ public abstract class UIRenderSpace {
         return null;
     }
 
-    public void FastUpdateVisibility() => UpdateVisibility(true);
-
-    protected Task UpdateVisibility(bool fastUpdate = false) {
-        var oldVis = IsVisible.Value;
-        IsVisible.Recompute();
-        var newVis = IsVisible.Value;
-        Task? t = null;
-        if (_html != null) {
-            var skipAnim = IsFirstRender || fastUpdate;
-            IsFirstRender = false;
-            if (newVis && (skipAnim || !oldVis) && IsVisibleAnimation is {} entry) {
-                t = AnimateIn(skipAnim, entry);
-            } else if (!newVis && (skipAnim || oldVis) && IsNotVisibleAnimation is { } exit) {
-                t = AnimateOut(skipAnim, exit);
-            } else if ((newVis != oldVis && Parent?.ShouldBeVisibleInTree is not false) || skipAnim)
-                //don't directly modify display if a parent renderer is disappearing
-                HTML.style.display = newVis.ToStyle();
-        }
-        return t.And(Parent?.UpdateVisibility(fastUpdate));
+    //visibility changes due to group dependencies must be cascaded upwards
+    public Task UpdateVisibility(bool fast = false) {
+        return LocalUpdateVisibility(fast).And(Parent?.UpdateVisibility(fast));
     }
 
+    protected Task LocalUpdateVisibility(bool fast = false) {
+        var oldVis = IsHTMLVisible.Value;
+        IsHTMLVisible.Recompute();
+        var newVis = IsHTMLVisible.Value;
+        Task? t = null;
+        if (_html != null && ControlsHTML) {
+            var ifr = IsFirstRender;
+            IsFirstRender = false;
+            var skipAnim = ifr || fast;
+            if (newVis && (ifr || !oldVis))
+                t = AnimateIn(skipAnim, IsVisibleAnimation);
+            else if (!newVis && (ifr || oldVis))
+                t = AnimateOut(skipAnim, IsNotVisibleAnimation);
+        }
+        return t ?? Task.CompletedTask;
+    }
+    
+    /// <summary>
+    /// Add an <see cref="IUIView"/> directly to the HTML for this render space.
+    /// </summary>
+    public UIRenderSpace WithView(IUIView view) {
+        Views.Add(view);
+        if (_html is not null)
+            view.Bind(HTML);
+        else if (Screen.Built)
+            _ = HTML;
+        return this;
+    }
+    
+    public void MarkViewsDestroyed() {
+        Views.Clear();
+        HTML.ClearBindings();
+    }
+
+    //NB: there seems to be a UITK issue where if you hide an element after setting its scaled size to 0,
+    // it may not redraw properly when scaled back up to normal size.
+    //As such, these hide animations scale to 0.01 (and are set to display:none afterwards).
     public static readonly Func<UIRenderSpace, ICancellee, Task> TooltipVisibleAnim =
         (rs, cT) => rs.MakeTask(rs.HTML.transform.ScaleTo(Vector3.one, 0.4f, Easers.EOutBack, cT),
             rs.HTML.style.FadeTo(1, .25f, cT: cT));
     
     public static readonly Func<UIRenderSpace, ICancellee, Task> TooltipNotVisibleAnim =
-        (rs, cT) => rs.MakeTask(rs.HTML.transform.ScaleTo(Vector3.zero, 0.25f, null, cT),
+        (rs, cT) => rs.MakeTask(rs.HTML.transform.ScaleTo(new Vector3(0.01f, 0.01f, 0.01f), 0.25f, null, cT),
             rs.HTML.style.FadeTo(0, .25f, cT: cT));
     
     public static readonly Func<UIRenderSpace, ICancellee, Task> PopupVisibleAnim =
         (rs, cT) => rs.MakeTask(rs.HTML.transform.ScaleTo(new Vector3(1, 1, 1), .2f, Easers.EOutSine, cT: cT));
     
     public static readonly Func<UIRenderSpace, ICancellee, Task> PopupNotVisibleAnim =
-        (rs, cT) => rs.MakeTask(rs.HTML.transform.ScaleTo(new Vector3(1, 0, 1), .12f, Easers.EIOSine, cT: cT));
+        (rs, cT) => rs.MakeTask(rs.HTML.transform.ScaleTo(new Vector3(1, 0.01f, 1), .12f, Easers.EIOSine, cT: cT));
 
     public UIRenderSpace WithTooltipAnim() {
         IsVisibleAnimation = TooltipVisibleAnim;
@@ -165,6 +263,11 @@ public abstract class UIRenderSpace {
         return this;
     }
 
+    public UIRenderSpace UseSourceVisible() {
+        VisibleWhenSourcesVisible = true;
+        return this;
+    }
+
     public Task MakeTask(params ITransition[] tweens) =>
         //stepTryPrepend is important so first-frame cancellation takes place immediately
         Task.WhenAll(tweens.Select(t => t.Run(Controller)));
@@ -172,26 +275,27 @@ public abstract class UIRenderSpace {
     public Task AddSource(UIGroup grp) {
         if (!Sources.Contains(grp)) {
             Sources.Add(grp);
-            return UpdateVisibility().And(Parent?.AddSource(grp));
+            return (Parent?.AddSource(grp)).And(LocalUpdateVisibility());
         } else
             return Task.CompletedTask;
     }
 
     public Task RemoveSource(UIGroup grp) {
         if (Sources.Remove(grp)) {
-            return UpdateVisibility().And(Parent?.RemoveSource(grp));
+            return (Parent?.RemoveSource(grp)).And(LocalUpdateVisibility());
         } else
             return Task.CompletedTask;
     }
 
-    public Task SourceBecameVisible(UIGroup grp) => UpdateVisibility();
-
-    public Task SourceBecameHidden(UIGroup grp) => UpdateVisibility();
-
     public UIRenderConstructed Construct(VisualTreeAsset prefab,
         Action<UIRenderConstructed, VisualElement>? builder = null) => new UIRenderConstructed(this, prefab, builder);
     
-    public UIRenderColumn ColumnRender(int index) => new(this, index);
+    public UIRenderColumn Col(int index) => new(this, index);
+
+    /// <summary>
+    /// Create a <see cref="UIRenderExplicit"/> that queries for the HTML subtree named `name`.
+    /// </summary>
+    public UIRenderExplicit Q(string name) => new(this, name);
 }
 
 /// <summary>
@@ -199,10 +303,14 @@ public abstract class UIRenderSpace {
 /// </summary>
 public class UIRenderExplicit : UIRenderSpace {
     private readonly Func<VisualElement, VisualElement> htmlFinder;
-    protected override VisualElement LoadHTML() => htmlFinder(Parent!.HTML);
+    protected override VisualElement _FirstLoadHTML() => htmlFinder(Parent!.HTML);
 
     public UIRenderExplicit(UIRenderSpace parent, Func<VisualElement, VisualElement> htmlFinder) : base(parent.Screen, parent) {
         this.htmlFinder = htmlFinder;
+    }
+    
+    public UIRenderExplicit(UIRenderSpace parent, string htmlName) : base(parent.Screen, parent) {
+        this.htmlFinder = ve => ve.Q(htmlName);
     }
 }
 
@@ -210,12 +318,12 @@ public class UIRenderExplicit : UIRenderSpace {
 /// A render space that renders directly to the screen HTML.
 /// </summary>
 public class UIRenderScreen : UIRenderSpace {
-    protected override VisualElement LoadHTML() => Screen.HTML;
-    protected override bool ShouldBeVisibleBase => Screen.ScreenIsActive;
+    protected override VisualElement _FirstLoadHTML() => Screen.HTML;
+    protected override bool ShouldBeVisibleBase => Screen.State.Value >= UIScreenState.InactiveGoingActive;
+    protected override bool ControlsHTML => false;
 
     public UIRenderScreen(UIScreen screen) : base(screen, null) {
-        screen.Tokens.Add(screen.OnEnterStart.Subscribe(_ => UpdateVisibility()));
-        screen.Tokens.Add(screen.OnExitEnd.Subscribe(_ => UpdateVisibility()));
+        screen.Tokens.Add(screen.State.Subscribe(_ => LocalUpdateVisibility()));
     }
 }
 
@@ -223,12 +331,12 @@ public class UIRenderScreen : UIRenderSpace {
 /// A render space that renders directly to the screen container.
 /// </summary>
 public class UIRenderScreenContainer : UIRenderSpace {
-    protected override VisualElement LoadHTML() => Screen.Container;
-    protected override bool ShouldBeVisibleBase => Screen.ScreenIsActive;
+    protected override VisualElement _FirstLoadHTML() => Screen.Container;
+    protected override bool ShouldBeVisibleBase => Screen.State.Value >= UIScreenState.InactiveGoingActive;
+    protected override bool ControlsHTML => false;
 
     public UIRenderScreenContainer(UIScreen screen) : base(screen, null) {
-        screen.Tokens.Add(screen.OnEnterStart.Subscribe(_ => UpdateVisibility()));
-        screen.Tokens.Add(screen.OnExitEnd.Subscribe(_ => UpdateVisibility()));
+        screen.Tokens.Add(screen.State.Subscribe(_ => LocalUpdateVisibility()));
     }
 }
 
@@ -241,12 +349,12 @@ public class UIRenderScreenContainer : UIRenderSpace {
 /// </summary>
 public class UIRenderAbsoluteTerritory : UIRenderSpace {
     private readonly VisualElement absTerr;
-    protected override VisualElement LoadHTML() => absTerr;
+    protected override VisualElement _FirstLoadHTML() => absTerr;
     /// <summary>
     /// Alpha of the darkened overlay when fully visible.
     /// Can be overriden by <see cref="PopupUIGroup.OverlayAlphaOverride"/>.
     /// </summary>
-    public float Alpha { get; set; } = 0.5f;
+    public float Alpha { get; set; } = 0.6f;
     private float GetTargetAlpha() {
         float? a = null;
         for (int ii = 0; ii < Sources.Count; ++ii)
@@ -255,7 +363,8 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
         return a ?? Alpha;
     }
 
-    protected override bool ShouldBeVisibleBase => Screen.ScreenIsActive && HasVisibleSource;
+    protected override bool ShouldBeVisibleBase => 
+        Screen.State.Value >= UIScreenState.InactiveGoingActive && HasVisibleSource;
 
     public UIRenderAbsoluteTerritory(UIScreen screen) : base(screen, null) {
         absTerr = Screen.HTML.Query("AbsoluteContainer");
@@ -278,9 +387,7 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
                 TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, 0, .12f,
                     a => HTML.style.backgroundColor = Helpers.WithA(bgc, a), cT: cT));
         };
-        //_ = UpdateVisibility().ContinueWithSync();
-        screen.Tokens.Add(screen.OnEnterStart.Subscribe(_ => UpdateVisibility()));
-        screen.Tokens.Add(screen.OnExitEnd.Subscribe(_ => UpdateVisibility()));
+        screen.Tokens.Add(screen.State.Subscribe(_ => LocalUpdateVisibility()));
     }
 }
 
@@ -289,11 +396,11 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
 /// </summary>
 public class UIRenderColumn : UIRenderSpace {
     public int Index { get; }
-    protected override VisualElement LoadHTML() {
+    protected override VisualElement _FirstLoadHTML() {
         var col = Parent!.HTML.Query(className: "column").ToList()[Index];
         var colScroll = col.Query<ScrollView>().ToList();
         if (colScroll.Count > 0)
-            return colScroll[0];
+            return colScroll[0].FixScrollSize();
         return col;
     }
 
@@ -312,7 +419,7 @@ public class UIRenderConstructed : UIRenderSpace {
     private readonly UIRenderSpace parent;
     private readonly Either<VisualTreeAsset, Func<VisualElement, VisualElement>> prefab;
     private readonly Action<UIRenderConstructed, VisualElement>? builder;
-    protected override VisualElement LoadHTML() {
+    protected override VisualElement _FirstLoadHTML() {
         VisualElement html;
         if (prefab.TryL(out var vta))
             parent.HTML.Add(html = vta.CloneTreeNoContainer());
@@ -340,10 +447,12 @@ public class UIRenderConstructed : UIRenderSpace {
     /// Delete this renderer's HTML and clear its sources.
     /// </summary>
     public void Destroy() {
+        MarkViewsDestroyed();
         for (int ii = 0; ii < Sources.Count; ++ii)
             Parent?.RemoveSource(Sources[ii]);
         Sources.Clear();
         parent.HTML.Remove(HTML);
+        Screen.Renderers.Remove(this);
     }
 }
 

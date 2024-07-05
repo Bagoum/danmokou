@@ -23,11 +23,10 @@ public static partial class XMLHelpers {
         public SaveLoadDataView(SaveLoadData data) : base(data) { }
 
         protected override BindingResult Update(in BindingContext context) {
-            var n = Node;
-            var title = n.HTML.Q<Label>("Title");
+            var title = HTML.Q<Label>("Title");
             title.text = $"Save #{ViewModel.i + 1}";
-            var desc = n.HTML.Q<Label>("Description");
-            var bg = n.HTML.Q("SS");
+            var desc = HTML.Q<Label>("Description");
+            var bg = HTML.Q("SS");
             if (ViewModel.Save is { } save) {
                 title.RemoveFromClassList("saveentry-title-unset");
                 desc.text = save.Description;

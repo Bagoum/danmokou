@@ -10,7 +10,7 @@
             </engine:VisualElement>
             <engine:VisualElement name="AlchemyLv" style="flex-grow: 0; justify-content: space-between; flex-direction: row;">
                 <engine:Label text="Alchemy Lv" name="Left" />
-                <engine:Label text="42" name="Right" />
+                <engine:Label text="69" name="Right" />
             </engine:VisualElement>
             <engine:VisualElement name="SuccessRate" style="flex-grow: 0; justify-content: space-between; flex-direction: row;">
                 <engine:Label text="Success Rate" name="Left" />

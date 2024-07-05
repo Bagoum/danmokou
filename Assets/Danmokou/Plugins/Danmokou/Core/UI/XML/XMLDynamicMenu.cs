@@ -23,7 +23,7 @@ public class XMLDynamicMenu : UIController, IFreeformContainer {
     public UINode Unselect { get; private set; } = null!;
     private readonly List<UIScreen> dynamicScreens = new();
 
-    public OverrideEvented<Func<UINode, ICursorState, UIResult?>?> HandleDefaultUnselectConfirm { get; } = new(null);
+    public OverrideEvented<Func<UINode, ICursorState, UICommand, UIResult?>?> HandleDefaultUnselectNav { get; } = new(null);
     public UIFreeformGroup FreeformGroup { get; private set; } = null!;
 
 
@@ -35,7 +35,7 @@ public class XMLDynamicMenu : UIController, IFreeformContainer {
     //most menus are defined in FirstFrame, but since XMLDynamicMenu is consumed as a service, it's useful
     // to construct it in Awake
     private void Awake() {
-        Unselect = EmptyNode.MakeUnselector(DefaultUnselectorConfirm);
+        Unselect = EmptyNode.MakeUnselector(DefaultUnselectorNav);
         MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => {
                 //Allow clicks to fallthrough if they don't hit any nodes on this menu
@@ -55,7 +55,7 @@ public class XMLDynamicMenu : UIController, IFreeformContainer {
     /// <br/>By default, the screen does not allow fallthrough clicks
     /// (this can be configured by setting `HTML.pickingMode` in `<paramref name="builder"/>`).
     /// </summary>
-    public (UIScreen, UIFreeformGroup) MakeScreen(Func<UINode, ICursorState, UIResult?>? unselectConfirm, Action<UIScreen, VisualElement>? builder = null) {
+    public (UIScreen, UIFreeformGroup) MakeScreen(Func<UINode, ICursorState, UICommand, UIResult?>? unselectNav, Action<UIScreen, VisualElement>? builder = null) {
         var s = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = builder ?? ((s, ve) => {
                 //Block fallthrough clicks
@@ -64,7 +64,7 @@ public class XMLDynamicMenu : UIController, IFreeformContainer {
             }),
             UseControlHelper = false
         };
-        var gr = s.AddFreeformGroup(unselectConfirm);
+        var gr = s.AddFreeformGroup(unselectNav);
         AddScreen(s);
         return (s, gr);
     }
@@ -80,8 +80,7 @@ public class XMLDynamicMenu : UIController, IFreeformContainer {
         return s;
     }
 
-    public UIResult DefaultUnselectorConfirm(UINode n, ICursorState cs) =>
-        HandleDefaultUnselectConfirm.Value?.Invoke(n, cs) ??
-        UIGroup.SilentNoOp;
+    public UIResult? DefaultUnselectorNav(UINode n, ICursorState cs, UICommand req) =>
+        HandleDefaultUnselectNav.Value?.Invoke(n, cs, req);
 }
 }

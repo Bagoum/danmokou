@@ -36,7 +36,7 @@ public class AxisView : UIView<AxisViewModel>, IUIView {
 
     public override void OnBuilt(UINode node) {
         base.OnBuilt(node);
-        Node.RootView.DisableAnimations();
+        node.RootView.DisableAnimations();
     }
 
     public void OnEnter(UINode node, ICursorState cs, bool animate) {
@@ -59,7 +59,7 @@ public class AxisView : UIView<AxisViewModel>, IUIView {
         var scale = isSel ? 2 : 1;
         var alpha = isSel ? 1 : 0.7f;
         var color = (Node.IsEnabled ? Color.white: Color.gray).WithA(alpha);
-        var tr = Node.HTML.transform;
+        var tr = HTML.transform;
         Cancellable.Replace(ref canceller);
         Node.Controller.PlayAnimation(Node.HTML.GoToLeftTop(
             UIBuilderRenderer.ToXMLOffset(myLoc), 0.6f, Easers.EOutSine, canceller));

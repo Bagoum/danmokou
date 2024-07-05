@@ -215,6 +215,18 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "ルナチャイルド"))
 			{ ID = "dialogue.luna" };
 		
+		public static readonly LString mizuchi = new LText("Miyadeguchi Mizuchi",
+			(Locales.JP, "宮出口瑞霊"))
+			{ ID = "dialogue.mizuchi" };
+		
+		public static readonly LString koishi = new LText("Komeiji Koishi",
+			(Locales.JP, "古明地こいし"))
+			{ ID = "dialogue.koishi" };
+		
+		public static readonly LString chimata = new LText("Tenkyuu Chimata",
+			(Locales.JP, "天弓千亦"))
+			{ ID = "dialogue.chimata" };
+		
 	}
 }
 }

@@ -17,13 +17,13 @@ public class PropTwoWayBinder<T> : TwoWayBinder<T> {
     protected override T GetInner() => (T)property.InvokeInst(model.Value)!;
     protected override void SetInner(T value) => property.SetInst(model.Value, value!);
     
-    public PropTwoWayBinder(IUIViewModel vm, string prop) : this(vm, prop, vm) { }
+    public PropTwoWayBinder(IVersionedUIViewModel vm, string prop) : this(vm, prop, vm) { }
 
-    public PropTwoWayBinder(object model, string prop, IUIViewModel? vm) : base(vm) {
+    public PropTwoWayBinder(object model, string prop, IVersionedUIViewModel? vm) : base(vm) {
         this.model = model;
         this.property = FindMember(model.GetType(), prop);
     }
-    public PropTwoWayBinder(Func<object> model, string prop, IUIViewModel? vm) : base(vm) {
+    public PropTwoWayBinder(Func<object> model, string prop, IVersionedUIViewModel? vm) : base(vm) {
         this.model = model;
         this.property = FindMember(model().GetType(), prop);
     }

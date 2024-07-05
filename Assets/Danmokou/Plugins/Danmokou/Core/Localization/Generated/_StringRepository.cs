@@ -15,6 +15,9 @@ namespace Danmokou.Core {
 [LocalizationStringsRepo]
 public static partial class LocalizedStrings {
 	private static readonly Dictionary<string, LString> _allDataMap = new Dictionary<string, LString>() {
+		{ "dialogue.chimata", DialogueMetadata.chimata },
+		{ "dialogue.koishi", DialogueMetadata.koishi },
+		{ "dialogue.mizuchi", DialogueMetadata.mizuchi },
 		{ "dialogue.luna", DialogueMetadata.luna },
 		{ "dialogue.sunny", DialogueMetadata.sunny },
 		{ "dialogue.star", DialogueMetadata.star },

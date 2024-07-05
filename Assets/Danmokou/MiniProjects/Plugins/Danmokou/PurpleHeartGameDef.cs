@@ -5,6 +5,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using BagoumLib;
+using BagoumLib.Assertions;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Tasks;
@@ -153,7 +154,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     y.ESayC("happy", l50)
                 );
                 UpdateDataV(p => p.State = State.S2_1_DoremyEntry, new() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
                 Doremy d = null!;
                 await VN.Wait(() => (d = VN.FindEntity<Doremy>()!) != null);
@@ -240,7 +241,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     y.ESayC("happy", l110)
                 );
                 UpdateDataV(p => p.State = State.S4_ToMistyLake, new() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
             });
             var s4sanae = Context("s4sanae", async () => {
@@ -286,7 +287,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                 );
                 c.Emote.RevokeOverride();
                 UpdateDataV(p => p.State = State.S5_ToRavine, new() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
             });
             var s5cirno = Context("s5cirno", async () => {
@@ -326,7 +327,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     i.ESayC("happy", l172)
                 );
                 UpdateDataV(p => p.State = State.S6_BackToMistyLake, new() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
             });
             var s6iku = Context("s6iku", async () => {
@@ -354,7 +355,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     y.ESayC("worry", l190)
                 );
                 UpdateDataV(p => p.State = State.S6_1_SeigaTransform, new MapStateTransitionSettings<PHIdealizedState>() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
                 Seiga s = null!;
                 await VN.Wait(() => (s = VN.FindEntity<Seiga>()!) != null);
@@ -455,7 +456,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     r.ESayC("happy", l253)
                 );
                 await UpdateData(p => p.State = State.S7_1_SanaeTransform, new() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
                 var s = VN.Find<Sanae>();
                 await VN.Sequential(
@@ -463,7 +464,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     s.SayC(l256)
                 );
                 await UpdateData(p => p.State = State.S8_RavineReimu, new() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
                 await y.ESayC("worry", l257);
             });
@@ -491,7 +492,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     y.ESayC("angry", l272)
                 );
                 UpdateDataV(p => p.State = State.S9_BackToHouse, new() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
             });
             var s9reimu = Context("s9reimu", () =>
@@ -558,7 +559,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     y.SayC(l313)
                 );
                 UpdateDataV(p => p.State = State.S10_RavineMarisa, new() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
             });
 
@@ -592,7 +593,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                 HideMD();
                 await rg.DoTransition(new RenderGroupTransition.Fade(rgp, 2f));
                 //vn.RunBGM("php.seiga");
-                md.RenderGroup.Value = rgp;
+                Md.RenderGroup.Value = rgp;
                 ShowMD();
                 await VN.Sequential(
                     m.ESayC("surprise", l326),
@@ -603,7 +604,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                 );
                 HideMD();
                 await rgp.DoTransition(new RenderGroupTransition.Fade(rg, 2f));
-                md.RenderGroup.Value = rg;
+                Md.RenderGroup.Value = rg;
                 await r.SetEmote("");
                 ShowMD();
                 await VN.Sequential(
@@ -637,7 +638,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                 );
                 HideMD();
                 await rg.DoTransition(new RenderGroupTransition.Fade(rgp, 2f));
-                md.RenderGroup.Value = rgp;
+                Md.RenderGroup.Value = rgp;
                 ShowMD();
                 await VN.Sequential(
                     y.ESayC("cry", l342),
@@ -652,7 +653,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                 );
                 HideMD();
                 await rgp.DoTransition(new RenderGroupTransition.Fade(rg, 2f));
-                md.RenderGroup.Value = rg;
+                Md.RenderGroup.Value = rg;
                 ShowMD();
                 await VN.Sequential(
                     y.SayC(l351),
@@ -661,7 +662,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     y.ESayC("angry", l354)
                 );
                 UpdateDataV(p => p.State = State.S12_SelfAtRavine, new() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
             });
 
@@ -675,7 +676,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                 );
                 y.Emote.RevokeOverride();
                 UpdateDataV(p => p.State = State.S13_HouseReimu, new() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
             });
 
@@ -717,9 +718,9 @@ public class PurpleHeartGameDef : ADVGameDef {
                     VN.SFX("vn-yukari-power").AsVnOp(VN).Then(VN.Wait(0.8f))
                         .Then(VN.SFX("vn-yukari-power").AsVnOp(VN)));
                 s.Alpha = 0;
-                md.Clear();
+                Md.Clear();
                 await UpdateData(p => p.State = State.S14_HouseSelf, new() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
                 VN.RunBGM("php.house");
                 await rgb.DoTransition(new RenderGroupTransition.Fade(rg, 1f));
@@ -731,7 +732,7 @@ public class PurpleHeartGameDef : ADVGameDef {
                     y.SayC(l384)
                 );
                 UpdateDataV(p => p.State = State.S15_Final, new() {
-                    SimultaneousActualization = true
+                    Options = ActualizeOptions.Simultaneous
                 });
             });
 
@@ -993,10 +994,10 @@ public class PurpleHeartGameDef : ADVGameDef {
         }
         
         public record PHIdealizedState(Executing e) : ADVIdealizedState(e) {
-            protected override Task FadeIn() {
+            protected override Task FadeIn(ActualizeOptions options) {
                 return e.rgb.DoTransition(new RenderGroupTransition.Fade(e.rg, 0.7f)).Task;
             }
-            protected override Task FadeOut() {
+            protected override Task FadeOut(ActualizeOptions options) {
                 return e.rg.DoTransition(new RenderGroupTransition.Fade(e.rgb, 0.7f)).Task;
             }
         }

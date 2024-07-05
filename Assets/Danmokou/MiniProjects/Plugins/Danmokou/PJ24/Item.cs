@@ -7,7 +7,7 @@ using Danmokou.UI.XML;
 using Newtonsoft.Json;
 
 namespace MiniProjects.PJ24 {
-[JsonConverter(typeof(SingletonSerializer<Item>))]
+[JsonConverter(typeof(SingletonConverter<Item>))]
 public abstract class Item {
     public string Name { get; }
     public Recipe? Recipe { get; protected init; }
@@ -52,7 +52,6 @@ public abstract class Item {
         LinenCloth.S,
         DragonscaleCloth.S,
         Rope.S,
-        RopeTEST.S,
         SteelYarn.S,
         DragonHarness.S,
         NutOil.S,
@@ -70,8 +69,18 @@ public abstract class Item {
         BoneHurtingJuice.S,
         SoulChain.S,
         SoulGuard.S,
-        MonochromeDragonStatue.S
+        GrayDragonStatue.S
     };
+
+    private static Dictionary<string, Item>? _nameDict;
+
+    public static Dictionary<string, Item> NameDict => _nameDict ??= Items.ToDictionary(x => x.Name);
+
+    public static Item FindByName(string name) {
+        if (NameDict.TryGetValue(name, out var x))
+            return x;
+        throw new Exception($"No item by name {name}");
+    }
     
     private Item(string? name = null) {
         Name = name ?? Alchemy.DefaultName(GetType());
@@ -156,7 +165,7 @@ public abstract class Item {
 
     public class MoldablePlastic : Item {
         private MoldablePlastic() {
-            Recipe = new(this, 0.25m, PetrochemicalWaste.S, Water.S);
+            Recipe = new(this, 1, 0.25m, PetrochemicalWaste.S, Water.S);
         }
         public static MoldablePlastic S { get; } = new();
         public override int? CategoryScore(Category c) => c switch {
@@ -166,7 +175,7 @@ public abstract class Item {
     }
     public class LinenCloth : Item {
         private LinenCloth() {
-            Recipe = new(this, 0.5m, FlaxFiber.S, Water.S);
+            Recipe = new(this, 3, 0.5m, FlaxFiber.S, Water.S);
         }
         public static LinenCloth S { get; } = new();
         public override int? CategoryScore(Category c) => c switch {
@@ -176,7 +185,7 @@ public abstract class Item {
     }
     public class DragonscaleCloth : Item {
         private DragonscaleCloth() {
-            Recipe = new(this, 0.5m, DragonScale.S, Water.S);
+            Recipe = new(this, 10, 0.5m, DragonScale.S, Water.S);
         }
         public static DragonscaleCloth S { get; } = new();
         public override int? CategoryScore(Category c) => c switch {
@@ -186,25 +195,19 @@ public abstract class Item {
     }
     public class Rope : Item {
         private Rope() {
-            Recipe = new(this, 0.25m, FlaxFiber.S);
+            Recipe = new(this, 6, 0.5m, (FlaxFiber.S, 2));
         }
         public static Rope S { get; } = new();
     }
-    public class RopeTEST : Item {
-        private RopeTEST() {
-            Recipe = new(this, 0.25m, FlaxFiber.S, FlaxFiber.S);
-        }
-        public static RopeTEST S { get; } = new();
-    }
     public class SteelYarn : Item {
         private SteelYarn() {
-            Recipe = new(this, 0.5m, FlaxFiber.S, Ingot.S, Water.S);
+            Recipe = new(this, 8, 0.5m, FlaxFiber.S, Ingot.S, Water.S);
         }
         public static SteelYarn S { get; } = new();
     }
     public class NutOil : Item {
         private NutOil() {
-            Recipe = new(this, 0.25m, BagOfNuts.S);
+            Recipe = new(this, 8, 0.25m, BagOfNuts.S);
         }
         public static NutOil S { get; } = new();
         public override int? CategoryScore(Category c) => c switch {
@@ -214,13 +217,13 @@ public abstract class Item {
     }
     public class RainbowDye : Item {
         private RainbowDye() {
-            Recipe = new(this, 0.5m, Water.S, RainbowRose.S);
+            Recipe = new(this, 12, 0.5m, Water.S, RainbowRose.S);
         }
         public static RainbowDye S { get; } = new();
     }
     public class RainbowPaintSet : Item {
         private RainbowPaintSet() {
-            Recipe = new(this, 0.5m, RainbowDye.S, MoldablePlastic.S);
+            Recipe = new(this, 14, 0.5m, RainbowDye.S, MoldablePlastic.S, Water.S);
         }
         public static RainbowPaintSet S { get; } = new();
         public override int? CategoryScore(Category c) => c switch {
@@ -230,13 +233,13 @@ public abstract class Item {
     }
     public class OilLamp : Item {
         private OilLamp() {
-            Recipe = new(this, 0.5m, Category.OIL, Ingot.S);
+            Recipe = new(this, 19, 1m, Category.OIL, Ingot.S);
         }
         public static OilLamp S { get; } = new();
     }
     public class DragonHarness : Item {
         private DragonHarness() {
-            Recipe = new(this, 1m, (Category.CLOTH, 2), Rope.S) { Effects = new[] {
+            Recipe = new(this, 22, 0.5m, (Category.CLOTH, 2), Rope.S) { Effects = new[] {
                 new EffectRequirement[] {
                     new(null, 65, Effect.Fragile.S),
                     new(65, null, Effect.Antifragile.S)
@@ -248,49 +251,49 @@ public abstract class Item {
     }
     public class MedicalSolution : Item {
         private MedicalSolution() {
-            Recipe = new(this, 0.25m, Water.S, Alcohol.S);
+            Recipe = new(this, 13, 0.5m, Water.S, Alcohol.S);
         }
         public static MedicalSolution S { get; } = new();
     }
     public class Astringent : Item {
         private Astringent() {
-            Recipe = new(this, 0.5m, MedicalSolution.S, Blackberry.S);
+            Recipe = new(this, 11, 0.5m, MedicalSolution.S, Blackberry.S);
         }
         public static Astringent S { get; } = new();
     }
     public class EyeBleach : Item {
         private EyeBleach() {
-            Recipe = new(this, 1m, (Astringent.S, 2), Salt.S, Category.OIL);
+            Recipe = new(this, 26, 1m, (Astringent.S, 2), Salt.S, Category.OIL);
         }
         public static EyeBleach S { get; } = new();
     }
     public class ProcessedMeat : Item {
         private ProcessedMeat() {
-            Recipe = new(this, 0.3m, RawMeat.S, Salt.S);
+            Recipe = new(this, 21, 0.3m, RawMeat.S, Salt.S);
         }
         public static ProcessedMeat S { get; } = new();
     }
     public class LiteralPoison : Item {
         private LiteralPoison() {
-            Recipe = new(this, 0.5m, MoldablePlastic.S, Red40.S);
+            Recipe = new(this, 29, 0.5m, MoldablePlastic.S, Red40.S);
         }
         public static LiteralPoison S { get; } = new();
     }
     public class BoneBuildingJuice : Item {
         private BoneBuildingJuice() {
-            Recipe = new(this, 0.5m, ProcessedMeat.S, Category.OIL);
+            Recipe = new(this, 30, 0.5m, ProcessedMeat.S, Category.OIL);
         }
         public static BoneBuildingJuice S { get; } = new();
     }
     public class BoneHurtingJuice : Item {
         private BoneHurtingJuice() {
-            Recipe = new(this, 1m, BoneBuildingJuice.S, LiteralPoison.S);
+            Recipe = new(this, 32, 1m, BoneBuildingJuice.S, LiteralPoison.S);
         }
         public static BoneHurtingJuice S { get; } = new();
     }
     public class EnchantedOil : Item {
         private EnchantedOil() {
-            Recipe = new(this, 0.5m, Category.OIL, CrystallizedFantasy.S);
+            Recipe = new(this, 35, 0.5m, Category.OIL, CrystallizedFantasy.S);
         }
         public static EnchantedOil S { get; } = new();
         public override int? CategoryScore(Category c) => c switch {
@@ -300,19 +303,19 @@ public abstract class Item {
     }
     public class SoulChain : Item {
         private SoulChain() {
-            Recipe = new(this, 1m, SteelYarn.S, Salt.S, LiteralPoison.S, SoulShell.S);
+            Recipe = new(this, 39, 2m, SteelYarn.S, Salt.S, LiteralPoison.S, SoulShell.S);
         }
         public static SoulChain S { get; } = new();
     }
     public class SoulGuard : Item {
         private SoulGuard() {
-            Recipe = new(this, 1m, SteelYarn.S, Salt.S, BoneBuildingJuice.S, SoulShell.S);
+            Recipe = new(this, 46, 1m, SteelYarn.S, Salt.S, BoneBuildingJuice.S, SoulShell.S);
         }
         public static SoulGuard S { get; } = new();
     }
     public class RefractiveMagicFuel : Item {
         private RefractiveMagicFuel() {
-            Recipe = new(this, 1m, ScatteringOpal.S, RainbowDye.S, Category.OIL) { Effects = new[] {
+            Recipe = new(this, 59, 0.5m, ScatteringOpal.S, RainbowDye.S, Category.OIL) { Effects = new[] {
                 null,
                 null,
                 new EffectRequirement[] {
@@ -325,7 +328,7 @@ public abstract class Item {
     }
     public class TritricolorBanner : Item {
         private TritricolorBanner() {
-            Recipe = new(this, 1m, Category.CLOTH, RainbowDye.S, MagnoliaBloom.S) { Effects = new[] {
+            Recipe = new(this, 42, 1m, Category.CLOTH, RainbowDye.S, MagnoliaBloom.S) { Effects = new[] {
                 new EffectRequirement[] {
                     new(null, 50, Effect.FullOfMicroplastics.S),
                     new(50, null, Effect.TraditionallyWoven.S)
@@ -336,11 +339,11 @@ public abstract class Item {
         }
         public static TritricolorBanner S { get; } = new();
     }
-    public class MonochromeDragonStatue : Item {
-        private MonochromeDragonStatue() {
-            Recipe = new(this, 1m, DragonHorn.S, EnchantedOil.S, RefractiveMagicFuel.S, (MoldablePlastic.S, 2));
+    public class GrayDragonStatue : Item {
+        private GrayDragonStatue() {
+            Recipe = new(this, 69, 1m, DragonHorn.S, EnchantedOil.S, RefractiveMagicFuel.S, (MoldablePlastic.S, 2));
         }
-        public static MonochromeDragonStatue S { get; } = new();
+        public static GrayDragonStatue S { get; } = new();
     }
 }
 
@@ -351,17 +354,32 @@ public enum Category {
 
 public class ItemInstance : IModelObject {
     Evented<bool> IModelObject._destroyed { get; } = new(false);
-    public Item Type { get; }
-    public List<EffectInstance> Effects { get; }
-    public List<TraitInstance> Traits { get; }
+    public Item Type { get; private init; }
+    public List<EffectInstance> Effects { get; private init; }
+    public List<TraitInstance> Traits { get; private init; }
 
-    public ItemInstance(Item typ, List<EffectInstance>? effs = null, List<TraitInstance>? traits = null) {
-        Type = typ;
-        Effects = effs ?? new();
+    public ItemInstance(Item type, List<EffectInstance>? effects = null, List<TraitInstance>? traits = null) {
+        Type = type;
+        Effects = effects ?? new();
         Traits = traits ?? new();
     }
 
     public ItemInstance Copy() => new(Type, Effects.ToList(), Traits.ToList());
+
+    public string Describe() {
+        var eff = "";
+        if (Effects.Count > 0) {
+            var es = Effects.Count > 1 ? "s" : "";
+            eff = $" w/ effect{es} " + string.Join(", ", Effects.Select(x => x.Type.Name));
+        }
+        var trait = "";
+        if (Traits.Count > 0) {
+            var ts = Traits.Count > 1 ? "s" : "";
+            trait = (eff.Length > 0 ? $"; trait{ts} " : $" w/ trait{ts} ") + 
+                    string.Join(", ", Traits.Select(x => x.Type.Name));
+        }
+        return $"{Type.Name}{eff}{trait}";
+    }
 }
 
 }

@@ -21,7 +21,7 @@
     margin-top: 20px;
 }
 
-.invisible {
+.pj24node.node-invisible, .synthComponent.node-invisible {
     display: none;
 }
 
@@ -29,10 +29,13 @@
     background-image: url("project://database/Assets/Danmokou/MiniProjects/raw/pj24/node.png?fileID=577195655271376678&guid=c5775ab322a5f6149a14b5f2c96c9485&type=3#node_0");
 }
 
-.pj24node.focus, .synthComponent.focus #Banner {
+.pj24node.node-focus {
     -unity-background-image-tint-color: rgb(241, 237, 236);
 }
-.pj24node.recipe.focus, .synthComponent.focus #Banner {
+.synthComponent.node-focus #Banner {
+    -unity-background-image-tint-color: rgb(255,255,255);
+}
+.pj24node.recipe.node-focus, .synthComponent.node-focus #Banner {
     translate: 20px -5px;
 }
 
@@ -45,10 +48,10 @@
     width: auto;
     scale: 0.9 0.9;
 }
-.pj24node.pbutton.focus {
+.pj24node.pbutton.node-focus {
     scale: 1.2 1.2;
 }
-.pj24node.pbutton.disabled {
+.pj24node.pbutton.node-disabled {
     opacity: 0.52;
 }
 

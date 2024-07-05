@@ -12,15 +12,15 @@ namespace Danmokou.UI.XML {
 public class FixedXMLViewModel : IConstUIViewModel {
     public IFixedXMLObject Descr { get; }
     public IFixedXMLReceiver? Recv { get; }
-    public Func<UINode,ICursorState,UIResult?>? OnConfirmer { get; init; }
+    public Func<UINode,ICursorState,UICommand,UIResult?>? Navigator { get; init; }
 
     public FixedXMLViewModel(IFixedXMLObject descr, IFixedXMLReceiver? recv = null) {
         Descr = descr;
         Recv = recv;
     }
 
-    UIResult? IUIViewModel.OnConfirm(UINode node, ICursorState cs) => 
-        OnConfirmer?.Invoke(node, cs) ?? Recv?.OnConfirm(node, cs);
+    UIResult? IUIViewModel.Navigate(UINode node, ICursorState cs, UICommand req) =>
+        Navigator?.Invoke(node, cs, req) ?? Recv?.Navigate(node, cs, req);
 
     UIGroup? IUIViewModel.Tooltip(UINode node, ICursorState cs, bool prevExists) {
         if (Recv?.Tooltip is { } tt)
@@ -37,21 +37,20 @@ public class FixedXMLView : UIView<FixedXMLViewModel>, IUIView {
     public override void OnBuilt(UINode node) {
         base.OnBuilt(node);
         if (AsEmpty)
-            Node.HTML.ConfigureEmpty();
+            HTML.ConfigureEmpty();
         //Since FixedXMLObject is event-based, we don't need an update method, just event bindings.
-        Node.AddToken(VM.Descr.IsInteractable.Subscribe(b => Node.UpdatePassthrough(!b)))
+        node.AddToken(VM.Descr.IsInteractable.Subscribe(b => node.UpdatePassthrough(!b)))
             .AddToken(VM.Descr.IsVisible.Subscribe(b => {
             //Allows opacity fade-out
-            Node.HTML.pickingMode = b ? PickingMode.Position : PickingMode.Ignore;
-            Node.HTML.style.opacity = b ? 1 : 0;
+            HTML.pickingMode = b ? PickingMode.Position : PickingMode.Ignore;
+            HTML.style.opacity = b ? 1 : 0;
         }));
-        Node.HTML.ConfigureAbsolute(VM.Descr.Pivot).ConfigureFixedXMLPositions(VM.Descr);
+        HTML.ConfigureAbsolute(VM.Descr.Pivot).ConfigureFixedXMLPositions(VM.Descr);
 
-        VM.Recv?.OnBuilt((Node as EmptyNode)!);
+        VM.Recv?.OnBuilt((node as EmptyNode)!);
     }
 
-    public override void OnDestroyed(UINode node) {
-        base.OnDestroyed(node);
+    void IUIView.OnDestroyed(UINode node) {
         VM.Descr.Cleanup();
     }
 

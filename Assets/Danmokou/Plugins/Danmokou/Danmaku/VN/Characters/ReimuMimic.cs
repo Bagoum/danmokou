@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Numerics;
 using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.Services;
-using Suzunoya.Entities;
 using SuzunoyaUnity.Derived;
 using SuzunoyaUnity.Mimics;
 using UnityEngine;

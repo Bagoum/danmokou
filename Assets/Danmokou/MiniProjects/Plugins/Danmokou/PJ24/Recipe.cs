@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace MiniProjects.PJ24 {
-public record Recipe(Item Result, decimal Time, params RecipeComponent[] Components) {
+public record Recipe(Item Result, int Level, decimal Time, params RecipeComponent[] Components) {
     public EffectRequirement[]?[]? Effects { get; init; }
 
     public int DaysTaken(int count) => (int)Math.Ceiling(Time * count);

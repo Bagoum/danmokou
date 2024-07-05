@@ -63,6 +63,11 @@ public abstract class PairedPropertyDrawer : PropertyDrawer {
 [CustomPropertyDrawer(typeof(NamedTextAsset))]
 public class TextAssetDrawer : PairedPropertyDrawer { }
 
+[CustomPropertyDrawer(typeof(NamedSprite))]
+public class NamedSpriteDrawer : PairedPropertyDrawer {
+    protected override string arg2 => "sprite";
+}
+
 [CustomPropertyDrawer(typeof(DataPrefab))]
 public class PrefabDrawer : PairedPropertyDrawer {
     protected override string arg2 => "prefab";

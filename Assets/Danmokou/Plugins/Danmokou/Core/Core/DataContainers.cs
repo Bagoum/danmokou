@@ -21,6 +21,12 @@ public struct NamedTextAsset {
 }
 
 [System.Serializable]
+public struct NamedSprite {
+    public string name;
+    public Sprite sprite;
+}
+
+[System.Serializable]
 public struct SMAssetGroup {
     public string groupTitle;
     public NamedTextAsset[] assets;

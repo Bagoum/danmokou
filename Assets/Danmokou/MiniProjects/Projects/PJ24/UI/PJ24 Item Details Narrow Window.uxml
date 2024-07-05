@@ -4,10 +4,12 @@
     <engine:VisualElement name="ItemDetails" template="PJ24 Item Details Window">
         <engine:VisualElement name="LongWindow" style="width: 1324px; height: 1428px; background-image: url(&quot;project://database/Assets/Danmokou/MiniProjects/raw/pj24/long%20rect.png?fileID=4120901811166270815&amp;guid=dc4389c984cb86f40810ea81d8d02e78&amp;type=3#long rect_0&quot;); color: rgb(107, 49, 27);">
             <engine:VisualElement name="VisualElement" style="flex-grow: 1; margin-top: 180px; margin-right: 170px; margin-bottom: 160px; margin-left: 170px; flex-direction: row;">
-                <engine:VisualElement style="flex-grow: 0; width: 500px;">
+                <engine:VisualElement style="flex-grow: 0; width: 480px;">
                     <engine:Label text="Recipe" name="Label" style="-unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-R%20SDF.asset?fileID=11400000&amp;guid=a4ca5d8a7e0241f41b58c69f59b3bca2&amp;type=2#Ubuntu-R SDF&quot;); font-size: 80px; -unity-text-align: upper-right; margin-top: 0; color: rgb(150, 79, 54); margin-right: 60px; padding-bottom: 0; display: none;" />
                     <engine:VisualElement style="flex-grow: 1; align-items: flex-start; flex-direction: row; margin-right: 60px; margin-top: -10px; margin-bottom: -10px;">
-                        <engine:VisualElement style="flex-grow: 0; background-image: url(&quot;project://database/Assets/Danmokou/MiniProjects/raw/pj24/square.png?fileID=2800000&amp;guid=3cc9a56748c4be842b7a4f1ffbf232e2&amp;type=3#square&quot;); width: 460px; height: 460px;" />
+                        <engine:VisualElement style="flex-grow: 0; background-image: url(&quot;project://database/Assets/Danmokou/MiniProjects/raw/pj24/square.png?fileID=2800000&amp;guid=3cc9a56748c4be842b7a4f1ffbf232e2&amp;type=3#square&quot;); width: 460px; height: 460px;">
+                            <engine:VisualElement name="Image" style="flex-grow: 1; margin-top: 100px; margin-right: 100px; margin-bottom: 100px; margin-left: 100px;" />
+                        </engine:VisualElement>
                     </engine:VisualElement>
                     <engine:VisualElement name="TraitContainer" style="flex-grow: 0; margin-right: 30px; height: 544px;">
                         <engine:Label text="...traits" style="-unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-R%20SDF.asset?fileID=11400000&amp;guid=a4ca5d8a7e0241f41b58c69f59b3bca2&amp;type=2#Ubuntu-R SDF&quot;); font-size: 80px; -unity-text-align: upper-right; margin-top: 0; color: rgb(150, 79, 54); margin-right: 0; margin-bottom: 20px;" />
@@ -19,13 +21,13 @@
                     </engine:VisualElement>
                 </engine:VisualElement>
                 <engine:VisualElement style="flex-grow: 1;">
-                    <engine:VisualElement style="flex-grow: 0;">
+                    <engine:VisualElement style="flex-grow: 0; margin-left: 40px;">
                         <engine:Label text="...categories" name="Label" style="-unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-R%20SDF.asset?fileID=11400000&amp;guid=a4ca5d8a7e0241f41b58c69f59b3bca2&amp;type=2#Ubuntu-R SDF&quot;); font-size: 80px; -unity-text-align: upper-right; margin-top: 0; color: rgb(150, 79, 54); margin-right: 0; margin-bottom: 20px;" />
                         <engine:Instance template="PJ24 Text Underlined" class="category narrowmeter" />
                         <engine:Instance template="PJ24 Text Underlined" class="category narrowmeter" />
                         <engine:Instance template="PJ24 Text Underlined" class="category narrowmeter" />
                     </engine:VisualElement>
-                    <engine:VisualElement style="flex-grow: 1; margin-left: 20px; margin-top: 108px;">
+                    <engine:VisualElement style="flex-grow: 1; margin-top: 108px;">
                         <engine:Label text="...effects" name="Label" style="-unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-R%20SDF.asset?fileID=11400000&amp;guid=a4ca5d8a7e0241f41b58c69f59b3bca2&amp;type=2#Ubuntu-R SDF&quot;); font-size: 80px; -unity-text-align: upper-right; margin-top: 0; color: rgb(150, 79, 54); margin-right: 0; margin-bottom: 20px;" />
                         <engine:Instance template="PJ24 Text Underlined" class="effect" />
                         <engine:Instance template="PJ24 Text Underlined" class="effect" />

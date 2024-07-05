@@ -35,14 +35,23 @@ public interface IUIView {
     /// <summary>
     /// Attach this view to a VisualElement.
     /// <br/>Called during UI instantiation, before <see cref="OnBuilt"/>.
-    /// All views on a given node receive <see cref="Bind"/>, and then all of them receive <see cref="OnBuilt"/>.
+    /// All views attached to a VE receive <see cref="Bind"/>,
+    /// and then if the VE is part of a UINode, all of them receive <see cref="OnBuilt"/>.
     /// </summary>
-    void Bind(UINode node, VisualElement ve);
-    
+    void Bind(VisualElement ve);
+
     /// <summary>
     /// Called when the node using this view was built.
+    /// <br/>If this view is free-floating and not attached to a node, this method will not be called.
     /// </summary>
     void OnBuilt(UINode node);
+    
+    /// <summary>
+    /// Called when the node using this view was destroyed.
+    /// <br/>If this view is free-floating and not attached to a node, this method will not be called.
+    /// <br/>It is not required to unbind the VE binding, as the node will call <see cref="VisualElement.ClearBindings"/>.
+    /// </summary>
+    void OnDestroyed(UINode node) { }
 
     /// <summary>
     /// Called when the display language or other global display setting changes.
@@ -81,25 +90,21 @@ public interface IUIView {
     void OnMouseUp(UINode node, PointerUpEvent ev) { }
     
     /// <summary>
-    /// Called when the node using this view was destroyed.
-    /// </summary>
-    void OnDestroyed(UINode node);
-    
-    /// <summary>
     /// Mark that this view should use the provided event to determine when it is dirty,
     ///  rather than using a hash code or rendering every frame.
     /// <br/>Can be called multiple times if there are multiple events that might require reprocessing.
     /// </summary>
-    void DirtyOn<T>(IObservable<T> ev);
+    IDisposable DirtyOn<T>(IObservable<T> ev);
 }
 
 
-public abstract class UIView : CustomBinding, IUIView, ITokenized {
+public abstract class UIView : CustomBinding, IUIView {
     private static readonly Dictionary<Type, BindingId> typeBindings = new();
     public virtual VisualTreeAsset? Prefab => null;
     public virtual Func<VisualElement, VisualElement>? Builder => null;
-    public List<IDisposable> Tokens { get; } = new();
+
     public UINode Node { get; private set; } = null!;
+    public VisualElement HTML { get; private set; } = null!;
     public IUIViewModel ViewModel { get; }
     public BindingUpdateTrigger UpdateTrigger {
         get => updateTrigger;
@@ -115,23 +120,30 @@ public abstract class UIView : CustomBinding, IUIView, ITokenized {
         UpdateTrigger = BindingUpdateTrigger.OnSourceChanged;
     }
 
-    public virtual void Bind(UINode node, VisualElement ve) {
-        Node = node;
+    public void Bind(VisualElement ve) {
+        HTML = ve;
         ve.SetBinding(BindingId, this);
     }
 
-    public virtual void OnBuilt(UINode node) { }
+    public void Unbind() {
+        HTML.ClearBinding(BindingId);
+    }
+
+    public virtual void OnBuilt(UINode node) {
+        Node = node;
+    }
 
     public virtual void ReprocessForLanguageChange() => Update(default);
 
-    public virtual void OnDestroyed(UINode node) {
-        (this as IDisposable).Dispose();
+    public IDisposable DirtyOn<T>(IObservable<T> ev) {
+        UpdateTrigger = BindingUpdateTrigger.WhenDirty;
+        return ev.Subscribe(_ => MarkDirty());
     }
 
-    public void DirtyOn<T>(IObservable<T> ev) {
-        UpdateTrigger = BindingUpdateTrigger.WhenDirty;
-        Tokens.Add(ev.Subscribe(_ => MarkDirty()));
-    }
+    /// <summary>
+    /// Create a UINode with only this view.
+    /// </summary>
+    public UINode MakeNode() => new UINode(this);
 }
 public abstract class UIView<T> : UIView, IDataSourceProvider where T : IUIViewModel {
     public new T ViewModel { get; }

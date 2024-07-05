@@ -29,7 +29,7 @@ public class LabelViewModel<T> : UIViewModel, ILabelViewModel {
 }
 
 /// <inheritdoc cref="ILabelViewModel"/>
-public class BaseLabelView<T> : UIView<T> where T : ILabelViewModel {
+public class BaseLabelView<T> : UIView<T>, IUIView where T : ILabelViewModel {
     private Label target = null!;
     private readonly string? labelName;
     public BaseLabelView(T data, string? labelName = null) : base(data) {
@@ -38,7 +38,7 @@ public class BaseLabelView<T> : UIView<T> where T : ILabelViewModel {
     
     public override void OnBuilt(UINode node) {
         base.OnBuilt(node);
-        target = Node.HTML.Q<Label>(labelName);
+        target = HTML.Q<Label>(labelName);
         if (target == null)
             throw new Exception($"No label found by name `{labelName}`");
     }

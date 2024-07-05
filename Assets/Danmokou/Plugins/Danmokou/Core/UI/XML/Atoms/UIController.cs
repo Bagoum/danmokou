@@ -55,7 +55,7 @@ public abstract record UIResult {
     /// </summary>
     public Action? OnPostTransition { get; init; }
     
-    public record DestroyMenu : UIResult;
+    public record CloseMenu : UIResult;
 
     public enum StayOnNodeType {
         DidSomething,
@@ -80,11 +80,13 @@ public abstract record UIResult {
         public GoToNode(UIScreen s) : this(s.Groups[0]) { }
     }
 
+    public record GoToSibling(int Index, bool NoOpIfSameNode = true) : UIResult;
+
     //Note: this is effectively the same as GoToNode, except you can add ReturnToOverride, which replaces
     // the screen caller with a different node.
     public record GoToScreen(UIScreen Screen, UINode? ReturnToOverride = null) : UIResult;
 
-    public record ReturnToGroupCaller : UIResult;
+    public record ReturnToGroupCaller(int Ascensions = 1) : UIResult;
 
     public record ReturnToTargetGroupCaller(UIGroup Target) : UIResult {
         public ReturnToTargetGroupCaller(UINode node) : this(node.Group) { }
@@ -96,6 +98,9 @@ public abstract record UIResult {
     public static implicit operator UIResult(UIGroup group) => new GoToNode(group);
 }
 
+/// <summary>
+/// A UI menu that manages a set of UIScreen by rendering them to game view and handling navigation.
+/// </summary>
 public abstract class UIController : CoroutineRegularUpdater {
     public static readonly Event<Unit> UIEventQueued = new();
     public abstract record CacheInstruction {
@@ -111,9 +116,13 @@ public abstract class UIController : CoroutineRegularUpdater {
     protected bool Built { get; private set; } = false;
     
     /// <summary>
-    /// Points to TemplateContainer
+    /// The TemplateContainer instantiated from <see cref="UIDocument"/>.<see cref="UIDocument.sourceAsset"/>
     /// </summary>
     protected VisualElement UIRoot { get; private set; } = null!;
+    
+    /// <summary>
+    /// The container for all UI screens on this menu. Normally, direct/only child of <see cref="UIRoot"/>.
+    /// </summary>
     protected VisualElement UIContainer { get; private set; } = null!;
     protected PanelSettings UISettings { get; private set; } = null!;
     
@@ -259,7 +268,6 @@ public abstract class UIController : CoroutineRegularUpdater {
         UIContainer = UIRoot.Q("UIContainer");
         UISettings = uid.panelSettings;
         Build();
-        uiRenderer.ApplyScrollHeightFix(UIRoot);
         UIRoot.style.opacity = 0;
         UIRoot.style.display = OpenOnInit.ToStyle();
         UIRoot.style.width = new Length(100, LengthUnit.Percent);
@@ -311,7 +319,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         ReturnTo = null;
     }
 
-    private void Build() {
+    protected void Build() {
         foreach (var s in Screens)
             if (s != null)
                 UIContainer.Add(s.Build(XMLUtils.Prefabs.TypeMap));
@@ -365,6 +373,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     
     private Task _OperateOnResult(UIResult? result, UITransitionOptions? opts) {
         if (result == null || (result is UIResult.GoToNode {NoOpIfSameNode:true} gTo && gTo.Target == Current) ||
+            (result is UIResult.GoToSibling {NoOpIfSameNode:true} gS && gS.Index == Current?.IndexInGroup) ||
             result is UIResult.StayOnNode) {
             if (result != null) Redraw();
             return Task.CompletedTask;
@@ -373,6 +382,11 @@ public abstract class UIController : CoroutineRegularUpdater {
         var next = Current;
         List<(UIGroup group, UINode? node)> LeftCalls = new();
         List<(UIGroup group, UINode? node)> EntryCalls = new();
+        List<(UINode src, bool isPush)>? screenChanges = null;
+        void RecordScreenChange(UINode? prev, bool isDescend) {
+            if (prev != null)
+                (screenChanges ??= new()).Add((prev, isDescend));
+        }
         foreach (var r in new[] { result }.Unroll()) {
             var prev = next;
             void TransferToNodeSameScreen(UINode target) {
@@ -408,8 +422,32 @@ public abstract class UIController : CoroutineRegularUpdater {
                 }
                 next = target;
             }
+            void ReturnToGroupOf((UIGroup grp, UINode? target) n) {
+                var (grp, target) = n;
+                //pass group separately since target may be destroyed and detached from group
+                if (target == null)
+                    throw new Exception("Return-to-group resulted in a null node");
+                if (target.Destroyed || !target.AllowInteraction) {
+                    if (grp.MaybeEntryNode is {} en)
+                        next = en;
+                    else {
+                        //if the group is now empty due to node deletion,
+                        // move navigation upwards
+                        while (GroupCall.TryPop(out var _n)) {
+                            LeftCalls.Add((grp, target));
+                            (grp, target) = _n;
+                            if (target != null) {
+                                ReturnToGroupOf((grp, target));
+                                return;
+                            }
+                        }
+                        throw new Exception("Couldn't send navigation upwards after group destruction");
+                    }
+                } else
+                    next = target;
+            }
             switch (r) {
-                case UIResult.DestroyMenu:
+                case UIResult.CloseMenu:
                     next = null;
                     opts = UITransitionOptions.DontAnimate;
                     if (prev != null)
@@ -420,6 +458,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                     break;
                 case UIResult.GoToScreen goToScreen:
                     if (goToScreen.Screen != prev?.Screen && (goToScreen.ReturnToOverride ?? prev) is { } returnTo) {
+                        RecordScreenChange(prev, true);
                         ScreenCall.Push(returnTo);
                         prev = null;
                         TransferToNodeSameScreen(goToScreen.Screen.Groups[0].EntryNode);
@@ -429,52 +468,51 @@ public abstract class UIController : CoroutineRegularUpdater {
                     if (goToNode.Target.Destroyed)
                         break;
                     if (goToNode.Target.Screen != prev?.Screen && prev != null) {
+                        RecordScreenChange(prev, true);
                         ScreenCall.Push(prev);
                         prev = null;
                     }
                     TransferToNodeSameScreen(goToNode.Target);
                     break;
-                case UIResult.ReturnToGroupCaller:
-                    next = null;
-                    var prevgn = (prev!.Group, node: prev);
-                    while (GroupCall.Count > 0 && next == null) {
-                        LeftCalls.Add(prevgn);
-                        prevgn = GroupCall.Pop()!;
-                        next = prevgn.node;
+                case UIResult.GoToSibling gSib:
+                    if (next is null)
+                        throw new Exception("Cannot go to the sibling of a null node");
+                    var target = next.Group.Nodes.Try(gSib.Index) ??
+                                 throw new Exception($"Node {next}'s group does not have {gSib.Index} nodes");
+                    if (target.Destroyed)
+                        break;
+                    TransferToNodeSameScreen(target);
+                    break;
+                case UIResult.ReturnToGroupCaller rg:
+                    var pn = (prev!.Group, node: prev);
+                    for (int ii = 0; ii < rg.Ascensions; ++ii) {
+                        do {
+                            if (GroupCall.Count == 0)
+                                throw new Exception("Stack empty, couldn't return to group caller");
+                            LeftCalls.Add(pn);
+                            pn = GroupCall.Pop()!;
+                        } while (pn.node is null);
                     }
-                    if (next == null)
-                        throw new Exception("Return-to-group resulted in a null node");
+                    ReturnToGroupOf(pn);
                     break;
                 case UIResult.ReturnToTargetGroupCaller rtg:
                     if (prev == null) throw new Exception("Current must be present for return-to-target op");
-                    var pn = (prev.Group, prev);
-                    var shortCircuit = false;
-                    stepup: ;
-                    while (GroupCall.TryPop(out var n)) {
-                        LeftCalls.Add(pn);
-                        pn = n!;
-                        next = n.node;
-                        if (n.group == rtg.Target || shortCircuit)
-                            break;
+                    var pgn = (prev.Group, node: prev);
+                    while (pgn.Group != rtg.Target) {
+                        if (GroupCall.Count == 0)
+                            throw new Exception("Stack empty, couldn't return to target group caller");
+                        LeftCalls.Add(pgn);
+                        pgn = GroupCall.Pop()!;
                     }
-                    if (next == null)
-                        throw new Exception("Return-to-target resulted in a null node");
-                    if (next.Destroyed) {
-                        if (pn.Group.HasEntryNode)
-                            next = pn.Group.EntryNode;
-                        else {
-                            //if the group is now empty due to node deletion,
-                            // move navigation upwards
-                            shortCircuit = true;
-                            goto stepup;
-                        }
-                    }
+                    if (pgn.node != prev)
+                        ReturnToGroupOf(pgn);
                     break;
                 case UIResult.ReturnToScreenCaller sc:
                     if (prev == null) throw new Exception("Current must be present for return-to-screen op");
                     var ngn = (prev.Group, (UINode?)prev);
                     for (int ii = 0; ii < sc.Ascensions; ++ii)
                         if (ScreenCall.TryPop(out var s)) {
+                            RecordScreenChange(s, false);
                             while (GroupCall.TryPeek(out var g) && (g.group.Screen == prev.Screen)) {
                                 LeftCalls.Add(ngn);
                                 ngn = GroupCall.Pop();
@@ -520,7 +558,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
         //Logs.Log($"Left: {string.Join(",", LeftCalls.Select(x => x.ToString()))}, Entered: {string.Join(",", EntryCalls.Select(x => x.ToString()))}");
         //Logs.Log($"Left: {string.Join(",", leftGroups.Select(x => x.ToString()))}, Entered: {string.Join(",", entryGroups.Select(x => x.ToString()))}");
-        return TransitionToNode(next, opts, leftGroups, entryGroups)
+        return TransitionToNode(next, opts, leftGroups, entryGroups, screenChanges)
             .ContinueWithSync(result.OnPostTransition);
     }
 
@@ -609,8 +647,8 @@ public abstract class UIController : CoroutineRegularUpdater {
             return OperateOnResult(new UIResult.GoToNode(StartingNode), null);
         else {
             foreach (var g in Screens.First(x => x != null)!.Groups) 
-                if (g.HasEntryNode) 
-                    return OperateOnResult(new UIResult.GoToNode(g.EntryNode), null);
+                if (g.MaybeEntryNode is {} en) 
+                    return OperateOnResult(new UIResult.GoToNode(en), null);
             throw new Exception($"Couldn't open menu {gameObject.name}");
         }
     }
@@ -619,7 +657,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     protected async Task Close() {
         if (!MenuActive) return;
         UIRoot.style.opacity = 0;
-        await OperateOnResult(new UIResult.DestroyMenu(), null);
+        await OperateOnResult(new UIResult.CloseMenu(), null);
         OnClosed();
     }
     
@@ -631,10 +669,11 @@ public abstract class UIController : CoroutineRegularUpdater {
         return openClose.EnqueueTask(async () => {
             if (MenuActive) return;
             OnWillOpen();
-            UIRoot.style.opacity = 0;
-            anim ??= UIRoot.FadeTo(1, 0.3f, x => x).Run(this);
             using var disable = PlayerInputEnabled.AddConst(false);
-            await Task.WhenAll(Open(), anim);
+            var openTask = Open(); //sets opacity to 1
+            UIRoot.style.opacity = 0f;
+            anim ??= UIRoot.FadeTo(1, 0.3f, x => x).Run(this);
+            await Task.WhenAll(openTask, anim);
         });
     }
     protected Task CloseWithAnimation(Task? anim = null) {
@@ -659,30 +698,62 @@ public abstract class UIController : CoroutineRegularUpdater {
     }
 
     private readonly Queue<Func<Task>> uiOperations = new();
-    private async Task TransitionToNode(UINode? next, UITransitionOptions opts, List<UIGroup> leftGroups, List<UIGroup> enteredGroups) {
+    private async Task TransitionToNode(UINode? next, UITransitionOptions opts, List<UIGroup> leftGroups, List<UIGroup> enteredGroups, List<(UINode src, bool isPush)>? screenChanges) {
         var prev = Current;
         if (prev == next) {
             return;
         }
+        //NB: screenChanges only records screen->screen transitions, not null->screen or screen->null transitions.
+        // That's why we define screenChanged separately.
         var screenChanged = next?.Screen != prev?.Screen;
+        if (screenChanged) {
+            prev?.Screen.NextState(UIScreenState.ActiveWillGoInactive);
+            next?.Screen.NextState(UIScreenState.InactiveWillGoActive);
+        }
         using var token = OperationsEnabled.AddConst(false);
         prev?.Leave(opts.Animate, CursorState.Value, leftGroups.Count == 0 && enteredGroups.Try(0) is PopupUIGroup);
+        //First phase tasks
         var tasks = new List<Task>();
-        foreach (var g in leftGroups) {
+        //The last ReturnFromChild should be executed in the second phase,
+        // since it usually has functionality similar to Enter
+        //Store this before running LeaveGroup since LeaveGroup may destroy groups and set Parent null
+        var lastReturnParent = leftGroups.Try(leftGroups.Count - 1)?.Parent;
+        for (var ii = 0; ii < leftGroups.Count; ii++) {
+            var g = leftGroups[ii];
+            if (ii < leftGroups.Count - 1 && g.Parent?.ReturnFromChild() is { IsCompletedSuccessfully: false } ptask)
+                tasks.Add(ptask);
             if (g.LeaveGroup() is { IsCompletedSuccessfully: false } task)
                 tasks.Add(task);
-            if (g.Parent?.ReturnFromChild() is { IsCompletedSuccessfully: false } ptask)
-                tasks.Add(ptask);
         }
+        //Handle first DescendToChild in EnterGroups
+        if (enteredGroups.Try(0)?.Parent?.DescendToChild() is { IsCompletedSuccessfully: false} dtask)
+            tasks.Add(dtask);
+        
+        if (screenChanges != null)
+            foreach (var (src, isPush) in screenChanges)
+                if (!isPush && src.Group.ReturnFromChild() is { IsCompletedSuccessfully: false } task)
+                    tasks.Add(task);
         if (tasks.Count > 0)
             await Task.WhenAll(tasks);
+        //Screen change
         if (screenChanged) {
-            prev?.Screen.ExitStart();
-            next?.Screen.EnterStart(prev == null);
+            prev?.Screen.NextState(UIScreenState.ActiveGoingInactive);
+            next?.Screen.NextState(UIScreenState.InactiveGoingActive);
         }
         tasks.Clear();
-        foreach (var g in enteredGroups) {
-            if (g.Parent?.DescendToChild() is { IsCompletedSuccessfully: false } ptask)
+        //Second phase tasks
+        if (screenChanges != null)
+            foreach (var (src, isPush) in screenChanges)
+                if (isPush && src.Group.DescendToChild() is { IsCompletedSuccessfully: false } task)
+                    tasks.Add(task);
+        //Handle last ReturnFromChild in LeftGroups
+        if (lastReturnParent?.ReturnFromChild() is { IsCompletedSuccessfully: false} ltask)
+            tasks.Add(ltask);
+        for (var ii = 0; ii < enteredGroups.Count; ii++) {
+            var g = enteredGroups[ii];
+            //The first DescendToChild should be executed in the first phase,
+            // since it usually has functionality similar to Leave
+            if (ii > 0 && g.Parent?.DescendToChild() is { IsCompletedSuccessfully: false } ptask)
                 tasks.Add(ptask);
             if (g.EnterGroup() is { IsCompletedSuccessfully: false } task)
                 tasks.Add(task);
@@ -698,8 +769,8 @@ public abstract class UIController : CoroutineRegularUpdater {
             await Task.WhenAll(tasks);
 
         if (screenChanged) {
-            prev?.Screen.ExitEnd();
-            next?.Screen.EnterEnd();
+            prev?.Screen.NextState(UIScreenState.Inactive);
+            next?.Screen.NextState(UIScreenState.Active);
         }
         if (next == null) {
             ScreenCall.Clear();
@@ -709,17 +780,21 @@ public abstract class UIController : CoroutineRegularUpdater {
     }
 
     public virtual async Task TransitionScreen(UIScreen? from, UIScreen to, UITransitionOptions opts) {
+        var hideFrom = from != null && from.State == UIScreenState.ActiveGoingInactive;
+        var showTo = to.State == UIScreenState.InactiveGoingActive;
         if (from == null || !opts.Animate) {
-            if (from != null) {
-                from.HTML.transform.position = Vector3.zero;
+            if (hideFrom) {
+                from!.HTML.transform.position = Vector3.zero;
                 from.HTML.style.opacity = 0;
                 if (from.SceneObjects != null)
                     from.SceneObjects.transform.position = Vector3.zero;
             }
-            to.HTML.transform.position = Vector3.zero;
-            to.HTML.style.opacity = 1;
-            if (to.SceneObjects != null)
-                to.SceneObjects.transform.position = Vector3.zero;
+            if (showTo) {
+                to.HTML.transform.position = Vector3.zero;
+                to.HTML.style.opacity = 1;
+                if (to.SceneObjects != null)
+                    to.SceneObjects.transform.position = Vector3.zero;
+            }
             return;
         }
         var t = opts.ScreenTransitionTime;
@@ -727,12 +802,13 @@ public abstract class UIController : CoroutineRegularUpdater {
         var epxml = new Vector2(ep.x * XMLWidth, ep.y * -XMLHeight);
         var eput = new Vector2(ep.x * MainCamera.ScreenWidth, ep.y * MainCamera.ScreenHeight);
         //to.HTML.transform.position = -epxml;
-        if (to.SceneObjects != null)
-            to.SceneObjects.transform.position = -eput;
-        to.HTML.style.opacity = 0;
         async Task FadeIn() {
+            if (to.SceneObjects != null)
+                to.SceneObjects.transform.position = -eput;
+            to.HTML.style.opacity = 0;
             if (opts.DelayScreenFadeInRatio > 0)
-                await RUWaitingUtils.WaitForUnchecked(this, Cancellable.Null, t * opts.DelayScreenFadeInRatio, false);
+                await RUWaitingUtils.WaitForUnchecked(this, Cancellable.Null, t * opts.DelayScreenFadeInRatio,
+                    false);
             await Task.WhenAll(
                 to.HTML.FadeTo(1, t, Easers.EIOSine).Run(this),
                 to.SceneObjects == null ?
@@ -741,10 +817,11 @@ public abstract class UIController : CoroutineRegularUpdater {
             );
         }
         await Task.WhenAll(
-            from.HTML.FadeTo(0, opts.ScreenTransitionTime, Easers.EIOSine).Run(this),
-            from.SceneObjects == null ? Task.CompletedTask : 
+            !hideFrom ? Task.CompletedTask :
+                from.HTML.FadeTo(0, opts.ScreenTransitionTime, Easers.EIOSine).Run(this),
+            from.SceneObjects == null || !hideFrom ? Task.CompletedTask : 
                 from.SceneObjects.transform.GoTo(eput, opts.ScreenTransitionTime, Easers.EIOSine).Run(this),
-            FadeIn()
+            !showTo ? Task.CompletedTask : FadeIn()
         );
     }
     

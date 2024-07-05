@@ -95,6 +95,7 @@ public class ADVInstanceRequest : IADVInstanceRequest {
         using var exec = Game.Setup(inst);
         Manager.SetupInstance(exec);
         var result = await exec.Run();
+        Logs.Log($"ADV execution for {Game.Key} is complete with result {result}");
         return (result, inst);
     }
 

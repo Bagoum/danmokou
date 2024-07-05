@@ -16,13 +16,17 @@ The following features are planned for future releases.
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
-# v11.2.0 (2024/07/04)
+# v11.2.0 (2024/08/04)
 
 #### Breaking Changes
 
 - All the commonly-used UXML CSS files (`UINode.uss`, `UIScreen.uss`, `UINodeLRSwitch.css`, etc) have been combined into `DMK UXML CSS.uss`.
 
 
+
+#### Fixes
+
+- Fixed a bug where the "Shatter" background transition effect would continue running indefinitely.
 
 
 

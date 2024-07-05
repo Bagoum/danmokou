@@ -14,7 +14,7 @@ namespace Danmokou.UI {
 public interface IFixedXMLReceiver {
     public LString? Tooltip => null;
     public void OnBuilt(EmptyNode n) { }
-    public UIResult OnConfirm(UINode n, ICursorState cs);
+    public UIResult? Navigate(UINode n, ICursorState cs, UICommand req);
     public void OnEnter(UINode n, ICursorState cs);
     public void OnLeave(UINode n, ICursorState cs);
     public void OnPointerDown(UINode n, PointerDownEvent ev);
