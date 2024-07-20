@@ -112,34 +112,15 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
     public Sprite[] ItemTypes = new Sprite[6];
     public InvItem?[] _inventory { get; } = new InvItem?[60];
     private int? CurrentIndex;
-    public List<Lookup<InvItem>> LookupLayers { get; } = new();
-    public CompiledLookup<InvItem> Lookup { get; private set; } = null!;
+    private LookupHelper<InvItem> Lookup { get; set; } = null!;
     private Lookup<InvItem>? TabFilter;
     private UIFreeformGroup LayersGrp { get; set; } = null!;
 
     public void AddLookup(Lookup<InvItem> layer) {
-        //Add constructed object to model
-        if (LookupLayers.Count > 0 && LookupLayers[^1].Hidden) {
-            for (int ii = LookupLayers.Count - 1; ii >= 0; --ii) {
-                if (ii == 0 || !LookupLayers[ii - 1].Hidden) {
-                    LookupLayers.Insert(ii, layer);
-                    goto added;
-                }
-            }
-        } else
-            LookupLayers.Add(layer);
-        added: ;
-        //Listen to lifetime event for removing constructed object from model
-        AddToken(layer.WhenDestroyed(() => {
-            LookupLayers.Remove(layer);
-            RecompileLookup();
-        }));
-        //Create view
+        AddToken(Lookup.AddLayer(layer));
         LayersGrp.AddNodeDynamic(new UINode(new LayerView(new(this, layer))));
-        RecompileLookup();
     }
-
-    public void RecompileLookup() => Lookup = CompiledLookup<InvItem>.From(_inventory, LookupLayers);
+    
     public InvItem? this[int ii] => Lookup[ii];
     
     public override void FirstFrame() {
@@ -155,6 +136,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
                 Traits = tlen.Range().Select(_ => traits.Random()).ToArray()
             };
         }
+        Lookup = new(_inventory);
 
         var w = 10;
         var h = 6;
@@ -179,7 +161,6 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
         //AddLookup(new Lookup<InvItem>.Sort<int>(it => it.Count, "Count", true));
         //AddLookup(new Lookup<InvItem>.Filter(it => it.Color != ItemColor.Gold, "Filter out Gold"));
         //AddLookup(new Lookup<InvItem>.Sort<ItemColor>(it => it.Color, "Color", false));
-        RecompileLookup();
         
         var grid = s.Container.AddColumn().ConfigureAbsolute()
             .WithAbsolutePosition(1920 - 550, 1080 + 100).SetWidthHeight(new Vector2(w, h) * dim + new Vector2(0, 240));
@@ -228,7 +209,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
             nodes[2] = new PassthroughNode("") { VisibleIf = () => !selectType.FirstSelected.Valid };
             for (int ii = 0; ii < types.Length; ++ii) {
                 var (desc, sel) = types[ii];
-                nodes[ii + 3] = sel.Extract().SelectorDropdown(LString.Format("{0}:", desc));
+                nodes[ii + 3] = sel.Obj.SelectorDropdown();
                 nodes[ii + 3].VisibleIf = () => selectType.FirstSelected.Try(out var x) && x.Item2 == sel;
             }
             return PopupUIGroup.CreatePopup(n, "Add Filter", rs => new UIColumn(rs, nodes), 
@@ -236,7 +217,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
                 new UIButton(LocalizedStrings.Controls.confirm, UIButton.ButtonType.Confirm, b => {
                     this.AddLookup(selectType.FirstSelected.Value.Item2.Realize());
                     return n.ReturnToGroup;
-                }) { EnabledIf = () => selectType.FirstSelected.Try(out var sel) && sel.Item2.Extract().IsAnySelected }
+                }) { EnabledIf = () => selectType.FirstSelected.Try(out var sel) && sel.Item2.Obj.IsAnySelected }
             }), builder: (_, ve) => ve.SetWidth(1200));
             
         }) {
@@ -294,27 +275,24 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
 
         public UIResult? OnConfirm(UINode node, ICursorState cs) {
             Layer.Enabled = !Layer.Enabled;
-            Src.RecompileLookup();
+            Src.Lookup.Recompile();
             return new UIResult.StayOnNode();
         }
 
         public UIResult? OnContextMenu(UINode node, ICursorState cs) {
+            var layers = Src.Lookup.Layers;
             if (cs is NullCursorState) {
-                var idx = Src.LookupLayers.IndexOf(Layer);
+                var idx = layers.IndexOf(Layer);
                 return PopupUIGroup.CreateContextMenu(node, new UINode?[] {
                     (idx > 0) ? new FuncNode("Move up", () => {
-                        (Src.LookupLayers[idx], Src.LookupLayers[idx - 1]) =
-                            (Src.LookupLayers[idx - 1], Src.LookupLayers[idx]);
-                        Src.RecompileLookup();
+                        Src.Lookup.SwapIndices(idx, idx - 1);
                         //We don't need to fire MovedToIndex on the other item since
                         // the movement of this item will make the other once naturally have the correct index
                         MovedToIndex.OnNext(idx - 1);
                         return node.ReturnToGroup;
                     }) : null,
-                    (idx < Src.LookupLayers.Count - 1 && !Src.LookupLayers[idx+1].Hidden) ? new FuncNode("Move down", () => {
-                        (Src.LookupLayers[idx], Src.LookupLayers[idx + 1]) =
-                            (Src.LookupLayers[idx + 1], Src.LookupLayers[idx]);
-                        Src.RecompileLookup();
+                    (idx < layers.Count - 1 && !layers[idx+1].Hidden) ? new FuncNode("Move down", () => {
+                        Src.Lookup.SwapIndices(idx, idx + 1);
                         MovedToIndex.OnNext(idx + 1);
                         return node.ReturnToGroup;
                     }) : null,
@@ -364,12 +342,12 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
             if (cs is MyInventorySwapCS swap) {
                 if (swap.FromIndex == Index)
                     return new UIResult.StayOnNode(UIResult.StayOnNodeType.NoOp);
-                if (Src.Lookup is not CompiledLookup<InvItem>.SourceData inv) {
+                if (Src.Lookup.Compiled is not CompiledLookup<InvItem>.SourceData) {
                     n.SetTooltip(n.MakeTooltip(UINode.SimpleTTGroup("Cannot reorder items when sort/filter is active")));
                     return null;
                 }
-                ref var swapFrom = ref inv.Data[swap.FromIndex];
-                ref var swapTo = ref inv.Data[Index];
+                ref var swapFrom = ref Src._inventory[swap.FromIndex];
+                ref var swapTo = ref Src._inventory[Index];
                 if (InvItem.IsSameType(swapFrom, swapTo)) {
                     if (swapFrom!.Count + swapTo!.Count > 10) {
                         swapFrom.Count += swapTo.Count - 10;

@@ -38,7 +38,7 @@ public class UIFreeformGroup : CompositeUIGroup, IFreeformContainer {
     }
 
     protected override UIResult? NavigateAmongComposite(UINode current, UICommand dir) {
-        var targets = NodesAndDependentNodes.Where(n => n.AllowInteraction && n != unselector).ToList();
+        var targets = NodesAndDependentNodes.Where(n => n.AllowKBInteraction && n != unselector).ToList();
         if (targets.Count > 0) {
             if (current == unselector) {
                 //Return the node farthest in the pressed direction
@@ -82,7 +82,7 @@ public class UIFreeformGroup : CompositeUIGroup, IFreeformContainer {
         }).OrderBy(x => x.Item3).ToList();
         foreach (var limit in angleLimits) {
             foreach (var (candidate, angle, _) in ordering) {
-                if (!candidate.AllowInteraction || allowed?.Invoke(candidate) is false)
+                if (!candidate.AllowKBInteraction || allowed?.Invoke(candidate) is false)
                     continue;
                 if (angle >= limit)
                     continue;

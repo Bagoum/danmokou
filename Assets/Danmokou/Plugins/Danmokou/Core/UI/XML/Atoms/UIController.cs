@@ -38,6 +38,7 @@ public abstract record UIPointerCommand {
 
     public record NormalCommand(UICommand Command, UINode? Source) : UIPointerCommand {
         public bool Silent { get; init; } = false;
+        public Vector2? Loc { get; init; } = null;
         public override bool ValidForCurrent(UINode current) => 
             Source == current || Source == null || Command == UICommand.Back;
     }
@@ -68,6 +69,8 @@ public abstract record UIResult {
     public record SequentialResult(params UIResult[] results) : UIResult, IUnrollable<UIResult> {
         public IEnumerable<UIResult> Values => results;
     }
+    
+    public record Lazy(Func<UIResult> Delayed) : UIResult { }
 
     public record StayOnNode(StayOnNodeType Action) : UIResult {
         public StayOnNode(bool IsNoOp = false) : this(IsNoOp ? StayOnNodeType.NoOp : StayOnNodeType.DidSomething) { }
@@ -76,8 +79,6 @@ public abstract record UIResult {
     public record GoToNode(UINode Target, bool NoOpIfSameNode = true) : UIResult {
         public GoToNode(UIGroup Group, int? Index = null) : 
             this(Index.Try(out var i) ? Group.Nodes[Math.Clamp(i, 0, Group.Nodes.Count-1)] : Group.EntryNode) {}
-        
-        public GoToNode(UIScreen s) : this(s.Groups[0]) { }
     }
 
     public record GoToSibling(int Index, bool NoOpIfSameNode = true) : UIResult;
@@ -96,6 +97,7 @@ public abstract record UIResult {
 
     public static implicit operator UIResult(UINode node) => new GoToNode(node);
     public static implicit operator UIResult(UIGroup group) => new GoToNode(group);
+
 }
 
 /// <summary>
@@ -167,6 +169,12 @@ public abstract class UIController : CoroutineRegularUpdater {
         QueuedInput = cmd;
         UIEventQueued.OnNext(default);
     }
+
+    /// <summary>
+    /// The most recent location of the mouse pointer. Note that this will not capture changes
+    ///  in the mouse pointer when it is not hovering over this menu's pickable HTML.
+    /// </summary>
+    public Vector2? LastPointerLocation { get; private set; } = null;
 
     protected virtual UINode? StartingNode => null;
     
@@ -265,6 +273,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         //higher sort order is more visible, so give them lower priority
         tokens.Add(uiRenderer.RegisterController(this, -(int)(uid.panelSettings.sortingOrder * 1000 + uid.sortingOrder)));
         UIRoot = uid.rootVisualElement;
+        UIRoot.RegisterCallback<PointerMoveEvent>(ev => LastPointerLocation = ev.position);
         UIContainer = UIRoot.Q("UIContainer");
         UISettings = uid.panelSettings;
         Build();
@@ -369,6 +378,9 @@ public abstract class UIController : CoroutineRegularUpdater {
         while (!ETime.FirstUpdateForScreen) yield return null;
         Current?.ScrollTo();
     }
+
+    public UIResult Navigate(UINode from, UICommand cmd) => 
+        CursorState.Value.Navigate(from, cmd);
     
     
     private Task _OperateOnResult(UIResult? result, UITransitionOptions? opts) {
@@ -387,7 +399,10 @@ public abstract class UIController : CoroutineRegularUpdater {
             if (prev != null)
                 (screenChanges ??= new()).Add((prev, isDescend));
         }
-        foreach (var r in new[] { result }.Unroll()) {
+        foreach (var _r in new[] { result }.Unroll()) {
+            var r = _r;
+            while (r is UIResult.Lazy lazy)
+                r = lazy.Delayed();
             var prev = next;
             void TransferToNodeSameScreen(UINode target) {
                 if (target.Group != prev?.Group) {  
@@ -513,7 +528,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                     for (int ii = 0; ii < sc.Ascensions; ++ii)
                         if (ScreenCall.TryPop(out var s)) {
                             RecordScreenChange(s, false);
-                            while (GroupCall.TryPeek(out var g) && (g.group.Screen == prev.Screen)) {
+                            while (GroupCall.TryPeek(out var g) && (g.group.Screen == ngn.Group.Screen)) {
                                 LeftCalls.Add(ngn);
                                 ngn = GroupCall.Pop();
                             }
@@ -601,7 +616,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                             uic.Command :
                             CurrentInputCommand;
                     if (command.Try(out var cmd))
-                        result = CursorState.Value.Navigate(Current, cmd);
+                        result = Navigate(Current, cmd);
                     silence = (QueuedInput as UIPointerCommand.NormalCommand)?.Silent ?? silence;
                 }
                 QueuedInput = null;
@@ -711,7 +726,8 @@ public abstract class UIController : CoroutineRegularUpdater {
             next?.Screen.NextState(UIScreenState.InactiveWillGoActive);
         }
         using var token = OperationsEnabled.AddConst(false);
-        prev?.Leave(opts.Animate, CursorState.Value, leftGroups.Count == 0 && enteredGroups.Try(0) is PopupUIGroup);
+        bool isPopup = leftGroups.Count == 0 && enteredGroups.Try(0) is PopupUIGroup;
+        prev?.Leave(opts.Animate, CursorState.Value, isPopup);
         //First phase tasks
         var tasks = new List<Task>();
         //The last ReturnFromChild should be executed in the second phase,
@@ -726,7 +742,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                 tasks.Add(task);
         }
         //Handle first DescendToChild in EnterGroups
-        if (enteredGroups.Try(0)?.Parent?.DescendToChild() is { IsCompletedSuccessfully: false} dtask)
+        if (enteredGroups.Try(0)?.Parent?.DescendToChild(isPopup) is { IsCompletedSuccessfully: false} dtask)
             tasks.Add(dtask);
         
         if (screenChanges != null)
@@ -744,7 +760,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         //Second phase tasks
         if (screenChanges != null)
             foreach (var (src, isPush) in screenChanges)
-                if (isPush && src.Group.DescendToChild() is { IsCompletedSuccessfully: false } task)
+                if (isPush && src.Group.DescendToChild(isPopup) is { IsCompletedSuccessfully: false } task)
                     tasks.Add(task);
         //Handle last ReturnFromChild in LeftGroups
         if (lastReturnParent?.ReturnFromChild() is { IsCompletedSuccessfully: false} ltask)
@@ -753,7 +769,7 @@ public abstract class UIController : CoroutineRegularUpdater {
             var g = enteredGroups[ii];
             //The first DescendToChild should be executed in the first phase,
             // since it usually has functionality similar to Leave
-            if (ii > 0 && g.Parent?.DescendToChild() is { IsCompletedSuccessfully: false } ptask)
+            if (ii > 0 && g.Parent?.DescendToChild(isPopup) is { IsCompletedSuccessfully: false } ptask)
                 tasks.Add(ptask);
             if (g.EnterGroup() is { IsCompletedSuccessfully: false } task)
                 tasks.Add(task);

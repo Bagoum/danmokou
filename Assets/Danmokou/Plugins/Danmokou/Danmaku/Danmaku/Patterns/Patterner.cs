@@ -631,18 +631,12 @@ public struct LoopControl<T> {
         } else if (props.frv2 != null) {
             GCX.RV2 = GCX.BaseRV2 + props.frv2(GCX);
         }
-        if (props.saveF != null) {
-            for (int ii = 0; ii < props.saveF.Count; ++ii) {
-                var (h, i, v) = props.saveF[ii];
+        if (props.saveF != null) 
+            foreach (var (h, i, v) in props.saveF) 
                 h.Save((int) i(GCX), v(GCX));
-            }
-        }
-        if (props.saveV2 != null) {
-            for (int ii = 0; ii < props.saveV2.Count; ++ii) {
-                var (h, i, v) = props.saveV2[ii];
+        if (props.saveV2 != null)
+            foreach (var (h, i, v) in props.saveV2) 
                 h.Save((int) i(GCX), v(GCX));
-            }
-        }
         if (props.sfx != null && (props.sfxIf?.Invoke(GCX) ?? true)) {
             int index = (props.sfxIndexer == null) ? GCX.i : (int) props.sfxIndexer(GCX);
             ISFXService.SFXService.Request(props.sfx.ModIndex(index));

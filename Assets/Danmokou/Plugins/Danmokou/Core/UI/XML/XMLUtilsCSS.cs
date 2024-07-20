@@ -197,8 +197,8 @@ public static class XMLUtils {
     /// Change the scrolling speed of UITK ScrollView (by default, it is too slow for actual use).
     /// </summary>
     public static ScrollView FixScrollSize(this ScrollView scroll) {
-        scroll.verticalPageSize = 1000;
-        scroll.mouseWheelScrollSize = 1000;
+        scroll.verticalPageSize = 2500;
+        scroll.mouseWheelScrollSize = 2500;
         return scroll;
     }
     
@@ -285,8 +285,9 @@ public static class XMLUtils {
         return tt;
     }
 
-    public static UINode SelectorDropdown(this Selector sel, LString description) =>
-        new UINode(description) {
+    public static UINode SelectorDropdown(this Selector sel, LString? description = null) =>
+        new UINode(description ?? LString.Format("{0}:", sel.Description ?? throw new Exception(
+                        "Selector does not have description for default dropdown display"))) {
             Prefab = XMLUtils.Prefabs.TwoLabelNode,
             OnConfirm = (n, cs) => PopupUIGroup.CreateDropdown(n, sel)
         }.Bind(new LabelView<(int ct, int first)>(new(sel.SelectedCount, ctf => {
@@ -294,6 +295,10 @@ public static class XMLUtils {
             if (ctf.ct > 1) return "(Multiple)";
             return sel.DescribeAt(ctf.first);
         }), "Label2"));
+
+    public static LROptionNode<bool> MakeSelector(this Evented<bool> data, LString title, LString falseDesc,
+        LString trueDesc) =>
+        new(title, data, new[] { (falseDesc, false), (trueDesc, true) });
 
     /// <summary>
     /// Render a visual element as a sprite with its actual coordinates and pivot,

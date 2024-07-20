@@ -128,45 +128,35 @@ public partial class BulletManager {
 
     public override void RegularUpdate() {
         ResetSentry();
-        SimpleBulletCollection sbc;
         //Temp-last set for control updates
-        for (int ii = 0; ii < activeEmpty.Count; ++ii) {
-            sbc = activeEmpty[ii];
+        foreach (var sbc in activeEmpty)
             sbc.temp_last = sbc.Count;
-        }
-        for (int ii = 0; ii < activeNpc.Count; ++ii) {
-            sbc = activeNpc[ii];
+        foreach (var sbc in activeNpc) 
             sbc.temp_last = sbc.Count;
-        }
-        for (int ii = 0; ii < activePlayer.Count; ++ii) {
-            sbc = activePlayer[ii];
+        foreach (var sbc in activePlayer) 
             sbc.temp_last = sbc.Count;
-        }
-        for (int ii = 0; ii < activeCulled.Count; ++ii) {
-            sbc = activeCulled[ii];
+        foreach (var sbc in activeCulled) 
             sbc.temp_last = sbc.Count;
-        }
         NPCBulletsRequireBucketing = ServiceLocator.FindAll<IEnemySimpleBulletCollisionReceiver>().NumberAlive() > 1;
         //Velocity and control updates
-        for (int ii = 0; ii < activeEmpty.Count; ++ii)
-            activeEmpty[ii].UpdateVelocityAndControls();
+        foreach (var sbc in activeEmpty)
+            sbc.UpdateVelocityAndControls();
         Profiler.BeginSample("NPC-fired simple bullet velocity updates");
-        for (int ii = 0; ii < activeNpc.Count; ++ii)
-            activeNpc[ii].UpdateVelocityAndControls(NPCBulletsRequireBucketing);
+        foreach (var sbc in activeNpc)
+            sbc.UpdateVelocityAndControls(NPCBulletsRequireBucketing);
         Profiler.EndSample();
         Profiler.BeginSample("Player simple bullet velocity updates");
-        for (int ii = 0; ii < activePlayer.Count; ++ii)
-            activePlayer[ii].UpdateVelocityAndControls();
+        foreach (var sbc in activePlayer)
+            sbc.UpdateVelocityAndControls();
         Profiler.EndSample();
-        for (int ii = 0; ii < activeCulled.Count; ++ii)
-            activeCulled[ii].UpdateVelocityAndControls();
+        foreach (var sbc in activeCulled)
+            sbc.UpdateVelocityAndControls();
     }
 
     public override void RegularUpdateCollision() {
         var collidees = ServiceLocator.FindAll<IEnemySimpleBulletCollisionReceiver>();
         Profiler.BeginSample("NPC simple bullet collisions");
-        for (int ii = 0; ii < activeNpc.Count; ++ii) {
-            var sbc = activeNpc[ii];
+        foreach (var sbc in activeNpc) {
             if (sbc.Count > 0)
                 for (int ic = 0; ic < collidees.Count; ++ic)
                     if (collidees.GetIfExistsAt(ic, out var receiver))
@@ -176,8 +166,7 @@ public partial class BulletManager {
 
         Profiler.BeginSample("Player simple bullet collisions");
         var enemies = ServiceLocator.FindAll<IPlayerSimpleBulletCollisionReceiver>();
-        for (int ii = 0; ii < activePlayer.Count; ++ii) {
-            var sbc = activePlayer[ii];
+        foreach (var sbc in activePlayer) {
             if (sbc.Count > 0)
                 for (int ie = 0; ie < enemies.Count; ++ie)
                     if (enemies.GetIfExistsAt(ie, out var receiver))
@@ -188,10 +177,9 @@ public partial class BulletManager {
 
     public override void RegularUpdateFinalize() {
         //Do this in the late step so it occurs after any custom collision handling, and before rendering
-        for (int ic = 0; ic < collections.Length; ++ic) {
-            var c = collections[ic];
-            for (int ii = 0; ii < c.Count; ++ii) {
-                c[ii].CompactAndSort();
+        foreach (var c in collections) {
+            foreach (var grp in c) {
+                grp.CompactAndSort();
             }
         }
     }
@@ -221,46 +209,39 @@ public partial class BulletManager {
     public static void DestroyCopiedPools() {
         //Some empty pools and npc pools are copied
         var newEmpty = new List<SimpleBulletCollection>();
-        for (int ii = 0; ii < activeEmpty.Count; ++ii) {
-            if (activeEmpty[ii].IsCopy) {
-                DestroySimpleStyle(activeEmpty[ii].Style);
-            } else {
-                newEmpty.Add(activeEmpty[ii]);
-            }
-        }
+        foreach (var sbc in activeEmpty)
+            if (sbc.IsCopy)
+                DestroySimpleStyle(sbc.Style);
+            else
+                newEmpty.Add(sbc);
         activeEmpty.Clear();
         activeEmpty.AddRange(newEmpty);
 
         var newNpc = new List<SimpleBulletCollection>();
-        for (int ii = 0; ii < activeNpc.Count; ++ii) {
-            if (activeNpc[ii].IsCopy) {
-                DestroySimpleStyle(activeNpc[ii].Style);
-            } else {
-                newNpc.Add(activeNpc[ii]);
-            }
-        }
+        foreach (var sbc in activeNpc)
+            if (sbc.IsCopy)
+                DestroySimpleStyle(sbc.Style);
+            else
+                newNpc.Add(sbc);
         activeNpc.Clear();
         activeNpc.AddRange(newNpc);
 
         //All player pools are copied
-        for (int ii = 0; ii < activePlayer.Count; ++ii) {
-            DestroySimpleStyle(activePlayer[ii].Style);
-        }
+        foreach (var sbc in activePlayer) 
+            DestroySimpleStyle(sbc.Style);
         activePlayer.Clear();
         //Don't delete culled pools since they are linked from the base pools
     }
 
     public static void ClearEmptyBullets(bool clearPlayer) {
-        for (int ii = 0; ii < activeEmpty.Count; ++ii) {
-            if (clearPlayer || !activeEmpty[ii].IsPlayer)
-                activeEmpty[ii].Reset();
-        }
+        foreach (var sbc in activeEmpty)
+            if (clearPlayer || !sbc.IsPlayer)
+                sbc.Reset();
     }
 
     public static void ClearAllBullets() {
-        foreach (var pool in simpleBulletPools.Values) {
+        foreach (var pool in simpleBulletPools.Values)
             pool.Reset();
-        }
         ClearNonSimpleBullets();
     }
 

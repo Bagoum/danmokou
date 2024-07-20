@@ -53,7 +53,8 @@ public class UIScreen : ITokenized {
     private bool _persistent = false;
     /// <summary>
     /// If true, this screen will always be visible, even if navigation is on a different screen.
-    /// <br/>Note that mouse events will not trigger on this screen's nodes unless it is the current screen,
+    /// <br/>The screen can be interactable. However, mouse events will not trigger on
+    ///  this screen's nodes when it is not the current screen,
     ///  because UIController does not allow cross-screen UIPointerCommand.Goto events.
     /// </summary>
     public bool Persistent {

@@ -29,6 +29,7 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
     //in unity units
     public Vector2 Size = Vector2.one;
     public Vector2 Offset;
+    public bool keyboardNavigable = true;
 
     public string[] xmlClasses = null!;
     public FixedXMLObject XML { get; private set; } = null!;
@@ -49,7 +50,10 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
             Descriptor = gameObject.name,
         };
 
-        Node = new EmptyNode(new FixedXMLView(new(XML, Receiver)) { AsEmpty = true });
+        Node = new EmptyNode(new FixedXMLView(new(XML, Receiver)) {
+            AsEmpty = true,
+            IsKeyboardNavigable = keyboardNavigable
+        });
         Node.WithCSS(xmlClasses);
     }
     public override void FirstFrame() {

@@ -709,8 +709,8 @@ public static class CollisionMath {
                     if (castPushOut.collider != null && castPushOut.collider != cast.collider) {
                         //If the second collider has already received an internal collision, then we fail.
                         //Otherwise, we allow an extra bounce to try to handle the second collider.
-                        for (int ii = 0; ii < doNotCollide.Count; ++ii)
-                            if (doNotCollide[ii] == castPushOut.collider) {
+                        foreach (var dnc in doNotCollide)
+                            if (dnc == castPushOut.collider) {
                                 squashed = true;
                                 return (Vector2.zero, Vector2.zero);
                             }

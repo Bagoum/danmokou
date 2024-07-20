@@ -234,13 +234,15 @@ t > fadein ?
     /// </summary>
     public static ReflectableLASM Boss(string bossKey) {
         var bossCfg = ResourceManager.GetBoss(bossKey);
-        return new(smh => {
+        return new(async smh => {
             var beh = Object.Instantiate(bossCfg.boss).GetComponent<BehaviorEntity>();
             if (smh.Context.LoadCheckpoint is { } ch && ch.StagePhase == (smh.Context as PhaseContext)?.Index && ch.BossCheckpoint is {} bc && bc.boss == bossCfg)
                 beh.phaseController.SetGoTo(bc.phase);
             else
                 beh.phaseController.SetGoTo(1);
-            return beh.RunBehaviorSM(SMRunner.CullRoot(StateMachineManager.FromText(bossCfg.stateMachine)!, smh.cT));
+            Logs.Log($"Starting boss: {bossKey}");
+            await beh.RunBehaviorSM(SMRunner.CullRoot(StateMachineManager.FromText(bossCfg.stateMachine)!, smh.cT));
+            Logs.Log($"Finished boss: {bossKey}. The boss object has been destroyed.");
         });
     }
     
@@ -807,10 +809,9 @@ t > fadein ?
     public static ReflectableLASM PlayerVariant((string key, StateMachine exec)[] options) => new(smh => {
         if (GameManagement.Instance.Player == null)
             throw new Exception("Cannot use PlayerVariant state machine when there is no player");
-        for (int ii = 0; ii < options.Length; ++ii) {
-            if (GameManagement.Instance.Player.key == options[ii].key) {
-                return options[ii].exec.Start(smh);
-            }
+        foreach (var opt in options) {
+            if (GameManagement.Instance.Player.key == opt.key)
+                return opt.exec.Start(smh);
         }
         throw new Exception("Could not find a matching player variant option for player " +
             $"{GameManagement.Instance.Player.key}");

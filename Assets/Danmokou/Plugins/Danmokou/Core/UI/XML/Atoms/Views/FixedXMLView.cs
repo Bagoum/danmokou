@@ -27,19 +27,27 @@ public class FixedXMLViewModel : IConstUIViewModel {
             return node.MakeTooltip(UINode.SimpleTTGroup(tt));
         return null;
     }
+
+    bool IUIViewModel.ShouldBeInteractable(UINode node) => Descr.IsInteractable.Value;
 }
 
 /// <inheritdoc cref="FixedXMLViewModel"/>
 public class FixedXMLView : UIView<FixedXMLViewModel>, IUIView {
     public bool AsEmpty { get; init; }
+    public bool IsKeyboardNavigable { get; init; } = true;
     public FixedXMLView(FixedXMLViewModel data) : base(data) { }
 
     public override void OnBuilt(UINode node) {
         base.OnBuilt(node);
         if (AsEmpty)
             HTML.ConfigureEmpty();
+        if (!IsKeyboardNavigable)
+            node.AllowKBInteraction = false;
         //Since FixedXMLObject is event-based, we don't need an update method, just event bindings.
-        node.AddToken(VM.Descr.IsInteractable.Subscribe(b => node.UpdatePassthrough(!b)))
+        node.AddToken(VM.Descr.IsInteractable.Subscribe(b => {
+                if (!b)
+                    node.Controller.MoveCursorAwayFromNode(node);
+            }))
             .AddToken(VM.Descr.IsVisible.Subscribe(b => {
             //Allows opacity fade-out
             HTML.pickingMode = b ? PickingMode.Position : PickingMode.Ignore;

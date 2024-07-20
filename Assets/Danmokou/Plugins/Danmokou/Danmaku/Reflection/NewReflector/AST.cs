@@ -1902,7 +1902,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
 
     public record InvokedMacro(PositionRange Pos, PositionRange Method, MacroDecl Macro, IAST Inner) : AST(Pos, Inner.EnclosingScope, Inner), IAST, IMethodTypeTree<Dummy> {
         public IReadOnlyList<Dummy> Overloads { get; } = new[] {
-            new Variable().And(x => Dummy.Method(x, x))
+            new Variable().Use(x => Dummy.Method(x, x))
         };
         public List<Dummy>? RealizableOverloads { get; set; }
         public IReadOnlyList<ITypeTree> Arguments => Params;

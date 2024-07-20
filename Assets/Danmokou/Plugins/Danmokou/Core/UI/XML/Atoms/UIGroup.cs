@@ -111,7 +111,7 @@ public record GroupVisibilityControl(UIGroup Group) {
 
     public virtual Task? OnReturnFromChild() => null;
 
-    public virtual Task? OnDescendToChild() => null;
+    public virtual Task? OnDescendToChild(bool isEnteringPopup) => null;
 
     public Task ParentVisibilityUpdated(GroupVisibility? parentVisibleInTree, bool notifyRender = true) {
         var prevVisInTree = VisibleInTree;
@@ -146,8 +146,8 @@ public record GroupVisibilityControl(UIGroup Group) {
     }
 
     public void ApplyToChildren() {
-        for (int ii = 0; ii < Group.Children.Count; ++ii)
-            Group.Children[ii].Visibility.ParentVisibilityUpdated(VisibleInTree, false);
+        foreach (var c in Group.Children)
+            c.Visibility.ParentVisibilityUpdated(VisibleInTree, false);
     }
 
     public override string ToString() => $"{this.GetType().RName()}({LocalVisible}, {ParentVisibleInTree})";
@@ -177,8 +177,8 @@ public record GroupVisibilityControl(UIGroup Group) {
             return UpdatedVisibility(prevVisInTree);
         }
 
-        public override Task? OnDescendToChild() {
-            if (!useLocalHiding) return null;
+        public override Task? OnDescendToChild(bool isEnteringPopup) {
+            if (!useLocalHiding || isEnteringPopup) return null;
             var prevVisInTree = VisibleInTree;
             LocalVisible = GroupVisibility.TreeVisibleLocalHidden;
             return UpdatedVisibility(prevVisInTree);
@@ -278,6 +278,12 @@ public abstract class UIGroup {
             return nodes;
         }
     }
+
+    public UIGroup WithNodeMod(Action<UINode> mod) {
+        foreach (var n in Nodes)
+            mod(n);
+        return this;
+    }
     private bool _interactable = true;
     public bool Interactable {
         get => _interactable;
@@ -308,10 +314,20 @@ public abstract class UIGroup {
     /// </summary>
     public Func<UIGroup, Task?>? OnEnter { private get; set; }
 
+    public UIGroup WithOnEnter(Action x) {
+        OnEnter = _ => { x(); return null; };
+        return this;
+    }
+    
     /// <summary>
     /// Run code when navigation moves outside of this group and all descendants of this group.
     /// </summary>
     public Func<UIGroup, Task?>? OnLeave { private get; set; }
+
+    public UIGroup WithOnLeave(Action x) {
+        OnLeave = _ => { x(); return null; };
+        return this;
+    }
 
     /// <summary>
     /// Run code when navigation moves from a descendant of this group to this group.
@@ -320,8 +336,9 @@ public abstract class UIGroup {
 
     /// <summary>
     /// Run code when navigation moves from this group to a descendant of this group.
+    /// <br/>bool: True iff the child group is a popup.
     /// </summary>
-    public Func<UIGroup, Task?>? OnGoToChild { private get; set; }
+    public Func<UIGroup, bool, Task?>? OnGoToChild { private get; set; }
     public UIGroup OnEnterOrReturnFromChild(Action<UIGroup> cb) {
         OnEnter = OnReturnFromChild = grp => {
             cb(grp);
@@ -349,9 +366,9 @@ public abstract class UIGroup {
     }
     public UINode? FirstInteractableNode {
         get {
-            for (int ii = 0; ii < Nodes.Count; ++ii)
-                if (Nodes[ii].AllowInteraction)
-                    return Nodes[ii];
+            foreach (var n in Nodes)
+                if (n.AllowInteraction)
+                    return n;
             return null;
         }
     }
@@ -464,7 +481,7 @@ public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? 
                     return res;
                 ii = Nodes.Count - 1;
             }
-            if (Nodes[ii].AllowInteraction)
+            if (Nodes[ii].AllowKBInteraction)
                 break;
         }
         return new GoToNode(this, ii);
@@ -479,7 +496,7 @@ public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? 
                     return res;
                 ii = 0;
             }
-            if (Nodes[ii].AllowInteraction)
+            if (Nodes[ii].AllowKBInteraction)
                 break;
         }
         return new GoToNode(this, ii);
@@ -549,8 +566,8 @@ public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? 
     /// <summary>
     /// Called when navigation goes from this group to a child of this group or a different screen.
     /// </summary>
-    public Task? DescendToChild() {
-        return Visibility.OnDescendToChild().And(OnGoToChild?.Invoke(this));
+    public Task? DescendToChild(bool isEnteringPopup) {
+        return Visibility.OnDescendToChild(isEnteringPopup).And(OnGoToChild?.Invoke(this, isEnteringPopup));
     }
 
     /// <summary>
@@ -662,7 +679,8 @@ public record PopupButtonOpts {
 
 public class PopupUIGroup : CompositeUIGroup {
     private UINode Source { get; }
-    
+
+    public bool AllowDefaultCtxMenu { get; set; } = false;
     public bool EasyExit { get; set; }
     public float? OverlayAlphaOverride { get; set; }
 
@@ -707,18 +725,21 @@ public class PopupUIGroup : CompositeUIGroup {
         return p;
     }
 
-    public static PopupUIGroup CreateContextMenu(UINode source, UINode?[] options) {
+    public static PopupUIGroup CreateContextMenu(UINode source, params UINode?[] options) {
         var render = MakeRenderer(source.Screen.AbsoluteTerritory, XMLUtils.Prefabs.ContextMenu);
-        render.HTML.ConfigureAbsolute(XMLUtils.Pivot.TopLeft).WithAbsolutePosition(
-            source.HTML.worldBound.center + source.HTML.worldBound.size * 0.3f);
-        var back = new FuncNode(LocalizedStrings.Generic.generic_back, UIButton.GoBackCommand<FuncNode>(source));
-        //NB: you can press X/RightClick *once* to leave an options menu.
+        var ctxMenuPos = source.HTML.worldBound.max-Vector2.Min(new(120, 120), source.HTML.worldBound.size * 0.2f);
+        if (source.Controller.LastPointerLocation is { } loc && source.HTML.worldBound.Contains(loc))
+            ctxMenuPos = loc;
+        render.HTML.ConfigureAbsolute(XMLUtils.Pivot.TopLeft).WithAbsolutePosition(ctxMenuPos);
+        var back = new FuncNode(LocalizedStrings.Generic.generic_back, UIButton.GoBackTwiceCommand<FuncNode>(source));
+        var close = new FuncNode(LocalizedStrings.Generic.generic_close, UIButton.GoBackCommand<FuncNode>(source));
+        //NB: you can press X *once* to leave an options menu.
         // If you add a ExitNodeOverride to the UIColumn, then you'll need to press it twice (as with standard popups)
         var grp = new UIColumn(new UIRenderConstructed(render, new(XMLUtils.AddColumn)), 
-            options.Append(back).Select(x => x?.WithCSS(XMLUtils.noPointerClass)));
+            options.Prepend(back).Append(close).Select(x => x?.WithCSS(XMLUtils.noPointerClass)));
         var p = new PopupUIGroup(render, null, source, grp) {
-            EntryNodeOverride = options.First(x => x != null)!,
-            ExitNodeOverride = back,
+            EntryNodeOverride = back,
+            ExitNodeOverride = close,
             EasyExit = true,
             OverlayAlphaOverride = 0,
         };
@@ -737,7 +758,8 @@ public class PopupUIGroup : CompositeUIGroup {
         return new PopupUIGroup(render, null, src, grp) {
             EntryNodeOverride = grp.EntryNode,
             EasyExit = true,
-            OverlayAlphaOverride = 0
+            AllowDefaultCtxMenu = true,
+            OverlayAlphaOverride = 0,
         };
     }
 
@@ -785,8 +807,8 @@ public abstract class CompositeUIGroup : UIGroup {
         get {
             if (base.MaybeEntryNode is { } pen)
                 return pen;
-            for (int ii = 0; ii < Components.Count; ++ii) {
-                if (Components[ii].MaybeEntryNode is { } en)
+            foreach (var c in Components) {
+                if (c.MaybeEntryNode is { } en)
                     return en;
             }
             return null;

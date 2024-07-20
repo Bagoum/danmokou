@@ -144,10 +144,10 @@ public class XMLMainMenuCampaign : XMLMainMenu {
                     return new UIResult.StayOnNode();
                 } else {
                     shotContinuation = shot => cont(new SharedInstanceMetadata(shot, dfc));
-                    return new UIResult.GoToNode(campaignToShotScreenMap[c]);
+                    return new UIResult.GoToScreen(campaignToShotScreenMap[c]);
                 }
             };
-            return new UIResult.GoToNode(DifficultyScreen);
+            return new UIResult.GoToScreen(DifficultyScreen);
         };
 
         StagePracticeScreen = this.StagePracticeScreen(GetMetadata);
@@ -218,7 +218,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
 
         UIResult? IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
             return fd == null ?
-                new UIResult.GoToNode(src.CustomDifficultyScreen) :
+                new UIResult.GoToScreen(src.CustomDifficultyScreen) :
                 src.dfcContinuation(new(fd));
         }
     }

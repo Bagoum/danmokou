@@ -225,8 +225,8 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         if (Params.Count > 1) {
             yield return PrintToken.indent;
             yield return PrintToken.newline;
-            for (int ii = 0; ii < Params.Count; ++ii) {
-                foreach (var x in Params[ii].DebugPrint())
+            foreach (var p in Params) {
+                foreach (var x in p.DebugPrint())
                     yield return x;
                 yield return ", ";
                 yield return PrintToken.newline;

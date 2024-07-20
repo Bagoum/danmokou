@@ -583,7 +583,7 @@ public record GenCtxProperty {
         }
     }
 
-    public record GCXColorProp(GCXF<string> color) : ValueProp<GCXF<string>>(color);
+    public record GCXColorProp(GCXF<string?> color) : ValueProp<GCXF<string?>>(color);
     public record ColorProp : ValueProp<string[]> {
         public readonly GCXF<float>? indexer;
         public readonly bool reverse;
@@ -716,8 +716,8 @@ public class GenCtxProperties<T> : GenCtxProperties {
     public readonly bool targetFromSummon;
     public readonly GCXF<bool>? runWhile;
     public readonly StateMachine? unpause;
-    public readonly IReadOnlyList<(ReflectEx.Hoist<float>, GCXF<float>, GCXF<float>)>? saveF;
-    public readonly IReadOnlyList<(ReflectEx.Hoist<Vector2>, GCXF<float>, GCXF<Vector2>)>? saveV2;
+    public readonly (ReflectEx.Hoist<float>, GCXF<float>, GCXF<float>)[]? saveF;
+    public readonly (ReflectEx.Hoist<Vector2>, GCXF<float>, GCXF<Vector2>)[]? saveV2;
     public readonly GCXF<bool>? clipIf;
     public readonly GCXF<bool>? cancelIf;
     public readonly GCXF<ETime.Timer>? timer;

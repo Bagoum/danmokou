@@ -1,6 +1,7 @@
 ﻿using System;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using Danmokou.ADV;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
 using Danmokou.Scenes;
@@ -15,7 +16,7 @@ using UnityEngine;
 namespace Danmokou.VN {
 public class DMKVNState : UnityVNState {
     public readonly string id;
-    public DMKVNState(ICancellee extCToken, string id, InstanceData save) : base(extCToken, save) {
+    public DMKVNState(ICancellee extCToken, string id, InstanceData save, ADVInstanceRequest? adv = null) : base(extCToken, save) {
         if (LoadTo != null)
             ServiceLocator.FindOrNull<ICameraTransition>()?.StallFadeOutUntil(() => SkippingMode != SkipMode.LOADING);
         this.id = id;

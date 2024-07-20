@@ -106,10 +106,6 @@ public abstract class UIView : CustomBinding, IUIView {
     public UINode Node { get; private set; } = null!;
     public VisualElement HTML { get; private set; } = null!;
     public IUIViewModel ViewModel { get; }
-    public BindingUpdateTrigger UpdateTrigger {
-        get => updateTrigger;
-        set => ViewModel.UpdateTrigger = updateTrigger = value;
-    }
     public BindingId BindingId =>
         typeBindings.TryGetValue(this.GetType(), out var bdg) ?
             bdg :
@@ -117,16 +113,12 @@ public abstract class UIView : CustomBinding, IUIView {
     
     public UIView(IUIViewModel viewModel) {
         this.ViewModel = viewModel;
-        UpdateTrigger = BindingUpdateTrigger.OnSourceChanged;
+        updateTrigger = BindingUpdateTrigger.OnSourceChanged;
     }
 
     public void Bind(VisualElement ve) {
         HTML = ve;
         ve.SetBinding(BindingId, this);
-    }
-
-    public void Unbind() {
-        HTML.ClearBinding(BindingId);
     }
 
     public virtual void OnBuilt(UINode node) {
@@ -136,7 +128,12 @@ public abstract class UIView : CustomBinding, IUIView {
     public virtual void ReprocessForLanguageChange() => Update(default);
 
     public IDisposable DirtyOn<T>(IObservable<T> ev) {
-        UpdateTrigger = BindingUpdateTrigger.WhenDirty;
+        updateTrigger = BindingUpdateTrigger.WhenDirty;
+        //NB: UITK internals will recompute hash code even if the update trigger is WhenDirty.
+        //In most cases when we set the update trigger to WhenDirty, we want to avoid allocations
+        // that would otherwise occur in hash code computation.
+        if (ViewModel is UIViewModel vm)
+            vm.OverrideViewHash ??= () => 0;
         return ev.Subscribe(_ => MarkDirty());
     }
 

@@ -2,9 +2,9 @@
     <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
     <ui:VisualElement class="node">
         <ui:VisualElement name="Selector" class="pointer prefix" />
-        <ui:VisualElement name="Checkmark" class="checkmark prefix" />
+        <ui:VisualElement name="Checkmark" class="checkmark prefix" style="background-image: url(&quot;project://database/Assets/Danmokou/Kenney/ui/cross.png?fileID=2800000&amp;guid=83afe1320062bc94b98fec15b302f3dd&amp;type=3#cross&quot;); margin-right: -10px; margin-left: -30px;" />
         <ui:VisualElement name="Body" class="body">
-            <ui:Label text="one two three日語" name="Label" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; border-bottom-color: rgb(128, 128, 128);" />
+            <ui:Label text="Example Text ここ" name="Label" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; border-bottom-color: rgb(128, 128, 128);" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -460,18 +460,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 935d6d3b359104c4fa7b5a1adaa0eda5, type: 3}
---- !u!114 &80936529 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3120967464440145734, guid: 935d6d3b359104c4fa7b5a1adaa0eda5,
-    type: 3}
-  m_PrefabInstance: {fileID: 80936528}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e9d37bde79c3ed0448e78a53fa8e425d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &743896006
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -605,13 +593,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9616987649fbb34b9356796eee7d67a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  uiRenderer: {fileID: 80936529}
+  uiRenderer: {fileID: 0}
   upDownSound: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092, type: 2}
   leftRightSound: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4, type: 2}
   confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
   failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
   backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
   showOptsSound: {fileID: 11400000, guid: 069c9c964b7962e48a1293683803bbb5, type: 2}
+  screenPersistentUIVTA: {fileID: 9197481963319205126, guid: b82e02d5eb526b2419e6914f74570b53,
+    type: 3}
   screenMainVTA: {fileID: 9197481963319205126, guid: 05aab446c91478043a2a071c12b9ce5e,
     type: 3}
   screenInventoryVTA: {fileID: 9197481963319205126, guid: 56315bacb851c0545b0b32f5cbac3431,

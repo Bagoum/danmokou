@@ -82,7 +82,7 @@ public class ADVInstanceRequest : IADVInstanceRequest {
 #endif
         async Task<(IADVCompletion result, IDisposable cleanup)> RunInScene() {
         var Tracker = new Cancellable();
-        var vn = new DMKVNState(Tracker, Game.Key, ADVData.VNData);
+        var vn = new DMKVNState(Tracker, Game.Key, ADVData.VNData, this);
         var evn = ServiceLocator.Find<IVNWrapper>().TrackVN(vn);
         if (Game.BacklogFeatures != ADVBacklogFeatures.NO_BACKLOG)
             ServiceLocator.Find<IVNBacklog>().TryRegister(evn);

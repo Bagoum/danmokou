@@ -14,6 +14,24 @@ public abstract class Trait {
 
     public override string ToString() => $"Trait {Name}";
 
+    private static Trait[]? _traits = null;
+    public static Trait[] Traits => _traits ??= new Trait[] {
+        Glowing1.S,
+        Glowing2.S,
+        Glowing3.S,
+        Rotten.S,
+        Sweet.S,
+        Sour.S,
+        SweetAndSour.S,
+        Sturdy.S,
+        Flexible.S,
+        Illuminating.S,
+        TastesLikeCoke.S,
+        EfficientFlow.S, 
+        ResistsFire.S,
+        ResistsLightning.S,
+    };
+
     public class Glowing1 : Trait {
         private Glowing1() { }
         public static Glowing1 S { get; } = new();

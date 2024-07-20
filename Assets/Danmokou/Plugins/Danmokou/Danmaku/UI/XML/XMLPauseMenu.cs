@@ -24,7 +24,17 @@ using static Danmokou.Core.LocalizedStrings.Generic;
 
 namespace Danmokou.UI.XML {
 public interface IPauseMenu {
+    /// <summary>
+    /// Try to open the pause menu on the next frame.
+    /// <br/>(This may result in a no-op if player input is not enabled, the menu is already open,
+    ///  or the game's run state is not pausable.)
+    /// </summary>
     void QueueOpen();
+
+    static UIResult FindAndQueueOpen() {
+        ServiceLocator.Find<IPauseMenu>().QueueOpen();
+        return new UIResult.StayOnNode(UIResult.StayOnNodeType.Silent);
+    }
 }
 /// <summary>
 /// Class to manage the pause menu UI. Links to an options screen and a VN save/load screen.

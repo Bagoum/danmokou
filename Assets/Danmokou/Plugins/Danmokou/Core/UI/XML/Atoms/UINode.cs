@@ -97,8 +97,8 @@ public class UINode {
     /// </summary>
     public bool IsNodeVisible {
         get {
-            for (int ii = 0; ii < Views.Count; ++ii)
-                if (!Views[ii].ViewModel.ShouldBeVisible(this))
+            foreach (var v in Views)
+                if (!v.ViewModel.ShouldBeVisible(this))
                     return false;
             return true;
         }
@@ -116,14 +116,27 @@ public class UINode {
     /// </summary>
     public bool IsEnabled {
         get {
-            for (int ii = 0; ii < Views.Count; ++ii)
-                if (!Views[ii].ViewModel.ShouldBeEnabled(this))
+            foreach (var v in Views)
+                if (!v.ViewModel.ShouldBeEnabled(this))
                     return false;
             return true;
         }
     }
     
-    public bool AllowInteraction => (Passthrough != true) && Group.Interactable && IsNodeVisible;
+    public bool AllowInteraction {
+        get {
+            if (!Group.Interactable || !IsNodeVisible) return false;
+            foreach (var v in Views)
+                if (!v.ViewModel.ShouldBeInteractable(this))
+                    return false;
+            return true;
+        }
+    }
+    public bool _allowKbInteraction = true;
+    public bool AllowKBInteraction {
+        get => _allowKbInteraction && AllowInteraction;
+        set => _allowKbInteraction = value;
+    }
     public int IndexInGroup => Group.Nodes.IndexOf(this);
 
     /// <summary>
@@ -139,20 +152,7 @@ public class UINode {
     
     #region InitOptions
 
-    /// <summary>
-    /// Set whether or not this node should be "skipped over" for navigation events.
-    /// <br/>Defaults to null, which operates like False, but can be overriden by the group.
-    /// <br/>If the node is not visible (due to VisibleIf returning false), then it will also be skipped.
-    /// <br/>Note: use <see cref="UpdatePassthrough"/> for runtime changes.
-    /// </summary>
-    public bool? Passthrough { get; set; } = null;
 
-    public void UpdatePassthrough(bool? b) {
-        if (Passthrough == b) return;
-        Passthrough = b;
-        if (b is true)
-            Controller.MoveCursorAwayFromNode(this);
-    }
     /// <summary>
     /// Set whether this node should tentatively save its location in the controller ReturnTo cache when the user
     /// navigates to it.
@@ -162,6 +162,11 @@ public class UINode {
     /// <inheritdoc cref="IUIViewModel.ShouldBeVisible"/>
     public Func<bool>? VisibleIf {
         set => RootView.VM.VisibleIf = value;
+    }
+    
+    /// <inheritdoc cref="IUIViewModel.ShouldBeInteractable"/>
+    public bool BaseInteractable {
+        set => RootView.VM.Interactable = value;
     }
     
     /// <inheritdoc cref="IUIViewModel.ShouldBeEnabled"/>
@@ -178,10 +183,26 @@ public class UINode {
     /// Overrides the visualTreeAsset used to construct this node's HTML.
     /// <br/>This overrides <see cref="IUIView"/>.<see cref="IUIView.Prefab"/>.
     /// </summary>
-    public VisualTreeAsset? Prefab { get; init; }
+    public VisualTreeAsset? Prefab { get; set; }
 
     /// <inheritdoc cref="UIView.Builder"/>
     public Func<VisualElement, VisualElement>? Builder { get; init; }
+
+    /// <summary>
+    /// If true, the node will create a default context menu with only "Back" and "Close" options
+    ///  if none of its views have context menus.
+    /// </summary>
+    public bool UseDefaultContextMenu {
+        get {
+            for (var g = Group; g != null; g = g.Parent)
+                if (g is PopupUIGroup pg) {
+                    if (!pg.AllowDefaultCtxMenu)
+                        return false;
+                    break;
+                }
+            return Controller.GroupCall.Count > 0 || Controller.ScreenCall.Count > 0;
+        }
+    }
 
     /// <summary>
     /// View rendering configurations to bind to this node's HTML.
@@ -236,8 +257,10 @@ public class UINode {
     /// </summary>
     public UIResult ReturnToGroup => new UIResult.ReturnToTargetGroupCaller(this);
 
-    public UINode(LString? description) {
+    public UINode(LString? description, params IUIView[] views) {
         Views.Add(RootView = new RootNodeView(this, description));
+        if (views.Length > 0)
+            Views.AddRange(views);
     }
     
     public UINode() : this(null as LString) { }
@@ -285,8 +308,8 @@ public class UINode {
     /// Retrieve the view of type T.
     /// </summary>
     public T? MaybeView<T>() where T: class, IUIView {
-        for (int ii = 0; ii < Views.Count; ++ii)
-            if (Views[ii] is T view)
+        foreach (var v in Views)
+            if (v is T view)
                 return view;
         return null;
     }
@@ -337,16 +360,21 @@ public class UINode {
         evtBinder.RegisterCallback<PointerUpEvent>(evt => {
             //Logs.Log($"Click {Description()}");
             //button 0, 1, 2 = left, right, middle click
-            //Right click is handled as UIBack in InputManager. UIBack is global (it does not depend
-            // on the current UINode), but click-to-confirm is done via callbacks specific to the UINode.
-            if (AllowInteraction && evt.button == 0) {
+            //Left is handled as confirm; Right is handled as context-menu. Both are dependent on the node
+            // they are applied to.
+            //Middle click can be rebound and is global.
+            if (AllowInteraction) {
                 //This event will not actually do anything unless the current node is this or null;
                 // see UIPointerCommand.ValidForCurrent
-                if (isInElement && startedClickHere)
-                    Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Confirm, this));
+                if (isInElement && startedClickHere && evt.button is 0 or 1) {
+                    Controller.QueueInput(new UIPointerCommand.NormalCommand(
+                        evt.button is 0 ? UICommand.Confirm : UICommand.ContextMenu, this) {
+                        Loc = evt.position
+                    });
+                    evt.StopPropagation();
+                }
                 foreach (var view in Views)
                     view.OnMouseUp(this, evt);
-                evt.StopPropagation();
             }
             startedClickHere = false;
         });
@@ -485,22 +513,24 @@ public class UINode {
                 return new UIResult.StayOnNode(true);
             if (OnConfirm?.Invoke(this, cs) is { } cres)
                 return cres;
-            for (int ii = 0; ii < Views.Count; ++ii)
-                if (Views[ii].ViewModel.OnConfirm(this, cs) is { } vmres)
+            foreach (var v in Views)
+                if (v.ViewModel.OnConfirm(this, cs) is { } vmres)
                     return vmres;
         }
         if (req == UICommand.ContextMenu) {
-            for (int ii = 0; ii < Views.Count; ++ii)
-                if (Views[ii].ViewModel.OnContextMenu(this, cs) is { } vmres)
+            foreach (var v in Views)
+                if (v.ViewModel.OnContextMenu(this, cs) is { } vmres)
                     return vmres;
-            return UIGroup.NoOp;
+            return UseDefaultContextMenu
+                ? PopupUIGroup.CreateContextMenu(this, Array.Empty<UINode?>())
+                : UIGroup.NoOp;
         }
         return NavigateInternal(req, cs);
     }
 
     protected virtual UIResult NavigateInternal(UICommand req, ICursorState cs) {
-        for (int ii = 0; ii < Views.Count; ++ii)
-            if (Views[ii].ViewModel.Navigate(this, cs, req) is { } vmres)
+        foreach (var v in Views)
+            if (v.ViewModel.Navigate(this, cs, req) is { } vmres)
                 return vmres;
         return Group.Navigate(this, req);
     }
@@ -595,7 +625,7 @@ public class EmptyNode : UINode {
 
 public class PassthroughNode : UINode {
     public PassthroughNode(LString? desc = null) : base(desc) {
-        Passthrough = true;
+        BaseInteractable = false;
     }
 }
 public class TwoLabelUINode : UINode {
@@ -879,7 +909,7 @@ public class KeyRebindInputNode : UINode, IUIViewModel {
     private readonly KeyRebindInputNodeView view;
     private class KeyRebindInputNodeView : UIView<KeyRebindInputNode> {
         public KeyRebindInputNodeView(KeyRebindInputNode data) : base(data) {
-            UpdateTrigger = BindingUpdateTrigger.WhenDirty;
+            updateTrigger = BindingUpdateTrigger.WhenDirty;
         }
         protected override BindingResult Update(in BindingContext context) {
             var n = ViewModel;
@@ -1073,6 +1103,9 @@ public class UIButton : UINode {
 
     public static Func<T, UIResult> GoBackCommand<T>(UINode source) => _ =>
         source.ReturnToGroup;
+    
+    public static Func<T, UIResult> GoBackTwiceCommand<T>(UINode source) => _ =>
+        source.ReturnToGroup.Then(new UIResult.Lazy(() => source.Controller.Navigate(source, UICommand.Back)));
 
     public static Func<UIButton, UIResult> GoBackCommand(UINode source) => GoBackCommand<UIButton>(source);
     public static UIButton Cancel(UINode source) =>

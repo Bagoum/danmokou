@@ -26,8 +26,8 @@ public abstract class UIRenderSpace {
             if (_html is null) {
                 _html = _FirstLoadHTML() ?? throw new Exception("Couldn't load HTML");
                 LocalUpdateVisibility(true);
-                for (var ii = 0; ii < Views.Count; ii++)
-                    Views[ii].Bind(_html);
+                foreach (var v in Views)
+                    v.Bind(_html);
             }
             return _html;
         }
@@ -82,8 +82,8 @@ public abstract class UIRenderSpace {
     public bool VisibleWhenSourcesVisible { get; set; } = false;
     public bool HasVisibleSource {
         get {
-            for (int ii = 0; ii < Sources.Count; ++ii)
-                if (Sources[ii].Visible)
+            foreach (var s in Sources)
+                if (s.Visible)
                     return true;
             return false;
         }
@@ -97,8 +97,8 @@ public abstract class UIRenderSpace {
         if (Sources.Count == 0)
             return false;
         var gh = group.Hierarchy;
-        for (int ii = 0; ii < Sources.Count; ++ii)
-            if (!Sources[ii].Hierarchy.IsWeakPrefix(gh))
+        foreach (var s in Sources)
+            if (!s.Hierarchy.IsWeakPrefix(gh))
                 return false;
         return true;
     }
@@ -114,7 +114,7 @@ public abstract class UIRenderSpace {
     /// </summary>
     public Func<UIRenderSpace, ICancellee, Task>? IsNotVisibleAnimation { get; set; }
     public bool IsFirstRender { get; set; } = true;
-    public bool IsAnimating => animateToken?.Cancelled is false;
+    public virtual bool IsAnimating => animateToken?.Cancelled is false;
     protected Cancellable? animateToken;
 
     public UIRenderSpace(UIScreen screen, UIRenderSpace? parent) {
@@ -126,8 +126,8 @@ public abstract class UIRenderSpace {
 
     private List<Task> UpdateVisibilityDependents() {
         var tasks = new List<Task>();
-        for (int ii = 0; ii < VisibilityDependents.Count; ++ii)
-            if (VisibilityDependents[ii].LocalUpdateVisibility() is {IsCompletedSuccessfully:false} t)
+        foreach (var dep in VisibilityDependents)
+            if (dep.LocalUpdateVisibility() is {IsCompletedSuccessfully:false} t)
                 tasks.Add(t);
         return tasks;
     }
@@ -197,7 +197,7 @@ public abstract class UIRenderSpace {
 
     //visibility changes due to group dependencies must be cascaded upwards
     public Task UpdateVisibility(bool fast = false) {
-        return LocalUpdateVisibility(fast).And(Parent?.UpdateVisibility(fast));
+        return (Parent?.UpdateVisibility(fast)).And(LocalUpdateVisibility(fast));
     }
 
     protected Task LocalUpdateVisibility(bool fast = false) {
@@ -208,7 +208,7 @@ public abstract class UIRenderSpace {
         if (_html != null && ControlsHTML) {
             var ifr = IsFirstRender;
             IsFirstRender = false;
-            var skipAnim = ifr || fast;
+            var skipAnim = ifr || fast || Screen.State.Value is UIScreenState.Inactive;
             if (newVis && (ifr || !oldVis))
                 t = AnimateIn(skipAnim, IsVisibleAnimation);
             else if (!newVis && (ifr || oldVis))
@@ -320,6 +320,7 @@ public class UIRenderExplicit : UIRenderSpace {
 public class UIRenderScreen : UIRenderSpace {
     protected override VisualElement _FirstLoadHTML() => Screen.HTML;
     protected override bool ShouldBeVisibleBase => Screen.State.Value >= UIScreenState.InactiveGoingActive;
+    public override bool IsAnimating => Screen.State.Value is > UIScreenState.Inactive and < UIScreenState.Active;
     protected override bool ControlsHTML => false;
 
     public UIRenderScreen(UIScreen screen) : base(screen, null) {
@@ -333,6 +334,7 @@ public class UIRenderScreen : UIRenderSpace {
 public class UIRenderScreenContainer : UIRenderSpace {
     protected override VisualElement _FirstLoadHTML() => Screen.Container;
     protected override bool ShouldBeVisibleBase => Screen.State.Value >= UIScreenState.InactiveGoingActive;
+    public override bool IsAnimating => Screen.State.Value is > UIScreenState.Inactive and < UIScreenState.Active;
     protected override bool ControlsHTML => false;
 
     public UIRenderScreenContainer(UIScreen screen) : base(screen, null) {
@@ -357,8 +359,8 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
     public float Alpha { get; set; } = 0.6f;
     private float GetTargetAlpha() {
         float? a = null;
-        for (int ii = 0; ii < Sources.Count; ++ii)
-            if (Sources[ii] is PopupUIGroup { OverlayAlphaOverride: { } f })
+        foreach (var s in Sources)
+            if (s is PopupUIGroup { OverlayAlphaOverride: { } f })
                 a = Math.Max(a ?? f, f);
         return a ?? Alpha;
     }
@@ -448,8 +450,8 @@ public class UIRenderConstructed : UIRenderSpace {
     /// </summary>
     public void Destroy() {
         MarkViewsDestroyed();
-        for (int ii = 0; ii < Sources.Count; ++ii)
-            Parent?.RemoveSource(Sources[ii]);
+        foreach (var s in Sources)
+            Parent?.RemoveSource(s);
         Sources.Clear();
         parent.HTML.Remove(HTML);
         Screen.Renderers.Remove(this);

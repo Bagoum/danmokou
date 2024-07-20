@@ -26,8 +26,8 @@ public interface IInputHandlerInputSource : IInputSource {
 
     /// <inheritdoc cref="IInputHandler.Interrupt"/>
     public static void Interrupt(IInputHandlerInputSource me) {
-        for (int ii = 0; ii < me.Handlers.Count; ++ii)
-            me.Handlers[ii].Interrupt();
+        foreach (var h in me.Handlers)
+            h.Interrupt();
     }
 }
 

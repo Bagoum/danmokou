@@ -1,13 +1,13 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
     <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/PJ24/UI/pj24%20css.uss?fileID=7433441132597879392&amp;guid=9d3df72b6a1977447b2a4823c6a62599&amp;type=3#pj24 css" />
-    <ui:VisualElement class="popup">
-        <ui:Label text="Replay Action" display-tooltip-when-elided="true" name="Header" style="width: 100%; padding-left: 50px; padding-right: 50px; font-size: 100px; display: none; color: #9d5b44;" />
+    <ui:VisualElement class="popup pj24popup">
+        <ui:Label text="Replay Action" display-tooltip-when-elided="true" name="Header" style="width: 100%; padding-left: 50px; padding-right: 50px; font-size: 100px; display: none; color: rgb(157, 91, 68);" />
         <ui:VisualElement name="BodyHTML" style="padding-left: 40px; padding-right: 40px; margin-top: 30px; width: 100%;" />
         <ui:VisualElement style="width: 70%; height: 8px; background-image: url(&quot;project://database/Assets/Danmokou/Sprites/util/1u-circle-soft70.png?fileID=2800000&amp;guid=87a41886daf625e44a2aaddbe77b7947&amp;type=3#1u-circle-soft70&quot;); margin-top: 25px; margin-bottom: 25px; -unity-background-image-tint-color: rgba(255, 255, 255, 0.61);" />
         <ui:VisualElement name="OptionsHTML" style="flex-direction: row; justify-content: space-between; width: 100%;">
             <ui:VisualElement name="Left" style="flex-direction: row; flex-shrink: 0; margin-right: 20px;" />
-            <ui:VisualElement name="Center" style="flex-direction: row; flex-shrink: 0; flex-grow: 1; justify-content:space-evenly;" />
+            <ui:VisualElement name="Center" style="flex-direction: row; flex-shrink: 0; flex-grow: 1; justify-content: space-evenly;" />
             <ui:VisualElement name="Right" style="flex-direction: row; margin-left: 20px; flex-shrink: 0;" />
         </ui:VisualElement>
     </ui:VisualElement>

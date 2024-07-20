@@ -167,12 +167,13 @@
     margin-left: -100px;
 }
 
-.prefix {
+.node .prefix {
     width: 100px;
     height: 100%;
     -unity-background-scale-mode: scale-to-fit;
     opacity: 0;
     flex-shrink: 0;
+    margin-top: -6px; /* same as node bottom border */
 }
 
 .pointer {

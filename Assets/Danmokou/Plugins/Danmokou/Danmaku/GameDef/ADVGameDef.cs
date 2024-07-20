@@ -44,6 +44,7 @@ public interface IADVGameDef : IGameDef {
     /// </summary>
     /// <param name="inst">Instance metadata</param>
     public abstract IExecutingADV Setup(ADVInstance inst);
+    
 }
 
 /// <summary>
@@ -53,7 +54,9 @@ public interface IADVGameDef : IGameDef {
 /// </summary>
 public abstract class ADVGameDef : GameDef, IADVGameDef {
     public SceneConfig sceneConfig = null!;
-    public ADVBacklogFeatures backlogFeatures = ADVBacklogFeatures.SHOW_BACKLOG;
+    [field:SerializeField] 
+    public ADVBacklogFeatures BacklogFeatures { get; set; } 
+        = ADVBacklogFeatures.SHOW_BACKLOG;
     
     /// <summary>
     /// Instantiate a process responsible for running the ADV game.
@@ -64,8 +67,7 @@ public abstract class ADVGameDef : GameDef, IADVGameDef {
     public abstract IExecutingADV Setup(ADVInstance inst);
     public abstract ADVData NewGameData();
 
-    public SceneConfig Scene => sceneConfig;
-    public ADVBacklogFeatures BacklogFeatures => backlogFeatures;
+    SceneConfig IADVGameDef.Scene => sceneConfig;
 }
 
 

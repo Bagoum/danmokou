@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
+using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using BagoumLib.Tasks;
+using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Scriptables;
@@ -22,10 +24,135 @@ using UnityEngine.UIElements;
 namespace MiniProjects.PJ24 {
 
 public class PJ24CraftingUXML : UIController {
-    private abstract record Viewing {
-        public record ItemType(Item Item) : Viewing {
+    public abstract record Viewing {
+        public abstract bool Matches(ItemInstance inst);
+        public record Inventory(Item? Item) : Viewing {
+            public override bool Matches(ItemInstance inst) => Item is null || Item == inst.Type;
         }
-        public record Requirement(RecipeComponent Cmp) : Viewing {
+
+        public record Synth(Recipe Recipe, int Count) : Viewing {
+            public Synth(ProposedSynth ps) : this(ps.Recipe ?? throw new Exception("No recipe selected"), ps.Count) { }
+            
+            public Evented<int> Version { get; } = new(0);
+
+            public List<ItemInstance>[] Selected { get; } = 
+                Recipe.Components
+                    .Select(x => new List<ItemInstance>())
+                    .ToArray();
+            public int? CurrentSelection { get; private set; }
+            public int CurrentSelectionOrThrow =>
+                CurrentSelection ?? throw new Exception("Not currently selecting ingredients for a recipe component");
+
+            public bool CurrentComponentSatisfied =>
+                CurrentSelection is {} sel && ComponentSatisfied(sel);
+            public (int selected, int required) ComponentReq(int index) => 
+                (Selected[index].Count, Recipe.Components[index].Count * Count);
+            public bool ComponentSatisfied(int index) {
+                var (sel, req) = ComponentReq(index);
+                return sel == req;
+            }
+            public bool AllComponentsSatisfied() {
+                for (int ii = 0; ii < Selected.Length; ++ii)
+                    if (!ComponentSatisfied(ii))
+                        return false;
+                return true;
+            }
+
+            public int? FirstUnsatisfiedIndex {
+                get {
+                    for (int ii = 0; ii < Selected.Length; ++ii)
+                        if (!ComponentSatisfied(ii))
+                            return ii;
+                    return null;
+                }
+            }
+            
+            public override bool Matches(ItemInstance inst) => 
+                CurrentSelection is not {} ind || (Recipe.Components[ind].Matches(inst) && !IsSelectedForOther(inst));
+
+            /// <summary>
+            /// Returns true if the item is selected for a component index other than the one currently being edited.
+            /// </summary>
+            public bool IsSelectedForOther(ItemInstance inst) {
+                for (int ii = 0; ii < Selected.Length; ++ii) {
+                    if (ii != CurrentSelection && Selected[ii] is { } lis) {
+                        for (int jj = 0; jj < lis.Count; ++jj)
+                            if (lis[jj] == inst)
+                                return true;
+                    }
+                }
+                return false;
+            }
+
+            public bool IsSelectedForCurrent(ItemInstance inst) =>
+                CurrentSelection is { } sel && Selected[sel].Contains(inst);
+            
+            public void StartSelecting(int index) {
+                Selected[index] = new();
+                CurrentSelection = index;
+                ++Version.Value;
+            }
+            
+            /// <summary>
+            /// Select the item if it is currently unselected,
+            /// or unselect it if it is currently selected.
+            /// </summary>
+            /// <returns>True if the item was selected, false if it was unselected,
+            /// or null if the item could not be selected because enough items have already been selected.</returns>
+            public bool? ChangeSelectionForCurrent(ItemInstance inst) {
+                var lis = Selected[CurrentSelectionOrThrow];
+                if (lis.Remove(inst)) {
+                    ++Version.Value;
+                    return false;
+                }
+                if (CurrentComponentSatisfied)
+                    return null;
+                lis.Add(inst);
+                ++Version.Value;
+                return true;
+            }
+            
+            
+            public void CancelSelection() {
+                if (CurrentSelection is not { } sel) return;
+                Selected[sel] = new();
+                CurrentSelection = null;
+                ++Version.Value;
+            }
+
+            public void CommitSelection() {
+                CurrentSelection = null;
+                ++Version.Value;
+            }
+        }
+        
+        public record Request(PJ24.Request Req) : Viewing {
+            public override bool Matches(ItemInstance inst) => Req.Matches(inst);
+            public int Version { get; private set; } = 0;
+
+            public List<ItemInstance> Selected { get; } = new();
+
+            public bool Satisfied => Selected.Count == Req.ReqCount;
+    
+            public bool IsSelected(ItemInstance inst) => Selected.Contains(inst);
+    
+            /// <summary>
+            /// Select the item if it is currently unselected,
+            /// or unselect it if it is currently selected.
+            /// </summary>
+            /// <returns>True if the item was selected, false if it was unselected,
+            /// or null if the item could not be selected because enough items have already been selected.</returns>
+            public bool? ChangeSelection(ItemInstance inst) {
+                if (Selected.Remove(inst)) {
+                    ++Version;
+                    return false;
+                }
+                if (Satisfied)
+                    return null;
+                Selected.Add(inst);
+                ++Version;
+                return true;
+            }
         }
     }
 
@@ -46,8 +173,8 @@ public class PJ24CraftingUXML : UIController {
     public Dictionary<Item, Sprite> ItemConfig { get; private set; } = null!;
     private PJ24GameDef.Executing exec = null!;
     private ProposedSynth nextRecipe { get; set; } = null!;
-    private CurrentSynth? Synth { get; set; }
-    private RequestSubmit? Submission { get; set; }
+    private Viewing.Synth? Synth => viewing as Viewing.Synth;
+    private Viewing.Request? Submission => viewing as Viewing.Request;
     private Viewing? viewing = null;
     private ItemInstance? viewingInst = null;
     private UINode requestItemSelOKNode = null!;
@@ -57,7 +184,15 @@ public class PJ24CraftingUXML : UIController {
     public SFXConfig reqSubmitSFX = null!;
     
     public PJ24GameDef.PJ24ADVData Data => exec.Data;
-
+    private LookupHelper<ItemInstance> InventoryView { get; set; } = null!;
+    private Lookup<ItemInstance>? filter;
+    private Lookup<ItemInstance>? sort;
+    private void ClearFilterSort() {
+        filter?.Destroy();
+        sort?.Destroy();
+        filter = null;
+        sort = null;
+    }
     private UIScreen PersistentScreen = null!;
     private UIScreen ScreenSynth1 = null!;
     private UIScreen ScreenSynth2 = null!;
@@ -83,8 +218,73 @@ public class PJ24CraftingUXML : UIController {
         SetupCB.SetFirst(this);
     }
 
+    private bool ItemInstVisible(ItemInstance? v) {
+        if (v is null) return false;
+        if (viewing?.Matches(v) is false) return false;
+        return true;
+    }
+
+    private readonly Evented<bool> exclude = new(false);
+    private readonly Evented<bool> reverse = new(false);
+    private Selector<Continuation<Selector, Lookup<ItemInstance>.Filter>>? filterSel;
+    private Selector<Lookup<ItemInstance>.Sort>? sortSel;
+    private PopupUIGroup ShowSortFilterMenu(UINode source) {
+        //filters
+        if (filterSel is null) {
+            var filters = new[] {
+                //TODO add some support for hiding elements of selectors based on adding a view to the node in the dropdown
+                new Selector<Trait>(Trait.Traits, c => c.Name, Multiselect: true)
+                    .AsFilterContinuation<ItemInstance>((vals, x) => x.HasAnyTrait(vals), exclude, "Trait"),
+                new Selector<Item>(Item.Items, c => c.Name, Multiselect: true)
+                    .AsFilterContinuation<ItemInstance>((vals, x) => vals.IndexOf(x.Type) > -1, exclude, "Item"),
+                new Selector<Category>(ReflectionUtils.GetEnumVals<Category>(), Multiselect: true)
+                    .AsFilterContinuation<ItemInstance>(
+                        (vals, x) => vals.Any(cat => x.Type.CategoryScore(cat) is not null), exclude, "Category")
+            };
+            filterSel = new Selector<Continuation<Selector, Lookup<ItemInstance>.Filter>>(filters, x => x.Obj.Description!);
+        }
+        var nodes = new List<UINode>() {
+            filterSel.SelectorDropdown("Filter by:"),
+            exclude.MakeSelector("Mode:", "Include", "Exclude"),
+            //empty passthrough node to keep size of box consistent even when no filter is selected
+            new PassthroughNode("\t") { VisibleIf = () => !filterSel.FirstSelected.Valid }
+        };
+        foreach (var f in filterSel.Values) {
+            nodes.Add(f.Obj.SelectorDropdown());
+            nodes[^1].VisibleIf = () => filterSel.FirstSelected.Try(out var sel) && sel == f;
+        }
+        
+        //sorts
+        if (sortSel is null) {
+            var sorts = new Lookup<ItemInstance>.Sort[] {
+                new Lookup<ItemInstance>.Sort<int>(x => x.Traits.Count, "Trait Count"),
+                new Lookup<ItemInstance>.Sort<string>(x => x.Type.Name, "Alphabetical"),
+            };
+            sortSel = new Selector<Lookup<ItemInstance>.Sort>(sorts, s => s.Feature);
+        }
+        nodes.AddRange(new[] {
+            new PassthroughNode("\t"),
+            sortSel.SelectorDropdown("Sort by:"),
+            reverse.MakeSelector("Order:", "Asc", "Desc")
+        });
+        
+        return PopupUIGroup.CreatePopup(source, "Filter/Sort", rs => new UIColumn(rs, nodes), 
+            new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
+                new UIButton(LocalizedStrings.Controls.confirm, UIButton.ButtonType.Confirm, b => {
+                    ClearFilterSort();
+                    if (sortSel.FirstSelected.Try(out var sels))
+                        AddToken(InventoryView.AddLayer(sort = sels with { Reverse = reverse.Value }));
+                    if (filterSel.FirstSelected.Try(out var self) && self.Obj.IsAnySelected)
+                        AddToken(InventoryView.AddLayer(filter = self.Realize()));
+                    return source.ReturnToGroup;
+                }) { EnabledIf = () => !filterSel.FirstSelected.Try(out var sel) || sel.Obj.IsAnySelected }
+            }), builder: (_, ve) => ve.SetWidth(1200));
+    }
+
     private void Setup(PJ24GameDef.Executing _exec) {
         exec = _exec;
+        InventoryView = new(Data.Inventory, 
+            new Lookup<ItemInstance>.Sort<int>(x => x.Type.SortIndex, "") { Hidden = true });
         nextRecipe = new ProposedSynth(exec.Data);
         
         //Completion screen showing result of synthesis
@@ -121,8 +321,7 @@ public class PJ24CraftingUXML : UIController {
             .WithChildren(gSynthItemSelect);
         var gSynthConfirm = new UIColumn(rSynthComponents.Q("ConfirmButton"),
             synthFinalizeNode = new UIButton("Synthesize!", UIButton.ButtonType.Confirm, n => {
-                    var result = Data.ExecuteSynthesis(Synth!);
-                    viewingInst = result;
+                    var result = viewingInst = Data.ExecuteSynthesis(Synth!);
                     ISFXService.SFXService.Request(craftSFX);
                     return new UIResult.GoToScreen(ScreenSynth3) {
                         Options = new() { DelayScreenFadeInRatio = 2.5f },
@@ -130,7 +329,7 @@ public class PJ24CraftingUXML : UIController {
                             _ = exec.RunCraftedItemIntuition(result)
                                 .ContinueWithSync(() => OperateOnResult(
                                     new UIResult.ReturnToScreenCaller(3), UITransitionOptions.Default));
-                            //wait for the crafted intuition to start first, then trigger data-based dialogues
+                            //let the crafted intuition to start first, then trigger data-based dialogues
                             exec.UpdateDataV(_ => { });
                         }
                     };
@@ -138,13 +337,8 @@ public class PJ24CraftingUXML : UIController {
                 EnabledIf = () => Synth?.CurrentSelection is null && Synth?.AllComponentsSatisfied() is true,
                 Prefab = popupButtonVTA
             });
-        ScreenSynth2.SetFirst(new VGroup(gSynthComponents, gSynthConfirm) {
-            OnEnter = _ => {
-                exec.RunSynthIngredientSelIntuition(Synth!.Recipe);
-                ShowTraits(ScreenSynth2.HTML.Q("Traits"), true, new());
-                return null;
-            }
-        });
+        ScreenSynth2.SetFirst(new VGroup(gSynthComponents, gSynthConfirm)
+            .WithOnEnter(() => exec.RunSynthIngredientSelIntuition(Synth!.Recipe)));
         
         //Selection screen showing recipes and crafting options
         ScreenSynth1 = new UIScreen(this) { Prefab = screenSynth1VTA };
@@ -159,28 +353,27 @@ public class PJ24CraftingUXML : UIController {
                 new[] { ((LString)"1 / 0", 1) }) {
             Builder = ve => ve.Q("CountSelector"),
             OnConfirm = (n, cs) => {
-                Synth = nextRecipe.StartSynth();
-                Listen(Synth.SelectionChanged, _ => {
-                    if (Synth.CurrentSelection is {} ind)
+                var syn = new Viewing.Synth(nextRecipe);
+                viewing = syn;
+                Listen(syn.Version, _ => {
+                    if (syn.CurrentSelection is {} ind)
                         ShowSynthEffect(ind, ScreenSynth2.HTML.Q("ConsolidatedEffectInfo"));
-                    ShowTraits(ScreenSynth2.HTML.Q("Traits"), true, Alchemy.CombineTraits(Synth.Selected));
+                    ShowTraits(ScreenSynth2.HTML.Q("Traits"), true, Alchemy.CombineTraits(syn.Selected));
                 });
-                return new UIResult.GoToNode(ScreenSynth2);
+                return new UIResult.GoToScreen(ScreenSynth2);
             },
         })
             .OnEnterOrReturnFromChild(_ => exec.RunSynthMenuCraftCtIntuition(nextRecipe.Recipe!, nextRecipe.MaxCount))
             .WithLeaveHideVisibility();
         new UIColumn(ScreenSynth1.Q("RecipeList").UseSourceVisible().WithPopupAnim().Col(0), 
-                Item.Items.Select(item => {
-            if (item.Recipe is null)
-                return null;
-            return new UINode(new RecipeNodeView(new(this, item))) {
-                OnConfirm = (n, cs) => Data.NumCanCraft(item.Recipe) > 0 ? 
-                    new UIResult.GoToNode(gCraftCount) : new UIResult.StayOnNode(true)
-            };
-        })).WithLocalLeaveHideVisibility()
-        .WithChildren(gCraftCount)
-        .SetFirst();
+                Item.Items.SelectNotNull(item => item.Recipe.OptFMap(r => 
+                    new UINode(new RecipeNodeView(new(this, item))) {
+                        OnConfirm = (n, cs) => Data.NumCanCraft(r) > 0 ? 
+                            new UIResult.GoToNode(gCraftCount) : new UIResult.StayOnNode(true)
+            })))
+            .WithLocalLeaveHideVisibility()
+            .WithChildren(gCraftCount)
+            .SetFirst();
         
         //Requests screen showing list of requests and item selector for submitting requests
         ScreenRequest = new UIScreen(this) { Prefab = screenRequestVTA };
@@ -191,12 +384,7 @@ public class PJ24CraftingUXML : UIController {
         var rReqItemInstances = rReqItemCont.Q("ItemInstanceList").UseTreeVisible().WithPopupAnim();
         var gReqItemInstances = new UIColumn(rReqItemInstances.Col(0));
         var gReqItemSelect = new VGroup(gReqItemInstances, new UIColumn(rReqItemInstances.Q("ConfirmButton"),
-            requestItemSelOKNode = new ReqItemSelConfirmView(new(this)).MakeNode())) {
-                OnLeave = _ => {
-                    Submission!.CancelSelection();
-                    return null;
-                },
-            }.WithLeaveHideVisibility();
+            requestItemSelOKNode = new ReqItemSelConfirmView(new(this)).MakeNode())).WithLeaveHideVisibility();
         //Request list
         var rRequestCont = ScreenRequest.Q("RequestListAndDetails").UseSourceVisible().WithPopupAnim();
         var gRequests = new UIColumn(rRequestCont.Q("RequestList").Col(0),
@@ -218,26 +406,52 @@ public class PJ24CraftingUXML : UIController {
         _ = ScreenInventory.Q("ItemDetails")
             .WithView(new ItemDetailsRenderView(new(this, ScreenInventory)));
         var rItemInstances = ScreenInventory.Q("ItemInstanceList").UseSourceVisible().WithPopupAnim();
-        var gInvItemInstances = new UIColumn(rItemInstances.Col(0)).WithLeaveHideVisibility();
+        var gInvItemInstances = new UIColumn(rItemInstances.Col(0))
+            .WithOnLeave(ClearFilterSort)
+            .WithLeaveHideVisibility();
         var rItemTypes = ScreenInventory.Q("ItemTypeList").UseSourceVisible().WithPopupAnim();
         new UIColumn(new UIRenderColumn(rItemTypes, 0), 
             Item.Items.Select(item => new TransferNode(null, gInvItemInstances) {
                 VisibleIf = () => Data.NumHeld(item) > 0,
             }.Bind(new ItemTypeNodeView(new(this, item))))
+            .Prepend(new TransferNode(null, gInvItemInstances).Bind(new ItemTypeNodeView(new(this, null))))
         ).WithLocalLeaveHideVisibility()
         .WithChildren(gInvItemInstances)
         .SetFirst();
         
         //Request screen, synth screen, and inventory screen all have item instance lists with different view logics.
         // ItemInstance has a "Destroyed" event; when this fires, the nodes will be removed (see the views' OnBuilt).
-        void ItemAdded(ItemInstance item) {
-            gReqItemInstances.AddNodeDynamic(new ItemInstReqSelNodeView(new(this, item)));
-            gSynthItemInstances.AddNodeDynamic(new ItemInstSynSelNodeView(new(this, item)));
-            gInvItemInstances.AddNodeDynamic(new ItemInstNodeView(new(this, item)));
+        var numNodes = 0;
+        void ItemAdded() {
+            //only keep as many nodes as are required to handle the entire inventory
+            if (Data.Inventory.Count <= numNodes) return; 
+            gReqItemInstances.AddNodeDynamic(new ItemInstReqSelNodeView(new(this, numNodes)));
+            gSynthItemInstances.AddNodeDynamic(new ItemInstSynSelNodeView(new(this, numNodes)));
+            gInvItemInstances.AddNodeDynamic(new ItemInstNodeView(new(this, numNodes++)));
         }
-        foreach (var item in Data.Inventory.Values.SelectMany(x => x))
-            ItemAdded(item);
-        Listen(Data.ItemAdded, ItemAdded);
+        UINode NoOtherHelper(string? filterMsg, string noFilterMsg, bool showFilterCtxMenu = false) {
+            var n = new UINode(
+                new FlagView(new(() => filter != null, filterMsg ?? "No items match the filters...", noFilterMsg)),
+                new NoOtherNodeView()) {
+                Prefab = nodeItemVTA,
+                OnBuilt = n => {
+                    n.HTML.Q("Name").style.maxWidth = 100f.Percent();
+                    n.HTML.Q("Count").style.display = false.ToStyle();
+                },
+            };
+            if (showFilterCtxMenu)
+                n.Bind(new ContextMenuView(new((n, _) => ItemInstNodeView.Model.CtxMenuOpts(this, n))));
+            return n;
+        }
+        gReqItemInstances.AddNodeDynamic(NoOtherHelper(null, "No items satisfy this request..."));
+        gSynthItemInstances.AddNodeDynamic(NoOtherHelper(null,  "No items remain for synthesis..."));
+        gInvItemInstances.AddNodeDynamic(NoOtherHelper(null, "You have no items here...", true));
+        foreach (var _ in Data.Inventory)
+            ItemAdded();
+        Listen(Data.InventoryChanged, _ => {
+            InventoryView.Recompile();
+            ItemAdded();
+        });
         
         MainScreen = new UIScreen(this) {
             Prefab = screenMainVTA,
@@ -247,9 +461,9 @@ public class PJ24CraftingUXML : UIController {
             },
         };
         var mainCol = new UIColumn(new UIRenderColumn(MainScreen, 0),
-            new TransferNode("Synthesize", ScreenSynth1) { Prefab = nodeMainMenuOptionVTA }.WithCSS("large"),
-            new TransferNode("Requests", ScreenRequest) { Prefab = nodeMainMenuOptionVTA }.WithCSS("large"),
-            new TransferNode("Inventory", ScreenInventory) { Prefab = nodeMainMenuOptionVTA }.WithCSS("large"),
+            new TransferNode("Synthesize", ScreenSynth1),
+            new TransferNode("Requests", ScreenRequest),
+            new TransferNode("Inventory", ScreenInventory),
             new FuncNode("Do Nothing", n => {
                 var p = PopupUIGroup.CreatePopup(n, "It's 10 AM.\nGo back to sleep?",
                     r => new UIColumn(r, new UINode(
@@ -268,20 +482,16 @@ public class PJ24CraftingUXML : UIController {
                         new UIButton("No", UIButton.ButtonType.Cancel, UIButton.GoBackCommand(n))
                                 {Prefab = popupButtonVTA}
                             .WithRootView(r => r.DisableAnimations()),
-                        new UIButton("Yes", UIButton.ButtonType.Confirm, _ => {
-                            exec.UpdateDataV(d => d.Date += 1);
-                            return n.ReturnToGroup;
-                        }) {Prefab = popupButtonVTA}
+                        new UIButton("Yes", UIButton.ButtonType.Confirm, 
+                                n.ReturnToGroup.AsFunc((UIButton _) => exec.UpdateDataV(d => d.Date += 1))) 
+                                {Prefab = popupButtonVTA}
                             .WithRootView(r => r.DisableAnimations())
                     }), popupVTA);
                 return p;
-            }) { Prefab = nodeMainMenuOptionVTA }.WithCSS("large"),
-            new FuncNode("Pause Menu", () => {
-                    ServiceLocator.Find<IPauseMenu>().QueueOpen();
-                    return new UIResult.StayOnNode(UIResult.StayOnNodeType.Silent);
-                })
-                { Prefab = nodeMainMenuOptionVTA }.WithCSS("large")
-        ).OnEnterOrReturnFromChild(_ => exec.TryRunBaseMenuIntuition());
+            }),
+            new FuncNode("Pause Menu", IPauseMenu.FindAndQueueOpen)
+        )   .WithNodeMod(n => n.WithCSS("large").Prefab = nodeMainMenuOptionVTA)
+            .OnEnterOrReturnFromChild(_ => exec.TryRunBaseMenuIntuition());
 
         PersistentScreen = new UIScreen(this) { Prefab = screenPersistentUIVTA, Persistent = true };
         PersistentScreen.ScreenRender.WithView(new PersistentUIRenderView(new(this)));
@@ -377,7 +587,7 @@ public class PJ24CraftingUXML : UIController {
 
     public void ShowItemDetailsAt(VisualElement xml) {
         var item = viewingInst;
-        var typ = item?.Type ?? (viewing as Viewing.ItemType)?.Item;
+        var typ = item?.Type ?? (viewing as Viewing.Inventory)?.Item;
         ShowCategories(typ, xml);
         ShowTraits(xml, item is not null || typ is null, 
             item?.Traits ?? new());
@@ -420,11 +630,11 @@ public class PJ24CraftingUXML : UIController {
 
             UIResult IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
                 if (Req is null) return new UIResult.ReturnToScreenCaller();
-                S.Submission = new RequestSubmit(Req);
+                S.viewing = new Viewing.Request(Req);
                 if (Selector?.MaybeEntryNode is {} en) {
                     return new UIResult.GoToNode(en);
                 } else {
-                    S.Submission = null;
+                    S.viewing = null;
                     return new UIResult.StayOnNode(true);
                 }
             }
@@ -467,12 +677,10 @@ public class PJ24CraftingUXML : UIController {
 
             UIResult IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
                 if (S.Synth is null) throw new Exception("Confirm on synth component with no synth");
-                S.viewing = new Viewing.Requirement(Cmp!);
                 S.Synth.StartSelecting(Index);
                 if (Selector.MaybeEntryNode is {} en) {
                     return new UIResult.GoToNode(en);
                 } else {
-                    S.viewing = null;
                     S.Synth.CancelSelection();
                     return new UIResult.StayOnNode(UIResult.StayOnNodeType.NoOp);
                 }
@@ -509,32 +717,44 @@ public class PJ24CraftingUXML : UIController {
             S = s;
             Val = val;
         }
+
+        public override int GetHashCode() {
+            return base.GetHashCode();
+        }
     }
 
     private class ItemInstNodeView : UIView<ItemInstNodeView.Model>, IUIView {
-        public class Model : IConstUIViewModel {
+        public class Model : UIViewModel, IUIViewModel {
             public PJ24CraftingUXML S { get; }
-            public ItemInstance Val { get; }
+            public ItemInstance? Val => S.InventoryView[Index];
+            public int Index { get; }
 
-            public Model(PJ24CraftingUXML s, ItemInstance val) {
+            public Model(PJ24CraftingUXML s, int index) {
                 S = s;
-                Val = val;
+                Index = index;
             }
-            bool IUIViewModel.ShouldBeVisible(UINode node) =>
-                (S.viewing as Viewing.ItemType)?.Item == Val.Type;
+            public override long GetViewHash() => Val?.GetHashCode() ?? -1;
+
+            bool IUIViewModel.ShouldBeVisible(UINode node) => S.ItemInstVisible(Val);
+
+            UIResult? IUIViewModel.OnContextMenu(UINode node, ICursorState cs) =>
+                PopupUIGroup.CreateContextMenu(node, CtxMenuOpts(S, node));
+
+            public static UINode[] CtxMenuOpts(PJ24CraftingUXML menu, UINode node) => new UINode[] {
+                    //by passing node as the popup source, it actually closes the context menu before
+                    // opening the popup, which is nice.
+                    new FuncNode("Filter/Sort", _ => menu.ShowSortFilterMenu(node))
+                };
         }
         public override VisualTreeAsset Prefab => VM.S.nodeItemVTA;
         public ItemInstNodeView(Model viewModel) : base(viewModel) { }
         
         protected override BindingResult Update(in BindingContext context) {
-            HTML.Q<Label>("Name").text = VM.Val.Type.Name;
-            HTML.Q<Label>("Count").style.display = DisplayStyle.None;
+            if (VM.Val is { } v) {
+                HTML.Q<Label>("Name").text = v.ShortDescribe();
+                HTML.Q<Label>("Count").style.display = DisplayStyle.None;
+            }
             return base.Update(in context);
-        }
-
-        public override void OnBuilt(UINode node) {
-            base.OnBuilt(node);
-            node.BindLifetime(VM.Val);
         }
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
@@ -545,28 +765,27 @@ public class PJ24CraftingUXML : UIController {
     private class ItemInstSynSelNodeView : UIView<ItemInstSynSelNodeView.Model>, IUIView {
         public class Model : UIViewModel, IUIViewModel {
             public PJ24CraftingUXML S { get; }
-            public ItemInstance Val { get; }
+            public ItemInstance? Val => S.InventoryView[Index];
+            public int Index { get; }
             private int ver = 0;
 
-            public Model(PJ24CraftingUXML s, ItemInstance val) {
+            public Model(PJ24CraftingUXML s, int index) {
                 S = s;
-                Val = val;
+                Index = index;
             }
 
-            public override long GetViewHash() => (S.Synth?.Version ?? -1, ver).GetHashCode();
+            public override long GetViewHash() => (Val, S.Synth?.Version ?? -1, ver).GetHashCode();
 
             UIResult IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
-                if (S.Synth!.ChangeSelectionForCurrent(Val) is null)
+                if (S.Synth!.ChangeSelectionForCurrent(Val!) is null)
                     return new UIResult.StayOnNode(UIResult.StayOnNodeType.NoOp);
-                ++ver;
+                ++ver; //TODO can you remove this local ver?
                 if (S.Synth!.CurrentComponentSatisfied)
                     return new UIResult.GoToNode(S.synthItemSelOKNode);
                 return new UIResult.StayOnNode(UIResult.StayOnNodeType.DidSomething);
             }
 
-            bool IUIViewModel.ShouldBeVisible(UINode node) =>
-                (S.viewing as Viewing.Requirement)?.Cmp.Matches(Val) is true &&
-                S.Synth?.IsSelectedForOther(Val) is not true;
+            bool IUIViewModel.ShouldBeVisible(UINode node) => S.ItemInstVisible(Val);
         }
         
         public override VisualTreeAsset Prefab => VM.S.nodeItemVTA;
@@ -574,49 +793,49 @@ public class PJ24CraftingUXML : UIController {
         public ItemInstSynSelNodeView(Model viewModel) : base(viewModel) {}
         
         protected override BindingResult Update(in BindingContext context) {
-            HTML.Q<Label>("Name").text = VM.Val.Type.Name;
-            var ct = HTML.Q<Label>("Count");
-            if (VM.S.Synth?.IsSelectedForCurrent(VM.Val) is true) {
-                ct.text = "X";
-                ct.style.display = DisplayStyle.Flex;
-            } else
-                ct.style.display = DisplayStyle.None;
+            if (VM.Val is {} v) {
+                HTML.Q<Label>("Name").text = v.ShortDescribe();
+                var ct = HTML.Q<Label>("Count");
+                if (VM.S.Synth?.IsSelectedForCurrent(v) is true) {
+                    ct.text = "X";
+                    ct.style.display = DisplayStyle.Flex;
+                } else
+                    ct.style.display = DisplayStyle.None;
+            }
             return base.Update(in context);
-        }
-
-        public override void OnBuilt(UINode node) {
-            base.OnBuilt(node);
-            node.BindLifetime(VM.Val);
         }
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
             VM.S.viewingInst = VM.Val;
         }
-        void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, bool _) {
-            VM.S.viewingInst = null;
+        void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, bool isEnteringPopup) {
+            if (!isEnteringPopup)
+                VM.S.viewingInst = null;
         }
     }
     
     private class ItemInstReqSelNodeView : UIView<ItemInstReqSelNodeView.Model>, IUIView {
         public class Model : UIViewModel, IUIViewModel {
             public PJ24CraftingUXML S { get; }
-            public ItemInstance Val { get; }
+            public ItemInstance? Val => S.InventoryView[Index];
+            public int Index { get; }
 
-            public Model(PJ24CraftingUXML s, ItemInstance val) {
+            public Model(PJ24CraftingUXML s, int index) {
                 S = s;
-                Val = val;
+                Index = index;
             }
 
-            public override long GetViewHash() => (S.Submission?.Version ?? -1).GetHashCode();
+            public override long GetViewHash() => (Val, S.Submission?.Version ?? -1).GetHashCode();
 
             UIResult IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
-                S.Submission!.ChangeSelection(Val);
-                if (S.Submission.Satisfied)
+                var req = (Viewing.Request)S.viewing!;
+                req.ChangeSelection(Val!);
+                if (req.Satisfied)
                     return new UIResult.GoToNode(S.requestItemSelOKNode);
                 return new UIResult.StayOnNode(UIResult.StayOnNodeType.DidSomething);
             }
 
-            bool IUIViewModel.ShouldBeVisible(UINode node) => S.Submission?.Req.Matches(Val) is true;
+            bool IUIViewModel.ShouldBeVisible(UINode node) => S.ItemInstVisible(Val);
         }
         
         public override VisualTreeAsset Prefab => VM.S.nodeItemVTA;
@@ -624,36 +843,34 @@ public class PJ24CraftingUXML : UIController {
         public ItemInstReqSelNodeView(Model viewModel) : base(viewModel) {}
         
         protected override BindingResult Update(in BindingContext context) {
-            HTML.Q<Label>("Name").text = VM.Val.Type.Name;
-            var ct = HTML.Q<Label>("Count");
-            if (VM.S.Submission?.IsSelected(VM.Val) is true) {
-                ct.text = "X";
-                ct.style.display = DisplayStyle.Flex;
-            } else
-                ct.style.display = DisplayStyle.None;
+            if (VM.Val is { } v) {
+                HTML.Q<Label>("Name").text = v.ShortDescribe();
+                var ct = HTML.Q<Label>("Count");
+                if (VM.S.Submission?.IsSelected(v) is true) {
+                    ct.text = "X";
+                    ct.style.display = DisplayStyle.Flex;
+                } else
+                    ct.style.display = DisplayStyle.None;
+            }
             return base.Update(in context);
-        }
-
-        public override void OnBuilt(UINode node) {
-            base.OnBuilt(node);
-            node.BindLifetime(VM.Val);
         }
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
             VM.S.viewingInst = VM.Val;
         }
-        void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, bool _) {
-            VM.S.viewingInst = null;
+        void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, bool isEnteringPopup) {
+            if (!isEnteringPopup)
+                VM.S.viewingInst = null;
         }
     }
     
     /// <summary>
     /// View for nodes which display an item type and the count held in the container.
     /// </summary>
-    private class ItemTypeNodeView : UIView<ObjViewModel<Item>>, IUIView {
+    private class ItemTypeNodeView : UIView<ObjViewModel<Item?>>, IUIView {
         public override VisualTreeAsset Prefab => VM.S.nodeItemVTA;
 
-        public ItemTypeNodeView(ObjViewModel<Item> viewModel) : base(viewModel) { }
+        public ItemTypeNodeView(ObjViewModel<Item?> viewModel) : base(viewModel) { }
 
         public override void OnBuilt(UINode node) {
             base.OnBuilt(node);
@@ -661,13 +878,14 @@ public class PJ24CraftingUXML : UIController {
         }
 
         protected override BindingResult Update(in BindingContext context) {
-            HTML.Q<Label>("Name").text = VM.Val.Name;
-            HTML.Q<Label>("Count").text = VM.S.Data.NumHeld(VM.Val).ToString();
+            HTML.Q<Label>("Name").text = VM.Val?.Name ?? "All";
+            HTML.Q<Label>("Count").text = 
+                (VM.Val is {} it ? VM.S.Data.NumHeld(it) : VM.S.Data.Inventory.Count).ToString();
             return base.Update(in context);
         }
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
-            VM.S.viewing = new Viewing.ItemType(VM.Val);
+            VM.S.viewing = new Viewing.Inventory(VM.Val);
             VM.S.viewingInst = null;
         }
 
@@ -714,7 +932,10 @@ public class PJ24CraftingUXML : UIController {
             public Model(PJ24CraftingUXML s) {
                 S = s;
             }
-            
+
+            bool IUIViewModel.ShouldBeInteractable(UINode node) => 
+                ((IUIViewModel)this).ShouldBeEnabled(node);
+
             bool IUIViewModel.ShouldBeEnabled(UINode node) => 
                 S.Submission?.Satisfied is true;
 
@@ -743,14 +964,14 @@ public class PJ24CraftingUXML : UIController {
     /// View for each recipe in the recipes list.
     /// </summary>
     private class RecipeNodeView : ItemTypeNodeView, IUIView {
-        public RecipeNodeView(ObjViewModel<Item> viewModel) : base(viewModel) { }
+        public RecipeNodeView(ObjViewModel<Item> viewModel) : base(viewModel!) { }
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
-            VM.S.nextRecipe.Recipe = VM.Val.Recipe;
+            VM.S.nextRecipe.Recipe = VM.Val!.Recipe;
         }
 
         protected override BindingResult Update(in BindingContext context) {
-            HTML.EnableInClassList("uncraftable", VM.S.Data.NumCanCraft(VM.Val.Recipe!) == 0);
+            HTML.EnableInClassList("uncraftable", VM.S.Data.NumCanCraft(VM.Val!.Recipe!) == 0);
             return base.Update(in context);
         }
     }
@@ -845,7 +1066,7 @@ public class PJ24CraftingUXML : UIController {
         public ItemDetailsRenderView(Model viewModel) : base(viewModel) { }
 
         protected override BindingResult Update(in BindingContext context) {
-            if (VM.S.State.Value > UIScreenState.Inactive) {
+            if (VM.S.State.Value >= UIScreenState.InactiveWillGoActive) {
                 VM.Menu.ShowItemDetailsAt(HTML);
                 if (VM.S == VM.Menu.ScreenSynth3)
                     VM.Menu.ShowItemImage(VM.Menu.viewingInst?.Type, VM.S.HTML.Q("HandImage"), true);
@@ -882,8 +1103,6 @@ public class ProposedSynth : VersionedUIViewModel {
     public ProposedSynth(PJ24GameDef.PJ24ADVData data) {
         Data = data;
     }
-
-    public CurrentSynth StartSynth() => new(Recipe ?? throw new Exception("No recipe selected"), Count);
 
 }
 }

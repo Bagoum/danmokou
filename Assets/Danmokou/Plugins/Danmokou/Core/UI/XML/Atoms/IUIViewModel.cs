@@ -14,18 +14,11 @@ namespace Danmokou.UI.XML {
 /// <br/>Contains information about data changes via <see cref="IDataSourceViewHashProvider.GetViewHashCode"/>.
 /// </summary>
 public interface IUIViewModel : IDataSourceViewHashProvider {
-    BindingUpdateTrigger UpdateTrigger { get; set; }
-    Func<long>? OverrideViewHash { get; set; }
+    Func<long>? OverrideViewHash => null;
 
-    //UITK internals will recompute hash code even if the update trigger is WhenDirty.
-    //In most cases when we set the update trigger to WhenDirty, we want to avoid allocations
-    // that would otherwise occur in hash code computation. As such, we provide this default behavior
-    // to prevent calculating the hash if it's not going to be used.
     long IDataSourceViewHashProvider.GetViewHashCode() {
         UpdateEvents(); //TODO put the UpdateEvents call in a better place
-        return UpdateTrigger == BindingUpdateTrigger.WhenDirty ?
-            0 :
-            OverrideViewHash?.Invoke() ?? GetViewHash();
+        return OverrideViewHash?.Invoke() ?? GetViewHash();
     }
 
     /// <summary>
@@ -35,8 +28,7 @@ public interface IUIViewModel : IDataSourceViewHashProvider {
 
     /// <summary>
     /// Get a hash code that changes whenever the view needs to be redrawn.
-    /// <br/>This will not be called if <see cref="UpdateTrigger"/> is WhenDirty,
-    ///  and is overriden by <see cref="OverrideViewHash"/>.
+    /// <br/>If <see cref="OverrideViewHash"/> is present, it will be used instead, and this will not be called.
     /// </summary>
     long GetViewHash();
 
@@ -72,7 +64,14 @@ public interface IUIViewModel : IDataSourceViewHashProvider {
     bool ShouldBeVisible(UINode node) => true;
     
     /// <summary>
+    /// Returns whether or not the group should be targetable from navigation/interaction events.
+    /// <br/>If ANY view model returns `false`, or if the node is not visible, then the node will not be interactable.
+    /// </summary>
+    bool ShouldBeInteractable(UINode node) => true;
+    
+    /// <summary>
     /// Returns whether or not the node is enabled for confirm/edit operations.
+    /// <br/>Disabled nodes are generally grayed out (they receive the 'node-disabled' CSS class).
     /// <br/>Disabled nodes can still be navigated.
     /// <br/>If ANY view model returns `false`, then the node will not be enabled.
     /// </summary>
@@ -83,7 +82,6 @@ public interface IUIViewModel : IDataSourceViewHashProvider {
 /// Basic base class for an implementation of <see cref="IUIViewModel"/>.
 /// </summary>
 public abstract class UIViewModel : IUIViewModel {
-    public BindingUpdateTrigger UpdateTrigger { get; set; }
     public Func<long>? OverrideViewHash { get; set; }
     
     public virtual void UpdateEvents() { }
@@ -94,20 +92,6 @@ public abstract class UIViewModel : IUIViewModel {
 /// A view model that never requires a redraw.
 /// </summary>
 public interface IConstUIViewModel : IUIViewModel {
-    BindingUpdateTrigger IUIViewModel.UpdateTrigger {
-        get => BindingUpdateTrigger.OnSourceChanged;
-        set {
-            if (value != BindingUpdateTrigger.OnSourceChanged)
-                throw new Exception($"Cannot set update trigger on {nameof(IConstUIViewModel)}");
-        }
-    }
-    Func<long>? IUIViewModel.OverrideViewHash { 
-        get => null;
-        set {
-            if (value != null)
-                throw new Exception($"Cannot set override hash handler on {nameof(IConstUIViewModel)}");
-        } 
-    }
     long IUIViewModel.GetViewHash() => 0;
 }
 
@@ -194,15 +178,7 @@ public class VersionedUIViewModel<T> : VersionedUIViewModel {
 /// </summary>
 public interface IDerivativeViewModel : IUIViewModel {
     public IUIViewModel Delegator { get; }
-
-    BindingUpdateTrigger IUIViewModel.UpdateTrigger {
-        get => Delegator.UpdateTrigger; 
-        set => Delegator.UpdateTrigger = value;
-    }
-    Func<long>? IUIViewModel.OverrideViewHash {
-        get => Delegator.OverrideViewHash; 
-        set => Delegator.OverrideViewHash = value;
-    }
+    Func<long>? IUIViewModel.OverrideViewHash => Delegator.OverrideViewHash;
     long IUIViewModel.GetViewHash() => Delegator.GetViewHash();
 }
 

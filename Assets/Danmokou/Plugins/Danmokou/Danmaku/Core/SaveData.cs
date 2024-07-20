@@ -159,7 +159,7 @@ public static class SaveData {
         public Evented<float> _VNTypingSoundVolume { get; } = new(1f);
         [JsonIgnore]
         public DisturbedProduct<float> VNTypingSoundVolume { get; } = new();
-        public bool VNOnlyFastforwardReadText = true;
+        public bool VNOnlyFastforwardReadText = false;
         
         public List<(string name, DifficultySettings settings)> DifficultySettings { get; init; } =
             new();

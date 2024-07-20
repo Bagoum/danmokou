@@ -2014,11 +2014,11 @@ internal static class SR {
         /// </summary>
         public static string JoinPooled(List<string> pieces) {
             int len = 0;
-            for (int ii = 0; ii < pieces.Count; ++ii)
-                len += pieces[ii].Length;
+            foreach (var p in pieces)
+                len += p.Length;
             var sb = Acquire(len);
-            for (int ii = 0; ii < pieces.Count; ++ii)
-                sb.Append(pieces[ii]);
+            foreach (var p in pieces)
+                sb.Append(p);
             var result = sb.ToStringPooled();
             Release(sb);
             return result;
@@ -2029,8 +2029,8 @@ internal static class SR {
         /// </summary>
         public static string JoinPooled(string connector, List<string> pieces) {
             int len = (pieces.Count - 1) * connector.Length;
-            for (int ii = 0; ii < pieces.Count; ++ii)
-                len += pieces[ii].Length;
+            foreach (var p in pieces)
+                len += p.Length;
             var sb = Acquire(len);
             for (int ii = 0; ii < pieces.Count; ++ii) {
                 if (ii > 0)

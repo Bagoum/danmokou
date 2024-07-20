@@ -83,8 +83,9 @@ public static class InputManager {
             Ctrl, Cmd, Alt, Shift, 
             new KBMKeyInputBinding(KeyCode.UpArrow), new KBMKeyInputBinding(KeyCode.RightArrow),
             new KBMKeyInputBinding(KeyCode.DownArrow), new KBMKeyInputBinding(KeyCode.LeftArrow),
-            //new MouseKeyInputBinding(0), don't allow modifying left-click, it will fuck with how it is used by default
-            new MouseKeyInputBinding(1), new MouseKeyInputBinding(2)
+            //Left/right click are used for confirm/context menu on UI; they must be reported by the target element.
+            //new MouseKeyInputBinding(0), new MouseKeyInputBinding(1), 
+            new MouseKeyInputBinding(2)
         }.Concat(TextInputKeys.Select(ti => new KBMKeyInputBinding(ti))).ToArray();
         var controllerKeys = new List<IInspectableInputBinding>();
         foreach (var axis in Enum.GetValues(typeof(ControllerAxis)).Cast<ControllerAxis>()) {

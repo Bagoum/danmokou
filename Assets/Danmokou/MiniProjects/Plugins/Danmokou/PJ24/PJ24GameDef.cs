@@ -48,7 +48,8 @@ public class PJ24GameDef : ADVGameDef {
 
         public Executing(PJ24GameDef gdef, ADVInstance inst) : base(inst) {
             this.gdef = gdef;
-            tokens.Add(Md.MinimalState.AddConst(true));
+            inst.VN.TimePerFastforwardConfirm = 0.1f;
+            //tokens.Add(Md.MinimalState.AddConst(true));
         }
 
         /// <inheritdoc/>
@@ -858,75 +859,81 @@ public class PJ24GameDef : ADVGameDef {
         };
         public int PhaseIndex { get; set; } = 0;
         [JsonIgnore] public GamePhase Phase => Phases[PhaseIndex];
+
+        public List<ItemInstance> Inventory { get; init; } = new() {
+            new(MoldablePlastic.S),
+            new(LinenCloth.S),
+            new(RainbowDye.S), new(RainbowDye.S),
+            new(MagnoliaBloom.S), new(MagnoliaBloom.S),
+        };
         
-        [JsonConverter(typeof(ComplexDictKeyConverter<Item, List<ItemInstance>>))]
+        /*[JsonConverter(typeof(ComplexDictKeyConverter<Item, List<ItemInstance>>))]
         public Dictionary<Item, List<ItemInstance>> Inventory { get; init; } = new() {
             {MoldablePlastic.S, new() {new(MoldablePlastic.S)}},
             {LinenCloth.S, new() {new(LinenCloth.S)}},
             {RainbowDye.S, new() {new(RainbowDye.S),new(RainbowDye.S)}},
             {MagnoliaBloom.S, new() {new(MagnoliaBloom.S),new(MagnoliaBloom.S)}},
-        };
-        [JsonIgnore] public Event<ItemInstance> ItemAdded { get; } = new();
+        };*/
+        [JsonIgnore] public Event<Unit> InventoryChanged { get; } = new();
 
         public PJ24ADVData(InstanceData VNData) : base(VNData) {
         }
 
-        public void SubmitRequest(RequestSubmit submission) {
+        public void SubmitRequest(PJ24CraftingUXML.Viewing.Request submission) {
             foreach (var item in submission.Selected)
-                RemoveItem(item);
+                RemoveItemFast(item);
             foreach (var (item, ct) in submission.Req.Reward)
                 for (int ii = 0; ii < ct; ++ii)
-                    AddItem(item.Copy());
+                    AddItemFast(item.Copy());
+            InventoryChanged.OnNext(default);
             submission.Req.Complete = true;
         }
         
-        public ItemInstance ExecuteSynthesis(CurrentSynth synth) {
+        public ItemInstance ExecuteSynthesis(PJ24CraftingUXML.Viewing.Synth synth) {
             Date += synth.Recipe.DaysTaken(synth.Count);
             foreach (var item in synth.Selected.SelectMany(x => x))
-                RemoveItem(item);
+                RemoveItemFast(item);
             var result = synth.Recipe.Synthesize(synth.Selected);
-            AddItem(result);
+            AddItemFast(result);
             for (int ii = 1; ii < synth.Count; ++ii)
-                AddItem(result.Copy());
+                AddItemFast(result.Copy());
+            InventoryChanged.OnNext(default);
             return result;
         }
 
+        private void AddItemFast(ItemInstance item) {
+            Inventory.Add(item);
+        }
         public void AddItem(ItemInstance item) {
-            Inventory.AddToList(item.Type, item);
-            ItemAdded.OnNext(item);
+            AddItemFast(item);
+            InventoryChanged.OnNext(default);
         }
 
-        public void RemoveItem(ItemInstance item) {
-            Inventory[item.Type].Remove(item);
+        private void RemoveItemFast(ItemInstance item) {
+            Inventory.Remove(item);
             item.Destroy();
         }
 
         public bool CanProbablySatisfy(Request req) {
-            if (Held(req.Required.Type) is not { } lis) return false;
             var ct = 0;
-            for (int ii = 0; ii < lis.Count; ++ii) {
-                if (req.Matches(lis[ii]) && ++ct >= req.ReqCount)
+            for (int ii = 0; ii < Inventory.Count; ++ii)
+                if (req.Matches(Inventory[ii]) && ++ct >= req.ReqCount)
                     return true;
-            }
             return false;
         }
-        public int NumHeld(Item item) => Held(item)?.Count ?? 0;
-        public List<ItemInstance>? Held(Item item) => Inventory.TryGetValue(item, out var lis) ? lis : null;
+        public int NumHeld(Item itemTyp) {
+            var total = 0;
+            foreach (var item in Inventory)
+                if (item.Type == itemTyp)
+                    ++total;
+            return total;
+        }
 
         public int NumHeld(RecipeComponent comp) {
             var total = 0;
-            for (int ii = 0; ii < Item.Items.Length; ++ii) {
-                var item = Item.Items[ii];
-                var match = comp.MatchesType(item);
-                if (match is true) {
-                    total += NumHeld(item);
-                } else if (match is null) {
-                    if (Held(item) is {} held)
-                        for (int jj = 0; jj < held.Count; ++jj)
-                            if (comp.Matches(held[jj]))
-                                ++total;
-                }
-            }
+            foreach (var item in Inventory)
+                if (comp.Matches(item))
+                    ++total;
             return total;
         }
 

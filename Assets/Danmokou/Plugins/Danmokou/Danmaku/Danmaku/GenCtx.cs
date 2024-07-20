@@ -279,11 +279,11 @@ public class GenCtx : IDisposable {
 
     public void UpdateRules((List<ErasedGCXF>? code, List<GCRule>? rules) rules) {
         if (rules.code is {} c)
-            for (int ii = 0; ii < c.Count; ++ii)
-                c[ii](this);
+            foreach (var rule in c)
+                rule(this);
         if (rules.rules is {} r)
-            for (int ii = 0; ii < r.Count; ++ii) 
-                UpdateRule(r[ii]);
+            foreach (var rule in r)
+                UpdateRule(rule);
     }
 }
 

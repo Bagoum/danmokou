@@ -26,6 +26,7 @@ public class RootNodeViewModel : UIViewModel, IUIViewModel {
     public LString? Description { get; }
     public Func<bool>? VisibleIf { get; set; }
     public Func<bool>? EnabledIf { get; set; }
+    public bool Interactable { get; set; } = true;
     
     /// <summary>
     /// If <see cref="UINode.IsVisible"/> is expensive to compute, this hash can be used instead.
@@ -43,7 +44,7 @@ public class RootNodeViewModel : UIViewModel, IUIViewModel {
     }
 
     public bool ShouldBeVisible(UINode node) => VisibleIf?.Invoke() ?? true;
-
+    public bool ShouldBeInteractable(UINode node) => Interactable;
     public bool ShouldBeEnabled(UINode node) => EnabledIf?.Invoke() ?? true;
 
     public override long GetViewHash() {

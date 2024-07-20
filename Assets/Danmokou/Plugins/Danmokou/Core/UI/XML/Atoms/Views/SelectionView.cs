@@ -12,6 +12,7 @@ namespace Danmokou.UI.XML {
 
 /// <inheritdoc cref="Selector{T}"/>
 public abstract class Selector {
+    public LString? Description { get; set; }
     public bool[] Selected { get; }
     public bool Multiselect { get; init; }
     /// <inheritdoc cref="Selector{T}"/>
@@ -77,9 +78,9 @@ public class Selector<F> : Selector {
     }
     
     /// <inheritdoc cref="Selector{T}"/>
-    public Selector(IReadOnlyList<F> Values, Func<F, LString> Describe, Func<F, UINode?>? MakeNode = null, bool Multiselect = false, bool[]? Selected = null) : base(Values.Count, Multiselect, Selected) {
+    public Selector(IReadOnlyList<F> Values, Func<F, LString>? Describe = null, Func<F, UINode?>? MakeNode = null, bool Multiselect = false, bool[]? Selected = null) : base(Values.Count, Multiselect, Selected) {
         this.Values = Values;
-        this.Describe = Describe;
+        this.Describe = Describe ?? (x => (LString)(x?.ToString() ?? "null"));
     }
 
     public override IEnumerable<UINode?> MakeNodes(UINode returnTo) => 
@@ -115,6 +116,7 @@ public class Selector<F> : Selector {
     /// </summary>
     public Continuation<Selector, Lookup<T>.Filter> AsFilterContinuation<T>(Func<F[], T, bool> matcher, 
         ICObservable<bool> exclude, LString feature, Func<F, LString>? printer = null) where T : class {
+        Description ??= feature;
         return Continuation<Selector, Lookup<T>.Filter>.Of(this, s => s.AsFilter(matcher, exclude.Value, feature, printer));
     }
 }

@@ -154,7 +154,7 @@
     display: none;
 }
 
-.popup {
+.popup.pj24popup {
     transition-property: opacity;
     transition-duration: 0.2s;
     width: auto;

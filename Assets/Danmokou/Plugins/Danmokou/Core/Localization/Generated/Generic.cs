@@ -68,6 +68,10 @@ public static partial class LocalizedStrings {
 			(Locales.JP, "キャンセル"))
 			{ ID = "generic.generic_cancel" };
 		
+		public static readonly LString generic_close = new LText("Close",
+			(Locales.JP, "閉じる"))
+			{ ID = "generic.generic_close" };
+		
 		public static readonly LString generic_back = new LText("Back",
 			(Locales.JP, "戻る"))
 			{ ID = "generic.generic_back" };

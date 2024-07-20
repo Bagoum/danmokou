@@ -73,6 +73,7 @@ public static partial class LocalizedStrings {
 		{ "generic.generic_delete", Generic.generic_delete },
 		{ "generic.generic_save", Generic.generic_save },
 		{ "generic.generic_back", Generic.generic_back },
+		{ "generic.generic_close", Generic.generic_close },
 		{ "generic.generic_cancel", Generic.generic_cancel },
 		{ "generic.generic_na", Generic.generic_na },
 		{ "generic.generic_deleted", Generic.generic_deleted },

@@ -80,12 +80,12 @@ public static partial class XMLHelpers {
         (PracticeBossesExist ?
             new UINode {
                 EnabledIf = () => unlockedPracticeBosses,
-                OnConfirm = (_, _) => new UIResult.GoToNode(bossPractice),
+                OnConfirm = (_, _) => new UIResult.GoToScreen(bossPractice),
             } : null)?.Bind(View(Wrap(Mode.BOSSPRAC, !unlockedPracticeBosses))), 
         (PracticeStagesExist ?
             new UINode {
                 EnabledIf = () => unlockedPracticeStages,
-                OnConfirm = (_, _) => new UIResult.GoToNode(stagePractice),
+                OnConfirm = (_, _) => new UIResult.GoToScreen(stagePractice),
             } : null)?.Bind(View(Wrap(Mode.STAGEPRAC, !unlockedPracticeStages))), 
         (game.Tutorial != null ? new UINode {
             OnConfirm = (_, _) => new UIResult.StayOnNode(!InstanceRequest.RunTutorial(game)),
@@ -227,7 +227,7 @@ public static partial class XMLHelpers {
                 Maybe<IInspectableInputBinding>? newTempBinding = null;
                 return PopupUIGroup.CreatePopup(n, $"Keybinding for \"{b.Purpose}\"",
                     r => new UIColumn(r, new UINode {
-                                Prefab = GameManagement.References.uxmlDefaults.PureTextNode, Passthrough = true
+                                Prefab = GameManagement.References.uxmlDefaults.PureTextNode, BaseInteractable = false
                             }.WithCSS(fontControlsClass)
                             .Bind(new LabelView<(string? curr, bool hasNext, string? next)>(new(
                                 () => (b.Sources[index]?.Description, newTempBinding != null, 
@@ -932,7 +932,7 @@ public static partial class XMLHelpers {
                                 var settingNameEntry = new TextInputNode(LString.Empty);
                                 return PopupUIGroup.CreatePopup(n, create_setting,
                                     r => new UIColumn(r, new UINode(new_setting_name) {
-                                        Prefab = Prefabs.PureTextNode, Passthrough = true
+                                        Prefab = Prefabs.PureTextNode, BaseInteractable = false
                                     }, settingNameEntry),
                                     new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
                                         UIButton.Save(() => {
@@ -1175,7 +1175,7 @@ public static partial class XMLHelpers {
             .Prepend(new TwoLabelUINode(practice_type, rec.Mode.Describe()))
             //() => allows updates when a replay name is saved
             .Prepend(new TwoLabelUINode("Name", () => rec.CustomNameOrPartial, null))
-            .Append(new UINode("") {Passthrough = true}).Concat(new TwoLabelUINode?[] {
+            .Append(new UINode("") {BaseInteractable = false}).Concat(new TwoLabelUINode?[] {
                 new("Completed?", rec.Completed.ToString()),
                 new("Difficulty", rec.Difficulty.Describe()),
                 new("Player", ShotConfig.PlayerShotDescription(ship?.ship, ship?.shot)),

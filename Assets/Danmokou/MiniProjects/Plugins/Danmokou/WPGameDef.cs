@@ -72,7 +72,7 @@ public class WPGameDef : ADVGameDef {
             (targetScreen, evTargets) = menu.MakeScreen(null);
             var targetInfo = new UINode("Select a target to present evidence to") {
                 Prefab = XMLUtils.Prefabs.PureTextNode,
-                Passthrough = true,
+                BaseInteractable = false,
                 OnBuilt = n => {
                     var l = n.HTML.Q<Label>();
                     l.style.backgroundColor = new Color(0.42f, 0.08f, 0.47f, 0.7f);
@@ -108,7 +108,7 @@ public class WPGameDef : ADVGameDef {
                 Data.Evidences.Select(ev => new UINode {
                     ShowHideGroup = new UIColumn(evInfo, new UINode {
                                 Prefab = XMLUtils.Prefabs.PureTextNode, 
-                                Passthrough = true, 
+                                BaseInteractable = false, 
                                 OnBuilt = n => n.Style.minHeight = 500
                             }.WithCSS(XMLUtils.fontBiolinumClass, XMLUtils.small1Class)
                             .Bind(new FlagView(new(() => ev.Enabled, ev.Description, 

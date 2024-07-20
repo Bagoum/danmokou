@@ -253,6 +253,10 @@ public record InteractableBCtxAssertion : InteractableAssertion, IAssertion<Inte
         base(Manager, () => {
             _ = Manager.ExecuteVN(OnClick).ContinueWithSync(null);
         }, OnClick.ID) {
+        //NB: by default, BCTX reuse local data when being repeatedly run;
+        // this means that if a BCTX is run to completion once, then run again but interrupted,
+        // the "Result" will be persisted from the first execution,
+        // and the BCTX will be considered completed.
         Exhausted = OnClick.IsCompletedInContexts();
     }
 

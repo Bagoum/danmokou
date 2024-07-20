@@ -11,6 +11,7 @@ namespace MiniProjects.PJ24 {
 public abstract class Item {
     public string Name { get; }
     public Recipe? Recipe { get; protected init; }
+    public int SortIndex => Items.IndexOf(this);
 
     public (Category category, int score)[] Categories => Alchemy.Categories
         .SelectNotNull(cat => this.CategoryScore(cat) is {} score ? (cat, score) : default((Category, int)?))
@@ -358,6 +359,14 @@ public class ItemInstance : IModelObject {
     public List<EffectInstance> Effects { get; private init; }
     public List<TraitInstance> Traits { get; private init; }
 
+    public bool HasAnyTrait(Trait[] traits) {
+        foreach (var ti in Traits)
+            if (traits.IndexOf(ti.Type) > -1)
+                return true;
+        return false;
+    }
+
+
     public ItemInstance(Item type, List<EffectInstance>? effects = null, List<TraitInstance>? traits = null) {
         Type = type;
         Effects = effects ?? new();
@@ -366,6 +375,19 @@ public class ItemInstance : IModelObject {
 
     public ItemInstance Copy() => new(Type, Effects.ToList(), Traits.ToList());
 
+    public string ShortDescribe() {
+        var et = "";
+        if (Effects.Count > 0)
+            et = $"{Effects.Count}E";
+        if (Traits.Count > 0) {
+            if (et.Length > 0)
+                et += ",";
+            et += $"{Traits.Count}T";
+        }
+        if (et.Length > 0)
+            return $"{Type.Name}:{et}";
+        return Type.Name;
+    }
     public string Describe() {
         var eff = "";
         if (Effects.Count > 0) {

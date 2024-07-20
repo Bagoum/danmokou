@@ -130,7 +130,7 @@ public class InputConfig {
     //don't listen to mouse left click for confirm-- left clicks need to be reported by the targeted element
     //(left click cannot be rebound)
     public RebindableInputBinding Back { get; } =
-        new(back, new KBMKeyInputBinding(KeyCode.X), new MouseKeyInputBinding(1)
+        new(back, new KBMKeyInputBinding(KeyCode.X), null
 #if UNITY_ANDROID
 //System back button is mapped to ESC
             , new KeyInputBinding(KeyCode.Escape)

@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Danmokou {
 [CreateAssetMenu(menuName = "Data/GameDef/Empty")]
 public class EmptyGameDef : DanmakuGameDef {
-    public override InstanceFeatures MakeFeatures(DifficultySettings _, InstanceMode m, long? __) => InstanceFeatures.InactiveFeatures;
+    public override InstanceFeatures MakeFeatures(DifficultySettings _, InstanceMode m, long? __) => new();
     public override IEnumerable<ShipConfig> AllShips => Array.Empty<ShipConfig>();
 }
 }

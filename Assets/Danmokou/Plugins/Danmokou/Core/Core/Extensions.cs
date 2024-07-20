@@ -149,40 +149,6 @@ public static class DictExtensions {
     }
 }
 
-public static class FuncExtensions {
-    public static Func<bool> Or(this Func<bool> x, Func<bool> y) => () => x() || y();
-    public static readonly Action Noop = () => { };
-
-    public static B And<A, B>(this A a, Func<A, B> then) => then(a);
-    
-    public static Action Then(this Action? a, Action? b) {
-        if (a == null) return b ?? Noop;
-        if (b == null) return a ?? Noop;
-        return () => {
-            a();
-            b();
-        };
-    }
-    
-    public static Action<T> Then<T>(this Action<T>? a, Action<T>? b) {
-        if (a == null) return b ?? (_ => {});
-        if (b == null) return a;
-        return x => {
-            a(x);
-            b(x);
-        };
-    }
-    
-    public static Action<T1,T2> Then<T1,T2>(this Action<T1,T2>? a, Action<T1,T2>? b) {
-        if (a == null) return b ?? ((_,_) => {});
-        if (b == null) return a;
-        return (x,y) => {
-            a(x,y);
-            b(x,y);
-        };
-    }
-}
-
 public static class FormattingExtensions {
     public static string PadRight(this int x, int by) => x.ToString().PadRight(by);
     public static string PadLZero(this int x, int by) => x.ToString().PadLeft(by, '0');
