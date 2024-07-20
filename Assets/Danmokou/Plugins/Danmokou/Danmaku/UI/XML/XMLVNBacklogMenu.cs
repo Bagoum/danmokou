@@ -26,6 +26,7 @@ namespace Danmokou.UI.XML {
 /// </summary>
 [Preserve]
 public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
+    public override bool CloseOnUnscopedBack => true;
     public static int BacklogCount { get; set; } = 120;
     private ExecutingVN? currVn;
     private ExecutingVN? CurrVN {
@@ -33,7 +34,6 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
         set => currVn = value;
     }
 
-    public XMLPauseMenu pauseMenu = null!;
     public VisualTreeAsset BacklogEntry = null!;
 
     private ScrollView logScroll = null!;
@@ -78,7 +78,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
                 node.HTML.Q("Speaker").style.backgroundImage = new StyleBackground(entry.speakerSprite);
         }
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             var entry = ViewModel.Entry;
             var vis = Node.Selection;
             var b = HTML.Q("Borderer");
@@ -88,7 +88,6 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
             HTML.Q<Label>("Description").style.color =
                 HTML.Q<Label>("Label").style.color =
                     entry.textColor * (vis == UINodeSelection.Focused ? Color.white : new Color(0.75f, 0.75f, 0.75f, 1f));
-            return base.Update(in context);
         }
     }
     
@@ -115,7 +114,7 @@ public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
     private bool openQueued = false;
     public override void RegularUpdate() {
         if (RegularUpdateGuard) {
-            if (IsActiveCurrentMenu && (InputManager.VNBacklogPause || InputManager.Pause || InputManager.UIBack || 
+            if (IsActiveCurrentMenu && (InputManager.VNBacklogPause || InputManager.Pause ||
                                (Input.mouseScrollDelta.y < 0 && logScroll.verticalScroller.value >= logScroll.verticalScroller.highValue))) {
                 CloseWithAnimationV();
             } else if (!MenuActive && (InputManager.VNBacklogPause || openQueued || Input.mouseScrollDelta.y > 0) &&

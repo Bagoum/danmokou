@@ -55,10 +55,10 @@ public class ValueDataSrc<T> : UIViewModel {
 //As such, I'm implementing this by taking the node and data source as arguments, and doing a pretty
 // raw UXML write.
 //Note that by implementing IDataSourceProvider, we don't need to specify dataSource on the source UXML object.
-public class CustomLabelView<T> : UIView, IDataSourceProvider {
+public class CustomLabelView<T> : CustomBinding, IDataSourceProvider {
     private UINode n;
     private ValueDataSrc<T> data;
-    public CustomLabelView(UINode n, ValueDataSrc<T> data) : base(data) {
+    public CustomLabelView(UINode n, ValueDataSrc<T> data) {
         this.n = n;
         this.data = data;
         updateTrigger = BindingUpdateTrigger.OnSourceChanged;

@@ -695,7 +695,7 @@ public class PJ24CraftingUXML : UIController {
 
         public SynthComponentView(Model viewModel) : base(viewModel) { }
         
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             VM.S.ShowItemImage(null, HTML);
             if (VM.Cmp is { } cmp) {
                 var syn = VM.S.Synth!;
@@ -705,7 +705,6 @@ public class PJ24CraftingUXML : UIController {
                 if (sel > 0)
                     VM.S.ShowItemImage(syn.Selected[VM.Index][0].Type, HTML);
             }
-            return base.Update(in context);
         }
     }
 
@@ -749,12 +748,11 @@ public class PJ24CraftingUXML : UIController {
         public override VisualTreeAsset Prefab => VM.S.nodeItemVTA;
         public ItemInstNodeView(Model viewModel) : base(viewModel) { }
         
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             if (VM.Val is { } v) {
                 HTML.Q<Label>("Name").text = v.ShortDescribe();
                 HTML.Q<Label>("Count").style.display = DisplayStyle.None;
             }
-            return base.Update(in context);
         }
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
@@ -792,7 +790,7 @@ public class PJ24CraftingUXML : UIController {
 
         public ItemInstSynSelNodeView(Model viewModel) : base(viewModel) {}
         
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             if (VM.Val is {} v) {
                 HTML.Q<Label>("Name").text = v.ShortDescribe();
                 var ct = HTML.Q<Label>("Count");
@@ -802,7 +800,6 @@ public class PJ24CraftingUXML : UIController {
                 } else
                     ct.style.display = DisplayStyle.None;
             }
-            return base.Update(in context);
         }
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
@@ -842,7 +839,7 @@ public class PJ24CraftingUXML : UIController {
 
         public ItemInstReqSelNodeView(Model viewModel) : base(viewModel) {}
         
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             if (VM.Val is { } v) {
                 HTML.Q<Label>("Name").text = v.ShortDescribe();
                 var ct = HTML.Q<Label>("Count");
@@ -852,7 +849,6 @@ public class PJ24CraftingUXML : UIController {
                 } else
                     ct.style.display = DisplayStyle.None;
             }
-            return base.Update(in context);
         }
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
@@ -877,11 +873,10 @@ public class PJ24CraftingUXML : UIController {
             node.AddToken(DirtyOn(VM.S.exec.DataChanged));
         }
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             HTML.Q<Label>("Name").text = VM.Val?.Name ?? "All";
             HTML.Q<Label>("Count").text = 
                 (VM.Val is {} it ? VM.S.Data.NumHeld(it) : VM.S.Data.Inventory.Count).ToString();
-            return base.Update(in context);
         }
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
@@ -918,12 +913,11 @@ public class PJ24CraftingUXML : UIController {
 
         public SynthItemSelConfirmView(Model viewModel) : base(viewModel) { }
         
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             if (VM.S.Synth is { CurrentSelection: { } sel } syn) {
                 var (has, req) = syn.ComponentReq(sel);
                 HTML.Q<Label>().text = has >= req ? "OK" : $"{has}/{req}";
             }
-            return base.Update(in context);
         }
     }
     private class ReqItemSelConfirmView : UIView<ReqItemSelConfirmView.Model> {
@@ -951,12 +945,11 @@ public class PJ24CraftingUXML : UIController {
         public override VisualTreeAsset? Prefab => VM.S.popupButtonVTA;
         public ReqItemSelConfirmView(Model viewModel) : base(viewModel) { }
         
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             if (VM.S.Submission is {} sub) {
                 var (has, req) = (sub.Selected.Count, sub.Req.ReqCount);
                 HTML.Q<Label>().text = (sub.Req.Complete || has >= req) ? "OK" : $"{has}/{req}";
             }
-            return base.Update(in context);
         }
     }
     
@@ -970,9 +963,9 @@ public class PJ24CraftingUXML : UIController {
             VM.S.nextRecipe.Recipe = VM.Val!.Recipe;
         }
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             HTML.EnableInClassList("uncraftable", VM.S.Data.NumCanCraft(VM.Val!.Recipe!) == 0);
-            return base.Update(in context);
+            base.UpdateHTML();
         }
     }
 
@@ -987,13 +980,12 @@ public class PJ24CraftingUXML : UIController {
 
         public PersistentUIRenderView(Model viewModel) : base(viewModel) { }
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             var data = VM.Menu.Data;
             var cal = HTML.Q("Calendar");
             cal.Q<Label>("Phase").text = data.Phase.Title;
             cal.Q<Label>("Today").text = $"今日  {data.Date}";
             cal.Q<Label>("Deadline").text = $"〆切  {data.Phase.Deadline}";
-            return base.Update(in context);
         }
     }
 
@@ -1011,7 +1003,7 @@ public class PJ24CraftingUXML : UIController {
 
         public SynthScreen1RenderView(Model viewModel) : base(viewModel) { }
         
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             var s = VM.Menu.ScreenSynth1;
             if (s.State.Value > UIScreenState.Inactive) {
                 var nextRecipe = VM.Menu.nextRecipe;
@@ -1041,7 +1033,6 @@ public class PJ24CraftingUXML : UIController {
                     cc.Q("Finish").Q<Label>("Right").text = (VM.Menu.Data.Date + time).ToString();
                 }
             }
-            return base.Update(in context);
         }
     }
     
@@ -1065,13 +1056,12 @@ public class PJ24CraftingUXML : UIController {
 
         public ItemDetailsRenderView(Model viewModel) : base(viewModel) { }
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             if (VM.S.State.Value >= UIScreenState.InactiveWillGoActive) {
                 VM.Menu.ShowItemDetailsAt(HTML);
                 if (VM.S == VM.Menu.ScreenSynth3)
                     VM.Menu.ShowItemImage(VM.Menu.viewingInst?.Type, VM.S.HTML.Q("HandImage"), true);
             }
-            return base.Update(in context);
         }
     }
     

@@ -13,13 +13,8 @@ namespace Danmokou.UI.XML {
 /// A set of data that will be rendered to screen by <see cref="IUIView"/>.
 /// <br/>Contains information about data changes via <see cref="IDataSourceViewHashProvider.GetViewHashCode"/>.
 /// </summary>
-public interface IUIViewModel : IDataSourceViewHashProvider {
+public interface IUIViewModel {
     Func<long>? OverrideViewHash => null;
-
-    long IDataSourceViewHashProvider.GetViewHashCode() {
-        UpdateEvents(); //TODO put the UpdateEvents call in a better place
-        return OverrideViewHash?.Invoke() ?? GetViewHash();
-    }
 
     /// <summary>
     /// Update any <see cref="LazyEvented{T}"/> that may lead to event-driven CSS updates.
@@ -147,8 +142,6 @@ public interface IVersionedUIViewModel : IUIViewModel {
 
 /// <inheritdoc cref="IVersionedUIViewModel"/>
 public class VersionedUIViewModel : IVersionedUIViewModel {
-    public BindingUpdateTrigger UpdateTrigger { get; set; }
-    public Func<long>? OverrideViewHash { get; set; }
     public Evented<long> EvViewVersion { get; } = new(0);
     
     /// <inheritdoc cref="EvViewVersion"/>

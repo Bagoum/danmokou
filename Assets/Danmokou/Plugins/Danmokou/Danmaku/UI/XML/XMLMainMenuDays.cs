@@ -182,9 +182,8 @@ public class XMLMainMenuDays : XMLMainMenu {
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) => ShowPhotos();
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             ShowPhotos();
-            return base.Update(in context);
         }
 
         void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, bool isEnteringPopup) {

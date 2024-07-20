@@ -43,9 +43,8 @@ public class AxisView : UIView<AxisViewModel>, IUIView {
         VM.Set(node);
     }
 
-    protected override BindingResult Update(in BindingContext context) {
+    public override void UpdateHTML() {
         SetRelativeLocation(VM.Index);
-        return base.Update(in context);
     }
 
     private void SetRelativeLocation(int selectedIndex) {

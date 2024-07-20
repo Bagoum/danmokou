@@ -576,7 +576,7 @@ public class ParallelSM : StateMachine {
         for (int ii = 0; ii < states.Length; ++ii)
             tasks[ii] = states[ii].Start(smh);
         //WARNING: Due to how WhenAll works, any child exceptions will only be thrown at the end of execution.
-        return TaskHelpers.TaskWhenAll(tasks);
+        return BagoumLib.Tasks.Utilities.TaskWhenAll(tasks);
     }
 }
 
@@ -606,7 +606,7 @@ public class RetargetUSM : UniversalSM {
         } else if (behs.Length == 1) {
             return behs[0].RunExternalSM(SMRunner.Run(states[0], smh.cT, smh.GCX), false);
         } else {
-            return Task.WhenAll(behs.Select(x => x.RunExternalSM(SMRunner.Run(states[0], smh.cT, smh.GCX), false)));
+            return behs.Select(x => x.RunExternalSM(SMRunner.Run(states[0], smh.cT, smh.GCX), false)).All();
         }
     }
 }

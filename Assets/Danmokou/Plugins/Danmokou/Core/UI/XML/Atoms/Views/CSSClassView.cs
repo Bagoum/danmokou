@@ -24,13 +24,12 @@ public class CSSClassViewModel : UIViewModel {
 public class CssClassView : UIView<CSSClassViewModel> {
     public CssClassView(CSSClassViewModel viewModel) : base(viewModel) { }
 
-    protected override BindingResult Update(in BindingContext context) {
+    public override void UpdateHTML() {
         var pass = ViewModel.Switch();
         if (ViewModel.WhenTrue is { } trueClass)
             HTML.EnableInClassList(trueClass, pass);
         if (ViewModel.WhenFalse is { } falseClass)
             HTML.EnableInClassList(falseClass, !pass);
-        return base.Update(in context);
     }
 }
 }

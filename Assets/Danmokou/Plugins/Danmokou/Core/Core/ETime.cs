@@ -262,7 +262,7 @@ public class ETime : MonoBehaviour {
     private void Update() {
         try {
             FirstUpdateForScreen = true;
-            UnityStartOfFrameInvokes(EngineStateManager.State);
+            Invoke(persistentUnitySofInvokes, EngineStateManager.State);
             for (; UntilNextFrame + EngineStepTime > FRAME_BOUNDARY;) {
                 //If the unity frame is skipped, then don't destroy trigger-based controls.
                 //If this toggle is moved out of the loop, then it is possible for trigger-based controls
@@ -272,7 +272,7 @@ public class ETime : MonoBehaviour {
                 UntilNextFrame -= FRAME_TIME;
                 LastUpdateForScreen = UntilNextFrame + EngineStepTime <= FRAME_BOUNDARY;
                 if (EngineStateManager.PendingUpdate) continue;
-                StartOfFrameInvokes(EngineStateManager.State);
+                Invoke(persistentSofInvokes, EngineStateManager.State);
                 //This is important for cases where objects are added at the end of the previous frame
                 // and then scanned (for player collision) during the movement step
                 Physics2D.SyncTransforms();
@@ -323,6 +323,7 @@ public class ETime : MonoBehaviour {
                     FrameNumberEv.Value++;
                 FirstUpdateForScreen = false;
             }
+            //Invoke(persistentUnityEofInvokes, EngineStateManager.State);
             UntilNextFrame += EngineStepTime;
             if (Mathf.Abs(UntilNextFrame) < FRAME_YIELD) UntilNextFrame = 0f;
             
@@ -357,17 +358,16 @@ public class ETime : MonoBehaviour {
 
     private const float FRAME_BOUNDARY = FRAME_TIME - FRAME_YIELD;
 
-    private static void UnityStartOfFrameInvokes(EngineState state) {
-        for (int ii = 0; ii < persistentUnitySofInvokes.Count; ++ii)
-            if (persistentUnitySofInvokes.GetIfExistsAt(ii, out var x) && x.state >= state)
-                x.cb();
-        persistentSofInvokes.Compact();
-    }
-    private static void StartOfFrameInvokes(EngineState state) {
-        for (int ii = 0; ii < persistentSofInvokes.Count; ++ii)
-            if (persistentSofInvokes.GetIfExistsAt(ii, out var x) && x.state >= state)
-                x.cb();
-        persistentSofInvokes.Compact();
+    private static void Invoke(DMCompactingArray<(Action cb, EngineState state)> invokers, EngineState state) {
+        var reqCompact = false;
+        for (int ii = 0; ii < invokers.Count; ++ii)
+            if (invokers.GetIfExistsAt(ii, out var x)) {
+                if (x.state >= state)
+                    x.cb();
+            } else
+                reqCompact = false;
+        if (reqCompact)
+            invokers.Compact();
     }
 
     private static void EndOfFrameInvokes(EngineState state) {

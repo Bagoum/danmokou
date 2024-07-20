@@ -12,6 +12,21 @@ namespace Danmokou.UI.XML {
 /// </summary>
 public interface IUIView {
     /// <summary>
+    /// When to update this view.
+    /// </summary>
+    BindingUpdateTrigger UpdateTrigger { get; }
+
+    /// <summary>
+    /// Returns true if the view is dirty, and set the dirty state to false.
+    /// </summary>
+    bool TryConsumeDirty();
+
+    /// <summary>
+    /// Update the view's HTML bindings.
+    /// </summary>
+    void UpdateHTML();
+    
+    /// <summary>
     /// The view model bound to this view.
     /// </summary>
     IUIViewModel ViewModel { get; }
@@ -33,25 +48,25 @@ public interface IUIView {
     Func<VisualElement, VisualElement>? Builder { get; }
     
     /// <summary>
-    /// Attach this view to a VisualElement.
+    /// Attach this view to a VisualElement and register it for updates.
     /// <br/>Called during UI instantiation, before <see cref="OnBuilt"/>.
     /// All views attached to a VE receive <see cref="Bind"/>,
     /// and then if the VE is part of a UINode, all of them receive <see cref="OnBuilt"/>.
     /// </summary>
-    void Bind(VisualElement ve);
+    void Bind(MVVMManager mvvm, VisualElement ve);
 
+    /// <summary>
+    /// Unbind this view from its VisualElement.
+    /// <br/>Called when the node or HTML using this view was destroyed.
+    /// </summary>
+    void Unbind();
+    
     /// <summary>
     /// Called when the node using this view was built.
     /// <br/>If this view is free-floating and not attached to a node, this method will not be called.
     /// </summary>
     void OnBuilt(UINode node);
     
-    /// <summary>
-    /// Called when the node using this view was destroyed.
-    /// <br/>If this view is free-floating and not attached to a node, this method will not be called.
-    /// <br/>It is not required to unbind the VE binding, as the node will call <see cref="VisualElement.ClearBindings"/>.
-    /// </summary>
-    void OnDestroyed(UINode node) { }
 
     /// <summary>
     /// Called when the display language or other global display setting changes.
@@ -98,43 +113,51 @@ public interface IUIView {
 }
 
 
-public abstract class UIView : CustomBinding, IUIView {
+public abstract class UIView : IUIView {
     private static readonly Dictionary<Type, BindingId> typeBindings = new();
     public virtual VisualTreeAsset? Prefab => null;
     public virtual Func<VisualElement, VisualElement>? Builder => null;
 
     public UINode Node { get; private set; } = null!;
     public VisualElement HTML { get; private set; } = null!;
+    public BindingUpdateTrigger UpdateTrigger { get; protected set; } = BindingUpdateTrigger.OnSourceChanged;
     public IUIViewModel ViewModel { get; }
-    public BindingId BindingId =>
-        typeBindings.TryGetValue(this.GetType(), out var bdg) ?
-            bdg :
-            typeBindings[this.GetType()] = new(this.GetType().RName());
+    private IDisposable? updateToken;
+    private bool dirty;
     
     public UIView(IUIViewModel viewModel) {
         this.ViewModel = viewModel;
-        updateTrigger = BindingUpdateTrigger.OnSourceChanged;
     }
 
-    public void Bind(VisualElement ve) {
+    public virtual void Bind(MVVMManager mvvm, VisualElement ve) {
         HTML = ve;
-        ve.SetBinding(BindingId, this);
+        updateToken = mvvm.RegisterView(this);
+    }
+
+    public virtual void Unbind() {
+        updateToken?.Dispose();
+        updateToken = null;
     }
 
     public virtual void OnBuilt(UINode node) {
         Node = node;
     }
 
-    public virtual void ReprocessForLanguageChange() => Update(default);
+    public virtual void UpdateHTML() { }
+    
+    public virtual void ReprocessForLanguageChange() => UpdateHTML();
+
+    bool IUIView.TryConsumeDirty() {
+        var x = dirty;
+        dirty = false;
+        return x;
+    }
+
+    public void MarkDirty() => dirty = true;
 
     public IDisposable DirtyOn<T>(IObservable<T> ev) {
-        updateTrigger = BindingUpdateTrigger.WhenDirty;
-        //NB: UITK internals will recompute hash code even if the update trigger is WhenDirty.
-        //In most cases when we set the update trigger to WhenDirty, we want to avoid allocations
-        // that would otherwise occur in hash code computation.
-        if (ViewModel is UIViewModel vm)
-            vm.OverrideViewHash ??= () => 0;
-        return ev.Subscribe(_ => MarkDirty());
+        UpdateTrigger = BindingUpdateTrigger.WhenDirty;
+        return ev.Subscribe(_ => dirty = true);
     }
 
     /// <summary>

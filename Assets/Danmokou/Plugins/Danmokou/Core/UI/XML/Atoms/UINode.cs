@@ -97,8 +97,8 @@ public class UINode {
     /// </summary>
     public bool IsNodeVisible {
         get {
-            foreach (var v in Views)
-                if (!v.ViewModel.ShouldBeVisible(this))
+            for (var ii = 0; ii < Views.Count; ii++)
+                if (!Views[ii].ViewModel.ShouldBeVisible(this))
                     return false;
             return true;
         }
@@ -116,8 +116,8 @@ public class UINode {
     /// </summary>
     public bool IsEnabled {
         get {
-            foreach (var v in Views)
-                if (!v.ViewModel.ShouldBeEnabled(this))
+            for (var ii = 0; ii < Views.Count; ii++)
+                if (!Views[ii].ViewModel.ShouldBeEnabled(this))
                     return false;
             return true;
         }
@@ -126,8 +126,8 @@ public class UINode {
     public bool AllowInteraction {
         get {
             if (!Group.Interactable || !IsNodeVisible) return false;
-            foreach (var v in Views)
-                if (!v.ViewModel.ShouldBeInteractable(this))
+            for (var ii = 0; ii < Views.Count; ii++)
+                if (!Views[ii].ViewModel.ShouldBeInteractable(this))
                     return false;
             return true;
         }
@@ -200,14 +200,17 @@ public class UINode {
                         return false;
                     break;
                 }
-            return Controller.GroupCall.Count > 0 || Controller.ScreenCall.Count > 0;
+            if (Controller.NextNodeInGroupCall is { } n && (Screen.AllowsPlayerExit || n.Screen == Screen))
+                return true;
+            return Screen.AllowsPlayerExit && (
+                        Controller.ScreenCall.Count > 0 || Controller.CloseOnUnscopedBack);
         }
     }
 
     /// <summary>
     /// View rendering configurations to bind to this node's HTML.
     /// </summary>
-    private List<IUIView> Views { get; } = new();
+    private readonly List<IUIView> Views = new();
     public RootNodeView RootView { get; }
     
     /// <summary>
@@ -277,7 +280,7 @@ public class UINode {
     public UINode Bind<T>(T view) where T : IUIView {
         Views.Add(view);
         if (Built) {
-            view.Bind(HTML);
+            view.Bind(Controller.MVVM, HTML);
             view.OnBuilt(this);
         }
         return this;
@@ -412,7 +415,7 @@ public class UINode {
         }
         AddCSSClasses();
         foreach (var view in Views)
-            view.Bind(HTML);
+            view.Bind(Controller.MVVM, HTML);
         Built = true;
         RegisterEvents();
         foreach (var view in Views)
@@ -439,9 +442,8 @@ public class UINode {
         if (Destroyed) return;
         Destroyed = true;
         foreach (var view in Views)
-            view.OnDestroyed(this);
+            view.Unbind();
         Views.Clear();
-        HTML.ClearBindings();
         Tokens.DisposeAll();
     }
 
@@ -761,9 +763,8 @@ public class LROptionNode<T> : BaseLROptionNode<T>, ILROptionNode {
             HTML.Q<Label>("Key").text = node.DescriptionOrEmpty;
         }
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             HTML.Q<Label>("Value").text = ViewModel.lastKey;
-            return base.Update(in context);
         }
     }
 
@@ -837,14 +838,13 @@ public class LROptionNode<T> : BaseLROptionNode<T>, ILROptionNode {
 public class ComplexLROptionNode<T> : BaseLROptionNode<T>, IComplexLROptionNode {
     private class View : UIView<ComplexLROptionNode<T>> {
         public View(ComplexLROptionNode<T> data) : base(data) { }
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             VM.HTML.Q<Label>("Key").text = VM.DescriptionOrEmpty;
             var container = VM.HTML.Q("LR2ChildContainer");
             container.Clear();
             foreach (var (i, v) in VM.values.Enumerate()) {
                 VM.HTML.Q("LR2ChildContainer").Add(VM.realizer(i, v, i == VM.Index));
             }
-            return base.Update(in context);
         }
     }
     
@@ -903,15 +903,13 @@ public class ComplexLROptionNode<T> : BaseLROptionNode<T>, IComplexLROptionNode 
 
 public class KeyRebindInputNode : UINode, IUIViewModel {
     private readonly LString? title;
-    public BindingUpdateTrigger UpdateTrigger { get; set; }
-    public Func<long>? OverrideViewHash { get; set; }
     public long GetViewHash() => 0;
     private readonly KeyRebindInputNodeView view;
     private class KeyRebindInputNodeView : UIView<KeyRebindInputNode> {
         public KeyRebindInputNodeView(KeyRebindInputNode data) : base(data) {
-            updateTrigger = BindingUpdateTrigger.WhenDirty;
+            UpdateTrigger = BindingUpdateTrigger.WhenDirty;
         }
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             var n = ViewModel;
             string t = n.title ?? "";
             n.HTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
@@ -921,7 +919,6 @@ public class KeyRebindInputNode : UINode, IUIViewModel {
                     "Press desired keys" :
                     string.Join("+", n.lastHeld.Select(l => l.Description)) :
                 "\t";
-            return base.Update(in context);
         }
     }
     public enum Mode {
@@ -1000,19 +997,16 @@ public class KeyRebindInputNode : UINode, IUIViewModel {
 
 public class TextInputNode : UINode, IUIViewModel {
     private readonly LString? title;
-    public BindingUpdateTrigger UpdateTrigger { get; set; }
-    public Func<long>? OverrideViewHash { get; set; }
     public long GetViewHash() => (isEntryEnabled, DataWIP, bdCursorIdx).GetHashCode();
     private class TextInputNodeView : UIView<TextInputNode> {
         public TextInputNodeView(TextInputNode data) : base(data) { }
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             var n = ViewModel;
             string t = n.title ?? "";
             n.HTML.Q<Label>("Prefix").text = string.IsNullOrEmpty(t) ? "" : t + ":";
             var disp = n.DisplayWIP;
             n.HTML.Q("FadedBack").style.display = disp.Length == 0 ? DisplayStyle.Flex : DisplayStyle.None;
             n.HTML.Q<Label>("Label").text = disp.Length == 0 ? "\t" : n.DisplayWIP;
-            return base.Update(in context);
         }
     }
     public string DataWIP { get; private set; } = "";

@@ -113,14 +113,14 @@ public record GroupVisibilityControl(UIGroup Group) {
 
     public virtual Task? OnDescendToChild(bool isEnteringPopup) => null;
 
-    public Task ParentVisibilityUpdated(GroupVisibility? parentVisibleInTree, bool notifyRender = true) {
+    public Task? ParentVisibilityUpdated(GroupVisibility? parentVisibleInTree, bool notifyRender = true) {
         var prevVisInTree = VisibleInTree;
         ParentVisibleInTree = parentVisibleInTree ?? GroupVisibility.TreeVisible;
         return UpdatedVisibility(prevVisInTree, notifyRender);
     }
 
-    private Task UpdatedVisibility(GroupVisibility prevVisInTree, bool notifyRender = true) {
-        var task0 = Task.CompletedTask;
+    private Task? UpdatedVisibility(GroupVisibility prevVisInTree, bool notifyRender = true) {
+        Task? task0 = null;
         var visInTree = VisibleInTree;
         var changed = visInTree != prevVisInTree;
         if (!changed) return task0;
@@ -138,11 +138,12 @@ public record GroupVisibilityControl(UIGroup Group) {
         
         if (Group.Children.Count == 0)
             return task0;
-        var tasks = new Task[Group.Children.Count + 1];
-        tasks[^1] = task0;
-        for (int ii = 0; ii < Group.Children.Count; ++ii)
-            tasks[ii] = Group.Children[ii].Visibility.ParentVisibilityUpdated(VisibleInTree, notifyRender);
-        return Task.WhenAll(tasks);
+        var tasks = new List<Task>();
+        tasks.AddNonNull(task0);
+        foreach (var c in Group.Children)
+            if (c.Visibility.ParentVisibilityUpdated(VisibleInTree, notifyRender) is { } task1)
+                tasks.Add(task1);
+        return tasks!.All();
     }
 
     public void ApplyToChildren() {
@@ -520,13 +521,19 @@ public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? 
         return null;
     }
 
-    protected UIResult? GoToExitOrLeaveScreen(UINode current, UICommand req) =>
-        (ExitNode != null && ExitNode != current) ?
-            new GoToNode(ExitNode) :
-        Parent?.NavigateOutOfEnclosed(this, current, req) ??
-            (Controller.ScreenCall.Count > 0 && Screen.AllowsPlayerExit ?
-                new ReturnToScreenCaller() :
-                null);
+    protected UIResult? GoToExitOrLeaveScreen(UINode current, UICommand req) {
+        if (ExitNode != null && ExitNode != current)
+            return new GoToNode(ExitNode);
+        if (Parent?.NavigateOutOfEnclosed(this, current, req) is { } res)
+            return res;
+        if (Screen.AllowsPlayerExit) {
+            if (Controller.ScreenCall.Count > 0)
+                return new ReturnToScreenCaller();
+            else if (Controller.GroupCall.Count == 0 && Controller.CloseOnUnscopedBack)
+                return new CloseMenu();
+        }
+        return null;
+    }
 
     /// <summary>
     /// When a node N has no specific handle for a navigation command, this function is called on N.Group to handle default navigation.

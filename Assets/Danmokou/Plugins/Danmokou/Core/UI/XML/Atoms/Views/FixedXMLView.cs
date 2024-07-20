@@ -58,7 +58,8 @@ public class FixedXMLView : UIView<FixedXMLViewModel>, IUIView {
         VM.Recv?.OnBuilt((node as EmptyNode)!);
     }
 
-    void IUIView.OnDestroyed(UINode node) {
+    public override void Unbind() {
+        base.Unbind();
         VM.Descr.Cleanup();
     }
 

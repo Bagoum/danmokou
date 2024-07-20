@@ -320,10 +320,9 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
             node.AddToken(VM.MovedToIndex.Subscribe(idx => node.MoveToIndex(idx)));
         }
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             HTML.Q<Label>().text = VM.Layer.Descr;
             HTML.style.color = VM.Layer.Enabled ? new Color(1, 1, 1, 1) : new Color(0.8f, 0.7f, 0.7f, 0.8f);
-            return base.Update(in context);
         }
     }
 
@@ -401,7 +400,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
         void IUIView.OnAddedToNavHierarchy(UINode node) => VM.Src.CurrentIndex = VM.Index;
         void IUIView.OnRemovedFromNavHierarchy(UINode node) => VM.Src.CurrentIndex = null;
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             var title = HTML.Q<Label>("Content");
             if (ViewModel.Item is { } item) {
                 title.style.display = DisplayStyle.Flex;
@@ -423,7 +422,6 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
                 new Color(0.2f, 0.4f, 0.6f) :
                 new StyleColor(StyleKeyword.Null);
             */
-            return base.Update(in context);
         }
     }
 
@@ -444,7 +442,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
     private class CurrentItemView : UIView<CurrentItemViewModel>, IUIView {
         public CurrentItemView(CurrentItemViewModel viewModel) : base(viewModel) { }
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             var txt = "";
             if (VM.Src.CurrentIndex is { } i) {
                 if (VM.Src[i] is not { } item) {
@@ -456,8 +454,6 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
                 }
             }
             HTML.Q<Label>().text = txt;
-            
-            return base.Update(in context);
         }
     }
 

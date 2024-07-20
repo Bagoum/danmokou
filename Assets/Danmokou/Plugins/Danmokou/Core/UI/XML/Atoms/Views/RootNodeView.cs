@@ -49,10 +49,19 @@ public class RootNodeViewModel : UIViewModel, IUIViewModel {
 
     public override long GetViewHash() {
         Profiler.BeginSample("RootNodeView hash computation");
-        var hc = (Node.Selection, 
-            NodeIsEnabledHash?.Invoke() ?? (Node.IsEnabled ? 1 : 0), 
-            NodeIsVisibleHash?.Invoke() ?? (Node.IsVisible ? 1 : 0), 
-            Node.Render.ShouldBeVisibleInTree).GetHashCode();
+        var hc = (long)Node.Selection << 3;
+        if (Node.Render.ShouldBeVisibleInTree)
+            hc += 1;
+        
+        if (NodeIsEnabledHash is { } efn)
+            hc = (hc << 3) + efn();
+        else if (Node.IsEnabled)
+            hc += 2;
+
+        if (NodeIsVisibleHash is { } vfn)
+            hc = (hc << 6) + vfn();
+        else if (Node.IsVisible)
+            hc += 4;
         Profiler.EndSample();
         return hc;
     }
@@ -86,7 +95,7 @@ public class RootNodeView : UIView<RootNodeViewModel>, IUIView {
     }
 
     public override void ReprocessForLanguageChange() {
-        Update(default);
+        UpdateHTML();
         UpdateLabel();
     }
 
@@ -101,7 +110,7 @@ public class RootNodeView : UIView<RootNodeViewModel>, IUIView {
     }
 
 
-    protected override BindingResult Update(in BindingContext context) {
+    public override void UpdateHTML() {
         HTML.EnableInClassList("node-focus", Node.Selection is UINodeSelection.Focused or UINodeSelection.PopupSource);
         HTML.EnableInClassList("node-group", Node.Selection is UINodeSelection.GroupFocused);
         HTML.EnableInClassList("node-selected", Node.Selection is UINodeSelection.GroupCaller);
@@ -116,7 +125,6 @@ public class RootNodeView : UIView<RootNodeViewModel>, IUIView {
                 _ = OnFirstRenderAnimation?.Invoke(Node, Cancellable.Null).ContinueWithSync();
             }
         }
-        return base.Update(in context);
     }
 
     public void UpdateLabel() {

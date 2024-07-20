@@ -146,11 +146,10 @@ public class SelectionViewModel<T> : UIViewModel, IUIViewModel {
 public class SelectionView<T>: UIView<SelectionViewModel<T>> {
     public SelectionView(SelectionViewModel<T> viewModel) : base(viewModel) { }
     
-    protected override BindingResult Update(in BindingContext context) {
+    public override void UpdateHTML() {
         var pass = VM.Selected();
         HTML.EnableInClassList(XMLUtils.dropdownSelect, pass);
         HTML.EnableInClassList(XMLUtils.dropdownUnselect, !pass);
-        return base.Update(in context);
     }
 }
 

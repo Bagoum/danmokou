@@ -56,6 +56,14 @@ public abstract record UIResult {
     /// </summary>
     public Action? OnPostTransition { get; init; }
     
+    /// <summary>
+    /// Disable the UI display and set current to null. (This has no animation.)
+    /// </summary>
+    public record CloseMenuFast : UIResult;
+
+    /// <summary>
+    /// Animate a menu closed using CloseWithAnimation.
+    /// </summary>
     public record CloseMenu : UIResult;
 
     public enum StayOnNodeType {
@@ -116,6 +124,8 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// True if the UI HTML has been built (in FirstFrame)
     /// </summary>
     protected bool Built { get; private set; } = false;
+
+    public MVVMManager MVVM { get; private set; } = null!;
     
     /// <summary>
     /// The TemplateContainer instantiated from <see cref="UIDocument"/>.<see cref="UIDocument.sourceAsset"/>
@@ -127,7 +137,8 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// </summary>
     protected VisualElement UIContainer { get; private set; } = null!;
     protected PanelSettings UISettings { get; private set; } = null!;
-    
+
+    public virtual bool CloseOnUnscopedBack => false;
     protected virtual bool CaptureFallthroughInteraction => true;
     protected virtual UIScreen?[] Screens => new[] {MainScreen};
     /// <summary>
@@ -155,7 +166,15 @@ public abstract class UIController : CoroutineRegularUpdater {
     public DisturbedAnd OperationsEnabled { get; } = new();
     public Stack<UINode> ScreenCall { get; } = new();
     public Stack<(UIGroup group, UINode? node)> GroupCall { get; } = new();
-    
+    public UINode? NextNodeInGroupCall {
+        get {
+            foreach (var (_, n) in GroupCall)
+                if (n != null)
+                    return n;
+            return null;
+        }
+    }
+
     public UINode? Current { get; private set; }
     public OverrideEvented<ICursorState> CursorState { get; } = new(new NullCursorState());
 
@@ -269,6 +288,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     public override void FirstFrame() {
         if (uiRenderer == null)
             uiRenderer = ServiceLocator.Find<UIBuilderRenderer>();
+        MVVM = new();
         var uid = GetComponent<UIDocument>();
         //higher sort order is more visible, so give them lower priority
         tokens.Add(uiRenderer.RegisterController(this, -(int)(uid.panelSettings.sortingOrder * 1000 + uid.sortingOrder)));
@@ -336,9 +356,9 @@ public abstract class UIController : CoroutineRegularUpdater {
     }
     protected void BuildLate(UIScreen s) => 
         UIContainer.Add(s.Build(XMLUtils.Prefabs.TypeMap));
-    
 
 
+    private readonly Dictionary<UINode, UINodeSelection> states = new();
     /// <summary>
     /// Redraws the current screen, or disables the UI display if there is no current node.
     /// <br/>Other screens are not affected.
@@ -352,7 +372,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
         Profiler.BeginSample("UI Redraw");
         UIRoot.style.display = DisplayStyle.Flex;
-        var states = new Dictionary<UINode, UINodeSelection>();
+        states.Clear();
         var nextIsPopupSrc = Current.Group is PopupUIGroup;
         foreach (var (grp, node) in GroupCall) {
             if (node != null)
@@ -389,7 +409,8 @@ public abstract class UIController : CoroutineRegularUpdater {
             result is UIResult.StayOnNode) {
             if (result != null) Redraw();
             return Task.CompletedTask;
-        } 
+        }
+        var closeMenuAfter = false;
         opts ??= UITransitionOptions.DontAnimate;
         var next = Current;
         List<(UIGroup group, UINode? node)> LeftCalls = new();
@@ -462,7 +483,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                     next = target;
             }
             switch (r) {
-                case UIResult.CloseMenu:
+                case UIResult.CloseMenuFast:
                     next = null;
                     opts = UITransitionOptions.DontAnimate;
                     if (prev != null)
@@ -470,6 +491,9 @@ public abstract class UIController : CoroutineRegularUpdater {
                     LeftCalls.AddRange(GroupCall);
                     GroupCall.Clear();
                     ScreenCall.Clear();
+                    break;
+                case UIResult.CloseMenu:
+                    closeMenuAfter = true;
                     break;
                 case UIResult.GoToScreen goToScreen:
                     if (goToScreen.Screen != prev?.Screen && (goToScreen.ReturnToOverride ?? prev) is { } returnTo) {
@@ -573,8 +597,11 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
         //Logs.Log($"Left: {string.Join(",", LeftCalls.Select(x => x.ToString()))}, Entered: {string.Join(",", EntryCalls.Select(x => x.ToString()))}");
         //Logs.Log($"Left: {string.Join(",", leftGroups.Select(x => x.ToString()))}, Entered: {string.Join(",", entryGroups.Select(x => x.ToString()))}");
-        return TransitionToNode(next, opts, leftGroups, entryGroups, screenChanges)
+        var task = TransitionToNode(next, opts, leftGroups, entryGroups, screenChanges)
             .ContinueWithSync(result.OnPostTransition);
+        if (closeMenuAfter)
+            task = task.Then(() => CloseWithAnimation());
+        return task;
     }
 
     public Task OperateOnResult(UIResult? result, UITransitionOptions? opts) {
@@ -648,7 +675,11 @@ public abstract class UIController : CoroutineRegularUpdater {
                 break;
         }
     }
-    
+
+    private void LateUpdate() {
+        MVVM.UpdateViews();
+    }
+
     #region Transition
 
     public void GoToNth(int grpIndex, int nodeIndex) =>
@@ -672,7 +703,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     protected async Task Close() {
         if (!MenuActive) return;
         UIRoot.style.opacity = 0;
-        await OperateOnResult(new UIResult.CloseMenu(), null);
+        await OperateOnResult(new UIResult.CloseMenuFast(), null);
         OnClosed();
     }
     
@@ -691,6 +722,7 @@ public abstract class UIController : CoroutineRegularUpdater {
             await Task.WhenAll(openTask, anim);
         });
     }
+    
     protected Task CloseWithAnimation(Task? anim = null) {
         return openClose.EnqueueTask(async () => {
             if (!MenuActive) return;
@@ -750,7 +782,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                 if (!isPush && src.Group.ReturnFromChild() is { IsCompletedSuccessfully: false } task)
                     tasks.Add(task);
         if (tasks.Count > 0)
-            await Task.WhenAll(tasks);
+            await tasks!.All();
         //Screen change
         if (screenChanged) {
             prev?.Screen.NextState(UIScreenState.ActiveGoingInactive);
@@ -782,7 +814,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         if (screenChanged && next != null)
             tasks.Add(TransitionScreen(prev?.Screen, next.Screen, opts));
         if (tasks.Count > 0)
-            await Task.WhenAll(tasks);
+            await tasks!.All();
 
         if (screenChanged) {
             prev?.Screen.NextState(UIScreenState.Inactive);

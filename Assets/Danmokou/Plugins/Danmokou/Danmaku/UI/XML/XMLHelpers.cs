@@ -1097,9 +1097,9 @@ public static partial class XMLHelpers {
             HTML.style.paddingRight = 20;
         }
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             HTML.Q<Label>("Description").text = viewModel.Achv.VisibleDescription;
-            return base.Update(in context);
+            base.UpdateHTML();
         }
     }
     public static UIScreen AchievementsScreen(this UIController menu, VisualTreeAsset node, 

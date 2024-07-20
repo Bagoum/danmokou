@@ -242,9 +242,8 @@ public class LocalXMLTetrisExample : CoroutineRegularUpdater {
             shadow.style.opacity = 0;
         }
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             shadow.style.opacity = (Node.Selection >= UINodeSelection.PopupSource) ? 1 : 0;
-            return base.Update(in context);
         }
     }
 
@@ -365,13 +364,12 @@ public class LocalXMLTetrisExample : CoroutineRegularUpdater {
             );
         }
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             RenderPosition();
             
             shadow.style.unityBackgroundImageTintColor = 
                 VM.BlockIsConfirmed ? Color.white : 
                 VM.Block.OverlapsAny(VM.Src.Blocks) ? new(1f, 0.3f, 0.4f) : new(0.4f, 0.8f, 1f);
-            return base.Update(in context);
         }
     }
 

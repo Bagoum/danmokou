@@ -43,9 +43,8 @@ public class BaseLabelView<T> : UIView<T>, IUIView where T : ILabelViewModel {
             throw new Exception($"No label found by name `{labelName}`");
     }
 
-    protected override BindingResult Update(in BindingContext context) {
+    public override void UpdateHTML() {
         target.text = ViewModel.Label;
-        return base.Update(in context);
     }
 }
 /// <inheritdoc cref="LabelViewModel{T}"/>

@@ -22,7 +22,7 @@ public static partial class XMLHelpers {
     private class SaveLoadDataView : UIView<SaveLoadData> {
         public SaveLoadDataView(SaveLoadData data) : base(data) { }
 
-        protected override BindingResult Update(in BindingContext context) {
+        public override void UpdateHTML() {
             var title = HTML.Q<Label>("Title");
             title.text = $"Save #{ViewModel.i + 1}";
             var desc = HTML.Q<Label>("Description");
@@ -36,7 +36,6 @@ public static partial class XMLHelpers {
                 desc.text = "";
                 bg.style.backgroundImage = UXMLPrefabs.defaultSaveLoadBG;
             }
-            return base.Update(in context);
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.DataStructures;
 using BagoumLib.Events;
@@ -27,7 +28,7 @@ public abstract class UIRenderSpace {
                 _html = _FirstLoadHTML() ?? throw new Exception("Couldn't load HTML");
                 LocalUpdateVisibility(true);
                 foreach (var v in Views)
-                    v.Bind(_html);
+                    v.Bind(Screen.Controller.MVVM, _html);
             }
             return _html;
         }
@@ -35,10 +36,9 @@ public abstract class UIRenderSpace {
     public UIScreen Screen { get; }
     public UIRenderSpace? Parent { get; }
     public LazyEvented<bool> IsHTMLVisible { get; }
-    protected virtual bool ShouldBeVisibleBase => !VisibleWhenSourcesVisible || HasVisibleSource;
+    protected virtual bool ShouldBeLocalVisible => !VisibleWhenSourcesVisible || HasVisibleSource;
     private bool? ShouldBeVisibleOverride { get; set; }
-    protected bool ShouldBeVisible => ShouldBeVisibleOverride ?? ShouldBeVisibleBase;
-    public bool ShouldBeVisibleInTree => ShouldBeVisible && (Parent?.ShouldBeVisibleInTree ?? true);
+    public bool ShouldBeVisibleInTree => ShouldBeLocalVisible && (Parent?.ShouldBeVisibleInTree ?? true);
     
     /// <summary>
     /// True if this render space is allowed to modify the HTML visibility. If false, will not run any
@@ -82,8 +82,8 @@ public abstract class UIRenderSpace {
     public bool VisibleWhenSourcesVisible { get; set; } = false;
     public bool HasVisibleSource {
         get {
-            foreach (var s in Sources)
-                if (s.Visible)
+            for (var ii = 0; ii < Sources.Count; ii++)
+                if (Sources[ii].Visible)
                     return true;
             return false;
         }
@@ -120,7 +120,7 @@ public abstract class UIRenderSpace {
     public UIRenderSpace(UIScreen screen, UIRenderSpace? parent) {
         this.Screen = screen;
         this.Parent = parent;
-        IsHTMLVisible = new(() => _useTreeForHTMLVisibility ? ShouldBeVisibleInTree : ShouldBeVisible);
+        IsHTMLVisible = new(() => _useTreeForHTMLVisibility ? ShouldBeVisibleInTree : ShouldBeLocalVisible);
         Screen.Renderers.Add(this);
     }
 
@@ -134,15 +134,17 @@ public abstract class UIRenderSpace {
     private Task? AnimateIn(bool skip, Func<UIRenderSpace, ICancellee, Task>? entry) {
         HTML.style.display = DisplayStyle.Flex;
         if (!skip && VisibilityDependents.Count > 0) {
+            var cT = Cancellable.Replace(ref animateToken);
             var tasks = UpdateVisibilityDependents();
             if (entry is not null)
-                tasks.Add(entry(this, Cancellable.Replace(ref animateToken)));
-            return Task.WhenAll(tasks);
+                tasks.Add(entry(this, cT));
+            //cancel cT so IsAnimating becomes false
+            return tasks!.All().ContinueWithSync(cT.Cancel);
         } else if (entry is not null) {
             var cT = Cancellable.Replace(ref animateToken);
             if (skip) 
                 cT.SoftCancel();
-            return entry(this, cT);
+            return entry(this, cT).ContinueWithSync(cT.Cancel);
         } else
             return null;
             
@@ -158,9 +160,10 @@ public abstract class UIRenderSpace {
             var cT = Cancellable.Replace(ref animateToken);
             if (exit is not null)
                 tasks.Add(exit(this, cT));
-            return Task.WhenAll(tasks).ContinueWithSync(() => {
+            return tasks!.All().ContinueWithSync(() => {
                 if (!cT.IsHardCancelled())
                     HTML.style.display = DisplayStyle.None;
+                cT.Cancel();
             });
         } else if (exit is not null) {
             var cT = Cancellable.Replace(ref animateToken);
@@ -171,28 +174,12 @@ public abstract class UIRenderSpace {
             return exit(this, cT).ContinueWithSync(() => {
                 if (!cT.IsHardCancelled())
                     HTML.style.display = DisplayStyle.None;
+                cT.Cancel();
             });
         } else {
             HTML.style.display = DisplayStyle.None;
             return null;
         }
-    }
-
-    /// <summary>
-    /// Sets the local visiblity of this render space,
-    ///  overriding <see cref="ShouldBeVisible"/> and/or <see cref="HasVisibleSource"/>.
-    /// </summary>
-    public Task OverrideVisibility(bool? visible) {
-        ShouldBeVisibleOverride = visible;
-        return LocalUpdateVisibility();
-    }
-    
-    /// <summary>
-    /// <see cref="OverrideVisibility"/>, but returns a null task.
-    /// </summary>
-    public Task? OverrideVisibilityV(bool? visible) {
-        OverrideVisibility(visible);
-        return null;
     }
 
     //visibility changes due to group dependencies must be cascaded upwards
@@ -223,15 +210,16 @@ public abstract class UIRenderSpace {
     public UIRenderSpace WithView(IUIView view) {
         Views.Add(view);
         if (_html is not null)
-            view.Bind(HTML);
+            view.Bind(Controller.MVVM, HTML);
         else if (Screen.Built)
             _ = HTML;
         return this;
     }
     
     public void MarkViewsDestroyed() {
+        foreach (var view in Views)
+            view.Unbind();
         Views.Clear();
-        HTML.ClearBindings();
     }
 
     //NB: there seems to be a UITK issue where if you hide an element after setting its scaled size to 0,
@@ -268,9 +256,9 @@ public abstract class UIRenderSpace {
         return this;
     }
 
-    public Task MakeTask(params ITransition[] tweens) =>
+    public Task MakeTask(params ITransition[] tweens)
         //stepTryPrepend is important so first-frame cancellation takes place immediately
-        Task.WhenAll(tweens.Select(t => t.Run(Controller)));
+        => tweens.All(t => t.Run(Controller));
 
     public Task AddSource(UIGroup grp) {
         if (!Sources.Contains(grp)) {
@@ -319,7 +307,7 @@ public class UIRenderExplicit : UIRenderSpace {
 /// </summary>
 public class UIRenderScreen : UIRenderSpace {
     protected override VisualElement _FirstLoadHTML() => Screen.HTML;
-    protected override bool ShouldBeVisibleBase => Screen.State.Value >= UIScreenState.InactiveGoingActive;
+    protected override bool ShouldBeLocalVisible => Screen.State.Value >= UIScreenState.InactiveGoingActive;
     public override bool IsAnimating => Screen.State.Value is > UIScreenState.Inactive and < UIScreenState.Active;
     protected override bool ControlsHTML => false;
 
@@ -333,7 +321,7 @@ public class UIRenderScreen : UIRenderSpace {
 /// </summary>
 public class UIRenderScreenContainer : UIRenderSpace {
     protected override VisualElement _FirstLoadHTML() => Screen.Container;
-    protected override bool ShouldBeVisibleBase => Screen.State.Value >= UIScreenState.InactiveGoingActive;
+    protected override bool ShouldBeLocalVisible => Screen.State.Value >= UIScreenState.InactiveGoingActive;
     public override bool IsAnimating => Screen.State.Value is > UIScreenState.Inactive and < UIScreenState.Active;
     protected override bool ControlsHTML => false;
 
@@ -365,7 +353,7 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
         return a ?? Alpha;
     }
 
-    protected override bool ShouldBeVisibleBase => 
+    protected override bool ShouldBeLocalVisible => 
         Screen.State.Value >= UIScreenState.InactiveGoingActive && HasVisibleSource;
 
     public UIRenderAbsoluteTerritory(UIScreen screen) : base(screen, null) {
@@ -374,21 +362,17 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
         var bgc = absTerr.style.backgroundColor.value;
         absTerr.style.display = DisplayStyle.None;
         absTerr.RegisterCallback<PointerUpEvent>(evt => {
-            if (evt.button != 0 || screen.Controller.Current == null || animateToken?.Cancelled is false) return;
+            if (evt.button != 0 || screen.Controller.Current == null || IsAnimating) return;
             Logs.Log("Clicked on absolute territory");
             screen.Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Back, null));
             evt.StopPropagation();
         });
-        IsVisibleAnimation = (rs, cT) => {
-            return MakeTask(
-                TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, GetTargetAlpha(), .2f,
-                    a => HTML.style.backgroundColor = Helpers.WithA(bgc, a), cT: cT));
-        };
-        IsNotVisibleAnimation = (rs, cT) => {
-            return MakeTask(
-                TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, 0, .12f,
-                    a => HTML.style.backgroundColor = Helpers.WithA(bgc, a), cT: cT));
-        };
+        IsVisibleAnimation = (rs, cT) => MakeTask(
+            TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, GetTargetAlpha(), .2f,
+                a => HTML.style.backgroundColor = Helpers.WithA(bgc, a), cT: cT));
+        IsNotVisibleAnimation = (rs, cT) => MakeTask(
+            TransitionHelpers.TweenTo(HTML.style.backgroundColor.value.a, 0, .12f,
+                a => HTML.style.backgroundColor = Helpers.WithA(bgc, a), cT: cT));
         screen.Tokens.Add(screen.State.Subscribe(_ => LocalUpdateVisibility()));
     }
 }
@@ -430,7 +414,7 @@ public class UIRenderConstructed : UIRenderSpace {
         builder?.Invoke(this, html);
         return html;
     }
-    protected override bool ShouldBeVisibleBase => HasVisibleSource;
+    protected override bool ShouldBeLocalVisible => HasVisibleSource;
 
     /// <summary>
     /// Constructor for <see cref="UIRenderConstructed"/>.
