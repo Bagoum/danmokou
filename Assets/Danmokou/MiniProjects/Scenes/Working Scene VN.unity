@@ -239,7 +239,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &52487955
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -939,7 +939,7 @@ PrefabInstance:
         type: 3}
       propertyPath: references
       value: 
-      objectReference: {fileID: 11400000, guid: 8eb3d68e67fddac44b3d03623fe155b2,
+      objectReference: {fileID: 11400000, guid: e9d0a0c3f23a9c84090fb87f17ca6e3e,
         type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1149,7 +1149,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd594754dd526c14d88942cd645fad0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  saveSlot: 7
+  saveSlot: 0
 --- !u!4 &1044200807
 Transform:
   m_ObjectHideFlags: 0

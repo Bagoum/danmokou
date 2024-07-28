@@ -134,6 +134,8 @@ public static class SaveData {
         public Evented<(int w, int h)> Resolution { get; } = new(GraphicsUtils.BestResolution);
         (int, int) IGraphicsSettings.Resolution => Resolution;
 #if UNITY_EDITOR && !EXBAKE_SAVE && !EXBAKE_LOAD
+        //Change this to control whether or not bosses teleport to their new location at the beginning of a phase.
+        //This only applies to the editor.
         public static bool TeleportAtPhaseStart => true;
 #else
         //Don't change this! TeleportAtPhaseStart is a editor utility and should not be enabled in builds.

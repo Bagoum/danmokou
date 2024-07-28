@@ -363,7 +363,7 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
         absTerr.style.display = DisplayStyle.None;
         absTerr.RegisterCallback<PointerUpEvent>(evt => {
             if (evt.button != 0 || screen.Controller.Current == null || IsAnimating) return;
-            Logs.Log("Clicked on absolute territory");
+            //Logs.Log("Clicked on absolute territory");
             screen.Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Back, null));
             evt.StopPropagation();
         });

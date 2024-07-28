@@ -165,11 +165,9 @@ public abstract class UIView : IUIView {
     /// </summary>
     public UINode MakeNode() => new UINode(this);
 }
-public abstract class UIView<T> : UIView, IDataSourceProvider where T : IUIViewModel {
+public abstract class UIView<T> : UIView where T : IUIViewModel {
     public new T ViewModel { get; }
     public T VM => ViewModel;
-    public object dataSource => ViewModel!;
-    public PropertyPath dataSourcePath => new();
     private bool _isFirstRender = true;
     private bool _isFirstVisibleRender = true;
     protected bool IsFirstRender() {

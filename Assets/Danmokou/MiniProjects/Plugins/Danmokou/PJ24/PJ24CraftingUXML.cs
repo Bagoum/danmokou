@@ -422,12 +422,13 @@ public class PJ24CraftingUXML : UIController {
         //Request screen, synth screen, and inventory screen all have item instance lists with different view logics.
         // ItemInstance has a "Destroyed" event; when this fires, the nodes will be removed (see the views' OnBuilt).
         var numNodes = 0;
-        void ItemAdded() {
+        void InventoryUpdated() {
             //only keep as many nodes as are required to handle the entire inventory
-            if (Data.Inventory.Count <= numNodes) return; 
-            gReqItemInstances.AddNodeDynamic(new ItemInstReqSelNodeView(new(this, numNodes)));
-            gSynthItemInstances.AddNodeDynamic(new ItemInstSynSelNodeView(new(this, numNodes)));
-            gInvItemInstances.AddNodeDynamic(new ItemInstNodeView(new(this, numNodes++)));
+            while (Data.Inventory.Count > numNodes) {
+                gReqItemInstances.AddNodeDynamic(new ItemInstReqSelNodeView(new(this, numNodes)));
+                gSynthItemInstances.AddNodeDynamic(new ItemInstSynSelNodeView(new(this, numNodes)));
+                gInvItemInstances.AddNodeDynamic(new ItemInstNodeView(new(this, numNodes++)));
+            }
         }
         UINode NoOtherHelper(string? filterMsg, string noFilterMsg, bool showFilterCtxMenu = false) {
             var n = new UINode(
@@ -446,11 +447,10 @@ public class PJ24CraftingUXML : UIController {
         gReqItemInstances.AddNodeDynamic(NoOtherHelper(null, "No items satisfy this request..."));
         gSynthItemInstances.AddNodeDynamic(NoOtherHelper(null,  "No items remain for synthesis..."));
         gInvItemInstances.AddNodeDynamic(NoOtherHelper(null, "You have no items here...", true));
-        foreach (var _ in Data.Inventory)
-            ItemAdded();
+        InventoryUpdated();
         Listen(Data.InventoryChanged, _ => {
             InventoryView.Recompile();
-            ItemAdded();
+            InventoryUpdated();
         });
         
         MainScreen = new UIScreen(this) {
@@ -617,17 +617,7 @@ public class PJ24CraftingUXML : UIController {
     }
 
     private class RequestView : UIView<RequestView.Model>, IUIView {
-        public class Model : UIViewModel, IUIViewModel {
-            public PJ24CraftingUXML S { get; }
-            public Request? Req { get; }
-            private UIGroup? Selector { get; }
-            
-            public Model(PJ24CraftingUXML s, Request? r, UIGroup? selector) {
-                S = s;
-                Req = r;
-                Selector = selector;
-            }
-
+        public record Model(PJ24CraftingUXML S, Request? Req, UIGroup? Selector) : IUIViewModel {
             UIResult IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
                 if (Req is null) return new UIResult.ReturnToScreenCaller();
                 S.viewing = new Viewing.Request(Req);
@@ -639,7 +629,8 @@ public class PJ24CraftingUXML : UIController {
                 }
             }
 
-            public override long GetViewHash() => (S.Submission?.Req, S.Submission?.Version ?? -1).GetHashCode();
+            long IUIViewModel.GetViewHash() 
+                => (S.Submission?.Req, S.Submission?.Version ?? -1).GetHashCode();
         }
         
         public override VisualTreeAsset Prefab => VM.S.nodeItemVTA;
@@ -663,17 +654,8 @@ public class PJ24CraftingUXML : UIController {
     /// View for each component of a synthesis on the synthesis board.
     /// </summary>
     private class SynthComponentView : UIView<SynthComponentView.Model> {
-        public class Model : UIViewModel, IUIViewModel {
-            public PJ24CraftingUXML S { get; }
-            public int Index { get; }
-            private UIGroup Selector { get; }
+        public record Model(PJ24CraftingUXML S, int Index, UIGroup Selector) : IUIViewModel {
             public RecipeComponent? Cmp => S.Synth?.Recipe.Components.Try(Index);
-            
-            public Model(PJ24CraftingUXML s, int index, UIGroup selector) {
-                S = s;
-                Index = index;
-                Selector = selector;
-            }
 
             UIResult IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
                 if (S.Synth is null) throw new Exception("Confirm on synth component with no synth");
@@ -686,9 +668,11 @@ public class PJ24CraftingUXML : UIController {
                 }
             }
 
-            bool IUIViewModel.ShouldBeVisible(UINode node) => Cmp != null;
+            bool IUIViewModel.ShouldBeVisible(UINode node) 
+                => Cmp != null;
 
-            public override long GetViewHash() => (S.Synth?.Version ?? -1, S.Synth?.Recipe.Result, S.Synth?.Count ?? -1).GetHashCode();
+            long IUIViewModel.GetViewHash() 
+                => (S.Synth?.Version ?? -1, S.Synth?.Recipe.Result, S.Synth?.Count ?? -1).GetHashCode();
         }
 
         public override VisualTreeAsset Prefab => VM.S.nodeSynthComponentVTA;
@@ -708,37 +692,17 @@ public class PJ24CraftingUXML : UIController {
         }
     }
 
-    public class ObjViewModel<T> : VersionedUIViewModel {
-        public PJ24CraftingUXML S { get; }
-        public T Val { get; }
-
-        public ObjViewModel(PJ24CraftingUXML s, T val) {
-            S = s;
-            Val = val;
-        }
-
-        public override int GetHashCode() {
-            return base.GetHashCode();
-        }
-    }
-
     private class ItemInstNodeView : UIView<ItemInstNodeView.Model>, IUIView {
-        public class Model : UIViewModel, IUIViewModel {
-            public PJ24CraftingUXML S { get; }
+        public record Model(PJ24CraftingUXML S, int Index) : IUIViewModel {
             public ItemInstance? Val => S.InventoryView[Index];
-            public int Index { get; }
-
-            public Model(PJ24CraftingUXML s, int index) {
-                S = s;
-                Index = index;
-            }
-            public override long GetViewHash() => Val?.GetHashCode() ?? -1;
 
             bool IUIViewModel.ShouldBeVisible(UINode node) => S.ItemInstVisible(Val);
 
-            UIResult? IUIViewModel.OnContextMenu(UINode node, ICursorState cs) =>
+            UIResult IUIViewModel.OnContextMenu(UINode node, ICursorState cs) =>
                 PopupUIGroup.CreateContextMenu(node, CtxMenuOpts(S, node));
-
+            
+            long IUIViewModel.GetViewHash() => Val?.GetHashCode() ?? -1;
+            
             public static UINode[] CtxMenuOpts(PJ24CraftingUXML menu, UINode node) => new UINode[] {
                     //by passing node as the popup source, it actually closes the context menu before
                     // opening the popup, which is nice.
@@ -761,29 +725,21 @@ public class PJ24CraftingUXML : UIController {
     }
 
     private class ItemInstSynSelNodeView : UIView<ItemInstSynSelNodeView.Model>, IUIView {
-        public class Model : UIViewModel, IUIViewModel {
-            public PJ24CraftingUXML S { get; }
+        public record Model(PJ24CraftingUXML S, int Index) : IUIViewModel {
             public ItemInstance? Val => S.InventoryView[Index];
-            public int Index { get; }
-            private int ver = 0;
-
-            public Model(PJ24CraftingUXML s, int index) {
-                S = s;
-                Index = index;
-            }
-
-            public override long GetViewHash() => (Val, S.Synth?.Version ?? -1, ver).GetHashCode();
 
             UIResult IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
                 if (S.Synth!.ChangeSelectionForCurrent(Val!) is null)
                     return new UIResult.StayOnNode(UIResult.StayOnNodeType.NoOp);
-                ++ver; //TODO can you remove this local ver?
                 if (S.Synth!.CurrentComponentSatisfied)
                     return new UIResult.GoToNode(S.synthItemSelOKNode);
                 return new UIResult.StayOnNode(UIResult.StayOnNodeType.DidSomething);
             }
 
             bool IUIViewModel.ShouldBeVisible(UINode node) => S.ItemInstVisible(Val);
+            
+            long IUIViewModel.GetViewHash() 
+                => (Val, S.Synth?.Version ?? -1, S.Synth?.Recipe.Result).GetHashCode();
         }
         
         public override VisualTreeAsset Prefab => VM.S.nodeItemVTA;
@@ -812,17 +768,10 @@ public class PJ24CraftingUXML : UIController {
     }
     
     private class ItemInstReqSelNodeView : UIView<ItemInstReqSelNodeView.Model>, IUIView {
-        public class Model : UIViewModel, IUIViewModel {
-            public PJ24CraftingUXML S { get; }
+        public record Model(PJ24CraftingUXML S, int Index) : IUIViewModel {
             public ItemInstance? Val => S.InventoryView[Index];
-            public int Index { get; }
-
-            public Model(PJ24CraftingUXML s, int index) {
-                S = s;
-                Index = index;
-            }
-
-            public override long GetViewHash() => (Val, S.Submission?.Version ?? -1).GetHashCode();
+            
+            long IUIViewModel.GetViewHash() => (Val, S.Submission?.Version ?? -1).GetHashCode();
 
             UIResult IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
                 var req = (Viewing.Request)S.viewing!;
@@ -863,10 +812,12 @@ public class PJ24CraftingUXML : UIController {
     /// <summary>
     /// View for nodes which display an item type and the count held in the container.
     /// </summary>
-    private class ItemTypeNodeView : UIView<ObjViewModel<Item?>>, IUIView {
+    private class ItemTypeNodeView : UIView<ItemTypeNodeView.Model>, IUIView {
+        public record Model(PJ24CraftingUXML S, Item? Val) : IConstUIViewModel;
+        
         public override VisualTreeAsset Prefab => VM.S.nodeItemVTA;
 
-        public ItemTypeNodeView(ObjViewModel<Item?> viewModel) : base(viewModel) { }
+        public ItemTypeNodeView(Model viewModel) : base(viewModel) { }
 
         public override void OnBuilt(UINode node) {
             base.OnBuilt(node);
@@ -891,25 +842,20 @@ public class PJ24CraftingUXML : UIController {
     }
 
     private class SynthItemSelConfirmView : UIView<SynthItemSelConfirmView.Model> {
-        public class Model : UIViewModel, IUIViewModel {
-            public PJ24CraftingUXML S { get; }
-            public Model(PJ24CraftingUXML s) {
-                S = s;
-            }
-
+        public record Model(PJ24CraftingUXML S) : IUIViewModel {
             bool IUIViewModel.ShouldBeEnabled(UINode node) => 
                 S.Synth?.CurrentComponentSatisfied is true;
 
-            UIResult? IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
+            UIResult IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
                 S.Synth!.CommitSelection();
                 if (S.Synth.FirstUnsatisfiedIndex is { } ind)
                     return new UIResult.ReturnToGroupCaller().Then(new UIResult.GoToSibling(ind));
                 return new UIResult.GoToNode(S.synthFinalizeNode);
             }
 
-            public override long GetViewHash() => (S.Synth?.Version ?? -1, S.Synth?.CurrentSelection ?? -1).GetHashCode();
+            long IUIViewModel.GetViewHash() => (S.Synth?.Version ?? -1, S.Synth?.CurrentSelection ?? -1).GetHashCode();
         }
-        public override VisualTreeAsset? Prefab => VM.S.popupButtonVTA;
+        public override VisualTreeAsset Prefab => VM.S.popupButtonVTA;
 
         public SynthItemSelConfirmView(Model viewModel) : base(viewModel) { }
         
@@ -921,28 +867,24 @@ public class PJ24CraftingUXML : UIController {
         }
     }
     private class ReqItemSelConfirmView : UIView<ReqItemSelConfirmView.Model> {
-        public class Model : UIViewModel, IUIViewModel {
-            public PJ24CraftingUXML S { get; }
-            public Model(PJ24CraftingUXML s) {
-                S = s;
-            }
-
+        public record Model(PJ24CraftingUXML S) : IUIViewModel {
             bool IUIViewModel.ShouldBeInteractable(UINode node) => 
                 ((IUIViewModel)this).ShouldBeEnabled(node);
 
             bool IUIViewModel.ShouldBeEnabled(UINode node) => 
                 S.Submission?.Satisfied is true;
 
-            UIResult? IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
+            UIResult IUIViewModel.OnConfirm(UINode node, ICursorState cs) {
                 ISFXService.SFXService.Request(S.reqSubmitSFX);
                 S.exec.UpdateDataV(d => d.SubmitRequest(S.Submission!));
                 return new UIResult.ReturnToGroupCaller();
             }
 
-            public override long GetViewHash() => (S.Submission?.Version ?? -1, S.Submission?.Req).GetHashCode();
+            long IUIViewModel.GetViewHash() 
+                => (S.Submission?.Version ?? -1, S.Submission?.Req).GetHashCode();
         }
 
-        public override VisualTreeAsset? Prefab => VM.S.popupButtonVTA;
+        public override VisualTreeAsset Prefab => VM.S.popupButtonVTA;
         public ReqItemSelConfirmView(Model viewModel) : base(viewModel) { }
         
         public override void UpdateHTML() {
@@ -957,7 +899,7 @@ public class PJ24CraftingUXML : UIController {
     /// View for each recipe in the recipes list.
     /// </summary>
     private class RecipeNodeView : ItemTypeNodeView, IUIView {
-        public RecipeNodeView(ObjViewModel<Item> viewModel) : base(viewModel!) { }
+        public RecipeNodeView(Model viewModel) : base(viewModel) { }
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
             VM.S.nextRecipe.Recipe = VM.Val!.Recipe;
@@ -969,13 +911,9 @@ public class PJ24CraftingUXML : UIController {
         }
     }
 
-    private class PersistentUIRenderView : UIView<PersistentUIRenderView.Model>, IUIView {
-        public class Model : UIViewModel {
-            public PJ24CraftingUXML Menu { get; }
-            public Model(PJ24CraftingUXML menu) {
-                Menu = menu;
-            }
-            public override long GetViewHash() => Menu.exec.DataVersion;
+    private class PersistentUIRenderView : UIView<PersistentUIRenderView.Model> {
+        public record Model(PJ24CraftingUXML Menu) : IUIViewModel {
+            long IUIViewModel.GetViewHash() => Menu.exec.DataVersion;
         }
 
         public PersistentUIRenderView(Model viewModel) : base(viewModel) { }
@@ -989,14 +927,9 @@ public class PJ24CraftingUXML : UIController {
         }
     }
 
-    private class SynthScreen1RenderView : UIView<SynthScreen1RenderView.Model>, IUIView {
-        public class Model : UIViewModel {
-            public PJ24CraftingUXML Menu { get; }
-            public Model(PJ24CraftingUXML menu) {
-                Menu = menu;
-            }
-
-            public override long GetViewHash() => 
+    private class SynthScreen1RenderView : UIView<SynthScreen1RenderView.Model> {
+        public record Model(PJ24CraftingUXML Menu) : IUIViewModel {
+            long IUIViewModel.GetViewHash() => 
                 Menu.ScreenSynth1.State.Value == UIScreenState.Inactive ? 0 :
                 (Menu.exec.DataVersion, Menu.nextRecipe.ViewVersion).GetHashCode();
         }
@@ -1037,16 +970,8 @@ public class PJ24CraftingUXML : UIController {
     }
     
     private class ItemDetailsRenderView : UIView<ItemDetailsRenderView.Model> {
-        public class Model : UIViewModel {
-            public PJ24CraftingUXML Menu { get; }
-            public UIScreen S { get; }
-
-            public Model(PJ24CraftingUXML m, UIScreen s) {
-                Menu = m;
-                S = s;
-            }
-
-            public override long GetViewHash() => 
+        public record Model(PJ24CraftingUXML Menu, UIScreen S) : IUIViewModel {
+            long IUIViewModel.GetViewHash() => 
                 //normally you don't need to include a check for ScreenIsActive,
                 // but we need to ensure that redraws occur when entering screenSynth3,
                 // so the cleanest way is to change the hash code when screenSynth3 is made active

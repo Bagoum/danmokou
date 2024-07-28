@@ -1099,7 +1099,7 @@ public class UIButton : UINode {
         source.ReturnToGroup;
     
     public static Func<T, UIResult> GoBackTwiceCommand<T>(UINode source) => _ =>
-        source.ReturnToGroup.Then(new UIResult.Lazy(() => source.Controller.Navigate(source, UICommand.Back)));
+        source.ReturnToGroup.Then(UIResult.LazyGoBackFrom(source));
 
     public static Func<UIButton, UIResult> GoBackCommand(UINode source) => GoBackCommand<UIButton>(source);
     public static UIButton Cancel(UINode source) =>

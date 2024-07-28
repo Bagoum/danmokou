@@ -738,15 +738,25 @@ public class PopupUIGroup : CompositeUIGroup {
         if (source.Controller.LastPointerLocation is { } loc && source.HTML.worldBound.Contains(loc))
             ctxMenuPos = loc;
         render.HTML.ConfigureAbsolute(XMLUtils.Pivot.TopLeft).WithAbsolutePosition(ctxMenuPos);
-        var back = new FuncNode(LocalizedStrings.Generic.generic_back, UIButton.GoBackTwiceCommand<FuncNode>(source));
-        var close = new FuncNode(LocalizedStrings.Generic.generic_close, UIButton.GoBackCommand<FuncNode>(source));
+        //If this is created as a show/hide group, then additionally go back from the show/hide creator ('parent').
+        Func<FuncNode, UIResult> cmd;
+        if (source.Controller.NextNodeInGroupCall is { } parent && 
+            (parent.ShowHideGroup == source.Group || 
+             parent.ShowHideGroup is CompositeUIGroup cug && cug.Components.Contains(source.Group)))
+            cmd = fn => UIButton.GoBackTwiceCommand<FuncNode>(source)(fn).Then(UIResult.LazyGoBackFrom(parent));
+        else
+            cmd = UIButton.GoBackTwiceCommand<FuncNode>(source);
+        var back = new FuncNode(LocalizedStrings.Generic.generic_back, cmd);
+        //var close = new FuncNode(LocalizedStrings.Generic.generic_close, UIButton.GoBackCommand<FuncNode>(source));
         //NB: you can press X *once* to leave an options menu.
         // If you add a ExitNodeOverride to the UIColumn, then you'll need to press it twice (as with standard popups)
         var grp = new UIColumn(new UIRenderConstructed(render, new(XMLUtils.AddColumn)), 
-            options.Prepend(back).Append(close).Select(x => x?.WithCSS(XMLUtils.noPointerClass)));
+            options.Prepend(back)
+                //.Append(close)
+                .Select(x => x?.WithCSS(XMLUtils.noPointerClass)));
         var p = new PopupUIGroup(render, null, source, grp) {
             EntryNodeOverride = back,
-            ExitNodeOverride = close,
+            //ExitNodeOverride = close,
             EasyExit = true,
             OverlayAlphaOverride = 0,
         };

@@ -18,8 +18,13 @@ The following features are planned for future releases.
 
 # v11.2.0 (2024/08/04)
 
-#### Breaking Changes
+#### UI Changes
 
+This version improves the UI handling first built out in 11.1.0.
+
+- Instead of using Unity's inbuilt CustomBinding classes, the default handling for UI views/view models uses a new helper class `MVVMManager` which is linked to `UIController`. This simplifies the logic around views, avoids calling hash-codes when not necessary, and allows using non-class types as views/view models. (Under Unity's default setup, views must inherit CustomBinding, and view models/data sources must have class identity in order to function properly with their internal change tracking system.)
+- Added support for "persistent screens", which are UIScreens that are always visible, by setting `uiScreen.Persistent = true`.
+- The right-click button has been changed to map to the context menu command. Nodes without custom context menu handling now have a default context menu with just a "Back" option, which is equivalent to going back from the original node. This is more closely mapped to webpage handling, where there is no mouse button for going back, but right-click opens a context menu with a back option. As with webpages, clicking outside the bounds of the context menu will cause the context menu to disappear.
 - All the commonly-used UXML CSS files (`UINode.uss`, `UIScreen.uss`, `UINodeLRSwitch.css`, etc) have been combined into `DMK UXML CSS.uss`.
 
 

@@ -17,7 +17,6 @@ using Danmokou.DMath;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.Profiling;
 using UnityEngine.UIElements;
 using static Danmokou.Core.DInput.InputManager;
@@ -78,7 +77,10 @@ public abstract record UIResult {
         public IEnumerable<UIResult> Values => results;
     }
     
-    public record Lazy(Func<UIResult> Delayed) : UIResult { }
+    public record Lazy(Func<UIResult> Delayed) : UIResult;
+
+    public static Lazy LazyGoBackFrom(UINode source)
+        => new Lazy(() => source.Controller.Navigate(source, UICommand.Back));
 
     public record StayOnNode(StayOnNodeType Action) : UIResult {
         public StayOnNode(bool IsNoOp = false) : this(IsNoOp ? StayOnNodeType.NoOp : StayOnNodeType.DidSomething) { }
@@ -365,6 +367,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// </summary>
     public void Redraw() {
         //This can occur if this gets called before FirstFrame
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
         if (UIRoot == null) return;
         if (Current == null) {
             UIRoot.style.display = DisplayStyle.None;

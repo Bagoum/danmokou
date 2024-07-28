@@ -77,7 +77,7 @@ public interface IUIViewModel {
 /// Basic base class for an implementation of <see cref="IUIViewModel"/>.
 /// </summary>
 public abstract class UIViewModel : IUIViewModel {
-    public Func<long>? OverrideViewHash { get; set; }
+    public Func<long>? OverrideViewHash { get; init; }
     
     public virtual void UpdateEvents() { }
     public abstract long GetViewHash();
