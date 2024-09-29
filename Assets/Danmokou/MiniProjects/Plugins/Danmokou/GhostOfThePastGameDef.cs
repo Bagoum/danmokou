@@ -77,7 +77,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                 Data.Evidences.Select(ev => new UINode {
                     ShowHideGroup = new UIColumn(evInfo, 
                         new UINode { Prefab = XMLUtils.Prefabs.PureTextNode, BaseInteractable = false, OnBuilt = n => n.Style.minHeight = 500 }
-                            .WithCSS(XMLUtils.fontBiolinumClass, XMLUtils.small1Class)
+                            .WithCSS(XMLUtils.fontBiolinumClass)
                             .Bind(new FlagView(new(() => ev.Enabled, ev.Description, 
                                 "I don't have any evidence to put here."))),
                         new UIButton("Present Evidence", UIButton.ButtonType.Confirm, _ => {

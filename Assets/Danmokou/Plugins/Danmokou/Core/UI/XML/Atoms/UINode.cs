@@ -329,6 +329,7 @@ public class UINode {
     protected virtual void RegisterEvents() {
         bool isInElement = false;
         bool startedClickHere = false;
+        IDisposable? cursorToken = null;
         //It's more mouse-friendly to use BodyHTML when possible so empty space on rows doesn't draw events
         var evtBinder = BodyOrNodeHTML;
         evtBinder.RegisterCallback<PointerEnterEvent>(evt => {
@@ -340,6 +341,8 @@ public class UINode {
             //don't fire pointer enter events if the renderer is animating out
             //NB: UIController doesn't allow this command to cross screens, so any persistent screens are show-only
             if (AllowInteraction && Render.ShouldBeVisibleInTree) {
+                cursorToken?.Dispose();
+                cursorToken = CursorManager.AddButton();
                 Controller.QueueInput(new UIPointerCommand.Goto(this));
                 evt.StopPropagation();
             }
@@ -350,6 +353,7 @@ public class UINode {
             //For freeform groups ONLY, moving the cursor off a node should deselect it.
             if (AllowInteraction && Group is UIFreeformGroup && Controller.Current == this)
                 Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Back, this) { Silent = true });
+            cursorToken?.Dispose();
             isInElement = false;
             startedClickHere = false;
         });
@@ -416,6 +420,12 @@ public class UINode {
         AddCSSClasses();
         foreach (var view in Views)
             view.Bind(Controller.MVVM, HTML);
+        var cursorTarget = HTML.Q(className: "cursor-target");
+        if (cursorTarget != null) {
+            var ctv = new VisualCursorTargetView();
+            Views.Add(ctv);
+            ctv.Bind(Controller.MVVM, cursorTarget);
+        }
         Built = true;
         RegisterEvents();
         foreach (var view in Views)
@@ -524,7 +534,7 @@ public class UINode {
                 if (v.ViewModel.OnContextMenu(this, cs) is { } vmres)
                     return vmres;
             return UseDefaultContextMenu
-                ? PopupUIGroup.CreateContextMenu(this, Array.Empty<UINode?>())
+                ? PopupUIGroup.CreateContextMenu(this)
                 : UIGroup.NoOp;
         }
         return NavigateInternal(req, cs);
@@ -545,11 +555,11 @@ public class UINode {
             view.OnEnter(this, cs, animate);
     }
 
-    public virtual void Leave(bool animate, ICursorState cs, bool isEnteringPopup) {   
-        if (!isEnteringPopup)
+    public virtual void Leave(bool animate, ICursorState cs, PopupUIGroup.Type? popupType) {   
+        if (popupType is null)
             CloseDependencies(animate);
         foreach (var view in Views)
-            view.OnLeave(this, cs, animate, isEnteringPopup);
+            view.OnLeave(this, cs, animate, popupType);
     }
 
     /// <summary>
@@ -616,17 +626,17 @@ public class EmptyNode : UINode {
         Source!.CreateCenterOffsetChildY(childY);
     
     public static EmptyNode MakeUnselector(Func<UINode, ICursorState, UICommand, UIResult?>? unselectNav) =>
-        new(new FixedXMLView(new(new UnselectorFixedXML()) { 
-                Navigator = (n, cs, req) => {
+        new(new FixedXMLView(new(new UnselectorFixedXML(), (n, cs, req) => {
                     if (unselectNav?.Invoke(n, cs, req) is { } res)
                         return res;
                     return req == UICommand.Confirm ? UIGroup.SilentNoOp : null;
                 }
-            }) { AsEmpty = true });
+            )) { AsEmpty = true });
 }
 
 public class PassthroughNode : UINode {
-    public PassthroughNode(LString? desc = null) : base(desc) {
+    //use \t to ensure that the node actually has a built height
+    public PassthroughNode(LString? desc = null) : base(desc ?? "\t") {
         BaseInteractable = false;
     }
 }
@@ -704,9 +714,9 @@ public class ConfirmFuncNode : UINode {
         return base.NavigateInternal(req, cs);
     }
 
-    public override void Leave(bool animate, ICursorState cs, bool isEnteringPopup) {
+    public override void Leave(bool animate, ICursorState cs, PopupUIGroup.Type? popupType) {
         isConfirm = false;
-        base.Leave(animate, cs, isEnteringPopup);
+        base.Leave(animate, cs, popupType);
     }
 }
 
@@ -989,9 +999,9 @@ public class KeyRebindInputNode : UINode, IUIViewModel {
         _ => base.NavigateInternal(req, cs)
     };
 
-    public override void Leave(bool animate, ICursorState cs, bool isEnteringPopup) {
+    public override void Leave(bool animate, ICursorState cs, PopupUIGroup.Type? popupType) {
         isEntryEnabled = false;
-        base.Leave(animate, cs, isEnteringPopup);
+        base.Leave(animate, cs, popupType);
     }
 }
 
@@ -1062,9 +1072,9 @@ public class TextInputNode : UINode, IUIViewModel {
         _ => base.NavigateInternal(req, cs)
     };
 
-    public override void Leave(bool animate, ICursorState cs, bool isEnteringPopup) {
+    public override void Leave(bool animate, ICursorState cs, PopupUIGroup.Type? popupType) {
         isEntryEnabled = false;
-        base.Leave(animate, cs, isEnteringPopup);
+        base.Leave(animate, cs, popupType);
     }
 }
 
@@ -1095,13 +1105,23 @@ public class UIButton : UINode {
             Bind(new FlagView(new(() => isConfirm, LocalizedStrings.UI.are_you_sure, descriptor)));
     }
 
-    public static Func<T, UIResult> GoBackCommand<T>(UINode source) => _ =>
-        source.ReturnToGroup;
+    /// <summary>
+    /// Return a command that returns to `toSource`.
+    /// </summary>
+    /// <param name="toSource"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static Func<T, UIResult> GoBackCommand<T>(UINode toSource) => _ =>
+        toSource.ReturnToGroup;
     
-    public static Func<T, UIResult> GoBackTwiceCommand<T>(UINode source) => _ =>
-        source.ReturnToGroup.Then(UIResult.LazyGoBackFrom(source));
+    /// <summary>
+    /// Return a command that returns to `toSource`, and then goes back again.
+    /// <br/>Use for context menus/etc where the current node is in a popup that is a descendant of `toSource`.
+    /// </summary>
+    public static Func<T, UIResult> GoBackTwiceCommand<T>(UINode toSource) => _ =>
+        toSource.ReturnToGroup.Then(UIResult.LazyGoBackFrom(toSource));
 
-    public static Func<UIButton, UIResult> GoBackCommand(UINode source) => GoBackCommand<UIButton>(source);
+    public static Func<UIButton, UIResult> GoBackCommand(UINode toSource) => GoBackCommand<UIButton>(toSource);
     public static UIButton Cancel(UINode source) =>
         new(LocalizedStrings.Generic.generic_cancel, ButtonType.Cancel, GoBackCommand(source));
     
@@ -1132,9 +1152,9 @@ public class UIButton : UINode {
         return base.NavigateInternal(req, cs);
     }
     
-    public override void Leave(bool animate, ICursorState cs, bool isEnteringPopup) {
+    public override void Leave(bool animate, ICursorState cs, PopupUIGroup.Type? popupType) {
         isConfirm = false;
-        base.Leave(animate, cs, isEnteringPopup);
+        base.Leave(animate, cs, popupType);
     }
 
     public static readonly Func<UINode, ICancellee, Task?> ButtonEnterAnimation = (n, cT) => 

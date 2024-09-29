@@ -115,6 +115,7 @@ Images (Assets/Danmokou/Sprites)
 - tiles/windmill: by carchagui on [DeviantArt](https://www.deviantart.com/carchagui/art/Windmill-animation-sheet-875418472).
 - UI/faIcons/*: icons from [FontAwesome](https://github.com/FortAwesome/Font-Awesome), licensed under CC-BY 4. Modifications made to original SVG files.
 - [UI/trophy.png](https://pixabay.com/vectors/success-badge-trophy-award-winner-5974538/)
+- [UI/feather-cursor.png](https://pixabay.com/vectors/feather-bird-wings-green-animal-304422/) (modified)
 - UI/pins/crow*: stock by Roy3D on [DeviantArt](https://www.deviantart.com/roy3d/art/Crows-2-PNG-Stock-412584565), modifications made.
 - UI/commense: Yukari sprites by [dairi](https://www.pixiv.net/en/users/4920496). Noncommercial use only. 
 - VN/Characters/dairi_*: by dairi.
@@ -357,6 +358,12 @@ See the OFL license above.
 ### PromptFont: OFL
 
 On Github here: https://github.com/Shinmera/promptfont/
+
+See the OFL license above.
+
+### Josefin Sans: OFL
+
+Copyright 2010 The Josefin Sans Project Authors (https://github.com/ThomasJockin/JosefinSansFont-master), with Reserved Font Name "Josefin Sans".
 
 See the OFL license above.
 

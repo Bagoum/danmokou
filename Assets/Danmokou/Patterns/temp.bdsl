@@ -7,18 +7,24 @@ phase 1000 {
     root(0, 2)
 } {
     paction 0 {
-        async "lellipse-*/w" <> gcrepeat {
-            wait(3s)
+        gtr {
+            //wait(3s)
             times(inf)
             sfx("x-fire-burst-1")
-        } gsrepeat {
-            times(8)
-            circle
-            color({ "red", "pink", "purple", "blue", "teal", "green", "yellow", "orange" })
-            preloop b{ 
-                hvar colorIndex = i;
-            }
-        } s(rvelocity(cx(3)))
+            waitchild
+        } {
+            sync "lellipse-*/w" <> gsrepeat {
+                times(8)
+                circle
+                color({ "red", "pink", "purple", "blue", "teal", "green", "yellow", "orange" })
+                preloop b{ 
+                    hvar colorIndex = i;
+                }
+            } s(rvelocity(cx(3)))
+            wait 2
+            //throw(new Exception("hello"))
+            //cond(i > 0, throw(new Exception("hello")), noop)
+        }
 
         bulletcontrol(persist, "lellipse-*/w", batch(t > 0.7, {
             sm(_, async "ellipse-*/w" <> gcrepeat {

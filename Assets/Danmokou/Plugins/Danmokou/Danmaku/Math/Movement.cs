@@ -77,7 +77,7 @@ public struct Movement {
         this.flipY = fy;
         this.angle = M.Atan2D(s, c);
     }
-    public Movement WithNoMovement() => new(VTPRepo.NoVTP, rootPos, cos_rot, sin_rot, flipX, flipY);
+    public readonly Movement WithNoMovement() => new(VTPRepo.NoVTP, rootPos, cos_rot, sin_rot, flipX, flipY);
 
     public Movement(VTP path): this(path, Vector2.zero, V2RV2.Zero) {}
 

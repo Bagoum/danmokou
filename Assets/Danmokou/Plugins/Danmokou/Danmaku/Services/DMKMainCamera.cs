@@ -16,22 +16,20 @@ using PropConsts = Danmokou.Graphics.PropConsts;
 namespace Danmokou.Services {
 
 public interface IScreenshotter {
-    public CRect FullScreenArea { get; }
-    
     /// <summary>
     /// Take a screenshot of the entire screen area.
     /// <br/>By default, captures all cameras except UI.
     /// <br/>Caller must dispose the return value via Object.Destroy.
     /// </summary>
     RenderTexture Screenshot(DMKMainCamera.CamType[]? cameras = null) => 
-        Screenshot(FullScreenArea, cameras);
+        Screenshot(null, cameras);
     
     /// <summary>
-    /// Take a screenshot of the screen area described by `rect`.
+    /// Take a screenshot of the screen area described by `rect`, or the entire screen area if it is null.
     /// <br/>By default, captures all cameras except UI.
     /// <br/>Caller must dispose the return value via Object.Destroy.
     /// </summary>
-    RenderTexture Screenshot(CRect rect, DMKMainCamera.CamType[]? cameras = null);
+    RenderTexture Screenshot(CRect? rect, DMKMainCamera.CamType[]? cameras = null);
 }
 
 public class DMKMainCamera : MainCamera, IScreenshotter {
@@ -70,11 +68,6 @@ public class DMKMainCamera : MainCamera, IScreenshotter {
         //Main,
         UI
     }
-    private static readonly int ShaderScrnWidthID = Shader.PropertyToID("_ScreenWidth");
-    private static readonly int ShaderScrnHeightID = Shader.PropertyToID("_ScreenHeight");
-    private static readonly int PixelsPerUnitID = Shader.PropertyToID("_PPU");
-    private static readonly int GlobalXOffsetID = Shader.PropertyToID("_GlobalXOffset");
-    private static readonly int MonitorAspectID = Shader.PropertyToID("_MonitorAspect");
 
     public Shader ayaShader = null!;
     private Material ayaMaterial = null!;
@@ -89,7 +82,7 @@ public class DMKMainCamera : MainCamera, IScreenshotter {
         CamType.UI
     };
 
-    public Camera FindCamera(CamType type) => type switch {
+    public CameraRenderer FindCamera(CamType type) => type switch {
         CamType.Background => BackgroundCamera,
         CamType.LowDirectRender => LowDirectCamera,
         CamType.Middle => MiddleCamera,
@@ -98,7 +91,7 @@ public class DMKMainCamera : MainCamera, IScreenshotter {
         CamType.Effects3D => Effects3DCamera,
         CamType.Shader => ShaderEffectCamera,
         CamType.UI => ServiceLocator.Find<IUIManager>().Camera,
-        _ => mainCam
+        _ => this
     };
 
     protected override void Awake() {
@@ -125,22 +118,20 @@ public class DMKMainCamera : MainCamera, IScreenshotter {
         tex.DestroyTexOrRT();
     }
 
-    public CRect FullScreenArea => new CRect(transform.position.x, transform.position.y,
-        MainCamera.HorizRadius, MainCamera.VertRadius, 0);
-
     /// <summary>
     /// Caller must dispose the return value via Object.Destroy.
     /// </summary>
-    public RenderTexture Screenshot(CRect rect, CamType[]? cameras=null) {
+    public RenderTexture Screenshot(CRect? rect, CamType[]? cameras=null) {
+        var r = rect ?? MCamInfo.Area;
         Profiler.BeginSample("Screenshot");
         var offset = transform.position;
-        ayaMaterial.SetFloat(PropConsts.OffsetX, (rect.x - offset.x) / ScreenWidth);
-        ayaMaterial.SetFloat(PropConsts.OffsetY, (rect.y - offset.y) / ScreenHeight);
-        float xsr = rect.halfW * 2 / ScreenWidth;
-        float ysr = rect.halfH * 2 / ScreenHeight;
+        ayaMaterial.SetFloat(PropConsts.OffsetX, (r.x - offset.x) / MCamInfo.ScreenWidth);
+        ayaMaterial.SetFloat(PropConsts.OffsetY, (r.y - offset.y) / MCamInfo.ScreenHeight);
+        float xsr = r.halfW * 2 / MCamInfo.ScreenWidth;
+        float ysr = r.halfH * 2 / MCamInfo.ScreenHeight;
         ayaMaterial.SetFloat(PropConsts.ScaleX, xsr);
         ayaMaterial.SetFloat(PropConsts.ScaleY, ysr);
-        ayaMaterial.SetFloat(PropConsts.Angle, rect.angle * BMath.degRad);
+        ayaMaterial.SetFloat(PropConsts.Angle, r.angle * BMath.degRad);
         var originalRT = RenderTexture.active;
         var originalRenderTo = RenderTo;
         RenderTo = RenderHelpers.DefaultTempRT();
@@ -151,12 +142,12 @@ public class DMKMainCamera : MainCamera, IScreenshotter {
         Profiler.EndSample();
         Shader.EnableKeyword("AYA_CAPTURE");
         foreach (var c in (cameras ?? AyaCameras).Select(FindCamera)) {
-            var camOriginalRenderTo = c.targetTexture;
-            c.targetTexture = RenderTo;
+            var camOriginalRenderTo = c.Cam.targetTexture;
+            c.Cam.targetTexture = RenderTo;
             Profiler.BeginSample("Render");
-            c.Render();
+            c.Cam.Render();
             Profiler.EndSample();
-            c.targetTexture = camOriginalRenderTo;
+            c.Cam.targetTexture = camOriginalRenderTo;
         }
         Shader.DisableKeyword("AYA_CAPTURE");
         var ss = RenderHelpers.DefaultTempRT(((int) (SaveData.s.Resolution.Value.w * xsr), 

@@ -664,7 +664,7 @@ public partial class PlayerController : BehaviorEntity,
     }
     
     private void _DoLoseLives(int livesLost, bool forceTraditionalRespawn) {
-        BulletManager.AutodeleteCircleOverTime(SoftcullProperties.OverTimeDefault(BPI.loc, 1.35f, 0f, 12f));
+        BulletManager.AutodeleteCircleOverTime(new(BPI.loc, 1.35f, 0f, 12f, null));
         BulletManager.RequestPowerAura("powerup1", 0, 0, GenCtx.Empty, new RealizedPowerAuraOptions(
             new PowerAuraOptions(new[] {
                 PowerAuraOption.Color(_ => ColorHelpers.CV4(SpawnedShip.meterDisplay)),

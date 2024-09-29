@@ -23,6 +23,7 @@ using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Graphics;
 using Danmokou.Pooling;
+using Danmokou.Reflection;
 using Danmokou.Reflection2;
 using Danmokou.Services;
 using Danmokou.SM;
@@ -64,9 +65,9 @@ public partial class BulletManager {
     }
 
     //Rendering variables
+    //Since we use StructuredBuffer, we aren't bound by the maximum shader array length (1023).
     private const int batchSize = 2047;
-    //Note: while 1023 is the maximum shader array length,
-    // the legacy renderer will (dangerously) split calls of batches greater than 511.
+    //The legacy renderer will (dangerously) split calls of batches greater than 511.
     //In addition, WebGL will create lag spikes when using batch sizes greater than 127,
     // and WebGPU will (dangerously) split calls of batches greater than 127.
     //(These numbers are approximate and may actually be driven more by material PB size than count.)
@@ -495,6 +496,7 @@ public partial class BulletManager {
             RNG.RNG_ALLOWED = true;
             return state;
         }
+#pragma warning disable CS0162 // Unreachable code detected
         private void UpdateVelocityAndControlsNonBucketed() {
             PruneControlsCancellation();
             if (Count > 0) {
@@ -525,6 +527,7 @@ public partial class BulletManager {
             }
             PruneControls();
         }
+#pragma warning restore CS0162 // Unreachable code detected
 
         public virtual void UpdateVelocityAndControls(bool forceBucketing=false) {
             bucketingRequests.Compact();
@@ -1073,11 +1076,6 @@ public partial class BulletManager {
 #if UNITY_EDITOR
     [ContextMenu("Debug FCTX usage")]
     public void DebugFCTX() {
-        void LogFV<T>() {
-            //Logs.Log($"FV<{typeof(T).SimpRName()} rent {FrameVars<T>.rented} return {FrameVars<T>.returned}");
-        }
-        LogFV<float>();
-        LogFV<Vector2>();
         Logs.Log($"EnvFrame: Created {EnvFrame.Created} / Cloned {EnvFrame.Cloned} / Disposed {EnvFrame.Disposed}");
         Logs.Log($"PICustomData: Alloc {PIData.Allocated} / Popped {PIData.Popped} / Cached {PIData.Recached} / Copied {PIData.Copied} / Cleared {PIData.Cleared}");
     }

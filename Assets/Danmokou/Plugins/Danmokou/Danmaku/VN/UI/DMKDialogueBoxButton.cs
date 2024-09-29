@@ -12,10 +12,10 @@ public class DMKDialogueBoxButton : DialogueBoxButton, IFixedXMLReceiver {
     
     private void Awake() {
         xml = GetComponent<FixedXMLHelper>();
+        xml.Receiver = this;
     }
     
     public void Bind(DMKADVDialogueBoxMimic parent, ADVDialogueBox db) {
-        parent.Listen(db.ComputedLocation, _ => xml.UpdatedLocations());
         var isVisible = new DisturbedAnd();
         parent.Listen(isVisible, xml.XML.IsVisible);
         parent.AddToken(isVisible.AddDisturbance(db.Visible));
@@ -39,12 +39,12 @@ public class DMKDialogueBoxButton : DialogueBoxButton, IFixedXMLReceiver {
         return null;
     }
 
-    public void OnEnter(UINode n, ICursorState cs) => OnPointerEnter(null!);
+    void IFixedXMLReceiver.OnEnter(UINode n, ICursorState cs) => OnPointerEnter(null!);
 
-    public void OnLeave(UINode n, ICursorState cs) => OnPointerExit(null!);
+    void IFixedXMLReceiver.OnLeave(UINode n, ICursorState cs) => OnPointerExit(null!);
 
-    public void OnPointerDown(UINode n, PointerDownEvent ev) => OnPointerDown(null!);
+    void IFixedXMLReceiver.OnPointerDown(UINode n, PointerDownEvent ev) => OnPointerDown(null!);
 
-    public void OnPointerUp(UINode n, PointerUpEvent ev) => OnPointerUp(null!);
+    void IFixedXMLReceiver.OnPointerUp(UINode n, PointerUpEvent ev) => OnPointerUp(null!);
 }
 }

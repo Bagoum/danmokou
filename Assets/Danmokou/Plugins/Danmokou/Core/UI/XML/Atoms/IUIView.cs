@@ -81,7 +81,7 @@ public interface IUIView {
     /// <summary>
     /// Called when navigation exited this node.
     /// </summary>
-    void OnLeave(UINode node, ICursorState cs, bool animate, bool isEnteringPopup) { }
+    void OnLeave(UINode node, ICursorState cs, bool animate, PopupUIGroup.Type? popupType) { }
     
     /// <inheritdoc cref="UINode.AddedToNavHierarchy"/>
     void OnAddedToNavHierarchy(UINode node) { }

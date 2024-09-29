@@ -1,23 +1,35 @@
-<#> bdsl1
-pattern { }
-phase 0
-	paction 0
-		shift-phase-to 1
+
+var allc = { "black", "purple", "teal", "green", "orange", "yellow", "red", "pink", "blue" }	
+pattern { } {
+
+phase 0 { } {
+	paction 0 {
+		shiftphaseto 1
+	}
+}
 	
-!!{ allc { black purple teal green orange yellow red pink blue }	
-##1. Spiral-to-straight
-phase 0 #{
-	paction 0
+//1
+phase 0 {
+    type(spell, "Spiral to straight")
+    hp(14000)
+    root(0, 2)
+} {
+	paction 0 {
 		position 0 1
-		async lightning-orange/w <1;:> gcr2 600 _ <> {
+		async "lightning-orange*" <1;:> gcr2 600 inf <> {
 			p this
 		} gsr2c 6 {
-			target a Lplayer
+			color { "/b", "/", "/w" }
+			target ang Lplayer
 		} pather 3 3 tprot
-			ss 1.5 dcircle * pm1 p 2 2 t
-			{ }
-#}
+			ss 1.5 dcircle(pm1(p) * 2, 2, t)
+			{
+					hueshift(60 * t)
 
+			 }
+	}
+}
+}
 
 
 

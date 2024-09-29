@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using BagoumLib;
+using BagoumLib.DataStructures;
 using BagoumLib.Expressions;
 using BagoumLib.Reflection;
 using Danmokou.Core;
@@ -72,7 +74,7 @@ public class TExArgCtx {
         /// <br/>Returns the argument for chaining convenience.
         /// </summary>
         public T Proxy<T>(T replacee) {
-            Proxy(replacee, typeof(T));
+            Proxy(replacee!, typeof(T));
             return replacee;
         }
 

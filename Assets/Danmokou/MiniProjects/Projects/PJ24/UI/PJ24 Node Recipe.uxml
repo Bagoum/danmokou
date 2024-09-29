@@ -3,5 +3,6 @@
     <engine:VisualElement name="Recipe" class="pj24node recipe" style="flex-direction: row; justify-content: space-between;">
         <engine:Label text="Monochrome Dragon Statue" name="Name" style="margin-left: 40px; max-width: 85%; text-overflow: ellipsis; overflow: hidden; -unity-text-align: upper-left; margin-top: 8px;" />
         <engine:Label text="9" name="Count" style="margin-right: 40px; -unity-text-align: upper-right;" />
+        <engine:VisualElement name="CursorTarget" class="cursor-target" style="left: 4%; top: 60%;" />
     </engine:VisualElement>
 </engine:UXML>

@@ -4,7 +4,7 @@
         <ui:VisualElement name="Selector" class="pointer prefix" />
         <ui:VisualElement name="Checkmark" class="checkmark prefix" />
         <ui:VisualElement name="Body" class="body">
-            <ui:Label text="one two three日語〆切" name="Label" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; border-bottom-color: rgb(128, 128, 128); -unity-font-definition: url(&quot;project://database/Assets/Danmokou/Fonts/TextCore%20SDF%20Assets/RocknRollOne-Regular%20SDF.asset?fileID=11400000&amp;guid=0527ac2f49047bd469798517c138f05e&amp;type=2#RocknRollOne-Regular SDF&quot;);" />
+            <ui:Label text="one two three日語〆切" name="Label" class="text coretext" style="height: 100%; padding-left: 0; padding-right: 0; border-bottom-color: rgb(128, 128, 128); -unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/Unity%20SDF/MPLUS2-Regular%20SDF.asset?fileID=11400000&amp;guid=b190676c5790a054688bff0c55d84aab&amp;type=2#MPLUS2-Regular SDF&quot;);" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

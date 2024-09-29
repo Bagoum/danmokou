@@ -81,48 +81,4 @@ public class N2Triangle<T> {
 
 }
 
-public static class DictCache<K, V> {
-    private static readonly Stack<Dictionary<K, V>> cached = new();
-
-    public static void Consign(Dictionary<K, V> cacheMe) {
-        cacheMe.Clear();
-        cached.Push(cacheMe);
-    }
-
-    public static Dictionary<K, V> Get() => cached.Count > 0 ? cached.Pop() : new Dictionary<K, V>();
-}
-
-public static class ListCache<T> {
-    private static readonly Stack<List<T>> cached = new();
-
-    public static void Consign(List<T> cacheMe) {
-        cacheMe.Clear();
-        cached.Push(cacheMe);
-    }
-
-    public static List<T> Get() => cached.Count > 0 ? cached.Pop() : new List<T>();
-}
-
-/// <summary>
-/// Cache for fixed-size arrays.
-/// </summary>
-/// <typeparam name="T"></typeparam>
-public static class ArrayCache<T> {
-    private static readonly Dictionary<int, Stack<T[]>> cached = new();
-    
-    public static void Consign(T[] cacheMe) {
-        Array.Clear(cacheMe, 0, cacheMe.Length);
-        if (!cached.TryGetValue(cacheMe.Length, out var l))
-            l = cached[cacheMe.Length] = new();
-        l.Push(cacheMe);
-    }
-
-    public static T[] Get(int size) =>
-        cached.TryGetValue(size, out var l) ?
-            l.Count > 0 ?
-                l.Pop() :
-                new T[size] :
-            new T[size];
-}
-
 }

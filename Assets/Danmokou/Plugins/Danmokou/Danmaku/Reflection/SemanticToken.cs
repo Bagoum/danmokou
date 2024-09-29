@@ -103,7 +103,7 @@ public record SemanticToken(PositionRange Position, string TokenType, IList<stri
     public static string MethodType(IMethodSignature mi) {
         if (mi.GetAttribute<OperatorAttribute>() != null || mi.GetAttribute<BDSL2OperatorAttribute>() != null)
             return SemanticTokenTypes.Operator;
-        if (mi.Member.Symbol == SymbolKind.Enum)
+        if (mi.Member.Symbol() == SymbolKind.Enum)
             return SemanticTokenTypes.EnumMember;
         return SemanticTokenTypes.Method;
     }

@@ -69,7 +69,7 @@ public class PatternSM : SequentialSM, EnvFrameAttacher {
             if (i > 0) {
                 target = Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
                 var mov = new Movement(new Vector2(-50f, 0f), 0f);
-                target.Initialize(null, mov, new ParametricInfo(in mov), null);
+                target.Initialize(null, in mov, new ParametricInfo(in mov), null);
                 subsummons.Add(target);
             }
             if (target.TryAsEnemy(out var e)) {
@@ -346,6 +346,8 @@ public class PhaseSM : SequentialSM {
                     foreach (var player in ServiceLocator.FindAll<PlayerController>())
                         player.MakeInvulnerable((int)(acTime * ETime.ENGINEFPS_F), false);
                     GameManagement.ClearPhaseAutocullOverTime_Initial(
+                        //NB: bullet->flake conversion only occurs in softcullPropsOverTime,
+                        // which is called only for standard boss phase completion
                         props.SoftcullPropsOverTime(smh.Exec, acTime), 
                         props.SoftcullPropsBeh(smh.Exec));
                     await finishTask;

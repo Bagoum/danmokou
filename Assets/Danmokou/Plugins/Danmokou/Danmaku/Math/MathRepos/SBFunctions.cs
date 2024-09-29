@@ -106,7 +106,7 @@ public class TExSBC : TEx<SimpleBulletCollection> {
         ExFunction.Wrap<SimpleBulletCollection>("IsAlive", typeof(int));
     public static readonly ExFunction transferFrom = ExFunction.Wrap<SimpleBulletCollection>("TransferFrom", 
         new[] {typeof(SimpleBulletCollection), typeof(int)});
-    public static readonly ExFunction copyNullFrom = ExFunction.Wrap<SimpleBulletCollection>("CopyNullFrom", 
+    public static readonly ExFunction copyNullFrom = ExFunction.Wrap<SimpleBulletCollection>(nameof(SimpleBulletCollection.CopyNullFrom), 
         new[] {typeof(SimpleBulletCollection), typeof(int), typeof(SoftcullProperties)});
     public static readonly ExFunction copyFrom = ExFunction.Wrap<SimpleBulletCollection>("CopyFrom", 
         new[] {typeof(SimpleBulletCollection), typeof(int)});

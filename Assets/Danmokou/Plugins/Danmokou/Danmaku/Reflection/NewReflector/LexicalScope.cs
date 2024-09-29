@@ -824,16 +824,17 @@ public class DMKScope : LexicalScope {
     public List<MethodSignature>? StaticMethodDeclaration(string name) {
         if (smInitMultiDecls.TryGetValue(name, out var results))
             return results;
+        var smSig = StateMachine.SMInitMap.TryGetValue(name, out var typ) ? 
+            Reflector.GetConstructorSignature(typ) : 
+            null;
         if (Reflector.ReflectionData.AllBDSL2Methods.TryGetValue(name, out results)) {
-            if (StateMachine.SMInitMethodMap.TryGetValue(name, out var typ2)) {
-                return smInitMultiDecls[name] = results.Concat(typ2).ToList();
-            }
+            if (smSig != null)
+                return smInitMultiDecls[name] = results.Append(smSig).ToList();
             return results;
         }
-        if (StateMachine.SMInitMethodMap.TryGetValue(name, out var typ)) {
-            return typ;
-        }
-        return null;
+        return smSig != null ? 
+            smInitMultiDecls[name] = new List<MethodSignature> { smSig } : 
+            null;
     }
 
     protected override Either<Unit, IDeclaration> _Declare(IDeclaration decl) =>

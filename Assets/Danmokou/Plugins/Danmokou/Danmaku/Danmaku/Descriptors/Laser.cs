@@ -30,10 +30,10 @@ public class Laser : FrameAnimBullet {
         ctr = new CurvedTileRenderLaser(config, gameObject);
         base.Awake();
     }
-    private void Initialize(bool isNew, BehaviorEntity? parent, Movement movement, ParametricInfo pi, float cold, float hot, BEHStyleMetadata style, ref RealizedLaserOptions options) {
+    private void Initialize(bool isNew, BehaviorEntity? parent, in Movement movement, ParametricInfo pi, float cold, float hot, BEHStyleMetadata style, ref RealizedLaserOptions options) {
         pi.ctx.laserController = ctr;
         ctr.SetYScale(options.yScale * defaultWidthMultiplier); //Needs to be done before Colorize sets first frame
-        base.Initialize(style, options.AsBEH, parent, movement, pi, out _); // Call after Awake/Reset
+        base.Initialize(style, options.AsBEH, parent, in movement, pi, out _); // Call after Awake/Reset
         if (options.endpoint != null) {
             var beh = BEHPooler.INode(Movement.None, new ParametricInfo(Vector2.zero, bpi.index),
                 Vector2.right, options.endpoint);
@@ -81,11 +81,11 @@ public class Laser : FrameAnimBullet {
         base.InvokeCull();
     }
 
-    public static void Request(BEHStyleMetadata style, BehaviorEntity? parent, Movement vel, ParametricInfo pi, 
+    public static void Request(BEHStyleMetadata style, BehaviorEntity? parent, in Movement vel, ParametricInfo pi, 
         float cold, float hot, ref RealizedLaserOptions options) {
         Laser created = BEHPooler.RequestUninitialized(style.RecolorOrThrow.prefab, out bool isNew)
             as Laser ?? throw new Exception($"The object {style.style} is not a laser!");
-        created.Initialize(isNew, parent, vel, pi, cold, hot, style, ref options);
+        created.Initialize(isNew, parent, in vel, pi, cold, hot, style, ref options);
     }
     
     protected override void UpdateStyle(BEHStyleMetadata newStyle) {

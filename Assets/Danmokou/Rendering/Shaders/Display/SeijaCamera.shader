@@ -1,6 +1,8 @@
 ﻿Shader "DMKCamera/SeijaCamera" {
 	Properties {
 		[PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
+		_CamHeight("Camera Height", Float) = 5
+		_GlobalXOffset("Global X Offset", Float) = 0
 		_RotateX("X Rotate", Range(0, 6.3)) = 0
 		_RotateY("Y Rotate", Range(0, 6.3)) = 0
 		_RotateZ("Z Rotate", Range(0, 6.3)) = 0
@@ -51,14 +53,12 @@
 				float4 loc  : SV_POSITION;
 				float2 uv	: TEXCOORD0;
 				float4 color: COLOR;
-				float2 rloc	: TEXCOORD1;
+				float2 rloc	: POSITION1;
 			};
 
-			//Globals
-            float _ScreenWidth;
-			float _ScreenHeight;
+			float4 _MainTex_TexelSize;
+			float _CamHeight;
 			float _GlobalXOffset;
-
 			float _RotateX;
 			float _RotateY;
 			float _RotateZ;
@@ -76,8 +76,9 @@
 				fragment f;
 				f.color = v.color;
 				f.loc = UnityObjectToClipPos(v.loc);
-				float2 p = float2((v.uv.x - 0.5) * _ScreenWidth - _GlobalXOffset,
-					(v.uv.y - 0.5) * _ScreenHeight);
+				float _CamWidth = _CamHeight * (_MainTex_TexelSize.z / _MainTex_TexelSize.w);
+				float2 p = float2((v.uv.x - 0.5) * _CamWidth - _GlobalXOffset,
+					(v.uv.y - 0.5) * _CamHeight);
 				//Rotation process is slightly strange, since we are trying to effectively rotate
 				// the source screen by rotating the sampling vector.
 				// For Z-rotation, this is done by rotating in the other direction.
@@ -95,7 +96,7 @@
 				f.uv = v.uv;
 				return f;
 			#endif
-				f.uv = float2((p.x + _GlobalXOffset) / _ScreenWidth + 0.5, p.y / _ScreenHeight + 0.5);
+				f.uv = float2((p.x + _GlobalXOffset) / _CamWidth + 0.5, p.y / _CamHeight + 0.5);
 				return f;
 			}
 			
@@ -106,7 +107,6 @@
 
 			
 			sampler2D _MainTex;
-			float4 _MainTex_TexelSize;
 			float _PixelizeX;
 			float _PixelizeRO;
 			float _PixelizeRI;
@@ -119,6 +119,7 @@
 			float4 frag(fragment f) : SV_Target {
 				if (abs(f.uv.x - 0.5) > 0.5 || abs(f.uv.y - 0.5) > 0.5 ||
 					abs(f.rloc.x) > _XBound || abs(f.rloc.y) > _YBound) return float4(0,0,0,1);
+				float _CamWidth = _CamHeight * (_MainTex_TexelSize.z / _MainTex_TexelSize.w);
 			#if FT_BLACKHOLE
 				float2 rt = rectToPolar(f.rloc);
 				if (_BlackHoleT > _BlackHoleAbsorbT)
@@ -135,7 +136,7 @@
 
 				float tr_delay = ratio(0.1, 1, tr);
 
-				
+				//Increase rotation angle, especially for closer points
 				rt.y += 3 * _BlackHoleAbsorbT * einsine(tr_delay) * lerp(0.2, 1, pow(1 - smoothstep(0, 6, rt.x), 3)) + 2.2 * ehr;
 				float rd = mod(rt.y + 0 * per / 2, per) / per * TAU;
 				rt.x += 6 * einsine(tr_delay) * lerp(0.8, 1, 0.5 + 0.5 * sin(rd));
@@ -143,7 +144,7 @@
 
 				//return float4(1 - abs(rt.x) / 4, 0, smoothstep(-PI/2, PI/2, rt.y), 1);
 				float2 xy = polarToRect(rt);
-				f.uv = float2((xy.x + _GlobalXOffset) / _ScreenWidth + 0.5, xy.y / _ScreenHeight + 0.5);
+				f.uv = float2((xy.x + _GlobalXOffset) / _CamWidth + 0.5, xy.y / _CamHeight + 0.5);
 				if (abs(f.uv.x - 0.5) > 0.5 || abs(f.uv.y - 0.5) > 0.5 ||
 					abs(xy.x) > _XBound || abs(xy.y) > _YBound) return float4(0,0,0,1);
 				float4 c_ = tex2D(_MainTex, f.uv);

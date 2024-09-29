@@ -34,6 +34,7 @@
         float4 loc  : SV_POSITION;
         float2 uv	: TEXCOORD0;
         float4 c    : COLOR;
+    	float2 world: TEXCOORD1;
     };
 	
 	float4 _Tint;
@@ -41,6 +42,7 @@
     fragment vert(vertex v) {
         fragment f;
         f.loc = UnityObjectToClipPos(v.loc);
+    	f.world = mul(unity_ObjectToWorld, v.loc).xy;
         f.uv = v.uv;
         f.c = v.color * _Tint;
         return f;
@@ -54,18 +56,16 @@
     float _NM;
     sampler2D _LNTex;
     sampler2D _DisplaceTex;
-    float _PPU; //Global
 	float _HueShift;
-	static float _DisplaceSpeed = 0.4;
-	static float _DisplaceMagnitude = 1;
 
     float4 fragLightning(fragment f, int ii) {
     #ifdef FANCY
-        return tex2D(_LNTex, lightningDistort2(f.uv, s(f.loc.xy/_PPU, _BX, _BY), rehash(_T * _TM, ii), _NM));
+        return tex2D(_LNTex, lightningDistort(f.uv, s(f.world, _BX, _BY), rehash(_T * _TM, ii), _NM));
     #else
-        float disp = tex2D(_DisplaceTex, f.loc.xy/_PPU * 0.3 + float2(0, ii * _DisplaceSpeed)).x;
-        disp = ((disp * 2) - 1) * _DisplaceMagnitude;
-        f.uv.y += disp * (1-cos(HPI * f.uv.x)) * _NM * cos(PI * (f.uv.y - 0.5));
+    	float t = rehash(_T * _TM * 0.1, ii);
+    	float disp = tex2D(_DisplaceTex, s(f.world, _BX, _BY) * 0.08 +
+    			float2(ii * PHI + cos(t), sin(t))).x;
+        f.uv.y += lightningDistortNoiseMult(f.uv, _NM * (disp * 2 - 1));
         return tex2D(_LNTex, f.uv);
     #endif
     }
@@ -87,7 +87,7 @@
 			CGPROGRAM
 		    float4 frag(fragment f) : SV_Target {
 		    	//lightning effect doesn't receive tint, but it does receive opacity
-		        float4 c= fragLightning(f, 0);
+		        float4 c = fragLightning(f, 0);
 		    	c.a *= f.c.a;
 		    	return c;
 		    }
@@ -118,7 +118,7 @@
 		    Blend SrcAlpha One, OneMinusDstAlpha One
 			CGPROGRAM
 		    float4 frag(fragment f) : SV_Target {
-		        float4 c= fragLightning(f, 1);
+		        float4 c = fragLightning(f, 1);
 		    	c.a *= f.c.a;
 		    	return c;
 		    }

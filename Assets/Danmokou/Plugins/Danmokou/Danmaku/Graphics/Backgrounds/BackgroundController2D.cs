@@ -131,11 +131,11 @@ public struct BackgroundTransition {
         public IEnumerable<FragmentRendering.Fragment> Tile4() {
             float s = fragmentRadius * (float)Math.Sqrt(2);
             float width = LocationHelpers.Width + 2f;
-            float height = DMKMainCamera.ScreenHeight;
+            float height = MainCamera.MCamInfo.ScreenHeight;
             for (float w = 0f; w < width + s; w += s) {
                 for (float h = 0f; h < height + s; h += s) {
                     var loc = new Vector2(w - width / 2f, h - height / 2f);
-                    var uv = DMKMainCamera.RelativeToScreenUV(loc);
+                    var uv = MainCamera.RelativeToScreenUV(loc);
                     yield return new FragmentRendering.Fragment(loc, uv, 
                         Mathf.PI/4, fragMaxInitSpeed, fragGravity, fragRotAccelMag);
                 }

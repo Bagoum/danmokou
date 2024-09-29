@@ -120,7 +120,7 @@ public struct DelegatedCreator {
         var _style = style;
         var index = sbh.index;
         Action SummonWithRealized(RealizedPowerAuraOptions rap) => () =>
-            BulletManager.RequestPowerAura(_style!, index, bpiid, sbh.GCX, rap);
+            BulletManager.RequestPowerAura(_style, index, bpiid, sbh.GCX, rap);
         
         BulletManager.RequestPowerAura(style, sbh.index, bpiid, sbh.GCX,
             new RealizedPowerAuraOptions(options, sbh.GCX, ParentOffset, sbh.ch.cT, SummonWithRealized));
@@ -174,19 +174,19 @@ public partial class BulletManager {
         CheckSentry();
         if (CheckComplexPool(style, out var bsm)) {
             var bullet = (Bullet) BEHPooler.RequestUninitialized(bsm.RecolorOrThrow.prefab, out _);
-            bullet.Initialize(bsm, opts, null, mov, pi, out _);
+            bullet.Initialize(bsm, opts, null, in mov, pi, out _);
         } else throw new Exception("Could not find complex bullet style: " + style);
     }
     public static void RequestPather(string style, in Movement mov, ParametricInfo pi, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
         CheckSentry();
         if (CheckComplexPool(style, out var bsm)) {
-            Pather.Request(bsm, mov, pi, maxRemember, remember, ref opts);
+            Pather.Request(bsm, in mov, pi, maxRemember, remember, ref opts);
         } else throw new Exception("Pather must be an faBulletStyle: " + style);
     }
     public static void RequestLaser(BehaviorEntity? parent, string style, in Movement mov, ParametricInfo pi, float cold, float hot, ref RealizedLaserOptions options) {
         CheckSentry();
         if (CheckComplexPool(style, out var bsm)) {
-            Laser.Request(bsm, parent, mov, pi, cold, hot, ref options);
+            Laser.Request(bsm, parent, in mov, pi, cold, hot, ref options);
         } else throw new Exception("Laser must be an faBulletStyle: " + style);
     }
     
@@ -196,7 +196,7 @@ public partial class BulletManager {
             BehaviorEntity beh = pooled ?
                 BEHPooler.RequestUninitialized(ResourceManager.GetSummonable(prefabName), out _) :
                 GameObject.Instantiate(ResourceManager.GetSummonable(prefabName)).GetComponent<BehaviorEntity>();
-            beh.Initialize(bsm, mov, pi, sm, parent, behName, opts);
+            beh.Initialize(bsm, in mov, pi, sm, parent, behName, opts);
             return beh;
         } else throw new Exception("No valid summonable by name: " + prefabName);
     }

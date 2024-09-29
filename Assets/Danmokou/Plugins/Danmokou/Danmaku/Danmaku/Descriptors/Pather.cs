@@ -18,14 +18,14 @@ public class Pather : FrameAnimBullet {
         base.Awake();
     }
 
-    private void Initialize(bool isNew, Movement movement, ParametricInfo pi, float maxRemember,
+    private void Initialize(bool isNew, in Movement mov, ParametricInfo pi, float maxRemember,
         BPY remember, BEHStyleMetadata style, ref RealizedBehOptions options) {
         ctr.SetYScale(options.scale); //Needs to be done before Colorize sets first frame
         //Order is critical so rBPI override points to initialized data on SM start
         // As a result we also need to assign ctx.bullet early so ctr.initialize can read it
         pi.ctx.bullet = this;
-        ctr.Initialize(this, config, style.RecolorOrThrow.material, isNew, movement, pi, remember, maxRemember, ref options);
-        base.Initialize(style, options, null, movement.WithNoMovement(), pi, out _); // Call after Awake/Reset
+        ctr.Initialize(this, config, style.RecolorOrThrow.material, isNew, in mov, pi, remember, maxRemember, ref options);
+        base.Initialize(style, options, null, mov.WithNoMovement(), pi, out _); // Call after Awake/Reset
         ctr.Activate(); //This invokes UpdateMesh
     }
 
@@ -59,9 +59,9 @@ public class Pather : FrameAnimBullet {
         base.InvokeCull();
     }
 
-    public static void Request(BEHStyleMetadata style, Movement movement, ParametricInfo pi, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
+    public static void Request(BEHStyleMetadata style, in Movement mov, ParametricInfo pi, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
         Pather created = (Pather) BEHPooler.RequestUninitialized(style.RecolorOrThrow.prefab, out bool isNew);
-        created.Initialize(isNew, movement, pi, maxRemember, remember, style, ref opts);
+        created.Initialize(isNew, in mov, pi, maxRemember, remember, style, ref opts);
     }
 
     public override ref ParametricInfo rBPI => ref ctr.BPI;

@@ -127,20 +127,22 @@ public partial class BulletManager {
     /// <param name="props">Container with information about color porting in autocullTarget.</param>
     /// <param name="target">New target style</param>
     /// <returns></returns>
+    /// NB: this cannot be merged with the other PortColorFormat below, because of the case props.autocullTarget==null
+    ///  which returns target=null and success=true.
     public static bool PortColorFormat(string fromStyle, in SoftcullProperties props, out string? target) {
         if (props.autocullTarget == null) {
             target = null;
             return true;
         }
         target = fromStyle;
-        if (fromStyle.IndexOf('.') > -1) fromStyle = fromStyle.Substring(0, fromStyle.IndexOf('.'));
+        if (fromStyle.IndexOf('.') > -1) fromStyle = fromStyle[..fromStyle.IndexOf('.')];
         for (int ii = fromStyle.Length - 1; ii >= 0; --ii) {
             if (fromStyle[ii] == '-') {
                 var slashInd = fromStyle.IndexOf('/') + 1;
-                var substrLen = (props.sendToC && slashInd > 0) ? (slashInd - ii) : (fromStyle.Length - ii);
-                var x = $"{props.autocullTarget}{fromStyle.Substring(ii, substrLen)}";
+                var end = (props.SendBWToColor && slashInd > 0) ? slashInd : fromStyle.Length;
+                var x = $"{props.autocullTarget}{fromStyle[ii..end]}";
                 target = CheckOrCopyPool(x, out _) ? x : props.DefaultPool;
-                return true;
+                return true; 
             }
         }
         return false;

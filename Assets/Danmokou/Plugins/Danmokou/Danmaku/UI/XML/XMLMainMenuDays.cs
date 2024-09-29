@@ -82,7 +82,7 @@ public class XMLMainMenuDays : XMLMainMenu {
                     return new UINode(p.Title(Meta())) {
                         CacheOnEnter = true, ShowHideGroup = new UIColumn(sceneChallengeCol, 
                             new UINode { OnConfirm = vm.OnConfirm }
-                                .WithCSS(large1Class, centerTextClass)
+                                .WithCSS(large1Class, centerText)
                                 .Bind(new LabelView<Challenge>(new(() => vm.c, c => c.Description(p.boss.boss)))),
                             new ComplexLROptionNode<Challenge>(LString.Empty, binder, p.challenges, (_, c, on) => {
                                     var ve = VTALR2Option.CloneTreeNoContainer();
@@ -95,7 +95,7 @@ public class XMLMainMenuDays : XMLMainMenu {
                                 }).Bind(new DayPhaseView(vm, photoBoard, photoSize)).WithCSS(optionNoKeyClass),
                             new UINode(main_gamestart) 
                                     { OnConfirm = vm.OnConfirm }
-                                .WithCSS(large1Class, centerTextClass)
+                                .WithCSS(large1Class, centerText)
                         )
                     }.WithCSS(large1Class, 
                         p.CompletedAll(Meta()) ? completedAllClass : 
@@ -117,24 +117,20 @@ public class XMLMainMenuDays : XMLMainMenu {
             c.style.paddingTop = 500;
         }, SceneObjects = MainScreenOnlyObjects};
         _ = new UIColumn(MainScreen, null,
-            new TransferNode(main_gamestart, SceneSelectScreen)
-                .WithCSS(large1Class),
+            new TransferNode(main_gamestart, SceneSelectScreen),
             new LROptionNode<string?>(main_lang, SaveData.s.TextLocale, new[] {
                     ((LString)("English"), Locales.EN),
                     ((LString)("日本語"), Locales.JP)
-                })
-                .WithCSS(large1Class),
+                }),
             new TransferNode(main_replays, ReplayScreen) {
                 EnabledIf = () => (SaveData.p.ReplayData.Count > 0)
-            }.WithCSS(large1Class),
-            new TransferNode(main_options, OptionsScreen)
-                .WithCSS(large1Class),
+            },
+            new TransferNode(main_options, OptionsScreen),
 #if !WEBGL
-            new FuncNode(main_quit, Application.Quit)
-                .WithCSS(large1Class),
+            new FuncNode(main_quit, Application.Quit),
 #endif
             new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
-                .WithCSS(large1Class));
+        ).WithNodeMod(n => n.WithCSS(large1Class));
 
         bool doAnim = ReturnTo == null;
         base.FirstFrame();
@@ -186,7 +182,7 @@ public class XMLMainMenuDays : XMLMainMenu {
             ShowPhotos();
         }
 
-        void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, bool isEnteringPopup) {
+        void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, PopupUIGroup.Type? popupType) {
             photoBoardToken?.Dispose();
         }
     }

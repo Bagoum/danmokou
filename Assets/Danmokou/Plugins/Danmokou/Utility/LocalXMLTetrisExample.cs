@@ -383,12 +383,10 @@ public class LocalXMLTetrisExample : CoroutineRegularUpdater {
 
         public UIResult? OnContextMenu(UINode node, ICursorState cs) {
             if (cs is NullCursorState && Src.FirstBlockAt(Loc) is { } b) {
-                return PopupUIGroup.CreateContextMenu(node, new UINode[] {
-                    new FuncNode("Delete", () => {
-                        b.Destroy();
-                        return node.ReturnToGroup;
-                    })
-                });
+                return PopupUIGroup.CreateContextMenu(node, new FuncNode("Delete", () => {
+                    b.Destroy();
+                    return node.ReturnToGroup;
+                }));
             }
             return null;
         }

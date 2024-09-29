@@ -56,6 +56,8 @@ MonoBehaviour:
     type: 3}
   <SaveLoadNode>k__BackingField: {fileID: 9197481963319205126, guid: d4c1a5168513d344bb24059bcd7d30d4,
     type: 3}
+  <Cursor>k__BackingField: {fileID: 9197481963319205126, guid: ffbee17c3b20d1b408d38783764ef511,
+    type: 3}
   defaultSaveLoadBG: {fileID: 2800000, guid: ea44ee5932ff7c84aa1697105b26bd29, type: 3}
   MkCodeBlock: {fileID: 9197481963319205126, guid: 4576ae9bbc048b9449cf927a4459612a,
     type: 3}

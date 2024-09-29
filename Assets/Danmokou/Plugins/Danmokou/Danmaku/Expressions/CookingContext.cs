@@ -7,6 +7,7 @@ using System.Text;
 using BagoumLib;
 using BagoumLib.Events;
 using BagoumLib.Expressions;
+using BagoumLib.Reflection;
 using Danmokou.Reflection;
 using Danmokou.Reflection2;
 using AST = Danmokou.Reflection2.AST;

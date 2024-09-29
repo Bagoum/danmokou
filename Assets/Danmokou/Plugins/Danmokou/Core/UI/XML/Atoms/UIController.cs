@@ -137,8 +137,11 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// <summary>
     /// The container for all UI screens on this menu. Normally, direct/only child of <see cref="UIRoot"/>.
     /// </summary>
-    protected VisualElement UIContainer { get; private set; } = null!;
+    public VisualElement UIContainer { get; private set; } = null!;
     protected PanelSettings UISettings { get; private set; } = null!;
+
+    private VisualCursor? _visualCursor;
+    public VisualCursor VisualCursor => _visualCursor ??= new(this);
 
     public virtual bool CloseOnUnscopedBack => false;
     protected virtual bool CaptureFallthroughInteraction => true;
@@ -273,6 +276,7 @@ public abstract class UIController : CoroutineRegularUpdater {
 
     protected virtual bool OpenOnInit => true;
     protected virtual Color BackgroundTint => new(0.17f, 0.05f, 0.20f);
+    public PopupUIGroup? TargetedPopup { get; set; } = null;
 
     private UICommand? CurrentInputCommand =>
         UILeft ? UICommand.Left :
@@ -296,6 +300,14 @@ public abstract class UIController : CoroutineRegularUpdater {
         tokens.Add(uiRenderer.RegisterController(this, -(int)(uid.panelSettings.sortingOrder * 1000 + uid.sortingOrder)));
         UIRoot = uid.rootVisualElement;
         UIRoot.RegisterCallback<PointerMoveEvent>(ev => LastPointerLocation = ev.position);
+        UIRoot.RegisterCallback<PointerUpEvent>(ev => TargetedPopup = null, TrickleDown.TrickleDown);
+        UIRoot.RegisterCallback<PointerUpEvent>(ev => {
+            //Use default context menu only; don't call the real context menu functions for Curr
+            if (Current is { UseDefaultContextMenu: true } curr && ev.button is 1)
+                uiOperations.Enqueue(() => 
+                    Current != curr ? Task.CompletedTask : 
+                        _OperateOnResult(PopupUIGroup.CreateContextMenu(curr, null, true, false), UITransitionOptions.Default));
+        });
         UIContainer = UIRoot.Q("UIContainer");
         UISettings = uid.panelSettings;
         Build();
@@ -405,7 +417,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     public UIResult Navigate(UINode from, UICommand cmd) => 
         CursorState.Value.Navigate(from, cmd);
     
-    
+    /// <inheritdoc cref="OperateOnResult"/>
     private Task _OperateOnResult(UIResult? result, UITransitionOptions? opts) {
         if (result == null || (result is UIResult.GoToNode {NoOpIfSameNode:true} gTo && gTo.Target == Current) ||
             (result is UIResult.GoToSibling {NoOpIfSameNode:true} gS && gS.Index == Current?.IndexInGroup) ||
@@ -607,6 +619,11 @@ public abstract class UIController : CoroutineRegularUpdater {
         return task;
     }
 
+    /// <summary>
+    /// Modify the UI based on <see cref="UIResult"/>.
+    /// </summary>
+    /// <param name="result">Result to execute.</param>
+    /// <param name="opts">UI transition options. If null, defaults to DontAnimate.</param>
     public Task OperateOnResult(UIResult? result, UITransitionOptions? opts) {
         if (uiOperations.Count == 0 && OperationsEnabled)
             return _OperateOnResult(result, opts);
@@ -681,6 +698,7 @@ public abstract class UIController : CoroutineRegularUpdater {
 
     private void LateUpdate() {
         MVVM.UpdateViews();
+        _visualCursor?.Update();
     }
 
     #region Transition
@@ -761,8 +779,18 @@ public abstract class UIController : CoroutineRegularUpdater {
             next?.Screen.NextState(UIScreenState.InactiveWillGoActive);
         }
         using var token = OperationsEnabled.AddConst(false);
-        bool isPopup = leftGroups.Count == 0 && enteredGroups.Try(0) is PopupUIGroup;
-        prev?.Leave(opts.Animate, CursorState.Value, isPopup);
+        PopupUIGroup.Type? popupType = (
+            (leftGroups.Count == 0 || leftGroups[^1] is PopupUIGroup { Typ: PopupUIGroup.Type.CtxMenu })
+                && enteredGroups.Try(0) is PopupUIGroup pug) 
+                    ? pug.Typ : null;
+        prev?.Leave(opts.Animate, CursorState.Value, popupType);
+        //Also issue leave command to the parent nodes of actioning context menus
+        for (var ii = 0; ii < leftGroups.Count; ii++) {
+            if (leftGroups[ii] is PopupUIGroup { Typ: PopupUIGroup.Type.CtxMenu } pug1 
+                    && (enteredGroups.Count > 0 || ii + 1 < leftGroups.Count))
+                pug1.Source.Leave(opts.Animate, CursorState.Value, popupType);
+        }
+
         //First phase tasks
         var tasks = new List<Task>();
         //The last ReturnFromChild should be executed in the second phase,
@@ -777,7 +805,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                 tasks.Add(task);
         }
         //Handle first DescendToChild in EnterGroups
-        if (enteredGroups.Try(0)?.Parent?.DescendToChild(isPopup) is { IsCompletedSuccessfully: false} dtask)
+        if (enteredGroups.Try(0)?.Parent?.DescendToChild(popupType) is { IsCompletedSuccessfully: false} dtask)
             tasks.Add(dtask);
         
         if (screenChanges != null)
@@ -795,7 +823,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         //Second phase tasks
         if (screenChanges != null)
             foreach (var (src, isPush) in screenChanges)
-                if (isPush && src.Group.DescendToChild(isPopup) is { IsCompletedSuccessfully: false } task)
+                if (isPush && src.Group.DescendToChild(popupType) is { IsCompletedSuccessfully: false } task)
                     tasks.Add(task);
         //Handle last ReturnFromChild in LeftGroups
         if (lastReturnParent?.ReturnFromChild() is { IsCompletedSuccessfully: false} ltask)
@@ -804,7 +832,7 @@ public abstract class UIController : CoroutineRegularUpdater {
             var g = enteredGroups[ii];
             //The first DescendToChild should be executed in the first phase,
             // since it usually has functionality similar to Leave
-            if (ii > 0 && g.Parent?.DescendToChild(isPopup) is { IsCompletedSuccessfully: false } ptask)
+            if (ii > 0 && g.Parent?.DescendToChild(popupType) is { IsCompletedSuccessfully: false } ptask)
                 tasks.Add(ptask);
             if (g.EnterGroup() is { IsCompletedSuccessfully: false } task)
                 tasks.Add(task);
@@ -851,7 +879,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         var t = opts.ScreenTransitionTime;
         var ep = GetRandomSlideEndpoint();
         var epxml = new Vector2(ep.x * XMLWidth, ep.y * -XMLHeight);
-        var eput = new Vector2(ep.x * MainCamera.ScreenWidth, ep.y * MainCamera.ScreenHeight);
+        var eput = new Vector2(ep.x * MainCamera.MCamInfo.ScreenWidth, ep.y * MainCamera.MCamInfo.ScreenHeight);
         //to.HTML.transform.position = -epxml;
         async Task FadeIn() {
             if (to.SceneObjects != null)
@@ -898,7 +926,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// <returns>True iff the cursor was moved (which also redraws the screen).</returns>
     public bool MoveCursorAwayFromNode(UINode n) {
         if (n == Current) {
-            if (!n.Destroyed) n.Leave(false, CursorState.Value, false);
+            if (!n.Destroyed) n.Leave(false, CursorState.Value, null);
             Current = n.Group.ExitNode;
             Redraw();
             return true;

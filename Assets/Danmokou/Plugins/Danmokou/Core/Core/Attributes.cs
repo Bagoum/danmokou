@@ -159,6 +159,7 @@ public class FileLinkAttribute : Attribute {
 /// <br/>If the assembly is marked, then on a class, Reflect marks that the methods in the class should be reflected.
 /// </summary>
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class)]
+[MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
 public class ReflectAttribute : FileLinkAttribute {
     public readonly Type? returnType;
     public ReflectAttribute(Type? returnType = null, 

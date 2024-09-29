@@ -57,7 +57,7 @@ public class FancyShotDisplay : FancyDisplay {
         }
     }
 
-    private static Vector2 axis => new(0, -DMKMainCamera.ScreenHeight);
+    private static Vector2 axis => new(0, -MainCamera.MCamInfo.ScreenHeight);
 
     public void SetRelative(int thisIndex, int selectedIndex, bool first) {
         var myLoc = axis * (thisIndex - selectedIndex);

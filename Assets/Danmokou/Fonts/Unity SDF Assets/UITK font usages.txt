@@ -1,0 +1,9 @@
+Ubuntu (in SZYU directory) - most normal UI text
+MPlus2 (in SZYU directory) - fallback for Japanese text
+LinBiolinum (in SZYU directory) - readable text display
+JosefinSans - title text
+NovaSquare - header text
+Signika - numerical text; keybindings
+PromptFont - keybinding glyphs
+Fira-Yasashisa-Joint - monospaced replay name display text
+Monoid - monospaced Markdown text

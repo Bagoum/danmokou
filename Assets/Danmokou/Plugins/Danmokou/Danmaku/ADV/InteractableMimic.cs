@@ -94,7 +94,7 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
     public override string SortingLayerFromPrefab => "";
 
     public FixedXMLHelper xml = null!;
-    public LString? Tooltip => entity.Metadata.Tooltip;
+    LString? IFixedXMLReceiver.Tooltip => entity.Metadata.Tooltip;
     
     private Interactable entity = null!;
     
@@ -115,13 +115,14 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
     
     private void Initialize(Interactable c) {
         base.Initialize(entity = c);
-        xml.Container = c.XMLContainer;
+        xml.Receiver = this;
+        if (c.XMLContainer is {} cont)
+            cont.AddNodeDynamic(xml.MakeNode());
         offsetter.Push(Wave);
         borderColor.Push(0f);
 
         tokens.Add(c.ComputedTint.AddDisturbance(c.Exhausted.Map( 
             exh => exh ? new FColor(0.65f, 0.65f, 0.65f, 1f) : FColor.White)));
-        Listen(c.ComputedLocation, _ => xml.UpdatedLocations());
         bool isFirstState = true;
         var man = ServiceLocator.Find<ADVManager>();
         tokens.Add(c.Visible.AddDisturbance(man.ADVState.Map(s =>
@@ -133,7 +134,7 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
         isFirstState = false;
     }
 
-    public void OnBuilt(EmptyNode n) {
+    void IFixedXMLReceiver.OnBuilt(UINode _n, IFixedXMLObject cfg) {
         //When the user hovers over the node, it should "bounce" or "wave". 
         // However, we don't want the root EmptyNode to change position, since that makes keyboard-based
         // movement unstable. Thus, we create a VE inside the empty node, which is `wb`.
@@ -141,6 +142,8 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
         // background-image. Thus, to render the background, we create another VE within `wb`, which is `w`.
         //In this setup, the root emptynode has a size of XMLSize, `wb` has a size of XMLSize+2*borderWidth,
         // and `w` has a size of of XMLSize. (The border appears outside of the dimensions of the root emptynode.)
+        if (_n is not EmptyNode n)
+            throw new Exception("Interactable mimic must be attached to empty node");
         var wb = new VisualElement().ConfigureAbsolute().ConfigureEmpty(false).ConfigureLeftTopListeners(
             n.CreateCenterOffsetChildX(new ConstantObservable<float>(0)),
             n.CreateCenterOffsetChildY(this.offsetter));
@@ -151,7 +154,7 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
             , 10));
         w = new VisualElement().ConfigureEmpty(false);
         wb.Add(w);
-        w.SetWidthHeight(xml.XMLSize);
+        w.ConfigureWidthHeightListeners(cfg.Width, cfg.Height);
         w.style.backgroundImage = new(entity.Metadata.Icon);
         w.style.unityBackgroundImageTintColor = entity.ComputedTint.Value._();
 
@@ -181,23 +184,19 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
         base.DoUpdate(dT);
     }
 
-    public void OnEnter(UINode n, ICursorState cs) {
+    void IFixedXMLReceiver.OnEnter(UINode n, ICursorState cs) {
         hoverActiveAction?.Dispose();
         hoverActiveAction = entity.Hover?.Enter(entity);
         offsetter.Push(bounce);
         borderColor.Push(1f);
     }
 
-    public void OnLeave(UINode n, ICursorState cs) {
+    void IFixedXMLReceiver.OnLeave(UINode n, ICursorState cs) {
         hoverActiveAction?.Dispose();
         hoverActiveAction = null;
         offsetter.Push(Wave);
         borderColor.Push(0);
     }
-
-    public void OnPointerDown(UINode n, PointerDownEvent ev) {}
-
-    public void OnPointerUp(UINode n, PointerUpEvent ev) {}
     
 
     protected override void SetSortingLayer(int layer) { }

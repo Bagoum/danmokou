@@ -5,6 +5,7 @@ using Ex = System.Linq.Expressions.Expression;
 using System.Reflection;
 using System.Text;
 using BagoumLib;
+using BagoumLib.DataStructures;
 using BagoumLib.Reflection;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -17,10 +18,10 @@ using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.GameInstance;
 using Danmokou.Graphics;
+using Danmokou.Reflection2;
 using Danmokou.Scriptables;
 using Danmokou.SM;
 using UnityEngine;
-using DictExtensions = Danmokou.Core.DictExtensions;
 using Vector3 = UnityEngine.Vector3;
 
 namespace Danmokou.Reflection {
@@ -37,6 +38,8 @@ public static partial class Reflector {
 #if UNITY_EDITOR
         if (!Application.isPlaying && !RHelper.REFLECT_IN_EDITOR) return;
 #endif
+        SimplifiedExprPrinter.Default.InjectSimplifier(t => t.IsTExOrTExFuncType(out var inner) ? inner : null);
+        
         AllowFuncification<TEx<float>>();
         AllowFuncification<TEx<bool>>(); //This will also allow stuff like (if + true false), which will error if you actually use it
         AllowFuncification<TEx<Vector2>>();
@@ -99,8 +102,6 @@ public static partial class Reflector {
         CreatePostAggregates("PA_Pow", "^");
         CreatePostAggregates("PA_And", "&");
         CreatePostAggregates("PA_Or", "|");
-        
-        WaitForPhaseSM = SMReflection.Wait(Synchronization.Time(_ => M.IntFloatMax));
     }
 
     private readonly struct PostAggregate {

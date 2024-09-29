@@ -29,7 +29,6 @@ internal static class IsExternalInit {}
 public class MyInventorySwapCS : CustomCursorState, ICursorState {
     public int FromIndex { get; }
     public UINode Source { get; }
-    public UIGroup? Tooltip { get; }
     public MyInventorySwapCS(int fromIndex, UINode source, LocalXMLInventoryExample menu) : base(menu.Menu) {
         FromIndex = fromIndex;
         Source = source;
@@ -45,12 +44,6 @@ public class MyInventorySwapCS : CustomCursorState, ICursorState {
 
     public void UpdateTooltipPosition(UINode next) =>
         next.HTML.SetTooltipAbsolutePosition(Tooltip?.Render.HTML);
-
-    public override void Destroy() {
-        base.Destroy();
-        _ = Tooltip?.LeaveGroup();
-    }
-
 
     public override UIResult Navigate(UINode current, UICommand cmd) {
         if (cmd == UICommand.Back) {
@@ -148,7 +141,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
             return ve;
         }), new UINode(new CurrentItemView(new(this))) {
             Prefab = XMLUtils.Prefabs.PureTextNode
-        }.WithCSS(XMLUtils.small1Class, XMLUtils.fontBiolinumClass)) {
+        }.WithCSS(XMLUtils.fontBiolinumClass)) {
             Interactable = false
         });
         Menu.FreeformGroup.AddGroupDynamic(LayersGrp = new UIFreeformGroup(new UIRenderExplicit(s, _ => {
@@ -168,13 +161,10 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
 
         var tabRender = grid.AddRow().SetHeight(240);
         
-        var rows = h.Range().Select(ir => new UIRow(new UIRenderExplicit(s, _ => {
-            var row = grid.AddRow();
-            return row;
-        }), w.Range().Select(ic => {
-            var index = ir * w + ic;
-            return new UINode(new InventorySlotView(new(this, index))) { Prefab = itemVTA };
-        }))).Cast<UIGroup>().ToArray();
+        var rows = h.Range().Select(
+            ir => new UIRow(new UIRenderExplicit(s, _ => grid.AddRow()), 
+            w.Range().Select(ic => 
+                new UINode(new InventorySlotView(new(this, ir * w + ic))) { Prefab = itemVTA })) as UIGroup).ToArray();
 
         var gridGroup = new VGroup(rows);
         var tabRow = new UIRow(new UIRenderExplicit(s, _ => tabRender), colors.Cast<ItemColor?>().Prepend(null)
@@ -206,7 +196,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
                 ("Include", false), ("Exclude", true)
             });
             //empty passthrough node to keep size of box consistent even when nothing is selected
-            nodes[2] = new PassthroughNode("") { VisibleIf = () => !selectType.FirstSelected.Valid };
+            nodes[2] = new PassthroughNode() { VisibleIf = () => !selectType.FirstSelected.Valid };
             for (int ii = 0; ii < types.Length; ++ii) {
                 var (desc, sel) = types[ii];
                 nodes[ii + 3] = sel.Obj.SelectorDropdown();
@@ -315,7 +305,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
 
         public override void OnBuilt(UINode node) {
             base.OnBuilt(node);
-            node.WithCSS(XMLUtils.small1Class, XMLUtils.fontBiolinumClass);
+            node.WithCSS(XMLUtils.fontBiolinumClass);
             node.BindLifetime(VM.Layer);
             node.AddToken(VM.MovedToIndex.Subscribe(idx => node.MoveToIndex(idx)));
         }
@@ -401,12 +391,12 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
         void IUIView.OnRemovedFromNavHierarchy(UINode node) => VM.Src.CurrentIndex = null;
 
         public override void UpdateHTML() {
-            var title = HTML.Q<Label>("Content");
+            var content = HTML.Q<Label>("Content");
             if (ViewModel.Item is { } item) {
-                title.style.display = DisplayStyle.Flex;
-                title.style.backgroundImage = new(item.s);
-                title.text = $"{item.Count}";
-                title.style.color = item.Color switch {
+                content.style.display = DisplayStyle.Flex;
+                content.style.backgroundImage = new(item.s);
+                content.text = $"{item.Count}";
+                content.style.color = item.Color switch {
                     ItemColor.Red => new Color(0.84f, 0.27f, 0.32f),
                     ItemColor.Blue => new Color(0.3f, 0.58f, 0.91f),
                     ItemColor.Green => new Color(0.19f, 0.78f, 0.36f),
@@ -415,7 +405,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
                     _ => throw new ArgumentOutOfRangeException()
                 };
             } else
-                title.style.display = DisplayStyle.None;
+                content.style.display = DisplayStyle.None;
             /* proof of concept for changing styling based on current cursor state
             var bg = n.HTML.Q("BG");
             bg.style.backgroundColor = (n.Controller.CursorState.Value is MyInventorySwapCS) ?

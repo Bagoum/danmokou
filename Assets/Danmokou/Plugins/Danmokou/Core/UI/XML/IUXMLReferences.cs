@@ -17,6 +17,7 @@ public interface IUXMLReferences {
     public VisualTreeAsset PureTextNode { get; }
     public VisualTreeAsset TwoLabelNode { get; }
     public VisualTreeAsset HeaderNode { get; }
+    public VisualTreeAsset Cursor { get; }
 
     public Dictionary<Type, VisualTreeAsset> TypeMap { get; }
 }

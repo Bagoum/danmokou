@@ -179,8 +179,8 @@ public static partial class XMLHelpers {
                         return new UINode(phase.Title) {
                             Prefab = spellPracticeNodeV,
                             OnBuilt = n => {
-                                var (cs, ct) = cmpSpellHist.GetOrDefault(key) ?? (0, 0);
-                                var (ps, pt) = prcSpellHist.GetOrDefault(key) ?? (0, 0);
+                                var (cs, ct) = cmpSpellHist.GetOrNull(key) ?? (0, 0);
+                                var (ps, pt) = prcSpellHist.GetOrNull(key) ?? (0, 0);
                                 n.HTML.Q<Label>("CampaignHistory").text = $"{cs}/{ct}";
                                 n.HTML.Q<Label>("PracticeHistory").text = $"{ps}/{pt}";
                             },
@@ -218,31 +218,31 @@ public static partial class XMLHelpers {
             new(parent => parent.AddZeroPaddingScrollColumn())).Col(0);
         UINode NodeForBinding(RebindableInputBinding b, int index, KeyRebindInputNode.Mode mode) {
             return new FuncNode(null, n => {
+                var title = $"Keybinding: \"{b.Purpose}\"";
                 if (b.ProtectedIndices.Contains(index))
-                    return PopupUIGroup.CreatePopup(n, $"Keybinding for \"{b.Purpose}\"",
-                        r => new UIColumn(r,
-                                new UINode("You cannot rebind this key.") { Prefab = Prefabs.PureTextNode })
-                            { Interactable = false }, new PopupButtonOpts.Centered(null));
+                    return PopupUIGroup.CreatePopup(n, title, r => new UIColumn(r,
+                            new UINode("You cannot rebind this key.") { Prefab = Prefabs.PureTextNode })
+                        { Interactable = false }, new PopupButtonOpts.Centered(null));
                 
                 Maybe<IInspectableInputBinding>? newTempBinding = null;
-                return PopupUIGroup.CreatePopup(n, $"Keybinding for \"{b.Purpose}\"",
-                    r => new UIColumn(r, new UINode {
-                                Prefab = GameManagement.References.uxmlDefaults.PureTextNode, BaseInteractable = false
-                            }.WithCSS(fontControlsClass)
-                            .Bind(new LabelView<(string? curr, bool hasNext, string? next)>(new(
-                                () => (b.Sources[index]?.Description, newTempBinding != null, 
-                                    newTempBinding?.ValueOrNull()?.Description), cn => {
-                                    var show = $"Current binding: {cn.curr ?? "(No binding)"}";
-                                    if (cn.hasNext)
-                                        show += $"\nNew binding: {cn.next ?? "(No binding)"}";
-                                    return show;
-                                })
-                            )),
+                return PopupUIGroup.CreatePopup(n, title, r => new UIColumn(r, 
+                        new UINode {
+                            Prefab = GameManagement.References.uxmlDefaults.PureTextNode, BaseInteractable = false
+                        }.WithCSS(fontControlsClass)
+                        .Bind(new LabelView<(string? curr, bool hasNext, string? next)>(new(
+                            () => (b.Sources[index]?.Description, newTempBinding != null, 
+                                newTempBinding?.ValueOrNull()?.Description), cn => {
+                                var show = $"Current binding: {cn.curr ?? "(No binding)"}";
+                                if (cn.hasNext)
+                                    show += $"\nNew binding: {cn.next ?? "(No binding)"}";
+                                return show;
+                            })
+                        )),
                         new KeyRebindInputNode(LString.Empty, keys => 
-                                newTempBinding = keys == null ? 
-                                    Maybe<IInspectableInputBinding>.None :
-                                    new(SimultaneousInputBinding.FromMany(keys)), mode)
-                            .WithCSS(noSpacePrefixClass, centerTextClass)),
+                            newTempBinding = keys == null ? 
+                                Maybe<IInspectableInputBinding>.None :
+                                new(SimultaneousInputBinding.FromMany(keys)), mode)
+                        .WithCSS(noSpacePrefixClass, centerText)),
                     new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
                         new UIButton("Unassign", UIButton.ButtonType.Confirm, _ => {
                             newTempBinding = Maybe<IInspectableInputBinding>.None;
@@ -258,8 +258,8 @@ public static partial class XMLHelpers {
                     })
                 );
             }) { OnBuilt = n => n.HTML.style.width = 30f.Percent() }
-                .WithCSS(small1Class, fontControlsClass)
-                .Bind(new SimpleLabelView(() => b.Sources[index]?.Description ?? "(No binding)"));
+                .WithCSS(fontControlsClass)
+                .Bind(new SimpleLabelView(() => b.Sources[index]?.Description ?? "---"));
         }
         UIGroup[] MakeBindings(IEnumerable<RebindableInputBinding> src, KeyRebindInputNode.Mode mode) => 
             src.Select(b => (UIGroup)new UIRow(
@@ -281,11 +281,11 @@ public static partial class XMLHelpers {
                 OnBuilt = n => n.HTML.style.width = 30f.Percent()
             });
         var kbBindingsLead = new UIRow(controlsSpace.Construct(Prefabs.UIScreenRow), 
-            new PassthroughNode("Keyboard Bindings").WithCSS(large1Class));
+            new PassthroughNode("Keyboard Bindings").WithCSS(large1Class, fontJosefin));
         var (kbm, ctrlr) = References.gameDefinition.GetRebindableControls();
         var kbBindings = MakeBindings(kbm, KeyRebindInputNode.Mode.KBM);
         var cBindingsLead = new UIRow(controlsSpace.Construct(Prefabs.UIScreenRow), 
-            new PassthroughNode("Controller Bindings").WithCSS(large1Class));
+            new PassthroughNode("Controller Bindings").WithCSS(large1Class, fontJosefin));
         var cBindings = MakeBindings(ctrlr, KeyRebindInputNode.Mode.Controller);
         
         var controlsGroup = new UINode("<cspace=16>CONTROLS</cspace>") {
@@ -440,6 +440,7 @@ public static partial class XMLHelpers {
                 s.Header.style.marginRight = 100;
                 s.Margin.SetLRMargin(360, 360);
                 var c1 = ve.AddColumn();
+                c1.style.marginLeft = -40;
                 var c2 = ve.AddColumn();
                 c1.style.justifyContent = c2.style.justifyContent = Justify.SpaceBetween;
                 c1.style.width = c2.style.width = 50f.Percent();
@@ -474,7 +475,10 @@ public static partial class XMLHelpers {
     }
     public static UIScreen ReplayScreen(this UIController m, UIScreen gameDetails) {
         var s = new UIScreen(m, "REPLAYS") {
-            Builder = (_, ve) => ve.AddScrollColumn()
+            Builder = (s, ve) => {
+                s.Margin.SetLRMargin(460, 460);
+                ve.AddScrollColumn();
+            }
         };
         s.SetFirst(new UIColumn(s, null) {
             LazyNodes = () => SaveData.p.ReplayData.Select(rep => {
@@ -501,7 +505,7 @@ public static partial class XMLHelpers {
                         }));
                 }) {
                     CacheOnEnter = true
-                }.WithCSS(monospaceClass, small2Class, centerTextClass);
+                }.WithCSS(recordDisplayClass);
             })
         });
         return s;
@@ -612,7 +616,7 @@ public static partial class XMLHelpers {
                         })
                     )) {
                     VisibleIf = () => Matches(g.RequestKey)
-                }.WithCSS(monospaceClass, small2Class, centerTextClass)
+                }.WithCSS(recordDisplayClass)
                  .WithRootView(v => v.VM.NodeIsVisibleHash = () => m.EvViewVersion));
         bool IsBossOrChallenge() => m.Mode is InstanceMode.BOSS_PRACTICE or InstanceMode.SCENE_CHALLENGE;
         bool IsStage() => m.Mode == InstanceMode.STAGE_PRACTICE;
@@ -789,7 +793,7 @@ public static partial class XMLHelpers {
                     s.Margin.style.marginLeft = 160;
                     var g = ve.AddColumn();
                     g.style.maxWidth = new Length(25, LengthUnit.Percent);
-                    g.style.paddingTop = 720;
+                    g.style.paddingTop = 660;
                 },
             }.WithOnEnterStart(() => ShowShot(true))
             .WithOnEnterEnd(UpdateDemo)
@@ -801,18 +805,18 @@ public static partial class XMLHelpers {
             });
         screen.Tokens.Add(p.EvViewVersion.OnChange.Subscribe(_ => ShowShot(false)));
         _ = new UIColumn(screen, null,
-            new PassthroughNode(shotsel_player).WithCSS(centerTextClass),
+            new PassthroughNode(shotsel_player).WithCSS(large1Class, centerText),
             playerSelect.WithCSS(optionNoKeyClass),
-            new PassthroughNode(LString.Empty),
-            new PassthroughNode(shotsel_shot).WithCSS(centerTextClass),
+            new PassthroughNode(),
+            new PassthroughNode(shotsel_shot).WithCSS(large1Class, centerText),
             shotSelect.WithCSS(optionNoKeyClass),
             subshotSelect.WithCSS(optionNoKeyClass),
-            new PassthroughNode(LString.Empty),
-            new PassthroughNode(shotsel_support).WithCSS(centerTextClass),
+            new PassthroughNode(),
+            new PassthroughNode(shotsel_support).WithCSS(large1Class, centerText),
             supportSelect.WithCSS(optionNoKeyClass),
-            new PassthroughNode(LString.Empty),
+            new PassthroughNode(),
             new FuncNode(play_game, () => continuation(new TeamConfig(0, 
-                p.subshot, (p.Player, p.shot, p.support)))).WithCSS(centerTextClass)
+                p.subshot, (p.Player, p.shot, p.support)))).WithCSS(large1Class, centerText)
             //new UINode(() => shotSelect.Value.title).SetAlwaysVisible().FixDepth(1),
             //new UINode(() => shotSelect.Value.description)
             //    .With(shotDescrClass).With(smallClass)
@@ -822,11 +826,13 @@ public static partial class XMLHelpers {
     }
 
     public static UIScreen CustomDifficultyScreen(this UIController menu, Func<DifficultySettings, UIResult> dfcCont) {
-        var screen = new UIScreen(menu, "CUSTOM DIFFICULTY SETTINGS") {Builder = (_, ve) => {
+        var screen = new UIScreen(menu, "CUSTOM DIFFICULTY SETTINGS") {Builder = (s, ve) => {
+            s.Margin.SetLRMargin(360, 360);
             var g1 = ve.AddScrollColumn();
-            g1.style.flexGrow = 2.4f;
-            g1.style.paddingRight = 120;
-            ve.AddScrollColumn().style.flexGrow = 2;
+            g1.style.paddingRight = 60;
+            g1.style.flexGrow = g1.style.flexShrink = 0;
+            g1.style.width = 55f.Percent();
+            var g2 = ve.AddScrollColumn();
         }};
         var dfc = new DifficultySettings(null);
         var viewModel = new VersionedUIViewModel();
@@ -1132,12 +1138,12 @@ public static partial class XMLHelpers {
                     return new UIResult.StayOnNode(ts.AddTrack(m) is null);
                 }) {
                 ShowHideGroup = new UIColumn(descCol, 
-                    new UINode(m.MusicRoomDescription).WithCSS(small2Class, fontUbuntuClass)) 
+                    new UINode(m.MusicRoomDescription).WithCSS(small1Class, fontUbuntuClass)) 
                 {Interactable = false}
             },
             false => new UINode("????????????????") {
                 ShowHideGroup = new UIColumn(descCol, 
-                    new UINode("This track is not yet unlocked.").WithCSS(small2Class, fontUbuntuClass))
+                    new UINode("This track is not yet unlocked.").WithCSS(small1Class, fontUbuntuClass))
                 {Interactable = false}
             },
             _ => null
@@ -1303,7 +1309,7 @@ public static partial class XMLHelpers {
                                 render.HTML.Q<ScrollView>().Add(RenderMarkdown(b));
                             }
                         }
-                    };
+                    }.WithCSS(large1Class);
                 })
         });
         return screen;

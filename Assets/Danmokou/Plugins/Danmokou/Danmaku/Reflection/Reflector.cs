@@ -34,7 +34,7 @@ public static partial class Reflector {
     //Used by language server to avoid failure on lstring parsing
     public static bool SOFT_FAIL_ON_UNMATCHED_LSTRING = false;
     
-    public static readonly StateMachine WaitForPhaseSM;
+    public static readonly StateMachine WaitForPhaseSM = SMReflection.Wait(Synchronization.Time(_ => M.IntFloatMax));
 
     private static IAST<StateMachine?> ReflectSM(IParseQueue q) {
         var (method, pos) = q.ScanUnit(out _);

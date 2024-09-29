@@ -30,10 +30,6 @@ public class DMKVNWrapper : VNWrapper {
         base.Awake();
     }
 
-    private void Start() {
-        tr.localPosition = ui.uiCamera.transform.localPosition;
-    }
-
     public override ExecutingVN TrackVN(IVNState vn) {
         var evn = base.TrackVN(vn);
         evn.tokens.Add(EngineStateManager.EvState.Subscribe(s => vn.InputAllowed.Value = s == EngineState.RUN));

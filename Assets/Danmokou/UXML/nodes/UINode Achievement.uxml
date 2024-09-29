@@ -4,8 +4,8 @@
         <ui:VisualElement name="Selector" class="pointer prefix" />
         <ui:VisualElement name="Checkmark" class="checkmark prefix" style="background-image: url(&quot;project://database/Assets/Danmokou/Sprites/UI/trophy.png?fileID=21300000&amp;guid=7649cfb062f19424780e407d9839a1ef&amp;type=3#trophy&quot;); margin-right: 10px;" />
         <ui:VisualElement class="body" style="margin-bottom: 30px; flex-direction: column;">
-            <ui:Label text="Without Love, It Cannot Be Seen" name="Label" class="text coretext" style="padding-left: 0; padding-right: 0; white-space: normal; font-size: 85px;" />
-            <ui:Label text="Clear the main game with the null shot (1CC, Normal or harder).&#10;" name="Description" class="text coretext" style="-unity-text-align: upper-left; font-size: 62px; padding-left: 0; padding-right: 0;" />
+            <ui:Label text="Without Love, It Cannot Be Seen" name="Label" class="text coretext" style="padding-left: 0; padding-right: 0; white-space: normal; font-size: 80px; -unity-font-definition: url(&quot;project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/JosefinSans-Regular%20SDF.asset?fileID=11400000&amp;guid=8d3d7663b30e7b74f864f92f0a7ad0b6&amp;type=2#JosefinSans-Regular SDF&quot;); padding-top: 8px;" />
+            <ui:Label text="Clear the main game with the null shot (1CC, Normal or harder).&#10;" name="Description" class="text coretext" style="-unity-text-align: upper-left; font-size: 44px; padding-left: 0; padding-right: 0;" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -428,8 +428,7 @@ public static class CollisionMath {
         var dx = (h.x - x) / scale;
         var dy = (h.y - y) / scale;
         
-        //Early exit condition: ||src -> target||^2 > 2(max_dist^2 + Lrad^2)
-        //The extra 2 is because 2(x^2+y^2) is an upper bound for (x+y)^2.
+        //Early exit condition: ||src -> target||^2 > 2(max_dist^2 + Lrad^2) > (max_dist + Lrad)^2
         if (dx * dx + dy * dy > 2f * (max_dist2 + h.grazeRadius2)) return NoCollision;
         
         //Derotate and subtract by node1:local to get the G vector (node1:world -> target)
@@ -619,8 +618,7 @@ public static class CollisionMath {
     public static CollisionResult GrazeCircleOnRect(in Hurtbox h, in float x, in float y, in Vector2 halfDim, in float diag2, in float scale, in Vector2 direction) {
         var dx = (h.x - x) / scale;
         var dy = (h.y - y) / scale;
-        //Early exit condition: ||src -> target||^2 > 2*(diag^2 + Lrad^2)
-        //The extra 2 is because 2(x^2+y^2) is an upper bound for (x+y)^2.
+        //Early exit condition: ||src -> target||^2 > 2(diag^2 + Lrad^2) > (diag + Lrad)^2
         if (dx * dx + dy * dy > 2f * (diag2 + h.grazeRadius2)) return NoCollision;
         //First DErotate the delta vector and get its absolutes. Note we use -sin_rot
         //Store delta vector in Rect for efficiency

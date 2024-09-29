@@ -34,7 +34,7 @@ public class XMLReplaySaveMenu : UIController {
                     return PopupUIGroup.CreatePopup(n, save_replay,
                         r => new UIColumn(r, new UINode(replay_name) {
                             Prefab = GameManagement.References.uxmlDefaults.PureTextNode, BaseInteractable = false
-                        }, nameEntry.WithCSS(noSpacePrefixClass, centerTextClass)),
+                        }, nameEntry.WithCSS(noSpacePrefixClass, centerText)),
                         new PopupButtonOpts.LeftRightFlush(null, new UINode[] {
                             UIButton.Save(() => {
                                 rec.Metadata.Record.AssignName(nameEntry.DataWIP);

@@ -104,7 +104,7 @@ public class RootNodeView : UIView<RootNodeViewModel>, IUIView {
         _ = anim(node, Cancellable.Replace(ref enterLeaveAnim))?.ContinueWithSync();
     }
 
-    void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, bool isEnteringPopup) {
+    void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, PopupUIGroup.Type? popupType) {
         if (!animate || !LeaveAnimation.Try(out var anim)) return;
         _ = anim(node, Cancellable.Replace(ref enterLeaveAnim))?.ContinueWithSync();
     }

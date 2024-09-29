@@ -347,7 +347,7 @@ public record GenCtxProperty {
     /// <summary>
     /// Use a function to retrieve a color on every invocation.
     /// </summary>
-    public static GenCtxProperty ColorX(GCXF<string> color) => new GCXColorProp(color);
+    public static GenCtxProperty ColorX(GCXF<string?> color) => new GCXColorProp(color);
     
     /// <summary>
     /// Cycle between colors on every invocation.

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reactive;
 using System.Text;
 using BagoumLib.Culture;
+using BagoumLib.DataStructures;
 using BagoumLib.Events;
 using Newtonsoft.Json;
 using UnityEngine;

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using BagoumLib;
 using Danmokou.Core;
 using Danmokou.Services;
+using Danmokou.UI;
 using Danmokou.VN;
 using Suzunoya;
 using Suzunoya.ControlFlow;

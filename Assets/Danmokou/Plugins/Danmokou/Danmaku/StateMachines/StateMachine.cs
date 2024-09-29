@@ -238,10 +238,10 @@ public abstract class StateMachine {
         {"gtr2", typeof(GTRepeat2)},
         {"alternate", typeof(AlternateUSM)},
         {"if", typeof(IfUSM)},
+        {"cond", typeof(IfUSM)},
         {"script", typeof(ScriptTSM)},
         {"debugf", typeof(DebugFloat)}
     };
-    public static readonly Dictionary<string, List<MethodSignature>> SMInitMethodMap;
     public static readonly Dictionary<Type, Type[]> SMChildMap = new() {
         {typeof(PatternSM), new[] { typeof(PhaseSM)}}, {
             typeof(PhaseSM), new[] {
@@ -254,13 +254,6 @@ public abstract class StateMachine {
         {typeof(EndPSM), new[] {typeof(LineActionSM), typeof(UniversalSM)}},
         {typeof(ScriptTSM), new[] {typeof(ScriptLineSM)}}
     };
-
-    static StateMachine() {
-        SMInitMethodMap = new(StringComparer.OrdinalIgnoreCase);
-        foreach (var (k, t) in SMInitMap) {
-            SMInitMethodMap[k] = new() { Reflector.GetConstructorSignature(t) };
-        }
-    }
 
     #endregion
     public static bool CheckCreatableChild(Type myType, Type childType) {
@@ -386,7 +379,7 @@ public abstract class StateMachine {
             ReflectionException? extraChildErr = null;
             int? nchildren = 0;
             if (prms.Length > 0) {
-                var requires_children = prms[^1].BDSL1ImplicitSMList;
+                var requires_children = sig.Mi.FeaturesAt(sig.Mi.Params.Length - 1)?.BDSL1ImplicitSMList is true;
                 var fill = Reflector.FillASTArray(args, 0, args.Length - (requires_children ? 1 : 0), sig, q);
                 argErr = fill.Error;
                 parenthesized = fill.Parenthesized;

@@ -32,8 +32,8 @@ public class PJ24CraftingUXML : UIController {
 
         public record Synth(Recipe Recipe, int Count) : Viewing {
             public Synth(ProposedSynth ps) : this(ps.Recipe ?? throw new Exception("No recipe selected"), ps.Count) { }
-            
-            public Evented<int> Version { get; } = new(0);
+
+            public int Version { get; private set; } = 0;
 
             public List<ItemInstance>[] Selected { get; } = 
                 Recipe.Components
@@ -90,7 +90,7 @@ public class PJ24CraftingUXML : UIController {
             public void StartSelecting(int index) {
                 Selected[index] = new();
                 CurrentSelection = index;
-                ++Version.Value;
+                ++Version;
             }
             
             /// <summary>
@@ -102,13 +102,13 @@ public class PJ24CraftingUXML : UIController {
             public bool? ChangeSelectionForCurrent(ItemInstance inst) {
                 var lis = Selected[CurrentSelectionOrThrow];
                 if (lis.Remove(inst)) {
-                    ++Version.Value;
+                    ++Version;
                     return false;
                 }
                 if (CurrentComponentSatisfied)
                     return null;
                 lis.Add(inst);
-                ++Version.Value;
+                ++Version;
                 return true;
             }
             
@@ -117,12 +117,12 @@ public class PJ24CraftingUXML : UIController {
                 if (CurrentSelection is not { } sel) return;
                 Selected[sel] = new();
                 CurrentSelection = null;
-                ++Version.Value;
+                ++Version;
             }
 
             public void CommitSelection() {
                 CurrentSelection = null;
-                ++Version.Value;
+                ++Version;
             }
         }
         
@@ -300,7 +300,8 @@ public class PJ24CraftingUXML : UIController {
         }).SetFirst();
         
         //Synthesis screen showing synth board / in-progress synthesis
-        ScreenSynth2 = new UIScreen(this) { Prefab = screenSynth2VTA };
+        ScreenSynth2 = new UIScreen(this) { Prefab = screenSynth2VTA }
+            .WithContainerView(new SynthScreen2RenderView(new(this)));
         //Item selection for synth board component
         var rSynthItemCont = ScreenSynth2.Q("ItemListAndDetails").UseSourceVisible();
         _ = rSynthItemCont.Q("ItemDetails").UseTreeVisible().WithPopupAnim()
@@ -341,8 +342,8 @@ public class PJ24CraftingUXML : UIController {
             .WithOnEnter(() => exec.RunSynthIngredientSelIntuition(Synth!.Recipe)));
         
         //Selection screen showing recipes and crafting options
-        ScreenSynth1 = new UIScreen(this) { Prefab = screenSynth1VTA };
-        _ = ScreenSynth1.ContainerRender.WithView(new SynthScreen1RenderView(new(this)));
+        ScreenSynth1 = new UIScreen(this) { Prefab = screenSynth1VTA }
+            .WithContainerView(new SynthScreen1RenderView(new(this)));
         var rCraftCount = new UIRenderExplicit(ScreenSynth1, ve => ve.Q("CraftingCount")) 
             .UseSourceVisible().WithPopupAnim();
         var gCraftCount = new UIColumn(rCraftCount, new LROptionNode<int>("", 
@@ -353,13 +354,7 @@ public class PJ24CraftingUXML : UIController {
                 new[] { ((LString)"1 / 0", 1) }) {
             Builder = ve => ve.Q("CountSelector"),
             OnConfirm = (n, cs) => {
-                var syn = new Viewing.Synth(nextRecipe);
-                viewing = syn;
-                Listen(syn.Version, _ => {
-                    if (syn.CurrentSelection is {} ind)
-                        ShowSynthEffect(ind, ScreenSynth2.HTML.Q("ConsolidatedEffectInfo"));
-                    ShowTraits(ScreenSynth2.HTML.Q("Traits"), true, Alchemy.CombineTraits(syn.Selected));
-                });
+                viewing = new Viewing.Synth(nextRecipe);
                 return new UIResult.GoToScreen(ScreenSynth2);
             },
         })
@@ -761,8 +756,8 @@ public class PJ24CraftingUXML : UIController {
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
             VM.S.viewingInst = VM.Val;
         }
-        void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, bool isEnteringPopup) {
-            if (!isEnteringPopup)
+        void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, PopupUIGroup.Type? popupType) {
+            if (popupType is null)
                 VM.S.viewingInst = null;
         }
     }
@@ -803,8 +798,8 @@ public class PJ24CraftingUXML : UIController {
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
             VM.S.viewingInst = VM.Val;
         }
-        void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, bool isEnteringPopup) {
-            if (!isEnteringPopup)
+        void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, PopupUIGroup.Type? popupType) {
+            if (popupType is null)
                 VM.S.viewingInst = null;
         }
     }
@@ -924,6 +919,24 @@ public class PJ24CraftingUXML : UIController {
             cal.Q<Label>("Phase").text = data.Phase.Title;
             cal.Q<Label>("Today").text = $"今日  {data.Date}";
             cal.Q<Label>("Deadline").text = $"〆切  {data.Phase.Deadline}";
+        }
+    }
+
+    private class SynthScreen2RenderView : UIView<SynthScreen2RenderView.Model> {
+        public record Model(PJ24CraftingUXML Menu) : IUIViewModel {
+            long IUIViewModel.GetViewHash() =>
+                (Menu.viewing as Viewing.Synth)?.Version ?? -1;
+        }
+        
+        public SynthScreen2RenderView(Model viewModel): base(viewModel) { }
+
+        public override void UpdateHTML() {
+            if (VM.Menu.viewing is not Viewing.Synth syn)
+                return;
+            //effects display for in-progress component item selection
+            if (syn.CurrentSelection is {} ind)
+                VM.Menu.ShowSynthEffect(ind, HTML.Q("ConsolidatedEffectInfo"));
+            VM.Menu.ShowTraits(HTML.Q("Traits"), true, Alchemy.CombineTraits(syn.Selected));
         }
     }
 

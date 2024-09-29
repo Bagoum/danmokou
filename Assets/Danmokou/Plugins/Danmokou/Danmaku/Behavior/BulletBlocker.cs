@@ -28,7 +28,7 @@ public class BulletBlocker : CoroutineRegularUpdater, IBehaviorEntityDependent,
     public Vector2 Location => beh.Location + M.RotateVector(colliderOffset, Direction);
     private Vector2 colliderOffset = Vector2.zero;
     public Vector2 Direction { get; private set; } = Vector2.right;
-    public bool ReceivesBulletCollisions(string style) => Styles.Matches(style);
+    public bool ReceivesBulletCollisions(string? style) => style is null || Styles.Matches(style);
 
     private void Awake() {
         beh = GetComponent<BehaviorEntity>();

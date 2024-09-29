@@ -81,7 +81,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
         PersistentYScale = scale;
         scaledLineRadius = lineRadius * scale;
     }
-    public void Initialize(Pather _pather, TiledRenderCfg cfg,  Material material, bool isNew, Movement mov, 
+    public void Initialize(Pather _pather, TiledRenderCfg cfg,  Material material, bool isNew, in Movement mov, 
         ParametricInfo pi, BPY rememberTime, float maxRememberTime, ref RealizedBehOptions options) {
         Pather = _pather;
         int newTexW = (int) Math.Ceiling(maxRememberTime * ETime.ENGINEFPS_F) + 1;

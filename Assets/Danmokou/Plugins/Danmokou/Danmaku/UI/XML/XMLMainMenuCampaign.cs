@@ -195,7 +195,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             new FuncNode(main_quit, Application.Quit),
         #endif
             new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
-        }.Select(x => x.WithCSS(large1Class, centerTextClass))) {
+        }.Select(x => x.WithCSS(large1Class, centerText))) {
             ExitIndexOverride = -2
         });
 

@@ -53,6 +53,8 @@ public class UXMLReferences : ScriptableObject, IUXMLReferences {
     public VisualTreeAsset HeaderNode { get; set; } = null!;
     [field:SerializeField]
     public VisualTreeAsset SaveLoadNode { get; set; } = null!;
+    [field: SerializeField] 
+    public VisualTreeAsset Cursor { get; set; } = null!;
 
     public Texture2D defaultSaveLoadBG = null!;
 

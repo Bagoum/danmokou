@@ -2,6 +2,8 @@
 using BagoumLib;
 using BagoumLib.Culture;
 using Danmokou.Behavior;
+using Danmokou.Core;
+using Danmokou.Services;
 using Danmokou.UI.XML;
 using UnityEditor;
 using UnityEngine;
@@ -13,12 +15,17 @@ namespace Danmokou.UI {
 /// </summary>
 public interface IFixedXMLReceiver {
     public LString? Tooltip => null;
-    public void OnBuilt(EmptyNode n) { }
+    public void OnBuilt(UINode n, IFixedXMLObject cfg) { }
     public UIResult? Navigate(UINode n, ICursorState cs, UICommand req);
-    public void OnEnter(UINode n, ICursorState cs);
-    public void OnLeave(UINode n, ICursorState cs);
-    public void OnPointerDown(UINode n, PointerDownEvent ev);
-    public void OnPointerUp(UINode n, PointerUpEvent ev);
+    public void OnEnter(UINode n, ICursorState cs) { }
+    public void OnLeave(UINode n, ICursorState cs) { }
+    public void OnPointerDown(UINode n, PointerDownEvent ev) { }
+    public void OnPointerUp(UINode n, PointerUpEvent ev) { }
+
+    /// <summary>
+    /// If implemented, overrides the default UINode creation for FixedXMLHelper (which makes an empty node).
+    /// </summary>
+    public UINode? CreateNode(FixedXMLHelper helper) => null;
 }
 
 /// <summary>
@@ -30,35 +37,49 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
     public Vector2 Size = Vector2.one;
     public Vector2 Offset;
     public bool keyboardNavigable = true;
+    /// <summary>
+    /// If true, the screen position of this UI element will be based on the orientation of the
+    ///  world cameras instead of the orientation of the UI camera (which is fixed at loc 0,0 size 16,9).
+    /// </summary>
+    public bool rendersInWorldSpace = false;
+    private CameraInfo? targetCam;
 
-    public string[] xmlClasses = null!;
     public FixedXMLObject XML { get; private set; } = null!;
-    public EmptyNode Node { get; private set; } = null!;
+    public UINode Node { get; private set; } = null!;
 
-    public MonoBehaviour actionHandler = null!;
-    
-    public IFreeformContainer? Container { get; set; }
-    private IFixedXMLReceiver Receiver => 
-        (actionHandler as IFixedXMLReceiver) ??
-        throw new Exception($"Action handler {actionHandler} is not an IFixedXMLReceiver");
+    public IFixedXMLReceiver? Receiver { get; set; }
 
-    public Vector2 XMLLocation => UIBuilderRenderer.ToXMLPos((Vector2)transform.position + Offset);
-    public Vector2 XMLSize => UIBuilderRenderer.ToXMLDims(Size);
+    public FixedXMLView CreateView(bool asEmpty) => new(new(XML, Receiver)) {
+        AsEmpty = asEmpty,
+        IsKeyboardNavigable = keyboardNavigable
+    };
 
     private void Awake() {
-        XML = new(XMLLocation.x, XMLLocation.y, XMLSize.x, XMLSize.y) {
-            Descriptor = gameObject.name,
-        };
-
-        Node = new EmptyNode(new FixedXMLView(new(XML, Receiver)) {
-            AsEmpty = true,
-            IsKeyboardNavigable = keyboardNavigable
-        });
-        Node.WithCSS(xmlClasses);
+        XML = new(Vector2.zero, null) { Descriptor = gameObject.name };
     }
+    
     public override void FirstFrame() {
-        var menu = Container ?? ServiceLocator.Find<XMLDynamicMenu>();
-        menu.AddNodeDynamic(Node);
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (Node is not null) return;
+        ServiceLocator.Find<XMLDynamicMenu>().AddNodeDynamic(MakeNode());
+    }
+
+    public UINode MakeNode() {
+        UpdateXML();
+        return Node = Receiver?.CreateNode(this) ?? new EmptyNode(CreateView(true));
+    }
+
+    private void UpdateXML() {
+        var worldPos = transform.position + (Vector3)Offset;
+        targetCam ??= CameraRenderer.FindCapturer(1 << gameObject.layer).Try(out var camr) 
+            ? camr.CamInfo : UIBuilderRenderer.UICamInfo;
+        //gameObject.la
+        var l = targetCam.ToXMLPos(worldPos);
+        var s = targetCam.ToXMLDims(worldPos, Size);
+        XML.Left.PublishIfNotSame(l.x);
+        XML.Top.PublishIfNotSame(l.y);
+        XML.Width.PublishIfNotSame(s.x);
+        XML.Height.PublishIfNotSame(s.y);
     }
 
     protected override void OnDisable() {
@@ -66,14 +87,9 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
         Node.Remove();
     }
 
-    [ContextMenu("Update locations")]
-    public void UpdatedLocations() {
-        var l = XMLLocation;
-        var s = XMLSize;
-        XML.Left.Value = l.x;
-        XML.Top.Value = l.y;
-        XML.Width.Value = s.x;
-        XML.Height.Value = s.y;
+    public override void RegularUpdate() {
+        UpdateXML();
+        base.RegularUpdate();
     }
 
 #if UNITY_EDITOR

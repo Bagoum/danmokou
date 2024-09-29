@@ -200,8 +200,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 #endif
     }
 
-    public void Initialize(Movement mov, ParametricInfo pi, SMRunner? sm, string behName = "") =>
-        Initialize(null, mov, pi, sm, null, behName);
+    public void Initialize(in Movement mov, ParametricInfo pi, SMRunner? sm, string behName = "") =>
+        Initialize(null, in mov, pi, sm, null, behName);
 
     /// <summary>
     /// If parented, we need firing offset to update Velocity's root position with parent.pos + offset every frame.
@@ -218,23 +218,23 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// <param name="parent">Transform parent of this BEH. Use sparingly</param>
     /// <param name="behName"></param>
     /// <param name="options"></param>
-    public void Initialize(BEHStyleMetadata? style, Movement mov, ParametricInfo pi, SMRunner? smr,
+    public void Initialize(BEHStyleMetadata? style, in Movement mov, ParametricInfo pi, SMRunner? smr,
         BehaviorEntity? parent=null, string behName="", RealizedBehOptions? options=null) {
         if (parent != null) TakeParent(parent);
         isSummoned = true;
         Options = options;
         bpi = pi;
-        tr.localPosition = firedOffset = mov.rootPos;
-        mov.rootPos = bpi.loc = tr.position;
-        original_angle = mov.angle;
         movement = mov;
+        tr.localPosition = firedOffset = movement.rootPos;
+        movement.rootPos = bpi.loc = tr.position;
+        original_angle = movement.angle;
         doVelocity = !movement.IsEmpty();
         if (doVelocity) {
             SetMovementDelta(movement.UpdateZero(ref bpi));
             tr.position = bpi.loc;
         }
-        if (options?.rotator != null) {
-            var rot = (Rotator = options?.rotator!)(bpi);
+        if (options?.rotator is {} rotator) {
+            var rot = (Rotator = rotator)(bpi);
             RotatorRotation = rot;
             tr.localEulerAngles = new Vector3(0, 0, rot);
         }
@@ -578,7 +578,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// While you can pass null here, that will still allocate some Task garbage.
     /// </summary>
     public async Task RunBehaviorSM(SMRunner sm, SMContext? context = null) {
-        if (sm.sm == null) 
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (sm.sm == null) //check this just to be safe
             return;
         if (sm.cT.Cancelled)
             throw new OperationCanceledException();

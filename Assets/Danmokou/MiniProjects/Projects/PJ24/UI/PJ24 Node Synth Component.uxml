@@ -12,5 +12,6 @@
                 <engine:Label text="(Possible effect)" name="Effect" style="-unity-text-align: upper-left; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 0; margin-bottom: 0; margin-left: 20px; -unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-R%20SDF.asset?fileID=11400000&amp;guid=a4ca5d8a7e0241f41b58c69f59b3bca2&amp;type=2#Ubuntu-R SDF&quot;); font-size: 60px; color: rgb(95, 63, 52); min-width: 900px;" />
             </engine:VisualElement>
         </engine:VisualElement>
+        <engine:VisualElement name="CursorTarget" class="cursor-target" style="left: 2%; top: 55%;" />
     </engine:VisualElement>
 </engine:UXML>

@@ -133,7 +133,7 @@ public static partial class Reflector {
         }
 
         for (int ii = starti; ii < endi; ++ii) {
-            if (prms[ii].NonExplicit) {
+            if (sig.Mi.FeaturesAt(ii)?.NonExplicit is true) {
                 asts[ii] = ReflectNonExplicitParam(q, prms[ii]);
             } else {
                 bool ThrowEmpty(IParseQueue lq) {
@@ -143,7 +143,7 @@ public static partial class Reflector {
                         asts[ii] = new AST.Failure(
                             new ReflectionException(new(endP, endP.Increment()), lq.WrapThrow(
                             $"Tried to construct {q.AsFileLink(sig)}, but the parser ran out of text when looking for argument " +
-                            $"#{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription}. " +
+                            $"#{ii + 1}/{prms.Length} ({prms[ii].AsParameter}). " +
                             "This probably means you have parentheses that do not enclose the entire function.") +
                             $" | [Arg#{ii + 1} Missing]"), prms[ii]);
                         return true;
@@ -153,9 +153,9 @@ public static partial class Reflector {
                 var local = q.NextChild();
                 if (ThrowEmpty(local)) continue;
                 string MakeErr() => $"Tried to construct {q.AsFileLink(sig)}, but failed to create argument " +
-                                    $"#{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription}.";
+                                    $"#{ii + 1}/{prms.Length} ({prms[ii].AsParameter})";
                 try {
-                    if ((asts[ii] = ReflectParam(local, prms[ii])).IsUnsound) {
+                    if ((asts[ii] = ReflectParam(local, prms[ii], sig.Mi.FeaturesAt(ii))).IsUnsound) {
                         asts[ii] = new AST.Failure(new(local.Position, MakeErr()), prms[ii]) { Basis = asts[ii] };
                         continue;
                     }
@@ -165,7 +165,7 @@ public static partial class Reflector {
                 }
                 if (local.HasLeftovers(out var lpi))
                     asts[ii] = new AST.Failure(local.WrapThrowLeftovers(lpi,
-                            $"Argument #{ii + 1}/{prms.Length} {prms[ii].SimplifiedDescription} has extra text."),
+                            $"Argument #{ii + 1}/{prms.Length} ({prms[ii].AsParameter}) has extra text."),
                         prms[ii]) { Basis = asts[ii] };
             }
         }
@@ -336,8 +336,8 @@ public static partial class Reflector {
             throw new StaticException($"No non-explicit reflection handling exists for type {p.Type.SimpRName()}");
     }
 
-    private static IAST ReflectParam(IParseQueue q, NamedParam p) {
-        if (p.LookupMethod) {
+    private static IAST ReflectParam(IParseQueue q, NamedParam p, ParamFeatures? pf) {
+        if (pf?.LookupMethod is true) {
             if (p.Type.GenericTypeArguments.Length == 0) 
                 throw new StaticException("Method-Lookup parameter must be generic");
             RecurseParens(ref q, p.Type);

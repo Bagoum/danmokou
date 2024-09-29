@@ -17,6 +17,7 @@ using Danmokou.ADV;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Services;
+using Danmokou.UI;
 using Danmokou.UI.XML;
 using Danmokou.VN;
 using MiniProjects.VN;
@@ -110,7 +111,7 @@ public class WPGameDef : ADVGameDef {
                                 Prefab = XMLUtils.Prefabs.PureTextNode, 
                                 BaseInteractable = false, 
                                 OnBuilt = n => n.Style.minHeight = 500
-                            }.WithCSS(XMLUtils.fontBiolinumClass, XMLUtils.small1Class)
+                            }.WithCSS(XMLUtils.fontBiolinumClass)
                             .Bind(new FlagView(new(() => ev.Enabled, ev.Description, 
                                 "I don't have any evidence to put here."))),
                         new UIButton("Use Evidence", UIButton.ButtonType.Confirm, _ => {
@@ -484,6 +485,8 @@ public class WPGameDef : ADVGameDef {
                 var w = VN.Find<LilyWhite>();
                 var l = VN.Find<Letty>();
                 using var _ = evidenceRequest.Request(lilyInt);
+                using var _1 = LinkCallback.RegisterClicker(("0", $"clicked"));
+                using var _2 = LinkCallback.RegisterHoverer(("0", $"hover"));
                 await vn.Sequential(
                     l.ESayC("happy", l116),
                     w.ESayC("cry", l117),
@@ -853,6 +856,12 @@ public class WPGameDef : ADVGameDef {
                 i.Assert(new CharacterAssertion<Reimu>(VN) {
                     Location = V3(-5, -0.6), Scale = V3(0.4f)
                 });
+                /*i.Assert(new RunOnEntryAssertion(async () => {
+                    vn.DefaultRenderGroup.ZoomTarget.Value = new(8, 4, 0);
+                    _ = vn.Sequential(vn.DefaultRenderGroup.ZoomTo(1.7f, 4),
+                        vn.DefaultRenderGroup.ZoomTo(0.8f, 4)
+                        ).Task;
+                }));*/
                 if (!d.State.RemovedLily)
                     i.Assert(
                         new CharacterAssertion<LilyWhite>(VN) {

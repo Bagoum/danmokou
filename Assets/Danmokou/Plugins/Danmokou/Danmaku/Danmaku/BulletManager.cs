@@ -139,24 +139,25 @@ public partial class BulletManager {
             sbc.temp_last = sbc.Count;
         NPCBulletsRequireBucketing = ServiceLocator.FindAll<IEnemySimpleBulletCollisionReceiver>().NumberAlive() > 1;
         //Velocity and control updates
-        foreach (var sbc in activeEmpty)
-            sbc.UpdateVelocityAndControls();
+        for (int ii = 0; ii < activeEmpty.Count; ++ii)
+            activeEmpty[ii].UpdateVelocityAndControls();
         Profiler.BeginSample("NPC-fired simple bullet velocity updates");
-        foreach (var sbc in activeNpc)
-            sbc.UpdateVelocityAndControls(NPCBulletsRequireBucketing);
+        for (int ii = 0; ii < activeNpc.Count; ++ii)
+            activeNpc[ii].UpdateVelocityAndControls(NPCBulletsRequireBucketing);
         Profiler.EndSample();
         Profiler.BeginSample("Player simple bullet velocity updates");
-        foreach (var sbc in activePlayer)
-            sbc.UpdateVelocityAndControls();
+        for (int ii = 0; ii < activePlayer.Count; ++ii)
+            activePlayer[ii].UpdateVelocityAndControls();
         Profiler.EndSample();
-        foreach (var sbc in activeCulled)
-            sbc.UpdateVelocityAndControls();
+        for (int ii = 0; ii < activeCulled.Count; ++ii)
+            activeCulled[ii].UpdateVelocityAndControls();
     }
 
     public override void RegularUpdateCollision() {
         var collidees = ServiceLocator.FindAll<IEnemySimpleBulletCollisionReceiver>();
         Profiler.BeginSample("NPC simple bullet collisions");
-        foreach (var sbc in activeNpc) {
+        for (int ii = 0; ii < activeNpc.Count; ++ii) {
+            var sbc = activeNpc[ii];
             if (sbc.Count > 0)
                 for (int ic = 0; ic < collidees.Count; ++ic)
                     if (collidees.GetIfExistsAt(ic, out var receiver))
@@ -166,7 +167,8 @@ public partial class BulletManager {
 
         Profiler.BeginSample("Player simple bullet collisions");
         var enemies = ServiceLocator.FindAll<IPlayerSimpleBulletCollisionReceiver>();
-        foreach (var sbc in activePlayer) {
+        for (int ii = 0; ii < activePlayer.Count; ++ii) {
+            var sbc = activePlayer[ii];
             if (sbc.Count > 0)
                 for (int ie = 0; ie < enemies.Count; ++ie)
                     if (enemies.GetIfExistsAt(ie, out var receiver))

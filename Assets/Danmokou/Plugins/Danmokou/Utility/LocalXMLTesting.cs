@@ -23,12 +23,11 @@ public class LocalXMLTesting : CoroutineRegularUpdater {
     public FixedXMLObject XML { get; private set; } = null!;
     public Sprite testIcon = null!;
 
-    public Vector2 XMLLocation => UIBuilderRenderer.ToXMLPos((Vector2)transform.position + Offset);
-    public Vector2 XMLSize => UIBuilderRenderer.ToXMLDims(Size);
     public bool[] visible = new bool[4];
 
     public override void FirstFrame() {
-        XML = new(XMLLocation.x, XMLLocation.y, null, null) {
+        var xmlLoc = UIBuilderRenderer.UICamInfo.ToXMLPos((Vector2)transform.position + Offset);
+        XML = new(xmlLoc.x, xmlLoc.y, null, null) {
             Descriptor = gameObject.name
         };
         var menu = ServiceLocator.Find<XMLDynamicMenu>();
@@ -48,7 +47,7 @@ public class LocalXMLTesting : CoroutineRegularUpdater {
                 VisibleIf = () => visible[i]
             }.WithCSS(XMLUtils.noPointerClass, XMLUtils.highVisClass);
             node.RootView.OnFirstRender((n, cT) => {
-                var delta = (Vector3)UIBuilderRenderer.ToXMLDims(new(0, 5));
+                var delta = (Vector3)UIBuilderRenderer.ToUIXMLDims(new(0, 5));
                 n.HTML.transform.position -= delta;
                 return new NoopTweener(0.2f * i, cT).Then(
                     n.HTML.transform.TranslateBy(delta, 1.4f, Easers.EOutBack, cT).Parallel(
@@ -63,7 +62,7 @@ public class LocalXMLTesting : CoroutineRegularUpdater {
             new UIRenderConstructed(menu.FreeformGroup.Render, new(XMLUtils.AddColumn), (_, ve) => {
                 ve.ConfigureAbsolute(XMLUtils.Pivot.Top);
                 ve.style.top = 400;
-                ve.style.left = UIBuilderRenderer.ToXMLPos(Vector2.zero).x;
+                ve.style.left = 1900;
                 ve.style.width = 26f.Percent();
                 ve.style.height = new StyleLength(StyleKeyword.Auto);
                 ve.SetPadding(30, 50, 30, 50);
@@ -75,15 +74,6 @@ public class LocalXMLTesting : CoroutineRegularUpdater {
         ) {
             Interactable = false
         });
-        /*
-        _ = menu.OperateOnResult(PopupUIGroup.CreatePopup(menu.Unselect, () => "Popup header",
-            r => new UIColumn(r, new UINode("col 1") { Prefab = XMLUtils.Prefabs.PureTextNode, Passthrough = true },
-                //This empty node will be the entry node of the popup, so the cancel node will not be selected by default.
-                new EmptyNode()),
-            new PopupButtonOpts.Centered(new UINode[] {
-                new UIButton("Cancel", UIButton.ButtonType.Cancel, UIButton.GoBackCommand(menu.Unselect)),
-                new UIButton("OK", UIButton.ButtonType.Confirm, UIButton.GoBackCommand(menu.Unselect))
-            })), null);*/
     }
 
 

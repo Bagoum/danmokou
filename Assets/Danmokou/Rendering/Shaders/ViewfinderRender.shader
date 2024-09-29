@@ -44,8 +44,6 @@
 			float _T;
 			float4 _Tint;
 			
-			float _ScreenWidth;
-			float _ScreenHeight;
 			float _OffX;
 			float _OffY;
 			float _ScaleX;
@@ -56,12 +54,13 @@
 				fragment f;
 				f.loc = UnityObjectToClipPos(v.loc);
 				f.c = v.color * _Tint;
+				float texAspect = _MainTex_TexelSize.z / _MainTex_TexelSize.w;
 				f.uv = v.uv;
 				f.uv -= float2(0.5, 0.5);
-				f.uv *= float2(_ScreenWidth, _ScreenHeight);
+				f.uv *= float2(texAspect, 1);
 				f.uv *= float2(_ScaleX, _ScaleY);
 				f.uv = rot2(_Angle, f.uv);
-				f.uv /= float2(_ScreenWidth, _ScreenHeight);
+				f.uv /= float2(texAspect, 1);
 				f.uv += float2(0.5, 0.5);
 				f.uv += float2(_OffX, _OffY);
 				return f;

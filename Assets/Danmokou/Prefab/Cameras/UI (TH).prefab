@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 37000146880203245}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.9, y: 0, z: -10}
+  m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -126,7 +126,7 @@ Transform:
   m_GameObject: {fileID: 268707954591982176}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -213,6 +213,7 @@ GameObject:
   - component: {fileID: 7922427210909136936}
   - component: {fileID: 6825078790550220629}
   - component: {fileID: 6760385609784745444}
+  - component: {fileID: 7168422005079082394}
   m_Layer: 0
   m_Name: UI (TH)
   m_TagString: Untagged
@@ -259,7 +260,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   autoShiftCamera: 1
-  uiCamera: {fileID: 9168421543190852496}
+  uiCamera: {fileID: 838350075727576897}
   PauseManager: {fileID: 2751001841577565892}
   frame: {fileID: 3083115505800647680}
   spellnameText: {fileID: 450338262309360461}
@@ -421,6 +422,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4d610ac42d91df46a63f3c5430fcf16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7168422005079082394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 268707954954881334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e99778526ee593b46860eea531b5bb4b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dflt:
+    cursor: {fileID: 2800000, guid: ef8d5834fade8344f8875fb82841b2b4, type: 3}
+    offset: {x: 6, y: 6}
+  button:
+    cursor: {fileID: 2800000, guid: 703a78e3fc96c3342af0449f4659f846, type: 3}
+    offset: {x: 10, y: 6}
+  text:
+    cursor: {fileID: 2800000, guid: e6edf36da32a91c40a6f6e7a9daff784, type: 3}
+    offset: {x: 32, y: 6}
 --- !u!1 &336973224485304437
 GameObject:
   m_ObjectHideFlags: 0
@@ -535,7 +557,7 @@ Transform:
   m_GameObject: {fileID: 370770824466782023}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1204,7 +1226,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 7.3, y: -4.3}
+  m_AnchoredPosition: {x: 5.4, y: -4.3}
   m_SizeDelta: {x: 2, y: 0.5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &8809623435329334476
@@ -1756,7 +1778,7 @@ Transform:
   m_GameObject: {fileID: 995578655549709916}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -1.9, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2008,7 +2030,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lowerText: {fileID: 6292335003614254153}
   displayContainer: {fileID: 3944038565794437893}
-  uiParent: {fileID: 268707954954881333}
   startOffset: {x: 4, y: 0}
   inTime: 1
   inLerp: ceoutback(2.2, t)
@@ -8227,7 +8248,6 @@ MonoBehaviour:
   showOptsSound: {fileID: 11400000, guid: 069c9c964b7962e48a1293683803bbb5, type: 2}
   openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
   closePauseSound: {fileID: 11400000, guid: ae28e1c6c483e1548943d8262b94e1bf, type: 2}
-  pauseMenu: {fileID: 2751001841577565892}
   BacklogEntry: {fileID: 9197481963319205126, guid: b486e4109b0309a4eba4774af138130b,
     type: 3}
 --- !u!114 &787389502131262120
@@ -9118,7 +9138,7 @@ Transform:
   m_GameObject: {fileID: 7223238248130683206}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -9138,6 +9158,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9d37bde79c3ed0448e78a53fa8e425d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  uiCamera: {fileID: 9168421543190852496}
   settings:
   - pane: {fileID: 11400000, guid: 9859cc4a0115c984db28be38f2fbec8a, type: 2}
     renderGroup: 0

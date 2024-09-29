@@ -50,7 +50,7 @@ public static class AoTHelper_CG {{
         foreach (var (gmib, ts) in GenericMethodSignature.specializeCache
                      .Select(kv => (Mi: kv.Key.Item2.Member, kv.Key.Item1))
                      .Distinct()
-                     .OrderBy(g => g.Mi.Name)) {
+                     .OrderBy(g => g.Mi.BaseMi.Name)) {
             if (gmib is TypeMember.Method gmi) {
                 AddConstructedMethod(gmi.Mi, ts.Data);
             } else

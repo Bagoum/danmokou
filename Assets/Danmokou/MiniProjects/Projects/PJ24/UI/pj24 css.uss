@@ -1,6 +1,5 @@
 .pj24node {
     max-width: 100%;
-    /*height: 90px;*/
     -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/RocknRollOne-Regular.ttf?fileID=12800000&guid=dad637643ac27d44f94bd64003a3100d&type=3#RocknRollOne-Regular");
     font-size: 48px;
     color: rgb(96, 71, 62);
@@ -9,19 +8,34 @@
     align-content: center;
     white-space: normal;
 }
-.synthComponent, .synthComponent #Banner {
+
+.synthComponent {
     transition: all 0.2s ease;
 }
-.pj24node, .synthComponent #Banner {
+
+.synthComponent #Banner {
+    transition: all 0.2s ease;
+}
+
+.pj24node {
     -unity-background-image-tint-color: rgb(218, 211, 208);
 }
+
+.synthComponent #Banner {
+    -unity-background-image-tint-color: rgb(218, 211, 208);
+}
+
 .pj24node.large {
     height: 130px;
     font-size: 80px;
     margin-top: 20px;
 }
 
-.pj24node.node-invisible, .synthComponent.node-invisible {
+.pj24node.node-invisible {
+    display: none;
+}
+
+.synthComponent.node-invisible {
     display: none;
 }
 
@@ -32,25 +46,38 @@
 .pj24node.node-focus {
     -unity-background-image-tint-color: rgb(241, 237, 236);
 }
+
 .synthComponent.node-focus #Banner {
-    -unity-background-image-tint-color: rgb(255,255,255);
+    -unity-background-image-tint-color: rgb(255, 255, 255);
 }
-.pj24node.recipe.node-focus, .synthComponent.node-focus #Banner {
+
+.pj24node.recipe.node-focus {
     translate: 20px -5px;
 }
 
-.pj24node.recipe.uncraftable, .underlinetext.uncraftable {
-    color: #af1f22;
+.synthComponent.node-focus #Banner {
+    translate: 20px -5px;
+}
+
+.pj24node.recipe.uncraftable {
+    color: rgb(175, 31, 34);
+}
+
+.underlinetext.uncraftable {
+    color: rgb(175, 31, 34);
 }
 
 .pj24node.pbutton {
     max-width: none;
     width: auto;
     scale: 0.9 0.9;
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/RocknRollOne-Regular.ttf?fileID=12800000&guid=dad637643ac27d44f94bd64003a3100d&type=3#RocknRollOne-Regular");
 }
+
 .pj24node.pbutton.node-focus {
     scale: 1.2 1.2;
 }
+
 .pj24node.pbutton.node-disabled {
     opacity: 0.52;
 }
@@ -67,35 +94,49 @@
     justify-content: space-between;
     -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/RocknRollOne-Regular.ttf?fileID=12800000&guid=dad637643ac27d44f94bd64003a3100d&type=3#RocknRollOne-Regular");
     font-size: 44px;
-    color: #60473e;
+    color: rgb(96, 71, 62);
     height: 80px;
 }
 
 #Time {
     color: rgb(96, 71, 62);
 }
+
 .pj24node #Meter {
     width: 320px;
     height: 40px;
 }
+
 .narrowmeter .pj24node #Meter {
     width: 200px;
 }
-.underlinetext #Count, .underlinetext #Meter {
+
+.underlinetext #Count {
     display: none;
 }
+
+.underlinetext #Meter {
+    display: none;
+}
+
 .ingredient .underlinetext #Count {
     display: flex;
 }
+
 .metered .underlinetext #Meter {
     display: flex;
 }
+
 .metered .underlinetext {
-    color: #9d5b44;
+    color: rgb(157, 91, 68);
 }
 
-.underlinetext.empty #Content, .underlinetext.empty #Content {
-    display:none;
+.underlinetext.empty #Content {
+    display: none;
+}
+
+.underlinetext.empty #Content {
+    display: none;
 }
 
 .unity-scroll-view {
@@ -164,12 +205,12 @@
     padding-right: 130px;
     padding-top: 120px;
     padding-bottom: 140px;
-    background-color: rgba(0,0,0,0);
+    background-color: rgba(0, 0, 0, 0);
     border-color: var(--liner);
-    border-left-width: 0px;
-    border-right-width: 0px;
-    border-top-width: 0px;
-    border-bottom-width: 0px;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
     position: absolute;
     max-width: 1650px;
     -unity-text-align: upper-center;
@@ -177,5 +218,12 @@
     align-items: center;
     min-width: 1000px;
     -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/RocknRollOne-Regular.ttf?fileID=12800000&guid=dad637643ac27d44f94bd64003a3100d&type=3#RocknRollOne-Regular");
-    background-image: url("project://database/Assets/Danmokou/MiniProjects/raw/pj24/wide%20rect.png?fileID=-855298285791758126&amp;guid=d7ce0a306424beb41af625423678d5d5&amp;type=3#wide rect_0");
+    background-image: url("project://database/Assets/Danmokou/MiniProjects/raw/pj24/wide%20rect.png?fileID=-855298285791758126&guid=d7ce0a306424beb41af625423678d5d5&type=3#wide rect_0");
+}
+
+.cursor-target {
+    flex-grow: 1;
+    position: absolute;
+    left: 5%;
+    top: 50%;
 }

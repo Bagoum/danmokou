@@ -108,7 +108,7 @@ public static class FragmentRendering {
             pb.SetTexture(PropConsts.mainTex, tex);
             pb.SetFloat(PropConsts.FragmentDiameter, config.FragmentDiameter);
             pb.SetFloat(PropConsts.FragmentSides, config.fragmentSides);
-            var size = texSize ?? new Vector2(DMKMainCamera.ScreenWidth, DMKMainCamera.ScreenHeight);
+            var size = texSize ?? new Vector2(MainCamera.MCamInfo.ScreenWidth, MainCamera.MCamInfo.ScreenHeight);
             pb.SetFloat(PropConsts.texWidth, size.x);
             pb.SetFloat(PropConsts.texHeight, size.y);
             this.cb = cb;

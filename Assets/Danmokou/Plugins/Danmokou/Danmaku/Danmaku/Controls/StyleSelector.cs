@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using BagoumLib.DataStructures;
 using Danmokou.Core;
 
 namespace Danmokou.Danmaku {

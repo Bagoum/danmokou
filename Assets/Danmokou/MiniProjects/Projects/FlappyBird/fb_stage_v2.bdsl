@@ -22,6 +22,8 @@ function obj2(y = 0, x = rand(4, 5.2), c = "amulet-orange/w") {
         { hp 100 })
 }
 
+//NB: This is a macro because it takes `Lplayer` as an argument in its usage below.
+// If it were a function, `Lplayer` would be calculated at expression compilation time (and be set to <0,0>).
 macro obj3(y = 2, x = 5) {
     color "tlfairy" summonr(none(cx(9)), 
         saction 0 {

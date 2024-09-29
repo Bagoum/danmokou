@@ -115,6 +115,7 @@ public abstract class UIRenderSpace {
     public Func<UIRenderSpace, ICancellee, Task>? IsNotVisibleAnimation { get; set; }
     public bool IsFirstRender { get; set; } = true;
     public virtual bool IsAnimating => animateToken?.Cancelled is false;
+    public bool IsAnimatingInTree => IsAnimating || Parent?.IsAnimatingInTree is true;
     protected Cancellable? animateToken;
 
     public UIRenderSpace(UIScreen screen, UIRenderSpace? parent) {
@@ -362,8 +363,11 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
         var bgc = absTerr.style.backgroundColor.value;
         absTerr.style.display = DisplayStyle.None;
         absTerr.RegisterCallback<PointerUpEvent>(evt => {
-            if (evt.button != 0 || screen.Controller.Current == null || IsAnimating) return;
-            //Logs.Log("Clicked on absolute territory");
+            if (evt.button != 0 || Controller.Current is not {} curr || IsAnimating) 
+                return;
+            //When popups are nested, clicking on the parent popups should also result in a Back
+            if (Controller.TargetedPopup == PopupUIGroup.LowestInHierarchy(curr)) 
+                return;
             screen.Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Back, null));
             evt.StopPropagation();
         });

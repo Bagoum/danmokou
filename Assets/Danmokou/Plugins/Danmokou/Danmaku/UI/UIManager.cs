@@ -34,7 +34,7 @@ public struct PrioritySprite {
 }
 
 public interface IUIManager {
-    Camera Camera { get; }
+    CameraRenderer Camera { get; }
     void SetBossHPLoader(Enemy? boss);
     void CloseBoss();
     void CloseProfile();
@@ -59,10 +59,9 @@ public interface IStageAnnouncer {
 }
 
 public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
-
     public bool autoShiftCamera;
-    [FormerlySerializedAs("camera")] public Camera uiCamera = null!;
-    public Camera Camera => uiCamera;
+    public CameraRenderer uiCamera = null!;
+    public CameraRenderer Camera => uiCamera;
     public XMLPauseMenu PauseManager = null!;
     public SpriteRenderer frame = null!;
     public TextMeshPro spellnameText = null!;
@@ -137,9 +136,9 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
         SetProfile(defaultProfile, defaultProfile);
         SetBossHPLoader(null);
         if (autoShiftCamera) 
-            uiCamera.transform.localPosition = 
+            transform.localPosition = 
                 new Vector3(-LocationHelpers.PlayableBounds.center.x, -LocationHelpers.PlayableBounds.center.y, 
-                    uiCamera.transform.localPosition.z);
+                    transform.localPosition.z);
     }
 
     protected override void BindListeners() {

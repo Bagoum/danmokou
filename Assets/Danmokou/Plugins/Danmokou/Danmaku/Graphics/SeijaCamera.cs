@@ -44,16 +44,16 @@ public readonly struct BlackHoleEffect {
         this.fadeBackT = fadeBackT;
     }
 }
-public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
+public class SeijaCamera : CameraRenderer, IShaderCamera {
     private static readonly int rotX = Shader.PropertyToID("_RotateX");
     private static readonly int rotY = Shader.PropertyToID("_RotateY");
     private static readonly int rotZ = Shader.PropertyToID("_RotateZ");
     private static readonly int xBound = Shader.PropertyToID("_XBound");
     private static readonly int yBound = Shader.PropertyToID("_YBound");
     private static readonly int blackHoleT = Shader.PropertyToID("_BlackHoleT");
-
-
-    private Camera cam = null!;
+    private static readonly int globalXOffsetID = Shader.PropertyToID("_GlobalXOffset");
+    private static readonly int camHeightID = Shader.PropertyToID("_CamHeight");
+    
 
     private readonly DisturbedSum<float> targetXRot = new(0f);
     private readonly DisturbedSum<float> targetYRot = new(0);
@@ -71,12 +71,9 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
     public Shader seijaShader = null!;
     private Material seijaMaterial = null!;
 
-    private void Awake() {
-        cam = GetComponent<Camera>();
+    protected override void Awake() {
+        base.Awake();
         seijaMaterial = new Material(seijaShader);
-        seijaMaterial.SetFloat(xBound, LocationHelpers.PlayableBounds.right + 1);
-        seijaMaterial.SetFloat(yBound, LocationHelpers.PlayableBounds.top + 1);
-        SetLocation(0, 0);
     }
 
     protected override void BindListeners() {
@@ -85,6 +82,20 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
 
         Listen(targetXRot, _ => UndoAddition());
         Listen(targetYRot, _ => UndoAddition());
+    }
+
+    public override void FirstFrame() {
+        UpdateBounds();
+        SetLocation(0, 0);
+    }
+
+    private void UpdateBounds() {
+        //Cut off the rendering just outside of the play area in order to avoid artifacting
+        seijaMaterial.SetFloat(xBound, LocationHelpers.PlayableBounds.right + 1);
+        seijaMaterial.SetFloat(yBound, LocationHelpers.PlayableBounds.top + 1);
+        seijaMaterial.SetFloat(globalXOffsetID, LocationHelpers.PlayableBounds.center.x);
+        seijaMaterial.SetFloat(camHeightID, MainCamera.MCamInfo.ScreenHeight);
+        //seijaMaterial.SetFloat(ShaderScrnWidthID, ScreenWidth);
     }
 
     private void UndoAddition() {
@@ -181,9 +192,6 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
             seijaMaterial.DisableKeyword("FT_PIXELIZE");
     }
 
-    private void OnPreRender() {
-        cam.targetTexture = DMKMainCamera.RenderTo;
-    }
     private void OnRenderImage(RenderTexture src, RenderTexture dest) {
         //Dest is dirty, rendering to it directly can cause issues if there are alpha pixels.
         //However, SeijaCamera shader uses One Zero, so we don't need to explicitly clear.
@@ -191,6 +199,9 @@ public class SeijaCamera : CoroutineRegularUpdater, IShaderCamera {
         UnityEngine.Graphics.Blit(src, dest, seijaMaterial);
     }
 
+    [ContextMenu("YRot")]
+    public void debugYRot() => _ = AddYRotation(30, 2f);
+    
     [ContextMenu("Black hole")]
     public void debugBlackHole() => ShowBlackHole(new BlackHoleEffect(5, 1, 2));
 

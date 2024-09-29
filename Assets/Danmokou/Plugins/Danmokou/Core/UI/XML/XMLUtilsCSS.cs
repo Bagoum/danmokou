@@ -30,20 +30,19 @@ public static class XMLUtils {
     
     public const string highVisClass = "highvis";
     public const string noPointerClass = "nopointer";
+    public const string fontJosefin = "font-josefin";
     public const string fontUbuntuClass = "font-ubuntu";
     public const string fontControlsClass = "font-controls";
     public const string fontBiolinumClass = "font-biolinum";
-    public const string monospaceClass = "monospace";
+    public const string recordDisplayClass = "record-display";
     public const string noSpacePrefixClass = "nospaceprefix";
     public const string large1Class = "large1";
     public const string large2Class = "large2";
     public const string small1Class = "small1";
     public const string small2Class = "small2";
-    public const string small3Class = "small3";
     public const string optionNoKeyClass = "nokey";
     public const string hideClass = "hide";
-    public const string descriptorClass = "descriptor";
-    public const string centerTextClass = "centertext";
+    public const string centerText = "centertext";
     public const string dropdownSelect = "checked";
     public const string dropdownUnselect = "unchecked";
     public const string dropdownTarget = "dropdown-target";
@@ -93,6 +92,8 @@ public static class XMLUtils {
     public static VisualElement SetPadding(this VisualElement root, float padding) =>
         root.SetPadding(padding, padding, padding, padding);
 
+    public static Vector2 InvertY(this Vector2 v) => new(v.x, -v.y);
+    
     public static class Pivot {
         public static Vector2 TopLeft { get; } = new(0, 1);
         public static Vector2 Top { get; } = new(0.5f, 1);
@@ -307,7 +308,7 @@ public static class XMLUtils {
     public static VisualElement ConfigureParentedFloatingImage(this VisualElement ve, Sprite s) {
         ve.ConfigureAbsolute(s.Pivot())
             .WithAbsolutePositionCentered()
-            .SetWidthHeight(UIBuilderRenderer.ToXMLDims(s.Dims()))
+            .SetWidthHeight(UIBuilderRenderer.ToUIXMLDims(s.Dims()))
             .style.backgroundImage = new(s);
         return ve;
     }
@@ -316,7 +317,7 @@ public static class XMLUtils {
             .ConfigureImage(s);
     
     public static VisualElement ConfigureImage(this VisualElement ve, Sprite s) {
-        ve.SetWidthHeight(UIBuilderRenderer.ToXMLDims(s.Dims()))
+        ve.SetWidthHeight(UIBuilderRenderer.ToUIXMLDims(s.Dims()))
             .style.backgroundImage = new(s);
         return ve;
     }

@@ -108,6 +108,9 @@ public class InstanceData {
     
     public ActiveTeamConfig? TeamCfg { get; private set; }
 
+#if UNITY_EDITOR
+    public void GetOrSetTeam_DebugLoad(ActiveTeamConfig? deflt) => TeamCfg ??= deflt;
+#endif
     public ActiveTeamConfig GetOrSetTeam(ActiveTeamConfig deflt) {
         if (TeamCfg is null) {
             TeamCfg = deflt;

@@ -16,6 +16,14 @@ The following features are planned for future releases.
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
+# v11.3.0 (2024/10/04)
+
+#### UI Changes
+
+- Added support for a custom cursor, configured by any "Cursor Manager" script (by default, there is one attached to the `UI (TH)` game object.) Mousing over a clickable UI node will switch to the button-based cursor. There is currently no support for the text-based cursor. Note that by default, cursor size is based on the computer running the program (ie. a computer will automatically scale the cursor to approximately the size of the computer's default cursor). You can disable this by using `UnityEngine.CursorMode.ForceSoftware` in `CursorManager.cs`, which will force the cursor to be the size of the cursor texture regardless of screen size.
+
+
+
 # v11.2.0 (2024/08/04)
 
 #### UI Changes
@@ -24,10 +32,10 @@ This version improves the UI handling first built out in 11.1.0.
 
 - Instead of using Unity's inbuilt CustomBinding classes, the default handling for UI views/view models uses a new helper class `MVVMManager` which is linked to `UIController`. This simplifies the logic around views, avoids calling hash-codes when not necessary, and allows using non-class types as views/view models. (Under Unity's default setup, views must inherit CustomBinding, and view models/data sources must have class identity in order to function properly with their internal change tracking system.)
 - Added support for "persistent screens", which are UIScreens that are always visible, by setting `uiScreen.Persistent = true`.
-- The right-click button has been changed to map to the context menu command. Nodes without custom context menu handling now have a default context menu with just a "Back" option, which is equivalent to going back from the original node. This is more closely mapped to webpage handling, where there is no mouse button for going back, but right-click opens a context menu with a back option. As with webpages, clicking outside the bounds of the context menu will cause the context menu to disappear.
+- The right-click button has been changed to map to the context menu command. Nodes without custom context menu handling now have a default context menu with just a "Back" option, which is equivalent to going back from the original node. This is more closely mapped to webpage handling, where there is no mouse button for going back, but right-click opens a context menu with a back option. As with webpages, clicking outside the bounds of the context menu will cause the context menu to disappear. Right-clicking on a part of the menu that doesn't have any nodes will also result in a context menu opening, with just the "Back" option.
 - All the commonly-used UXML CSS files (`UINode.uss`, `UIScreen.uss`, `UINodeLRSwitch.css`, etc) have been combined into `DMK UXML CSS.uss`.
-
-
+- Added support for a floating visual cursor next to the current node. If your UINode HTML contains an element with the class `.cursor-target` (preferably an absolute-positioned empty block), then the UI backend will automatically create a `VisualCursorTargetView` that instantiates and moves a floating visual cursor to that element's location. The cursor will automatically disappear when moving to a node that doesn't have a `.cursor-target` element. This is currently used in the PJ24 project; see eg. `PJ24 Node.uxml`. The cursor is instantiated from the `Cursor` object in UXML references; by default this is a feather quill cursor. 
+- The default UITK font has been changed to Ubuntu (for normal text) and Josefina Sans (for title text). All usages of Odibee Sans in UITK have been replaced (though it's still used for some TextMeshPro Canvas UI stuff). This brings the UI handling closer to standard design trends. There is a file `UITK font usages` in `Assets/Danmokou/Fonts/Unity SDF Assets` which notes the standard usages for each of the UITK fonts.
 
 #### Fixes
 

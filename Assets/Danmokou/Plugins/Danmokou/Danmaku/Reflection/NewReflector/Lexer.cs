@@ -106,7 +106,7 @@ public static class Lexer {
             //LStrings are :like.this
             T(@":[a-zA-Z0-9]+[a-zA-Z0-9.]*", TokenType.LString),
             T(@"[!@#$%^&*+\-.<=>?/\\|~:]+", (p, s) => {
-                if (s.Value.StartsWith("//")) //this is a comment, not an operator
+                if (s.Value.StartsWith("//")) //this is a comment, not an operator.
                     return Maybe<(Token, int)>.None;
                 var op = operatorTrie.FindLongestSubstring(s.Value);
                 if (op is null) return Maybe<(Token, int)>.None;
@@ -619,23 +619,10 @@ public static class Lexer {
             .FMap(x => x.a.JoinTokens(x.b).WithType(TokenType.TypeIdentifier));
         
     private static ParseResult<Token> ParseTypeIdentifier(InputStream<Token> inp) => parseTypeIdent(inp);
-
-    /*
-    private static readonly Parser<Token, Token> parseV2RV2 =
-        Sequential(
-            TokenOfValue("<"),
-            //attempt on this so in cases like <RX;RY:A> it doesn't parse and fatal on A during 2nd repeat
-            Sequential(Num.Opt(), Semicolon, Num.Opt(), TokenOfValue(":"),
-                (x, sc, y, c) => x.JoinTokens(sc).JoinTokens(y).JoinTokens(c)).Attempt().Repeat(0, 2),
-            Num.Opt(),
-            TokenOfValue(">"),
-            (op, nrxy, ang, cl) => 
-                op.JoinTokens(nrxy).JoinTokens(ang).JoinTokens(cl).WithType(TokenType.V2RV2)
-        ).Attempt();*/
+    
 
     private static readonly Parser<Token, List<Token>> postprocessor = ChoiceL("token", 
             parseTypeIdent,
-            //parseV2RV2,
             Any<Token>()
         ).Many();
 

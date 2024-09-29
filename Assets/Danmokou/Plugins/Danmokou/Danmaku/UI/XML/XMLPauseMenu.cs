@@ -100,8 +100,7 @@ public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
                 lastSaveLoadSS.DestroyTexOrRT();
             }
             lastSaveLoadSS = ServiceLocator.Find<IScreenshotter>().Screenshot(
-                new CRect(-LocationHelpers.PlayableBounds.center.x, 0, MainCamera.ScreenWidth / 2f, 
-                    MainCamera.ScreenHeight / 2f, 0), new[] { DMKMainCamera.CamType.UI });
+                UIBuilderRenderer.UICamInfo.Area, new[] { DMKMainCamera.CamType.UI });
         }
         base.OnWillOpen();
     }

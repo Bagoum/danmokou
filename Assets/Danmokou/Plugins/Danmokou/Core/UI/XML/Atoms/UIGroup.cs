@@ -111,7 +111,7 @@ public record GroupVisibilityControl(UIGroup Group) {
 
     public virtual Task? OnReturnFromChild() => null;
 
-    public virtual Task? OnDescendToChild(bool isEnteringPopup) => null;
+    public virtual Task? OnDescendToChild(PopupUIGroup.Type? popupType) => null;
 
     public Task? ParentVisibilityUpdated(GroupVisibility? parentVisibleInTree, bool notifyRender = true) {
         var prevVisInTree = VisibleInTree;
@@ -178,8 +178,8 @@ public record GroupVisibilityControl(UIGroup Group) {
             return UpdatedVisibility(prevVisInTree);
         }
 
-        public override Task? OnDescendToChild(bool isEnteringPopup) {
-            if (!useLocalHiding || isEnteringPopup) return null;
+        public override Task? OnDescendToChild(PopupUIGroup.Type? popupType) {
+            if (!useLocalHiding || popupType != null) return null;
             var prevVisInTree = VisibleInTree;
             LocalVisible = GroupVisibility.TreeVisibleLocalHidden;
             return UpdatedVisibility(prevVisInTree);
@@ -337,9 +337,8 @@ public abstract class UIGroup {
 
     /// <summary>
     /// Run code when navigation moves from this group to a descendant of this group.
-    /// <br/>bool: True iff the child group is a popup.
     /// </summary>
-    public Func<UIGroup, bool, Task?>? OnGoToChild { private get; set; }
+    public Func<UIGroup, PopupUIGroup.Type?, Task?>? OnGoToChild { private get; set; }
     public UIGroup OnEnterOrReturnFromChild(Action<UIGroup> cb) {
         OnEnter = OnReturnFromChild = grp => {
             cb(grp);
@@ -573,8 +572,8 @@ public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? 
     /// <summary>
     /// Called when navigation goes from this group to a child of this group or a different screen.
     /// </summary>
-    public Task? DescendToChild(bool isEnteringPopup) {
-        return Visibility.OnDescendToChild(isEnteringPopup).And(OnGoToChild?.Invoke(this, isEnteringPopup));
+    public Task? DescendToChild(PopupUIGroup.Type? popupType) {
+        return Visibility.OnDescendToChild(popupType).And(OnGoToChild?.Invoke(this, popupType));
     }
 
     /// <summary>
@@ -597,6 +596,8 @@ public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? 
             _ = Render.RemoveSource(this).ContinueWithSync();
         }
         ClearNodes();
+        if (Parent is CompositeUIGroup cig)
+            cig.RemoveGroup(this);
         Parent = null;
         if (this is CompositeUIGroup cuig)
             foreach (var g in cuig.Components.ToList())
@@ -685,7 +686,13 @@ public record PopupButtonOpts {
 }
 
 public class PopupUIGroup : CompositeUIGroup {
-    private UINode Source { get; }
+    public enum Type {
+        Popup,
+        CtxMenu,
+        Dropdown
+    }
+    public UINode Source { get; }
+    public Type Typ { get; }
 
     public bool AllowDefaultCtxMenu { get; set; } = false;
     public bool EasyExit { get; set; }
@@ -720,7 +727,7 @@ public class PopupUIGroup : CompositeUIGroup {
         } else throw new NotImplementedException();
         var exit = opts.FirstOrDefault(o => o is UIButton { Type: UIButton.ButtonType.Cancel });
         var entry = opts.FirstOrDefault(o => o is UIButton { Type: UIButton.ButtonType.Confirm }) ?? exit;
-        var p = new PopupUIGroup(render, header, source, new VGroup(bodyGroup, 
+        var p = new PopupUIGroup(Type.Popup, render, header, source, new VGroup(bodyGroup, 
             new UIRow(new UIRenderExplicit(render, html => html.Q("OptionsHTML")), opts) {
                 EntryNodeOverride = entry,
                 ExitNodeOverride = exit
@@ -732,10 +739,14 @@ public class PopupUIGroup : CompositeUIGroup {
         return p;
     }
 
-    public static PopupUIGroup CreateContextMenu(UINode source, params UINode?[] options) {
+    public static PopupUIGroup CreateContextMenu(UINode source, params UINode?[] options)
+        => CreateContextMenu(source, options, true, true);
+    
+    public static PopupUIGroup CreateContextMenu(UINode source, UINode?[]? options, bool allowBackout, bool requireBoundedLocation = true) {
         var render = MakeRenderer(source.Screen.AbsoluteTerritory, XMLUtils.Prefabs.ContextMenu);
         var ctxMenuPos = source.HTML.worldBound.max-Vector2.Min(new(120, 120), source.HTML.worldBound.size * 0.2f);
-        if (source.Controller.LastPointerLocation is { } loc && source.HTML.worldBound.Contains(loc))
+        if (source.Controller.LastPointerLocation is { } loc && 
+            (!requireBoundedLocation || source.HTML.worldBound.Contains(loc)))
             ctxMenuPos = loc;
         render.HTML.ConfigureAbsolute(XMLUtils.Pivot.TopLeft).WithAbsolutePosition(ctxMenuPos);
         //If this is created as a show/hide group, then additionally go back from the show/hide creator ('parent').
@@ -746,18 +757,18 @@ public class PopupUIGroup : CompositeUIGroup {
             cmd = fn => UIButton.GoBackTwiceCommand<FuncNode>(source)(fn).Then(UIResult.LazyGoBackFrom(parent));
         else
             cmd = UIButton.GoBackTwiceCommand<FuncNode>(source);
-        var back = new FuncNode(LocalizedStrings.Generic.generic_back, cmd);
+        var back = allowBackout ? new FuncNode(LocalizedStrings.Generic.generic_back, cmd) : null;
         //var close = new FuncNode(LocalizedStrings.Generic.generic_close, UIButton.GoBackCommand<FuncNode>(source));
         //NB: you can press X *once* to leave an options menu.
         // If you add a ExitNodeOverride to the UIColumn, then you'll need to press it twice (as with standard popups)
         var grp = new UIColumn(new UIRenderConstructed(render, new(XMLUtils.AddColumn)), 
-            options.Prepend(back)
+            (options ?? Array.Empty<UINode?>()).Prepend(back)
                 //.Append(close)
                 .Select(x => x?.WithCSS(XMLUtils.noPointerClass)));
-        var p = new PopupUIGroup(render, null, source, grp) {
+        var p = new PopupUIGroup(Type.CtxMenu, render, null, source, grp) {
             EntryNodeOverride = back,
             //ExitNodeOverride = close,
-            EasyExit = true,
+            EasyExit = back is not null,
             OverlayAlphaOverride = 0,
         };
         return p;
@@ -772,31 +783,32 @@ public class PopupUIGroup : CompositeUIGroup {
             });
         target.SetTooltipAbsolutePosition(render.HTML.ConfigureAbsolute(XMLUtils.Pivot.Top));
         var grp = new UIColumn(new UIRenderColumn(render, 0), selector.MakeNodes(src));
-        return new PopupUIGroup(render, null, src, grp) {
+        var p = new PopupUIGroup(Type.Dropdown, render, null, src, grp) {
             EntryNodeOverride = grp.EntryNode,
             EasyExit = true,
             AllowDefaultCtxMenu = true,
             OverlayAlphaOverride = 0,
         };
+        return p;
     }
 
     private static UIRenderSpace MakeRenderer(UIRenderAbsoluteTerritory at, VisualTreeAsset prefab, Action<UIRenderConstructed, VisualElement>? builder = null) {
         var render = new UIRenderConstructed(at, prefab, builder) {
             AnimateOutWithParent = true
         }.WithPopupAnim();
-        //Don't allow pointer events to hit the underlying Absolute Territory
-        render.HTML.RegisterCallback<PointerUpEvent>(evt => evt.StopPropagation());
         return render;
     }
     
-    public PopupUIGroup(UIRenderSpace r, LString? header, UINode source, UIGroup body) :
+    public PopupUIGroup(Type typ, UIRenderSpace r, LString? header, UINode source, UIGroup body) :
         base(r, body) {
+        this.Typ = typ;
         this.Visibility = new GroupVisibilityControl.UpdateOnLeaveHide(this);
         this.Source = source;
         this.Parent = source.Group;
         this.NavigationCanLeaveGroup = false;
         this.DestroyOnLeave = true;
         WithOnBuilt(_ => {
+            Render.HTML.RegisterCallback<PointerUpEvent>(evt => Controller.TargetedPopup ??= this);
             var h = Render.HTML.Q<Label>("Header");
             if (header is null) {
                 if (h != null)
@@ -812,6 +824,17 @@ public class PopupUIGroup : CompositeUIGroup {
         UICommand.Back => EasyExit ? Source.ReturnToGroup : NoOp,
         _ => null
     };
+
+    /// <summary>
+    /// Find the lowest popup group in the node's parent hierarchy;
+    ///  ie. the first popup group going up from the node's group.
+    /// </summary>
+    public static PopupUIGroup? LowestInHierarchy(UINode n) {
+        for (var g = n.Group; g != null; g = g.Parent)
+            if (g is PopupUIGroup pug)
+                return pug;
+        return null;
+    }
 }
 
 /// <summary>
@@ -847,6 +870,10 @@ public abstract class CompositeUIGroup : UIGroup {
     public void AddGroupDynamic(UIGroup g) {
         AddGroup(g);
         Controller.Redraw();
+    }
+
+    public void RemoveGroup(UIGroup g) {
+        Components.Remove(g);
     }
 
     public override IEnumerable<UINode> NodesAndDependentNodes => 

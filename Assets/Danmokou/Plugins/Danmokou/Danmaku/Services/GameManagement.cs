@@ -60,8 +60,8 @@ public class GameManagement : CoroutineRegularUpdater {
     
     public static void DeactivateInstance() {
         //Actually null on startup
-        // ReSharper disable once ConstantConditionalAccessQualifier
-        if (Instance?.InstanceActive == true) {
+        // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+        if (Instance?.InstanceActive is true) {
             Logs.Log("Deactivating game instance.");
             Instance.Deactivate(false);
             Instance.Dispose();
@@ -73,7 +73,8 @@ public class GameManagement : CoroutineRegularUpdater {
         var inst = new InstanceData(mode, features, req, replay);
 #if UNITY_EDITOR
         if (mode == InstanceMode.DEBUG)
-            inst.GetOrSetTeam(EvInstance.Value?.TeamCfg);
+            // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+            inst.GetOrSetTeam_DebugLoad(EvInstance.Value?.TeamCfg);
 #endif
         Logs.Log($"Creating new game instance with mode {mode} on difficulty {inst.Difficulty.Describe()}.", true);
         EvInstance.OnNext(inst);
@@ -319,9 +320,9 @@ public class GameManagement : CoroutineRegularUpdater {
 
 
     [ContextMenu("Lower Rank Level")]
-    public void LowerRankLevel() => (Instance.RankF as RankFeature)?.SetRankLevel(Instance.RankF!.RankLevel - 1);
+    public void LowerRankLevel() => (Instance.RankF as RankFeature)?.SetRankLevel(Instance.RankF.RankLevel - 1);
     [ContextMenu("Up Rank Level")]
-    public void UpRankLevel() => (Instance.RankF as RankFeature)?.SetRankLevel(Instance.RankF!.RankLevel + 1);
+    public void UpRankLevel() => (Instance.RankF as RankFeature)?.SetRankLevel(Instance.RankF.RankLevel + 1);
     [ContextMenu("Add Rank Points")]
     public void AddRankPoints() => (Instance.RankF as RankFeature)?.AddRankPoints(10000);
     [ContextMenu("Sub Rank Points")]

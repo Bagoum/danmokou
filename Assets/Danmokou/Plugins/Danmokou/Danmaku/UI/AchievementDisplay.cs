@@ -29,7 +29,6 @@ public class AchievementDisplay : CoroutineRegularUpdater {
     
     public TextMeshPro lowerText = null!;
     public GameObject displayContainer = null!;
-    public UIManager uiParent = null!;
     
     private Transform tr = null!;
     private static readonly Queue<DisplayRequest> queued = new();
@@ -50,8 +49,7 @@ public class AchievementDisplay : CoroutineRegularUpdater {
 
     private void Awake() {
         tr = transform;
-        baseLoc = (Vector2)tr.localPosition - 
-                  (uiParent.autoShiftCamera ? LocationHelpers.PlayableBounds.center : Vector2.zero);
+        baseLoc = tr.localPosition;
         
     #if WEBGL && !EXBAKE_LOAD && !EXBAKE_SAVE
         InLerp = t => Easers.CEOutBack(2.2f, t);

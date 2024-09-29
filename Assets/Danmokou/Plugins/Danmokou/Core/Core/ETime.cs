@@ -331,7 +331,6 @@ public class ETime : MonoBehaviour {
         } catch (Exception e) {
             Logs.UnityError("Error thrown in the ETime update loop.");
             Logs.LogException(e);
-            throw;
         }
     }
 
@@ -343,11 +342,13 @@ public class ETime : MonoBehaviour {
             //In case of lag spikes (eg. on scene load), don't try to recuperate the frames
             lastFrameTime = Math.Max(lastFrameTime, Time.realtimeSinceStartup);
             if (ThreadWaiter) {
-                //Profiler.BeginSample("No-Vsync Synchronizer");
                 var sleepTime = lastFrameTime - Time.realtimeSinceStartup - 0.01f;
+                Profiler.BeginSample("No-Vsync Sleep");
                 if (sleepTime > 0) Thread.Sleep((int) (sleepTime * 1000));
+                Profiler.EndSample();
+                Profiler.BeginSample("No-Vsync Loop");
                 while (Time.realtimeSinceStartup < lastFrameTime) { }
-                //Profiler.EndSample();
+                Profiler.EndSample();
             }
         }
         // ReSharper disable once IteratorNeverReturns

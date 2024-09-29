@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using BagoumLib;
 using BagoumLib.Reflection;
 using BagoumLib.Unification;
 using Danmokou.Core;
@@ -32,7 +33,10 @@ namespace Danmokou.Reflection {
         /// <summary>
         /// The parameters of the method signature.
         /// </summary>
-        Reflector.NamedParam[] Params { get; }
+        NamedParam[] Params { get; }
+
+        Reflector.ParamFeatures[]? ParamFeatures => TypeMemberFeatures.Features(Member);
+        Reflector.ParamFeatures? FeaturesAt(int ii) => ParamFeatures?.Try(ii);
         
         /// <summary>Executable information for the method/constructor/field/property.</summary>
         TypeMember Member { get; }
@@ -74,7 +78,7 @@ namespace Danmokou.Reflection {
         string AsSignatureWithRestrictions { get; }
 
         [PublicAPI]
-        public string AsSignatureWithParamMod(Func<Reflector.NamedParam, int, string> paramMod);
+        public string AsSignatureWithParamMod(Func<NamedParam, int, string> paramMod);
         
         /// <summary>
         /// Show the signature of this method, only including types and not names.
@@ -140,14 +144,14 @@ namespace Danmokou.Reflection {
         /// <summary>
         /// Simplified description of the method parameters. Lifted methods have lifted parameters.
         /// </summary>
-        public Reflector.NamedParam[] Params { get; init; }
+        public NamedParam[] Params { get; init; }
         /// <inheritdoc/>
         public TypeDesignation.Dummy SharedType { get; init; }
         public Dictionary<Type, TypeDesignation.Variable> GenericTypeMap { get; private set; }
         /// <inheritdoc cref="IGenericMethodSignature.SharedGenericTypes"/>
         public TypeDesignation.Variable[] SharedGenericTypes { get; init; } = Array.Empty<TypeDesignation.Variable>();
 
-        protected MethodSignature(TypeMember Member, Reflector.NamedParam[] Params) {
+        protected MethodSignature(TypeMember Member, NamedParam[] Params) {
             this.Member = Member;
             this.Params = Params;
             GenericTypeMap = new Dictionary<Type, TypeDesignation.Variable>();
@@ -180,8 +184,8 @@ namespace Danmokou.Reflection {
         }
         public bool IsFallthrough { get; init; } = false;
         public string TypeName => Member.TypeName;
-        public string Name => Member.Name;
-        public bool IsCtor => Member.Name == ".ctor";
+        public string Name => Member.BaseMi.Name;
+        public bool IsCtor => Member.BaseMi.Name == ".ctor";
         public bool IsStatic => Member.Static;
         public Type? DeclaringType => Member.BaseMi.DeclaringType;
 
@@ -202,7 +206,7 @@ namespace Danmokou.Reflection {
             }
         }
 
-        public string AsSignatureWithParamMod(Func<Reflector.NamedParam, int, string> paramMod) =>
+        public string AsSignatureWithParamMod(Func<NamedParam, int, string> paramMod) =>
             Member.AsSignature(paramMod);
 
         /// <summary>
@@ -211,7 +215,7 @@ namespace Danmokou.Reflection {
         public int ExplicitParameterCount(int start = 0, int? end = null) {
             var ct = 0;
             for (int ii = start; ii < (end ?? Params.Length); ++ii)
-                if (!Params[ii].NonExplicit)
+                if ((this as IMethodSignature).FeaturesAt(ii)?.NonExplicit is not true)
                     ++ct;
             return ct;
         }
@@ -307,7 +311,7 @@ namespace Danmokou.Reflection {
     }
 
     /// <inheritdoc cref="MethodSignature"/>
-    public record GenericMethodSignature(TypeMember.Method Minf, Reflector.NamedParam[] Params) : MethodSignature(Minf, Params), IGenericMethodSignature {
+    public record GenericMethodSignature(TypeMember.Method Minf, NamedParam[] Params) : MethodSignature(Minf, Params), IGenericMethodSignature {
         public int TypeParams { get; } = Minf.Mi.GetGenericArguments().Length;
         public static readonly Dictionary<(FreezableArray<Type>, MethodSignature), MethodSignature> specializeCache = new();
         
@@ -345,10 +349,10 @@ namespace Danmokou.Reflection {
     /// <param name="Original">The source method, with the signature (A, B, C)->R.</param>
     /// <param name="FuncedParams">The parameter list [T->A, T->B, T->C]. This is provided as <see cref="MethodSignature.Params"/>.</param>
     /// <param name="BaseParams">The parameter list [A, B, C].</param>
-    public abstract record LiftedMethodSignature(MethodSignature Original, Reflector.NamedParam[] FuncedParams, Reflector.NamedParam[] BaseParams) 
+    public abstract record LiftedMethodSignature(MethodSignature Original, NamedParam[] FuncedParams, NamedParam[] BaseParams) 
         : MethodSignature(Original.Member, FuncedParams) {
         protected static readonly Dictionary<(Type, Type), (Type lmsTR, ConstructorInfo constr)> typeSpecCache = new();
-        protected static readonly Type[] consTypes = { typeof(MethodSignature), typeof(Reflector.NamedParam[]), typeof(Reflector.NamedParam[]) };
+        protected static readonly Type[] consTypes = { typeof(MethodSignature), typeof(NamedParam[]), typeof(NamedParam[]) };
 
         public override Reflector.InvokedMethod Call(string? calledAs) => new Reflector.LiftedInvokedMethod(this, calledAs);
         
@@ -364,23 +368,22 @@ namespace Danmokou.Reflection {
         /// <summary>
         /// Lift a set of parameters over the reader functor T->.
         /// </summary>
-        public static Reflector.NamedParam[] LiftParams<T>(MethodSignature method) => LiftParams(typeof(T), method);
+        public static NamedParam[] LiftParams<T>(MethodSignature method) => LiftParams(typeof(T), method);
         
-        public static Reflector.NamedParam[] LiftParams(Type t, MethodSignature method) {
+        public static NamedParam[] LiftParams(Type t, MethodSignature method) {
             var baseTypes = method.Params;
-            var fTypes = new Reflector.NamedParam[baseTypes.Length];
+            var fTypes = new NamedParam[baseTypes.Length];
             for (int ii = 0; ii < baseTypes.Length; ++ii) {
                 var bt = baseTypes[ii].Type;
-                fTypes[ii] = baseTypes[ii] with {
-                    Type = Reflector.ReflectionData.LiftType(t, bt, out var result) ? result : bt
-                };
+                fTypes[ii] = new(Reflector.ReflectionData.LiftType(t, bt, out var result) ? result : bt,
+                    baseTypes[ii].Name);
             }
             return fTypes;
         }
     }
 
     /// <inheritdoc cref="LiftedMethodSignature"/>
-    public abstract record LiftedMethodSignature<T>(MethodSignature Original, Reflector.NamedParam[] FuncedParams, Reflector.NamedParam[] BaseParams) :
+    public abstract record LiftedMethodSignature<T>(MethodSignature Original, NamedParam[] FuncedParams, NamedParam[] BaseParams) :
         LiftedMethodSignature(Original, FuncedParams, BaseParams) {
         private static readonly Dictionary<MemberInfo, LiftedMethodSignature<T>> liftCache = new();
         
@@ -412,7 +415,7 @@ namespace Danmokou.Reflection {
     }
     
     /// <inheritdoc cref="LiftedMethodSignature"/>
-    public record GenericLiftedMethodSignature<T>(MethodSignature Original, TypeMember.Method Minf, Reflector.NamedParam[] FuncedParams, Reflector.NamedParam[] BaseParams) : LiftedMethodSignature<T>(Original, FuncedParams, BaseParams), IGenericMethodSignature  {
+    public record GenericLiftedMethodSignature<T>(MethodSignature Original, TypeMember.Method Minf, NamedParam[] FuncedParams, NamedParam[] BaseParams) : LiftedMethodSignature<T>(Original, FuncedParams, BaseParams), IGenericMethodSignature  {
         public override Type ReturnType => Reflector.Func2Type(typeof(T), base.ReturnType);
 
         public override object Invoke(MethodCall? ast, params object?[] prms)
@@ -441,7 +444,7 @@ namespace Danmokou.Reflection {
     //Note that we must eventually specify the R in LiftedMethodSignature in order to ensure that
     // InvokeMiFunced creates a correctly-typed Func<T,R>.
     /// <inheritdoc cref="LiftedMethodSignature"/>
-    public record LiftedMethodSignature<T, R>(MethodSignature Original, Reflector.NamedParam[] FuncedParams, Reflector.NamedParam[] BaseParams) 
+    public record LiftedMethodSignature<T, R>(MethodSignature Original, NamedParam[] FuncedParams, NamedParam[] BaseParams) 
         : LiftedMethodSignature<T>(Original, FuncedParams, BaseParams) {
         private static readonly Dictionary<MemberInfo, LiftedMethodSignature<T, R>> liftCache = new();
         public override Type ReturnType => typeof(Func<T, R>);

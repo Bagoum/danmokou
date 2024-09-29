@@ -53,6 +53,7 @@ namespace Danmokou.SM {
 /// </summary>
 [Reflect]
 public static class SMReflection {
+    private static readonly StateMachine noop = NoOp();
     private static readonly ReflWrap<Func<float, float, float, ParametricInfo, float>> CrosshairOpacity =
         ReflWrap.FromFunc("SMReflection.CrosshairOpacity", () =>
             Reflection2.Helpers.ParseAndCompileDelegate<Func<float, float, float, ParametricInfo, float>>(@"
@@ -114,7 +115,7 @@ t > fadein ?
         using var token = PlayerController.AllControlEnabled.AddConst(false);
         foreach (var pc in ServiceLocator.FindAll<PlayerController>()) {
             pc.MakeInvulnerable((int)(t * 120), false);
-        };
+        }
         await RUWaitingUtils.WaitFor(smh.Exec, smh.cT, t, false);
     });
 
@@ -226,6 +227,9 @@ t > fadein ?
     
     #endregion
 
+    /// <summary>
+    /// Return Task.CompletedTask.
+    /// </summary>
     public static ReflectableLASM NoOp() => new(smh => Task.CompletedTask);
 
     /// <summary>
@@ -596,8 +600,6 @@ t > fadein ?
             return mover.Start(smh);
         });
     }
-    
-    private static readonly StateMachine noop = NoOp();
 
 
     /// <summary>
@@ -798,6 +800,16 @@ t > fadein ?
     /// </summary>
     public static ReflectableLASM Print<T>(GCXF<T> val) => new(smh => {
         Logs.Log(val(smh.GCX)?.ToString() ?? "<null>", false, LogLevel.INFO);
+        return Task.CompletedTask;
+    });
+    
+    /// <summary>
+    /// Execute a function. If it returns an exception, throw it.
+    /// </summary>
+    public static ReflectableLASM Throw(GCXF<Exception?> val) => new(smh => {
+        if (val(smh.GCX) is { } exc)
+            //don't directly throw here. for consistency, we only want to throw if this is being awaited
+            return Task.FromException(exc);
         return Task.CompletedTask;
     });
     

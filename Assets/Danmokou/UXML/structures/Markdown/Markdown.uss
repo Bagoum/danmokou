@@ -1,34 +1,35 @@
 .mkHeader {
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/JosefinSans-Regular%20SDF.asset?fileID=11400000&guid=8d3d7663b30e7b74f864f92f0a7ad0b6&type=2#JosefinSans-Regular SDF");
     border-bottom-color: rgb(207, 139, 9);
     border-bottom-width: 6px;
-    font-size: 120px;
+    font-size: 105px;
     max-width: 80%;
 }
 
 .mkHeader.mkHeader2 {
-    font-size: 105px;
+    font-size: 85px;
     border-bottom-width: 5px;
     max-width: 70%;
 }
 
 .mkHeader.mkHeader3 {
-    font-size: 85px;
+    font-size: 75px;
     border-bottom-width: 4px;
     max-width: 60%;
 }
 
 .mkHeader.mkHeader4 {
-    font-size: 75px;
-    border-bottom-width: 0;
-}
-
-.mkHeader.mkHeader5 {
     font-size: 65px;
     border-bottom-width: 0;
 }
 
-.mkHeader.mkHeader6 {
+.mkHeader.mkHeader5 {
     font-size: 55px;
+    border-bottom-width: 0;
+}
+
+.mkHeader.mkHeader6 {
+    font-size: 45px;
     border-bottom-width: 0;
 }
 

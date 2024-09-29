@@ -29,7 +29,7 @@ public partial class AyaCamera : BehaviorEntity {
         ? Orientation.VERTICAL
         : Orientation.HORIZONTAL;
 
-    public AyaCameraStateFlow StateFlow { get; private set; }
+    public AyaCameraStateFlow StateFlow { get; private set; } = null!;
     public static Orientation CameraOrientation { get; private set; } = Orientation.HORIZONTAL;
     private float CameraOrientationAngleOffset => (CameraOrientation == Orientation.HORIZONTAL) ? 0f : 90f;
 
@@ -136,6 +136,7 @@ public partial class AyaCamera : BehaviorEntity {
             if (!full && ChargeFull) {
                 ISFXService.SFXService.Request(onFullCharge);
             }
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             if (prevCharge != charge)
                 text.text = string.Format(textFormat, charge);
             text.color = TextColor;

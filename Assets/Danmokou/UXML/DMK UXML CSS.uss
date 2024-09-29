@@ -1,7 +1,23 @@
-:root, .theme-goldaccent, .theme-goldaccent * {
+:root {
     --accent-text: rgb(238, 170, 24);
     --accent-pure: rgb(207, 139, 0);
-    --accent-pure-60: rgb(207, 139, 0.6);
+    --accent-pure-60: rgba(207, 139, 0, 0.6);
+    --accent-pure-0: rgba(207, 139, 0, 0);
+    --accent-dark1: rgb(147, 92, 29);
+}
+
+.theme-goldaccent {
+    --accent-text: rgb(238, 170, 24);
+    --accent-pure: rgb(207, 139, 0);
+    --accent-pure-60: rgba(207, 139, 0, 0.6);
+    --accent-pure-0: rgba(207, 139, 0, 0);
+    --accent-dark1: rgb(147, 92, 29);
+}
+
+.theme-goldaccent * {
+    --accent-text: rgb(238, 170, 24);
+    --accent-pure: rgb(207, 139, 0);
+    --accent-pure-60: rgb(207, 139, 0);
     --accent-pure-0: rgba(207, 139, 0, 0);
     --accent-dark1: rgb(147, 92, 29);
 }
@@ -10,7 +26,7 @@
     --accent-pure: rgb(129, 128, 106);
 }
 
-:root, .theme-purple, .theme-purple * {
+:root {
     --main-pure: rgb(108, 21, 121);
     --main-dark1-80: rgba(74, 16, 84, 0.8);
     --main-dark2-90: rgba(33, 4, 39, 0.9);
@@ -21,7 +37,40 @@
     --gray: rgb(95, 85, 95);
 }
 
-.theme-blue, .theme-blue * {
+.theme-purple {
+    --main-pure: rgb(108, 21, 121);
+    --main-dark1-80: rgba(74, 16, 84, 0.8);
+    --main-dark2-90: rgba(33, 4, 39, 0.9);
+    --highlighter-70: rgba(92, 22, 106, 0.7);
+    --neutral-bg: rgb(55, 30, 63);
+    --liner: rgb(184, 116, 201);
+    --liner-dark: rgb(108, 68, 125);
+    --gray: rgb(95, 85, 95);
+}
+
+.theme-purple * {
+    --main-pure: rgb(108, 21, 121);
+    --main-dark1-80: rgba(74, 16, 84, 0.8);
+    --main-dark2-90: rgba(33, 4, 39, 0.9);
+    --highlighter-70: rgba(92, 22, 106, 0.7);
+    --neutral-bg: rgb(55, 30, 63);
+    --liner: rgb(184, 116, 201);
+    --liner-dark: rgb(108, 68, 125);
+    --gray: rgb(95, 85, 95);
+}
+
+.theme-blue {
+    --main-pure: rgb(28, 62, 147);
+    --main-dark1-80: rgba(22, 35, 84, 0.8);
+    --main-dark2-90: rgba(16, 16, 48, 0.9);
+    --highlighter-70: rgba(68, 88, 189, 0.7);
+    --neutral-bg: rgb(43, 53, 96);
+    --liner: rgb(91, 167, 234);
+    --liner-dark: rgb(65, 121, 171);
+    --gray: rgb(82, 83, 99);
+}
+
+.theme-blue * {
     --main-pure: rgb(28, 62, 147);
     --main-dark1-80: rgba(22, 35, 84, 0.8);
     --main-dark2-90: rgba(16, 16, 48, 0.9);
@@ -43,7 +92,7 @@
     opacity: 1;
     transition-property: opacity;
     transition-duration: 0.3s;
-    font-size: 85px;
+    font-size: 70px;
     background-color: rgba(0, 0, 0, 0);
     color: whitesmoke;
     background-image: none;
@@ -54,30 +103,56 @@
     flex-direction: row;
     align-content: center;
     max-width: 100%;
-    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Odibee-CorpSt-Joint%20SDF.asset?fileID=11400000&guid=cbda6169226e6d64bb00b80c0210330c&type=2#Odibee-CorpSt-Joint SDF");
+    -unity-font-definition: url("project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-R%20SDF.asset?fileID=11400000&guid=a4ca5d8a7e0241f41b58c69f59b3bca2&type=2#Ubuntu-R SDF");
 }
 
-.font-ubuntu, .font-ubuntu .node {
+.font-ubuntu {
     -unity-font-definition: url("project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-L%20SDF.asset?fileID=11400000&guid=98f4f451ca482fa4ebc8dd8dafe12b06&type=2#Ubuntu-L SDF");
 }
 
-.font-controls, .font-controls .node {
+.font-ubuntu .node {
+    -unity-font-definition: url("project://database/Assets/SZYU/Fonts/Unity%20SDF/Ubuntu-L%20SDF.asset?fileID=11400000&guid=98f4f451ca482fa4ebc8dd8dafe12b06&type=2#Ubuntu-L SDF");
+}
+
+.font-controls {
     -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Signika-Regular%20SDF.asset?fileID=11400000&guid=a59d94292a6917d4da3cf1a2f7ed675f&type=2#Signika-Regular SDF");
 }
 
-.font-biolinum, .font-biolinum .node {
+.font-controls .node {
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Signika-Regular%20SDF.asset?fileID=11400000&guid=a59d94292a6917d4da3cf1a2f7ed675f&type=2#Signika-Regular SDF");
+}
+
+.font-biolinum {
     -unity-font-definition: url("project://database/Assets/SZYU/Fonts/Unity%20SDF/LinBiolinum_R_G%20SDF.asset?fileID=11400000&guid=7139a17b7319bb84494b6e01f410b0a2&type=2#LinBiolinum_R_G SDF");
 }
-.font-rocknroll, .font-rocknroll .node {
+
+.font-biolinum .node {
+    -unity-font-definition: url("project://database/Assets/SZYU/Fonts/Unity%20SDF/LinBiolinum_R_G%20SDF.asset?fileID=11400000&guid=7139a17b7319bb84494b6e01f410b0a2&type=2#LinBiolinum_R_G SDF");
+}
+
+.font-rocknroll {
     -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/RocknRollOne-Regular.ttf?fileID=12800000&guid=dad637643ac27d44f94bd64003a3100d&type=3#RocknRollOne-Regular");
+}
+
+.font-rocknroll .node {
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/RocknRollOne-Regular.ttf?fileID=12800000&guid=dad637643ac27d44f94bd64003a3100d&type=3#RocknRollOne-Regular");
+}
+
+.font-josefin {
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/JosefinSans-Regular%20SDF.asset?fileID=11400000&guid=8d3d7663b30e7b74f864f92f0a7ad0b6&type=2#JosefinSans-Regular SDF");
+}
+
+.font-josefin .node {
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/JosefinSans-Regular%20SDF.asset?fileID=11400000&guid=8d3d7663b30e7b74f864f92f0a7ad0b6&type=2#JosefinSans-Regular SDF");
 }
 
 .hide {
     display: none;
 }
 
-.monospace {
+.record-display {
     -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Fira-Yasashisa-Joint%20SDF.asset?fileID=11400000&guid=9697e36c4624ace47aeadba6f395ffbd&type=2#Fira-Yasashisa-Joint SDF");
+    font-size: 53px;
 }
 
 .node .text {
@@ -128,23 +203,19 @@
 }
 
 .node.large1 {
-    font-size: 100px;
+    font-size: 85px;
 }
 
 .node.large2 {
-    font-size: 120px;
+    font-size: 100px;
 }
 
 .node.small1 {
-    font-size: 70px;
+    font-size: 60px;
 }
 
 .node.small2 {
-    font-size: 53px;
-}
-
-.node.small3 {
-    font-size: 42px;
+    font-size: 50px;
 }
 
 .node.empty {
@@ -173,7 +244,6 @@
     -unity-background-scale-mode: scale-to-fit;
     opacity: 0;
     flex-shrink: 0;
-    margin-top: -6px; /* same as node bottom border */
 }
 
 .pointer {
@@ -207,7 +277,15 @@
     justify-content: center;
 }
 
+.record-display {
+    justify-content: center;
+}
+
 .centertext {
+    -unity-text-align: upper-center;
+}
+
+.record-display {
     -unity-text-align: upper-center;
 }
 
@@ -240,6 +318,8 @@
     flex-direction: row;
     padding-left: 10px;
     padding-right: 10px;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 
 .node.small1 > .body {
@@ -264,14 +344,17 @@
     border-bottom-color: var(--accent-pure);
 }
 
+.node.header.node-selected {
+    opacity: 1;
+}
+
 .pbutton .text {
-    font-size: 85px;
     background-color: var(--gray);
     min-width: 160px;
-    padding-left: 30px;
-    padding-right: 30px;
-    padding-top: 20px;
-    padding-bottom: 16px;
+    padding-left: 26px;
+    padding-right: 26px;
+    padding-top: 26px;
+    padding-bottom: 26px;
     margin-right: 0;
     width: auto;
     -unity-text-align: upper-center;
@@ -293,7 +376,7 @@
     margin-bottom: 0;
     padding-left: 80px;
     padding-right: 80px;
-    padding-top: 60px;
+    padding-top: 64px;
     padding-bottom: 40px;
     background-color: var(--main-dark2-90);
     border-color: var(--liner);
@@ -307,7 +390,6 @@
     flex-direction: column;
     align-items: center;
     min-width: 1000px;
-    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Odibee-CorpSt-Joint%20SDF.asset?fileID=11400000&guid=cbda6169226e6d64bb00b80c0210330c&type=2#Odibee-CorpSt-Joint SDF");
     border-top-left-radius: 12px;
     border-bottom-left-radius: 12px;
     border-top-right-radius: 12px;
@@ -316,10 +398,8 @@
 
 .popup > #Header {
     color: var(--accent-text);
-}
-
-.node.header.node-selected {
-    opacity: 1;
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/JosefinSans-Regular%20SDF.asset?fileID=11400000&guid=8d3d7663b30e7b74f864f92f0a7ad0b6&type=2#JosefinSans-Regular SDF");
+    font-size: 100px;
 }
 
 .node.saveentry .body {
@@ -359,11 +439,11 @@
 }
 
 .saveentry-title {
-    font-size: 80px;
+    font-size: 66px;
     padding-left: 0;
     padding-right: 0;
-    margin-bottom: -8px;
     flex-shrink: 0;
+    margin-top: -8px;
 }
 
 .saveentry-title-unset {
@@ -399,10 +479,10 @@
 }
 
 .tooltip {
-    padding-left: 36px;
-    padding-right: 36px;
-    padding-top: 20px;
-    padding-bottom: 20px;
+    padding-left: 26px;
+    padding-right: 24px;
+    padding-top: 16px;
+    padding-bottom: 16px;
     background-color: var(--main-dark1-80);
     border-color: var(--accent-pure);
     border-bottom-right-radius: 40px;
@@ -423,6 +503,15 @@
     transition-duration: 0.2s;
     transition-timing-function: ease-out;
     z-index: 100;
+}
+
+.tooltip .node {
+    font-size: 60px;
+}
+
+.tooltip .node > .body {
+    padding-left: 7px;
+    padding-right: 7px;
 }
 
 .tooltip.tooltip-above {
@@ -479,14 +568,14 @@
 #Star {
     height: 100%;
     width: 240px;
-    background-image: url('/Assets/Danmokou/Sprites/UI/boss-star.png');
+    background-image: url("project://database/Assets/Danmokou/Sprites/UI/boss-star.png?fileID=21300000&guid=1cece61e3610eb84084c3dc5246ee605&type=3#boss-star");
     -unity-background-image-tint-color: rgb(255, 0, 0);
     margin-left: -20px;
     margin-right: -20px;
 }
 
 .bracket {
-    -unity-font-definition: url('project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Odibee-CorpSt-Joint%20SDF.asset?fileID=11400000&guid=cbda6169226e6d64bb00b80c0210330c&type=2#Odibee-CorpSt-Joint SDF');
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/JosefinSans-Regular%20SDF.asset?fileID=11400000&guid=8d3d7663b30e7b74f864f92f0a7ad0b6&type=2#JosefinSans-Regular SDF");
     font-size: 200px;
     color: rgb(200, 200, 200);
     -unity-text-align: middle-left;
@@ -522,21 +611,12 @@
     white-space: nowrap;
 }
 
-
-/*
- *
- *
- Screen CSS 
- *
- *
- */
-
 #UIContainer {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0);
     display: flex;
-    background-image: url('project://database/Assets/SZYU/Sprites/util/1u-square.jpg?fileID=2800000&guid=d12639885f66bc0409fd0dd22e006cac&type=3#1u-square');
+    background-image: url("project://database/Assets/SZYU/Sprites/util/1u-square.jpg?fileID=2800000&guid=d12639885f66bc0409fd0dd22e006cac&type=3#1u-square");
     -unity-background-image-tint-color: rgba(30, 6, 46, 0);
 }
 
@@ -617,23 +697,33 @@
     height: 100%;
     position: absolute;
     overflow: hidden;
-    background-image: url('project://database/Assets/Danmokou/Sprites/UI/UITK/purple%20bg.png?fileID=2800000&guid=ea44ee5932ff7c84aa1697105b26bd29&type=3#purple bg');
+    background-image: url("project://database/Assets/Danmokou/Sprites/UI/UITK/purple%20bg.png?fileID=2800000&guid=ea44ee5932ff7c84aa1697105b26bd29&type=3#purple bg");
     -unity-background-image-tint-color: rgba(255, 255, 255, 0);
 }
 
 .uiScreenLiner {
-    background-image: url('project://database/Assets/Danmokou/Sprites/UI/UITK/fancy%20line.png?fileID=2800000&guid=1bca1eddce362f44ead387cb73ea8fde&type=3#fancy line');
+    background-image: url("project://database/Assets/Danmokou/Sprites/UI/UITK/fancy%20line.png?fileID=2800000&guid=1bca1eddce362f44ead387cb73ea8fde&type=3#fancy line");
     width: 3840px;
     height: 80px;
     -unity-background-image-tint-color: var(--liner-dark);
     flex-shrink: 0;
 }
 
-.header {
+.node.header {
     padding-left: 0;
     padding-right: 0;
     margin-bottom: 60px;
-    -unity-font-definition: url('project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/NovaSquare-Regular%20SDF.asset?fileID=11400000&guid=a6ec488a76fadbf4083ef2a0ad8cf899&type=2#NovaSquare-Regular SDF');
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/NovaSquare-Regular%20SDF.asset?fileID=11400000&guid=a6ec488a76fadbf4083ef2a0ad8cf899&type=2#NovaSquare-Regular SDF");
+    font-size: 130px;
+    color: var(--accent-text);
+    -unity-text-align: upper-left;
+}
+
+#Header.header {
+    padding-left: 0;
+    padding-right: 0;
+    margin-bottom: 60px;
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/NovaSquare-Regular%20SDF.asset?fileID=11400000&guid=a6ec488a76fadbf4083ef2a0ad8cf899&type=2#NovaSquare-Regular SDF");
     font-size: 130px;
     color: var(--accent-text);
     -unity-text-align: upper-left;

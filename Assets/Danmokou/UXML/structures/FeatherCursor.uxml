@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
+    <ui:VisualElement picking-mode="Ignore" name="Feather" style="position: absolute; width: 125px; height: 240px; transform-origin: 88% 98%; translate: -88% -98%; background-image: url(&quot;project://database/Assets/Danmokou/Sprites/UI/feather_cursor.png?fileID=2800000&amp;guid=f06141699a25e0f4a845f175540f6846&amp;type=3#feather_cursor&quot;); rotate: -5deg;" />
+</ui:UXML>

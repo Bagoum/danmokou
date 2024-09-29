@@ -197,6 +197,11 @@ public class UIScreen : ITokenized {
         return HTML;
     }
 
+    public UIScreen WithContainerView(IUIView view) {
+        ContainerRender.WithView(view);
+        return this;
+    }
+
     private void SetVisible(bool visible) {
         HTML.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         if (SceneObjects != null)

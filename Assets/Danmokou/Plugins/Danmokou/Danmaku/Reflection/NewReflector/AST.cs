@@ -711,7 +711,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                     if (m.Mi.IsCtor && m.Mi.ReturnType == typeof(PhaseSM) &&
                         (Ex)Params[1].Realize(new TExArgCtx()) is ConstantExpression { Value: PhaseProperties props }) {
                         return new($"{props.phaseType?.ToString() ?? "Phase"}", props.cardTitle?.Value ?? "",
-                            m.Mi.Member.Symbol, Position.ToRange(), 
+                            m.Mi.Member.Symbol(), Position.ToRange(), 
                             FlattenParams((p, i) => p.ToSymbolTree($"({m.Params[i].Name})")));
                     }
                 } catch {
@@ -719,10 +719,10 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
                 }
                 return m.Mi.IsFallthrough ? 
                         Params[0].ToSymbolTree() :
-                        new(m.Name, m.Mi.TypeOnlySignature, m.Mi.Member.Symbol, Position.ToRange(), 
+                        new(m.Name, m.Mi.TypeOnlySignature, m.Mi.Member.Symbol(), Position.ToRange(), 
                             FlattenParams((p, i) => p.ToSymbolTree($"({m.Params[i].Name})")));
             } else if (Methods.Length > 0)
-                return new(Methods[0].Name, null, Methods[0].Mi.Member.Symbol, Position.ToRange(),
+                return new(Methods[0].Name, null, Methods[0].Mi.Member.Symbol(), Position.ToRange(),
                     FlattenParams((p, i) => p.ToSymbolTree($"({Methods[0].Params[i].Name})")));
             else
                 return new DocumentSymbol("<No method found>", null, SymbolKind.Method, Position.ToRange(),
@@ -954,7 +954,7 @@ public abstract record AST(PositionRange Position, LexicalScope EnclosingScope, 
 
         public DocumentSymbol ToSymbolTree(string? descr = null) {
             var m = SelectedOverload?.method.Meth ?? Methods[0];
-            return new(m.Name, $"(invoked with {Params.Length} args)", m.Mi.Member.Symbol, Position.ToRange(), 
+            return new(m.Name, $"(invoked with {Params.Length} args)", m.Mi.Member.Symbol(), Position.ToRange(), 
                 FlattenParams((p, i) => p.ToSymbolTree($"({m.Params[i].Name})")));
         }
 

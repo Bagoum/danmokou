@@ -10,6 +10,14 @@ namespace Danmokou.Reflection {
 /// </summary>
 [PublicAPI]
 public static class AnalysisHelpers {
+    public static SymbolKind Symbol(this TypeMember mem) => mem switch {
+        TypeMember.Constructor => SymbolKind.Constructor,
+        TypeMember.Property => SymbolKind.Property,
+        TypeMember.Field f => f.Fi.DeclaringType == f.Fi.FieldType && f.Fi.DeclaringType?.IsEnum is true ? 
+            SymbolKind.Enum : SymbolKind.Field,
+        _ => SymbolKind.Method,
+    };
+    
     public static Position ToPosition(this Mizuhashi.Position pos) =>
         new(pos.Line - 1, pos.Column - 1);
 

@@ -24,14 +24,15 @@ public static partial class XMLHelpers {
 
         public override void UpdateHTML() {
             var title = HTML.Q<Label>("Title");
-            title.text = $"Save #{ViewModel.i + 1}";
             var desc = HTML.Q<Label>("Description");
             var bg = HTML.Q("SS");
             if (ViewModel.Save is { } save) {
+                title.text = save.SaveTime.SimpleTime();
                 title.RemoveFromClassList("saveentry-title-unset");
                 desc.text = save.Description;
                 bg.style.backgroundImage = save.Image.Texture;
             } else {
+                title.text = $"Save #{ViewModel.i + 1}";
                 title.AddToClassList("saveentry-title-unset");
                 desc.text = "";
                 bg.style.backgroundImage = UXMLPrefabs.defaultSaveLoadBG;

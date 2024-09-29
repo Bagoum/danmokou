@@ -15,9 +15,9 @@ public static class LocationHelpers {
     }
     public static Vector2 PlayableScreenCenter { get; private set; } = Vector2.zero;
     public static FieldBounds PlayableBounds { get; private set; } = new() {
-        left = -3.6f,
-        right = 3.6f,
-        top = 4.1f,
+        left = -8f,
+        right = 8f,
+        top = 4.5f,
         bot = -4.5f
     };
     

@@ -216,12 +216,12 @@ public class PhaseProperty {
     /// Note that this is on by default for card-type spells (nons, spells, timeouts, finals).
     /// </summary>
     /// <returns></returns>
-    public static PhaseProperty Clear() => new ClearProp(true, null, null);
+    public static PhaseProperty Clear() => new ClearProp(true);
     /// <summary>
     /// Don't automatically clear bullets and hoisted data at the end of this phase.
     /// </summary>
     /// <returns></returns>
-    public static PhaseProperty NoClear() => new ClearProp(false, null, null);
+    public static PhaseProperty NoClear() => new ClearProp(false);
 
     /// <summary>
     /// Same as RootT with a default time of 2 seconds.
@@ -341,12 +341,8 @@ public class PhaseProperty {
 
     public class ClearProp : PhaseProperty {
         public readonly bool clear;
-        public readonly string? target;
-        public readonly string? defaulter;
-        public ClearProp(bool doClear, string? targetPool, string? defaulter) {
+        public ClearProp(bool doClear) {
             clear = doClear;
-            target = targetPool;
-            this.defaulter = defaulter;
         }
     }
 
@@ -392,37 +388,36 @@ public record SoftcullProperties {
     public float advance { get; init; }
     public float minDist { get; }
     public float maxDist { get; }
+    
+    /// <summary>
+    /// The target style to which bullets will be converted. If null, bullets will only fade out.
+    /// </summary>
     public string? autocullTarget { get; }
     private string autocullDefault { get; }
+    
+    /// <summary>
+    /// If true, /b and /w styles will be converted to / styles.
+    /// This is only used for end-of-phase clears, which prioritize the uniformity over the accuracy.
+    /// <br/>(Irrelevant if <see cref="autocullTarget"/> is null.)
+    /// </summary>
+    public bool SendBWToColor { get; init; } = false;
+    
     /// <summary>
     /// True iff the cleared bullets should be converted to flake items that grant the player extra points.
     /// </summary>
     public bool UseFlakeItems { get; init; } = false;
     public string? DefaultPool => autocullTarget == null ? null : $"{autocullTarget}-{autocullDefault}";
-    public readonly bool sendToC;
 
-    public SoftcullProperties(Vector2 center, float advance, float minDist, float maxDist, string? target, string? dflt=null) {
+    public SoftcullProperties(Vector2 center, float advance, float minDist, float maxDist, string? target=null, string? dflt=null) {
         this.center = center;
         this.advance = advance;
         this.minDist = minDist;
         this.maxDist = maxDist;
         this.autocullTarget = target;
         this.autocullDefault = dflt ?? "black/b";
-        this.sendToC = true;
     }
 
-    public static SoftcullProperties OverTimeDefault(Vector2 center, float advance, float minDist, float maxDist,
-        string? target = null, string? dflt = null) =>
-        new(center, advance, minDist, maxDist, target, dflt);
-    
-    public static SoftcullProperties SynchronousDefault(Vector2 center, float advance, float minDist, float maxDist,
-        string? target = null, string? dflt = null) =>
-        new(center, advance, minDist, maxDist, target, dflt);
-
-    //TODO review other usages
-    public SoftcullProperties(string? target, string? dflt) : this(Vector2.zero, 0, 0, 0, target, dflt) {
-        sendToC = false;
-    }
+    public SoftcullProperties(string? target, string? dflt) : this(Vector2.zero, 0, 0, 0, target, dflt) { }
 
     public float AdvanceTime(Vector2 location) {
         var dist = (location - center).magnitude;
@@ -449,17 +444,22 @@ public class PhaseProperties {
     private readonly bool? cleanup = null;
     public bool Cleanup => cleanup ?? phaseType?.IsPattern() ?? false;
     public readonly bool endSound = true;
-    private readonly string? autocullTarget;
     private readonly string? autocullBehTarget = "cwheel";
-    private readonly string? autocullDefault;
 
     public SoftcullProperties SoftcullProps(BehaviorEntity exec) =>
-        SoftcullProperties.SynchronousDefault(exec.GlobalPosition(), 0.4f, 0.5f, 4f, autocullTarget, autocullDefault);
+        new(exec.GlobalPosition(), 0.4f, 0.5f, 4f) {
+            //SendBWToColor = true //superfluous
+        };
+    //TODO get a better BEH cull animation than cwheel
     public SoftcullProperties SoftcullPropsBeh(BehaviorEntity exec) =>
-        SoftcullProperties.SynchronousDefault(exec.GlobalPosition(), 0.4f, 0.5f, 4f, autocullBehTarget, autocullDefault);
+        new(exec.GlobalPosition(), 0.4f, 0.5f, 4f, autocullBehTarget) {
+            SendBWToColor = true
+        };
     public SoftcullProperties SoftcullPropsOverTime(BehaviorEntity exec, float advance) =>
-        SoftcullProperties.OverTimeDefault(exec.GlobalPosition(), advance, 0.5f, 8f, autocullTarget, autocullDefault)
-         with { UseFlakeItems = true };
+        new(exec.GlobalPosition(), advance, 0.5f, 8f) {
+            //SendBWToColor = true //superfluous
+            UseFlakeItems = true
+        };
     
     public readonly int? livesOverride = null;
     public readonly StateMachine? rootMove = null;
@@ -510,8 +510,6 @@ public class PhaseProperties {
                 else BgTransitionOut = ResourceManager.GetBackgroundTransition(btp.style);
             } else if (prop is ClearProp cp) {
                 cleanup = cp.clear;
-                autocullTarget = cp.target ?? autocullTarget;
-                autocullDefault = cp.defaulter ?? autocullDefault;
             } else if (prop is LivesOverrideProp lop) 
                 livesOverride = lop.lives;
             else if (prop is SpellCutinProp scp) 

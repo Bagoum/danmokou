@@ -1,8 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
     <ui:VisualElement style="width: 280px; height: 200px; background-image: none; flex-direction: row; justify-content: center;">
-        <ui:Label text="[" name="LBracket" class="bracket" />
+        <ui:Label text="[" name="LBracket" class="bracket" style="margin-left: -10px;" />
         <ui:VisualElement name="Star" style="width: 200px; margin-right: -30px; margin-left: -30px;" />
-        <ui:Label text="]" name="RBracket" class="bracket" />
+        <ui:Label text="]" name="RBracket" class="bracket" style="margin-right: -10px;" />
     </ui:VisualElement>
 </ui:UXML>

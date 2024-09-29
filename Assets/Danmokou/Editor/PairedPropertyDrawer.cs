@@ -68,6 +68,13 @@ public class NamedSpriteDrawer : PairedPropertyDrawer {
     protected override string arg2 => "sprite";
 }
 
+[CustomPropertyDrawer(typeof(CursorData))]
+public class CursorDrawer : PairedPropertyDrawer {
+    protected override string arg1 => "cursor";
+    protected override string arg2 => "offset";
+    protected override bool showName => true;
+}
+
 [CustomPropertyDrawer(typeof(DataPrefab))]
 public class PrefabDrawer : PairedPropertyDrawer {
     protected override string arg2 => "prefab";

@@ -29,8 +29,6 @@ using MethodCall = Danmokou.Reflection2.AST.MethodCall;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
-    public static string SimpRName(this Type t) => SimplifiedExprPrinter.Default.Print(t);
-    
     public static string SimpRName(this TypeDesignation t) {
         if (t is TypeDesignation.Known kt) {
             if (kt.Typ == typeof(Func<,>) && (kt.Arguments[0] as TypeDesignation.Known)?.Typ == typeof(TExArgCtx)) {
@@ -51,34 +49,15 @@ public static partial class Reflector {
         else
             return t.ToString();
     }
-    private class SimplifiedExprPrinter : CSharpTypePrinter {
-        public new static readonly ITypePrinter Default = new SimplifiedExprPrinter()
-            { PrintTypeNamespace = _ => false };
-        public override string Print(Type t) {
-            if (t.IsTExOrTExFuncType(out var inner))
-                t = inner;
-            return base.Print(t);
-        }
-    }
-    /// <summary>
-    /// A simplified description of a method parameter.
-    /// </summary>
-    /// <param name="Type">Parameter type</param>
-    /// <param name="Name">Parameter name</param>
-    /// <param name="LookupMethod">Whether this parameter has LookupMethodAttribute</param>
-    /// <param name="NonExplicit">Whether this parameter has NonExplicitAttribute</param>
-    /// <param name="BDSL1ImplicitSMList">Whether this parameter has <see cref="BDSL1ImplicitChildrenAttribute"/></param>
-    public record NamedParam(Type Type, string Name, bool LookupMethod = false, bool NonExplicit = false, bool BDSL1ImplicitSMList = false) {
-        public static implicit operator NamedParam(ParameterInfo pi) => 
-            new(pi.ParameterType, pi.Name, 
-                pi.GetCustomAttribute<LookupMethodAttribute>() != null,
+
+    public record ParamFeatures(bool LookupMethod = false, bool NonExplicit = false, bool BDSL1ImplicitSMList = false) {
+        public static implicit operator ParamFeatures(ParameterInfo pi) => 
+            new(pi.GetCustomAttribute<LookupMethodAttribute>() != null,
                 pi.GetCustomAttribute<NonExplicitParameterAttribute>() != null,
                 pi.GetCustomAttribute<BDSL1ImplicitChildrenAttribute>() != null);
-
-        public string Description => $"{Name}<{CSharpTypePrinter.Default.Print(Type)}>";
-        public string AsParameter => $"{Type.SimpRName()} {Name}";
-        public string SimplifiedDescription => $"\"{Name}\" (type: {SimplifiedExprPrinter.Default.Print(Type)})";
     }
+    
+    
     public static MethodSignature Signature(this MethodBase mi) => MethodSignature.Get(mi);
     
     /// <summary>

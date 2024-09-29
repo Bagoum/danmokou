@@ -124,7 +124,7 @@ public interface ICircularPlayerSimpleBulletCollisionReceiver : IPlayerSimpleBul
 }
 
 /// <summary>
-/// Implementation <see cref="IEnemySimpleBulletCollisionReceiver"/> that handles collision when the entity
+/// Implementation of <see cref="IEnemySimpleBulletCollisionReceiver"/> that handles collision when the entity
 ///  is circular and has a grazebox. Used by the player.
 /// </summary>
 public interface ICircularGrazableEnemySimpleBulletCollisionReceiver : IEnemySimpleBulletCollisionReceiver,

@@ -84,10 +84,10 @@ public class Bullet : BehaviorEntity {
         allBullets.Add(this);
     }
 
-    public virtual void Initialize(BEHStyleMetadata? style, RealizedBehOptions options, BehaviorEntity? parent, Movement mov, ParametricInfo pi, out int layer) {
+    public virtual void Initialize(BEHStyleMetadata? style, RealizedBehOptions options, BehaviorEntity? parent, in Movement mov, ParametricInfo pi, out int layer) {
         pi.ctx.bullet = this;
         Player = options.playerBullet;
-        base.Initialize(style, mov, pi, options.smr, parent, options: options);
+        base.Initialize(style, in mov, pi, options.smr, parent, options: options);
         gameObject.layer = layer = options.layer ?? DefaultLayer;
         hueShift = options.hueShift;
         Damage = options.damage ?? 1;

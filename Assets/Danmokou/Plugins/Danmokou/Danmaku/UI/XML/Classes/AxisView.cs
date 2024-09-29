@@ -61,7 +61,7 @@ public class AxisView : UIView<AxisViewModel>, IUIView {
         var tr = HTML.transform;
         Cancellable.Replace(ref canceller);
         Node.Controller.PlayAnimation(Node.HTML.GoToLeftTop(
-            UIBuilderRenderer.ToXMLOffset(myLoc), 0.6f, Easers.EOutSine, canceller));
+            UIBuilderRenderer.ToUIXMLDims(myLoc).InvertY(), 0.6f, Easers.EOutSine, canceller));
         Node.Controller.PlayAnimation(tr.ScaleTo(scale, 0.4f, Easers.EOutSine, canceller));
         //sr.ColorTo(color, time, Easers.EOutSine, canceller).Run(this, new CoroutineOptions(true));
     }

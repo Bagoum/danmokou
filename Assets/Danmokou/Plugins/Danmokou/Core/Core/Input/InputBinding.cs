@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using BagoumLib.Culture;
+using BagoumLib.DataStructures;
 using Newtonsoft.Json;
 using UnityEngine;
 

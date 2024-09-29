@@ -38,7 +38,7 @@ public static class BDSL2ParsingTests {
         return (res.Left.AnnotateWithParameters(new(gs), args).LeftOrRight<AST.Block, AST.Failure, IAST>(), gs);
     }
     private static void AssertASTFail(string source, string pattern, IDelegateArg[] args) {
-        var (ast, gs) = MakeAST(ref source, args);
+        var (ast, _) = MakeAST(ref source, args);
         var excs = ast.FirstPassExceptions().ToList();
         Assert.IsTrue(excs.Count > 0);
         Assert.IsTrue(excs.Any(exc => _RegexMatches(pattern, exc.Message)));
@@ -99,7 +99,7 @@ x++ + block {
 }";
         var args = new IDelegateArg[] { new DelegateArg<float>("myArg") };
         var ast = AssertVerified(source, args);
-        var vars = (ast as Reflection2.AST)!.LocalScope!.variableDecls.Values.OrderBy(x => x.Name).ToArray();
+        var vars = (ast as AST)!.LocalScope!.variableDecls.Values.OrderBy(x => x.Name).ToArray();
         ListEq(vars.Select(v => (v.Assignments, v.Name)).ToArray(), new[] {
             (2, "myArg"),
             (3, "x"),
@@ -130,7 +130,7 @@ x++ + block {
 4 + x = 3";
         var ast = AssertVerified(source);
         try {
-            var f = CompilerHelpers.PrepareDelegate<Func<float, float>>(ast.Realize, Array.Empty<IDelegateArg>());
+            CompilerHelpers.PrepareDelegate<Func<float, float>>(ast.Realize, Array.Empty<IDelegateArg>());
             Assert.Fail();
         } catch (ReflectionException exc) {
             StringContains("is not writeable", exc.Message);
@@ -142,7 +142,7 @@ x++ + block {
         var args = new IDelegateArg[] { };
         var ast = AssertVerified("gsr2c 10 { bindLR() } { s tprot rotate(lr * 20, block{ var aa = 4; px(aa + aa); }) }");
         var result = CompilerHelpers.PrepareDelegate<Func<SyncPattern>>(ast.Realize, args);
-        int k = 5;
+        Debug.Log(result);
     }
 }
 }

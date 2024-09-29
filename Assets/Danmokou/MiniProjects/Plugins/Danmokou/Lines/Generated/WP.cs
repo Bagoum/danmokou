@@ -362,7 +362,7 @@ public static partial class ScriptLocalization {
 		public static readonly LString l115 = new LText("Oh, there's a book up there. I could go walk and get it, but I'm too lazy.")
 			{ ID = "l115" };
 		
-		public static readonly LString l116 = new LText("This hill is much less steep than the ones on Youkai Mountain. If you want to learn snowboarding, this is a good place to start.")
+		public static readonly LString l116 = new LText("This <link=0>hill is much</link> less steep than the ones on Youkai Mountain. If you want to learn snowboarding, this is a good place to start.")
 			{ ID = "l116" };
 		
 		public static readonly LString l117 = new LText("Uuuwwww... I'm not prepared for this...")

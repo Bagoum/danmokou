@@ -62,6 +62,8 @@ public record FixedXMLObject : IFixedXMLObject {
         Height = new(h);
         IsInteractable.AddDisturbance(IsVisible);
     }
+    
+    public FixedXMLObject(Vector2 lt, Vector2? wh) : this(lt.x, lt.y, wh?.x, wh?.y) { }
 
     public FixedXMLObject MakeUninteractable(out IDisposable token) {
         token = IsInteractable.AddConst(false);

@@ -1,24 +1,40 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using BagoumLib;
 using BagoumLib.Tasks;
 using Danmokou.Core;
-using Danmokou.DMath;
 using Danmokou.UI.XML;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Object = UnityEngine.Object;
 
 namespace Danmokou.UI {
-public class TMPLinkHandler : MonoBehaviour, IPointerClickHandler, IPointerMoveHandler {
+public class TMPLinkHandler : MonoBehaviour, IPointerClickHandler, IPointerMoveHandler, IPointerExitHandler {
     public Canvas? canvas;
     public TMP_Text text = null!;
-    private readonly Dictionary<string, UIGroup> tooltips = new();
+    private readonly Dictionary<string, UIGroup> stickyTooltips = new();
+    private readonly Dictionary<string, UIGroup> quickTooltips = new();
+    private IDisposable? cursorMod;
 
     public void ClearTooltips() {
-        foreach (var tt in tooltips.Values)
-            _ = tt.LeaveGroup().ContinueWithSync();
-        tooltips.Clear();
+        ClearTooltips(stickyTooltips);
+        ClearTooltips(quickTooltips);
     }
+
+    private void ClearTooltips(Dictionary<string, UIGroup> tts, UIGroup? except = null) {
+        string? eKey = null;
+        foreach (var (key, tt) in tts) {
+            if (tt == except)
+                eKey = key;
+            else
+                _ = tt.LeaveGroup().ContinueWithSync();
+        }
+        tts.Clear();
+        if (eKey != null && except != null)
+            tts[eKey] = except;
+    }
+    
 
     public void OnPointerClick(PointerEventData eventData) {
         if (eventData.button == PointerEventData.InputButton.Right) {
@@ -32,28 +48,57 @@ public class TMPLinkHandler : MonoBehaviour, IPointerClickHandler, IPointerMoveH
             ExecuteEvents.ExecuteHierarchy(transform.parent.gameObject, eventData, ExecuteEvents.pointerClickHandler);
             return;
         }
-        var link = text.textInfo.linkInfo[li];
-        var lid = link.GetLinkID();
-        if (tooltips.Remove(lid, out var ett)) {
+        var lid = text.textInfo.linkInfo[li].GetLinkID();
+        if (stickyTooltips.Remove(lid, out var ett)) {
             _ = ett.LeaveGroup().ContinueWithSync();
         } else {
             var (succ, tt) = LinkCallback.ProcessClick(lid);
             if (!succ) {
-                Logs.Log($"No processor found for link of id {lid}", level: LogLevel.WARNING);
+                Logs.Log($"No click handler found for link of id {lid}", level: LogLevel.WARNING);
                 return;
             }
+            if (quickTooltips.Remove(lid, out var eqtt))
+                _ = eqtt.LeaveGroup().ContinueWithSync();
             if (tt != null) {
-                tt.Render.HTML.WithAbsolutePosition(UIBuilderRenderer.ToXMLPos((tl + tr) / 2.0f));
-                tooltips[lid] = tt;
+                tt.Render.HTML.WithAbsolutePosition(UIBuilderRenderer.UICamInfo.ToXMLPos((tl + tr) / 2.0f));
+                stickyTooltips[lid] = tt;
             }
         }
     }
 
     public void OnPointerMove(PointerEventData eventData) {
-        /*Debug.Log($"POINTER MVOE {eventData}");
-        var li = TMP_TextUtilities.FindIntersectingLink(text, eventData.position,
-            canvas == null ? null! : canvas.worldCamera);
-        Debug.Log(li);*/
+        cursorMod?.Dispose();
+        var li = FindIntersectingLink(text, eventData.position, canvas == null ? null! : canvas.worldCamera,
+            out _, out var tl, out _, out var tr);
+        if (li < 0) {
+            ClearTooltips(quickTooltips);
+            ExecuteEvents.ExecuteHierarchy(transform.parent.gameObject, eventData, ExecuteEvents.pointerMoveHandler);
+            return;
+        }
+        cursorMod = CursorManager.AddButton();
+        var lid = text.textInfo.linkInfo[li].GetLinkID();
+        if (stickyTooltips.ContainsKey(lid)) {
+            ClearTooltips(quickTooltips);
+            return;
+        }
+        var ett = quickTooltips.GetValueOrDefault(lid);
+        ClearTooltips(quickTooltips, ett);
+        if (ett is null) {
+            var (succ, tt) = LinkCallback.ProcessHover(lid);
+            if (!succ) {
+                Logs.Log($"No hover handler found for link of id {lid}", level: LogLevel.WARNING);
+                return;
+            }
+            if (tt != null) {
+                tt.Render.HTML.WithAbsolutePosition(UIBuilderRenderer.UICamInfo.ToXMLPos((tl + tr) / 2.0f));
+                quickTooltips[lid] = tt;
+            }
+        }
+    }
+
+    public void OnPointerExit(PointerEventData eventData) {
+        ClearTooltips(quickTooltips);
+        cursorMod?.Dispose();
     }
 
 
