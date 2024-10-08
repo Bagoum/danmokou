@@ -6,7 +6,7 @@ using Danmokou.UI.XML;
 /// <summary>
 /// Callback for when a link is clicked in a UI handler.
 /// </summary>
-public delegate (bool success, UIGroup? tooltip) LinkEvent(string id);
+public delegate (bool success, TooltipProxy? tooltip) LinkEvent(string id);
 
 namespace Danmokou.UI {
 public static class LinkCallback {
@@ -41,14 +41,14 @@ public static class LinkCallback {
     public static IDisposable RegisterHoverer(params (string id, string text)[] pairs) => 
         RegisterHoverer(MakeTooltipMap(pairs));
 
-    private static (bool success, UIGroup? tooltip) Process(DMCompactingArray<LinkEvent> handlers, string id) {
+    private static (bool success, TooltipProxy? tooltip) Process(DMCompactingArray<LinkEvent> handlers, string id) {
         for (int ii = 0; ii < handlers.Count; ++ii)
             if (handlers.GetIfExistsAt(ii, out var clicker) && clicker(id) is { success: true } res)
                 return res;
         return (false, null);
     }
 
-    public static (bool success, UIGroup? tooltip) ProcessClick(string id) => Process(clickers, id);
-    public static (bool success, UIGroup? tooltip) ProcessHover(string id) => Process(hoverers, id);
+    public static (bool success, TooltipProxy? tooltip) ProcessClick(string id) => Process(clickers, id);
+    public static (bool success, TooltipProxy? tooltip) ProcessHover(string id) => Process(hoverers, id);
 }
 }

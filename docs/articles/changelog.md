@@ -16,13 +16,16 @@ The following features are planned for future releases.
 - [Backlog] Implementation of a TH18-like card engine
 - [Backlog] Procedural generation of stages and bullet patterns
 
-# v11.3.0 (2024/10/04)
+# v11.3.0 (2024/11/04)
 
 #### UI Changes
 
 - Added support for a custom cursor, configured by any "Cursor Manager" script (by default, there is one attached to the `UI (TH)` game object.) Mousing over a clickable UI node will switch to the button-based cursor. There is currently no support for the text-based cursor. Note that by default, cursor size is based on the computer running the program (ie. a computer will automatically scale the cursor to approximately the size of the computer's default cursor). You can disable this by using `UnityEngine.CursorMode.ForceSoftware` in `CursorManager.cs`, which will force the cursor to be the size of the cursor texture regardless of screen size.
 
+#### Rendering Changes
 
+- Cameras have been consolidated. DirectRender cameras have been removed (instanced rendering now renders as the lowest item in either LowCamera or HighCamera). 3DCamera has been removed (it was unused in the engine as is, though you can add any cameras as necessary). ShaderEffectCamera was removed, but its logic was moved to HighCamera as PlayScreenPostprocessing.cs. BackgroundCombiner was removed and its logic was consolidated into BackgroundOrchestrator. See [the doc on rendering](ResolutionRendering.md) for details on the current setup.
+- DownDistorter (the component that creates distortion effects around bosses) has been removed. Instead, boss distortion is performed by BackgroundOrchestrator when it merges background textures. As before, only one distortion effect may be active at a time, though it is now feasible to add more by turning the distortion process into a vector or multi-pass.
 
 # v11.2.0 (2024/08/04)
 

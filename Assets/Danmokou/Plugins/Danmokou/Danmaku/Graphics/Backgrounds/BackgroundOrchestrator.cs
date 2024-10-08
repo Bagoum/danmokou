@@ -1,38 +1,94 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Events;
+using BagoumLib.Functional;
 using Danmokou.Behavior;
 using Danmokou.Core;
+using Danmokou.DMath;
+using Danmokou.Services;
 using JetBrains.Annotations;
 using Danmokou.SM;
 using SuzunoyaUnity.Rendering;
 using UnityEngine;
+using UnityEngine.Rendering;
 using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.Graphics.Backgrounds {
 public interface IBackgroundOrchestrator {
     void QueueTransition(BackgroundTransition bgt);
-    void ConstructTarget(GameObject bgp, bool withTransition = true, bool destroyIfExists = false);
+    void ConstructTarget(GameObject? bgp, bool withTransition = true, bool destroyIfExists = false);
+    IDisposable AddDistorter(Transform tr, CameraInfo tracker);
 }
 public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrchestrator {
     private Transform tr = null!;
-    private BackgroundCombiner BackgroundCombiner { get; set; } = null!;
+    //private BackgroundCombiner BackgroundCombiner { get; set; } = null!;
     public BackgroundController? FromBG { get; private set; }
     public BackgroundController? ToBG { get; private set; }
     
     private readonly Dictionary<GameObject, BackgroundController> instantiated = new();
     private BackgroundTransition? nextRequestedTransition;
 
-    public GameObject backgroundCombiner = null!;
-    public Material baseMixerMaterial = null!;
     public GameObject defaultBGCPrefab = null!;
-    
-    public float Time { get; private set; }
 
+    public Material orchestratorBaseMaterial = null!;
+    private Material mat = null!;
+    private CameraRenderer cmr = null!;
+    private float mixTime = 0f;
+    public float Time { get; private set; }
+    
+    private GameObject? lastRequestedBGC;
+    //We don't update backgrounds immediately, since there are use-cases where we push two backgrounds
+    // one after another and want the first one to be ignored.
+    private Action? pendingBackgroundUpdate;
+    private readonly OverrideEvented<(Transform tr, CameraInfo cam)?> distorter = new(null);
+
+    
+    
+    private void Awake() {
+        cmr = GetComponent<CameraRenderer>();
+        mat = new Material(orchestratorBaseMaterial);
+        tr = transform;
+        Time = 0f;
+    }
+
+    protected override void BindListeners() {
+        base.BindListeners();
+        RegisterService<IBackgroundOrchestrator>(this, new ServiceLocator.ServiceOptions { Unique = true });
+        Listen(SaveData.s.Backgrounds, _ => ShowHide());
+        Listen(RenderHelpers.PreferredResolution, _ => UpdateTextures());
+        Listen(IGraphicsSettings.SettingsEv, _ => UpdateDistortion());
+    }
+    
+    public override void FirstFrame() {
+        if (FromBG == null) {
+            var bgc = (lastRequestedBGC == null) ? defaultBGCPrefab : lastRequestedBGC;
+            lastRequestedBGC = null;
+            pendingBackgroundUpdate = null;
+            FromBG = CreateBGC(bgc);
+            ShowHide();
+        }
+        ResetMaterial();
+        UpdateTextures();
+    }
+
+    public override void RegularUpdate() {
+        if (ETime.LastUpdateForScreen) UpdateTextures();
+        base.RegularUpdate();
+        if (EngineStateManager.State <= EngineState.RUN) { 
+            mixTime += ETime.FRAME_TIME;
+            Time += ETime.FRAME_TIME;
+            pendingBackgroundUpdate?.Invoke();
+            pendingBackgroundUpdate = null;
+        }
+    }
+    public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
+    
     private void ShowHide() {
         if (FromBG != null) {
             FromBG.ShowHideBySettings(SaveData.s.Backgrounds);
@@ -40,6 +96,51 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         if (ToBG != null) {
             ToBG.ShowHideBySettings(SaveData.s.Backgrounds);
         }
+    }
+
+    private void UpdateTextures() {
+        if (FromBG == null || !FromBG.IsDrawing) {
+            mat.DisableKeyword("MIX_FROM_ONLY");
+            mat.EnableKeyword("NO_BG_RENDER");
+            return;
+        }
+        mat.DisableKeyword("NO_BG_RENDER");
+        var sco = !GameManagement.Instance.InstanceActiveGuardInScene ? Vector2.zero :
+            cmr.CamInfo.ToScreenPoint(LocationHelpers.PlayableBounds.center + LocationHelpers.PlayableScreenCenter)
+            - cmr.CamInfo.ToScreenPoint(LocationHelpers.PlayableScreenCenter);
+        mat.SetVector(screenCenterOffset, new Vector4(sco.x, sco.y, 0, 0));
+        var fromTex = FromBG.capturer.Captured;
+        var toTex = (ToBG == null) ? null : ToBG.capturer.Captured;
+        if (toTex == null) {
+            mat.EnableKeyword("MIX_FROM_ONLY");
+            mat.SetTexture(PropConsts.fromTex, fromTex);
+        } else {
+            mat.DisableKeyword("MIX_FROM_ONLY");
+            mat.SetTexture(PropConsts.fromTex, fromTex);
+            mat.SetTexture(PropConsts.toTex, toTex);
+        }
+        mat.SetFloat(PropConsts.time, mixTime);
+        mat.SetFloat(distortTime, Time);
+        if (distorter.Value is { } val) {
+            var dc = val.cam.ToScreenPoint(val.tr.position);
+            mat.SetVector(distortCenter, new Vector4(dc.x, dc.y, 0, 0));
+        }
+    }
+    
+    private void UpdateDistortion() {
+        var hasDistorter = distorter.Value.HasValue;
+        var isFancy = SaveData.s.Shaders;
+        mat.SetOrUnsetKeyword(hasDistorter && !isFancy, "SHADOW_ONLY");
+        mat.SetOrUnsetKeyword(hasDistorter && isFancy, "SHADOW_AND_DISTORT");
+    }
+
+    private void ResetMaterial() {
+        var kws = mat.enabledKeywords.ToArray();
+        foreach (var kw in kws)
+            mat.DisableKeyword(kw);
+        mat.EnableKeyword("MIX_FROM_ONLY");
+        UpdateDistortion();
+        mixTime = 0;
     }
 
     private BackgroundController CreateBGC(GameObject prefab) {
@@ -53,43 +154,6 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         }
     }
 
-    private GameObject? lastRequestedBGC;
-    public override void FirstFrame() {
-        if (FromBG == null) {
-            var bgc = (lastRequestedBGC == null) ? defaultBGCPrefab : lastRequestedBGC;
-            lastRequestedBGC = null;
-            FromBG = CreateBGC(bgc);
-            ShowHide();
-        }
-    }
-    public static GameObject? NextSceneStartupBGC { get; set; }
-    //We don't update backgrounds immediately, since there are use-cases where we push two backgrounds
-    // one after another and want the first one to be ignored.
-    private Action? pendingBackgroundUpdate;
-    private void Awake() {
-        tr = transform;
-        lastRequestedBGC = NextSceneStartupBGC;
-        NextSceneStartupBGC = null;
-        Time = 0f;
-        BackgroundCombiner = Instantiate(backgroundCombiner, Vector3.zero, Quaternion.identity)
-            .GetComponent<BackgroundCombiner>();
-        BackgroundCombiner.Initialize(this);
-    }
-
-    protected override void BindListeners() {
-        base.BindListeners();
-        RegisterService<IBackgroundOrchestrator>(this, new ServiceLocator.ServiceOptions { Unique = true });
-        Listen(RenderHelpers.PreferredResolution, _ => ShowHide());
-    }
-
-    public override void RegularUpdate() {
-        pendingBackgroundUpdate?.Invoke();
-        pendingBackgroundUpdate = null;
-        base.RegularUpdate();
-        Time += ETime.FRAME_TIME;
-    }
-
-
     public void QueueTransition(BackgroundTransition bgt) => nextRequestedTransition = bgt;
 
     private void FinishTransition() {
@@ -98,8 +162,11 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
             FromBG = ToBG;
             ToBG = null;
         }
+        ResetMaterial();
+        UpdateTextures();
     }
-    public void ConstructTarget(GameObject bgp, bool withTransition=true, bool destroyIfExists=false) {
+    public void ConstructTarget(GameObject? bgp, bool withTransition=true, bool destroyIfExists=false) {
+        if (bgp is null) return;
         lastRequestedBGC = bgp;
         if (FromBG == null) return;
         pendingBackgroundUpdate = () => {
@@ -119,9 +186,9 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
     }
 
     private void SetTarget(BackgroundController bgc, bool withTransition) {
-        if (withTransition && nextRequestedTransition.HasValue) {
+        if (withTransition && nextRequestedTransition.Try(out var transition)) {
             ToBG = bgc;
-            DoTransition(nextRequestedTransition.Value);
+            DoTransition(transition);
             nextRequestedTransition = null;
         } else {
             if (FromBG != null)
@@ -135,13 +202,14 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
     private void DoTransition(BackgroundTransition bgt) {
         if (FromBG == null) return;
         if (ToBG == null) throw new Exception("Cannot do transition when target BG is null");
-        var pb = new MaterialPropertyBlock();
-        var mat = Instantiate(baseMixerMaterial);
+        ResetMaterial();
+        /*var pb = new MaterialPropertyBlock();
+        var mat = Instantiate(baseMixerMaterial);*/
         var cts = new Cancellable();
         transitionCTS.Add(cts);
         Func<bool>? condition = null;
         float timeout = bgt.Apply(this, mat, ref condition);
-        BackgroundCombiner.SetMaterial(mat, pb);
+        //BackgroundCombiner.SetMaterial(mat, pb);
         void Finish() {
             if (!cts.Cancelled) FinishTransition();
             transitionCTS.Remove(cts);
@@ -152,12 +220,26 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
             RUWaitingUtils.WaitThenCBEvenIfCancelled(this, cts, timeout, condition ?? (() => true), Finish);
     }
 
+    public IDisposable AddDistorter(Transform transf, CameraInfo tracker) {
+        var disp = distorter.AddConst((transf, tracker));
+        UpdateDistortion();
+        return disp;
+    }
+
     protected override void OnDisable() {
         foreach (var cts in transitionCTS) cts.Cancel();
         transitionCTS.Clear();
         FromBG = ToBG = null;
         base.OnDisable();
     }
+
+    private void OnRenderImage(RenderTexture source, RenderTexture destination) {
+        UnityEngine.Graphics.Blit(source, destination, mat);
+    }
+    
+    private static readonly int screenCenterOffset = Shader.PropertyToID("_ScreenCenterOffset");
+    private static readonly int distortTime = Shader.PropertyToID("_DistortT");
+    private static readonly int distortCenter = Shader.PropertyToID("_DistortCenter");
 }
 
 

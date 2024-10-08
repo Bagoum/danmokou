@@ -315,12 +315,14 @@ public record InstanceRequest {
 
     private Task<InstanceRecord>? SelectBoss(BossPracticeRequest ab) {
         var b = ab.boss.boss;
-        BackgroundOrchestrator.NextSceneStartupBGC = b.Background(ab.PhaseType);
         if (ServiceLocator.Find<ISceneIntermediary>().LoadScene(SceneRequest.TaskFromOnFinish(References.unitScene,
                 SceneRequest.Reason.START_ONE,
                 SetupInstance,
-                //Note: this load during onHalfway is for the express purpose of preventing load lag
-                () => StateMachineManager.FromText(b.stateMachine),
+                () => {
+                    //Note: SM load during onHalfway is for the express purpose of preventing load lag
+                    StateMachineManager.FromText(b.stateMachine);
+                    ServiceLocator.Find<IBackgroundOrchestrator>().ConstructTarget(b.Background(ab.PhaseType), false);
+                },
                 async () => {
                     var beh = UnityEngine.Object.Instantiate(b.boss).GetComponent<BehaviorEntity>();
                     beh.phaseController.Override(ab.phase.index);
@@ -338,12 +340,13 @@ public record InstanceRequest {
     }
 
     private Task<InstanceRecord>? SelectChallenge(PhaseChallengeRequest cr) {
-        BackgroundOrchestrator.NextSceneStartupBGC = cr.Boss.Background(cr.phase.phase.type);
         if (ServiceLocator.Find<ISceneIntermediary>().LoadScene(SceneRequest.TaskFromOnLoad(References.unitScene,
                 SceneRequest.Reason.START_ONE,
                 SetupInstance,
                 () => {
                     StateMachineManager.FromText(cr.Boss.stateMachine);
+                    ServiceLocator.Find<IBackgroundOrchestrator>()
+                        .ConstructTarget(cr.Boss.Background(cr.phase.phase.type), false);
                     return ServiceLocator.Find<IChallengeManager>().TrackChallenge(new SceneChallengeReqest(this, cr), InstTracker);
                 },
                 () => {

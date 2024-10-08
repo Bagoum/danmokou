@@ -144,6 +144,7 @@ public static class M {
     }
 
     public static Vector2 PtMul(this Vector2 a, Vector2 b) => new(a.x * b.x, a.y * b.y);
+    public static Vector3 PtMul(this Vector3 a, Vector3 b) => new(a.x * b.x, a.y * b.y, a.z * b.z);
     public static Vector2 ConvertBasis(Vector2 source, Vector2 basis1) => RotateVector(source, basis1.x, -basis1.y);
     public static Vector2 DeconvertBasis(Vector2 source, Vector2 basis1) => RotateVector(source, basis1.x, basis1.y);
 
@@ -434,12 +435,31 @@ public readonly struct CRect {
     public readonly float sin_rot;
     public readonly float angle;
     public Vector2 Offset => new Vector2(x, y);
+    public float MinX => x - halfW;
+    public float MaxX => x + halfW;
+    public float MinY => y - halfH;
+    public float MaxY => y + halfH;
+    public Vector2 Center => new(x, y);
+    public Vector2 BotLeft => M.RotateVectorDeg(MinX, MinY, angle);
+    public Vector2 TopLeft => M.RotateVectorDeg(MinX, MaxY, angle);
+    public Vector2 BotRight => M.RotateVectorDeg(MaxX, MinY, angle);
+    public Vector2 TopRight => M.RotateVectorDeg(MaxX, MaxY, angle);
 
     public CRect(float x, float y, float halfW, float halfH, float ang_deg) {
         this.x = x;
         this.y = y;
         this.halfW = halfW;
         this.halfH = halfH;
+        this.angle = ang_deg;
+        this.cos_rot = M.CosDeg(ang_deg);
+        this.sin_rot = M.SinDeg(ang_deg);
+    }
+
+    public CRect(Vector2 min, Vector2 max, float ang_deg) {
+        this.x = (min.x + max.x) / 2f;
+        this.y = (min.y + max.y) / 2f;
+        this.halfW = (max.x - min.x) / 2f;
+        this.halfH = (max.y - min.y) / 2f;
         this.angle = ang_deg;
         this.cos_rot = M.CosDeg(ang_deg);
         this.sin_rot = M.SinDeg(ang_deg);

@@ -1062,7 +1062,8 @@ public partial class BulletManager {
         new RenderParams(ri.Material) {
         layer = layer,
         camera = c,
-        matProps = pb
+        matProps = pb,
+        rendererPriority = -1000
     };
     private void CallLegacyRender(in MeshGenerator.RenderInfo ri, in RenderParams rp, int ct) {
         if (ct == 0) return;

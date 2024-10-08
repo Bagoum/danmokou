@@ -8,7 +8,6 @@ using UnityEngine;
 
 namespace Danmokou.UI.XML {
 public class UnselectorFixedXML : IFixedXMLObject {
-    public string Descriptor => "Unselector";
     public ICObservable<float> Top { get; } = new ConstantObservable<float>(0);
     public ICObservable<float> Left { get; } = new ConstantObservable<float>(0);
     public ICObservable<float?> Width { get; } = new ConstantObservable<float?>(0);

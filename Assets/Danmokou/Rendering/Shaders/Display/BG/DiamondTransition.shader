@@ -1,7 +1,6 @@
 ﻿Shader "_Transition/DiamondTransition" {
 	Properties {
-		[PerRendererData] _MainTex("[Unused]", 2D) = "white" {}
-		_TrueTex("Sprite Texture", 2D) = "white" {}
+		[PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
 		[PerRendererData] _FaderTex("Fade Controller", 2D) = "white" {}
 		_F("Fill Ratio", Range(0, 1)) = 0.7
 		_BX("Blocks X", Float) = 32
@@ -49,7 +48,7 @@
 
             float _F;
 			sampler2D _FaderTex;
-			sampler2D _TrueTex;
+			sampler2D _MainTex;
 			static const float _Smooth = 0.02f;
 
 			float _BX;
@@ -74,7 +73,7 @@
 				float rel_dist_2 = abs(rel_block_2.x) + abs(rel_block_2.y);
 				float rel_dist_3 = abs(rel_block_3.x) + abs(rel_block_3.y);
 				float rel_dist_4 = abs(rel_block_4.x) + abs(rel_block_4.y);
-				float4 c = tex2D(_TrueTex, f.uv);
+				float4 c = tex2D(_MainTex, f.uv);
 				return lerp(float4(0, 0, 0, 0), c, clamp(
 					smoothstep(-_Smooth, _Smooth, size - rel_dist_1) +
 					smoothstep(-_Smooth, _Smooth, size - rel_dist_2) +

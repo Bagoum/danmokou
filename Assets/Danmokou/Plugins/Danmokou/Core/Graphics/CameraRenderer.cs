@@ -23,7 +23,7 @@ public class CameraRenderer : CoroutineRegularUpdater {
 
     protected override void BindListeners() {
         base.BindListeners();
-        ServiceLocator.Register(this);
+        RegisterService(this);
         Listen(IGraphicsSettings.SettingsEv, s => CamInfo.UpdateAspectFields(s.Resolution));
     }
 

@@ -43,7 +43,17 @@ public static class TestMath {
             proj = M.ProjectVectorUnit(myVec, Vector2.right);
             Assert.AreEqual(proj.x, 3, eps);
             Assert.AreEqual(proj.y, 0, eps);
+        }
 
+        [Test]
+        public static void TestProjectOntoRect() {
+            var r = new CRect(2, 2, 3, 4, 0);
+            Assert.AreEqual(new Vector2(5, 2), CollisionMath.ProjectPointOntoRect(new(8, 2), r));
+            Assert.AreEqual(new Vector2(5, 2), CollisionMath.ProjectPointOntoRect(new(4, 2), r));
+            Assert.AreEqual(new Vector2(5, 3), CollisionMath.ProjectPointOntoRect(new(8, 4), r));
+            Assert.AreEqual(new Vector2(5, 1), CollisionMath.ProjectPointOntoRect(new(8, 0), r));
+            Assert.AreEqual(new Vector2(3, 6), CollisionMath.ProjectPointOntoRect(new(4, 10), r));
+            Assert.AreEqual(new Vector2(1, 6), CollisionMath.ProjectPointOntoRect(new(0, 10), r));
         }
 
         [Test]

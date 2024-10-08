@@ -1,4 +1,5 @@
-﻿using Danmokou.DMath;
+﻿using System;
+using Danmokou.DMath;
 using Danmokou.UI;
 using Danmokou.UI.XML;
 using UnityEngine;
@@ -40,12 +41,12 @@ public class CameraInfo {
         Center = tr.position;
     }
     
-    private Vector2 RescaleDims(Vector2 worldDim, (int w, int h) targetResolution) =>
+    public Vector2 RescaleDims(Vector2 worldDim, (int w, int h) targetResolution) =>
         new(worldDim.x / ScreenWidth * targetResolution.w, worldDim.y / ScreenHeight * targetResolution.h);
 
-    /// <inheritdoc cref="ToXMLDims"/>
-    public Vector2 RectToXMLDims(Vector3 minWorldPos, Vector3 maxWorldPos) =>
-        (ToXMLPos(maxWorldPos) - ToXMLPos(minWorldPos)).InvertY();
+    public CRect ToScreenRect(CRect worldRect, float worldZ) =>
+        new(ToScreenPoint(new(worldRect.MinX, worldRect.MinY, worldZ)),
+            ToScreenPoint(new(worldRect.MaxX, worldRect.MaxY, worldZ)), worldRect.angle);
     
     /// <summary>
     /// Relative to this camera, convert world dimensions into screen dimensions in XML coordinates.
@@ -56,12 +57,29 @@ public class CameraInfo {
     /// <summary>
     /// Relative to this camera, convert a world position into a screen position in XML coordinates.
     /// </summary>
-    public Vector2 ToXMLPos(Vector3 worldPos) {
+    public Vector2 ToXMLPos(Vector3 worldPos) => 
+        UIBuilderRenderer.ScreenpointToXML(ToScreenPoint(worldPos));
+
+    /// <summary>
+    /// Relative to this camera, convert a world position into a screen position in UV coordinates.
+    /// </summary>
+    public Vector2 ToScreenPoint(Vector3 worldPos) {
         var viewpoint = Camera.WorldToViewportPoint(worldPos);
         var viewrect = Camera.rect;
-        var screenpoint = viewrect.min + (Vector2)viewpoint.MulBy(viewrect.size);
-        return new(UIBuilderRenderer.UIResolution.w * screenpoint.x,
-            UIBuilderRenderer.UIResolution.h * (1 - screenpoint.y));
+        return viewrect.min + (Vector2)viewpoint.MulBy(viewrect.size);
+    }
+
+    /// <summary>
+    /// Relative to this camera, convert a viewport position into a world position with the Z coordinate fixed.
+    /// <br/>NB: Unity's ViewportToWorldPoint has the same signature, but instead of fixing the Z coordinate,
+    ///  it fixes the distance from camera.
+    /// </summary>
+    public Vector3 ViewportToWorldFixedZ(Vector2 viewportPos, float worldZ) {
+        var ray = Camera.ViewportPointToRay(viewportPos);
+        if (Math.Abs(ray.direction.z) < M.MAG_ERR)
+            throw new Exception("Can't determine world point with fixed Z");
+        var t = (worldZ - ray.origin.z) / ray.direction.z;
+        return ray.origin + ray.direction * t;
     }
 }
 

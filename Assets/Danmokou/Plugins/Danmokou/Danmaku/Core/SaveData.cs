@@ -348,7 +348,6 @@ public static class SaveData {
         s.Fullscreen.Subscribe(UpdatedFullscreen);
         ETime.SetVSync(s.Vsync);
         Logs.Verbose = s.Verbose;
-        Logs.Log($"Initial settings: resolution {s.Resolution.Value}, fullscreen {s.Fullscreen.Value}, vsync {s.Vsync}");
         r = ReadRecord() ?? new Record();
         _ = ServiceLocator.Register<IGlobalVNDataProvider>(r);
         Achievement.AchievementStateUpdated.Subscribe(r.UpdateAchievement);
@@ -360,8 +359,6 @@ public static class SaveData {
         
         //save language changes to disk immediately for convenience
         s.TextLocale.OnChange.Subscribe(_ => AssignSettingsChanges());
-        //BackgroundOrchestrator uses the resolution update event to turn on/off backgrounds
-        s.Backgrounds.OnChange.Subscribe(_ => UpdatedResolution());
     }
 
     private static Record? ReadRecord() => ReadJson<Record>(RECORD);
@@ -373,14 +370,12 @@ public static class SaveData {
 
     //Screen changes does not take effect immediately, so we need to do this on-change instead of together with
     //shader variable reassignment
-    //this is also used to turn backgrounds on/off
     public static void UpdatedResolution((int w, int h)? dims = null) {
         if (dims is {} wh) {
             //Changing output resolution on phones doesn't make sense and does weird things
         #if !(UNITY_ANDROID || UNITY_IOS)
             Screen.SetResolution(wh.w, wh.h, s.Fullscreen);
         #endif
-            Logs.Log($"Set resolution to {wh}");
         }
         SuzunoyaUnity.Rendering.RenderHelpers.PreferredResolution.OnNext(s.Resolution);
     }

@@ -567,7 +567,7 @@ public class PurpleHeartGameDef : ADVGameDef {
 
             var s10main = Context("s10main", async () => {
                 var r = VN.Find<Reimu>();
-                using var rgp = vn.Add(new UnityRenderGroup("pool", 2, false));
+                using var rgp = vn.Add(new UnityRenderGroup(2, false));
                 using var p = VN.Add(new PoolBG());
                 using var m = VN.Add(new Marisa());
                 m.Alpha = 0.6f;
@@ -622,7 +622,7 @@ public class PurpleHeartGameDef : ADVGameDef {
             });
 
             var s11main = Context("s11main", async () => {
-                using var rgp = vn.Add(new UnityRenderGroup("pool", 2, false));
+                using var rgp = vn.Add(new UnityRenderGroup(2, false));
                 using var p = VN.Add(new PoolBG());
                 using var m = VN.Add(new Marisa());
                 m.Visible.Value = false;

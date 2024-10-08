@@ -5,6 +5,9 @@
     }
     SubShader {
         Tags {
+            //NB: If using this shader to rerender something that is opaque
+            // (eg. background shatter effect) you can use Geometry render queue
+            // to ensure it renders below direct-render bullets/etc.
             "RenderType" = "Transparent"
             "IgnoreProjector" = "True"
             "Queue" = "Transparent"

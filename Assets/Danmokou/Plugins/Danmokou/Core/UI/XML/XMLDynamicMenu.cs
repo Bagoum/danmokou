@@ -51,7 +51,7 @@ public class XMLDynamicMenu : UIController, IFreeformContainer {
     /// <summary>
     /// Create a UIScreen for this <see cref="XMLDynamicMenu"/>, as well as a <see cref="UIFreeformGroup"/> and an
     ///  unselector node within. Nodes or groups may be added to the freeform group by calling
-    /// <see cref="UIFreeformGroup.AddNodeDynamic"/> or <see cref="UIFreeformGroup.AddGroupDynamic"/>.
+    /// <see cref="UIFreeformGroup.AddNodeDynamic(UINode)"/> or <see cref="UIFreeformGroup.AddGroupDynamic"/>.
     /// <br/>By default, the screen does not allow fallthrough clicks
     /// (this can be configured by setting `HTML.pickingMode` in `<paramref name="builder"/>`).
     /// </summary>

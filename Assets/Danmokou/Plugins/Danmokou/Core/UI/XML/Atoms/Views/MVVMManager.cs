@@ -3,6 +3,10 @@ using BagoumLib.DataStructures;
 using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
+/// <summary>
+/// Helper class that manages conservatively updating
+///  <see cref="IUIView"/> based on update triggers and hash code changes.
+/// </summary>
 public class MVVMManager {
     private record ViewState(IUIView View) {
         public BindingUpdateTrigger LastUpdateTrigger { get; set; } = BindingUpdateTrigger.EveryUpdate;

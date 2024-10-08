@@ -200,7 +200,7 @@ t > fadein ?
     /// Note: this returns immediately.
     /// </summary>
     public static ReflectableLASM SeijaX(float degrees, float time) => new(smh => {
-        smh.Context.PhaseObjects.Add(ServiceLocator.Find<IShaderCamera>().AddXRotation(degrees, time));
+        smh.Context.PhaseObjects.Add(ServiceLocator.Find<IPlayScreenShader>().AddXRotation(degrees, time));
         return Task.CompletedTask;
     });
     
@@ -210,7 +210,7 @@ t > fadein ?
     /// </summary>
     public static ReflectableLASM SeijaY(float degrees, float time) {
         return new(smh => {
-            smh.Context.PhaseObjects.Add(ServiceLocator.Find<IShaderCamera>().AddYRotation(degrees, time));
+            smh.Context.PhaseObjects.Add(ServiceLocator.Find<IPlayScreenShader>().AddYRotation(degrees, time));
             return Task.CompletedTask;
         });
     }

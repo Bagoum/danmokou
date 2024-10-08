@@ -857,6 +857,7 @@ public class WPGameDef : ADVGameDef {
                     Location = V3(-5, -0.6), Scale = V3(0.4f)
                 });
                 /*i.Assert(new RunOnEntryAssertion(async () => {
+                    vn.DefaultRenderGroup.LocalLocation.Value = new(1, 1, 0);
                     vn.DefaultRenderGroup.ZoomTarget.Value = new(8, 4, 0);
                     _ = vn.Sequential(vn.DefaultRenderGroup.ZoomTo(1.7f, 4),
                         vn.DefaultRenderGroup.ZoomTo(0.8f, 4)

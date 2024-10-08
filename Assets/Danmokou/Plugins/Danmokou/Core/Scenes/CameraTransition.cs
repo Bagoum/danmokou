@@ -17,21 +17,22 @@ public interface ICameraTransition {
     void Fade(ICameraTransitionConfig? cfg, out float waitIn, out float waitOut);
     public void StallFadeOutUntil(Func<bool> cond);
 }
+/// <summary>
+/// Class that generates a material that can be used to blit a camera overlay onto the screen.
+/// <br/>The material is consumed by <see cref="DMKMainCamera"/>.
+/// </summary>
 public class CameraTransition : RegularUpdater, ICameraTransition {
     private static ICameraTransitionConfig? inherited;
 
     public CameraTransitionConfig defaultConfig = null!;
-    private MaterialPropertyBlock pb = null!;
+    public (Material mat, Texture mainTex)? Render { get; private set; }
     private SpriteRenderer sr = null!;
 
     private void Awake() {
-        pb = new MaterialPropertyBlock();
         sr = GetComponent<SpriteRenderer>();
         if (inherited != null) {
             StartCoroutine(FadeOut(inherited));
             inherited = null;
-        } else {
-            Deactivate();
         }
     }
 
@@ -41,14 +42,6 @@ public class CameraTransition : RegularUpdater, ICameraTransition {
     }
     
     public override void RegularUpdate() { }
-
-    private void Deactivate() {
-        sr.enabled = false;
-    }
-
-    private void Activate() {
-        sr.enabled = true;
-    }
 
     public void Fade(ICameraTransitionConfig? cfg, out float waitIn, out float waitOut) {
         inherited = cfg ?? defaultConfig;
@@ -71,27 +64,24 @@ public class CameraTransition : RegularUpdater, ICameraTransition {
     }
 
     private IEnumerator FadeIn(ICameraTransitionConfig cfg) {
-        sr.sharedMaterial = cfg.FadeIn.material;
-        pb.SetTexture(PropConsts.trueTex, cfg.FadeToTex);
-        pb.SetTexture(PropConsts.faderTex, cfg.FadeIn.transitionTexture);
+        var m = cfg.FadeIn.material;
+        Render = (m, cfg.FadeToTex);
+        m.SetTexture(PropConsts.faderTex, cfg.FadeIn.transitionTexture);
         SetReverse(cfg.FadeIn.material, cfg.FadeIn);
-        Activate();
         ServiceLocator.Find<ISFXService>().Request(cfg.FadeIn.sfx);
         for (float t = 0; t < cfg.FadeIn.time; t += ETime.ASSUME_SCREEN_FRAME_TIME) {
-            pb.SetFloat(PropConsts.fillRatio, cfg.FadeIn.Value(t));
-            sr.SetPropertyBlock(pb);
+            m.SetFloat(PropConsts.fillRatio, cfg.FadeIn.Value(t));
             yield return null;
         }
-        pb.SetFloat(PropConsts.fillRatio, 1);
-        sr.SetPropertyBlock(pb);
+        m.SetFloat(PropConsts.fillRatio, 1);
+        //the scene ends after this
     }
 
     private IEnumerator FadeOut(ICameraTransitionConfig cfg) {
-        sr.sharedMaterial = cfg.FadeOut.material;
-        pb.SetTexture(PropConsts.trueTex, cfg.FadeToTex);
-        pb.SetTexture(PropConsts.faderTex, cfg.FadeOut.transitionTexture);
+        var m = cfg.FadeOut.material;
+        Render = (m, cfg.FadeToTex);
+        m.SetTexture(PropConsts.faderTex, cfg.FadeOut.transitionTexture);
         SetReverse(cfg.FadeOut.material, cfg.FadeOut);
-        Activate();
         bool didSfx = false;
         //Give an extra frame before opening up, to allow Stall calls if necessary
         for (float t = -ETime.FRAME_TIME; t < cfg.FadeOut.time - ETime.FRAME_TIME; t += ETime.ASSUME_SCREEN_FRAME_TIME) {
@@ -101,19 +91,14 @@ public class CameraTransition : RegularUpdater, ICameraTransition {
                 }
                 fadeOutStallers.Clear();
             }
-            
-            pb.SetFloat(PropConsts.fillRatio, cfg.FadeOut.Value(Math.Max(t, 0)));
-            sr.SetPropertyBlock(pb);
+            m.SetFloat(PropConsts.fillRatio, cfg.FadeOut.Value(Math.Max(t, 0)));
             yield return null;
             //Put this here so it works well with "long first frames"
             if (!didSfx) 
                 ServiceLocator.Find<ISFXService>().Request(cfg.FadeOut.sfx);
             didSfx = true;
         }
-        pb.SetFloat(PropConsts.fillRatio, 0);
-        pb.SetTexture(PropConsts.trueTex, sr.sprite.texture);
-        sr.SetPropertyBlock(pb);
-        Deactivate();
+        Render = null;
         cfg.OnTransitionComplete?.Invoke();
     }
 

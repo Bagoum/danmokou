@@ -59,7 +59,7 @@ public static class _VNCrimsonVermilion {
             var o = new SharedObjects() {
                 vn = vn,
                 rg = (UnityRenderGroup) vn.DefaultRenderGroup,
-                rgb = vn.Add(new UnityRenderGroup( "black", 1, false)),
+                rgb = vn.Add(new UnityRenderGroup(1, false)),
                 footstep = null!,
                 mainDialogue = vn.Add(new ADVDialogueBox()),
                 blackScreenDialogue = vn.Add(new ADVDialogueBox()), 

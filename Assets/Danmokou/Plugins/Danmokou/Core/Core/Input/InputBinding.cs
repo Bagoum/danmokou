@@ -334,7 +334,7 @@ public class InputHandler : IInputHandler {
         /// If it is held further, it will also be active once after `LongPause`
         ///  seconds, and then repeatedly once every `ShortPause` seconds.
         /// </summary>
-        public record OnceRefire(float LongPause = 0.3f, float ShortPause = 0.1f) : Once;
+        public record OnceRefire(float LongPause = 0.2f, float ShortPause = 0.07f) : Once;
 
         /// <summary>
         /// The handler is continuously active starting from the first Regular Update frame

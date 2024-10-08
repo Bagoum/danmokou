@@ -140,3 +140,16 @@ float pm1Sigmoid(float x, float pow) {
 float pm1SigmoidBound(float x, float pow, float bound){
     return pm1Sigmoid(x / bound, pow) * bound;
 }
+
+//Converts UV coordinates to screen coordinates (where 1=height of screen) relative to a center UV.
+float2 uvToYScreenCoord(float2 uv, float2 centerUV, float aspect) {
+    return float2((uv.x-centerUV.x) * aspect, uv.y - centerUV.y);
+}
+float2 yScreenCoordToUV(float2 yScreenCoord, float2 centerUV, float aspect) {
+    return float2(yScreenCoord.x / aspect + centerUV.x, yScreenCoord.y + centerUV.y);
+}
+
+float4 opaque(float4 c) {
+    c.a = 1;
+    return c;
+}

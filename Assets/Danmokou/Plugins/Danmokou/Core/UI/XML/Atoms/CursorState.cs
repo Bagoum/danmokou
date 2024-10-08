@@ -42,7 +42,7 @@ public class NullCursorState : ICursorState {
 public abstract class CustomCursorState : ICursorState, ITokenized {
     public List<IDisposable> Tokens { get; } = new();
     public UIController Controller { get; }
-    protected UIGroup? Tooltip { get; set; }
+    public TooltipProxy? Tooltip { get; protected set; }
 
     public CustomCursorState(UIController controller) {
         Tokens.Add((Controller = controller).CursorState.AddConst(this));
@@ -50,7 +50,7 @@ public abstract class CustomCursorState : ICursorState, ITokenized {
     public abstract UIResult Navigate(UINode current, UICommand cmd);
 
     public virtual void Destroy() {
-        _ = Tooltip?.LeaveGroup().ContinueWithSync();
+        Tooltip?.Close();
         Tokens.DisposeAll();
     }
 

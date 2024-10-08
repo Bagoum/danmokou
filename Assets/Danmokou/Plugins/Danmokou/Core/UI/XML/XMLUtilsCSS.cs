@@ -142,27 +142,17 @@ public static class XMLUtils {
         return ve;
     }
 
-    public static VisualElement ConfigureEmpty(this VisualElement empty, bool pickable = true) {
-        empty.SetPadding(0, 0, 0, 0);
-        empty.pickingMode = pickable ? PickingMode.Position : PickingMode.Ignore;
-        return empty;
-    }
-
-    public static VisualElement ConfigureFixedXMLPositions(this VisualElement n, IFixedXMLObject source) =>
-            n.ConfigureLeftTopListeners(source.Left, source.Top)
-             .ConfigureWidthHeightListeners(source.Width, source.Height);
-
-    public static VisualElement ConfigureLeftTopListeners(this VisualElement n, ICObservable<float> left,
-        ICObservable<float> top) {
-        left.Subscribe(w => n.style.left = w);
-        top.Subscribe(h => n.style.top = h);
+    public static VisualElement ConfigureLeftTopListeners(this VisualElement n, ICObservable<float>? left,
+        ICObservable<float>? top) {
+        left?.Subscribe(w => n.style.left = w);
+        top?.Subscribe(h => n.style.top = h);
         return n;
     }
     
-    public static VisualElement ConfigureWidthHeightListeners(this VisualElement n, ICObservable<float?> width,
-        ICObservable<float?> height) {
-        width.Subscribe(w => n.style.width = w.ToLength());
-        height.Subscribe(h => n.style.height = h.ToLength());
+    public static VisualElement ConfigureWidthHeightListeners(this VisualElement n, ICObservable<float?>? width,
+        ICObservable<float?>? height) {
+        width?.Subscribe(w => n.style.width = w.ToLength());
+        height?.Subscribe(h => n.style.height = h.ToLength());
         return n;
     }
 
@@ -182,6 +172,12 @@ public static class XMLUtils {
 
     public static VisualElement SetWidthHeight(this VisualElement n, Vector2 wh) =>
         n.SetWidth(wh.x).SetHeight(wh.y);
+
+    public static VisualElement UnboundSize(this VisualElement n) {
+        n.style.maxWidth = new StyleLength(StyleKeyword.None);
+        n.style.maxHeight = new StyleLength(StyleKeyword.None);
+        return n;
+    }
 
     public static VisualElement AddVE(this VisualElement root, VisualElement? child) {
         child ??= new VisualElement();
@@ -235,14 +231,22 @@ public static class XMLUtils {
     /// </summary>
     public static void SetTooltipAbsolutePosition(this VisualElement node, VisualElement? tooltip) {
         if (tooltip is null) return;
+        tooltip.WithAbsolutePosition(DetermineTooltipAbsolutePosition(node, tooltip));
+    }
+    
+    /// <summary>
+    /// Reposition an absolute-positioned tooltip relative to a node.
+    /// <br/>The relative positioning of the tooltip (eg. top right or top left of the node)
+    ///  depends on the CSS classes of the tooltip.
+    /// </summary>
+    public static Vector2 DetermineTooltipAbsolutePosition(this VisualElement node, VisualElement tooltip) {
         var nr = node.worldBound;
-        var leftTop = new Vector2(nr.xMax, nr.yMin); //by default, tooltip is above-right
         if (tooltip.ClassListContains("tooltip-above")) {
-            leftTop = new(nr.center.x, nr.yMin);
+            return new(nr.center.x, nr.yMin);
         } else if (tooltip.ClassListContains("tooltip-below")) {
-            leftTop = new(nr.center.x, nr.yMax);
-        }
-        tooltip.WithAbsolutePosition(leftTop);
+            return new(nr.center.x, nr.yMax);
+        } else
+            return new Vector2(nr.xMax, nr.yMin); //by default, tooltip is above-right
     }
 
     /// <summary>
@@ -255,24 +259,24 @@ public static class XMLUtils {
     /// <summary>
     /// Instantiate a UIGroup and RenderSpace representing a tooltip, and make it show on the screen under a provided node.
     /// </summary>
-    public static T MakeTooltip<T>(this UINode n, Func<UIRenderSpace, T> ttGroup, Action<UIRenderConstructed, VisualElement>? builder = null, bool animateEntry = true) where T : UIGroup {
+    public static TooltipProxy<T> MakeTooltip<T>(this UINode n, Func<UIRenderSpace, T> ttGroup, Action<UIRenderConstructed, VisualElement>? builder = null, bool animateEntry = true) where T : UIGroup {
         var tt = MakeTooltipInner(n.Screen, ttGroup, builder, animateEntry);
-        tt.Parent = n.Group;
-        n.HTML.SetTooltipAbsolutePosition(tt.Render.HTML);
+        tt.TT.Parent = n.Group;
+        tt.Track(n);
         return tt;
     }
 
     /// <summary>
     /// Instantiate a UIGroup and RenderSpace representing a tooltip. The location must be manually set.
     /// </summary>
-    public static T MakeTooltip<T>(this XMLDynamicMenu menu, Func<UIRenderSpace, T> ttGroup,
+    public static TooltipProxy<T> MakeTooltip<T>(this XMLDynamicMenu menu, Func<UIRenderSpace, T> ttGroup,
         Action<UIRenderConstructed, VisualElement>? builder = null, bool animateEntry = true) where T : UIGroup {
         var tt = MakeTooltipInner(menu.MainScreen, ttGroup, builder, animateEntry);
-        tt.Parent = menu.FreeformGroup;
+        tt.TT.Parent = menu.FreeformGroup;
         return tt;
     }
 
-    private static T MakeTooltipInner<T>(UIScreen s, Func<UIRenderSpace, T> ttGroup,
+    private static TooltipProxy<T> MakeTooltipInner<T>(UIScreen s, Func<UIRenderSpace, T> ttGroup,
         Action<UIRenderConstructed, VisualElement>? builder = null, bool animateEntry = true) where T : UIGroup {
         var tt = ttGroup(s.TooltipRender(builder));
         tt.Visibility = new GroupVisibilityControl.UpdateOnLeaveHide(tt);
@@ -283,7 +287,7 @@ public static class XMLUtils {
         if (!animateEntry)
             tt.Render.IsFirstRender = true;
         _ = tt.EnterGroup()?.ContinueWithSync();
-        return tt;
+        return new TooltipProxy<T>(tt);
     }
 
     public static UINode SelectorDropdown(this Selector sel, LString? description = null) =>

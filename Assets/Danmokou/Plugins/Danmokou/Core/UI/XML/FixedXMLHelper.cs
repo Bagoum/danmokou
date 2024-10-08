@@ -1,10 +1,12 @@
 ﻿using System;
 using BagoumLib;
 using BagoumLib.Culture;
+using BagoumLib.Events;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Services;
 using Danmokou.UI.XML;
+using MathNet.Numerics.LinearAlgebra.Single;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -37,25 +39,19 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
     public Vector2 Size = Vector2.one;
     public Vector2 Offset;
     public bool keyboardNavigable = true;
-    /// <summary>
-    /// If true, the screen position of this UI element will be based on the orientation of the
-    ///  world cameras instead of the orientation of the UI camera (which is fixed at loc 0,0 size 16,9).
-    /// </summary>
-    public bool rendersInWorldSpace = false;
-    private CameraInfo? targetCam;
 
-    public FixedXMLObject XML { get; private set; } = null!;
+    public WorldTrackingXML XML { get; private set; } = null!;
     public UINode Node { get; private set; } = null!;
 
     public IFixedXMLReceiver? Receiver { get; set; }
 
-    public FixedXMLView CreateView(bool asEmpty) => new(new(XML, Receiver)) {
-        AsEmpty = asEmpty,
-        IsKeyboardNavigable = keyboardNavigable
+    public FixedXMLView CreateView(bool absPosition = true) => new(new(XML, Receiver)) {
+        IsKeyboardNavigable = keyboardNavigable,
+        IsAbsPositioned = absPosition
     };
 
     private void Awake() {
-        XML = new(Vector2.zero, null) { Descriptor = gameObject.name };
+        XML = new(UIBuilderRenderer.UICamInfo, () => transform.position + (Vector3)Offset, () => Size);
     }
     
     public override void FirstFrame() {
@@ -65,31 +61,14 @@ public class FixedXMLHelper : CoroutineRegularUpdater {
     }
 
     public UINode MakeNode() {
-        UpdateXML();
-        return Node = Receiver?.CreateNode(this) ?? new EmptyNode(CreateView(true));
-    }
-
-    private void UpdateXML() {
-        var worldPos = transform.position + (Vector3)Offset;
-        targetCam ??= CameraRenderer.FindCapturer(1 << gameObject.layer).Try(out var camr) 
-            ? camr.CamInfo : UIBuilderRenderer.UICamInfo;
-        //gameObject.la
-        var l = targetCam.ToXMLPos(worldPos);
-        var s = targetCam.ToXMLDims(worldPos, Size);
-        XML.Left.PublishIfNotSame(l.x);
-        XML.Top.PublishIfNotSame(l.y);
-        XML.Width.PublishIfNotSame(s.x);
-        XML.Height.PublishIfNotSame(s.y);
+        if (CameraRenderer.FindCapturer(1 << gameObject.layer).Try(out var camr))
+            XML.TargetCam = camr.CamInfo;
+        return Node = Receiver?.CreateNode(this) ?? new EmptyNode(CreateView());
     }
 
     protected override void OnDisable() {
         base.OnDisable();
         Node.Remove();
-    }
-
-    public override void RegularUpdate() {
-        UpdateXML();
-        base.RegularUpdate();
     }
 
 #if UNITY_EDITOR

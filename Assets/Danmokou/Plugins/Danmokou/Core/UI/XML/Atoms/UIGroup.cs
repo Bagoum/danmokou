@@ -223,7 +223,8 @@ public abstract class UIGroup {
         Visibility = new GroupVisibilityControl.UpdateOnLeaveHide(this, useLocalHiding:true);
         return this;
     }
-
+    
+    public bool AllowWraparoundMovement { get; set; } = true;
     /// <summary>
     /// Whether or not user focus can leave this group via mouse/keyboard control. (True by default, except for popups.)
     /// </summary>
@@ -295,6 +296,8 @@ public abstract class UIGroup {
                     n.ReprocessSelection();
         }
     }
+    
+    public bool Destroyed { get; private set; } = false;
 
     /// <summary>
     /// Node to go to when trying to enter this group.
@@ -421,7 +424,7 @@ public abstract class UIGroup {
         return this;
     }
 
-public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? nodes) {
+    public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? nodes) {
         Screen = container;
         Render = render ?? container.ColumnRender(0);
         Visibility = new GroupVisibilityControl(this);
@@ -479,6 +482,8 @@ public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? 
             if (ii == -1) {
                 if (TryDelegateNavigationToEnclosure(node, req, out var res))
                     return res;
+                if (!AllowWraparoundMovement)
+                    return NoOp;
                 ii = Nodes.Count - 1;
             }
             if (Nodes[ii].AllowKBInteraction)
@@ -494,6 +499,8 @@ public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? 
             if (ii == Nodes.Count) {
                 if (TryDelegateNavigationToEnclosure(node, req, out var res))
                     return res;
+                if (!AllowWraparoundMovement)
+                    return NoOp;
                 ii = 0;
             }
             if (Nodes[ii].AllowKBInteraction)
@@ -589,6 +596,7 @@ public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? 
     /// Remove all nodes in this group, then remove the group from the screen and render config.
     /// </summary>
     public void Destroy() {
+        if (Destroyed) return;
         Screen.Groups.Remove(this);
         if (Render is UIRenderConstructed uirc && Render.AllSourcesDescendFrom(this)) {
             uirc.Destroy();
@@ -602,6 +610,7 @@ public UIGroup(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?>? 
         if (this is CompositeUIGroup cuig)
             foreach (var g in cuig.Components.ToList())
                 g.Destroy();
+        Destroyed = true;
     }
 
     /// <summary>
@@ -855,11 +864,11 @@ public abstract class CompositeUIGroup : UIGroup {
         }
     }
 
-    public CompositeUIGroup(IReadOnlyList<UIGroup> groups) : this(groups[0].Screen, groups) { }
     public CompositeUIGroup(UIRenderSpace render, IEnumerable<UIGroup> groups, IEnumerable<UINode?>? nodes = null) : base(render, nodes) {
         foreach (var g in groups)
             AddGroup(g);
     }
+    public CompositeUIGroup(IReadOnlyList<UIGroup> groups) : this(groups[0].Screen, groups) { }
     public CompositeUIGroup(UIRenderSpace render, params UIGroup[] groups) : this(render,(IEnumerable<UIGroup>) groups) { }
 
     private void AddGroup(UIGroup g) {
@@ -913,14 +922,18 @@ public abstract class CompositeUIGroup : UIGroup {
             return FinalizeTransition(current, result);
         if (TryDelegateNavigationToEnclosure(current, dir, out var res))
             return res;
+        if (!AllowWraparoundMovement)
+            return null;
         //Reset the position to the wall opposite the direction
         // Eg. if the position is <500, 600> and the direction is right, set the position to <0, 600>
         var newFrom = M.RectFromCenter(dir switch {
             //up/down is inverted
-            UICommand.Down => new Vector2(from.center.x, 0),
-            UICommand.Up => new Vector2(from.center.x, current.Screen.HTML.worldBound.yMax),
-            UICommand.Left => new Vector2(current.Screen.HTML.worldBound.xMax, from.center.y),
-            UICommand.Right => new Vector2(0, from.center.y),
+            UICommand.Down => new Vector2(from.center.x, Math.Min(Render.HTML.worldBound.yMin, 0)),
+            UICommand.Up => new Vector2(from.center.x, 
+                Math.Max(Render.HTML.worldBound.yMax, current.Screen.HTML.worldBound.yMax)),
+            UICommand.Left => 
+                new Vector2(Math.Max(Render.HTML.worldBound.xMax, current.Screen.HTML.worldBound.xMax), from.center.y),
+            UICommand.Right => new Vector2(Math.Min(Render.HTML.worldBound.xMin, 0), from.center.y),
             _ => throw new Exception()
         }, new(2, 2));
         //Logs.Log($"Wraparound {dir} from {from} to {newFrom}");
@@ -934,6 +947,7 @@ public abstract class CompositeUIGroup : UIGroup {
 /// <br/>This group has no nodes.
 /// </summary>
 public class VGroup : CompositeUIGroup {
+    public VGroup(UIRenderSpace render, params UIGroup[] groups) : base(render, groups) { }
     public VGroup(params UIGroup[] groups) : base(groups) { }
 }
 
@@ -942,6 +956,7 @@ public class VGroup : CompositeUIGroup {
 /// <br/>This group has no nodes.
 /// </summary>
 public class HGroup : CompositeUIGroup {
+    public HGroup(UIRenderSpace render, params UIGroup[] groups) : base(render, groups) { }
     public HGroup(params UIGroup[] groups) : base(groups) { }
 }
 

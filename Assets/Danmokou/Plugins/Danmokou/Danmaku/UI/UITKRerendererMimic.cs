@@ -1,13 +1,44 @@
 ﻿using System;
+using System.Collections.Generic;
 using BagoumLib;
-using Danmokou.Graphics;
 using Suzunoya.Display;
 using Suzunoya.Entities;
 using SuzunoyaUnity;
 using SuzunoyaUnity.Mimics;
+using SuzunoyaUnity.Rendering;
 using UnityEngine;
+using PropConsts = Danmokou.Graphics.PropConsts;
 
 namespace Danmokou.UI {
+
+/* Potential implementation for rendering UITK contents directly to RenderGroup RT -
+   not currently feasible since we can't control UITK render time, so it usually ends up rendering UI
+   after the RenderGroup RT has been rendered/blitted to its final destination.
+public class UITKToRGAdapter : IOverrideRenderTarget {
+    public float Zoom => RG.Zoom;
+    public Vector2 ZoomTarget => RG.ZoomTarget.Value._();
+    public Vector2 Offset => RG.ComputedLocation.Value._();
+    public RenderTexture WriteTo => RG.Captured;
+    public UnityRenderGroup RG { get; }
+    private List<IDisposable> tokens = new();
+    
+    public UITKToRGAdapter(UnityRenderGroup rg, int group) {
+        this.RG = rg;
+        var uiBuilder = ServiceLocator.Find<UIBuilderRenderer>();
+        IDisposable? renderToken = null;
+        var listenToken = uiBuilder.RTGroups.Subscribe(rtg => {
+            renderToken?.Dispose();
+            renderToken = rtg.GetValueOrDefault(group)?.Target.AddConst(this);
+        });
+        //no need to listen - this token will be destroyed by EntityActive.OnCompleted
+        rg.EntityActive.Subscribe(s => {
+            if (s >= EntityState.Deleted) {
+                listenToken?.Dispose();
+                renderToken?.Dispose();
+            }
+        });
+    }
+}*/
 
 /// <summary>
 /// Displays UITK render textures for groups configured in <see cref="UIBuilderRenderer"/>.
@@ -23,7 +54,7 @@ public class UITKRerenderer : Rendered, IOverrideRenderTarget {
     private RenderGroup RG => RenderGroup.Value ?? throw new Exception("No render group for rerenderer");
     public float Zoom => RG.Zoom;
     public Vector2 ZoomTarget => RG.ZoomTarget.Value._();
-    public bool RendersToUICamera => true;
+    public Vector2 Offset => RG.ComputedLocation.Value._();
 
     public UITKRerenderer(int uitkRenderGroup) : base() {
         this.UITKRenderGroup = uitkRenderGroup;
@@ -53,8 +84,8 @@ public class UITKRerendererMimic : RenderedMimic {
             renderToken = null;
             if (rtg.TryGetValue(c.UITKRenderGroup, out var pane)) {
                 sr.enabled = true;
-                pb.SetTexture(PropConsts.renderTex, pane.Texture);
                 AddToken(renderToken = pane.Target.AddConst(c));
+                pb.SetTexture(PropConsts.renderTex, pane.TempTexture);
             } else {
                 sr.enabled = false;
                 pb.SetTexture(PropConsts.renderTex, unsetRT);

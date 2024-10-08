@@ -49,7 +49,7 @@ public interface IUIViewModel {
     /// <summary>
     /// Called when the node is entered in order to determine a tooltip to show next to the node.
     /// </summary>
-    UIGroup? Tooltip(UINode node, ICursorState cs, bool prevExists) => null;
+    TooltipProxy? Tooltip(UINode node, ICursorState cs, bool prevExists) => null;
 
     /// <summary>
     /// Returns whether or not the node should be visible.

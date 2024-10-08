@@ -1,7 +1,6 @@
 ﻿Shader "_Transition/FireTransition" {
 	Properties {
-		[PerRendererData] _MainTex("[Unused]", 2D) = "white" {}
-		_TrueTex("Sprite Texture", 2D) = "white" {}
+		[PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
 		_F("Fill Ratio", Range(0, 1)) = 0.7
 		_T("Time", Range(0, 10)) = 5
 		_BX("Blocks X", Float) = 6
@@ -51,7 +50,7 @@
 
             float _F;
 			sampler2D _FaderTex;
-			sampler2D _TrueTex;
+			sampler2D _MainTex;
 			
             float _BX;
             float _BY;
@@ -73,7 +72,7 @@
 			#endif
                 float grad = pow(f.uv.y, 1.5);
 		
-			    float4 c = tex2D(_TrueTex, f.uv) * f.color;
+			    float4 c = tex2D(_MainTex, f.uv) * f.color;
                 c = c * smoothstep(-_Smooth, _Smooth, lerp(0, 1+_Magnitude, _F) - grad + noise);
 				return c;
 			}

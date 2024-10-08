@@ -365,7 +365,9 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
         absTerr.RegisterCallback<PointerUpEvent>(evt => {
             if (evt.button != 0 || Controller.Current is not {} curr || IsAnimating) 
                 return;
-            //When popups are nested, clicking on the parent popups should also result in a Back
+            //PointerUpEvent will propagate upwards iff it doesn't hit a UINode.
+            //If the node is within a popup, issue a Back unless the propagated pointer event
+            // hits the node's lowest containing popup. 
             if (Controller.TargetedPopup == PopupUIGroup.LowestInHierarchy(curr)) 
                 return;
             screen.Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Back, null));

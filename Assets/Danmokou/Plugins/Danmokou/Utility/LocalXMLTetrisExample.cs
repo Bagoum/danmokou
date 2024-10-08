@@ -29,7 +29,7 @@ public class LocalXMLTetrisExample : CoroutineRegularUpdater {
     public VisualTreeAsset itemVTA = null!;
     public XMLDynamicMenu Menu { get; private set; } = null!;
     public List<Block> Blocks { get; } = new();
-    public Grid Grid { get; } = new Grid((0, 0), (20, 13));
+    public TGrid Grid { get; } = new TGrid((0, 0), (20, 13));
     private UIFreeformGroup BlocksGrp = null!;
 
     public Block? FirstBlockAt(Pt loc) {
@@ -485,7 +485,7 @@ public class ProtoBlock {
     }
 }
 
-public record Grid(Pt Min, Pt Max) {
+public record TGrid(Pt Min, Pt Max) {
     public int Width => Max.x - Min.x;
     public int Height => Max.y - Min.y;
 }
@@ -497,14 +497,14 @@ public enum BlockStatus : int {
 }
 public class Block : IModelObject {
     public ProtoBlock Proto { get; }
-    public Grid Grid { get; }
+    public TGrid Grid { get; }
     public Pt Position { get; private set; }
     public int Rotation { get; private set; }
     public BlockStatus Status { get; set; } = BlockStatus.Confirmed;
     public Boxel[] Boxels => Proto.Boxels;
     Evented<bool> IModelObject._destroyed { get; } = new(false);
 
-    public Block(ProtoBlock typ, Grid grid) {
+    public Block(ProtoBlock typ, TGrid grid) {
         Proto = typ;
         Grid = grid;
         UpdatePosition(new(0, 0), out _);

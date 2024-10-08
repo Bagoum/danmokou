@@ -7,8 +7,12 @@ using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Plugins.Danmokou.Utility;
+using Danmokou.Services;
+using Danmokou.UI;
 using Danmokou.UI.XML;
+using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using UnityEngine.UIElements;
 
 public record Edge<V>(V From, V To, double Cost) : IEdge<V> {
@@ -24,20 +28,33 @@ public record Unit(string Name, int Move) {
 }
 
 public class LocalXMLSRPGExamples : CoroutineRegularUpdater {
-    public GameObject tilePrefab = null!;
+    private CameraInfo gridCam = null!;
+    public GameObject worldSpaceUITK = null!;
     public VisualTreeAsset itemVTA = null!;
     public Sprite arrowStraight = null!;
     public Sprite arrowEnd = null!;
     public Sprite arrowCurve = null!;
     public XMLDynamicMenu Menu { get; private set; } = null!;
-    private int h = 6;
-    private int w = 10;
     public Tile[][] Map { get; private set; } = null!;
     public Graph<Edge<Tile>, Tile> Graph { get; private set; } = null!;
+    public Grid grid = null!;
+    public Tilemap[] tilemaps = null!;
 
     public override void FirstFrame() {
         Menu = ServiceLocator.Find<XMLDynamicMenu>();
         var s = Menu.MainScreen;
+        var minLoc = tilemaps[0].cellBounds.min;
+        var maxLoc = tilemaps[0].cellBounds.max;
+        foreach (var t in tilemaps) {
+            minLoc = Vector3Int.Min(minLoc, t.cellBounds.min);
+            maxLoc = Vector3Int.Max(maxLoc, t.cellBounds.max);
+        }
+        var h = maxLoc.y - minLoc.y;
+        var w = maxLoc.x - minLoc.x;
+        var gridBounds = new CRect(tilemaps[0].gameObject.transform,
+            new Bounds(tilemaps[0].cellSize.PtMul(maxLoc + minLoc) / 2f, 
+                tilemaps[0].cellSize.PtMul(maxLoc - minLoc)));
+        
         Map = new Tile[h][];
         for (int ih = 0; ih < h; ++ih) {
             Map[ih] = new Tile[w];
@@ -53,7 +70,7 @@ public class LocalXMLSRPGExamples : CoroutineRegularUpdater {
                 };
         }
         Map[2][2].Unit = new("A", 5);
-        Map[4][4].Unit = new("B", 4);
+        Map[4][3].Unit = new("B", 4);
         var edges = new List<Edge<Tile>>();
         for (int ih = 0; ih < h; ++ih) {
             for (int iw = 0; iw < w; ++iw) {
@@ -70,18 +87,26 @@ public class LocalXMLSRPGExamples : CoroutineRegularUpdater {
             }
         }
         Graph = new(Map.SelectMany(x => x), edges);
-        
-        var rows = h.Range().Select(ir => new UIRow(s.ScreenRender, 
-                w.Range().Select(ic => {
-                    var tileGO = GameObject.Instantiate(tilePrefab, transform);
-                    tileGO.transform.position = new Vector3(-7 + ic, 2 - ir, RNG.GetFloatOffFrame(-1f, 2f));
-                    return tileGO.GetComponent<SRPGTileHelper>().Initialize(this, (ir, ic));
-                })) as UIGroup)
+
+        gridCam = CameraRenderer.FindCapturer(1 << tilemaps[0].gameObject.layer).Value.CamInfo;
+        AddToken(ServiceLocator.Find<WorldCameraContainer>().RestrictCameraPan(gridCam, gridBounds, 0));
+        var render = new UIRenderExplicit(s.ContainerRender, ve => ve.AddColumn().UnboundSize())
+            ;/*.WithView(new FixedXMLView(new(new WorldTrackingXML(gridCam, () => new(minLoc.x, maxLoc.y), null) {
+                Pivot = XMLUtils.Pivot.TopLeft
+            })));*/
+        var rows = h.Range().Select(ir => new UIRow(new UIRenderExplicit(render, ve => ve.AddRow()), 
+                w.Range().Select(ic => new UINode(
+                    new TileView(new(this, gridBounds.TopLeft + new Vector2(0.5f + ic, -0.5f - ir), (ir, ic)))
+                    /*, new FixedXMLView(new(new WorldTrackingXML(gridCam, 
+                        () => gridBounds.TopLeft + new Vector2(0.5f + ic, -0.5f - ir), () => new(1,1))))
+                    */))) { AllowWraparoundMovement = false } as UIGroup)
             .ToArray();
         
-        var gridGroup = new VGroup(rows);
+        var gridGroup = new VGroup(render, rows) { AllowWraparoundMovement = false };
         Menu.FreeformGroup.AddGroupDynamic(gridGroup);
-        
+        Instantiate(worldSpaceUITK).GetComponent<WorldSpaceUITK>()
+            .Initialize(gridBounds, 0, UIBuilderRenderer.ADV_INTERACTABLES_GROUP);
+
     }
     
     
@@ -92,11 +117,13 @@ public class LocalXMLSRPGExamples : CoroutineRegularUpdater {
     public class TileView : UIView<TileView.Model>, IUIView {
         public class Model : UIViewModel, IUIViewModel {
             public LocalXMLSRPGExamples Src { get; }
+            public Vector2 WorldLoc { get; }
             public (int r, int c) Index { get; }
             public Tile Tile => Src.Map[Index.r][Index.c];
             
-            public Model(LocalXMLSRPGExamples src, (int r, int c) index) {
+            public Model(LocalXMLSRPGExamples src, Vector2 worldLoc, (int r, int c) index) {
                 this.Src = src;
+                this.WorldLoc = worldLoc;
                 Index = index;
             }
 
@@ -114,7 +141,7 @@ public class LocalXMLSRPGExamples : CoroutineRegularUpdater {
             UIResult? IUIViewModel.OnContextMenu(UINode node, ICursorState cs) =>
                 PopupUIGroup.CreateContextMenu(node);
 
-            UIGroup? IUIViewModel.Tooltip(UINode node, ICursorState cs, bool prevExists) {
+            TooltipProxy? IUIViewModel.Tooltip(UINode node, ICursorState cs, bool prevExists) {
                 return node.MakeTooltip(UINode.SimpleTTGroup($"{Tile.Cost}"));
             }
         }
@@ -125,6 +152,8 @@ public class LocalXMLSRPGExamples : CoroutineRegularUpdater {
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
             if (cs is UnitActionCS actor)
                 actor.UpdateTargetNode(VM.Tile, node);
+            ServiceLocator.Find<WorldCameraContainer>()
+                .TrackTarget(VM.WorldLoc, VM.Src.gridCam, new(0.5f, 0.5f, 0.2f, 0.2f, 0));
         }
 
         //void IUIView.OnAddedToNavHierarchy(UINode node) => VM.Src.CurrentIndex = VM.Index;
@@ -212,7 +241,7 @@ public class LocalXMLSRPGExamples : CoroutineRegularUpdater {
             }
             SRPGUtils.ReconstructPath(prev, target, currentPath.Cleared());
             end: ;
-            next.HTML.SetTooltipAbsolutePosition(Tooltip?.Render.HTML);
+            Tooltip?.Track(next);
         }
 
         public override UIResult Navigate(UINode current, UICommand cmd) {

@@ -1,7 +1,6 @@
 ﻿Shader "_Transition/WipeTransition" {
 	Properties {
-		[PerRendererData] _MainTex("[Unused]", 2D) = "white" {}
-		_TrueTex("Sprite Texture", 2D) = "white" {}
+		[PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
 		[PerRendererData] _FaderTex("Fade Controller", 2D) = "white" {}
 		_F("Fill Ratio", Range(0, 1)) = 0.7
 	}
@@ -47,14 +46,14 @@
 
             float _F;
 			sampler2D _FaderTex;
-			sampler2D _TrueTex;
+			sampler2D _MainTex;
 			static const float _Smooth = 0.0001f;
 
 			float4 frag(fragment f) : SV_Target {
         #ifdef REQ_EMPTY
 				return float4(0,0,0,0);
         #endif
-				float4 c = tex2D(_TrueTex, f.uv);
+				float4 c = tex2D(_MainTex, f.uv);
         #ifdef REQ_CIRCLE
 				float req = mod1(atan2(f.uv.y - 0.5, f.uv.x - 0.5) / TAU, 1);
         #else

@@ -37,7 +37,6 @@ public static class PropConsts {
 
     public static readonly int mainTex = Shader.PropertyToID("_MainTex");
     public static readonly int renderTex = Shader.PropertyToID("_RenderTex");
-    public static readonly int trueTex = Shader.PropertyToID("_TrueTex");
     public static readonly int faderTex = Shader.PropertyToID("_FaderTex");
     public static readonly int fromTex = Shader.PropertyToID("_FromTex");
     public static readonly int toTex = Shader.PropertyToID("_ToTex");
@@ -89,8 +88,6 @@ public static class PropConsts {
     public static readonly int FragmentSides = Shader.PropertyToID("_FragSides");
     public static readonly int UVX = Shader.PropertyToID("_UVX");
     public static readonly int UVY = Shader.PropertyToID("_UVY");
-    public static readonly int ScreenX = Shader.PropertyToID("_ScreenX");
-    public static readonly int ScreenY = Shader.PropertyToID("_ScreenY");
     public static readonly int OffsetX = Shader.PropertyToID("_OffX");
     public static readonly int OffsetY = Shader.PropertyToID("_OffY");
     public static readonly int Zoom = Shader.PropertyToID("_Zoom");

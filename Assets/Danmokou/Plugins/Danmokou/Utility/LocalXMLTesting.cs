@@ -27,9 +27,7 @@ public class LocalXMLTesting : CoroutineRegularUpdater {
 
     public override void FirstFrame() {
         var xmlLoc = UIBuilderRenderer.UICamInfo.ToXMLPos((Vector2)transform.position + Offset);
-        XML = new(xmlLoc.x, xmlLoc.y, null, null) {
-            Descriptor = gameObject.name
-        };
+        XML = new(xmlLoc.x, xmlLoc.y, null, null);
         var menu = ServiceLocator.Find<XMLDynamicMenu>();
         //var node = new UINode("hello world") { Prefab = XMLUtils.Prefabs.PureTextNode };
         //node.ConfigureAbsoluteLocation(XML);

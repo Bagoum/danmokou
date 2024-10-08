@@ -219,7 +219,7 @@ public class UINode {
     public Action<UINode>? OnBuilt { get; set; }
     private string?[]? cssClasses;
     
-    private UIGroup? currentTooltip = null;
+    private TooltipProxy? currentTooltip = null;
     
     /// <summary>
     /// Overrides <see cref="Navigate"/> for Confirm entries.
@@ -495,9 +495,6 @@ public class UINode {
         if (selection >= UINodeSelection.Default && !Group.Interactable)
             selection = Max(selection, UINodeSelection.GroupFocused);
         Selection = selection;
-        //TODO not sure where to put this
-        if (currentTooltip is not null)
-            HTML.SetTooltipAbsolutePosition(currentTooltip.Render.HTML);
     }
 
     //call when group.interactable is turned off, which should modify selection
@@ -591,9 +588,9 @@ public class UINode {
         var ctt = currentTooltip;
         currentTooltip = null;
         if (animate) {
-            _ = ctt.LeaveGroup().ContinueWithSync();
+            ctt.Close();
         } else
-            ctt.Destroy();
+            ctt.TT.Destroy();
     }
     public void RemakeTooltip(ICursorState cs) {
         var prevExists = currentTooltip is not null;
@@ -604,9 +601,10 @@ public class UINode {
             }
     }
 
-    public void SetTooltip(UIGroup? tooltip) {
+    public void SetTooltip(TooltipProxy? tooltip) {
         CloseTooltip(tooltip is null || tooltip.Render.IsAnimating);
         currentTooltip = tooltip;
+        tooltip?.Track(this);
     }
 
     #endregion
@@ -631,7 +629,7 @@ public class EmptyNode : UINode {
                         return res;
                     return req == UICommand.Confirm ? UIGroup.SilentNoOp : null;
                 }
-            )) { AsEmpty = true });
+            )));
 }
 
 public class PassthroughNode : UINode {

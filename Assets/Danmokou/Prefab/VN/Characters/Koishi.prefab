@@ -66,7 +66,7 @@ PrefabInstance:
     - target: {fileID: 3158699776333818788, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: m_Name
-      value: Koishi Variant
+      value: Koishi
       objectReference: {fileID: 0}
     - target: {fileID: 3158699777817199630, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
@@ -83,7 +83,7 @@ PrefabInstance:
     - target: {fileID: 6961882707186433460, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.2421876
+      value: -0.2421875
       objectReference: {fileID: 0}
     - target: {fileID: 6961882707186433460, guid: c49533a826fdb13409ee106e66235e02,
         type: 3}

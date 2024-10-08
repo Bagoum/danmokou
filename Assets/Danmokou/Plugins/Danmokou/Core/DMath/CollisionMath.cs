@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using JetBrains.Annotations;
@@ -504,7 +505,6 @@ public static class CollisionMath {
     public static readonly ExFunction pointInCircle = ExFunction.Wrap(t, "PointInCircle", new[] {ExUtils.tv2, ExUtils.tcc});
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [UsedImplicitly]
     public static bool PointInRect(Vector2 pt, CRect rect) {
         pt.x -= rect.x;
         pt.y -= rect.y;
@@ -514,8 +514,30 @@ public static class CollisionMath {
         if (pt.y < 0) pt.y *= -1;
         return px < rect.halfW && pt.y < rect.halfH;
     }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool CircleInRect(float x, float y, float radius, CRect rect) {
+    public static Vector2 ProjectPointOntoRect(Vector2 pt, CRect rect) {
+        pt.x -= rect.x;
+        pt.y -= rect.y;
+        float d = (float)Math.Sqrt(pt.x * pt.x + pt.y * pt.y);
+        float ascent = (float)Math.Atan2(rect.halfH, rect.halfW);
+        float ang = (float)Math.Atan2(pt.y, pt.x);
+        float angq = BMath.Mod(BMath.PI, ang - rect.angle);
+        if (angq > BMath.PI)
+            angq -= BMath.PI;
+        if (angq > BMath.HPI)
+            angq = BMath.PI - angq;
+        float projectMult;
+        if (angq < ascent)
+            projectMult = rect.halfW / (d*(float)Math.Cos(angq));
+        else
+            projectMult = rect.halfH / (d*(float)Math.Sin(angq));
+        return new Vector2(rect.x + projectMult * pt.x, rect.y + projectMult * pt.y);
+
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool CircleFullyInRect(float x, float y, float radius, CRect rect) {
         x -= rect.x;
         y -= rect.y;
         float px = rect.cos_rot * x + rect.sin_rot * y;

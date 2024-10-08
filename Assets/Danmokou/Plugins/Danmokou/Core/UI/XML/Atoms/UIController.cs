@@ -22,93 +22,6 @@ using UnityEngine.UIElements;
 using static Danmokou.Core.DInput.InputManager;
 
 namespace Danmokou.UI.XML {
-public enum UICommand {
-    Left,
-    Right,
-    Up,
-    Down,
-    Confirm,
-    Back,
-    ContextMenu,
-}
-
-public abstract record UIPointerCommand {
-    public virtual bool ValidForCurrent(UINode current) => true;
-
-    public record NormalCommand(UICommand Command, UINode? Source) : UIPointerCommand {
-        public bool Silent { get; init; } = false;
-        public Vector2? Loc { get; init; } = null;
-        public override bool ValidForCurrent(UINode current) => 
-            Source == current || Source == null || Command == UICommand.Back;
-    }
-    
-    
-    public record Goto(UINode Target) : UIPointerCommand;
-}
-
-public abstract record UIResult {
-    public UITransitionOptions? Options { get; init; }
-    
-    /// <summary>
-    /// If this UIResult results in a transition between nodes or between screens, then this callback is invoked
-    ///  after the transition is complete.
-    /// </summary>
-    public Action? OnPostTransition { get; init; }
-    
-    /// <summary>
-    /// Disable the UI display and set current to null. (This has no animation.)
-    /// </summary>
-    public record CloseMenuFast : UIResult;
-
-    /// <summary>
-    /// Animate a menu closed using CloseWithAnimation.
-    /// </summary>
-    public record CloseMenu : UIResult;
-
-    public enum StayOnNodeType {
-        DidSomething,
-        NoOp,
-        Silent
-    }
-
-    public SequentialResult Then(UIResult second) => new SequentialResult(this, second);
-
-    public record SequentialResult(params UIResult[] results) : UIResult, IUnrollable<UIResult> {
-        public IEnumerable<UIResult> Values => results;
-    }
-    
-    public record Lazy(Func<UIResult> Delayed) : UIResult;
-
-    public static Lazy LazyGoBackFrom(UINode source)
-        => new Lazy(() => source.Controller.Navigate(source, UICommand.Back));
-
-    public record StayOnNode(StayOnNodeType Action) : UIResult {
-        public StayOnNode(bool IsNoOp = false) : this(IsNoOp ? StayOnNodeType.NoOp : StayOnNodeType.DidSomething) { }
-    }
-
-    public record GoToNode(UINode Target, bool NoOpIfSameNode = true) : UIResult {
-        public GoToNode(UIGroup Group, int? Index = null) : 
-            this(Index.Try(out var i) ? Group.Nodes[Math.Clamp(i, 0, Group.Nodes.Count-1)] : Group.EntryNode) {}
-    }
-
-    public record GoToSibling(int Index, bool NoOpIfSameNode = true) : UIResult;
-
-    //Note: this is effectively the same as GoToNode, except you can add ReturnToOverride, which replaces
-    // the screen caller with a different node.
-    public record GoToScreen(UIScreen Screen, UINode? ReturnToOverride = null) : UIResult;
-
-    public record ReturnToGroupCaller(int Ascensions = 1) : UIResult;
-
-    public record ReturnToTargetGroupCaller(UIGroup Target) : UIResult {
-        public ReturnToTargetGroupCaller(UINode node) : this(node.Group) { }
-    }
-
-    public record ReturnToScreenCaller(int Ascensions = 1) : UIResult;
-
-    public static implicit operator UIResult(UINode node) => new GoToNode(node);
-    public static implicit operator UIResult(UIGroup group) => new GoToNode(group);
-
-}
 
 /// <summary>
 /// A UI menu that manages a set of UIScreen by rendering them to game view and handling navigation.
@@ -126,11 +39,11 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// True if the UI HTML has been built (in FirstFrame)
     /// </summary>
     protected bool Built { get; private set; } = false;
-
     public MVVMManager MVVM { get; private set; } = null!;
     
     /// <summary>
-    /// The TemplateContainer instantiated from <see cref="UIDocument"/>.<see cref="UIDocument.sourceAsset"/>
+    /// The TemplateContainer instantiated from <see cref="UIDocument"/>.<see cref="UIDocument.sourceAsset"/>.
+    /// Each UI pane can have multiple UIDocuments, each with their own <see cref="UIRoot"/>.
     /// </summary>
     protected VisualElement UIRoot { get; private set; } = null!;
     
@@ -145,12 +58,17 @@ public abstract class UIController : CoroutineRegularUpdater {
 
     public virtual bool CloseOnUnscopedBack => false;
     protected virtual bool CaptureFallthroughInteraction => true;
+    protected virtual bool OpenOnInit => true;
+    protected virtual Color BackgroundTint => new(0.17f, 0.05f, 0.20f);
+    protected virtual UINode? StartingNode => null;
     protected virtual UIScreen?[] Screens => new[] {MainScreen};
+    
     /// <summary>
     /// Event issued when the UI receives a visual update. Screens may subscribe to this
     ///  in order to control their rendering.
     /// </summary>
     public Event<float> UIVisualUpdateEv { get; } = new();
+    
     /// <summary>
     /// Controls the opacity of the entire menu.
     /// Generally 0, except on pause menus.
@@ -158,17 +76,20 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// </summary>
     public PushLerper<float> BackgroundOpacity { get; } = 
         new(0.5f, (a, b, t) => M.Lerp(a, b, Easers.EIOSine(t)));
+    
     public UIScreen MainScreen { get; protected set; } = null!;
     
     /// <summary>
     /// Whether or not the UI should update based on player input in RegularUpdate.
     /// </summary>
     public DisturbedAnd PlayerInputEnabled { get; } = new();
-    
     /// <summary>
     /// Whether or not the UI should allow any update operations at all.
     /// </summary>
     public DisturbedAnd OperationsEnabled { get; } = new();
+    protected bool RegularUpdateGuard => ETime.FirstUpdateForScreen && PlayerInputEnabled;
+    public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
+    
     public Stack<UINode> ScreenCall { get; } = new();
     public Stack<(UIGroup group, UINode? node)> GroupCall { get; } = new();
     public UINode? NextNodeInGroupCall {
@@ -179,105 +100,22 @@ public abstract class UIController : CoroutineRegularUpdater {
             return null;
         }
     }
-
-    public UINode? Current { get; private set; }
-    public OverrideEvented<ICursorState> CursorState { get; } = new(new NullCursorState());
-
-    /// <summary>
-    /// Event-driven UI input (based on UITK bindings).
-    /// Stored temporarily and only read during <see cref="RegularUpdate"/>.
-    /// </summary>
-    public UIPointerCommand? QueuedInput { get; private set; }
-
-    public void QueueInput(UIPointerCommand cmd) {
-        QueuedInput = cmd;
-        UIEventQueued.OnNext(default);
-    }
-
-    /// <summary>
-    /// The most recent location of the mouse pointer. Note that this will not capture changes
-    ///  in the mouse pointer when it is not hovering over this menu's pickable HTML.
-    /// </summary>
-    public Vector2? LastPointerLocation { get; private set; } = null;
-
-    protected virtual UINode? StartingNode => null;
-    
-    //The reason for this virtual structure is because implementers (eg. XMLMainMenuCampaign)
-    // need to store the list *statically*, since the specific menu object will be deleted on scene change.
-    protected virtual List<CacheInstruction>? ReturnTo { get; set; }
-
-    //The point we want to return to (eg. boss card selection) is usually not the node that causes the action
-    // (eg. the difficulty select button), so we have a two-step add-commit process.
-    private List<CacheInstruction>? tentativeReturnTo;
-    
-    
-    public UIBuilderRenderer uiRenderer = null!;
-    public SFXConfig? upDownSound;
-    public SFXConfig? leftRightSound;
-    public SFXConfig? confirmSound;
-    public SFXConfig? failureSound;
-    public SFXConfig? backSound;
-    public SFXConfig? showOptsSound;
     
     private readonly TaskQueue openClose = new();
+    public UINode? Current { get; private set; }
     public bool MenuActive => Current != null;
-    //TODO what happens if you screw with the 16x9 frame? how would you measure this in non-ideal conditions?
-    public int XMLWidth => UISettings.referenceResolution.x;
-    public int XMLHeight => UISettings.referenceResolution.y;
-
-    protected List<CacheInstruction> GetInstructionsToNode(UINode? c) {
-        var revInds = new List<CacheInstruction>();
-        var groupStack = new Stack<(UIGroup group, UINode? node)>(GroupCall.Reverse());
-        var screenStack = new Stack<UINode>(ScreenCall.Reverse());
-        void GoToThisNode() {
-            revInds.Add(new CacheInstruction.ToGroupNode(c.IndexInGroup));
-            for (int ii = c.Group.Nodes.Count - 1; ii >= 0; --ii)
-                if (c.Group.Nodes[ii] is IBaseLROptionNode opt) {
-                    revInds.Add(new CacheInstruction.ToOption(opt.Index));
-                    revInds.Add(new CacheInstruction.ToGroupNode(((UINode)opt).IndexInGroup));
-                }
-        }
-        while (c != null) {
-            if ((groupStack.TryPeek(out var g) && (g.group.Screen == c.Screen))) {
-                GoToThisNode();
-                revInds.Add(new CacheInstruction.ToGroup(null, c.Screen.Groups.IndexOf(c.Group)));
-                var (g_, c_) = groupStack.Pop();
-                c = c_ ?? g_.EntryNode;
-            } else if (screenStack.TryPeek(out _)) {
-                GoToThisNode();
-                revInds.Add(new CacheInstruction.ToGroup(Screens.IndexOf(c.Screen), c.Screen.Groups.IndexOf(c.Group)));
-                c = screenStack.Pop();
-            }  else {
-                GoToThisNode();
-                c = null;
-            }
-        }
-        revInds.Reverse();
-        return revInds;
-    }
-    public void TentativeCache(UINode node) {
-        tentativeReturnTo = GetInstructionsToNode(node);
-    }
-
-    public void ConfirmCache() {
-        if (tentativeReturnTo != null)
-            Logs.Log($"Caching menu position with indices " +
-                     $"{string.Join(", ", tentativeReturnTo.Select(x => x.ToString()))}");
-        ReturnTo = tentativeReturnTo;
-    }
-
-    public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
-    protected bool RegularUpdateGuard => ETime.FirstUpdateForScreen && PlayerInputEnabled;
     /// <summary>
     /// Returns true iff this menu is active and it is also the most high-priority active menu.
     /// Of all active menus, only the most high-priority one should handle input, so use this to gate input.
     /// </summary>
     protected bool IsActiveCurrentMenu => MenuActive && uiRenderer.IsHighestPriorityActiveMenu(this);
-
-    protected virtual bool OpenOnInit => true;
-    protected virtual Color BackgroundTint => new(0.17f, 0.05f, 0.20f);
-    public PopupUIGroup? TargetedPopup { get; set; } = null;
-
+    
+    public OverrideEvented<ICursorState> CursorState { get; } = new(new NullCursorState());
+    /// <summary>
+    /// Event-driven UI input (based on UITK bindings).
+    /// Stored temporarily and only read during <see cref="RegularUpdate"/>.
+    /// </summary>
+    public UIPointerCommand? QueuedInput { get; private set; }
     private UICommand? CurrentInputCommand =>
         UILeft ? UICommand.Left :
         UIRight ? UICommand.Right :
@@ -287,13 +125,36 @@ public abstract class UIController : CoroutineRegularUpdater {
         UIBack ? UICommand.Back :
         UIContextMenu ? UICommand.ContextMenu :
         null;
+    /// <summary>
+    /// The most recent location of the mouse pointer. Note that this will not capture changes
+    ///  in the mouse pointer when it is not hovering over this menu's pickable HTML.
+    /// </summary>
+    public Vector2? LastPointerLocation { get; private set; } = null;
+    
+    //The reason for this virtual structure is because implementers (eg. XMLMainMenuCampaign)
+    // need to store the list *statically*, since the specific menu object will be deleted on scene change.
+    protected virtual List<CacheInstruction>? ReturnTo { get; set; }
+    //The point we want to return to (eg. boss card selection) is usually not the node that causes the action
+    // (eg. the difficulty select button), so we have a two-step add-commit process.
+    private List<CacheInstruction>? tentativeReturnTo;
+
+    public PopupUIGroup? TargetedPopup { get; set; } = null;
+    private UIBuilderRenderer uiRenderer = null!;
+    private readonly Queue<Func<Task>> uiOperations = new();
+    
+    // Serialized fields
+    public SFXConfig? upDownSound;
+    public SFXConfig? leftRightSound;
+    public SFXConfig? confirmSound;
+    public SFXConfig? failureSound;
+    public SFXConfig? backSound;
+    public SFXConfig? showOptsSound;
 
     //Note: it should be possible to use Awake instead of FirstFrame w.r.t UIDocument being instantiated, 
     // but many menus depend on binding to services,
     // and services are not reliably queryable until FirstFrame.
     public override void FirstFrame() {
-        if (uiRenderer == null)
-            uiRenderer = ServiceLocator.Find<UIBuilderRenderer>();
+        uiRenderer = ServiceLocator.Find<UIBuilderRenderer>();
         MVVM = new();
         var uid = GetComponent<UIDocument>();
         //higher sort order is more visible, so give them lower priority
@@ -332,6 +193,11 @@ public abstract class UIController : CoroutineRegularUpdater {
                 await DoReturn();
             }))().ContinueWithSync();
         }
+    }
+    
+    public void QueueInput(UIPointerCommand cmd) {
+        QueuedInput = cmd;
+        UIEventQueued.OnNext(default);
     }
 
     private async Task DoReturn() {
@@ -765,7 +631,47 @@ public abstract class UIController : CoroutineRegularUpdater {
         _ = CloseWithAnimation().ContinueWithSync();
     }
 
-    private readonly Queue<Func<Task>> uiOperations = new();
+    protected List<CacheInstruction> GetInstructionsToNode(UINode? c) {
+        var revInds = new List<CacheInstruction>();
+        var groupStack = new Stack<(UIGroup group, UINode? node)>(GroupCall.Reverse());
+        var screenStack = new Stack<UINode>(ScreenCall.Reverse());
+        void GoToThisNode() {
+            revInds.Add(new CacheInstruction.ToGroupNode(c.IndexInGroup));
+            for (int ii = c.Group.Nodes.Count - 1; ii >= 0; --ii)
+                if (c.Group.Nodes[ii] is IBaseLROptionNode opt) {
+                    revInds.Add(new CacheInstruction.ToOption(opt.Index));
+                    revInds.Add(new CacheInstruction.ToGroupNode(((UINode)opt).IndexInGroup));
+                }
+        }
+        while (c != null) {
+            if ((groupStack.TryPeek(out var g) && (g.group.Screen == c.Screen))) {
+                GoToThisNode();
+                revInds.Add(new CacheInstruction.ToGroup(null, c.Screen.Groups.IndexOf(c.Group)));
+                var (g_, c_) = groupStack.Pop();
+                c = c_ ?? g_.EntryNode;
+            } else if (screenStack.TryPeek(out _)) {
+                GoToThisNode();
+                revInds.Add(new CacheInstruction.ToGroup(Screens.IndexOf(c.Screen), c.Screen.Groups.IndexOf(c.Group)));
+                c = screenStack.Pop();
+            }  else {
+                GoToThisNode();
+                c = null;
+            }
+        }
+        revInds.Reverse();
+        return revInds;
+    }
+    public void TentativeCache(UINode node) {
+        tentativeReturnTo = GetInstructionsToNode(node);
+    }
+
+    public void ConfirmCache() {
+        if (tentativeReturnTo != null)
+            Logs.Log($"Caching menu position with indices " +
+                     $"{string.Join(", ", tentativeReturnTo.Select(x => x.ToString()))}");
+        ReturnTo = tentativeReturnTo;
+    }
+
     private async Task TransitionToNode(UINode? next, UITransitionOptions opts, List<UIGroup> leftGroups, List<UIGroup> enteredGroups, List<(UINode src, bool isPush)>? screenChanges) {
         var prev = Current;
         if (prev == next) {
@@ -878,9 +784,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
         var t = opts.ScreenTransitionTime;
         var ep = GetRandomSlideEndpoint();
-        var epxml = new Vector2(ep.x * XMLWidth, ep.y * -XMLHeight);
         var eput = new Vector2(ep.x * MainCamera.MCamInfo.ScreenWidth, ep.y * MainCamera.MCamInfo.ScreenHeight);
-        //to.HTML.transform.position = -epxml;
         async Task FadeIn() {
             if (to.SceneObjects != null)
                 to.SceneObjects.transform.position = -eput;

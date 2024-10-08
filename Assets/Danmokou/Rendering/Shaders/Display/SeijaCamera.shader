@@ -1,13 +1,10 @@
 ﻿Shader "DMKCamera/SeijaCamera" {
 	Properties {
 		[PerRendererData] _MainTex("Sprite Texture", 2D) = "white" {}
-		_CamHeight("Camera Height", Float) = 5
-		_GlobalXOffset("Global X Offset", Float) = 0
+		_ScreenRectBound("Screen Rect Bound", Vector) = (0,0,1,1)
 		_RotateX("X Rotate", Range(0, 6.3)) = 0
 		_RotateY("Y Rotate", Range(0, 6.3)) = 0
 		_RotateZ("Z Rotate", Range(0, 6.3)) = 0
-		_XBound("X Bound", Float) = 4
-		_YBound("Y Bound", Float) = 4
 		[Toggle(FT_PIXELIZE)] _DoPixelize("Show Pixellation?", Float) = 0
 		_PixelizeX("Pixelize X Blocks", Float) = 640
 		_PixelizeRO("Pixelize Outer Radius", Float) = 100
@@ -57,13 +54,10 @@
 			};
 
 			float4 _MainTex_TexelSize;
-			float _CamHeight;
-			float _GlobalXOffset;
 			float _RotateX;
 			float _RotateY;
 			float _RotateZ;
-			float _XBound;
-			float _YBound;
+			float4 _ScreenRectBound;
 
 
 			float2 rotate(float2 xy, float rad) {
@@ -76,9 +70,8 @@
 				fragment f;
 				f.color = v.color;
 				f.loc = UnityObjectToClipPos(v.loc);
-				float _CamWidth = _CamHeight * (_MainTex_TexelSize.z / _MainTex_TexelSize.w);
-				float2 p = float2((v.uv.x - 0.5) * _CamWidth - _GlobalXOffset,
-					(v.uv.y - 0.5) * _CamHeight);
+				float aspect = (_MainTex_TexelSize.z / _MainTex_TexelSize.w);
+				float2 p = float2((v.uv.x - _ScreenRectBound.x) * aspect, v.uv.y -  _ScreenRectBound.y);
 				//Rotation process is slightly strange, since we are trying to effectively rotate
 				// the source screen by rotating the sampling vector.
 				// For Z-rotation, this is done by rotating in the other direction.
@@ -96,7 +89,7 @@
 				f.uv = v.uv;
 				return f;
 			#endif
-				f.uv = float2((p.x + _GlobalXOffset) / _CamWidth + 0.5, p.y / _CamHeight + 0.5);
+				f.uv = float2(p.x / aspect + _ScreenRectBound.x, p.y + _ScreenRectBound.y);
 				return f;
 			}
 			
@@ -116,20 +109,26 @@
 			float _BlackHoleBlackT;
 			float _BlackHoleFadeT;
 
+			bool oob(float2 uv) {
+				return abs(uv.x - _ScreenRectBound.x) > _ScreenRectBound.z
+					|| abs(uv.y - _ScreenRectBound.y) > _ScreenRectBound.w
+					|| abs(uv.x - 0.5) > 0.5 || abs(uv.y - 0.5) > 0.5;
+			}
+
 			float4 frag(fragment f) : SV_Target {
-				if (abs(f.uv.x - 0.5) > 0.5 || abs(f.uv.y - 0.5) > 0.5 ||
-					abs(f.rloc.x) > _XBound || abs(f.rloc.y) > _YBound) return float4(0,0,0,1);
-				float _CamWidth = _CamHeight * (_MainTex_TexelSize.z / _MainTex_TexelSize.w);
+				if (oob(f.uv)) return float4(0,0,0,1);
+				float aspect = _MainTex_TexelSize.z / _MainTex_TexelSize.w;
+				//note: locations are in screen units (<0,0> -> <1,1>),
+				//distances are in screen Y units (0->16/9 for X, 0->1 for Y)
 			#if FT_BLACKHOLE
 				float2 rt = rectToPolar(f.rloc);
 				if (_BlackHoleT > _BlackHoleAbsorbT)
 					return lerp(float4(0, 0, 0, 1), tex2D(_MainTex, f.uv), smoothstep(0, _BlackHoleFadeT, _BlackHoleT - _BlackHoleAbsorbT - _BlackHoleBlackT));
 				float tr = _BlackHoleT / _BlackHoleAbsorbT;
-				float bhr = lerp(0, 1, einsine(smoothstep(0, 0.25, tr)));
-				float bhe = 0.6;
-
-				float ehr = pow(1 - smoothstep(-bhe * 0.2, bhe, rt.x - bhr), 3);
-				float blackness = smoothstep(-0.02, 0.02, rt.x - bhr);
+				float bhr = lerp(0, 0.11, einsine(smoothstep(0, 0.25, tr)));
+				//ehr: closeness to event horizon
+				float ehr = pow(1 - smoothstep(-0.017, 0.1, rt.x - bhr), 3);
+				float outside = smoothstep(-0.003, 0.003, rt.x - bhr);
 
 				//rt.x += 2;
 				float per = TAU / 4;
@@ -137,32 +136,26 @@
 				float tr_delay = ratio(0.1, 1, tr);
 
 				//Increase rotation angle, especially for closer points
-				rt.y += 3 * _BlackHoleAbsorbT * einsine(tr_delay) * lerp(0.2, 1, pow(1 - smoothstep(0, 6, rt.x), 3)) + 2.2 * ehr;
-				float rd = mod(rt.y + 0 * per / 2, per) / per * TAU;
-				rt.x += 6 * einsine(tr_delay) * lerp(0.8, 1, 0.5 + 0.5 * sin(rd));
-
-
-				//return float4(1 - abs(rt.x) / 4, 0, smoothstep(-PI/2, PI/2, rt.y), 1);
-				float2 xy = polarToRect(rt);
-				f.uv = float2((xy.x + _GlobalXOffset) / _CamWidth + 0.5, xy.y / _CamHeight + 0.5);
-				if (abs(f.uv.x - 0.5) > 0.5 || abs(f.uv.y - 0.5) > 0.5 ||
-					abs(xy.x) > _XBound || abs(xy.y) > _YBound) return float4(0,0,0,1);
-				float4 c_ = tex2D(_MainTex, f.uv);
-				return lerp(float4(0, 0, 0, 1), c_, blackness * (1 - smoothstep(-0.4, 0, _BlackHoleT - _BlackHoleAbsorbT)));
+				rt.y += 3 * _BlackHoleAbsorbT * einsine(tr_delay) * lerp(0.2, 1, pow(1 - smoothstep(0, 0.65, rt.x), 3)) + 2.2 * ehr;
+				float rd = mod(rt.y, per) / per * TAU;
+				rt.x += 0.65 * einsine(tr_delay) * lerp(0.8, 1, 0.5 + 0.5 * sin(rd));
 				
+				float2 xy = polarToRect(rt);
+				f.uv = float2(xy.x / aspect + _ScreenRectBound.x, xy.y + _ScreenRectBound.y);
+				if (oob(f.uv)) return float4(0,0,0,1);
+				return lerp(float4(0, 0, 0, 1), tex2D(_MainTex, f.uv),
+					outside * (1 - smoothstep(-0.4, 0, _BlackHoleT - _BlackHoleAbsorbT)));
 			#endif
-				float2 uv = f.uv;
 			#if FT_PIXELIZE
 				float _Px = _PixelizeX;
 				float _Py = _Px * (_MainTex_TexelSize.w / _MainTex_TexelSize.z);
 				float2 puv = float2((floor(f.uv.x * _Px) + 0.5)/_Px,
 						(floor(f.uv.y * _Py) + 0.5)/_Py);
-				float dist = length(f.rloc - _PixelizeCenter.xy);
-				float enable = smoothstep(0.1, -0.1, dist - _PixelizeRO) * smoothstep(-0.1, 0.1, dist - _PixelizeRI);
-				uv = lerp(uv, puv, enable);
+				float dist = length(float2((f.uv.x - _PixelizeCenter.x)*aspect, f.uv.y-_PixelizeCenter.y));
+				float enable = smoothstep(0.01, -0.01, dist - _PixelizeRO) * smoothstep(-0.01, 0.01, dist - _PixelizeRI);
+				f.uv = lerp(f.uv, puv, enable);
 			#endif
-				float4 c = tex2D(_MainTex, uv);
-				return c;
+				return tex2D(_MainTex, f.uv);
 			}
 			ENDCG
 		}

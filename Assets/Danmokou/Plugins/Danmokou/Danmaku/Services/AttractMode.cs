@@ -65,7 +65,7 @@ public class AttractMode : CoroutineRegularUpdater {
             foreach (var r in replays) {
                 bool finished = false;
                 new InstanceRequest((_, __) => finished = true, r.replay.CompiledReplay) {
-                    PreferredCameraTransition = GameManagement.References.defaultTransition.AsQuickFade(true)
+                    PreferredCameraTransition = GameManagement.References.defaultTransition.AsQuickFade(silent: true)
                 }.Run();
                 yield return null;
                 sr.enabled = true;

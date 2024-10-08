@@ -131,6 +131,7 @@ public class GameManagement : CoroutineRegularUpdater {
         ETime.RegisterPersistentSOFInvoke(Enemy.FreezeEnemies);
         ETime.RegisterPersistentEOFInvoke(BehaviorEntity.PrunePoolControls);
         ETime.RegisterPersistentEOFInvoke(CurvedTileRenderLaser.PrunePoolControls);
+        Listen(SceneIntermediary.SceneLoaded, _ => Instance.InstanceActiveGuardInScene = Instance.InstanceActiveGuard);
         
         RegisterService<IUXMLReferences>(UXMLPrefabs);
 

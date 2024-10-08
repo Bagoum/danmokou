@@ -34,7 +34,7 @@ public class THJam13CustomDataFeature : BaseInstanceFeature, ICustomDataFeature,
             TimeInLastMode = TimeInMode;
             TimeInMode = 0;
             RetroMode01SmoothEv.PushIfNotSame(retro ? 1 : 0);
-            ServiceLocator.MaybeFind<IShaderCamera>().ValueOrNull()?.ShowPixelation(
+            ServiceLocator.MaybeFind<IPlayScreenShader>().ValueOrNull()?.ShowPixelation(
                 new(2f, _ => LocationHelpers.TruePlayerLocation, pi => 16 * pi.t, 
                     retro ? pi => BMath.Lerp(640, 960, pi.t/2f) : null, retro));
         }));

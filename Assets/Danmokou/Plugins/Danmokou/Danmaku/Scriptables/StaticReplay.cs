@@ -38,15 +38,9 @@ public class StaticReplay : ScriptableObject {
 
     [ContextMenu("View Replay")]
     public void View() {
-        var t = GameManagement.References.defaultTransition.AsRecord;
-        var ss = ServiceLocator.Find<IScreenshotter>().Screenshot(DMKMainCamera.AllCameras);
-        t = t with { FadeIn = t.FadeIn.AsInstantaneous, 
-            FadeToTex = ss,
-            OnTransitionComplete = ss.DestroyTexOrRT
-        };
         new InstanceRequest((_, __) => ServiceLocator.Find<ISceneIntermediary>().LoadScene(
             InstanceRequest.ReturnScene(GameManagement.References.mainMenu)), CompiledReplay) {
-            PreferredCameraTransition = t
+            PreferredCameraTransition = GameManagement.References.defaultTransition.AsQuickFade()
         }.Run();
     }
 

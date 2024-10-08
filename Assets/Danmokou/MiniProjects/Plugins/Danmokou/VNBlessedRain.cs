@@ -37,7 +37,7 @@ public static class _VNBlessedRain {
     }
     private static BoundedContext<Unit> _TopLevel(DMKVNState vn) => new(vn, "TOP", async () => {
         var o = new Shared(vn, vn.Add(new ADVDialogueBox()), (UnityRenderGroup)vn.DefaultRenderGroup, 
-            vn.Add(new UnityRenderGroup("black", 1, true)));
+            vn.Add(new UnityRenderGroup(1, true)));
         o.rg.Visible.Value = false;
         o.md.Alpha = 1;
         await o.GetRain();

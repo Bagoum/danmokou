@@ -16,7 +16,7 @@ public partial record Ability {
             var bhe = new BlackHoleEffect(5, 0.5f, 1.5f);
             float totalTime = 7.5f;
             bomber.MakeInvulnerable((int) (120f * totalTime), true);
-            ServiceLocator.Find<IShaderCamera>().ShowBlackHole(bhe);
+            ServiceLocator.Find<IPlayScreenShader>().ShowBlackHole(bhe);
             ServiceLocator.Find<IRaiko>().Shake(3, null, 1);
             ISFXService.SFXService.Request("mima-blackhole");
             SpawnCutin();

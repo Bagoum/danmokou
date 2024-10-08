@@ -74,7 +74,7 @@ public class PatternSM : SequentialSM, EnvFrameAttacher {
             }
             if (target.TryAsEnemy(out var e)) {
                 if (i > 0) {
-                    e.DisableDistortion(); 
+                    e.DisallowDistortion(); 
                     //Overlapping distortion effects cause artifacting even with proper sprite ordering since
                     // it destroys continuousness guarantees
                     subbosses.Add(e);

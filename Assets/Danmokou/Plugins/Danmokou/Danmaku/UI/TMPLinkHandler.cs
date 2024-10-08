@@ -13,8 +13,8 @@ namespace Danmokou.UI {
 public class TMPLinkHandler : MonoBehaviour, IPointerClickHandler, IPointerMoveHandler, IPointerExitHandler {
     public Canvas? canvas;
     public TMP_Text text = null!;
-    private readonly Dictionary<string, UIGroup> stickyTooltips = new();
-    private readonly Dictionary<string, UIGroup> quickTooltips = new();
+    private readonly Dictionary<string, TooltipProxy> stickyTooltips = new();
+    private readonly Dictionary<string, TooltipProxy> quickTooltips = new();
     private IDisposable? cursorMod;
 
     public void ClearTooltips() {
@@ -22,13 +22,13 @@ public class TMPLinkHandler : MonoBehaviour, IPointerClickHandler, IPointerMoveH
         ClearTooltips(quickTooltips);
     }
 
-    private void ClearTooltips(Dictionary<string, UIGroup> tts, UIGroup? except = null) {
+    private void ClearTooltips(Dictionary<string, TooltipProxy> tts, TooltipProxy? except = null) {
         string? eKey = null;
         foreach (var (key, tt) in tts) {
             if (tt == except)
                 eKey = key;
             else
-                _ = tt.LeaveGroup().ContinueWithSync();
+                tt.Close();
         }
         tts.Clear();
         if (eKey != null && except != null)
@@ -50,7 +50,7 @@ public class TMPLinkHandler : MonoBehaviour, IPointerClickHandler, IPointerMoveH
         }
         var lid = text.textInfo.linkInfo[li].GetLinkID();
         if (stickyTooltips.Remove(lid, out var ett)) {
-            _ = ett.LeaveGroup().ContinueWithSync();
+            ett.Close();
         } else {
             var (succ, tt) = LinkCallback.ProcessClick(lid);
             if (!succ) {
@@ -58,7 +58,7 @@ public class TMPLinkHandler : MonoBehaviour, IPointerClickHandler, IPointerMoveH
                 return;
             }
             if (quickTooltips.Remove(lid, out var eqtt))
-                _ = eqtt.LeaveGroup().ContinueWithSync();
+                eqtt.Close();
             if (tt != null) {
                 tt.Render.HTML.WithAbsolutePosition(UIBuilderRenderer.UICamInfo.ToXMLPos((tl + tr) / 2.0f));
                 stickyTooltips[lid] = tt;

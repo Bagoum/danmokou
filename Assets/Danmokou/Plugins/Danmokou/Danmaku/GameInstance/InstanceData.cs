@@ -160,7 +160,18 @@ public class InstanceData {
     
     #region ComputedProperties
 
+    /// <summary>
+    /// True iff the mode is nonnull and the instance is active.
+    /// </summary>
     public bool InstanceActiveGuard => mode != InstanceMode.NULL && InstanceActive;
+    
+    /// <summary>
+    /// True iff the mode was nonnull and the instance was active when the current scene started.
+    /// <br/>In cases such as boss practice, the instance may stop being active during scene
+    ///  execution.
+    /// </summary>
+    public bool InstanceActiveGuardInScene { get; set; }
+    
     public double PlayerDamageMultiplier => M.Lerp(0, 3, Difficulty.Counter, 1.20, 1);
     public ShipConfig? Player => TeamCfg?.Ship;
     public Subshot? Subshot => TeamCfg?.Subshot;
@@ -200,6 +211,8 @@ public class InstanceData {
         Features.Add(FaithF = features.Faith.Create(this));
         Features.Add(MeterF = features.Meter.Create(this));
         Features.Add(CustomDataF = features.CustomData.Create(this));
+        
+        InstanceActiveGuardInScene = InstanceActiveGuard;
     }
 
     public (int success, int total)? LookForSpellHistory(string bossKey, int phaseIndex) {

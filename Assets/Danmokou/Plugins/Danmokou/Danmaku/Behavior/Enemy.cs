@@ -15,6 +15,7 @@ using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.Graphics;
+using Danmokou.Graphics.Backgrounds;
 using Danmokou.Player;
 using Danmokou.Reflection;
 using JetBrains.Annotations;
@@ -111,8 +112,8 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     public ntw.CurvedTextMeshPro.TextProOnACircle? spellCircleText;
     private Transform? cardtr;
     private Transform? spellTr;
-    public SpriteRenderer? distorter;
-    private bool hasDistorter;
+    private bool distortAllowed;
+    private IDisposable? distortToken;
     private MaterialPropertyBlock distortPB = null!;
     private MaterialPropertyBlock scPB = null!;
     private float healthbarStart; // 0-1
@@ -175,11 +176,10 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
             if (spellCircleText != null)
                 spellCircleText.GetComponent<TextMeshPro>().sortingOrder = sortOrder + 1;
         }
-        if (hasCardCircle = (cardCircle != null))
+        if (distortAllowed = hasCardCircle = (cardCircle != null))
             cardCircle!.sortingOrder = sortOrder + 2;
+        distortToken = null;
         if (healthbarSprite != null) healthbarSprite.sortingOrder = sortOrder + 3;
-        if (hasDistorter = (distorter != null)) 
-            distorter!.sortingOrder = sortOrder;
         allEnemies[enemyIndex = enemyIndexCtr++] = this;
         tokens.Add(orderedEnemies.Add(this));
         HP = maxHP;
@@ -211,13 +211,6 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         if (cardCircle != null) {
             cardtr = cardCircle.transform;
             cardCircle.enabled = false;
-        }
-        if (distorter != null) {
-            distorter.material = Instantiate(distorter.material);
-            distorter.GetPropertyBlock(distortPB);
-            distortPB.SetFloat(PropConsts.time, 0f);
-            distorter.SetPropertyBlock(distortPB);
-            distorter.enabled = false;
         }
         if (spellCircle != null) {
             spellTr = spellCircle.transform;
@@ -266,14 +259,23 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         if (cameraCrosshair != null) cameraCrosshair.color = b.colors.uiHPColor;
     }
 
-    public void DisableDistortion() {
-        if (distorter != null)
-            distorter.material.EnableKeyword("SHADOW_ONLY");
+    public void DisallowDistortion() {
+        distortAllowed = false;
+        distortToken?.Dispose();
+        distortToken = null;
     }
+
+    public void ActivateDistortion() {
+        if (distortAllowed && distortToken is null) {
+            tokens.Add(distortToken = ServiceLocator.Find<IBackgroundOrchestrator>()
+                .AddDistorter(transform, CameraRenderer.FindCapturer(1 << gameObject.layer).Value.CamInfo));
+        }
+    }
+    
     private void RequestCardCircle(Color colorR, Color colorG, Color colorB, TP3 rotator) {
         if (cardCircle != null) {
             cardCircle.enabled = true;
-            if (distorter != null) distorter.enabled = SaveData.s.Shaders;
+            ActivateDistortion();
             var cpb = new MaterialPropertyBlock();
             cardCircle.GetPropertyBlock(cpb);
             cpb.SetColor(PropConsts.redColor, colorR);
@@ -287,12 +289,6 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         scPB.SetColor(PropConsts.redColor, c1);
         scPB.SetColor(PropConsts.greenColor, c2);
         scPB.SetColor(PropConsts.blueColor, c3);
-    }
-
-    private void RecheckGraphicsSettings() {
-        if (cardCircle != null && distorter != null) {
-            distorter.enabled = cardCircle.enabled & SaveData.s.Shaders;
-        }
     }
 
     private ICancellee spellCircleCancel = Cancellable.Null;
@@ -317,7 +313,6 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
             return Math.Max(MinSCScale,
                 M.Lerp(startRad * spellBreather(Beh.rBPI.t), MinSCScale, pt / timeout));
         };
-        RecheckGraphicsSettings();
     }
 
     public void DivertHP(Enemy to) {
@@ -344,10 +339,6 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         receivesBulletCollisions =
             LocationHelpers.OnPlayableScreenBy(-0.3f, Beh.GlobalPosition()) && Vulnerable().HitsLand();
         _displayBarRatio = M.Lerp(_displayBarRatio, BarRatio, HPLerpRate * ETime.FRAME_TIME);
-        if (hasDistorter) {
-            distortPB.SetFloat(PropConsts.time, Beh.rBPI.t);
-            distorter!.SetPropertyBlock(distortPB);
-        }
         if (hasCardCircle) {
             var rt = cardtr!.localEulerAngles;
             rt += ETime.FRAME_TIME * cardRotator(Beh.rBPI);
@@ -584,7 +575,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
 
     private bool ViewfinderHits(CRect viewfinder) => 
         Vulnerable().TakesDamage() && ayaCameraRadius != null && 
-        CollisionMath.CircleInRect(Beh.rBPI.loc.x, Beh.rBPI.loc.y, ayaCameraRadius, viewfinder);
+        CollisionMath.CircleFullyInRect(Beh.rBPI.loc.x, Beh.rBPI.loc.y, ayaCameraRadius, viewfinder);
     public void ShowCrosshairIfViewfinderHits(CRect viewfinder) {
         if (cameraCrosshair != null) {
             cameraCrosshair.enabled = ViewfinderHits(viewfinder);

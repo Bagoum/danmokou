@@ -164,7 +164,7 @@ var sm = pattern({
 		saction 0 {
 			exec b{
 				var bhe = new BlackHoleEffect(4, 0.5, 1.5);
-				ServiceLocator.Find<IShaderCamera>().ShowBlackHole(bhe);
+				ServiceLocator.Find<IPlayScreenShader>().ShowBlackHole(bhe);
 				ISFXService.SFXService.Request("mima-blackhole");
 			}
 			wait(4.5)

@@ -42,9 +42,6 @@ public class MyInventorySwapCS : CustomCursorState, ICursorState {
         });
     }
 
-    public void UpdateTooltipPosition(UINode next) =>
-        next.HTML.SetTooltipAbsolutePosition(Tooltip?.Render.HTML);
-
     public override UIResult Navigate(UINode current, UICommand cmd) {
         if (cmd == UICommand.Back) {
             Destroy();
@@ -368,7 +365,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
             } else return null;
         }
 
-        public UIGroup? Tooltip(UINode node, ICursorState cs, bool prevExists) {
+        public TooltipProxy? Tooltip(UINode node, ICursorState cs, bool prevExists) {
             if (Src[Index] is { } item)
                 return node.MakeTooltip(UINode.SimpleTTGroup($"{item.Name} x{item.Count}"));
             return null;
@@ -384,7 +381,7 @@ public class LocalXMLInventoryExample : CoroutineRegularUpdater {
 
         void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
             if (cs is MyInventorySwapCS swap)
-                swap.UpdateTooltipPosition(node);
+                swap.Tooltip?.Track(node);
         }
 
         void IUIView.OnAddedToNavHierarchy(UINode node) => VM.Src.CurrentIndex = VM.Index;

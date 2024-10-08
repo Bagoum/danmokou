@@ -144,7 +144,7 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
         // and `w` has a size of of XMLSize. (The border appears outside of the dimensions of the root emptynode.)
         if (_n is not EmptyNode n)
             throw new Exception("Interactable mimic must be attached to empty node");
-        var wb = new VisualElement().ConfigureAbsolute().ConfigureEmpty(false).ConfigureLeftTopListeners(
+        var wb = new VisualElement().ConfigureAbsolute().ConfigureLeftTopListeners(
             n.CreateCenterOffsetChildX(new ConstantObservable<float>(0)),
             n.CreateCenterOffsetChildY(this.offsetter));
         n.HTML.Add(wb);
@@ -152,8 +152,8 @@ public class InteractableMimic : RenderedMimic, IFixedXMLReceiver {
             new Color(.812f, .545f, 0, a)
             //new Color(0.6f, 0f, 0.5f, a)
             , 10));
-        w = new VisualElement().ConfigureEmpty(false);
-        wb.Add(w);
+        wb.Add(w = new VisualElement());
+        wb.SetRecursivePickingMode(PickingMode.Ignore); //only the root empty node is pickable
         w.ConfigureWidthHeightListeners(cfg.Width, cfg.Height);
         w.style.backgroundImage = new(entity.Metadata.Icon);
         w.style.unityBackgroundImageTintColor = entity.ComputedTint.Value._();

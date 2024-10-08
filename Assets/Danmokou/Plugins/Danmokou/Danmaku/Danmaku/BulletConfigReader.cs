@@ -398,7 +398,7 @@ public partial class BulletManager : RegularUpdater {
                             CreateN($"{sname}-{color.name}".ToLower(), extras_offset++, () => color.gradient.Recolor(spritesheet, sbes.renderMode));
                         }
                         if (!sbes.colorizing.Any && sbes.gradients.Length == 0) {
-                            Logs.Log("No sprite recoloring for "+ sname);
+                            //Logs.Log("No sprite recoloring for "+ sname);
                             CreateN(sname, 0, () => spritesheet);
                         }
                     }

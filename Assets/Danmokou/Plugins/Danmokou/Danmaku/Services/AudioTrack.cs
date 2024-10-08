@@ -75,7 +75,6 @@ public abstract class BaseRunningAudioTrack : IRunningAudioTrack {
         src1.clip = Track.Clip;
         src1.pitch = Track.Pitch;
         host.Tokens.Add(Src1Volume.Subscribe(v => src1.volume = v));
-        Logs.Log($"Created audio track: {Track.Title}");
         host.Tracks.Add(this);
         if (host.State.Value >= AudioTrackState.Active)
             PlayDelayed();
