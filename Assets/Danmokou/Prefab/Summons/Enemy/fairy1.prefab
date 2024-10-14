@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 3407124447063394661}
   - component: {fileID: 3407124447063394663}
   - component: {fileID: 3407124447063394662}
+  - component: {fileID: -6806632078679206952}
+  - component: {fileID: -2496388789893554472}
   m_Layer: 15
   m_Name: fairy1
   m_TagString: Untagged
@@ -48,11 +50,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  deathEffect: {fileID: 11400000, guid: 2da45783ab6c9fd4883d37b44a9997dd, type: 2}
   cullableRadius:
     cullable: 1
     cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}
-  displayer: {fileID: 6353401824704334620}
 --- !u!114 &3407124447063394662
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -65,6 +65,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b9be94bcb555ba4aac4864f75005f45, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 3407124447063394663}
   takesBossDamage: 0
   maxHP: 250
   taiAtariRadius:
@@ -85,7 +86,7 @@ MonoBehaviour:
   cardCircle: {fileID: 0}
   spellCircle: {fileID: 0}
   spellCircleText: {fileID: 0}
-  distorter: {fileID: 0}
+  healthbarOpacity: 1
   nonspellColor:
     useConstant: 1
     constVal:
@@ -110,6 +111,35 @@ MonoBehaviour:
     useConstant: 0
     constVal: 0
     refVal: {fileID: 11400000, guid: 19b2f071062cf5549b0c1bf40d04b315, type: 2}
+--- !u!114 &-6806632078679206952
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3407124447063394658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7a20201a0ff4e48baf7d4e0da80c9c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  beh: {fileID: 3407124447063394663}
+  deathEffect: {fileID: 11400000, guid: 2da45783ab6c9fd4883d37b44a9997dd, type: 2}
+--- !u!114 &-2496388789893554472
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3407124447063394658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9bd6d08a6f547c787ab9c1f954a37ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  beh: {fileID: 3407124447063394663}
+  cullable: 1
+  cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}
 --- !u!1 &3912476776650022200
 GameObject:
   m_ObjectHideFlags: 0
@@ -162,6 +192,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -210,6 +241,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f975c3b7d1e4452fb8f027d21f5df966, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 3407124447063394663}
   rotationMethod:
     type: 0
     InVelocityDirection:

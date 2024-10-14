@@ -12,6 +12,7 @@ using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using BagoumLib.Tasks;
 using Danmokou.Behavior;
+using Danmokou.Behavior.Display;
 using Danmokou.Behavior.Functions;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
@@ -92,8 +93,8 @@ t > fadein ?
             float fadein = Mathf.Max(0.15f, homesec / 5f);
             _ = Sync(style, _ => V2RV2.Zero, SyncPatterns.Loc0(Summon(path,
                 new ReflectableLASM(smh2 => {
-                    smh2.Exec.DisplayerOrThrow.FadeSpriteOpacity(bpi => CrosshairOpacity.Value(fadein, homesec, sticksec, bpi),
-                        homesec + sticksec, smh2.cT, GetAwaiter(out Task t));
+                    smh2.Exec.Dependent<DisplayController>().FadeSpriteOpacity(bpi => 
+                            CrosshairOpacity.Value(fadein, homesec, sticksec, bpi), homesec + sticksec, smh2.cT, GetAwaiter(out Task t));
                     return t;
                 }), new BehOptions()))).Start(smh);
             await saver.Start(smh);
@@ -216,13 +217,13 @@ t > fadein ?
     }
 
     public static ReflectableLASM StageAnnounce() => new(smh => {
-        ServiceLocator.Find<IStageAnnouncer>().AnnounceStage(smh.cT, out float t);
-        return RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
+        ServiceLocator.Find<IStageAnnouncer>().AnnounceStage(smh.cT, WaitingUtils.GetAwaiter(out Task t));
+        return t;
     });
     
     public static ReflectableLASM StageDeannounce() => new(smh => {
-        ServiceLocator.Find<IStageAnnouncer>().DeannounceStage(smh.cT, out float t);
-        return RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, t, false);
+        ServiceLocator.Find<IStageAnnouncer>().DeannounceStage(smh.cT, WaitingUtils.GetAwaiter(out Task t));
+        return t;
     });
     
     #endregion
@@ -523,7 +524,7 @@ t > fadein ?
     /// Kill this entity (death effects included).
     /// </summary>
     public static ReflectableLASM Poof() => new(smh => {
-        smh.Exec.Poof();
+        smh.Exec.CullMe(true);
         return Task.CompletedTask;
     });
 
@@ -610,10 +611,11 @@ t > fadein ?
         var w1 = MoveTarget(t1, _ => Expression.Constant((Func<float,float>)Easers.EOutSine), target1);
         var w2 = MoveTarget(t2, _ => Expression.Constant((Func<float,float>)Easers.EInSine), target2);
         return new(async smh => {
-            if (smh.Exec.isEnemy) smh.Exec.Enemy.SetVulnerable(Vulnerability.NO_DAMAGE);
+            var isEnemy = smh.Exec.TryDependent<Enemy>(out var enemy);
+            if (isEnemy) enemy.SetVulnerable(Vulnerability.NO_DAMAGE);
             await w1.Start(smh);
             smh.ThrowIfCancelled();
-            if (smh.Exec.isEnemy) smh.Exec.Enemy.SetVulnerable(Vulnerability.VULNERABLE);
+            if (isEnemy) enemy.SetVulnerable(Vulnerability.VULNERABLE);
             await wrapped.Start(smh);
             smh.ThrowIfCancelled();
             await w2.Start(smh);
@@ -640,7 +642,7 @@ t > fadein ?
     /// Link this entity's HP pool to another enemy. The other enemy will serve as the source and this will simply redirect damage.
     /// </summary>
     public static ReflectableLASM DivertHP(GCXF<BehaviorEntity> target) => new(smh => {
-        smh.Exec.Enemy.DivertHP(target(smh.GCX).Enemy);
+        smh.Exec.Dependent<Enemy>().DivertHP(target(smh.GCX).Dependent<Enemy>());
         return Task.CompletedTask;
     });
 
@@ -648,7 +650,8 @@ t > fadein ?
     /// Set the enemy to be vulnerable if the condition returns true, otherwise set it to be invulnerable.
     /// </summary>
     public static ReflectableLASM Vulnerable(GCXF<bool> isVulnerable) => new(smh => {
-        smh.Exec.Enemy.SetVulnerable(isVulnerable(smh.GCX) ? Vulnerability.VULNERABLE : Vulnerability.NO_DAMAGE);
+        smh.Exec.Dependent<Enemy>()
+            .SetVulnerable(isVulnerable(smh.GCX) ? Vulnerability.VULNERABLE : Vulnerability.NO_DAMAGE);
         return Task.CompletedTask;
     });
 
@@ -657,19 +660,21 @@ t > fadein ?
     /// (This SM is blocking.)
     /// </summary>
     public static ReflectableLASM VulnerableAfter(Synchronizer sync) => new(async smh => {
-        smh.Exec.Enemy.SetVulnerable(Vulnerability.NO_DAMAGE);
+        smh.Exec.Dependent<Enemy>().SetVulnerable(Vulnerability.NO_DAMAGE);
         await sync(smh);
         smh.ThrowIfCancelled();
-        smh.Exec.Enemy.SetVulnerable(Vulnerability.VULNERABLE);
+        smh.Exec.Dependent<Enemy>().SetVulnerable(Vulnerability.VULNERABLE);
     });
     
     public static ReflectableLASM FadeSprite(BPY fader, GCXF<float> time) => new(smh => {
-        smh.Exec.DisplayerOrThrow.FadeSpriteOpacity(fader, time(smh.GCX), smh.cT, GetAwaiter(out Task t));
+        smh.Exec.Dependent<DisplayController>()
+            .FadeSpriteOpacity(fader, time(smh.GCX), smh.cT, GetAwaiter(out Task t));
         return t;
     });
 
     public static ReflectableLASM Scale(BPY scaler, GCXF<float> time) => new(smh => {
-        smh.Exec.DisplayerOrThrow.Scale(scaler, time(smh.GCX), smh.cT, GetAwaiter(out Task t));
+        smh.Exec.Dependent<DisplayController>()
+            .Scale(scaler, time(smh.GCX), smh.cT, GetAwaiter(out Task t));
         return t;
     });
     

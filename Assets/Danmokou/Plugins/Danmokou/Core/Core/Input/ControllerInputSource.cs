@@ -116,7 +116,8 @@ public class ControllerInputSource : IKeyedInputSource, IPrimaryInputSource {
     public IInputHandler uiConfirm { get; }
     public IInputHandler uiBack { get; }
     public IInputHandler uiContextMenu { get; }
-    public IInputHandler? dialogueSkipAll { get; } = null;
+    public IInputHandler? dialogueSkipAll => null;
+    public IInputHandler? leftClick => null;
 
     private readonly List<(Either<ControllerAxis, KeyCode>, float)> accValues = new();
     private readonly HashSet<ControllerAxis> countedTypes = new();

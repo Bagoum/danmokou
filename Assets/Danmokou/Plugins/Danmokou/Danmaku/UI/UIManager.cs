@@ -54,8 +54,8 @@ public interface IUIManager {
 }
 
 public interface IStageAnnouncer {
-    void AnnounceStage(ICancellee cT, out float time);
-    void DeannounceStage(ICancellee cT, out float time);
+    void AnnounceStage(ICancellee cT, Action done);
+    void DeannounceStage(ICancellee cT, Action done);
 }
 
 public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
@@ -256,21 +256,21 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
 
     private void UpdatePB() {
         //pivDecayPB.SetFloat(PropConsts.time, time);
-        pivDecayPB.SetFloat(PropConsts.fillRatio, Instance.FaithF.VisibleFaith.Value);
+        pivDecayPB.SetFloat(PropConsts.FillRatio, Instance.FaithF.VisibleFaith.Value);
         pivDecayPB.SetFloat(PropConsts.innerFillRatio, Mathf.Clamp01(Instance.FaithF.VisibleFaithLenience.Value));
         PIVDecayBar.SetPropertyBlock(pivDecayPB);
-        meterPB.SetFloat(PropConsts.fillRatio, (float) Instance.MeterF.Meter);
+        meterPB.SetFloat(PropConsts.FillRatio, (float) Instance.MeterF.Meter);
         meterPB.SetColor(PropConsts.colorMult, Instance.TeamCfg?.Support is Ability.Metered ? Color.white : 
             new Color(0.5f, 0.5f, 0.5f, 0.7f));
         MeterBar.SetPropertyBlock(meterPB);
         //bossHPPB.SetFloat(PropConsts.time, time);
         if (bossHP != null) {
             bossHPPB.SetColor(PropConsts.fillColor, bossHP.UIHPColor);
-            bossHPPB.SetFloat(PropConsts.fillRatio, bossHP.DisplayBarRatio);
+            bossHPPB.SetFloat(PropConsts.FillRatio, bossHP.DisplayBarRatio);
         }
         BossHPBar.SetPropertyBlock(bossHPPB);
         rankPB.SetColor(PropConsts.fillColor, rankPointBarColor.Evaluate((float)(Instance.RankF?.RankRatio ?? 0)));
-        rankPB.SetFloat(PropConsts.fillRatio, Instance.RankF?.VisibleRankPointFill.Value ?? 0);
+        rankPB.SetFloat(PropConsts.FillRatio, Instance.RankF?.VisibleRankPointFill.Value ?? 0);
         rankPointBar.SetPropertyBlock(rankPB);
         leftSidebarPB.SetFloat(PropConsts.time, profileTime);
         rightSidebarPB.SetFloat(PropConsts.time, profileTime);
@@ -556,20 +556,18 @@ public class UIManager : CoroutineRegularUpdater, IUIManager, IStageAnnouncer {
 
     private const float stageAnnounceStay = 2f;
 
-    public void AnnounceStage(ICancellee cT, out float time) {
-        time = 2 * (stageAnnouncer.moveTime + stageAnnouncer.spreadTime) + stageAnnounceStay;
-        stageAnnouncer.Queue(new PiecewiseAppear.AppearRequest(PiecewiseAppear.AppearAction.APPEAR, 1f, () => 
+    public void AnnounceStage(ICancellee cT, Action done) {
+        stageAnnouncer.Queue(new PiecewiseAppear.AppearRequest(PiecewiseAppear.Action.APPEAR, 1f, () => 
             RUWaitingUtils.WaitThenCB(this, cT, stageAnnounceStay, false, () => 
-                stageAnnouncer.Queue(new PiecewiseAppear.AppearRequest(PiecewiseAppear.AppearAction.DISAPPEAR, 0f, null)))));
+                stageAnnouncer.Queue(new PiecewiseAppear.AppearRequest(PiecewiseAppear.Action.DISAPPEAR, 1f, done)))));
     }
 
     private const float stageDAnnounceIn = 0.5f;
     private const float stageDAnnounceStay = 3f;
     private const float stageDAnnounceOut = 1f;
 
-    public void DeannounceStage(ICancellee cT, out float time) {
-        time = stageDAnnounceIn + stageDAnnounceOut + stageDAnnounceStay;
-        InStayOutSpriteFade(stageDeannouncer, stageDAnnounceIn, stageAnnounceStay, stageDAnnounceOut, cT);
+    public void DeannounceStage(ICancellee cT, Action done) {
+        InStayOutSpriteFade(stageDeannouncer, stageDAnnounceIn, stageAnnounceStay, stageDAnnounceOut, cT, done);
     }
 
     public TextMeshPro challengeHeader = null!;

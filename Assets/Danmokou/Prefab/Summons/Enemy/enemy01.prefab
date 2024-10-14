@@ -25,12 +25,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1605316801514891694}
+  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4607728708591253782}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1610359917773566252
 SpriteRenderer:
@@ -43,11 +44,15 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -96,7 +101,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f975c3b7d1e4452fb8f027d21f5df966, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationMethod: 0
+  <Beh>k__BackingField: {fileID: 4607728708591253780}
+  rotationMethod:
+    type: 0
+    InVelocityDirection:
+      offset: 0
+    LeanByVelocity:
+      xAxis: 1
+      multiplier: 8
+      rotationOffset: 0
+      rotationLimit: {x: -30, y: 30}
+  yPosBopPeriod:
+    useConstant: 1
+    constVal: 0
+    refVal: {fileID: 0}
+  yPosBopAmplitude:
+    useConstant: 1
+    constVal: 0
+    refVal: {fileID: 0}
+  yScaleBopPeriod:
+    useConstant: 1
+    constVal: 0
+    refVal: {fileID: 0}
+  yScaleBopAmplitude:
+    useConstant: 1
+    constVal: 0
+    refVal: {fileID: 0}
+  rotator:
+    useConstant: 1
+    constVal: 
+    refVal: {fileID: 0}
   sprite: {fileID: 1610359917773566252}
   animate:
     LRRelation: 5
@@ -140,12 +174,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4246765862435795434}
+  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4607728708591253782}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &6886938451648613105
 SpriteRenderer:
@@ -158,11 +193,15 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -210,6 +249,8 @@ GameObject:
   - component: {fileID: 4607728708591253783}
   - component: {fileID: 4607728708591253780}
   - component: {fileID: 4607728708591253781}
+  - component: {fileID: 862347001664666234}
+  - component: {fileID: -3490979684975173134}
   m_Layer: 15
   m_Name: enemy01
   m_TagString: Untagged
@@ -224,14 +265,15 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4607728708591253777}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8624921883506251226}
   - {fileID: 8353711851253041142}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &4607728708591253783
 SpriteRenderer:
@@ -244,11 +286,15 @@ SpriteRenderer:
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -299,34 +345,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  deathEffect: {fileID: 11400000, guid: 2da45783ab6c9fd4883d37b44a9997dd, type: 2}
   cullableRadius:
     cullable: 1
     cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}
-  collisionInfo:
-    collisionRadius: 0
-    CollisionActiveOnInit: 0
-    destructible: 0
-    grazeEveryFrames: 0
-  displayer: {fileID: 3044890651925379683}
-  animate:
-    LRRelation: 5
-    UDRelation: 5
-    frames:
-      idleAnim:
-      - sprite: {fileID: -8828500147440310334, guid: d336619b2d1034247986d6b9c22256f0,
-          type: 3}
-        time: 0.5
-        skipLoop: 0
-      rightAnim: []
-      leftAnim: []
-      upAnim: []
-      downAnim: []
-      attackAnim: []
-      deathAnim:
-      - sprite: {fileID: 21300000, guid: 5be58a1997611384da6a91317f3802d5, type: 3}
-        time: 0.1
-        skipLoop: 0
 --- !u!114 &4607728708591253781
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -339,8 +360,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b9be94bcb555ba4aac4864f75005f45, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 4607728708591253780}
   takesBossDamage: 0
   maxHP: 1000
+  taiAtariRadius:
+    useConstant: 1
+    constVal: 0
+    refVal: {fileID: 0}
   collisionRadius:
     useConstant: 0
     constVal: 0
@@ -354,7 +380,8 @@ MonoBehaviour:
   healthbarSprite: {fileID: 0}
   cardCircle: {fileID: 0}
   spellCircle: {fileID: 0}
-  distorter: {fileID: 0}
+  spellCircleText: {fileID: 0}
+  healthbarOpacity: 1
   nonspellColor:
     useConstant: 1
     constVal:
@@ -379,3 +406,32 @@ MonoBehaviour:
     useConstant: 0
     constVal: 0
     refVal: {fileID: 11400000, guid: 19b2f071062cf5549b0c1bf40d04b315, type: 2}
+--- !u!114 &862347001664666234
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4607728708591253777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7a20201a0ff4e48baf7d4e0da80c9c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  beh: {fileID: 4607728708591253780}
+  deathEffect: {fileID: 11400000, guid: 2da45783ab6c9fd4883d37b44a9997dd, type: 2}
+--- !u!114 &-3490979684975173134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4607728708591253777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9bd6d08a6f547c787ab9c1f954a37ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  beh: {fileID: 4607728708591253780}
+  cullable: 1
+  cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}

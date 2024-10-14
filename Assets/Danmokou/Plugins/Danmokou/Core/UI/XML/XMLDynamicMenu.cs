@@ -25,6 +25,11 @@ public class XMLDynamicMenu : UIController, IFreeformContainer {
 
     public OverrideEvented<Func<UINode, ICursorState, UICommand, UIResult?>?> HandleDefaultUnselectNav { get; } = new(null);
     public UIFreeformGroup FreeformGroup { get; private set; } = null!;
+    public override bool CanConsumeInput =>
+        base.CanConsumeInput && (!inputFallthrough || QueuedInput != null || Current != Unselect 
+                                  || LastOperationFrame == ETime.FrameNumber);
+
+    public bool inputFallthrough = false;
 
 
     protected override void BindListeners() {

@@ -21,6 +21,12 @@ public class DMKADVDialogueBoxMimic : ADVDialogueBoxMimic {
     public override void Initialize(ADVDialogueBox db) {
         base.Initialize(db);
         LinkHandler = GetComponentInChildren<TMPLinkHandler>();
+        
+        if (LinkHandler != null)
+            Listen(db.Active, active => {
+                if (!active)
+                    LinkHandler.ClearTooltips();
+            });
 
         if (useDialogueBoxOpacitySetting)
             Listen(SaveData.SettingsEv, s => background.color = background.color.WithA(s.VNDialogueOpacity));

@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Functional;
+using BagoumLib.Reflection;
+using BagoumLib.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
@@ -26,33 +28,12 @@ using UnityEditor;
 using UnityEngine.Profiling;
 
 namespace Danmokou.Behavior {
-
-[Serializable]
-public struct ItemDrops {
-    public double value;
-    public int pointPP;
-    public int life;
-    public int power;
-    public int gems;
-    public bool autocollect;
-    public ItemDrops(double v, int pp, int l, int pow, int gem, bool autoc=false) {
-        value = v;
-        pointPP = pp;
-        life = l;
-        power = pow;
-        gems = gem;
-        autocollect = autoc;
-    }
-
-    public ItemDrops Mul(float by) => new((value * by), (int)(pointPP * by), (int)(life * by), 
-        (int)(power * by), (int)(gems * by), autocollect);
-}
-
 /// <summary>
 /// A high-level class that describes all complex danmaku-related objects (primarily bullets and NPCs).
 /// </summary>
 public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler {
     //BEH is only pooled when summoned via the firing API.
+    private static readonly Dictionary<string, HashSet<BehaviorEntity>> idLookup = new();
 
     [Tooltip("This must be null for pooled BEH.")]
     public TextAsset? behaviorScript;
@@ -60,126 +41,72 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// ID to refer to this entity in behavior scripts.
     /// </summary>
     public string ID = "";
-    private static readonly Dictionary<string, HashSet<BehaviorEntity>> idLookup = new();
+    
+    /// <summary>
+    /// Components such as <see cref="Enemy"/> which have a separate execution loop
+    ///  but depend on this for enable/disable calls.
+    /// <br/>Components should call <see cref="LinkDependentUpdater"/> in their Awake functions.
+    /// </summary>
+    private readonly List<IBehaviorEntityDependent> dependentComponents = new();
+    
+    public SMPhaseController phaseController;
     //This is automatically disposed by the state machine that generates it
     public ICancellable? PhaseShifter { get; set; }
     private readonly HashSet<Cancellable> behaviorToken = new();
     public int NumRunningSMs => behaviorToken.Count;
     
     /// <summary>
-    /// Components such as <see cref="Enemy"/> which have a separate execution loop
-    ///  but depend on this for enable/disable calls.
+    /// The angle at which this entity was originally fired.
     /// </summary>
-    private readonly List<IBehaviorEntityDependent> dependentComponents = new();
-    
-    public RealizedBehOptions? Options { get; private set; }
-    
+    public float OriginalAngle { get; protected set; }
     /// <summary>
     /// Last movement delta of the entity. Zero if no movement occurred.
     /// </summary>
     public Vector2 LastDelta { get; private set; }
-    
     /// <summary>
     /// Last movement delta of the entity, not including effects from collisions. Zero if the entity did not
     ///  try to move.
     /// </summary>
     public Vector2 LastDesiredDelta { get; private set; }
-
     /// <summary>
     /// The direction in which the entity is currently moving. If the entity is not moving, then
     ///  this contains the most recent direction in which it was moving.
     /// </summary>
     public Vector2 Direction { get; private set; }
-    public float DirectionDeg => M.AtanD(Direction);
-
     /// <summary>
     /// An optional rotation function provided by <see cref="Danmaku.Options.BehOption.Rotate"/> for
     ///  manually controlling the rotation of the entity. This will affect the euler angles of the entity.
     /// </summary>
     public BPY? Rotator { get; private set; }
     public float? RotatorRotation { get; private set; }
-    
-    /// <summary>
-    /// Only the original firing angle matters for rotational movement velocity
-    /// </summary>
-    public float original_angle { get; protected set; }
 
-    protected bool dying { get; private set; } = false;
+    protected bool Dying { get; private set; } = false;
     private Enemy? enemy;
-    public EffectStrategy? deathEffect;
-
-    private string NameMe => string.IsNullOrWhiteSpace(ID) ? gameObject.name : ID;
-    public Enemy Enemy {
-        get {
-            if (enemy == null)
-                throw new Exception($"BEH {NameMe} is not an Enemy, " +
-                                    $"but you are trying to access the Enemy component.");
-            else
-                return enemy;
-        }
-    }
-    public bool isEnemy => enemy != null;
-
-    public bool TryAsEnemy(out Enemy e) {
-        e = enemy!;
-        return isEnemy;
-    }
-
-    public virtual bool TriggersUITimeout => false;
-    public SMPhaseController phaseController;
-    //These values are only set for Initialize-based BEH (via SM summon command)
-    //All bullets are initialize-based and use these
+    public Enemy Enemy => enemy == null ? throw new Exception($"BEH {ID.Or(gameObject.name)} is not an Enemy.") : enemy;
+    
+    private Movement movement = Movement.None;
+    /// <summary>
+    /// If parented, we need firing offset to update Velocity's root position with parent.pos + offset every frame.
+    /// </summary>
+    private Vector2 firedOffset;
     protected ParametricInfo bpi; //bpi.index is queried by other scripts, defaults to zero
     /// <summary>
     /// Access to BPI struct.
     /// Note: Do not modify rBPI.t directly, instead use SetTime. This is because entities like Laser have double handling for rBPI.t.
     /// </summary>
     public virtual ref ParametricInfo rBPI => ref bpi;
-    public ParametricInfo BPI => rBPI;
-    public Vector2 Location => rBPI.loc;
-
-    public virtual void SetTime(float t) {
-        rBPI.t = t;
-    }
-
-    private Movement movement;
-    private bool doVelocity = false;
-
     
-    private const float FIRST_CULLCHECK_TIME = 2;
-
-    [Serializable]
-    public struct CullableRadius {
-        public bool cullable;
-        public SOFloat cullRadius;
-    }
-
-    public CullableRadius cullableRadius;
-    public float ScreenCullRadius => (cullableRadius.cullRadius == null) ?  4f :
-        cullableRadius.cullRadius.value;
-    private const int checkCullEvery = 120;
-    private int beh_cullCtr = 0;
-    private Pred? delete;
+    /// <summary>
+    /// Global position of this entity.
+    /// </summary>
+    public virtual Vector2 Location => rBPI.loc;
+    
     public int DefaultLayer { get; private set; }
 
-    public enum DirectionRelation {
-        RUFlipsLD,
-        LDFlipsRU,
-        RUCopiesLD,
-        LDCopiesRU,
-        Independent,
-        None
-    }
-
-    public DisplayController? displayer;
-    public DisplayController DisplayerOrThrow => (displayer != null) ? displayer : throw new Exception($"BEH {ID} does not have a displayer");
-    private bool isSummoned = false;
-    protected virtual int Findex => 0;
-    protected virtual PIData DefaultFCTX() => PIData.NewUnscoped();
     protected override void Awake() {
         base.Awake();
         DefaultLayer = gameObject.layer;
-        bpi = new ParametricInfo(DefaultFCTX(), tr.position, Findex, RNG.GetUInt(), 0);
+        bpi = new ParametricInfo(PIData.NewUnscoped(), tr.position, 0, RNG.GetUInt(), 0);
         enemy = GetComponent<Enemy>();
         RegisterID();
         UpdateStyle(defaultMeta);
@@ -188,7 +115,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     protected override void BindListeners() {
         base.BindListeners();
 #if UNITY_EDITOR || ALLOW_RELOAD
-        if (SceneIntermediary.IsFirstScene && this is not Bullet && 
+        if (SceneIntermediary.IsFirstScene && 
             (this is FireOption || this is BossBEH || this is LevelController || GetComponent<RELOADER>() != null)) {
             Listen(Events.LocalReset, () => {
                 HardCancel(false);
@@ -200,13 +127,25 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 #endif
     }
 
-    public void Initialize(in Movement mov, ParametricInfo pi, SMRunner? sm, string behName = "") =>
-        Initialize(null, in mov, pi, sm, null, behName);
-
-    /// <summary>
-    /// If parented, we need firing offset to update Velocity's root position with parent.pos + offset every frame.
-    /// </summary>
-    private Vector2 firedOffset;
+    public bool TryDependent<T>(out T value) where T : IBehaviorEntityDependent {
+        for (int ii = 0; ii < dependentComponents.Count; ++ii)
+            if (dependentComponents[ii] is T typed) {
+                value = typed;
+                return true;
+            }
+        value = default!;
+        return false;
+    }
+    
+    public T Dependent<T>() where T : IBehaviorEntityDependent {
+        for (int ii = 0; ii < dependentComponents.Count; ++ii)
+            if (dependentComponents[ii] is T typed)
+                return typed;
+        throw new Exception($"BEH {ID.Or(gameObject.name)} is not an {typeof(T).RName()}, " +
+                            $"but you are trying to access this component.");
+    }
+    
+    public virtual void SetTime(float t) => rBPI.t = t;
 
     /// <summary>
     /// Initialize a BEH. You are not required to call this, but all BEH that are generated in code should use this.
@@ -221,50 +160,42 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public void Initialize(BEHStyleMetadata? style, in Movement mov, ParametricInfo pi, SMRunner? smr,
         BehaviorEntity? parent=null, string behName="", RealizedBehOptions? options=null) {
         if (parent != null) TakeParent(parent);
-        isSummoned = true;
-        Options = options;
         bpi = pi;
         movement = mov;
         tr.localPosition = firedOffset = movement.rootPos;
         movement.rootPos = bpi.loc = tr.position;
-        original_angle = movement.angle;
-        doVelocity = !movement.IsEmpty();
-        if (doVelocity) {
+        OriginalAngle = movement.angle;
+        if (!movement.IsEmpty()) {
             SetMovementDelta(movement.UpdateZero(ref bpi));
             tr.position = bpi.loc;
         }
-        if (options?.rotator is {} rotator) {
-            var rot = (Rotator = rotator)(bpi);
-            RotatorRotation = rot;
-            tr.localEulerAngles = new Vector3(0, 0, rot);
-        }
-        
+        Rotator = options?.rotator;
+        var rot = Rotator?.Invoke(bpi) ?? 0;
+        RotatorRotation = rot;
+        tr.localEulerAngles = new Vector3(0, 0, rot);
         if (IsNontrivialID(behName)) ID = behName;
         if (smr is {} runner)
             _ = RunBehaviorSM(runner);
         //This comes after so SMs run due to ~@ commands are not destroyed by BeginBehaviorSM
         RegisterID();
         UpdateStyle(style ?? defaultMeta);
-        deathDrops = options?.drops;
-        delete = options?.delete;
         for (int ii = 0; ii < dependentComponents.Count; ++ii)
             dependentComponents[ii].Initialized(options);
     }
 
-    protected override void ResetValues() {
-        base.ResetValues();
+    protected override void ResetValues(bool isFirst) {
+        base.ResetValues(isFirst);
         phaseController = SMPhaseController.Normal(0);
-        dying = false;
+        Dying = false;
         Direction = Vector2.right;
-        if (enemy != null) enemy.LinkAndReset(this);
-        if (displayer != null) displayer.LinkAndReset(this);
-        for (int ii = 0; ii < dependentComponents.Count; ++ii)
-            dependentComponents[ii].Alive();
+        if (!isFirst) 
+            for (int ii = 0; ii < dependentComponents.Count; ++ii)
+                dependentComponents[ii].OnLinkOrResetValues(false);
     }
     
     public override void FirstFrame() {
+        base.FirstFrame();
         UpdateRendering(true);
-        
         //Note: This pathway is used for player shots and minor summoned effects (such as cutins).
         //It is not used for bosses/stages, which call directly into RunBehaviorSM.
         if (behaviorScript != null) {
@@ -282,9 +213,13 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
     }
 
+    /// <summary>
+    /// Call this in Awake from any <see cref="IBehaviorEntityDependent"/>.
+    /// </summary>
     public void LinkDependentUpdater(IBehaviorEntityDependent ru) {
-        if (!dependentComponents.Contains(ru)) 
-            dependentComponents.Add(ru);
+        if (dependentComponents.Contains(ru)) return;
+        dependentComponents.Add(ru);
+        ru.OnLinkOrResetValues(true);
     }
 
     private static bool IsNontrivialID(string? id) => !string.IsNullOrWhiteSpace(id) && id != "_";
@@ -295,21 +230,17 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     private void RegisterID() {
         if (!idLookup.ContainsKey(ID)) { idLookup[ID] = new HashSet<BehaviorEntity>(); }
         idLookup[ID].Add(this);
-        if (IsNontrivialID(ID)) {
-            if (pointers.TryGetValue(ID, out BEHPointer behp) && !behp.Attached) {
-                behp.Attach(this);
-            }
-        }
+        if (IsNontrivialID(ID) && pointers.TryGetValue(ID, out BEHPointer behp) && !behp.Attached)
+            behp.Attach(this);
     }
     
     /// <summary>
     /// Safe to call twice.
     /// </summary>
     private void UnregisterID() {
-        if (idLookup.TryGetValue(ID, out var dct)) dct.Remove(this);
-        if (pointers.TryGetValue(ID, out var behp) && behp.beh == this) {
+        if (idLookup.TryGetValue(ID, out var set)) set.Remove(this);
+        if (pointers.TryGetValue(ID, out var behp) && behp.beh == this)
             behp.Detach();
-        }
     }
     
     /// <summary>
@@ -330,7 +261,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// </summary>
     /// <param name="p">Target global position</param>
     private void SetTransformGlobalPosition(Vector2 p) {
-        if (parented) tr.position = p;
+        if (Parented) tr.position = p;
         else tr.localPosition = p; // Slightly faster pathway
     }
     
@@ -350,7 +281,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// <returns></returns>
     public IEnumerator ExecuteVelocity(LimitedTimeMovement ltv) {
         if (ltv.cT.Cancelled) { ltv.done(); yield break; }
-        Movement vel = new Movement(ltv.vtp, GlobalPosition(), V2RV2.Angle(original_angle));
+        Movement vel = new Movement(ltv.vtp, Location, V2RV2.Angle(OriginalAngle));
         float doTime = (ltv.enabledFor < float.Epsilon) ? float.MaxValue : ltv.enabledFor;
         ParametricInfo tbpi = ltv.pi;
         tbpi.loc = bpi.loc;
@@ -382,81 +313,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         SetMovementDelta(Vector2.zero);
         ltv.done();
     }
-
-
-    #region Death
-
-    /// <summary>
-    /// Call this from hp-management scripts when you are out of HP.
-    /// </summary>
-    public void OutOfHP() {
-        if (PhaseShifter != null) {
-            ShiftPhase();
-        } else {
-            Poof(true);
-        }
-    }
-
-    private void DestroyInitial(bool allowFinalize, bool allowDrops=false) {
-        if (dying) return;
-        dying = true;
-        if (allowDrops) DropItemsOnDeath();
-        UnregisterID();
-        HardCancel(allowFinalize);
-        for (int ii = 0; ii < dependentComponents.Count; ++ii)
-            dependentComponents[ii].Died();
-    }
-
-    private void DestroyFinal() {
-        if (displayer != null) displayer.Hide();
-        bpi.Dispose();
-        if (isPooled) {
-            PooledDone();
-        } else {
-            Destroy(gameObject);
-        }
-    }
-
-    private void TryDeathEffect() {
-        if (deathEffect != null && !SceneIntermediary.LOADING) deathEffect.Proc(GlobalPosition(), GlobalPosition(), 1f);
-    }
-    
-    /// <summary>
-    /// Call instead of InvokeCull when you need to show death animations and trigger finalize effects.
-    /// </summary>
-    public void Poof(bool? drops=null) {
-        if (SceneIntermediary.LOADING) InvokeCull();
-        else if (!dying) {
-            myStyle.IterateDestroyControls(this);
-            DestroyInitial(true, drops ?? AmIOutOfHP);
-            if (enemy != null) {
-                enemy.DoSuicideFire();
-                GameManagement.Instance.NormalEnemyDestroyed();
-            }
-            TryDeathEffect();
-            if (displayer == null) DestroyFinal();
-            else displayer.Animate(AnimationType.Death, false, DestroyFinal);
-        }
-    }
-    
-    [ContextMenu("Destroy Direct")]
-    public virtual void InvokeCull() {
-        if (dying) return; //Possible when @ cull is used on cullOnFinish entity
-        DestroyInitial(false);
-        DestroyFinal();
-    }
-
-    protected override void ExternalDestroy() => InvokeCull();
-
-    #endregion
-
-    public static void DestroyAllSummons() {
-        foreach (var id in idLookup) {
-            foreach (var beh in id.Value.ToList()) {
-                if (beh.isSummoned) beh.InvokeCull();
-            }
-        }
-    }
     
     protected virtual void SpawnSimple(string styleName) {
         BulletManager.RequestNullSimple(styleName, bpi.loc, Direction);
@@ -470,15 +326,15 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
 
     protected virtual void RegularUpdateMove() {
-        if (doVelocity) {
-            if (parented) {
+        if (!movement.IsEmpty()) {
+            if (Parented) {
                 movement.rootPos = GetParentPosition() + firedOffset;
                 bpi.loc = tr.position;
             }
             VelocityStepAndLook(ref movement, ref bpi);
         } else {
             bpi.t += ETime.FRAME_TIME;
-            if (parented) bpi.loc = tr.position;
+            if (Parented) bpi.loc = tr.position;
         }
         if (Rotator != null) {
             var rot = Rotator(bpi);
@@ -486,91 +342,33 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             tr.localEulerAngles = new Vector3(0, 0, rot);
         }
     }
-    
-    private void RegularUpdateControl()  {
-        //thisStyleControls may change during iteration. Don't respect changes
-        myStyle.IterateControls(this);
-    }
 
-    /// <summary>
-    /// Check if this object needs to be culled automatically.
-    /// </summary>
-    /// <returns>True iff the object was culled.</returns>
-    protected virtual bool RegularUpdateCullCheck() {
-        if (delete?.Invoke(rBPI) == true) {
-            InvokeCull();
-            return true;
-        }
-        else if (beh_cullCtr == 0 && cullableRadius.cullable && myStyle.CameraCullable.Value 
-                 && bpi.t > FIRST_CULLCHECK_TIME && LocationHelpers.OffPlayableScreenBy(ScreenCullRadius, bpi.loc)) {
-            InvokeCull();
-            return true;
-        } else {
-            beh_cullCtr = (beh_cullCtr + 1) % checkCullEvery;
-            return false;
-        }
-    }
-
+    protected bool nextUpdateAllowed = true;
     public override void RegularUpdate() {
         Profiler.BeginSample("BehaviorEntity Update");
-        if (dying) {
+        if (Dying) {
             base.RegularUpdate();
         } else {
             if (nextUpdateAllowed) {
                 RegularUpdateMove();
                 base.RegularUpdate();
             } else nextUpdateAllowed = true;
-            RegularUpdateControl();
-            if (!dying) RegularUpdateCullCheck();
+            Style.IterateControls(this);
         }
         Profiler.EndSample();
     }
 
-    public override void RegularUpdateFinalize() {
-        UpdateRendering(false);
+    public override void RegularUpdateFinalize() => UpdateRendering(false);
+
+    protected virtual void UpdateRendering(bool isFirstFrame) {
+        foreach (var cmp in dependentComponents)
+            cmp.OnRender(isFirstFrame, LastDesiredDelta);
     }
-
-    protected void UpdateRendering(bool isFirstFrame) {
-        Profiler.BeginSample("BehaviorEntity displayer update");
-        if (displayer != null) {
-            displayer.FaceInDirection(LastDesiredDelta);
-            UpdateDisplayerRender(isFirstFrame);
-            displayer.UpdateRender(isFirstFrame);
-        }
-        Profiler.EndSample();
-    }
-
-    protected virtual void UpdateDisplayerRender(bool isFirstFrame) { }
-
-    protected bool nextUpdateAllowed = true;
 
     public override int UpdatePriority => UpdatePriorities.BEH;
-
-    #region Interfaces
-
-    public Vector2 LocalPosition() {
-        if (parented) return tr.localPosition;
-        return bpi.loc; 
-    }
-
-    /// <summary>
-    /// For external consumption
-    /// </summary>
-    /// <returns></returns>
-    public virtual Vector2 GlobalPosition() => bpi.loc;
-
-    public bool HasParent() {
-        return parented;
-    }
-
-    protected virtual void FlipVelX() {
-        movement.FlipX();
-    }
-    protected virtual void FlipVelY() {
-        movement.FlipY();
-    }
     
-    #endregion
+    protected virtual void FlipVelX() => movement.FlipX();
+    protected virtual void FlipVelY() => movement.FlipY();
 
     /// <summary>
     /// Destroy all other SMs and run an SM.
@@ -604,13 +402,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
                         $"BehaviorEntity {ID} finished running its SM{(sm.cullOnFinish ? " and will destroy itself." : ".")}",
                         level: LogLevel.DEBUG1);
                 }
-                if (sm.cullOnFinish) {
-                    if (PoofOnPhaseEnd) Poof();
-                    else {
-                        if (DeathEffectOnParentCull && sm.cT.Root.Cancelled) TryDeathEffect();
-                        InvokeCull();
-                    }
-                }
+                if (sm.cullOnFinish)
+                    CullMe(true);
             }
             //It is possible for tasks to still be running at this point (most critically if
             // using ~), so we cancel to make sure they get destroyed
@@ -618,10 +411,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
             behaviorToken.Remove(cT);
         }
     }
-
-    private bool AmIOutOfHP => enemy != null && enemy.HP <= 0;
-    private bool PoofOnPhaseEnd => AmIOutOfHP && this is not BossBEH;
-    private bool DeathEffectOnParentCull => true;
 
     /// <summary>
     /// Run an SM in parallel to any currently running SMs.
@@ -654,9 +443,6 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         }
         if (sm.cullOnFinish) InvokeCull();
     }
-
-    [ContextMenu("Finish SMs")]
-    public void FinishAllSMs() => HardCancel(false);
     
     public bool AllowFinishCalls { get; private set; } = true;
     /// <summary>
@@ -664,7 +450,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// </summary>
     public void HardCancel(bool allowFinishCB) {
         if (behaviorToken.Count == 0) return;
-        AllowFinishCalls = allowFinishCB && !SceneIntermediary.LOADING;
+        AllowFinishCalls = allowFinishCB;
         foreach (var cT in behaviorToken.ToArray()) {
             cT.Cancel();
         }
@@ -673,6 +459,44 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         AllowFinishCalls = true;
         PhaseShifter = null;
     }
+
+    /// <summary>
+    /// Destroy this BehaviorEntity. If `allowFinalize` is true, produce death effects.
+    /// </summary>
+    public void CullMe(bool allowFinalize) {
+        if (Dying) return;
+        Dying = true;
+        allowFinalize &= !SceneIntermediary.LOADING;
+        CullHook(allowFinalize);
+        if (allowFinalize)
+            Style.IterateDestroyControls(this);
+        UnregisterID();
+        HardCancel(allowFinalize);
+        var (fragDone, cullNow) = allowFinalize && dependentComponents.Count > 0 ?
+            (WaitingUtils.GetManyCallback(dependentComponents.Count, FinalizeCull), false) :
+            (WaitingUtils.NoOp, true);
+        for (int ii = 0; ii < dependentComponents.Count; ++ii)
+            dependentComponents[ii].Culled(allowFinalize, fragDone);
+        if (cullNow)
+            FinalizeCull();
+        return;
+
+        void FinalizeCull() {
+            bpi.Dispose();
+            if (isPooled)
+                PooledDone();
+            else
+                Destroy(gameObject);
+        }
+    }
+    
+    protected virtual void CullHook(bool allowFinalize) { }
+
+    [ContextMenu("Destroy Direct")]
+    public void InvokeCull() => CullMe(false);
+
+    protected override void ExternalDestroy() => CullMe(false);
+
     protected override void OnDisable() {
         ExternalDestroy();
         base.OnDisable();
@@ -686,36 +510,15 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
     
     public BehaviorEntity GetINode(string behName, uint? bpiid) {
-        var mov = new Movement(rBPI.loc, V2RV2.Angle(original_angle));
+        var mov = new Movement(rBPI.loc, V2RV2.Angle(OriginalAngle));
         return BEHPooler.INode(mov, new ParametricInfo(in mov, rBPI.index, bpiid), Direction, behName);
-    }
-
-
-#if UNITY_EDITOR
-    [ContextMenu("Debug all BEHIDs")]
-    public void DebugBEHID() {
-        int total = 0;
-        foreach (var p in idLookup.Values) {
-            total += p.Count;
-        }
-        Debug.LogFormat("Found {0} BEH", total);
-    }
-    
-    
-#endif
-
-    private static readonly Action noop = () => { };
-    [ContextMenu("Animate Attack")]
-    public void AnimateAttack() {
-        if (displayer != null) displayer.Animate(AnimationType.Attack, false, null);
     }
 
     #region GetExecForID
 
     public static BehaviorEntity GetExecForID(string id) {
-        foreach (BehaviorEntity beh in idLookup[id]) {
+        foreach (BehaviorEntity beh in idLookup[id])
             return beh;
-        }
         throw new Exception("Could not find beh for ID: " + id);
     }
 
@@ -724,8 +527,8 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public static BEHPointer GetPointerForID(string id) {
         if (!pointers.TryGetValue(id, out var p))
             pointers[id] = p = new(id);
-        if (!p.Attached && idLookup.ContainsKey(id))
-            foreach (BehaviorEntity beh in idLookup[id]) {
+        if (!p.Attached && idLookup.TryGetValue(id, out var behs))
+            foreach (BehaviorEntity beh in behs) {
                 p.Attach(beh);
                 break;
             }
@@ -735,31 +538,22 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     public static BehaviorEntity[] GetExecsForIDs(string[] ids) {
         int totalct = 0;
         for (int ii = 0; ii < ids.Length; ++ii) {
-            if (idLookup.ContainsKey(ids[ii])) {
-                totalct += idLookup[ids[ii]].Count;
+            if (idLookup.TryGetValue(ids[ii], out var behs)) {
+                totalct += behs.Count;
             }
         }
         BehaviorEntity[] ret = new BehaviorEntity[totalct];
         int acc = 0;
         for (int ii = 0; ii < ids.Length; ++ii) {
-            if (idLookup.ContainsKey(ids[ii])) {
-                idLookup[ids[ii]].CopyTo(ret, acc);
-                acc += idLookup[ids[ii]].Count;
+            if (idLookup.TryGetValue(ids[ii], out var behs)) {
+                behs.CopyTo(ret, acc);
+                acc += behs.Count;
             }
         }
         return ret;
     }
 
     #endregion
-    
-    
-#if UNITY_EDITOR
-    [ContextMenu("Debug transform")]
-    public void DebugTransform() {
-        Debug.Log($"${tr.gameObject.name} parented by ${tr.parent.gameObject.name}");
-    }
-
-#endif
 }
 
 public class BEHPointer {
@@ -767,7 +561,6 @@ public class BEHPointer {
     public BehaviorEntity? beh;
     public BehaviorEntity Beh => (beh != null) ? beh : throw new Exception($"BEHPointer {id} has not been bound");
     public bool Attached { get; private set; }
-    public Vector2 Loc => Beh.Location;
 
     public BEHPointer(string id, BehaviorEntity? beh = null) {
         this.id = id;

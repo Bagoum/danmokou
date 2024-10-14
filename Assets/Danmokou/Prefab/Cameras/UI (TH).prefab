@@ -3790,7 +3790,7 @@ GameObject:
   - component: {fileID: 4280604961253750380}
   - component: {fileID: 6353410435991168437}
   - component: {fileID: 2901974950582656805}
-  m_Layer: 8
+  m_Layer: 0
   m_Name: ADV Interactive XML
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3824,12 +3824,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62d1d02c4d08462c9578c56b129b1fc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  upDownSound: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092, type: 2}
-  leftRightSound: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4, type: 2}
-  confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
-  failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
-  backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
-  showOptsSound: {fileID: 11400000, guid: 069c9c964b7962e48a1293683803bbb5, type: 2}
 --- !u!114 &2901974950582656805
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5364,7 +5358,7 @@ GameObject:
   - component: {fileID: 1894430877009419734}
   - component: {fileID: 5586214206757030397}
   - component: {fileID: 5052696388102766053}
-  m_Layer: 8
+  m_Layer: 0
   m_Name: Success XML
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5398,14 +5392,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76d5cdaac6992744c8820b4535eeaff4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  upDownSound: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092, type: 2}
-  leftRightSound: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4, type: 2}
-  confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
-  failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
-  backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
-  showOptsSound: {fileID: 11400000, guid: 069c9c964b7962e48a1293683803bbb5, type: 2}
-  openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
-  closePauseSound: {fileID: 11400000, guid: ae28e1c6c483e1548943d8262b94e1bf, type: 2}
 --- !u!114 &5052696388102766053
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7771,7 +7757,7 @@ GameObject:
   - component: {fileID: 4148592873509289903}
   - component: {fileID: 2751001841577565892}
   - component: {fileID: 8983056133481144812}
-  m_Layer: 8
+  m_Layer: 0
   m_Name: Pause XML
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7805,14 +7791,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b30dd2735323489d8623d48d6205078e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  upDownSound: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092, type: 2}
-  leftRightSound: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4, type: 2}
-  confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
-  failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
-  backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
-  showOptsSound: {fileID: 11400000, guid: 069c9c964b7962e48a1293683803bbb5, type: 2}
-  openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
-  closePauseSound: {fileID: 11400000, guid: ae28e1c6c483e1548943d8262b94e1bf, type: 2}
 --- !u!114 &8983056133481144812
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7931,7 +7909,7 @@ GameObject:
   - component: {fileID: 8820502579076746234}
   - component: {fileID: 2861775042805017151}
   - component: {fileID: 787389502131262120}
-  m_Layer: 8
+  m_Layer: 0
   m_Name: VN Backlog XML
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7965,14 +7943,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3074a5d792b143efbbf4b539d5575db0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  upDownSound: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092, type: 2}
-  leftRightSound: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4, type: 2}
-  confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
-  failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
-  backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
-  showOptsSound: {fileID: 11400000, guid: 069c9c964b7962e48a1293683803bbb5, type: 2}
-  openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
-  closePauseSound: {fileID: 11400000, guid: ae28e1c6c483e1548943d8262b94e1bf, type: 2}
   BacklogEntry: {fileID: 9197481963319205126, guid: b486e4109b0309a4eba4774af138130b,
     type: 3}
 --- !u!114 &787389502131262120
@@ -9113,7 +9083,7 @@ GameObject:
   - component: {fileID: 1715975853819903829}
   - component: {fileID: 3645146637385385824}
   - component: {fileID: 2234159099224221338}
-  m_Layer: 8
+  m_Layer: 0
   m_Name: Death XML
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9147,14 +9117,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6723b3b763e64306b325a3a65d65ddf9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  upDownSound: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092, type: 2}
-  leftRightSound: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4, type: 2}
-  confirmSound: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636, type: 2}
-  failureSound: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8, type: 2}
-  backSound: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98, type: 2}
-  showOptsSound: {fileID: 11400000, guid: 069c9c964b7962e48a1293683803bbb5, type: 2}
-  openPauseSound: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706, type: 2}
-  closePauseSound: {fileID: 11400000, guid: ae28e1c6c483e1548943d8262b94e1bf, type: 2}
 --- !u!114 &2234159099224221338
 MonoBehaviour:
   m_ObjectHideFlags: 0

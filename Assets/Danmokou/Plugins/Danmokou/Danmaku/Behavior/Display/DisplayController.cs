@@ -69,17 +69,22 @@ public class RotationMethod {
 }
 
 public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependent {
-
+    /// <summary>
+    /// The BehaviorEntity which this display controller is dependent on.
+    /// <br/>If this display is an element of a <see cref="IMultiDisplayController"/>, then this should be null.
+    /// </summary>
+    [field:SerializeField]
+    public BehaviorEntity Beh { get; protected set; } = null!;
+    private IMultiDisplayController? container;
     public RotationMethod rotationMethod = new();
 
     protected bool flipX;
     protected bool flipY;
 
-    protected float time => beh.rBPI.t;
+    protected float time => Beh.rBPI.t;
     protected Transform tr { get; private set; } = null!;
     protected MaterialPropertyBlock pb { get; private set; } = null!;
-    protected BehaviorEntity beh { get; private set; } = null!;
-    protected ParametricInfo BPI => beh.rBPI;
+    protected ParametricInfo BPI => Beh.rBPI;
 
     public RFloat yPosBopPeriod = null!;
     public RFloat yPosBopAmplitude = null!;
@@ -94,23 +99,35 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
     private Vector3 lastScale = Vector3.one;
 
     protected virtual void Awake() {
-        rotatorF = rotator.Get().IntoIfNotNull<BPY>();
+        if (Beh != null && container is null)
+            Beh.LinkDependentUpdater(this);
     }
 
-    public virtual void LinkAndReset(BehaviorEntity parent) {
-        tr = transform;
-        initialScale = lastScale = tr.localScale;
-        beh = parent;
-        beh.LinkDependentUpdater(this);
-        pb = CreatePB();
+    public void IsPartOf(IMultiDisplayController controller) {
+        if (Beh != null)
+            throw new Exception($"Display controller {gameObject.name} is dependent on {controller}, " +
+                                $"but has the {nameof(Beh)} field set");
+        Beh = controller.Beh;
+        container = controller;
+    }
+
+    public virtual void OnLinkOrResetValues(bool isLink) {
+        //OnLinkOrResetValues can be called before Awake for components of IMultiDisplayController
+        if (isLink) {
+            tr = transform;
+            initialScale = lastScale = tr.localScale;
+            rotatorF = rotator.Get().IntoIfNotNull<BPY>();
+        }
+        pb = new();
         flipX = flipY = false;
-        rotatorF = rotator.Get().IntoIfNotNull<BPY>();
         SetTransform();
         Show();
     }
 
-    public void Died() {
+    public virtual void Culled(bool allowFinalize, Action done) {
         tr.localScale = initialScale;
+        Hide();
+        done();
     }
 
     public abstract void SetMaterial(Material mat);
@@ -118,7 +135,7 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
     public virtual void Show() { }
     public virtual void Hide() { }
 
-    public virtual void UpdateStyle(BehaviorEntity.BEHStyleMetadata style) { }
+    public virtual void StyleChanged(BehaviorEntity.BEHStyleMetadata style) { }
 
     public virtual void SetSortingOrder(int x) { }
 
@@ -131,26 +148,18 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
     }
 
     public void Scale(BPY scaler, float over, ICancellee cT, Action done) {
-        var tbpi = beh.rBPI;
+        var tbpi = Beh.rBPI;
         tbpi.t = 0;
         lastScalerValue = scaler(tbpi);
-        beh.RunRIEnumerator(_Scale(scaler, tbpi, over, cT, done));
+        Beh.RunRIEnumerator(_Scale(scaler, tbpi, over, cT, done));
     }
 
     public virtual void Animate(AnimationType typ, bool loop, Action? done) {
         throw new Exception("DisplayController has no default animation handling");
     }
 
-    public abstract MaterialPropertyBlock CreatePB();
-
-    //This function is called from a BEH in RegularUpdateRender.
-    /// <summary>
-    /// Update the rendering for this display. Called from <see cref="BehaviorEntity.UpdateRendering"/>.
-    /// </summary>
-    /// <param name="isFirstFrame">True if this is the first frame update for the object.
-    /// It is sometimes efficient to skip rendering updates when !ETime.LastUpdateForScreen,
-    /// but rendering updates should not be skipped on the first frame.</param>
-    public virtual void UpdateRender(bool isFirstFrame) {
+    public virtual void OnRender(bool isFirstFrame, Vector2 lastDesiredDelta) {
+        FaceInDirection(lastDesiredDelta);
         SetTransform();
         if (ETime.LastUpdateForScreen || isFirstFrame) {
             pb.SetFloat(PropConsts.time, time);
@@ -164,15 +173,15 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
         scale.x *= flipX ? -1 : 1;
         scale.y *= flipY ? -1 : 1;
         scale *= lastScalerValue;
-        if (yPosBopPeriod > 0) {
+        if (yPosBopPeriod > 0 && yPosBopAmplitude > 0) {
             float yOffset = yPosBopAmplitude * M.Sin(BMath.TAU * time / yPosBopPeriod);
             tr.localPosition = new Vector3(0, yOffset);
         }
-        if (yScaleBopPeriod > 0) {
+        if (yScaleBopPeriod > 0 && yScaleBopAmplitude > 0) {
             scale.y *= 1 + yScaleBopAmplitude * M.Sin(BMath.TAU * time / yScaleBopPeriod);
         }
         if (rotatorF != null) {
-            tr.localEulerAngles = new Vector3(0, 0, rotatorF(beh.rBPI));
+            tr.localEulerAngles = new Vector3(0, 0, rotatorF(Beh.rBPI));
         }
         if (scale != lastScale)
             tr.localScale = lastScale = scale;
@@ -193,9 +202,6 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
         }
     }
 
-    protected static readonly Action noop = () => { };
-
-
     protected void SetFlip(bool flipx, bool flipy) {
         flipX = flipx;
         flipY = flipy;
@@ -206,7 +212,7 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
         for (tbpi.t = 0f; tbpi.t < over - ETime.FRAME_YIELD; tbpi.t += ETime.FRAME_TIME) {
             yield return null;
             if (cT.Cancelled) { break; } //Set to target and then leave
-            tbpi.loc = beh.rBPI.loc;
+            tbpi.loc = Beh.rBPI.loc;
             lastScalerValue = scaler(tbpi);
         }
         tbpi.t = over;

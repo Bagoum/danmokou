@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Danmokou.Behavior;
+using Danmokou.Core;
 using Danmokou.Scenes;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -13,7 +14,7 @@ public abstract class Pooled : CoroutineRegularUpdater {
     /// <summary>
     /// True iff the object has a parent other than the default pool container/null.
     /// </summary>
-    protected bool parented;
+    public bool Parented { get; private set; }
     protected Transform tr = null!;
     protected abstract Transform Container { get; }
     private readonly List<Pooled> dependents = new();
@@ -21,12 +22,12 @@ public abstract class Pooled : CoroutineRegularUpdater {
 
     protected virtual void Awake() {
         tr = transform;
-        parented = tr.parent != null;
+        Parented = tr.parent != null;
     }
 
     protected override void OnEnable() {
-        ResetValues();
         base.OnEnable();
+        ResetValues(true);
     }
 
     public void TakeParent(Pooled par) {
@@ -34,24 +35,24 @@ public abstract class Pooled : CoroutineRegularUpdater {
         tr.SetParent((parent = par).tr, false);
         tr.localPosition = Vector3.zero;
         parent.dependents.Add(this);
-        parented = true;
+        Parented = true;
     }
 
     protected Vector2 GetParentPosition() {
-        return parented ? (Vector2)tr.parent.position : Vector2.zero;
+        return Parented ? (Vector2)tr.parent.position : Vector2.zero;
     }
 
     public void ResetValuesEnableUpdates() {
-        if (isPooled) parented = false;
+        if (isPooled) Parented = false;
         EnableUpdates();
-        ResetValues();
+        ResetValues(false);
     }
 
     /// <summary>
-    /// Called by Pooler when a cached object is brought back alive,
-    /// as well as during first instantiation in OnEnable (after Awake, but before object is fully created).
+    /// Called by Pooler when a cached object is brought back alive (after object initialization),
+    ///  and also for unpooled objects in FirstFrame.
     /// </summary>
-    protected virtual void ResetValues() { }
+    protected virtual void ResetValues(bool isFirst) { }
     
     protected virtual void PooledDone() {
         //Note that all correctly running SM coroutines are already finished
@@ -60,7 +61,7 @@ public abstract class Pooled : CoroutineRegularUpdater {
         //we want to clear these out.
         ForceClosingFrame();
         DisableUpdates();
-        if (parented) {
+        if (Parented) {
             if (parent!.gameObject.activeInHierarchy) tr.SetParent(Container, false);
             else {
                 //This case occurs when disabling due to scene end, which can occur naturally via eg. scene reload
@@ -120,6 +121,7 @@ public abstract class Pooled<P> : Pooled where P : class {
         isPooled = true;
         self_ref = self;
         tr.SetParent(ShowUnderContainer ? Container : null);
+        active.Add(self);
     }
 
     protected override void PooledDone() {

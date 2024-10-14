@@ -51,7 +51,7 @@ public class BulletBlocker : CoroutineRegularUpdater, IBehaviorEntityDependent,
     }
 
 
-    public void Alive() {
+    void IBehaviorEntityDependent.OnLinkOrResetValues(bool isLink) {
         EnableUpdates();
     }
 
@@ -61,8 +61,9 @@ public class BulletBlocker : CoroutineRegularUpdater, IBehaviorEntityDependent,
         base.BindListeners();
     }
 
-    public void Died() {
+    void IBehaviorEntityDependent.Culled(bool allowFinalize, Action done) {
         DisableUpdates();
+        done();
     }
 
     public override void RegularUpdate() {
@@ -79,7 +80,7 @@ public class BulletBlocker : CoroutineRegularUpdater, IBehaviorEntityDependent,
     }
 
     CollisionResult IEnemyLaserCollisionReceiver.Check(CurvedTileRenderLaser laser, Vector2 laserLoc, float cos, float sin, out int segment, out Vector2 collLoc) {
-        if (ReceivesBulletCollisions(laser.Laser.myStyle.style ?? "") &&
+        if (ReceivesBulletCollisions(laser.Laser.Style.style ?? "") &&
             laser.ComputeRectCollision(laserLoc, cos, sin, Location, rectCollider!.halfRect, Direction, out segment,
                 out collLoc)) {
             return new(true, false);

@@ -4,45 +4,51 @@ using System.Linq;
 using BagoumLib;
 using BagoumLib.DataStructures;
 using BagoumLib.Functional;
-using Danmokou.Core;
+using BagoumLib.Reflection;
+using Danmokou.DMath;
+using Danmokou.Scriptables;
+using Danmokou.SRPG.Nodes;
+using UnityEngine;
+using UnityEngine.Tilemaps;
 
-namespace Danmokou.Plugins.Danmokou.Utility {
-
-public interface IEdge<V> {
-    public V From { get; }
-    public V To { get; }
-}
-
-public class Graph<E, V>: IDisposable where V: notnull where E: IEdge<V> {
-    public V[] Nodes { get; }
-    private readonly Dictionary<V, List<E>> outgoing = DictCache<V, List<E>>.Get();
-    private readonly Dictionary<V, List<E>> incoming = DictCache<V, List<E>>.Get();
-    private readonly Dictionary<(V, V), E> edges = DictCache<(V,V), E>.Get(); //assumes <=1 edge per vertex pair
-    private static readonly List<E> EmptyList = new();
-
-    public Graph(IEnumerable<V> Nodes, IEnumerable<E> Edges) {
-        this.Nodes = Nodes.ToArray();
-        foreach (var e in Edges) {
-            outgoing.AddToList(e.From, e);
-            incoming.AddToList(e.To, e);
-            edges[(e.From, e.To)] = e;
-        }
-    }
-    public IReadOnlyList<E> Outgoing(V node) => outgoing.GetValueOrDefault(node, EmptyList);
-    public IReadOnlyList<E> Incoming(V node) => incoming.GetValueOrDefault(node, EmptyList);
-    public E? TryFindEdge(V from, V to) => edges.GetValueOrDefault((from, to));
-
-    public E FindEdge(V from, V to) =>
-        TryFindEdge(from, to) ?? throw new Exception($"No edge exists between {from} and {to}");
-
-    public void Dispose() {
-        outgoing.ConsignRecursive();
-        incoming.ConsignRecursive();
-        DictCache<(V,V), E>.Consign(edges);
-    }
-}
-
+namespace Danmokou.SRPG {
 public static class SRPGUtils {
+    private static ISRPGNodeMatchable[]? _nodeTypes;
+    public static ISRPGNodeMatchable[] NodeTypes => _nodeTypes ??= new ISRPGNodeMatchable[] {
+        new Empty(),
+        new Grass(),
+        new Road(),
+        new Water(),
+        new Forested.Maker(),
+    };
+    private static Dictionary<string, ISRPGNodeMatchable>? _keyToNodeType;
+    public static Dictionary<string, ISRPGNodeMatchable> KeyToNodeType => _keyToNodeType ??= 
+        NodeTypes.Where(nt => nt.Key != null).ToDictionary(nt => nt.Key!);
+
+    public static Node MakeNode(IReadOnlyList<ISRPGNodeMatcher> matchers, Tilemap[] tilemaps,
+        Vector3Int loc) {
+        ISRPGNodeType? typ = null;
+        foreach (var tm in tilemaps) {
+            if (tm.GetTile(loc) is not { } tile)
+                continue;
+            var matcher = ISRPGNodeMatcher.Match(tile, matchers) ??
+                          throw new Exception($"No matched tile for {tile}");
+            var tileCons = SRPGUtils.KeyToNodeType[matcher.Key];
+            if (tileCons is ISRPGNodeModifier modder) {
+                if (typ is null)
+                    throw new Exception($"Cannot use tile modder {modder} with no base tile");
+                typ = modder.Modify(typ);
+            } else if (tileCons is ISRPGNodeType rawTyp)
+                typ = rawTyp; //overwrite if already exists
+            else throw new Exception($"No handling for tile constructor type {tileCons.GetType().RName()}");
+        }
+        //cellToWorld gets bottom-left position
+        var cellBotLeft = tilemaps[0].CellToWorld(loc);
+        return new Node(typ ?? new Empty(), loc, 
+            cellBotLeft + 0.5f * tilemaps[0].cellSize,
+            cellBotLeft + tilemaps[0].tileAnchor.PtMul(tilemaps[0].cellSize));
+    }
+
     /// <summary>
     /// Remove any cycles in the list of vertices `path` in-place, and return the same list.
     /// </summary>

@@ -47,8 +47,6 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
     // one after another and want the first one to be ignored.
     private Action? pendingBackgroundUpdate;
     private readonly OverrideEvented<(Transform tr, CameraInfo cam)?> distorter = new(null);
-
-    
     
     private void Awake() {
         cmr = GetComponent<CameraRenderer>();
@@ -96,29 +94,19 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         if (ToBG != null) {
             ToBG.ShowHideBySettings(SaveData.s.Backgrounds);
         }
+        CheckForNonRenderingBG();
     }
 
     private void UpdateTextures() {
-        if (FromBG == null || !FromBG.IsDrawing) {
-            mat.DisableKeyword("MIX_FROM_ONLY");
-            mat.EnableKeyword("NO_BG_RENDER");
+        if (FromBG == null || !FromBG.IsDrawing) 
             return;
-        }
-        mat.DisableKeyword("NO_BG_RENDER");
         var sco = !GameManagement.Instance.InstanceActiveGuardInScene ? Vector2.zero :
             cmr.CamInfo.ToScreenPoint(LocationHelpers.PlayableBounds.center + LocationHelpers.PlayableScreenCenter)
             - cmr.CamInfo.ToScreenPoint(LocationHelpers.PlayableScreenCenter);
         mat.SetVector(screenCenterOffset, new Vector4(sco.x, sco.y, 0, 0));
-        var fromTex = FromBG.capturer.Captured;
-        var toTex = (ToBG == null) ? null : ToBG.capturer.Captured;
-        if (toTex == null) {
-            mat.EnableKeyword("MIX_FROM_ONLY");
-            mat.SetTexture(PropConsts.fromTex, fromTex);
-        } else {
-            mat.DisableKeyword("MIX_FROM_ONLY");
-            mat.SetTexture(PropConsts.fromTex, fromTex);
-            mat.SetTexture(PropConsts.toTex, toTex);
-        }
+        mat.SetTexture(PropConsts.fromTex, FromBG.capturer.Captured);
+        if (ToBG != null) 
+            mat.SetTexture(PropConsts.toTex, ToBG.capturer.Captured);
         mat.SetFloat(PropConsts.time, mixTime);
         mat.SetFloat(distortTime, Time);
         if (distorter.Value is { } val) {
@@ -135,12 +123,14 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
     }
 
     private void ResetMaterial() {
-        var kws = mat.enabledKeywords.ToArray();
-        foreach (var kw in kws)
-            mat.DisableKeyword(kw);
-        mat.EnableKeyword("MIX_FROM_ONLY");
+        CombinerKeywords.Apply(mat, CombinerKeywords.FROM_ONLY);
+        CheckForNonRenderingBG();
         UpdateDistortion();
         mixTime = 0;
+    }
+
+    private void CheckForNonRenderingBG() {
+        mat.SetOrUnsetKeyword(FromBG == null || !FromBG.IsDrawing, "NO_BG_RENDER");
     }
 
     private BackgroundController CreateBGC(GameObject prefab) {
@@ -240,21 +230,5 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
     private static readonly int screenCenterOffset = Shader.PropertyToID("_ScreenCenterOffset");
     private static readonly int distortTime = Shader.PropertyToID("_DistortT");
     private static readonly int distortCenter = Shader.PropertyToID("_DistortCenter");
-}
-
-
-public static class CombinerKeywords {
-    public const string TO_ONLY = "MIX_TO_ONLY";
-    public const string ALPHA = "MIX_ALPHA_BLEND";
-    public const string WIPE_TEX = "MIX_WIPE_TEX";
-    public const string WIPE1 = "MIX_WIPE1";
-    public const string WIPEFROMCENTER = "MIX_WIPE_CENTER";
-    public const string WIPEY = "MIX_WIPE_Y";
-    private static readonly string[] kws = {TO_ONLY, ALPHA, WIPE_TEX, WIPE1, WIPEFROMCENTER};
-
-    public static void Apply(Material mat, string keyword) {
-        foreach (var kw in kws) mat.DisableKeyword(kw);
-        mat.EnableKeyword(keyword);
-    }
 }
 }

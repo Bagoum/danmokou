@@ -37,7 +37,7 @@ public class Cutin : RegularUpdater {
         recordCtr += ETime.FRAME_TIME;
         if (recordCtr > recordPositionEvery) {
             recordCtr -= recordPositionEvery;
-            GhostPooler.Request(beh.GlobalPosition(),
+            GhostPooler.Request(beh.Location,
                 DMath.M.RotateVectorDeg(beh.LastDelta * (AIVelocitySpeedRatio / ETime.FRAME_TIME),
                     AIVelocityRotationDeg), ghost);
         }

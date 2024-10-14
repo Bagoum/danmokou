@@ -40,16 +40,22 @@ public class FrameAnimBullet : ColorizableBullet {
     public int hotFrame;
     public bool repeat = true;
 
-    protected override void ResetValues() {
-        base.ResetValues();
+    protected override void ResetValues(bool isFirst) {
+        base.ResetValues(isFirst);
         frameTime = 0f;
+        currFrame = 0;
         if (realizedFrames == null!)
             realizedFrames = frames.ToArray();
         else {
             for (int ii = 0; ii < frames.Length; ++ii)
                 realizedFrames[ii] = frames[ii];
         }
-        SetFrame(0);
+    }
+
+    protected override void UpdateRendering(bool isFirstFrame) {
+        if (isFirstFrame)
+            SetFrame(currFrame);
+        base.UpdateRendering(isFirstFrame);
     }
 
     public override void RegularUpdateFinalize() {

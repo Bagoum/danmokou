@@ -11,10 +11,10 @@ using UnityEngine.Profiling;
 namespace Danmokou.Behavior.Display {
 public class SpriteDisplayController: DisplayController {
     public SpriteRenderer sprite = null!;
-    public override MaterialPropertyBlock CreatePB() {
-        var m = new MaterialPropertyBlock();
-        sprite.GetPropertyBlock(m);
-        return m;
+
+    public override void OnLinkOrResetValues(bool isLink) {
+        base.OnLinkOrResetValues(isLink);
+        sprite.GetPropertyBlock(pb);
     }
 
     public override void SetMaterial(Material mat) {
@@ -22,8 +22,8 @@ public class SpriteDisplayController: DisplayController {
         sprite.GetPropertyBlock(pb);
     }
 
-    public override void UpdateRender(bool isFirstFrame) {
-        base.UpdateRender(isFirstFrame);
+    public override void OnRender(bool isFirstFrame, Vector2 lastDesiredDelta) {
+        base.OnRender(isFirstFrame, lastDesiredDelta);
         if (ETime.LastUpdateForScreen || isFirstFrame) {
             sprite.SetPropertyBlock(pb);
         }
@@ -51,10 +51,10 @@ public class SpriteDisplayController: DisplayController {
     }
     
     public override void FadeSpriteOpacity(BPY fader01, float over, ICancellee cT, Action done) {
-        var tbpi = beh.rBPI;
+        var tbpi = Beh.rBPI;
         tbpi.t = 0;
         sprite.color = sprite.color.WithA(fader01(tbpi));
-        beh.RunRIEnumerator(_FadeSpriteOpacity(fader01, tbpi, over, cT, done));
+        Beh.RunRIEnumerator(_FadeSpriteOpacity(fader01, tbpi, over, cT, done));
     }
     private IEnumerator _FadeSpriteOpacity(BPY fader01, ParametricInfo tbpi, float over, ICancellee cT, Action done) {
         if (cT.Cancelled) { done(); yield break; }
@@ -62,7 +62,7 @@ public class SpriteDisplayController: DisplayController {
         for (tbpi.t = 0f; tbpi.t < over - ETime.FRAME_YIELD; tbpi.t += ETime.FRAME_TIME) {
             yield return null;
             if (cT.Cancelled) { break; } //Set to target and then leave
-            tbpi.loc = beh.rBPI.loc;
+            tbpi.loc = Beh.rBPI.loc;
             c.a = fader01(tbpi);
             sprite.color = c;
         }

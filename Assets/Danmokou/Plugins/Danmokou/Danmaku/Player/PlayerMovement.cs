@@ -1,4 +1,5 @@
 ﻿using System;
+using Danmokou.Behavior.Display;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
 using Danmokou.DMath;
@@ -69,7 +70,7 @@ public abstract partial record PlayerMovement {
                     releasedHoldSinceLastJump = false;
                     holdingJumpRemainingTime = MaxHoldJumpTime;
                     y = JumpVel * dT;
-                    player.SpawnedShip.displayer!.Animate(AnimationType.Attack, false, null);
+                    player.SpawnedShip.Dependent<DisplayController>().Animate(AnimationType.Attack, false, null);
                 }
             } else {
                 holdingJumpRemainingTime = 0;

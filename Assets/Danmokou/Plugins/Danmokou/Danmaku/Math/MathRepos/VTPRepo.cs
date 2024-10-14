@@ -195,7 +195,7 @@ public static class VTPControllers {
 [Reflect]
 public static class VTPRepo {
     [DontReflect]
-    public static bool IsNone(this VTP func) => func == NoVTP;
+    public static bool IsNone(this VTP func) => ReferenceEquals(func, NoVTP);
 
     public static readonly ExVTP ExNoVTP = VTPControllers.Velocity(CartesianNRot(Parametrics.Zero()));
     public static readonly VTP NoVTP =
@@ -210,7 +210,7 @@ public static class VTPRepo {
     /// <summary>
     /// No movement.
     /// </summary>
-    public static ExVTP None() => ExNoVTP;
+    public static VTP None() => NoVTP;
 
     /// <summary>
     /// Switch between path functions based on a condition.

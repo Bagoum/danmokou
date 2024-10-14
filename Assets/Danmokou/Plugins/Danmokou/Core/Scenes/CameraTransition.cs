@@ -19,7 +19,7 @@ public interface ICameraTransition {
 }
 /// <summary>
 /// Class that generates a material that can be used to blit a camera overlay onto the screen.
-/// <br/>The material is consumed by <see cref="DMKMainCamera"/>.
+/// <br/>The material is consumed by <see cref="MainCamera"/>.
 /// </summary>
 public class CameraTransition : RegularUpdater, ICameraTransition {
     private static ICameraTransitionConfig? inherited;
@@ -70,10 +70,10 @@ public class CameraTransition : RegularUpdater, ICameraTransition {
         SetReverse(cfg.FadeIn.material, cfg.FadeIn);
         ServiceLocator.Find<ISFXService>().Request(cfg.FadeIn.sfx);
         for (float t = 0; t < cfg.FadeIn.time; t += ETime.ASSUME_SCREEN_FRAME_TIME) {
-            m.SetFloat(PropConsts.fillRatio, cfg.FadeIn.Value(t));
+            m.SetFloat(PropConsts.FillRatio, cfg.FadeIn.Value(t));
             yield return null;
         }
-        m.SetFloat(PropConsts.fillRatio, 1);
+        m.SetFloat(PropConsts.FillRatio, 1);
         //the scene ends after this
     }
 
@@ -91,7 +91,7 @@ public class CameraTransition : RegularUpdater, ICameraTransition {
                 }
                 fadeOutStallers.Clear();
             }
-            m.SetFloat(PropConsts.fillRatio, cfg.FadeOut.Value(Math.Max(t, 0)));
+            m.SetFloat(PropConsts.FillRatio, cfg.FadeOut.Value(Math.Max(t, 0)));
             yield return null;
             //Put this here so it works well with "long first frames"
             if (!didSfx) 

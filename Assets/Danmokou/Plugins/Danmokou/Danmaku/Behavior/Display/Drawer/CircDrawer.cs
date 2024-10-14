@@ -9,6 +9,6 @@ public class CircDrawer : ShapeDrawer {
         locate = locater;
     }
 
-    protected override V2RV2 GetLocScaleRot() => locate(beh.rBPI);
+    protected override V2RV2 GetLocScaleRot() => locate(Beh.rBPI);
 }
 }

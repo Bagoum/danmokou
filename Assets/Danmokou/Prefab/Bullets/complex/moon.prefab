@@ -52,6 +52,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -99,6 +100,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -106,6 +108,7 @@ MonoBehaviour:
     LeanByVelocity:
       xAxis: 1
       multiplier: 8
+      rotationOffset: 0
       rotationLimit: {x: -30, y: 30}
   yPosBopPeriod:
     useConstant: 1
@@ -139,6 +142,7 @@ GameObject:
   - component: {fileID: 3764406661813136869}
   - component: {fileID: 976398667412730249}
   - component: {fileID: 2082620872909629274}
+  - component: {fileID: -6788375910339101794}
   m_Layer: 11
   m_Name: moon
   m_TagString: Untagged
@@ -176,11 +180,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 1
     cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}
-  displayer: {fileID: 666071119851931530}
   material: {fileID: 2100000, guid: 5458891e477bea5438b857b92a28ba0c, type: 2}
   collisionInfo:
     CollisionActiveOnInit: 1
@@ -246,6 +248,21 @@ MonoBehaviour:
   end: 0
   points: []
   debug: 0
+--- !u!114 &-6788375910339101794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3764406661813136865}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9bd6d08a6f547c787ab9c1f954a37ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  beh: {fileID: 976398667412730249}
+  cullable: 1
+  cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}
 --- !u!1 &4580006514681953620
 GameObject:
   m_ObjectHideFlags: 0
@@ -5034,6 +5051,7 @@ ParticleSystemRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -5136,6 +5154,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd3e768eb00f4f728c46451d230bb67d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 976398667412730249}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -5143,6 +5162,7 @@ MonoBehaviour:
     LeanByVelocity:
       xAxis: 1
       multiplier: 8
+      rotationOffset: 0
       rotationLimit: {x: -30, y: 30}
   yPosBopPeriod:
     useConstant: 1
@@ -5213,6 +5233,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5658dc9a4f61403888f81ea3cc8b8e4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 1
     InVelocityDirection:
@@ -5220,6 +5241,7 @@ MonoBehaviour:
     LeanByVelocity:
       xAxis: 1
       multiplier: 8
+      rotationOffset: 0
       rotationLimit: {x: -30, y: 30}
   yPosBopPeriod:
     useConstant: 1

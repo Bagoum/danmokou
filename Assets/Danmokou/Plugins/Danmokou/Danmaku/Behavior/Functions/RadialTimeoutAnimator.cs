@@ -42,7 +42,7 @@ public class RadialTimeoutAnimator : TimeBoundAnimator {
 
     private void Awake() {
         (sr = GetComponent<SpriteRenderer>()).GetPropertyBlock(pb = new MaterialPropertyBlock());
-        pb.SetFloat(PropConsts.fillRatio, 0);
+        pb.SetFloat(PropConsts.FillRatio, 0);
         sr.SetPropertyBlock(pb);
         tr = transform;
     }
@@ -78,13 +78,13 @@ public class RadialTimeoutAnimator : TimeBoundAnimator {
         float t = 0;
         var lit = time * lerpInTimeRatio;
         for (; t < time * lerpInTimeRatio; t += ETime.FRAME_TIME) {
-            pb.SetFloat(PropConsts.fillRatio, M.SinDeg(90 * t / lit));
+            pb.SetFloat(PropConsts.FillRatio, M.SinDeg(90 * t / lit));
             sr.SetPropertyBlock(pb);
             if (cT.Cancelled) break;
             yield return null;
         }
         for (; t < time; t += ETime.FRAME_TIME) {
-            pb.SetFloat(PropConsts.fillRatio, 1 - (t - lit) / (time * (1 - endEarlyRatio) - lit));
+            pb.SetFloat(PropConsts.FillRatio, 1 - (t - lit) / (time * (1 - endEarlyRatio) - lit));
             sr.SetPropertyBlock(pb);
             if (cT.Cancelled) break;
             yield return null;

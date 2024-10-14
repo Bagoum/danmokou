@@ -66,7 +66,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     //Note: trailRenderer requires reversing the sprite.
     protected override bool HandleAsMesh => false;
     public readonly TrailRenderer trailR;
-    public string? Style => Pather.myStyle.style;
+    public string? Style => Pather.Style.style;
 
     //player bullets only
     private PlayerBullet? playerBullet;
@@ -86,7 +86,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
         Pather = _pather;
         int newTexW = (int) Math.Ceiling(maxRememberTime * ETime.ENGINEFPS_F) + 1;
         base.Initialize(_pather, cfg, material, isNew, false, options.playerBullet != null, newTexW);
-        if (_pather.HasParent()) throw new NotImplementedException("Pather cannot be parented");
+        if (_pather.Parented) throw new NotImplementedException("Pather cannot be parented");
         movement = mov;
         bpi = pi;
         _ = movement.UpdateZero(ref bpi);
@@ -121,7 +121,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
     private const float FIRST_CULLCHECK_TIME = 4;
     public bool CullCheck() {
         cullCtr = (cullCtr + 1) % checkCullEvery;
-        if (cullCtr == 0 && Pather.myStyle.CameraCullable.Value && bpi.t > FIRST_CULLCHECK_TIME && LocationHelpers.OffPlayableScreenBy(CULL_RAD, centers[read_from])) {
+        if (cullCtr == 0 && Pather.Style.CameraCullable.Value && bpi.t > FIRST_CULLCHECK_TIME && LocationHelpers.OffPlayableScreenBy(CULL_RAD, centers[read_from])) {
             onCameraCulled();
             return true;
         }
@@ -248,7 +248,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
             for (int ic = 0; ic < collidees.Count; ++ic) {
                 if (collidees.GetIfExistsAt(ic, out var receiver) && receiver.Process(this, plb, cut1, cut2).collide) {
                     Pather.IsColliding = true;
-                    Pather.myStyle.IterateCollideControls(Pather);
+                    Pather.Style.IterateCollideControls(Pather);
                 }
             }
         } else {
@@ -256,7 +256,7 @@ public class CurvedTileRenderPather : CurvedTileRender {
             for (int ic = 0; ic < collidees.Count; ++ic) {
                 if (collidees.GetIfExistsAt(ic, out var receiver) && receiver.Process(this, cut1, cut2).collide) {
                     Pather.IsColliding = true;
-                    Pather.myStyle.IterateCollideControls(Pather);
+                    Pather.Style.IterateCollideControls(Pather);
                 }
             }
         }

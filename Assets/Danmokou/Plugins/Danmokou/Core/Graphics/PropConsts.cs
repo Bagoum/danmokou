@@ -57,8 +57,9 @@ public static class PropConsts {
     public static readonly int blendOp = Shader.PropertyToID("_BlendOp");
     public static readonly int alpha = Shader.PropertyToID("_Alpha");
     public static readonly int radius = Shader.PropertyToID("_R");
-    public static readonly int fillRatio = Shader.PropertyToID("_F");
+    public static readonly int FillRatio = Shader.PropertyToID("_F");
     public static readonly int innerFillRatio = Shader.PropertyToID("_FI");
+    public static readonly int FillMult = Shader.PropertyToID("_FMult");
     public static readonly int subradius = Shader.PropertyToID("_Subradius");
     public static readonly int threshold = Shader.PropertyToID("_Threshold");
     public static readonly int texWidth = Shader.PropertyToID("_TexWidth");

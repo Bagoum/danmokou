@@ -98,10 +98,6 @@
                 return f;
             }
             
-            float grayscale(float4 c) {
-                return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
-            }
-            
 			float4 frag(fragment f) : SV_Target { 
 			    //f.uv = float2(length(f.uv) + _T / 12.0, 0.5 + atan2(f.uv.y, f.uv.x) / TAU + 0.5 * sin(_T / 24.0));
 			    f.uv += _T * float2(_ScrollX, _ScrollY);

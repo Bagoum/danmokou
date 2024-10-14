@@ -16,9 +16,8 @@ public record EndcardStageConfig(string dialogueKey, SceneConfig Scene) : IStage
 }
 
 public interface ITransformHandler {
-    Vector2 LocalPosition();
-    Vector2 GlobalPosition();
-    bool HasParent();
+    Vector2 Location { get; }
+    bool Parented { get; }
     //Note: if !HasParent, then LocalPosition=GlobalPosition
 }
 }

@@ -114,16 +114,13 @@ public abstract class BaseRunningAudioTrack : IRunningAudioTrack {
     
     
     public virtual void PauseSrc() {
-        Logs.Log($"Paused audio track: {Track.Title}", level: LogLevel.DEBUG1);
         currSrc.Pause();
     }
     public virtual void UnPauseSrc() {
-        Logs.Log($"Unpaused audio track: {Track.Title}", level: LogLevel.DEBUG1);
         currSrc.UnPause();
     }
     
     public virtual void CancelSrc() {
-        Logs.Log($"Cancelling audio track: {Track.Title}. It will be destroyed on the next frame.");
         Src1Volume.OnCompleted();
         currSrc.Stop();
     }

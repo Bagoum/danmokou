@@ -115,7 +115,7 @@ public partial class PlayerController {
         meterDisplayOpacity.Push(1);
         for (float t = 0; t < (maxTime ?? float.PositiveInfinity) && !cT.Cancelled; t += ETime.FRAME_TIME) {
             float meterDisplayRatio = fadeInOver <= 0 ? 1 : Easers.EOutSine(Mathf.Clamp01(t / fadeInOver));
-            meterPB.SetFloat(PropConsts.fillRatio, Instance.MeterF.VisibleMeter.Value * meterDisplayRatio);
+            meterPB.SetFloat(PropConsts.FillRatio, Instance.MeterF.VisibleMeter.Value * meterDisplayRatio);
             meter.SetPropertyBlock(meterPB);
             yield return null;
         }

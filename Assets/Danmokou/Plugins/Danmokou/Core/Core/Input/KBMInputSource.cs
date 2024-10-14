@@ -39,6 +39,7 @@ public class KBMInputSource : IKeyedInputSource, IPrimaryInputSource {
     public IInputHandler uiBack { get; } = InputHandler.Trigger(i.Back, back);
     public IInputHandler uiContextMenu { get; } = InputHandler.Trigger(i.ContextMenu, back);
     public IInputHandler dialogueSkipAll { get; } = InputHandler.Trigger(i.SkipDialogue, skip);
+    public IInputHandler leftClick { get; } = InputHandler.Trigger(new KBMKeyInputBinding(KeyCode.Mouse0), confirm);
     
     
     public short? HorizontalSpeed =>

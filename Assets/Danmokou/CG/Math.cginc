@@ -153,3 +153,7 @@ float4 opaque(float4 c) {
     c.a = 1;
     return c;
 }
+
+float grayscale(float4 c) {
+    return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+}

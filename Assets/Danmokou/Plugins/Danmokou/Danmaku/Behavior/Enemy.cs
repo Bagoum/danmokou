@@ -25,6 +25,8 @@ using UnityEngine;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using UnityEngine.Profiling;
+using UnityEngine.Rendering;
+
 // ReSharper disable AssignmentInConditionalExpression
 
 namespace Danmokou.Behavior {
@@ -37,54 +39,53 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     private const float cardCircleTrailCatchup = 0.03f;
     private const float spellCircleTrailMultiplier = 30f;
     private const float spellCircleTrailCatchup = 0.02f;
-    public readonly struct FrozenCollisionInfo {
-        public readonly Vector2 location;
-        public readonly float radius;
-        public readonly int enemyIndex;
-        public bool Active => allEnemies.ContainsKey(enemyIndex);
-        public readonly Enemy enemy;
-
-        public FrozenCollisionInfo(Enemy e) {
-            location = e.Beh.GlobalPosition();
-            radius = e.collisionRadius;
-            enemy = e;
-            enemyIndex = e.enemyIndex;
-        }
+    private const float LOW_HP_THRESHOLD = .2f;
+    private const float HPLerpRate = 14f;
+    private const int maxRenderCounter = 4096;
+    //All spell circles are rendered below all card circles, 
+    // which are rendered below all hpbars, all on the LowFX sorting layer.
+    //The enemy Displayer is rendered on a higher sorting layer.
+    private const int spellCircleRCOffset = -2 * maxRenderCounter;
+    private const int cardCircleRCOffset = -1 * maxRenderCounter;
+    private const int hpBarRCOffset = 0;
+    
+    private static short renderCounter = 0;
+    private static short NextRenderCounter() {
+        if (++renderCounter >= maxRenderCounter)
+            renderCounter = 0;
+        return renderCounter;
     }
-
+    
+    [field:SerializeField]
     public BehaviorEntity Beh { get; private set; } = null!;
     public Vector2 Location => Beh.Location;
     public bool takesBossDamage;
     private Maybe<Enemy> divertHP = Maybe<Enemy>.None;
-    public StyleSelector? VulnerableStyles { get; private set; }
-    public BPY? ReceivedDamageMult { get; set; }
     public double HP { get; private set; }
     public int maxHP = 1000;
-    public int PhotoHP { get; private set; } = 1;
     private int maxPhotoHP = 1;
+    public int PhotoHP { get; private set; } = 1;
+    private float HPRatio => (float)(HP / maxHP);
+    private float PhotoRatio => (float) PhotoHP / maxPhotoHP;
+    private float BarRatio => Math.Min(PhotoRatio, HPRatio);
+    [UsedImplicitly]
+    public float EffectiveBarRatio => divertHP.Try(out var d) ? d.EffectiveBarRatio : BarRatio;
+    private float _displayBarRatio;
+    public float DisplayBarRatio => divertHP.Try(out var d) ? d.DisplayBarRatio : _displayBarRatio;
     public int PhotosTaken { get; private set; } = 0;
-    //public bool Vulnerable { get; private set; }= true;
-
-    private Vulnerability _vulnerable;
-    public Vulnerability Vulnerable(bool bypassDamageMult = false) => 
-        (!bypassDamageMult && receivedDamageMult <= 0) 
-        ? Vulnerability.PASS_THROUGH : 
-        _vulnerable;
+    
     //Updated every frame based on Vulnerability
     private bool receivesBulletCollisions;
+    private Vulnerability _vulnerable;
+    public StyleSelector? VulnerableStyles { get; private set; }
     private double receivedDamageMult;
-
-    public bool ReceivesBulletCollisions(string? style) =>
-        receivesBulletCollisions && (style is null || VulnerableStyles?.Matches(style) is not false);
+    public BPY? ReceivedDamageMult { get; set; }
+    private ItemDrops? deathDrops = null;
     
-    //private static int enemyIndexCtr = 0;
-    //private int enemyIndex;
-
     /// <summary>
     /// The radius of this entity's hitbox when it collides with the player.
     /// </summary>
     public RFloat? taiAtariRadius = null!;
-    
     /// <summary>
     /// Hurtbox radius.
     /// </summary>
@@ -94,27 +95,20 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     /// The entirety of this circle must be within the viewfinder for a capture to succeed.
     /// </summary>
     public RFloat? ayaCameraRadius;
-    
-
-    private const float LOW_HP_THRESHOLD = .2f;
 
     public bool modifyDamageSound;
-
     public SpriteRenderer? cameraCrosshair;
-
-    [Header("Healthbar Controller (Optional)")]
     public SpriteRenderer? healthbarSprite;
     private MaterialPropertyBlock hpPB = null!;
     public SpriteRenderer? cardCircle;
     private bool hasCardCircle;
     public SpriteRenderer? spellCircle;
     private bool hasSpellCircle;
-    public ntw.CurvedTextMeshPro.TextProOnACircle? spellCircleText;
+    public SortingGroup? spellCircleSortGroup;
     private Transform? cardtr;
     private Transform? spellTr;
     private bool distortAllowed;
     private IDisposable? distortToken;
-    private MaterialPropertyBlock distortPB = null!;
     private MaterialPropertyBlock scPB = null!;
     private float healthbarStart; // 0-1
     private float healthbarSize; //As fraction of total bar, 0-1
@@ -125,14 +119,9 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
 
     public RColor2 nonspellColor = null!;
     public RColor2 spellColor = null!;
-
     public RColor unfilledColor = null!;
-
     public RFloat hpRadius = null!;
     public RFloat hpThickness = null!;
-
-    //Previously 6f, increasing for fire shader
-    private const float HPLerpRate = 14f;
 
     private FXY cardBreather = t => 1f + M.Sine(7, 0.1f, t);
     private TP3 cardRotator = _ => new Vector3(0, 0, 60);
@@ -140,46 +129,28 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     private TP3 spellRotator = _ => Vector3.zero;
     private Maybe<PlayerController> target;
 
-    private static short renderCounter = short.MinValue;
-    private const short renderCounterStep = 4;
-
-    private static short NextRenderCounter() {
-        if ((renderCounter += renderCounterStep) > -renderCounterStep) {
-            renderCounter = short.MinValue;
-        }
-        return renderCounter;
-    }
-    
-    public ItemDrops AutoDeathItems => new(
-        Math.Max(1, maxHP / 300.0), 
-        maxHP >= 400 ? Mathf.CeilToInt(maxHP / 900f) : 0, 
-        maxHP >= 300 ? Mathf.CeilToInt(maxHP / 800f) : 0,
-        maxHP >= 400 ? Mathf.CeilToInt(maxHP / 700f) : 0,
-        Mathf.CeilToInt(maxHP / 600f)
-        );
-
-
     private static int enemyIndexCtr = 0;
     private int enemyIndex;
+    private int sortOrder;
     private static readonly Dictionary<int, Enemy> allEnemies = new();
     private static readonly DMCompactingArray<Enemy> orderedEnemies = new();
     private static readonly List<FrozenCollisionInfo> frozenEnemies = new();
     public static IReadOnlyList<FrozenCollisionInfo> FrozenEnemies => frozenEnemies;
 
-    public void LinkAndReset(BehaviorEntity _beh) {
-        Beh = _beh;
+    private void Awake() {
         Beh.LinkDependentUpdater(this);
-        var sortOrder = NextRenderCounter();
-        _beh.displayer!.SetSortingOrder(sortOrder);
-        if (hasSpellCircle = (spellCircle != null)) {
-            spellCircle!.sortingOrder = sortOrder;
-            if (spellCircleText != null)
-                spellCircleText.GetComponent<TextMeshPro>().sortingOrder = sortOrder + 1;
-        }
+    }
+
+    void IBehaviorEntityDependent.OnLinkOrResetValues(bool isLink) {
+        sortOrder = NextRenderCounter();
+        if (hasSpellCircle = (spellCircle != null)) 
+            if (spellCircleSortGroup != null)
+                spellCircleSortGroup.sortingOrder = spellCircleRCOffset + sortOrder;
+        
         if (distortAllowed = hasCardCircle = (cardCircle != null))
-            cardCircle!.sortingOrder = sortOrder + 2;
+            cardCircle!.sortingOrder = cardCircleRCOffset + sortOrder;
         distortToken = null;
-        if (healthbarSprite != null) healthbarSprite.sortingOrder = sortOrder + 3;
+        if (healthbarSprite != null) healthbarSprite.sortingOrder = hpBarRCOffset + sortOrder;
         allEnemies[enemyIndex = enemyIndexCtr++] = this;
         tokens.Add(orderedEnemies.Add(this));
         HP = maxHP;
@@ -188,15 +159,14 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         receivesBulletCollisions = false;
         receivedDamageMult = 0;
         target = ServiceLocator.MaybeFind<PlayerController>();
-        hpPB = new MaterialPropertyBlock();
-        distortPB = new MaterialPropertyBlock();
-        scPB = new MaterialPropertyBlock();
+        hpPB = new();
+        scPB = new();
         if (cameraCrosshair != null) cameraCrosshair.enabled = false;
         if (healthbarSprite != null) {
             healthbarSprite.enabled = true;
             healthbarSprite.GetPropertyBlock(hpPB);
             HealthbarOpacityFunc = ReflWrap<BPY>.Wrap(healthbarOpacity);
-            hpPB.SetFloat(PropConsts.alpha, HealthbarOpacityFunc(Beh.BPI));
+            hpPB.SetFloat(PropConsts.alpha, HealthbarOpacityFunc(Beh.rBPI));
             hpPB.SetFloat(PropConsts.radius, hpRadius);
             hpPB.SetFloat(PropConsts.subradius, hpThickness);
             healthbarStart = 0f;
@@ -204,7 +174,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
             SetHPBarColors(null);
             hpPB.SetColor(PropConsts.unfillColor, unfilledColor);
             _displayBarRatio = BarRatio;
-            hpPB.SetFloat(PropConsts.fillRatio, DisplayBarRatio);
+            hpPB.SetFloat(PropConsts.FillRatio, DisplayBarRatio);
             hpPB.SetColor(PropConsts.fillColor, currPhase.color1);
             healthbarSprite.SetPropertyBlock(hpPB);
         }
@@ -220,9 +190,6 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
             spellCircle.gameObject.SetActive(false);
         }
         lastSpellCircleRad = LerpFromSCScale;
-    }
-
-    public void Alive() {
         EnableUpdates();
     }
 
@@ -234,20 +201,32 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         RegisterService<IPlayerBulletCollisionReceiver>(this);
     }
 
+    public override void FirstFrame() {
+        base.FirstFrame();
+        Beh.Dependent<DisplayController>().SetSortingOrder(sortOrder);
+    }
+
     public void Initialized(RealizedBehOptions? options) {
-        VulnerableStyles = null;
-        ReceivedDamageMult = null;
+        VulnerableStyles = options?.vulnerable;
+        ReceivedDamageMult = options?.receivedDamage;
+        deathDrops = options?.drops;
         if (options.Try(out var o)) {
             if (o.hp.Try(out var hp)) SetHP(hp, hp);
-            VulnerableStyles = o.vulnerable;
-            ReceivedDamageMult = o.receivedDamage;
         }
     }
     
-    public void Died() {
+    void IBehaviorEntityDependent.Culled(bool allowFinalize, Action done) {
+        if (allowFinalize) {
+            if (HP <= 0 || PhotoHP <= 0) {
+                DoSuicideFire();
+                GameManagement.Instance.NormalEnemyDestroyed();
+                DropItems(deathDrops ?? AutoDeathItems());
+            }
+        }
         if (healthbarSprite != null) healthbarSprite.enabled = false;
         allEnemies.Remove(enemyIndex);
         DisableUpdates();
+        done();
     }
 
     public void ConfigureBoss(BossConfig b) {
@@ -319,14 +298,6 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         divertHP = to == this ? Maybe<Enemy>.None : to;
     }
 
-    private float HPRatio => (float)(HP / maxHP);
-    private float PhotoRatio => (float) PhotoHP / maxPhotoHP;
-    private float BarRatio => Math.Min(PhotoRatio, HPRatio);
-    [UsedImplicitly]
-    public float EffectiveBarRatio => divertHP.Try(out var d) ? d.EffectiveBarRatio : BarRatio;
-    private float _displayBarRatio;
-    public float DisplayBarRatio => divertHP.Try(out var d) ? d.DisplayBarRatio : _displayBarRatio;
-
     private Color HPColor => currPhaseType == PhaseType.Timeout ?
             unfilledColor :
             //Approximation to make the max color appear earlier
@@ -337,7 +308,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     public override void RegularUpdate() {
         receivedDamageMult = ReceivedDamageMult?.Invoke(Beh.rBPI) ?? 1;
         receivesBulletCollisions =
-            LocationHelpers.OnPlayableScreenBy(-0.3f, Beh.GlobalPosition()) && Vulnerable().HitsLand();
+            LocationHelpers.OnPlayableScreenBy(-0.3f, Beh.Location) && Vulnerable().HitsLand();
         _displayBarRatio = M.Lerp(_displayBarRatio, BarRatio, HPLerpRate * ETime.FRAME_TIME);
         if (hasCardCircle) {
             var rt = cardtr!.localEulerAngles;
@@ -390,30 +361,82 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         PollDamage();
         PollPhotoDamage();
         if (--dmgLabelBuffer == 0 && labelAccDmg > 0) {
-            Beh.DropDropLabel(dmgGrad, $"{labelAccDmg:n0}");
+            DropHelpers.DropDropLabel(Location, dmgGrad, $"{labelAccDmg:n0}");
             labelAccDmg = 0;
         }
         if (healthbarSprite != null) {
-            hpPB.SetFloat(PropConsts.alpha, HealthbarOpacityFunc(Beh.BPI));
-            hpPB.SetFloat(PropConsts.fillRatio, DisplayBarRatio);
+            hpPB.SetFloat(PropConsts.alpha, HealthbarOpacityFunc(Beh.rBPI));
+            hpPB.SetFloat(PropConsts.FillRatio, DisplayBarRatio);
             hpPB.SetColor(PropConsts.fillColor, HPColor);
             hpPB.SetFloat(PropConsts.time, Beh.rBPI.t);
             healthbarSprite.SetPropertyBlock(hpPB);
         }
     }
     
+    #region Items
+    
+    
+    public ItemDrops AutoDeathItems() => new(
+        Math.Max(1, maxHP / 300.0), 
+        maxHP >= 400 ? Mathf.CeilToInt(maxHP / 900f) : 0, 
+        maxHP >= 300 ? Mathf.CeilToInt(maxHP / 800f) : 0,
+        maxHP >= 400 ? Mathf.CeilToInt(maxHP / 700f) : 0,
+        Mathf.CeilToInt(maxHP / 600f)
+    );
+    
+    public void DropItems(ItemDrops? drops, float rValue, float rPPP, float rLife, float rPower, float rGems) {
+        if (drops.HasValue) DropHelpers.DropItems(drops.Value, Location, rValue, rPPP, rLife, rPower, rGems);
+    }
+    public void DropItems(ItemDrops? drops) {
+        if (drops.HasValue) DropHelpers.DropItems(drops.Value, Location);
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Drop some power")]
+    public void DropSomePower() => DropHelpers.DropEvenly(ItemType.POWER, Location, 19, false, 0.4f);
+    [ContextMenu("Drop some life")]
+    public void DropSomeLife() => DropHelpers.DropEvenly(ItemType.LIFE, Location, 100, false, 0.4f);
+    [ContextMenu("Drop some value")]
+    public void DropSomeValue() => DropHelpers.DropEvenly(ItemType.VALUE, ItemType.SMALL_VALUE, 
+        GameManagement.Instance.ScoreF.SmallValueRatio, Location, 1.4, false, 0.9f);
+    [ContextMenu("Drop some PPP")]
+    public void DropSomePPP() => DropHelpers.DropEvenly(ItemType.PPP, Location, 200, false, 0.4f);
+    [ContextMenu("Drop a full power")]
+    public void DropFullPower() => DropHelpers.DropOne(ItemType.FULLPOWER, Location);
+    [ContextMenu("Drop 1UP")]
+    public void Drop1UP() => DropHelpers.DropOne(ItemType.ONEUP, Location);
+    [ContextMenu("Drop powerup D")]
+    public void DropPowerupD() => DropHelpers.DropOne(ItemType.POWERUP_D, Location);
+    [ContextMenu("Drop powerup M")]
+    public void DropPowerupM() => DropHelpers.DropOne(ItemType.POWERUP_M, Location);
+    [ContextMenu("Drop powerup K")]
+    public void DropPowerupK() => DropHelpers.DropOne(ItemType.POWERUP_K, Location);
+    [ContextMenu("Drop shifting powerup")]
+    public void DropPowerupShift() => DropHelpers.DropOne(ItemType.POWERUP_SHIFT, Location);
+#endif
+    
+    #endregion
+    
     public static void FreezeEnemies() {
         frozenEnemies.Clear();
         orderedEnemies.Compact();
         for (int ii = 0; ii < orderedEnemies.Count; ++ii) {
             var enemy = orderedEnemies[ii];
-            if (LocationHelpers.OnPlayableScreen(enemy.Beh.GlobalPosition()) && enemy.Vulnerable().HitsLand()) {
+            if (LocationHelpers.OnPlayableScreen(enemy.Beh.Location) && enemy.Vulnerable().HitsLand()) {
                 frozenEnemies.Add(new FrozenCollisionInfo(enemy));
             }
         }
     }
 
     #region ReceiveCollisionsFromPlayerBullets
+
+    public Vulnerability Vulnerable(bool bypassDamageMult = false) => 
+        (!bypassDamageMult && receivedDamageMult <= 0) 
+            ? Vulnerability.PASS_THROUGH : 
+            _vulnerable;
+    
+    public bool ReceivesBulletCollisions(string? style) =>
+        receivesBulletCollisions && (style is null || VulnerableStyles?.Matches(style) is not false);
     
     public bool TakeHit(in PlayerBullet pb, in Vector2 location, in uint bpiId) {
         if ((pb.data.bossDmg > 0 || pb.data.stageDmg > 0)
@@ -432,7 +455,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     void ICircularPlayerLaserCollisionReceiver.TakeHit(CurvedTileRenderLaser laser, Vector2 collLoc,
         PlayerBullet plb) => TakeHit(plb, collLoc, laser.BPI.id);
     void ICircularPlayerBulletCollisionReceiver.TakeHit(Bullet bullet, Vector2 collLoc,
-        PlayerBullet plb) => TakeHit(plb, collLoc, bullet.BPI.id);
+        PlayerBullet plb) => TakeHit(plb, collLoc, bullet.rBPI.id);
     
 
     private const float SHOTGUN_DIST_MAX = 1f;
@@ -485,7 +508,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         HP = M.Clamp(0f, maxHP, HP - queuedDamage);
         queuedDamage = 0;
         if (HP <= 0) {
-            Beh.OutOfHP();
+            ShiftBEHPhaseOrKill();
             _vulnerable = Vulnerability.NO_DAMAGE; //Wait for new hp value to be declared
         } else if (modifyDamageSound) {
             if ((float) HP / maxHP < LOW_HP_THRESHOLD) {
@@ -495,7 +518,13 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     }
     
     #endregion
-    
+
+    private void ShiftBEHPhaseOrKill() {
+        if (Beh.PhaseShifter != null)
+            Beh.ShiftPhase();
+        else
+            Beh.CullMe(true);
+    }
     
     private long labelAccDmg = 0;
     private int dmgLabelBuffer = -1;
@@ -512,7 +541,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         PhotoHP = M.Clamp(0, maxPhotoHP, PhotoHP - queuedPhotoDamage);
         queuedPhotoDamage = 0;
         if (PhotoHP == 0) {
-            Beh.OutOfHP();
+            ShiftBEHPhaseOrKill();
             _vulnerable = Vulnerability.NO_DAMAGE;
         }
     }
@@ -571,7 +600,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         return true;
     }
 
-    public void ProcOnHit(EffectStrategy effect, Vector2 hitLoc) => effect.Proc(hitLoc, Beh.GlobalPosition(), collisionRadius);
+    public void ProcOnHit(EffectStrategy effect, Vector2 hitLoc) => effect.Proc(hitLoc, Beh.Location, collisionRadius);
 
     private bool ViewfinderHits(CRect viewfinder) => 
         Vulnerable().TakesDamage() && ayaCameraRadius != null && 
@@ -607,20 +636,6 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         }
     }
     
-#if UNITY_EDITOR
-    private void OnDrawGizmos() {
-        var position = transform.position;
-        Handles.color = Color.red;
-        if (ayaCameraRadius != null) Handles.DrawWireDisc(position, Vector3.forward, ayaCameraRadius);
-        if (taiAtariRadius != null) Handles.DrawWireDisc(position, Vector3.forward, taiAtariRadius);
-        Handles.color = Color.green;
-        Handles.DrawWireDisc(position, Vector3.forward, 0.9f);
-            Handles.color = Color.cyan;
-            if (collisionRadius > 0) 
-                Handles.DrawWireDisc(position, Vector3.forward, collisionRadius);
-    }
-#endif
-    
     [UsedImplicitly]
     public static bool FindNearest(Vector3 source, out Vector2 position) {
         Profiler.BeginSample("FindNearest");
@@ -645,7 +660,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     [UsedImplicitly]
     public static bool FindNearestSave(Vector3 source, int? preferredEnemy, out int enemy, out Vector2 position) {
         if (preferredEnemy.Try(out var eid) && allEnemies.TryGetValue(eid, out var pe)) {
-            position = pe.Beh.GlobalPosition();
+            position = pe.Beh.Location;
             enemy = eid;
             return true;
         }
@@ -666,6 +681,21 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         }
         return found;
     }
+    
+    public readonly struct FrozenCollisionInfo {
+        public readonly Vector2 location;
+        public readonly float radius;
+        public readonly int enemyIndex;
+        public bool Active => allEnemies.ContainsKey(enemyIndex);
+        public readonly Enemy enemy;
+
+        public FrozenCollisionInfo(Enemy e) {
+            location = e.Beh.Location;
+            radius = e.collisionRadius;
+            enemy = e;
+            enemyIndex = e.enemyIndex;
+        }
+    }
 
     public static readonly ExFunction findNearest = ExFunction.Wrap<Enemy>("FindNearest", new[] {
         typeof(Vector3), typeof(Vector2).MakeByRefType()
@@ -674,6 +704,18 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         typeof(Vector3), typeof(int?), typeof(int).MakeByRefType(), typeof(Vector2).MakeByRefType()
     });
     
-    
+#if UNITY_EDITOR
+    private void OnDrawGizmos() {
+        var position = transform.position;
+        Handles.color = Color.red;
+        if (ayaCameraRadius != null) Handles.DrawWireDisc(position, Vector3.forward, ayaCameraRadius);
+        if (taiAtariRadius != null) Handles.DrawWireDisc(position, Vector3.forward, taiAtariRadius);
+        Handles.color = Color.green;
+        Handles.DrawWireDisc(position, Vector3.forward, 0.9f);
+        Handles.color = Color.cyan;
+        if (collisionRadius > 0) 
+            Handles.DrawWireDisc(position, Vector3.forward, collisionRadius);
+    }
+#endif
 }
 }

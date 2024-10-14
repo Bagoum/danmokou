@@ -397,7 +397,8 @@ public static partial class AtomicPatterns {
         };
     }
 
-    private static SMRunner WaitForPhase(ICancellee cT) => SMRunner.Cull(Reflector.WaitForPhaseSM, cT)!.Value;
+    private static SMRunner WaitForPhase(ICancellee cT) => 
+        SMRunner.Cull(HelperStateMachines.Stall(), cT)!.Value;
 
     public static SyncPattern Circ(TP4 color, BPRV2 locScaleAngle) => new(sbh => {
         uint id = sbh.GCX.NextID();

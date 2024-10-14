@@ -14,7 +14,7 @@ Here are the cameras ordered by depth, their culling layers, and the primary sor
 | UI Camera   | UI                                                     | UI                               | Renders to the composite texture.                            |
 | Main Camera |                                                        |                                  | Doesn't capture any content. Renders the composite texture to screen, adding black bars if the monitor is not 16x9. |
 
-Indirect mesh rendering uses `Graphics.DrawMeshInstanced` or `Graphics.DrawMeshInstancedProcedural`, which are Unity functions that optimize the process of drawing the same sprite multiple times. They do not offer control over sorting layers, and are effectively rendered with Sorting Layer = Default and Sorting Order = 0. 
+Indirect mesh rendering uses `Graphics.DrawMeshInstanced` or `Graphics.RenderMeshPrimitives`, which are Unity functions that optimize the process of drawing the same sprite multiple times. They do not offer control over sorting layers, and are effectively rendered with Sorting Layer = Default and Sorting Order = 0. 
 
 ## Rendering Order
 

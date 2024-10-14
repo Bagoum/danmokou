@@ -97,12 +97,17 @@ public class InstanceData {
     public bool InstanceActive { get; private set; } = true;
     public void Deactivate(bool isProperCompletion) {
         if (InstanceActive) {
+            Logs.Log("Deactivating game instance. " + 
+                     (isProperCompletion ? "(Ran to completion)" : "(Cancelled early)"));
             InstanceActive = false;
             Request?.Cancel();
             if (isProperCompletion) {
                 Replay?.TryFinish();
             } else
                 Replay?.Cancel();
+            tokens.DisposeAll();
+            foreach (var f in Features)
+                f.Dispose();
         }
     }
     
@@ -135,6 +140,7 @@ public class InstanceData {
     
     #region DynamicData
 
+    private List<IDisposable> tokens = new();
     public Suzunoya.Data.InstanceData VNData { get; }
     public CardHistory CardHistory { get; }
     public List<BossConfig> BossesEncountered { get; } = new();
@@ -213,6 +219,8 @@ public class InstanceData {
         Features.Add(CustomDataF = features.CustomData.Create(this));
         
         InstanceActiveGuardInScene = InstanceActiveGuard;
+
+        tokens.Add(GameManagement.ReturnToMainMenuCancellation.Subscribe(_ => Deactivate(false)));
     }
 
     public (int success, int total)? LookForSpellHistory(string bossKey, int phaseIndex) {
@@ -322,7 +330,7 @@ public class InstanceData {
     /// </summary>
     public bool Restart() {
         if (Request == null) throw new Exception("No game instance found to restart");
-        Request.Cancel();
+        Deactivate(false);
         InstanceRequest.InstanceRestarted.OnNext(Request);
         return Request.Copy().Run();
     }
@@ -365,11 +373,6 @@ public class InstanceData {
                 f.OnContinueOrCheckpoint();
             cb(LastCheckpoint!);
         } else Logs.UnityError("No checkpoint is recorded, but you tried to restart from a checkpoint.");
-    }
-
-    public void Dispose() {
-        foreach (var f in Features)
-            f.Dispose();
     }
     
 #if UNITY_EDITOR

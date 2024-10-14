@@ -52,6 +52,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -100,6 +101,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -182,6 +184,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -230,6 +233,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -309,6 +313,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd3e768eb00f4f728c46451d230bb67d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 7151692062364644108}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -441,6 +446,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -489,6 +495,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -571,6 +578,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -619,6 +627,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -701,6 +710,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -749,6 +759,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -831,6 +842,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -879,6 +891,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -921,6 +934,7 @@ GameObject:
   - component: {fileID: 7151692062364644108}
   - component: {fileID: 6328024069235940164}
   - component: {fileID: 332648351628115877}
+  - component: {fileID: 1319568313173306123}
   m_Layer: 16
   m_Name: PipeWhite
   m_TagString: Untagged
@@ -958,11 +972,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 1
     cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}
-  displayer: {fileID: 0}
 --- !u!114 &6328024069235940164
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1023,6 +1035,21 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 2, y: 7}
   m_EdgeRadius: 0
+--- !u!114 &1319568313173306123
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3021130170359312601}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9bd6d08a6f547c787ab9c1f954a37ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  beh: {fileID: 7151692062364644108}
+  cullable: 1
+  cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}
 --- !u!1 &4170632376120796700
 GameObject:
   m_ObjectHideFlags: 0
@@ -1110,6 +1137,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1157,6 +1185,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -1274,6 +1303,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1322,6 +1352,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -1404,6 +1435,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1451,6 +1483,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -1533,6 +1566,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1581,6 +1615,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -1663,6 +1698,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1710,6 +1746,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -1792,6 +1829,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1839,6 +1877,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -1921,6 +1960,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1968,6 +2008,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -2050,6 +2091,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -2098,6 +2140,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:

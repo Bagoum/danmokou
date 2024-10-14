@@ -20,16 +20,16 @@ phase 60
 		} laser null 1 _ { 
 			hueshift(120 * t)
 		}
-		async moon-*/w <1.4;:> gcr2 220 1 <> {
+		async moon-*/w <1.4;:> gcr2 240 _ <> {
 		} gsr2c 4 {
 			bindLR
 			color { red teal yellow black }
 		} complex polar(
-			1.6,
+			1.6 + 1 * t,
 			120 * t
 		) {
 			rotate(&lr * 120 * t)
-			hueshift(120 * t)
+			##hueshift(120 * t)
 		}
 		
 	

@@ -23,9 +23,9 @@ public abstract class Commentator<T> : CoroutineRegularUpdater {
     public TextMeshProUGUI text = null!;
 
     public void Appear() => appearController.Queue(new PiecewiseAppear.AppearRequest(
-        PiecewiseAppear.AppearAction.APPEAR, 0.65f, ShowText));
+        PiecewiseAppear.Action.APPEAR, 0.65f, ShowText));
     public void Disappear() => appearController.Queue(new PiecewiseAppear.AppearRequest(
-        PiecewiseAppear.AppearAction.DISAPPEAR, 0, HideText));
+        PiecewiseAppear.Action.DISAPPEAR, 0, HideText));
     public void SetSprite(Sprite s) => sprite.sprite = s;
     public void ShowText() => textCanvas.enabled = true;
     public void HideText() => textCanvas.enabled = false;

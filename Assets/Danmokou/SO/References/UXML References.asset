@@ -78,3 +78,19 @@ MonoBehaviour:
     type: 3}
   MkParagraph: {fileID: 9197481963319205126, guid: 8376647b710a37147a87ddeb9d9a311c,
     type: 3}
+  <UpDownSound>k__BackingField: {fileID: 11400000, guid: 0333a90f360fc1f429670fdbcd980092,
+    type: 2}
+  <LeftRightSound>k__BackingField: {fileID: 11400000, guid: 1b9f20d147bf4da4dbd1e986d09942b4,
+    type: 2}
+  <ConfirmSound>k__BackingField: {fileID: 11400000, guid: 0575ca7e870172446b6877f8b91c7636,
+    type: 2}
+  <FailureSound>k__BackingField: {fileID: 11400000, guid: d27fed347086bd648aad28a9b2fa76d8,
+    type: 2}
+  <BackSound>k__BackingField: {fileID: 11400000, guid: d23b067b4fe25b04199a60093042cd98,
+    type: 2}
+  <ShowOptsSound>k__BackingField: {fileID: 11400000, guid: 069c9c964b7962e48a1293683803bbb5,
+    type: 2}
+  <OpenPauseSound>k__BackingField: {fileID: 11400000, guid: 39c182daf18c49a498de6d96c7954706,
+    type: 2}
+  <ClosePauseSound>k__BackingField: {fileID: 11400000, guid: ae28e1c6c483e1548943d8262b94e1bf,
+    type: 2}

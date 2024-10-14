@@ -6,6 +6,8 @@ namespace Danmokou.Core {
 public struct DataPrefab {
     public string name;
     public GameObject prefab;
+
+    public string Name => !string.IsNullOrWhiteSpace(name) ? name : prefab.name;
 }
 
 [System.Serializable]

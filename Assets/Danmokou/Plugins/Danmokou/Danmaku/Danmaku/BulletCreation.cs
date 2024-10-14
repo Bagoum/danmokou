@@ -44,16 +44,16 @@ public struct DelegatedCreator {
 
     private float ResolveFacing() {
         if (facing == Facing.DEROT) return 0f;
-        if (facing == Facing.VELOCITY) return parent.DirectionDeg;
-        if (facing == Facing.ROTATOR) return parent.RotatorRotation ?? parent.original_angle;
-        return parent.original_angle;
+        if (facing == Facing.VELOCITY) return M.AtanD(parent.Direction);
+        if (facing == Facing.ROTATOR) return parent.RotatorRotation ?? parent.OriginalAngle;
+        return parent.OriginalAngle;
     }
 
     public V2RV2 FacedRV2(V2RV2 rv2) => rv2.RotateAll(ResolveFacing());
 
     public void CacheLoc() {
         cacheLoc = true;
-        cachedLoc = parent.GlobalPosition();
+        cachedLoc = parent.Location;
     }
 
     public void Root(Vector2? root) {
@@ -134,7 +134,7 @@ public struct DelegatedCreator {
     public Vector2 ParentOffset => 
         forceRoot ?? ((transformParent != null) ? 
             Vector2.zero : 
-            cacheLoc ? cachedLoc : parent.GlobalPosition());
+            cacheLoc ? cachedLoc : parent.Location);
 
     /// <summary>
     /// Find where a bullet would be fired for a given offset.

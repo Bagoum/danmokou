@@ -51,7 +51,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// The container for all UI screens on this menu. Normally, direct/only child of <see cref="UIRoot"/>.
     /// </summary>
     public VisualElement UIContainer { get; private set; } = null!;
-    protected PanelSettings UISettings { get; private set; } = null!;
+    public PanelSettings UISettings { get; private set; } = null!;
 
     private VisualCursor? _visualCursor;
     public VisualCursor VisualCursor => _visualCursor ??= new(this);
@@ -88,7 +88,9 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// </summary>
     public DisturbedAnd OperationsEnabled { get; } = new();
     protected bool RegularUpdateGuard => ETime.FirstUpdateForScreen && PlayerInputEnabled;
+    public long LastOperationFrame { get; private set; } = -1;
     public override EngineState UpdateDuring => EngineState.MENU_PAUSE;
+    public override int UpdatePriority => UpdatePriorities.UI;
     
     public Stack<UINode> ScreenCall { get; } = new();
     public Stack<(UIGroup group, UINode? node)> GroupCall { get; } = new();
@@ -103,12 +105,25 @@ public abstract class UIController : CoroutineRegularUpdater {
     
     private readonly TaskQueue openClose = new();
     public UINode? Current { get; private set; }
-    public bool MenuActive => Current != null;
+    
     /// <summary>
-    /// Returns true iff this menu is active and it is also the most high-priority active menu.
-    /// Of all active menus, only the most high-priority one should handle input, so use this to gate input.
+    /// True if the menu is active (ie. some node on the menu is selected and the menu is open).
     /// </summary>
-    protected bool IsActiveCurrentMenu => MenuActive && uiRenderer.IsHighestPriorityActiveMenu(this);
+    public bool MenuActive => Current != null;
+    
+    /// <summary>
+    /// True if this menu is capable of consuming input. This is true by default, except for certain
+    ///  "pass-through" menus which allow input to fall through to lower-priority menus
+    ///  when their Unselector node is current.
+    /// </summary>
+    public virtual bool CanConsumeInput => true;
+    
+    /// <summary>
+    /// Returns true iff this menu is <see cref="MenuActive"/> and <see cref="CanConsumeInput"/>,
+    ///  and is the highest-priority such menu. This is only true for one menu at a time, and only that
+    ///  menu should perform input handling.
+    /// </summary>
+    protected bool IsActiveCurrentMenu => uiRenderer.IsHighestPriorityActiveMenu(this);
     
     public OverrideEvented<ICursorState> CursorState { get; } = new(new NullCursorState());
     /// <summary>
@@ -141,14 +156,6 @@ public abstract class UIController : CoroutineRegularUpdater {
     public PopupUIGroup? TargetedPopup { get; set; } = null;
     private UIBuilderRenderer uiRenderer = null!;
     private readonly Queue<Func<Task>> uiOperations = new();
-    
-    // Serialized fields
-    public SFXConfig? upDownSound;
-    public SFXConfig? leftRightSound;
-    public SFXConfig? confirmSound;
-    public SFXConfig? failureSound;
-    public SFXConfig? backSound;
-    public SFXConfig? showOptsSound;
 
     //Note: it should be possible to use Awake instead of FirstFrame w.r.t UIDocument being instantiated, 
     // but many menus depend on binding to services,
@@ -196,6 +203,8 @@ public abstract class UIController : CoroutineRegularUpdater {
     }
     
     public void QueueInput(UIPointerCommand cmd) {
+        //We allow move-to-node commands to be queued while the menu is animating
+        if (!OperationsEnabled && cmd is not UIPointerCommand.Goto) return;
         QueuedInput = cmd;
         UIEventQueued.OnNext(default);
     }
@@ -284,13 +293,15 @@ public abstract class UIController : CoroutineRegularUpdater {
         CursorState.Value.Navigate(from, cmd);
     
     /// <inheritdoc cref="OperateOnResult"/>
-    private Task _OperateOnResult(UIResult? result, UITransitionOptions? opts) {
+    private async Task _OperateOnResult(UIResult? result, UITransitionOptions? opts) {
         if (result == null || (result is UIResult.GoToNode {NoOpIfSameNode:true} gTo && gTo.Target == Current) ||
             (result is UIResult.GoToSibling {NoOpIfSameNode:true} gS && gS.Index == Current?.IndexInGroup) ||
             result is UIResult.StayOnNode) {
             if (result != null) Redraw();
-            return Task.CompletedTask;
+            return;
         }
+        LastOperationFrame = ETime.FrameNumber;
+        using var token = OperationsEnabled.AddConst(false);
         var closeMenuAfter = false;
         opts ??= UITransitionOptions.DontAnimate;
         var next = Current;
@@ -303,8 +314,14 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
         foreach (var _r in new[] { result }.Unroll()) {
             var r = _r;
-            while (r is UIResult.Lazy lazy)
-                r = lazy.Delayed();
+            while (true) {
+                if (r is UIResult.Lazy lazy)
+                    r = lazy.Delayed();
+                else if (r is UIResult.AfterTask afterTask)
+                    r = await afterTask.Delayed();
+                else
+                    break;
+            }
             var prev = next;
             void TransferToNodeSameScreen(UINode target) {
                 if (target.Group != prev?.Group) {  
@@ -478,11 +495,11 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
         //Logs.Log($"Left: {string.Join(",", LeftCalls.Select(x => x.ToString()))}, Entered: {string.Join(",", EntryCalls.Select(x => x.ToString()))}");
         //Logs.Log($"Left: {string.Join(",", leftGroups.Select(x => x.ToString()))}, Entered: {string.Join(",", entryGroups.Select(x => x.ToString()))}");
-        var task = TransitionToNode(next, opts, leftGroups, entryGroups, screenChanges)
+        await TransitionToNode(next, opts, leftGroups, entryGroups, screenChanges)
             .ContinueWithSync(result.OnPostTransition);
         if (closeMenuAfter)
-            task = task.Then(() => CloseWithAnimation());
-        return task;
+            await CloseWithAnimation();
+        LastOperationFrame = ETime.FrameNumber;
     }
 
     /// <summary>
@@ -503,7 +520,6 @@ public abstract class UIController : CoroutineRegularUpdater {
             UIVisualUpdateEv.OnNext(ETime.ASSUME_SCREEN_FRAME_TIME);
             BackgroundOpacity.Update(ETime.ASSUME_SCREEN_FRAME_TIME);
         }
-
         while (ETime.FirstUpdateForScreen) {
             if (OperationsEnabled && uiOperations.TryDequeue(out var nxt))
                 _ = nxt();
@@ -533,27 +549,28 @@ public abstract class UIController : CoroutineRegularUpdater {
                     silence = (QueuedInput as UIPointerCommand.NormalCommand)?.Silent ?? silence;
                 }
                 QueuedInput = null;
+                var prefabs = XMLUtils.Prefabs;
                 if (result is UIResult.GoToNode gTo && gTo.Target == Current)
                     result = new UIResult.StayOnNode(gTo.NoOpIfSameNode);
                 if (result != null && !silence) {
                     ISFXService.SFXService.Request(
                         result switch {
-                            UIResult.StayOnNode { Action: UIResult.StayOnNodeType.NoOp } => failureSound,
+                            UIResult.StayOnNode { Action: UIResult.StayOnNodeType.NoOp } => prefabs.FailureSound,
                             UIResult.StayOnNode { Action: UIResult.StayOnNodeType.Silent } => null,
                             _ => command switch {
-                                UICommand.Left => leftRightSound,
-                                UICommand.Right => leftRightSound,
-                                UICommand.Up => upDownSound,
-                                UICommand.Down => upDownSound,
-                                UICommand.Confirm => confirmSound,
-                                UICommand.Back => backSound,
-                                UICommand.ContextMenu => showOptsSound,
+                                UICommand.Left => prefabs.LeftRightSound,
+                                UICommand.Right => prefabs.LeftRightSound,
+                                UICommand.Up => prefabs.UpDownSound,
+                                UICommand.Down => prefabs.UpDownSound,
+                                UICommand.Confirm => prefabs.ConfirmSound,
+                                UICommand.Back => prefabs.BackSound,
+                                UICommand.ContextMenu => prefabs.ShowOptsSound,
                                 _ => null
                             }
                         });
                 } else if (doCustomSFX)
                     //Probably need to get this from the custom node handling? idk
-                    ISFXService.SFXService.Request(leftRightSound);
+                    ISFXService.SFXService.Request(prefabs.LeftRightSound);
                 if (result != null && result is not UIResult.StayOnNode)
                     OperateOnResult(result, result.Options ?? UITransitionOptions.Default).ContinueWithSync();
                 break;
@@ -684,7 +701,6 @@ public abstract class UIController : CoroutineRegularUpdater {
             prev?.Screen.NextState(UIScreenState.ActiveWillGoInactive);
             next?.Screen.NextState(UIScreenState.InactiveWillGoActive);
         }
-        using var token = OperationsEnabled.AddConst(false);
         PopupUIGroup.Type? popupType = (
             (leftGroups.Count == 0 || leftGroups[^1] is PopupUIGroup { Typ: PopupUIGroup.Type.CtxMenu })
                 && enteredGroups.Try(0) is PopupUIGroup pug) 
@@ -839,8 +855,6 @@ public abstract class UIController : CoroutineRegularUpdater {
     }
 
     public Task PlayAnimation(ITransition anim) => anim.Run(this, CoroutineOptions.DroppableDefault);
-    
-    public override int UpdatePriority => UpdatePriorities.UI;
 
     protected override void OnDisable() {
         foreach (var s in Screens) {

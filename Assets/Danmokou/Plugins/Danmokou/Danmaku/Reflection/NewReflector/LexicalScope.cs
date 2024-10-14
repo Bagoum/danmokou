@@ -523,14 +523,15 @@ public class LexicalScope {
     public static Ex VariableWithoutLexicalScope(TExArgCtx tac, string varName, Type typ, Ex? deflt = null, Func<Ex, Ex>? opOnValue = null) {
         Ex ef = tac.EnvFrame;
         if (tac.Ctx.UnscopedEnvframeAcess.TryGetValue((varName, typ), out var keys)) {
+            //This branch is only entered if opOnValue results in looking up the same dynamic variable.
+            // This occurs in cases like `&var1 = &var1 + 1`. 
+            //In these cases, we don't need to re-invoke getInstructions.
             var (p, t, v) = keys;
             return (opOnValue ?? noOpOnValue)(EnvFrame.Value(ef.DictGet(p), t, v, typ));
         } else {
             var parentage = ExUtils.V<int>("parentage");
             var typeIdx = ExUtils.V<int>("typeIdx");
             var valueIdx = ExUtils.V<int>("valueIdx");
-            //We cache the out parameters of the instructions call, but only within the scope of the `opOnValue` call.
-            // This allows cases like `updatef { var1 (&var1 + 1) }`/`&var1 = &var1 + 1` to be handled efficiently.
             tac.Ctx.UnscopedEnvframeAcess[(varName, typ)] = (parentage, typeIdx, valueIdx);
             var ret = Ex.Block(new[] { parentage, typeIdx, valueIdx },
                 Ex.Condition(getInstructions.InstanceOf(Ex.PropertyOrField(ef, nameof(EnvFrame.Scope)), 

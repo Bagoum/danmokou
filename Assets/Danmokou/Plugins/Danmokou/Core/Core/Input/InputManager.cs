@@ -144,6 +144,9 @@ public static class InputManager {
     public static bool UIUp => PlayerInput.UIUp ?? false;
     public static bool UIDown => PlayerInput.UIDown ?? false;
 
+    //BE CAREFUL ABOUT USING THIS - left click is bound to UINode handling
+    public static bool IsLeftClick => PlayerInput.LeftClick ?? false;
+
     public static IInputHandler GetKeyTrigger(KeyCode key) => PlayerInput.GetKeyTrigger(key);
     
     //Called by GameManagement

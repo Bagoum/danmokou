@@ -1,4 +1,5 @@
 ﻿using Danmokou.Behavior;
+using Danmokou.Behavior.Display;
 using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
 using Danmokou.Scriptables;
@@ -23,7 +24,7 @@ public class ColorizableBullet : Bullet {
     public virtual void ColorizeOverwrite(FrameAnimBullet.Recolor r) => Colorize(r);
 
     protected virtual void SetSprite(Sprite s) {
-        displayer!.SetSprite(s);
+        Dependent<DisplayController>().SetSprite(s);
     }
 }
 }

@@ -52,6 +52,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -99,6 +100,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f975c3b7d1e4452fb8f027d21f5df966, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -190,6 +192,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c16a58e2275e45d9b73d8353f2e638c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 3492216104592152486}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -245,6 +248,11 @@ PrefabInstance:
         type: 3}
       propertyPath: animate.LRRelation
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4401497610235162315, guid: 0623db11f1c15fc409072cf3af7a2a95,
+        type: 3}
+      propertyPath: <Beh>k__BackingField
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4401497610235162315, guid: 0623db11f1c15fc409072cf3af7a2a95,
         type: 3}
@@ -367,6 +375,18 @@ PrefabInstance:
       addedObject: {fileID: 6486619910158425623}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0623db11f1c15fc409072cf3af7a2a95, type: 3}
+--- !u!114 &3492216104592152486 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4288191306515568470, guid: 0623db11f1c15fc409072cf3af7a2a95,
+    type: 3}
+  m_PrefabInstance: {fileID: 861435806996906224}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcd38e9f7d55e7f42b4df572b17094ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &3954492030500367931 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4401497610235162315, guid: 0623db11f1c15fc409072cf3af7a2a95,

@@ -41,11 +41,8 @@ public static class Pooler<T> where T : Pooled<T> {
         } else {
             GameObject go = Object.Instantiate(prefab);
             created = go.GetComponent<T>() ?? go.AddComponent<T>();
-            //ResetValues is called from OnEnable
             isNew = true;
         }
-        active[prefab].Add(created);
-        //We have two initialize functions since subimplementations may need to pass extra data
         created.SetPooled(active[prefab], free[prefab], created);
         return created;
     }
@@ -69,7 +66,7 @@ public static class BEHPooler {
 
     public static BehaviorEntity INode(Movement mov, ParametricInfo pi, Vector2 rotation, string behName) {
         var beh = RequestUninitialized(Prefabs.inode, out _);
-        beh.Initialize(mov, pi, null, behName);
+        beh.Initialize(null, in mov, pi, null, null, behName);
         beh.SetMovementDelta(rotation);
         return beh;
     }

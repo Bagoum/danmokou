@@ -246,7 +246,6 @@ public record InstanceRequest {
         record ??= MakeGameRecord();
         Logs.Log("Finalizing game instance.");
         d.Deactivate(true); //Also stops the replay
-        d.Dispose();
         TrySave(record);
         InstanceCompleted.OnNext((d, record));
         return record;
@@ -285,6 +284,7 @@ public record InstanceRequest {
 
     public void Cancel() {
         if (!instTracker.Cancelled) {
+            Logs.Log("Cancelling instance request.");
             instTracker.Cancel();
             GameManagement.DeactivateInstance();
         }

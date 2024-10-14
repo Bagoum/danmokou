@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using BagoumLib;
 using BagoumLib.DataStructures;
+using Danmokou.Achievements;
 using UnityEngine;
 
 namespace Danmokou.Core.DInput {
@@ -95,6 +96,8 @@ public class AggregateInputSource : IInputHandlerInputSource, IInputSource {
 
     public bool? DialogueConfirm => Aggregate(x => x.DialogueConfirm);
     public bool? DialogueSkipAll => Aggregate(x => x.DialogueSkipAll);
+    
+    public bool? LeftClick => Aggregate(x => x.LeftClick);
 }
 
 }

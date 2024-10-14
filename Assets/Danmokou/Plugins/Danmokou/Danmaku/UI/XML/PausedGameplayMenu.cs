@@ -12,20 +12,17 @@ using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
 public class PausedGameplayMenu : UIController {
-    public SFXConfig? openPauseSound;
-    public SFXConfig? closePauseSound;
-
     private IDisposable? pauseToken;
 
     protected override bool OpenOnInit => false;
 
     protected override void OnWillOpen() {
-        ISFXService.SFXService.Request(openPauseSound);
+        ISFXService.SFXService.Request(XMLUtils.Prefabs.OpenPauseSound);
         tokens.Add(pauseToken = EngineStateManager.RequestState(EngineState.MENU_PAUSE));
     }
 
     protected override void OnWillClose() {
-        ISFXService.SFXService.Request(closePauseSound);
+        ISFXService.SFXService.Request(XMLUtils.Prefabs.ClosePauseSound);
     }
     protected override void OnClosed() {
         pauseToken?.Dispose();

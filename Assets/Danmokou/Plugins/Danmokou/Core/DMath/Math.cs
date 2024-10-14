@@ -145,6 +145,8 @@ public static class M {
 
     public static Vector2 PtMul(this Vector2 a, Vector2 b) => new(a.x * b.x, a.y * b.y);
     public static Vector3 PtMul(this Vector3 a, Vector3 b) => new(a.x * b.x, a.y * b.y, a.z * b.z);
+    public static Vector2 PtDiv(this Vector2 a, Vector2 b) => new(a.x / b.x, a.y / b.y);
+    public static Vector3 PtDiv(this Vector3 a, Vector3 b) => new(a.x / b.x, a.y / b.y, a.z / b.z);
     public static Vector2 ConvertBasis(Vector2 source, Vector2 basis1) => RotateVector(source, basis1.x, -basis1.y);
     public static Vector2 DeconvertBasis(Vector2 source, Vector2 basis1) => RotateVector(source, basis1.x, basis1.y);
 
@@ -444,6 +446,7 @@ public readonly struct CRect {
     public Vector2 TopLeft => M.RotateVectorDeg(MinX, MaxY, angle);
     public Vector2 BotRight => M.RotateVectorDeg(MaxX, MinY, angle);
     public Vector2 TopRight => M.RotateVectorDeg(MaxX, MaxY, angle);
+    public Rect AsRect => new(MinX, MinY, 2 * halfW, 2 * halfH);
 
     public CRect(float x, float y, float halfW, float halfH, float ang_deg) {
         this.x = x;
@@ -477,7 +480,28 @@ public readonly struct CRect {
         this.sin_rot = M.SinDeg(angle);
     }
     
+    public CRect(Vector2 center, Bounds bounds) : 
+        this(center.x+bounds.center.x, center.y+bounds.center.y, bounds.extents.x, bounds.extents.y, 0) { }
+    
     public static implicit operator CRect(V2RV2 rect) => new CRect(rect.nx, rect.ny, rect.rx, rect.ry, rect.angle);
+}
+
+public readonly struct WorldQuad {
+    public Rect BaseRect { get; }
+    public float Z { get; }
+    public Quaternion Rotation { get; }
+    public Vector3 Center => BaseRect.center.WithZ(Z);
+    public Vector2 HalfDims => BaseRect.size / 2f;
+    public Vector3 BotLeft => Center + Rotation * HalfDims.PtMul(new(-1, -1));
+    public Vector3 BotRight => Center + Rotation * HalfDims.PtMul(new(1, -1));
+    public Vector3 TopLeft => Center + Rotation * HalfDims.PtMul(new(-1, 1));
+    public Vector3 TopRight => Center + Rotation * HalfDims.PtMul(new(1, 1));
+    
+    public WorldQuad(Rect baseRect, float z, Quaternion rotation) {
+        BaseRect = baseRect;
+        Z = z;
+        Rotation = rotation;
+    }
 }
 
 /// <summary>

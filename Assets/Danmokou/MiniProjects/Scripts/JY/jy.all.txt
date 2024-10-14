@@ -27,7 +27,7 @@ phase 0
 			position -15 0
 		@ { $other }
 			diverthp $me
-		shift-phase-to 10
+		shift-phase-to 7
 
 
 !{ power1()

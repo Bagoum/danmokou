@@ -30,9 +30,6 @@ public static class Extensions {
 
     public static void Show(this VisualElement ve) => ve.style.display = DisplayStyle.Flex;
     public static void Hide(this VisualElement ve) => ve.style.display = DisplayStyle.None;
-
-    public static string? Or(this string? x, string? y) =>
-        string.IsNullOrWhiteSpace(x) ? y : x;
 }
 
 public static class FormattingExtensions {

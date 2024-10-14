@@ -73,7 +73,7 @@ public class ParticlePooled : Pooled<ParticlePooled> {
         }
     }
 
-    protected override void ResetValues() {
+    protected override void ResetValues(bool isFirst) {
         ReassignColors();
     }
 

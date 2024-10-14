@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reactive;
 using BagoumLib;
 using BagoumLib.Tasks;
+using Danmokou.Behavior.Display;
 using Danmokou.Behavior.Functions;
 using Danmokou.Behavior.Items;
 using Danmokou.Core;
@@ -130,7 +131,7 @@ public class AnimatorControllerLASM : ReflectableLASM {
     /// </summary>
     /// <returns></returns>
     public static Animate Attack() => smh => {
-        smh.Exec.AnimateAttack();
+        smh.Exec.Dependent<DisplayController>().Animate(AnimationType.Attack, false, null);
         return Task.CompletedTask;
     };
 }

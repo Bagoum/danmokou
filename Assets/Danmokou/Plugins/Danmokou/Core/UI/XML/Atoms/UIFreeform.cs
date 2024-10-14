@@ -22,6 +22,7 @@ public class UnselectorFixedXML : IFixedXMLObject {
 /// </summary>
 public class UIFreeformGroup : CompositeUIGroup, IFreeformContainer {
     private readonly UINode? unselector;
+    public bool HasUnselector => unselector != null;
     public UIFreeformGroup(UIRenderSpace container, UINode? unselector = null) : base(container, Array.Empty<UIGroup>(), new[] { unselector }) {
         this.unselector = unselector;
         ExitNodeOverride = unselector;

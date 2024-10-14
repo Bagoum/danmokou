@@ -675,7 +675,7 @@ public static partial class ExM {
     /// Returns the direction of the FireOption. Primarily used for player lasers.
     /// </summary>
     public static ExBPY OptionAngle(Func<TExArgCtx, TEx<FireOption>> ctr) => tac => 
-        ctr(tac).Field(nameof(BehaviorEntity.original_angle));
+        ctr(tac).Field(nameof(BehaviorEntity.OriginalAngle));
 
     private static Ex PowerFeature => inst.Field(nameof(InstanceData.PowerF));
     /// <summary>

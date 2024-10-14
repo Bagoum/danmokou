@@ -17,12 +17,12 @@ public abstract class ShapeDrawer : SpriteDisplayController {
 
     protected abstract V2RV2 GetLocScaleRot();
 
-    public override void UpdateRender(bool isFirstFrame) {
-        sprite.color = ColorHelpers.V4C(color(beh.rBPI));
+    public override void OnRender(bool isFirstFrame, Vector2 lastDesiredDelta) {
+        sprite.color = ColorHelpers.V4C(color(Beh.rBPI));
         lastRV2 = GetLocScaleRot();
         tr.localPosition = lastRV2.NV;
         tr.localEulerAngles = new Vector3(0, 0, BMath.Mod(360, lastRV2.angle));
-        base.UpdateRender(isFirstFrame);
+        base.OnRender(isFirstFrame, lastDesiredDelta);
     }
 }
 }

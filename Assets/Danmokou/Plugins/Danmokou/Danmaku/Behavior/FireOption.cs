@@ -57,13 +57,6 @@ public class FireOption : BehaviorEntity {
     private int currPower = 0;
     private float powerLerp = 0.2f;
     public int findex;
-    protected override int Findex => findex;
-    protected override PIData DefaultFCTX() {
-        var f = PIData.NewUnscoped();
-        f.firer = this;
-        f.playerController = Player;
-        return f;
-    }
     public PlayerController Player { get; private set; } = null!;
 
     //Called from initialize instead
@@ -73,8 +66,12 @@ public class FireOption : BehaviorEntity {
         Player = playr;
         //I feel kind of bad about this, but it ensures that PlayerInput is linked before the SM runs.
         base.Awake();
+        //override default BehaviorEntity bpi
+        bpi.ctx.firer = this;
+        bpi.ctx.playerController = Player;
+        bpi = new(bpi.ctx, bpi.loc, findex, bpi.id);
         sr = GetComponent<SpriteRenderer>();
-        original_angle = 0; //Shoot up by default
+        OriginalAngle = 0;
         freeFocusLerp = Player.IsFocus ? 1 : 0;
         freeOffset = ReflWrap<TP3>.Wrap(offsetFree);
         if (string.IsNullOrWhiteSpace(offsetFocus)) offsetFocus = offsetFree;
@@ -128,14 +125,14 @@ public class FireOption : BehaviorEntity {
         powerLerp = Mathf.Clamp01(powerLerp + ETime.FRAME_TIME / powerLerpTime);
         var lerpDir = Player.IsFocus ? 1 : -1;
         freeFocusLerp = Mathf.Clamp01(freeFocusLerp + lerpDir * ETime.FRAME_TIME / freeFocusLerpTime);
-        original_angle = M.Lerp(freeAngle(bpi), focusAngle(bpi), freeFocusLerp);
+        OriginalAngle = M.Lerp(freeAngle(bpi), focusAngle(bpi), freeFocusLerp);
         tr.localPosition = Vector3.Lerp(FreeOffset, FocusOffset, freeFocusLerp);
         if (doOpacity) {
             var color = rootColor;
             color.a *= freeOpacity!(bpi) * (1 - freeFocusLerp) + focusOpacity!(bpi) * freeFocusLerp;
             sr.color = color;
         }
-        tr.localEulerAngles = new Vector3(0, 0, original_angle + rotator?.Invoke(bpi) ?? 0f);
+        tr.localEulerAngles = new Vector3(0, 0, OriginalAngle + rotator?.Invoke(bpi) ?? 0f);
     }
 
     protected override void RegularUpdateMove() {

@@ -45,7 +45,7 @@ public class ResourceManager : MonoBehaviour {
     private static void LoadSOPrefabs(SOPrefabs source, IDictionary<string, GameObject> target) {
         foreach (var lis in source.prefabs) {
             foreach (DataPrefab x in lis.prefabs) {
-                target[x.name] = x.prefab;
+                target[x.Name] = x.prefab;
             }
         }
     }

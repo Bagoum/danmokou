@@ -28,7 +28,20 @@ public interface IOverrideRenderTarget {
     public Vector2 ZoomTarget { get; }
     public Vector2 Offset { get; }
     public (CameraInfo cam, int layerMask)? AsWorldUI => null;
+    
+    /// <summary>
+    /// Modifies the size of the rendering RT.
+    /// <br/>eg. TextureSizeMult=(2,1) on a 3840x2160 resolution will make this target
+    ///  use a 7680x2160 RT, and be able to fit twice as much content horizontally.
+    /// </summary>
     public Vector2? TextureSizeMult => null;
+    
+    /// <summary>
+    /// Modifies the scale of the rendering RT and the scale of the panel.
+    /// <br/>eg. ResolutionMult=0.5 on a 3840x2160 resolution will make this target
+    ///  use a 1920x1080 RT, but the amount of content will be the same.
+    /// </summary>
+    public float? ResolutionMult => null;
 }
 
 [Serializable]
@@ -48,12 +61,17 @@ public class RenderablePane {
     }
 
     public void RemakeTexture((int w, int h) res) {
-        pane.scale = res.w / (float)UIBuilderRenderer.UIResolution.w;
-        (int w, int h) unscaledRes = res;
+        var resMult = 1f;
+        var baseRes = res;
+        if (Target.Value?.ResolutionMult is { } rm) {
+            resMult = rm;
+            baseRes = res =(Mathf.RoundToInt(res.w * rm), Mathf.RoundToInt(res.h * rm));
+        }
+        pane.scale = baseRes.w / (float)UIBuilderRenderer.UIResolution.w;
         if (Target.Value?.TextureSizeMult is { } mult)
-            res = (Mathf.RoundToInt(res.w * mult.x), Mathf.RoundToInt(res.h * mult.y));
+            res = (Mathf.RoundToInt(baseRes.w * mult.x), Mathf.RoundToInt(baseRes.h * mult.y));
         var (nextTex, isTemp) = Target.Value is {} tgt ?
-            (RenderHelpers.DefaultTempRT(res), true) :
+            (RenderHelpers.DefaultTempRT(res, useDepth: false), true) :
             (MainCamera.RenderTo, false);
         Logs.Log($"Remaking UI textures for pane {pane.name} in {res}. " + 
                  (isTemp ? "Writes to a temp texture." : "Writes to MainCamera.RenderTo."));
@@ -69,30 +87,37 @@ public class RenderablePane {
         TempTexture = isTemp ? nextTex : null;
         
         pane.SetScreenToPanelSpaceFunction(loc => {
-            /* See LetterboxedInput.cs.
-            A world space canvas relates mouse input only to the target texture to which the canvas is rendering. For example, if my canvas renders to a camera with a target texture of resolution 1920x1080, then the canvas will perceive a mouse input at position <1900, 1060> as occuring in the top right of the canvas, regardless of where on the screen this input is located.
-
-            UIToolkit panels have an issue in that the way they relate input depends both on the target texture and the screen, because the transformation from mouse location (starting at the bottom left) to UXML location (starting at the top left) is done with something like `uxml_y = Screen.height - mouse_y`.
-            If my panel renders to a texture of resolution 1920x1080 and the screen has resolution 1920x1080, then the panel will perceive a mouse input at position <1900, 1060> as occuring at the top right of the panel (specifically, at UXML position <1900, 20>).  However, if my screen instead has resolution 3840x2160, then the panel will perceive a mouse input at position <1900, 1060> as ocurring at the *center right* of the panel, at UXML position (1900, 1080).
-             */
-            var panelLoc = loc + new Vector2(0, unscaledRes.h - Screen.height);
-            if (panelLoc.x < 0 || panelLoc.x > unscaledRes.w || panelLoc.y < 0 || panelLoc.y > unscaledRes.h)
+            //evLoc is the pointer event location originally provided by LetterboxedInput,
+            // which is relative to MainCamera.RenderTo dims and accounts for letterboxing.
+            //loc = (evLoc.x, Screen.height - evLoc.y) <- internal Unity implementation in PanelRaycaster,
+            //                                            undesired since we don't really care about Screen here
+            var evLoc = new Vector2(loc.x, Screen.height - loc.y);
+            //Multiply by resMult to account for possible RT-specific lower/higher resolution.
+            evLoc *= resMult;
+            if (evLoc.x < 0 || evLoc.x > baseRes.w || evLoc.y < 0 || evLoc.y > baseRes.h)
                 return new(float.NaN, float.NaN);
+            //screen XML coordinates of the event
+            var screenXMLLoc = new Vector2(evLoc.x, baseRes.h - evLoc.y);
             
+            //We need to report the panel XML coordinates of the event.
+            //In the default case (AsWorldUI = null), we assume the panel is fullscreen,
+            // so screen XML coords = panel XML coords.
+            //Otherwise, we use raycast+textureCoord, and multiply by the actual panel size (res)
+            // to determine panel XML coordinates.
             if (Target.Value is {} t) {
+                //For actual world UI with Mesh/MeshCollider
                 if (t.AsWorldUI is { } coll) {
-                    //For actual world UI with Mesh/MeshCollider
-                    var screenLoc = new Vector2(panelLoc.x / unscaledRes.w, 1 - panelLoc.y / unscaledRes.h);
-                    var ray = coll.cam.Camera.ViewportPointToRay(screenLoc);
-                    Debug.DrawRay(ray.origin, ray.direction * 100, Color.magenta);
+                    //Screen coordinates of the event
+                    var screenLoc = new Vector2(evLoc.x / baseRes.w, evLoc.y / baseRes.h);
+                    var ray = coll.cam.ScreenPointToRay(screenLoc);
                     if (Physics.Raycast(ray, out var hit, 100f, coll.layerMask, QueryTriggerInteraction.Collide)) {
+                        Debug.DrawRay(ray.origin, ray.direction * hit.distance, Color.magenta);
                         var tc = hit.textureCoord;
-                        Logs.Log($"Tex coord collision at {tc} ({new Vector2(tc.x * res.w, (1 - tc.y) * res.h)})");
+                        //Logs.Log($"Tex coord collision at {tc} ({new Vector2(tc.x * res.w, (1 - tc.y) * res.h)})");
                         return new(tc.x * res.w, (1 - tc.y) * res.h);
                     } else
                         return new(float.NaN, float.NaN);
                 }
-                
                 //If this renderer is being sent through a UITKRerenderer, adjust for the zoom/transform applied
                 var zoom = t.Zoom;
                 var offset = t.Offset;
@@ -105,12 +130,12 @@ public class RenderablePane {
                         // that are fixed to 3840x2160.
                         res.w * (0.5f + ztarget.x / UIBuilderRenderer.UICamInfo.ScreenWidth),
                         res.h * (0.5f - ztarget.y / UIBuilderRenderer.UICamInfo.ScreenHeight));
-                    return center + (panelLoc - center) / zoom + 
+                    return center + (screenXMLLoc - center) / zoom + 
                            new Vector2(offset.x / UIBuilderRenderer.UICamInfo.ScreenWidth * res.w / zoom,
                                       -offset.y / UIBuilderRenderer.UICamInfo.ScreenHeight * res.h / zoom);
                 }
             }
-            return panelLoc;
+            return screenXMLLoc;
         });
     }
 
@@ -148,8 +173,8 @@ public class UIBuilderRenderer : RegularUpdater {
     
     public bool IsHighestPriorityActiveMenu(UIController c) {
         for (int ii = 0; ii < controllers.Count; ++ii)
-            if (controllers.ExistsAt(ii) && controllers[ii].MenuActive)
-                return (controllers[ii] == c);
+            if (controllers.GetIfExistsAt(ii, out var cr) && cr is { MenuActive: true, CanConsumeInput: true })
+                return (cr == c);
         return false;
     }
 
@@ -180,6 +205,13 @@ public class UIBuilderRenderer : RegularUpdater {
             groupToRT[pane.renderGroup] = pane;
         }
         RTGroups.OnNext(groupToRT);
+    }
+
+    public int GroupOf(PanelSettings panel) {
+        foreach (var s in settings)
+            if (s.pane == panel)
+                return s.renderGroup;
+        throw new Exception($"Couldn't find configuration for panel {panel.name}");
     }
 
     /// <summary>

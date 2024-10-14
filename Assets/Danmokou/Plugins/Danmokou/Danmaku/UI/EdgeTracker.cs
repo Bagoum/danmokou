@@ -38,19 +38,19 @@ public class EdgeTracker : RegularUpdater {
         if (cT.Cancelled) {
             Finish();
         } else {
-            var target = source.GlobalPosition();
+            var target = source.Location;
             if (containerActive != LocationHelpers.OnPlayableScreenBy(5f, target)) {
                 container.SetActive(containerActive = !containerActive);
             }
             if (containerActive) {
                 var p = tr.localPosition;
                 if (moveHorizontally) {
-                    p.x = Mathf.Clamp(source.GlobalPosition().x,
+                    p.x = Mathf.Clamp(target.x,
                         LocationHelpers.PlayableBounds.left + yield,
                         LocationHelpers.PlayableBounds.right - yield);
                 }
                 if (moveVertically) {
-                    p.y = Mathf.Clamp(source.GlobalPosition().y,
+                    p.y = Mathf.Clamp(target.y,
                         LocationHelpers.PlayableBounds.bot + yield,
                         LocationHelpers.PlayableBounds.top - yield);
                 }

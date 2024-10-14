@@ -82,5 +82,23 @@ public class UXMLReferences : ScriptableObject, IUXMLReferences {
         {typeof(ILROptionNode), OptionLRNode},
         {typeof(IComplexLROptionNode), ComplexOptionLRNode}
     };
+    
+    [Header("Menu SFX")]
+    [field: SerializeField] 
+    public SFXConfig? UpDownSound { get; set; }
+    [field: SerializeField] 
+    public SFXConfig? LeftRightSound { get; set; }
+    [field: SerializeField] 
+    public SFXConfig? ConfirmSound { get; set; }
+    [field: SerializeField] 
+    public SFXConfig? FailureSound { get; set; }
+    [field: SerializeField] 
+    public SFXConfig? BackSound { get; set; }
+    [field: SerializeField] 
+    public SFXConfig? ShowOptsSound { get; set; }
+    [field: SerializeField] 
+    public SFXConfig? OpenPauseSound { get; set; }
+    [field: SerializeField] 
+    public SFXConfig? ClosePauseSound { get; set; }
 }
 }

@@ -195,7 +195,7 @@ pattern({ mixer {
 				loadsbtextures({{ "amuletdd-red", " amuletdd-blue", " needle-orange" }})
 				loadsbtextures({{"blast-red", "blast-purple", "needle2-purple" }})
 			}
-			shiftphaseto 4
+			shiftphaseto 3
 		}
 	}
 

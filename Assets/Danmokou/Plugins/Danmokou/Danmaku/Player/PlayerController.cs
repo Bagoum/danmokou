@@ -490,7 +490,7 @@ public partial class PlayerController : BehaviorEntity,
         
         
         if (--scoreLabelBuffer == 0 && labelAccScore > 0) {
-            DropDropLabel(scoreLabelBonus ? scoreGrad_bonus : scoreGrad, $"{labelAccScore:n0}", 
+            DropHelpers.DropDropLabel(Location, scoreLabelBonus ? scoreGrad_bonus : scoreGrad, $"{labelAccScore:n0}", 
                 multiplier: Mathf.Max(1, (float)Math.Log(labelAccScore / 100.0, 100)));
             labelAccScore = 0;
             scoreLabelBonus = false;
@@ -618,10 +618,10 @@ public partial class PlayerController : BehaviorEntity,
         return effectGO;
     }
     
-    public override void InvokeCull() {
+    protected override void CullHook(bool allowFinalize) {
         DestroyExistingShot();
         UpdateInputTimes(false, false); //clears dependent lasers
-        base.InvokeCull();
+        base.CullHook(allowFinalize);
     }
     
     protected override void OnDisable() {
@@ -664,7 +664,7 @@ public partial class PlayerController : BehaviorEntity,
     }
     
     private void _DoLoseLives(int livesLost, bool forceTraditionalRespawn) {
-        BulletManager.AutodeleteCircleOverTime(new(BPI.loc, 1.35f, 0f, 12f, null));
+        BulletManager.AutodeleteCircleOverTime(new(Location, 1.35f, 0f, 12f, null));
         BulletManager.RequestPowerAura("powerup1", 0, 0, GenCtx.Empty, new RealizedPowerAuraOptions(
             new PowerAuraOptions(new[] {
                 PowerAuraOption.Color(_ => ColorHelpers.CV4(SpawnedShip.meterDisplay)),
@@ -673,7 +673,7 @@ public partial class PlayerController : BehaviorEntity,
                 PowerAuraOption.Scale(_ => 5f),
                 PowerAuraOption.Static(), 
                 PowerAuraOption.High(), 
-            }), GenCtx.Empty, BPI.loc, Cancellable.Null, null!));
+            }), GenCtx.Empty, Location, Cancellable.Null, null!));
         GameManagement.Instance.BasicF.AddLives(-livesLost);
         ServiceLocator.FindOrNull<IRaiko>()?.Shake(1.5f, null, 0.9f);
         Invuln(HitInvulnFrames);

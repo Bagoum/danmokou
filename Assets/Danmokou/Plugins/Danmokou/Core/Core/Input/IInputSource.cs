@@ -39,6 +39,7 @@ public interface IInputSource {
     // but in a more generalized game, it may be necessary to support unification)
     bool ? DialogueConfirm => null;
     bool? DialogueSkipAll => null;
+    bool? LeftClick => null;
 
     /// <summary>
     /// Update all controls (called once per Unity frame).
@@ -73,8 +74,10 @@ public class NullInputSource : IInputSource {
     public bool? UIRight => false;
     public bool? UIUp => false;
     public bool? UIDown => false;
-    public bool ? DialogueConfirm => false;
+    public bool? DialogueConfirm => false;
     public bool? DialogueSkipAll => false;
+    public bool? LeftClick => false;
+    
     public bool OncePerUnityFrameToggleControls() {
         return false;
     }

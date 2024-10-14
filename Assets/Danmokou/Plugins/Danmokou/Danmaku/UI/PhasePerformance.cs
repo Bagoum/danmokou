@@ -23,9 +23,8 @@ public class PhasePerformance : PiecewiseAppear {
     public PhasePerformanceStar[] stars = null!;
     public override Bounds Bounds => background.sprite.bounds.MulBy(background.transform.lossyScale);
     public override Vector2 Center => background.transform.position;
-    public override (Texture, bool) Texture() => (ServiceLocator.Find<IScreenshotter>().Screenshot(
-        new CRect(background.transform, background.sprite.bounds),
-        new[] {DMKMainCamera.CamType.UI}), true);
+    public override (Texture, bool) Texture() => (ServiceLocator.Find<IScreenshotter>()
+        .Screenshot(new CRect(Center, Bounds), new[] {DMKMainCamera.CamType.UI}), true);
 
     public void Initialize(string description, PhaseCompletion pc) {
         if (pc.phase.Boss == null || pc.CaptureStars == null) {
@@ -35,9 +34,9 @@ public class PhasePerformance : PiecewiseAppear {
         descriptionText.text = description;
         performanceText.text = $"{pc.Performance} <size=3.6>({pc.ElapsedTime:F1}s)</size>";
         background.color = pc.phase.Boss.colors.uiColor;
-        Queue(new AppearRequest(AppearAction.APPEAR, 0.9f, () => 
+        Queue(new AppearRequest(Action.APPEAR, 0.9f, () => 
             RunDroppableRIEnumerator(ShowStars(pc.CaptureStars.Value, pc.phase.Boss.colors.uiHPColor, () =>
-                Queue(new AppearRequest(AppearAction.DISAPPEAR, 1f, () => Destroy(gameObject)))))));
+                Queue(new AppearRequest(Action.DISAPPEAR, 1f, () => Destroy(gameObject)))))));
     }
     
     public override void Hide() {
@@ -48,7 +47,7 @@ public class PhasePerformance : PiecewiseAppear {
         container.SetActive(true);
     }
 
-    private IEnumerator ShowStars(int score, Color color, Action cb) {
+    private IEnumerator ShowStars(int score, Color color, System.Action cb) {
         for (int ii = 0; ii < stars.Length; ++ii) {
             stars[ii].Show(ii < score ? color : (Color?) null);
             for (float t = 0; t < starShowDelay; t += ETime.FRAME_TIME)

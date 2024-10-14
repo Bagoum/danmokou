@@ -89,14 +89,13 @@ public class GenCtx : IDisposable {
     public ref V2RV2 RV2 => ref EnvFrame.Value<V2RV2>(GCXVars.rv2);
     public ref V2RV2 BaseRV2 => ref EnvFrame.Value<V2RV2>(GCXVars.brv2);
     public ref float SummonTime => ref EnvFrame.Value<float>(GCXVars.st);
-    public Vector2 Loc => exec.GlobalPosition();
     public uint? idOverride = null;
     /// <summary>
     /// Get a <see cref="ParametricInfo"/> with <see cref="idOverride"/> or the executing entity's ID
     ///  to use for <see cref="GCXF{T}"/> functions.
     /// </summary>
     [UsedImplicitly]
-    public ParametricInfo AsBPI => new(fctx, Loc, index, idOverride ?? exec.rBPI.id, i);
+    public ParametricInfo AsBPI => new(fctx, exec.Location, index, idOverride ?? exec.rBPI.id, i);
     private bool _isInCache = false;
 
     /*

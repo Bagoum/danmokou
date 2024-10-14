@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using BagoumLib;
 using UnityEngine;
 
@@ -59,6 +60,8 @@ public abstract record UIResult {
     public record SequentialResult(params UIResult[] results) : UIResult, IUnrollable<UIResult> {
         public IEnumerable<UIResult> Values => results;
     }
+
+    public record AfterTask(Func<Task<UIResult>> Delayed) : UIResult;
     
     public record Lazy(Func<UIResult> Delayed) : UIResult;
 

@@ -206,6 +206,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f975c3b7d1e4452fb8f027d21f5df966, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 5738943023965476947}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -309,6 +310,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7129938059944411000}
   - component: {fileID: 3112859572604580512}
+  - component: {fileID: 8975285640098955902}
   m_Layer: 17
   m_Name: Spell Circle
   m_TagString: Untagged
@@ -387,6 +389,18 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!210 &8975285640098955902
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 356711371632658184}
+  m_Enabled: 1
+  m_SortingLayerID: -247109493
+  m_SortingLayer: 4
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
 --- !u!1 &2449433742376059346
 GameObject:
   m_ObjectHideFlags: 0
@@ -526,11 +540,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: mokou
-  deathEffect: {fileID: 0}
-  cullableRadius:
-    cullable: 0
-    cullRadius: {fileID: 0}
-  displayer: {fileID: 5274603300772143566}
 --- !u!114 &2839687353931545650
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -543,6 +552,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b9be94bcb555ba4aac4864f75005f45, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 5738943023965476947}
   takesBossDamage: 1
   maxHP: 1000
   taiAtariRadius:
@@ -562,8 +572,7 @@ MonoBehaviour:
   healthbarSprite: {fileID: 564064160}
   cardCircle: {fileID: 6239955699839352181}
   spellCircle: {fileID: 3112859572604580512}
-  spellCircleText: {fileID: 6702499488466320482}
-  distorter: {fileID: 0}
+  spellCircleSortGroup: {fileID: 8975285640098955902}
   healthbarOpacity: 1
   nonspellColor:
     useConstant: 0

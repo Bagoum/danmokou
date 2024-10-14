@@ -79,7 +79,7 @@ public abstract class TiledRender {
     protected void Initialize(ITransformHandler locationer, TiledRenderCfg cfg, Material material, bool is_static,
         bool isPlayer) {
         locater = locationer;
-        parented = locater.HasParent();
+        parented = locater.Parented;
         isStatic = is_static;
         //material.enableInstancing = false; //Instancing doesn't work with this, and it has overhead, so disable it.
         render.sharedMaterial = material;

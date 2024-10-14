@@ -5,40 +5,68 @@ using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Graphics;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Danmokou.UI.XML {
+/// <summary>
+/// Settings for rerendering UITK into a sprite in world space.
+/// <br/>By default, this is configured to simply rerender to a sprite filling the entire UI camera.
+/// </summary>
+public record WorldSpaceUITKSettings(int RenderGroup) {
+    /// <summary>
+    /// The world quad describing the position of the UI (Defaults to the quad covered by the capturing camera).
+    /// </summary>
+    public WorldQuad? Quad { get; init; }
+    /// <summary>
+    /// The sorting layer for the sprite (Defaults to "UI").
+    /// </summary>
+    public string SortingLayerName { get; init; } = "UI";
+    /// <summary>
+    /// The sorting order for the sprite (Defaults to 1000).
+    /// </summary>
+    public int SortingOrder { get; init; } = 1000;
+    /// <summary>
+    /// The GameObject layer (which determines the capturing camera) of the sprite (Defaults to UI).
+    /// </summary>
+    public int Layer { get; init; } = LayerMask.NameToLayer("UI");
+    
+    public WorldSpaceUITKSettings(PanelSettings pane) : this(ServiceLocator.Find<UIBuilderRenderer>().GroupOf(pane)) { }
+}
+
 public class WorldSpaceUITK : CoroutineRegularUpdater, IOverrideRenderTarget {
-    public float Zoom => 1;
-    public Vector2 ZoomTarget => Vector2.zero;
-    public Vector2 Offset => Vector2.zero;
+    float IOverrideRenderTarget.Zoom => 1;
+    Vector2 IOverrideRenderTarget.ZoomTarget => Vector2.zero;
+    Vector2 IOverrideRenderTarget.Offset => Vector2.zero;
     public (CameraInfo, int)? AsWorldUI { get; private set; }
     public Vector2? TextureSizeMult { get; private set; }
+    //public float? ResolutionMult => 0.5f;
 
     private MeshRenderer mesh = null!;
     private MaterialPropertyBlock pb = null!;
-    private bool initialized = false;
     
     private void Awake() {
         mesh = GetComponent<MeshRenderer>();
-        mesh.sortingLayerName = "UI";
         mesh.GetPropertyBlock(pb = new());
     }
 
     private IDisposable? renderToken;
-    public void Initialize(CRect worldLoc, float worldZ, int group) {
+    public void Initialize(WorldSpaceUITKSettings settings) {
+        mesh.sortingLayerName = settings.SortingLayerName;
+        mesh.sortingOrder = settings.SortingOrder;
         var tr = transform;
-        tr.position = worldLoc.Center.WithZ(worldZ);
-        tr.localScale = new(worldLoc.halfW * 2, worldLoc.halfH * 2, 1);
-        TextureSizeMult = new(worldLoc.halfW / UIBuilderRenderer.UICamInfo.HorizRadius,
-                              worldLoc.halfH / UIBuilderRenderer.UICamInfo.VertRadius);
-        initialized = true;
-        var uiBuilder = ServiceLocator.Find<UIBuilderRenderer>();
-        var layerMask = 1 << gameObject.layer;
-        AsWorldUI = (CameraRenderer.FindCapturer(layerMask).Value.CamInfo, layerMask);
-        Listen(uiBuilder.RTGroups, rtg => {
+        var layerMask = 1 << (gameObject.layer = settings.Layer);
+        var capturer = CameraRenderer.FindCapturer(layerMask).Value.CamInfo;
+        AsWorldUI = (capturer, layerMask);
+        var quad = settings.Quad ?? new WorldQuad(capturer.Area.AsRect, 0, Quaternion.identity);
+        tr.position = quad.Center;
+        tr.localScale = new(quad.BaseRect.width, quad.BaseRect.height, 1);
+        tr.localEulerAngles = quad.Rotation.eulerAngles;
+        TextureSizeMult = new(quad.BaseRect.width / UIBuilderRenderer.UICamInfo.ScreenWidth,
+                              quad.BaseRect.height / UIBuilderRenderer.UICamInfo.ScreenHeight);
+        Listen(ServiceLocator.Find<UIBuilderRenderer>().RTGroups, rtg => {
             renderToken?.Dispose();
             renderToken = null;
-            if (rtg.TryGetValue(group, out var pane)) {
+            if (rtg.TryGetValue(settings.RenderGroup, out var pane)) {
                 mesh.enabled = true;
                 AddToken(renderToken = pane.Target.AddConst(this));
                 pb.SetTexture(PropConsts.mainTex, pane.TempTexture);

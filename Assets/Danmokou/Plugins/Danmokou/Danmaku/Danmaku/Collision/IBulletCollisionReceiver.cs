@@ -45,7 +45,7 @@ public interface ICircularPlayerBulletCollisionReceiver : IPlayerBulletCollision
     bool ReceivesBulletCollisions(string? style);
 
     CollisionResult IPlayerBulletCollisionReceiver.Process(Bullet bullet, PlayerBullet plb) {
-        if (ReceivesBulletCollisions(bullet.myStyle.style) &&
+        if (ReceivesBulletCollisions(bullet.Style.style) &&
             bullet.ComputeCircleCollision(Location, CollisionRadius, out var loc)) {
             TakeHit(bullet, loc, plb);
             return new(true, false);
@@ -77,7 +77,7 @@ public interface ICircularGrazableEnemyBulletCollisionReceiver: IEnemyBulletColl
     
     
     CollisionResult IEnemyBulletCollisionReceiver.Process(Bullet bullet) {
-        if (ReceivesBulletCollisions(bullet.myStyle.style)) {
+        if (ReceivesBulletCollisions(bullet.Style.style)) {
             var coll = bullet.ComputeGrazeCollision(Hurtbox, out var loc);
             if (coll.graze || coll.collide)
                 TakeHit(bullet, loc, coll);

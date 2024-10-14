@@ -190,7 +190,7 @@ public static class Compilers {
     [ExpressionBoundary]
     [Constable]
     public static VTP VTP(ExVTP ex) {
-        if (ex == VTPRepo.ExNoVTP) return new(VTPRepo.NoVTP);
+        if (ex == VTPRepo.ExNoVTP) return VTPRepo.NoVTP;
         return PrepareDelegate<VTP>(ex,
             new DelegateArg<Movement>("vtp_mov", true, true),
             new DelegateArg<float>("vtp_dt", true, true),

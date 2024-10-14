@@ -351,7 +351,7 @@ public class UINode {
         evtBinder.RegisterCallback<PointerLeaveEvent>(evt => {
             //Logs.Log($"Leave {Description()}");
             //For freeform groups ONLY, moving the cursor off a node should deselect it.
-            if (AllowInteraction && Group is UIFreeformGroup && Controller.Current == this)
+            if (AllowInteraction && Group is UIFreeformGroup { HasUnselector: true } && Controller.Current == this)
                 Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Back, this) { Silent = true });
             cursorToken?.Dispose();
             isInElement = false;
@@ -359,10 +359,11 @@ public class UINode {
         });
         evtBinder.RegisterCallback<PointerDownEvent>(evt => {
             //Logs.Log($"Down {Description()}");
-            if (AllowInteraction)
+            if (AllowInteraction && Controller.PlayerInputEnabled) {
                 foreach (var view in Views)
                     view.OnMouseDown(this, evt);
-            startedClickHere = true;
+                startedClickHere = true;
+            }
         });
         evtBinder.RegisterCallback<PointerUpEvent>(evt => {
             //Logs.Log($"Click {Description()}");
@@ -370,10 +371,10 @@ public class UINode {
             //Left is handled as confirm; Right is handled as context-menu. Both are dependent on the node
             // they are applied to.
             //Middle click can be rebound and is global.
-            if (AllowInteraction) {
+            if (AllowInteraction && isInElement && startedClickHere) {
                 //This event will not actually do anything unless the current node is this or null;
                 // see UIPointerCommand.ValidForCurrent
-                if (isInElement && startedClickHere && evt.button is 0 or 1) {
+                if (evt.button is 0 or 1) {
                     Controller.QueueInput(new UIPointerCommand.NormalCommand(
                         evt.button is 0 ? UICommand.Confirm : UICommand.ContextMenu, this) {
                         Loc = evt.position

@@ -21,12 +21,12 @@ public class ParticleDisplayController : DisplayController {
         defaultsLoaded = true;
     }
 
-    protected override void Awake() {
-        base.Awake();
+    public override void OnLinkOrResetValues(bool isLink) {
         LoadDefaults();
+        base.OnLinkOrResetValues(isLink);
     }
 
-    public override void UpdateStyle(BehaviorEntity.BEHStyleMetadata style) {
+    public override void StyleChanged(BehaviorEntity.BEHStyleMetadata style) {
         LoadDefaults(); //This may be called before Awake through BEH.Awake
         var m = particles.main;
         if (style.recolor?.palette != null && colorFromPalette >= 0) {
@@ -44,10 +44,6 @@ public class ParticleDisplayController : DisplayController {
 
     public override void Hide() {
         particles.Stop();
-    }
-
-    public override MaterialPropertyBlock CreatePB() {
-        return new();
     }
 }
 }

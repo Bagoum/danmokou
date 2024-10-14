@@ -38,6 +38,7 @@ public class MainCamera : CameraRenderer, IRenderGroupOutput {
     protected override void Awake() {
         base.Awake();
         singleton = this;
+        RecreateRT(RenderHelpers.PreferredResolution);
     }
 
     private void RecreateRT((int w, int h) res) {
@@ -50,7 +51,7 @@ public class MainCamera : CameraRenderer, IRenderGroupOutput {
     protected override void BindListeners() {
         base.BindListeners();
         RegisterService<IRenderGroupOutput>(this);
-        Listen(RenderHelpers.PreferredResolution, RecreateRT);
+        Listen(RenderHelpers.PreferredResolution.OnChange, RecreateRT);
         Listen(IGraphicsSettings.SettingsEv, ReassignGlobalShaderVariables);
     }
 

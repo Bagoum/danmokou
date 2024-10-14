@@ -1,30 +1,38 @@
 ﻿using System;
 using BagoumLib.Cancellation;
+using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.DMath;
 using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Danmokou.Behavior.Display {
-public class GroupDisplayController : DisplayController {
+
+public interface IMultiDisplayController {
+    BehaviorEntity Beh { get; }
+}
+
+public class GroupDisplayController : DisplayController, IMultiDisplayController {
     public DisplayController recvSprite = null!;
     public DisplayController[] all = null!;
 
-    public override void LinkAndReset(BehaviorEntity parent) {
-        base.LinkAndReset(parent);
-        for (int ii = 0; ii < all.Length; ++ii) all[ii].LinkAndReset(parent);
+    protected override void Awake() {
+        foreach (var controller in all)
+            controller.IsPartOf(this);
+        base.Awake();
     }
 
-    public override MaterialPropertyBlock CreatePB() {
-        return new();
+    public override void OnLinkOrResetValues(bool isLink) {
+        base.OnLinkOrResetValues(isLink);
+        for (int ii = 0; ii < all.Length; ++ii) all[ii].OnLinkOrResetValues(isLink);
     }
 
     public override void SetMaterial(Material mat) {
         recvSprite.SetMaterial(mat);
     }
 
-    public override void UpdateStyle(BehaviorEntity.BEHStyleMetadata style) {
-        for (int ii = 0; ii < all.Length; ++ii) all[ii].UpdateStyle(style);
+    public override void StyleChanged(BehaviorEntity.BEHStyleMetadata style) {
+        for (int ii = 0; ii < all.Length; ++ii) all[ii].StyleChanged(style);
     }
 
     public override void Show() {
@@ -40,9 +48,9 @@ public class GroupDisplayController : DisplayController {
 
     public override void SetProperty(int id, float val) => recvSprite.SetProperty(id, val);
 
-    public override void UpdateRender(bool isFirstFrame) {
-        base.UpdateRender(isFirstFrame);
-        for (int ii = 0; ii < all.Length; ++ii) all[ii].UpdateRender(isFirstFrame);
+    public override void OnRender(bool isFirstFrame, Vector2 lastDesiredDelta) {
+        base.OnRender(isFirstFrame, lastDesiredDelta);
+        for (int ii = 0; ii < all.Length; ++ii) all[ii].OnRender(isFirstFrame, lastDesiredDelta);
     }
 
     public override void FaceInDirection(Vector2 delta) {
@@ -59,5 +67,11 @@ public class GroupDisplayController : DisplayController {
 
     public override void Animate(AnimationType typ, bool loop, Action? done) =>
         recvSprite.Animate(typ, loop, done);
+
+    public override void Culled(bool allowFinalize, Action done) {
+        foreach (var c in all)
+            c.Culled(allowFinalize, c == recvSprite ? done : WaitingUtils.NoOp);
+        base.Culled(allowFinalize, WaitingUtils.NoOp);
+    }
 }
 }

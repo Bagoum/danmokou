@@ -12,6 +12,8 @@ public class Pather : FrameAnimBullet {
     public PatherRenderCfg config = null!;
     private CurvedTileRenderPather ctr = null!;
 
+    public override Vector2 Location => ctr.GlobalPosition;
+
     protected override void Awake() {
         ctr = new CurvedTileRenderPather(config, gameObject);
         ctr.SetCameraCullable(InvokeCull);
@@ -29,15 +31,18 @@ public class Pather : FrameAnimBullet {
         ctr.Activate(); //This invokes UpdateMesh
     }
 
-    public override Vector2 GlobalPosition() => ctr.GlobalPosition;
-
     public override void RegularUpdateParallel() {
         if (nextUpdateAllowed) ctr.UpdateMovement(ETime.FRAME_TIME);
     }
     public override bool HasNontrivialParallelUpdate => true;
     
     protected override void RegularUpdateMove() { }
-    protected override bool RegularUpdateCullCheck() => base.RegularUpdateCullCheck() || ctr.CullCheck();
+
+    public override void RegularUpdate() {
+        base.RegularUpdate();
+        if (!Dying)
+            ctr.CullCheck();
+    }
 
     public override void RegularUpdateCollision() {
             ctr.DoRegularUpdateCollision(collisionActive);
@@ -53,10 +58,9 @@ public class Pather : FrameAnimBullet {
         ctr.SetSprite(s, yscale);
     }
 
-    public override void InvokeCull() {
-        if (dying) return;
+    protected override void CullHook(bool allowFinalize) {
         ctr.Deactivate();
-        base.InvokeCull();
+        base.CullHook(allowFinalize);
     }
 
     public static void Request(BEHStyleMetadata style, in Movement mov, ParametricInfo pi, float maxRemember, BPY remember, ref RealizedBehOptions opts) {

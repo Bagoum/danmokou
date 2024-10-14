@@ -19,22 +19,22 @@ public class PowerAura : SpriteDisplayController {
         options = opts;
         ISFXService.SFXService.Request(options.sfx);
         sprite.color = new Color(0, 0, 0, 0);
-        gameObject.layer = opts.layer ?? beh.DefaultLayer;
+        gameObject.layer = opts.layer ?? Beh.DefaultLayer;
         pb.SetFloat(PropConsts.speed, opts.iterations / opts.totalTime);
-        beh.rBPI.t = opts.initialTime;
+        Beh.rBPI.t = opts.initialTime;
     }
 
-    public override void UpdateRender(bool isFirstFrame) {
-        sprite.color = ColorHelpers.V4C(options.color(beh.rBPI));
-        base.UpdateRender(isFirstFrame);
+    public override void OnRender(bool isFirstFrame, Vector2 lastDesiredDelta) {
+        sprite.color = ColorHelpers.V4C(options.color(Beh.rBPI));
+        base.OnRender(isFirstFrame, lastDesiredDelta);
         if (options.cT.Cancelled) {
             InvokeCull();
-        } else if (beh.rBPI.t > options.totalTime) {
+        } else if (Beh.rBPI.t > options.totalTime) {
             options.continuation?.Invoke();
             InvokeCull();
         }
     }
 
-    public void InvokeCull() => beh.InvokeCull();
+    public void InvokeCull() => Beh.InvokeCull();
 }
 }

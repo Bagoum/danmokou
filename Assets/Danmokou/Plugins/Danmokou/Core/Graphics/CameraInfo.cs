@@ -81,6 +81,16 @@ public class CameraInfo {
         var t = (worldZ - ray.origin.z) / ray.direction.z;
         return ray.origin + ray.direction * t;
     }
+    
+    //NB: Camera's inbuilt ScreenToViewportPoint and ScreenPointToRay use screen coordinates in pixels.
+    //Functions below use screen coordinates in x:[0,1], y:[0,1].
+
+    public Vector2 ScreenToViewport(Vector2 screenPos) {
+        var r = Camera.rect;
+        return (screenPos - r.min).PtDiv(r.size);
+    }
+
+    public Ray ScreenPointToRay(Vector2 screenPos) => Camera.ViewportPointToRay(ScreenToViewport(screenPos));
 }
 
 }

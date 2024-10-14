@@ -33,8 +33,6 @@ public static partial class Reflector {
     [PublicAPI]
     //Used by language server to avoid failure on lstring parsing
     public static bool SOFT_FAIL_ON_UNMATCHED_LSTRING = false;
-    
-    public static readonly StateMachine WaitForPhaseSM = SMReflection.Wait(Synchronization.Time(_ => M.IntFloatMax));
 
     private static IAST<StateMachine?> ReflectSM(IParseQueue q) {
         var (method, pos) = q.ScanUnit(out _);
@@ -47,7 +45,7 @@ public static partial class Reflector {
             return new AST.Preconstructed<StateMachine?>(pos, null);
         } else if (method == "stall") {
             q.Advance();
-            return new AST.Preconstructed<StateMachine?>(pos, WaitForPhaseSM);
+            return new AST.Preconstructed<StateMachine?>(pos, HelperStateMachines.Stall());
         } else {
             var nested = q.NextChild();
             try {

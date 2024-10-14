@@ -403,7 +403,7 @@ public partial class BulletManager : RegularUpdater {
                         }
                     }
                     
-                    Colorize(x.name, sbes.spriteSheet, 0);
+                    Colorize(x.Name, sbes.spriteSheet, 0);
                     foreach (var form in sbes.identicalForms) {
                         Colorize(form.name, form.sprite, form.renderOffset);
                     }
@@ -411,9 +411,9 @@ public partial class BulletManager : RegularUpdater {
                     foreach (var color in sbes.spriteSpecificGradients) {
                         if (color.gradient != null) {
                             var g = color.gradient;
-                            CreateN($"{x.name}-{color.color}".ToLower(), extras_offset_outer++, () => g.Recolor(color.sprite, sbes.renderMode));
+                            CreateN($"{x.Name}-{color.color}".ToLower(), extras_offset_outer++, () => g.Recolor(color.sprite, sbes.renderMode));
                         } else {
-                            CreateN($"{x.name}-{color.color}".ToLower(), extras_offset_outer++, () => color.sprite);
+                            CreateN($"{x.Name}-{color.color}".ToLower(), extras_offset_outer++, () => color.sprite);
                         }
                     }
 
@@ -423,7 +423,7 @@ public partial class BulletManager : RegularUpdater {
                     colors.AssertValidity();
                     if (!colors.Any && fa.gradients.Length == 0) {
                         //No recoloring. Untested
-                        AddComplexStyle(new DeferredFramesRecoloring(x.prefab, fa, 0, "", x.name, null, false));
+                        AddComplexStyle(new DeferredFramesRecoloring(x.prefab, fa, 0, "", x.Name, null, false));
                         continue; 
                     }
                     Func<Sprite, Sprite> ColorizeSprite(Palette p, GradientModifier gt) => s => throwaway_gm.Recolor(p.Gradient, gt, fa.renderMode, s);
@@ -431,7 +431,7 @@ public partial class BulletManager : RegularUpdater {
                         var p = basicGradientPalettes[ii];
                         void CreateF(string suffix, int offset, GradientModifier mod) {
                             var variant = $"{p.colorName}{suffix}";
-                            var style = $"{x.name}-{variant}";
+                            var style = $"{x.Name}-{variant}";
                             AddComplexStyle(new DeferredFramesRecoloring(x.prefab, fa, ii + offset * nPalettes, 
                                 variant, style, ColorizeSprite(p, mod), p.recolorizable, p));
                         }
@@ -453,7 +453,7 @@ public partial class BulletManager : RegularUpdater {
                                 var b = basicGradientPalettes[jj];
                                 void Create2F(string suffix, int offset, Func<Sprite, Sprite> recolorer) {
                                     var variant = $"{r.Name};{b.Name}{suffix}";
-                                    var style = $"{x.name}-{variant}";
+                                    var style = $"{x.Name}-{variant}";
                                     AddComplexStyle(new DeferredFramesRecoloring(x.prefab, fa, ii + offset * nPalettes, 
                                         variant, style, recolorer, p.recolorizable, p));
                                 }
@@ -472,7 +472,7 @@ public partial class BulletManager : RegularUpdater {
                     //Manual color variants
                     int extras_offset = 3 * nPalettes;
                     foreach (var color in fa.gradients) {
-                        string style = $"{x.name}-{color.name}";
+                        string style = $"{x.Name}-{color.name}";
                         AddComplexStyle(new DeferredFramesRecoloring(x.prefab, fa, extras_offset++, color.name, 
                             style, s => color.gradient.Recolor(s, fa.renderMode), false));
                     }

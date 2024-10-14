@@ -46,6 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd3e768eb00f4f728c46451d230bb67d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 2
     InVelocityDirection:
@@ -131,6 +132,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -178,6 +180,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f975c3b7d1e4452fb8f027d21f5df966, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 2
     InVelocityDirection:
@@ -283,6 +286,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -331,6 +335,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -413,6 +418,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -460,6 +466,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -899,6 +906,18 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 3730969007194085674}
   m_SourcePrefab: {fileID: 100100000, guid: 4f67648ec56d30044b03a5959e19a4e0, type: 3}
+--- !u!114 &2884352696324497620 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5693660460388628107, guid: 4f67648ec56d30044b03a5959e19a4e0,
+    type: 3}
+  m_PrefabInstance: {fileID: 7423257627619628639}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 245093e367578004ca35cd58a68862c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6824231656817080970 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4156892766488800469, guid: 4f67648ec56d30044b03a5959e19a4e0,
@@ -917,6 +936,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd3e768eb00f4f728c46451d230bb67d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 2884352696324497620}
   rotationMethod:
     type: 2
     InVelocityDirection:

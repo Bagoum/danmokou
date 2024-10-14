@@ -190,6 +190,7 @@ public readonly struct SMRunner {
     /// </summary>
     public static SMRunner? Cull(StateMachine? sm, ICancellee cT, GenCtx? gcx=null) =>
         sm != null ? new(sm, cT, true, false, gcx) : null;
+    
     /// <summary>
     /// Run the SM and then destroy the executing object.
     /// <br/>Also, any nested summons will be bounded by <see cref="cT"/>.
@@ -212,7 +213,7 @@ public readonly struct SMRunner {
     /// See <see cref="RunRoot(Danmokou.SM.StateMachine,BagoumLib.Cancellation.ICancellee)"/>.
     /// </summary>
     public static SMRunner RunRoot(TextAsset sm, ICancellee cT) => RunRoot(StateMachineManager.FFromText(sm), cT);
-    public SMRunner(StateMachine sm, ICancellee cT, bool cullOnFinish, bool root, GenCtx? gcx) {
+    private SMRunner(StateMachine sm, ICancellee cT, bool cullOnFinish, bool root, GenCtx? gcx) {
         this.sm = sm;
         this.cT = cT;
         this.cullOnFinish = cullOnFinish;

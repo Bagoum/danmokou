@@ -203,8 +203,8 @@ public readonly struct SMHandoff : IDisposable {
     }
 
     public void SetAllVulnerable(IReadOnlyList<Enemy> subbosses, Vulnerability v) {
-        if (Exec.isEnemy)
-            Exec.Enemy.SetVulnerable(v);
+        if (Exec.TryDependent<Enemy>(out var enemy))
+            enemy.SetVulnerable(v);
         for (int ii = 0; ii < subbosses.Count; ++ii) {
             subbosses[ii].SetVulnerable(v);
         }

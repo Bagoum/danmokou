@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1629245834751830706}
   - component: {fileID: 8652161057874992166}
   - component: {fileID: 7855314105782740711}
+  - component: {fileID: -2738145900401783834}
   m_Layer: 19
   m_Name: WindmillSpikes
   m_TagString: Untagged
@@ -49,11 +50,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 1
     cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}
-  displayer: {fileID: 30133709337530928}
 --- !u!114 &8652161057874992166
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -113,6 +112,21 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.2, y: 2.5}
   m_EdgeRadius: 0
+--- !u!114 &-2738145900401783834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 96228872570543763}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9bd6d08a6f547c787ab9c1f954a37ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  beh: {fileID: 1629245834751830706}
+  cullable: 1
+  cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}
 --- !u!1 &3999491741525445686
 GameObject:
   m_ObjectHideFlags: 0
@@ -165,6 +179,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -212,7 +227,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f975c3b7d1e4452fb8f027d21f5df966, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationMethod: 0
+  <Beh>k__BackingField: {fileID: 1629245834751830706}
+  rotationMethod:
+    type: 0
+    InVelocityDirection:
+      offset: 0
+    LeanByVelocity:
+      xAxis: 1
+      multiplier: 8
+      rotationOffset: 0
+      rotationLimit: {x: -30, y: 30}
   yPosBopPeriod:
     useConstant: 1
     constVal: 0

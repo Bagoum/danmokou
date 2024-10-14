@@ -66,7 +66,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private int maxCollisionLength;
     private bool nonpiercing;
     public float LastActiveTime { get; private set; }
-    public string? Style => Laser.myStyle.style;
+    public string? Style => Laser.Style.style;
     
     private AABB bounds;
 
@@ -94,7 +94,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         base.Initialize(_laser, cfg, material, isNew, options.isStatic, playerBullet != null, newTexW); //doesn't do any mesh generation, safe to call first
         path = options.lpath;
         bpi = pi;
-        bpi.loc = locater.GlobalPosition();
+        bpi.loc = locater.Location;
         maxCollisionLength = centers.Length;
         nonpiercing = options.nonpiercing;
         hueShift = options.hueShift;
@@ -146,7 +146,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 
 
     public override void UpdateMovement(float dT) {
-        bpi.loc = locater.GlobalPosition();
+        bpi.loc = locater.Location;
         UpdateRotation();
         base.UpdateMovement(dT);
     }
@@ -370,7 +370,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         Laser.IsColliding = false;
         if (!collisionActive)
             goto finalize;
-        var loc = locater.GlobalPosition();
+        var loc = locater.Location;
         float rot = BMath.degRad * (parented ? tr.eulerAngles.z : simpleEulerRotation.z);
         float cos = (float)Math.Cos(rot);
         float sin = (float)Math.Sin(rot);
@@ -383,7 +383,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                     if (collidees.GetIfExistsAt(ic, out var receiver) &&
                         receiver.Process(this, plb, loc, cos, sin, out var segment).collide) {
                         Laser.IsColliding = true;
-                        Laser.myStyle.IterateCollideControls(Laser);
+                        Laser.Style.IterateCollideControls(Laser);
                         //Don't modify nonpiercing, so that the collision check is the same for all enemies
                         //segment+1 since segment is inclusive, but collLength is exclusive
                         smallestCollisionLength = Math.Min(smallestCollisionLength, segment + 1);
@@ -409,7 +409,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                             receiver.ProcessActual(this, loc, cos, sin, coll, collLoc);
                             if (coll.collide) {
                                 Laser.IsColliding = true;
-                                Laser.myStyle.IterateCollideControls(Laser);
+                                Laser.Style.IterateCollideControls(Laser);
                                 smallestCollisionLength = Math.Min(smallestCollisionLength, segment + 1);
                             }
                         }
@@ -418,7 +418,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
                 if (nonpiercing) {
                     if (smallestReceiver != null) {
                         Laser.IsColliding = true;
-                        Laser.myStyle.IterateCollideControls(Laser);
+                        Laser.Style.IterateCollideControls(Laser);
                     }
                     for (int ii = 0; ii < npReceivers!.Count; ++ii) {
                         var (recv, coll, segment, collLoc) = npReceivers[ii];
@@ -476,7 +476,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     public override void Activate() {
         UpdateGraphics();
         base.Activate();
-        bpi.loc = locater.GlobalPosition();
+        bpi.loc = locater.Location;
         UpdateRotation();
         requiresTrRotUpdate = true;
         ReassignTransform();
@@ -484,7 +484,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     
     public void SpawnSimple(string style) {
         int skip = Mathf.CeilToInt(0.5f / updateStagger);
-        Vector2 basePos = locater.GlobalPosition();
+        Vector2 basePos = locater.Location;
         for (int ii = centers.Length - 1; ii > 0; ii -= skip) {
             BulletManager.RequestNullSimple(style, M.RotateVectorDeg(centers[ii], simpleEulerRotation.z) + basePos, 
                     M.RotateVectorDeg((centers[ii] - centers[ii-1]).normalized, simpleEulerRotation.z));
@@ -508,7 +508,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 #if UNITY_EDITOR
     public unsafe void Draw() {
         Handles.color = Color.cyan;
-        Vector3 rp = locater.GlobalPosition();
+        Vector3 rp = locater.Location;
         GenericColliderInfo.DrawGizmosForSegments(centers, 0, 1, centers.Length, rp, scaledLineRadius, 0);
         
         Handles.color = Color.red;
@@ -705,7 +705,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cLaserControl SM(LPred cond, SM.StateMachine sm) => new((b, cT) => {
             if (cond(b.bpi, b.lifetime)) {
-                var mov = new Movement(b.bpi.loc, V2RV2.Angle(b.Laser.original_angle));
+                var mov = new Movement(b.bpi.loc, V2RV2.Angle(b.Laser.OriginalAngle));
                 using var gcx = b.bpi.ctx.RevertToGCX(sm.Scope, b.Laser);
                 _ = BEHPooler.INode(mov, new ParametricInfo(in mov, b.bpi.index), b.nextTrueDelta, "l-pool-triggered")
                     .RunExternalSM(SMRunner.Cull(sm, cT, gcx));

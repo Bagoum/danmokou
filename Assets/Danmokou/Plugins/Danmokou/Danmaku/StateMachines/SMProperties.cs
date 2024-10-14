@@ -447,16 +447,16 @@ public class PhaseProperties {
     private readonly string? autocullBehTarget = "cwheel";
 
     public SoftcullProperties SoftcullProps(BehaviorEntity exec) =>
-        new(exec.GlobalPosition(), 0.4f, 0.5f, 4f) {
+        new(exec.Location, 0.4f, 0.5f, 4f) {
             //SendBWToColor = true //superfluous
         };
     //TODO get a better BEH cull animation than cwheel
     public SoftcullProperties SoftcullPropsBeh(BehaviorEntity exec) =>
-        new(exec.GlobalPosition(), 0.4f, 0.5f, 4f, autocullBehTarget) {
+        new(exec.Location, 0.4f, 0.5f, 4f, autocullBehTarget) {
             SendBWToColor = true
         };
     public SoftcullProperties SoftcullPropsOverTime(BehaviorEntity exec, float advance) =>
-        new(exec.GlobalPosition(), advance, 0.5f, 8f) {
+        new(exec.Location, advance, 0.5f, 8f) {
             //SendBWToColor = true //superfluous
             UseFlakeItems = true
         };

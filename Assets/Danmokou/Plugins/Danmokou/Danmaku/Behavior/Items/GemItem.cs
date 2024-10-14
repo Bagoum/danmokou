@@ -20,8 +20,8 @@ public class GemItem : Item {
         base.CollectMe(collector);
     }
 
-    protected override void ResetValues() {
-        base.ResetValues();
+    protected override void ResetValues(bool isFirst) {
+        base.ResetValues(isFirst);
         t = 0;
         sr.sprite = sprites[currSprite = 0];
     }

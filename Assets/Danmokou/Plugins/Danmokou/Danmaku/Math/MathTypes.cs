@@ -77,6 +77,11 @@ public class PIData {
         firer != null ? firer : 
             throw new Exception("PICustomData is not a bullet or a GenCtx proxy, " +
                                 $"and therefore does not have a {nameof(Firer)}.");
+
+    public Enemy? enemyFirer; //For NPC bullets
+    public Enemy EnemyFirer => 
+        enemyFirer != null ? enemyFirer : 
+            throw new Exception("PICustomData does not have a firing enemy set.");
     
     public PlayerController? playerController; //For player bullets
     [UsedImplicitly]
@@ -263,6 +268,8 @@ public class PIData {
         };
         if (playerController == null)
             playerController = gcx?.playerController;
+        if (firer != null && firer.TryDependent<Enemy>(out var e))
+            enemyFirer = e;
     }
     
     /// <summary>

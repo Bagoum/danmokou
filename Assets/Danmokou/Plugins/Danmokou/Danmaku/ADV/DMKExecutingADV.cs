@@ -95,8 +95,6 @@ public abstract class DMKExecutingADV<I, D> : BaseExecutingADV<I, D>, IRegularUp
         dialogueShowOffset.Push(new(0f, -0.5f, 0));
         dialogueShowAlpha.Push(new FColor(1, 1, 1, 0));
         Md.Active.Value = false;
-        var lh = (Md.Mimic as DMKADVDialogueBoxMimic)?.LinkHandler;
-        if (lh != null) lh.ClearTooltips();
     }
     protected void ShowMD() {
         dialogueShowOffset.Push(new(0,0,0));

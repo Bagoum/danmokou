@@ -15,7 +15,6 @@ public class CoroutineRegularUpdater : RegularUpdater, ICoroutineRunner {
         if (coroutines.Count > 0) {
             Logs.UnityError($"{this.GetType().Name} ({gameObject.name}) has {coroutines.Count} leftover coroutines." +
                            $" This should only occur on hard shutdowns.");
-            //coroutines.Close(); //For debugging
         }
     }
 

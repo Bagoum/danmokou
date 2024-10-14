@@ -23,7 +23,6 @@ public class LevelController : BehaviorEntity {
     public StageConfig? wip_stage;
     private string? _DefaultSuicideStyle => stage?.DefaultSuicideStyle;
     public static string? DefaultSuicideStyle { get; private set; }
-    public override bool TriggersUITimeout => true;
 
     /// <inheritdoc cref="LevelRunRequest.Method"/>
     public enum LevelRunMethod {

@@ -129,7 +129,7 @@ public class DMKMainCamera : MainCamera, IScreenshotter {
         ayaMaterial.SetFloat(PropConsts.ScaleY, ysr);
         ayaMaterial.SetFloat(PropConsts.Angle, r.angle * BMath.degRad);
         var originalRT = RenderTexture.active;
-        var overrideRT = RenderHelpers.DefaultTempRT();
+        var overrideRT = RenderHelpers.CloneRTFormat(MainCamera.RenderTo);
         MainCamera.TmpOverrideRenderTo = overrideRT;
         //Clear is required since the camera list may not contain BackgroundCamera,
         // which is the only one that clears

@@ -8,6 +8,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 35604859634650494, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: deathEffect
+      value: 
+      objectReference: {fileID: 11400000, guid: ded93beba55022a439308cf37b13d360,
+        type: 2}
+    - target: {fileID: 1062581215778985920, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
+        type: 3}
+      propertyPath: deathEffect
+      value: 
+      objectReference: {fileID: 11400000, guid: ded93beba55022a439308cf37b13d360,
+        type: 2}
     - target: {fileID: 1062581215778985920, guid: 7bf25ad8ebe4c9e47a4772d43415315d,
         type: 3}
       propertyPath: healthbarOpacity

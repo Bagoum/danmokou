@@ -122,15 +122,6 @@ public class PSpriteDrawer : PairedPropertyDrawer {
     protected override string arg2 => "sprite";
 }
 
-[CustomPropertyDrawer(typeof(BehaviorEntity.CullableRadius))]
-public class CullRadDrawer : PairedPropertyDrawer {
-    protected override string arg1 => "cullable";
-
-    protected override string arg2 => "cullRadius";
-    protected override float w1 => 0.2f;
-    protected override float w2 => 0.8f;
-    protected override bool showName => true;
-}
 [CustomPropertyDrawer(typeof(OrdinalShot))]
 public class OrdinalShotDrawer : PairedPropertyDrawer {
     protected override string arg1 => "ordinal";

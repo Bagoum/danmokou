@@ -94,6 +94,7 @@ public class ADVInstanceRequest : IADVInstanceRequest {
         var inst = new ADVInstance(this, vn, Tracker);
         using var exec = Game.Setup(inst);
         Manager.SetupInstance(exec);
+        using var _ = GameManagement.ReturnToMainMenuCancellation.Subscribe(_ => inst.Cancel());
         var result = await exec.Run();
         Logs.Log($"ADV execution for {Game.Key} is complete with result {result}");
         return (result, inst);

@@ -3,6 +3,7 @@ using System.Collections;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using BagoumLib;
 using BagoumLib.Culture;
 using Danmokou.Core;
 using Danmokou.DMath;
@@ -34,7 +35,7 @@ public class AudioTrack : ScriptableObject, IAudioTrackInfo {
     public AudioTrackLoopMode Loop => loopMode;
     public Vector2 LoopSeconds => loopSeconds;
     public float StartTime => startWithTime;
-    public string Title => title.Or(key) ?? "";
+    public string Title => title.Or(key);
     public string TrackPlayLocation => trackPlayLocation;
 
     public LString MusicRoomDescription => musicRoomDescription.MaybeValue ?? ("No description");

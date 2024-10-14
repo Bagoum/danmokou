@@ -72,7 +72,8 @@ public interface IDescriptiveInputSource : IInputSource {
     bool? IInputSource.UIContextMenu => uiContextMenu.Active;
     IInputHandler? dialogueSkipAll { get; }
     bool? IInputSource.DialogueSkipAll => dialogueSkipAll?.Active;
-
+    IInputHandler? leftClick { get; }
+    bool? IInputSource.LeftClick => leftClick?.Active;
 }
 
 /// <summary>
@@ -84,7 +85,8 @@ public interface IKeyedInputSource : IDescriptiveInputSource, IInputHandlerInput
         Handlers.AddRange(new[] {
                 arrowLeft, arrowRight, arrowUp, arrowDown,
                 focusHold, fireHold, bomb, meter, swap, fly, slowFall,
-                pause, vnBacklogPause, uiConfirm, uiBack, uiContextMenu, dialogueSkipAll
+                pause, vnBacklogPause, uiConfirm, uiBack, uiContextMenu, dialogueSkipAll,
+                leftClick
             }.FilterNone()
         );
     }

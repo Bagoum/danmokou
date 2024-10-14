@@ -71,14 +71,13 @@ public class Laser : FrameAnimBullet {
         ctr.SetLifetime(t);
     }
 
-    public override void InvokeCull() {
-        if (dying) return;
+    protected override void CullHook(bool allowFinalize) {
         ctr.Deactivate();
         if (endpt.exists) {
-            endpt.beh!.InvokeCull();
+            endpt.beh!.CullMe(allowFinalize);
             endpt = new PointContainer(null);
         }
-        base.InvokeCull();
+        base.CullHook(allowFinalize);
     }
 
     public static void Request(BEHStyleMetadata style, BehaviorEntity? parent, in Movement vel, ParametricInfo pi, 

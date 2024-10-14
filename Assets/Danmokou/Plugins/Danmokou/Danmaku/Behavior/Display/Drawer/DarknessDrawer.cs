@@ -17,11 +17,11 @@ public class DarknessDrawer : SpriteDisplayController {
         pb.SetFloat(PropConsts.ScaleX, sprite.transform.lossyScale.x);
     }
 
-    public override void UpdateRender(bool isFirstFrame) {
+    public override void OnRender(bool isFirstFrame, Vector2 lastDesiredDelta) {
         sprite.color = color(BPI);
         tr.localPosition = locate(BPI);
         pb.SetFloat(PropConsts.radius, scale(BPI));
-        base.UpdateRender(isFirstFrame);
+        base.OnRender(isFirstFrame, lastDesiredDelta);
     }
 }
 }

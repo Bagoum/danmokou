@@ -91,19 +91,16 @@ public static class FragmentRendering {
         private readonly Vector2 xBounds = new(-14, 14);
         private readonly Vector2 yBounds = new(-10, 10);
         public readonly int layer;
-        public readonly int layerMask;
         private readonly float? aliveFor;
         private float time;
 
-        public FragmentRenderInstance(FragmentConfig config, IEnumerable<Fragment> fragments, string? layerName, 
+        public FragmentRenderInstance(FragmentConfig config, IEnumerable<Fragment> fragments, int? layer, 
             Texture tex, Action? cb, Vector2? texSize=null, float? aliveFor=null) {
             this.config = config;
             this.fragments = fragments.ToArray();
             if (this.fragments.Length == 0)
                 throw new Exception("Cannot setup FragmentRenderInstance with 0 fragments");
-            layerName ??= "LowDirectRender";
-            layer = LayerMask.NameToLayer(layerName);
-            layerMask = LayerMask.GetMask(layerName);
+            this.layer = layer ?? LayerMask.NameToLayer("LowDirectRender");
             pb = new MaterialPropertyBlock();
             pb.SetTexture(PropConsts.mainTex, tex);
             pb.SetFloat(PropConsts.FragmentDiameter, config.FragmentDiameter);
@@ -147,7 +144,7 @@ public static class FragmentRendering {
 
     public static void Render(Camera c, FragmentRenderInstance? inst) {
         if (inst == null || inst.fragments.Length == 0) return;
-        if ((c.cullingMask & inst.layerMask) == 0) return;
+        if ((c.cullingMask & (1 << inst.layer)) == 0) return;
         var instanceCount = inst.fragments.Length;
         for (int done = 0; done < instanceCount; done += batchSize) {
             int run = Math.Min(instanceCount - done, batchSize);

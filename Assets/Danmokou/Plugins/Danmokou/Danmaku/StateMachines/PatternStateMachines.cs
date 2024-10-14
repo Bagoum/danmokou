@@ -72,7 +72,7 @@ public class PatternSM : SequentialSM, EnvFrameAttacher {
                 target.Initialize(null, in mov, new ParametricInfo(in mov), null);
                 subsummons.Add(target);
             }
-            if (target.TryAsEnemy(out var e)) {
+            if (target.TryDependent<Enemy>(out var e)) {
                 if (i > 0) {
                     e.DisallowDistortion(); 
                     //Overlapping distortion effects cause artifacting even with proper sprite ordering since
@@ -85,7 +85,7 @@ public class PatternSM : SequentialSM, EnvFrameAttacher {
             string trackerName = b.BottomTrackerName;
             if (trackerName.Length > 0) ui?.TrackBEH(target, trackerName, smh.cT);
         }
-        smh.Exec.Enemy.Subbosses = subbosses;
+        smh.Exec.Dependent<Enemy>().Subbosses = subbosses;
         return (subbosses, subsummons);
     }
 
@@ -98,7 +98,7 @@ public class PatternSM : SequentialSM, EnvFrameAttacher {
         var ui = ServiceLocator.FindOrNull<IUIManager>();
         if (Props.boss != null) {
             GameManagement.Instance.SetCurrentBoss(Props.boss, jsmh.Exec, jsmh.cT);
-            ui?.SetBossHPLoader(jsmh.Exec.Enemy);
+            ui?.SetBossHPLoader(jsmh.Exec.Dependent<Enemy>());
             (subbosses, subsummons) = ConfigureAllBosses(ui, jsmh, Props.boss, Props.bosses);
         }
         bool firstBoss = true;
@@ -221,6 +221,9 @@ public class PhaseSM : SequentialSM {
             _PrepareBackgroundGraphics(ctx, bgo);
         }
     }
+
+    private bool ShowUITimeoutForExec(BehaviorEntity beh) => beh is BossBEH or LevelController;
+    
     private void PreparePhase(PhaseContext ctx, IUIManager? ui, SMHandoff smh, IReadOnlyList<Enemy> subbosses, 
         out Task cutins, IBackgroundOrchestrator? bgo) {
         cutins = Task.CompletedTask;
@@ -239,16 +242,16 @@ public class PhaseSM : SequentialSM {
                 null;
             ui?.SetSpellname(props.cardTitle?.ToString(), rate);
         } 
-        if (smh.Exec.TriggersUITimeout) 
+        if (ShowUITimeoutForExec(smh.Exec)) 
             ui?.ShowStaticTimeout(props.HideTimeout ? 0 : Timeout(ctx.Boss));
-        if (smh.Exec.isEnemy) {
+        if (smh.Exec.TryDependent<Enemy>(out var enemy)) {
             if (props.photoHP.Try(out var photoHP)) {
-                smh.Exec.Enemy.SetPhotoHP(photoHP, photoHP);
+                enemy.SetPhotoHP(photoHP, photoHP);
             } else if ((props.hp ?? props.phaseType?.DefaultHP()).Try(out var hp)) {
                 if (ctx.Boss != null) hp = (int) (hp * GameManagement.Difficulty.bossHPMod);
-                smh.Exec.Enemy.SetHP(hp, hp);
+                enemy.SetHP(hp, hp);
             }
-            smh.Exec.Enemy.SetHPBar(props.hpbar ?? props.phaseType?.HPBarLength(), props.phaseType);
+            enemy.SetHPBar(props.hpbar ?? props.phaseType?.HPBarLength(), props.phaseType);
             //Bosses are by default invulnerable on unmarked phases
             smh.SetAllVulnerable(subbosses, props.phaseType?.DefaultVulnerability() ?? 
                                          (ctx.Boss == null ? Vulnerability.VULNERABLE : Vulnerability.NO_DAMAGE));
@@ -291,12 +294,12 @@ public class PhaseSM : SequentialSM {
                 () => smh.SetAllVulnerable(subbosses, Vulnerability.VULNERABLE));
         RUWaitingUtils.WaitThenCB(smh.Exec, smh.cT, timeout, true, toCancel.Cancel);
         if (props.phaseType?.IsSpell() is true && ctx.Boss != null) {
-            smh.Exec.Enemy.RequestSpellCircle(timeout, smh.cT);
+            smh.Exec.Dependent<Enemy>().RequestSpellCircle(timeout, smh.cT);
             foreach (var subboss in subbosses)
                 subboss.RequestSpellCircle(timeout, smh.cT);
         }
         //else smh.exec.Enemy.DestroySpellCircle();
-        if (!props.HideTimeout && smh.Exec.TriggersUITimeout)
+        if (!props.HideTimeout && ShowUITimeoutForExec(smh.Exec))
             ui?.ShowTimeout(props.phaseType?.IsCard() ?? false, timeout, smh.cT);
     }
 
@@ -385,10 +388,10 @@ public class PhaseSM : SequentialSM {
         //Since it's dependent on parent tokens as well, just checking `prepared.Cancelled`
         // would also include cases like object destruction or local reset.
         var completedBy = prepared.LocallyCancelled ?
-            (smh.Exec.isEnemy ?
-                (smh.Exec.Enemy.PhotoHP <= 0 && (props.photoHP ?? 0) > 0) ? 
+            (smh.Exec.TryDependent<Enemy>(out var enemy) ?
+                (enemy.PhotoHP <= 0 && (props.photoHP ?? 0) > 0) ? 
                     PhaseClearMethod.PHOTO :
-                    (smh.Exec.Enemy.HP <= 0 && (props.hp ?? 0) > 0) ?
+                    (enemy.HP <= 0 && (props.hp ?? 0) > 0) ?
                         PhaseClearMethod.HP :
                         (PhaseClearMethod?) null :
                 null) ??
@@ -405,9 +408,9 @@ public class PhaseSM : SequentialSM {
                         PowerAuraOption.Scale(_ => 4.5f),
                         PowerAuraOption.Static(), 
                         PowerAuraOption.High(), 
-                    }), smh.GCX, smh.Exec.GlobalPosition(), smh.cT, null!));
+                    }), smh.GCX, smh.Exec.Location, smh.cT, null!));
             }
-            smh.Exec.DropItems(pc.DropItems, 1.4f, 0.6f, 1f, 0.2f, 2f);
+            smh.Exec.Dependent<Enemy>().DropItems(pc.DropItems, 1.4f, 0.6f, 1f, 0.2f, 2f);
             ServiceLocator.FindOrNull<IRaiko>()
                 ?.Shake(defaultShakeTime, defaultShakeMult, defaultShakeMag, smh.cT, null);
         }

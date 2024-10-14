@@ -65,7 +65,6 @@ public partial class BehaviorEntity {
         }
         public BEHControl Mirror() => new(caller.Mirror(), new(action, priority), persist, cT);
     }
-
     
     /// <summary>
     /// Structure similar to SimpleBulletCollection, but does not contain its component objects.
@@ -143,7 +142,7 @@ public partial class BehaviorEntity {
         private readonly DMCompactingArray<BEHControl> onDestroyControls = new(4);
 
         public void IterateControls(BehaviorEntity beh) {
-            for (int ii = 0; ii < controls.Count && !beh.dying; ++ii) {
+            for (int ii = 0; ii < controls.Count && !beh.Dying; ++ii) {
                 //Ignore controls that have been cancelled, as they may be invalid
                 if (!controls[ii].cT.Cancelled)
                     controls[ii].action(beh, controls[ii].cT);
@@ -185,11 +184,12 @@ public partial class BehaviorEntity {
     private static readonly HashSet<string> ignoreCullStyles = new();
 
     //set by initialize > updatestyleinfo
-    public BEHStyleMetadata myStyle { get; private set; } = defaultMeta;
+    public BEHStyleMetadata Style { get; private set; } = defaultMeta;
 
     protected virtual void UpdateStyle(BEHStyleMetadata newStyle) {
-        myStyle = newStyle;
-        if (displayer != null) displayer.UpdateStyle(myStyle);
+        Style = newStyle;
+        foreach (var cmp in dependentComponents)
+            cmp.StyleChanged(newStyle);
     }
 
     /// <summary>
@@ -278,7 +278,7 @@ public partial class BehaviorEntity {
         [CreatesInternalScope(AutoVarMethod.None, true)]
         public static cBEHControl Poof(Pred cond) {
             return new((b, cT) => {
-                if (cond(b.rBPI)) b.Poof();
+                if (cond(b.rBPI)) b.CullMe(true);
             }, BulletControl.P_CULL);
         }
         

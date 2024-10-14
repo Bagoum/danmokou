@@ -1,11 +1,12 @@
 ﻿using System;
 using BagoumLib.Cancellation;
+using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.DMath;
 using UnityEngine;
 
 namespace Danmokou.Behavior.Display {
-public class OneOfDisplayController : DisplayController {
+public class OneOfDisplayController : DisplayController, IMultiDisplayController {
     public DisplayController[] all = null!;
     public int baseSelIndex = 0;
     private int _selIndex;
@@ -17,23 +18,25 @@ public class OneOfDisplayController : DisplayController {
         }
     }
     public DisplayController recvSprite => all[SelIndex];
-    
-    public override void LinkAndReset(BehaviorEntity parent) {
-        base.LinkAndReset(parent);
-        for (int ii = 0; ii < all.Length; ++ii) all[ii].LinkAndReset(parent);
-        SelIndex = baseSelIndex;
+
+    protected override void Awake() {
+        foreach (var controller in all)
+            controller.IsPartOf(this);
+        base.Awake();
     }
 
-    public override MaterialPropertyBlock CreatePB() {
-        return new();
+    public override void OnLinkOrResetValues(bool isLink) {
+        base.OnLinkOrResetValues(isLink);
+        for (int ii = 0; ii < all.Length; ++ii) all[ii].OnLinkOrResetValues(isLink);
+        SelIndex = baseSelIndex;
     }
 
     public override void SetMaterial(Material mat) {
         recvSprite.SetMaterial(mat);
     }
 
-    public override void UpdateStyle(BehaviorEntity.BEHStyleMetadata style) {
-        for (int ii = 0; ii < all.Length; ++ii) all[ii].UpdateStyle(style);
+    public override void StyleChanged(BehaviorEntity.BEHStyleMetadata style) {
+        for (int ii = 0; ii < all.Length; ++ii) all[ii].StyleChanged(style);
     }
 
     public override void Show() {
@@ -50,9 +53,9 @@ public class OneOfDisplayController : DisplayController {
 
     public override void SetProperty(int id, float val) => recvSprite.SetProperty(id, val);
 
-    public override void UpdateRender(bool isFirstFrame) {
-        base.UpdateRender(isFirstFrame);
-        for (int ii = 0; ii < all.Length; ++ii) all[ii].UpdateRender(isFirstFrame);
+    public override void OnRender(bool isFirstFrame, Vector2 lastDesiredDelta) {
+        base.OnRender(isFirstFrame, lastDesiredDelta);
+        for (int ii = 0; ii < all.Length; ++ii) all[ii].OnRender(isFirstFrame, lastDesiredDelta);
     }
 
     public override void FaceInDirection(Vector2 delta) {
@@ -69,5 +72,11 @@ public class OneOfDisplayController : DisplayController {
 
     public override void Animate(AnimationType typ, bool loop, Action? done) =>
         recvSprite.Animate(typ, loop, done);
+
+    public override void Culled(bool allowFinalize, Action done) {
+        for (int ii = 0; ii < all.Length; ++ii)
+            all[ii].Culled(allowFinalize, ii == SelIndex ? done : WaitingUtils.NoOp);
+        base.Culled(allowFinalize, WaitingUtils.NoOp);
+    }
 }
 }

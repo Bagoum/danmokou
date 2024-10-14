@@ -1,0 +1,129 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: MapBG
+  m_Shader: {fileID: 4800000, guid: 6d35152892b74867b47b098f8ce12a02, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - ETC1_EXTERNAL_ALPHA
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DisplaceMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DisplaceTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SuperposeTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BX: 32
+    - _BY: 18
+    - _BlendFrom: 5
+    - _BlendOp: 0
+    - _BlendTo: 10
+    - _BumpScale: 1
+    - _CircularRadius: 0
+    - _CircularSpeed: 0
+    - _CircularXSpeed: 0
+    - _CircularYSpeed: 0
+    - _Cutoff: 0.5
+    - _DetailNormalMapScale: 1
+    - _DisplaceMagnitude: 0
+    - _DisplaceSpeed: 0
+    - _DisplaceXMul: 0
+    - _DstBlend: 0
+    - _FadeInT: 1
+    - _GlossMapScale: 1
+    - _Glossiness: 0.5
+    - _GlossyReflections: 1
+    - _HueShift: 0
+    - _Metallic: 0
+    - _Mode: 0
+    - _OcclusionStrength: 1
+    - _Parallax: 0.02
+    - _RotationSpeed: 0
+    - _ScrollX: 0
+    - _ScrollY: 0
+    - _SmoothnessTextureChannel: 0
+    - _SpecularHighlights: 1
+    - _SrcBlend: 1
+    - _T: 0
+    - _ToggleDisplace: 0
+    - _ToggleFadein: 0
+    - _ToggleGrayscale: 0
+    - _ToggleMulAlpha: 0
+    - _ToggleOverlay: 0
+    - _ToggleSuperpose: 0
+    - _ToggleWhite: 0
+    - _UVSec: 0
+    - _ZWrite: 1
+    - _ZoomSpeed: 0
+    - _ZoomSpeedC: 0
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _LineColor: {r: 0.8820755, g: 0.8098571, b: 0.7697357, a: 1}
+    - _Tint: {r: 0.7311321, g: 0.6578046, b: 0.5517978, a: 1}
+    - _TintS: {r: 1, g: 1, b: 1, a: 1}
+    - _Viewport: {r: 0.5, g: 0.55, b: 0.35, a: 0.45}
+    - _ViewportWrapColor: {r: 0.3773585, g: 0.25880244, b: 0.14595942, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

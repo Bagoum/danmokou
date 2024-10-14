@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
 using BagoumLib;
 using BagoumLib.Events;
 using Danmokou.Achievements;
@@ -52,6 +53,7 @@ public class GameManagement : CoroutineRegularUpdater {
 
     public static InstanceData Instance { get; private set; } = null!;
     public static Evented<InstanceData> EvInstance { get; } = new(null!);
+    public static Event<Unit> ReturnToMainMenuCancellation { get; } = new();
 
     static GameManagement() {
         //This is somewhat faster for reflection consumption than Instance => EvInstance.Value
@@ -62,9 +64,7 @@ public class GameManagement : CoroutineRegularUpdater {
         //Actually null on startup
         // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
         if (Instance?.InstanceActive is true) {
-            Logs.Log("Deactivating game instance.");
             Instance.Deactivate(false);
-            Instance.Dispose();
         }
     }
 
@@ -164,11 +164,11 @@ public class GameManagement : CoroutineRegularUpdater {
     public static bool GoToMainMenu() => ServiceLocator.Find<ISceneIntermediary>().LoadScene(
         new SceneRequest(References.mainMenu,
             //This cancels the replay and deactivates the instance as well
-            SceneRequest.Reason.ABORT_RETURN, () => Instance.Request?.Cancel())) is { };
+            SceneRequest.Reason.ABORT_RETURN, () => ReturnToMainMenuCancellation.OnNext(default))) is { };
     
     public static bool QuickFadeToMainMenu() => ServiceLocator.Find<ISceneIntermediary>().LoadScene(
         new SceneRequest(References.mainMenu,
-            SceneRequest.Reason.ABORT_RETURN, () => Instance.Request?.Cancel())
+            SceneRequest.Reason.ABORT_RETURN, () => ReturnToMainMenuCancellation.OnNext(default))
                 { Transition = GameManagement.References.defaultTransition.AsQuickFade(false) }) is { };
 
     public static bool CanRestart => Instance.Request is { CanRestart: true };
@@ -176,7 +176,6 @@ public class GameManagement : CoroutineRegularUpdater {
 #if UNITY_EDITOR || ALLOW_RELOAD
 
     public static void LocalReset() {
-        BehaviorEntity.DestroyAllSummons();
         PublicDataHoisting.ClearAllValues();
         //PICustomData.ClearNames();
         ReflWrap.ClearWrappers();

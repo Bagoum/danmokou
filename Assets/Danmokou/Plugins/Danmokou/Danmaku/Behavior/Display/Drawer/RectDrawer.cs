@@ -9,7 +9,7 @@ public class RectDrawer : ShapeDrawer {
         base.Initialize(colorizer);
     }
 
-    protected override V2RV2 GetLocScaleRot() => locate(beh.rBPI);
+    protected override V2RV2 GetLocScaleRot() => locate(Beh.rBPI);
 }
 }
 

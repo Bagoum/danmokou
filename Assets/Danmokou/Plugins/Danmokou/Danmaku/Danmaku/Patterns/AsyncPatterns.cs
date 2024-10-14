@@ -27,7 +27,6 @@ namespace Danmokou.Danmaku.Patterns {
 [Reflect]
 public static partial class AsyncPatterns {
     private struct APExecutionTracker {
-        private static readonly Action noop = () => { };
         private LoopControl<AsyncPattern> looper;
         /// <summary>
         /// AsyncHandoff provided by caller. Contains the callback for marking completion.

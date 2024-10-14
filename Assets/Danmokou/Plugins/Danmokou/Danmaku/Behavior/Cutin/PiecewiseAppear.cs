@@ -15,17 +15,17 @@ using static Danmokou.Graphics.FragmentRendering;
 
 namespace Danmokou.Behavior.Display {
 public class PiecewiseAppear : CoroutineRegularUpdater {
-    public enum AppearAction {
+    public enum Action {
         APPEAR,
         DISAPPEAR
     }
 
     public readonly struct AppearRequest {
-        public readonly AppearAction action;
-        public readonly Action? cb;
+        public readonly Action action;
+        public readonly System.Action? cb;
         public readonly float callbackAtRatio;
         
-        public AppearRequest(AppearAction action, float cbRatio, Action? cb) {
+        public AppearRequest(Action action, float cbRatio, System.Action? cb) {
             this.action = action;
             this.cb = cb;
             this.callbackAtRatio = cbRatio;
@@ -39,12 +39,13 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
     public float moveTime;
     public float spreadTime;
     private float TotalTime => moveTime + spreadTime;
+
+    public virtual Bounds Bounds => sr.sprite.bounds.MulBy(transform.lossyScale);
+    public virtual Vector2 Center => transform.position;
+    public virtual (Texture, bool isTemp) Texture() => (sr.sprite.texture, false);
     
-    private const string uiLayer = "UI";
     private readonly List<AppearRequest> continuations = new();
-
     private readonly DMCompactingArray<FragmentRenderInstance> updaters = new();
-
     private bool isRunning = false;
 
     protected virtual void Awake() {
@@ -55,8 +56,8 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
         continuations.Add(act);
         //Squash
         if (continuations.Count >= 2 &&
-            ((continuations[0].action == AppearAction.APPEAR && continuations[1].action == AppearAction.DISAPPEAR) ||
-            (continuations[0].action == AppearAction.DISAPPEAR && continuations[1].action == AppearAction.APPEAR))) {
+            ((continuations[0].action == Action.APPEAR && continuations[1].action == Action.DISAPPEAR) ||
+            (continuations[0].action == Action.DISAPPEAR && continuations[1].action == Action.APPEAR))) {
             var cb1 = continuations[0].cb;
             var cb2 = continuations[1].cb;
             continuations.RemoveAt(0);
@@ -98,23 +99,19 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
     public virtual void Show() {
         sr.enabled = true;
     }
-
-    public virtual Bounds Bounds => sr.sprite.bounds.MulBy(transform.lossyScale);
-    public virtual Vector2 Center => transform.position;
-    public virtual (Texture, bool isTemp) Texture() => (sr.sprite.texture, false);
-
     private IEnumerable<Fragment> GenerateFragments(bool invert) {
         var bounds = Bounds;
         float s = config.fragmentRadius * (float)Math.Sqrt(2);
         Vector2 trloc = Center;
-        var ixd = Mathf.FloorToInt((s + bounds.max.x - bounds.min.x) / s);
-        var iyd = Mathf.FloorToInt((s + bounds.max.y - bounds.min.y) / s);
+        var ixd = Mathf.FloorToInt((s + bounds.size.x) / s);
+        var iyd = Mathf.FloorToInt((s + bounds.size.y) / s);
         float Effective01Time(in ParametricInfo bpi) {
             var _ix = bpi.index / iyd;
             var _iy = bpi.index % iyd;
             var xf = _ix / (float) ixd;
             var yf = _iy / (float) iyd;
-            var t = (bpi.t - 0.5f * (1.9f - xf - yf) * spreadTime) / moveTime + 
+            var spreadFactor = invert ? (1.9f - xf - yf) : (-0.1f + xf + yf);
+            var t = (bpi.t - 0.5f * spreadFactor * spreadTime) / moveTime + 
                     RNG.GetSeededFloat(-0.05f, 0f, RNG.Rehash(bpi.id));
             t = Mathf.Clamp01(t);
             return Easers.EInSine(invert ? 1 - t : t);
@@ -131,7 +128,7 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
                 var uv = new Vector2(BMath.Ratio(bounds.min.x, bounds.max.x, x), 
                     BMath.Ratio(bounds.min.y, bounds.max.y, y));
                 yield return new Fragment(loc, uv, 
-                    Mathf.PI/4, mover, index, null, scaler);
+                    Mathf.PI/config.fragmentSides, mover, index, null, scaler);
             }
         }
     }
@@ -139,9 +136,9 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
     private void Run(AppearRequest req) {
         var act = req.action;
         isRunning = true;
-        if      (act == AppearAction.APPEAR)
+        if      (act == Action.APPEAR)
             Appear();
-        else if (act == AppearAction.DISAPPEAR)
+        else if (act == Action.DISAPPEAR)
             Disappear();
         else throw new Exception($"Couldn't resolve action {act}");
         if (req.cb != null) {
@@ -157,13 +154,12 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
     public void Disappear() {
         Show();
         var (tex, temp) = Texture();
-        var fri = new FragmentRenderInstance(config, GenerateFragments(false), uiLayer, tex, () => {
+        Hide();
+        var fri = new FragmentRenderInstance(config, GenerateFragments(false), gameObject.layer, tex, () => {
                 if (temp)
                     tex.DestroyTexOrRT();
                 Dequeue();
-            },
-            Bounds.extents * 2, TotalTime);
-        Hide();
+            }, Bounds.size, TotalTime);
         updaters.Add(fri);
     }
 
@@ -171,16 +167,24 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
     public void Appear() {
         Show();
         var (tex, temp) = Texture();
-        var fri = new FragmentRenderInstance(config, GenerateFragments(true), uiLayer, tex, () => {
+        Hide();
+        var fri = new FragmentRenderInstance(config, GenerateFragments(true), gameObject.layer, tex, () => {
                 if (temp)
                     tex.DestroyTexOrRT();
                 Show();
                 Dequeue();
-            },
-            Bounds.extents * 2, TotalTime);
-        Hide();
+            }, Bounds.size, TotalTime);
         updaters.Add(fri);
         
+    }
+    
+    
+    private void Render(Camera c) {
+        if (!Application.isPlaying) return;
+        for (int ii = 0; ii < updaters.Count; ++ii) {
+            if (updaters.GetIfExistsAt(ii, out var u))
+                FragmentRendering.Render(c, u);
+        }
     }
     
     public void Clear() {
@@ -191,16 +195,6 @@ public class PiecewiseAppear : CoroutineRegularUpdater {
             }
         }
         updaters.Compact();
-    }
-    
-    
-    private void Render(Camera c) {
-        if (!Application.isPlaying) return;
-        //Effects render to LowEffects
-        for (int ii = 0; ii < updaters.Count; ++ii) {
-            if (updaters.GetIfExistsAt(ii, out var u))
-                FragmentRendering.Render(c, u);
-        }
     }
 
     protected override void OnEnable() {

@@ -1,9 +1,20 @@
 ﻿using System;
+using BagoumLib.Tasks;
 using Danmokou.Core;
 using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Danmokou.Behavior.Display {
+
+public enum DirectionRelation {
+    RUFlipsLD,
+    LDFlipsRU,
+    RUCopiesLD,
+    LDCopiesRU,
+    Independent,
+    None
+}
+
 public class FrameAnimDisplayController : SpriteDisplayController {
     [Serializable]
     public struct Animation {
@@ -18,7 +29,7 @@ public class FrameAnimDisplayController : SpriteDisplayController {
             public Frame[] deathAnim;
             public FrameRunner runner;
 
-            private Frame[] GetFramesForAnimType(AnimationType typ) {
+            public Frame[] FramesForAnim(AnimationType typ) {
                 if (typ == AnimationType.Attack) return attackAnim;
                 if (typ == AnimationType.Right) return rightAnim;
                 if (typ == AnimationType.Left) return leftAnim;
@@ -29,10 +40,10 @@ public class FrameAnimDisplayController : SpriteDisplayController {
             }
             
             public Sprite? SetAnimationTypeIfPriority(AnimationType typ, bool loop, Action? onLoopOrFinish) => 
-                runner.SetAnimationTypeIfPriority(typ, GetFramesForAnimType(typ), loop, onLoopOrFinish);
+                runner.SetAnimationTypeIfPriority(typ, FramesForAnim(typ), loop, onLoopOrFinish);
 
             public Sprite? ResetToIdle() => 
-                runner.SetAnimationType(AnimationType.None, GetFramesForAnimType(AnimationType.None), true, noop);
+                runner.SetAnimationType(AnimationType.None, FramesForAnim(AnimationType.None), true, WaitingUtils.NoOp);
 
             public Sprite? Update(float dT) {
                 var (resetMe, updSprite) = runner.Update(dT);
@@ -40,8 +51,8 @@ public class FrameAnimDisplayController : SpriteDisplayController {
             }
         }
 
-        public BehaviorEntity.DirectionRelation LRRelation;
-        public BehaviorEntity.DirectionRelation UDRelation;
+        public DirectionRelation LRRelation;
+        public DirectionRelation UDRelation;
         public FrameConfig frames;
 
         private Action<Sprite?> setSprite;
@@ -64,7 +75,7 @@ public class FrameAnimDisplayController : SpriteDisplayController {
             if (d != null)
                 //Only update scale when actively moving in a direction
                 setScale(flipX, flipY);
-            setSprite(frames.SetAnimationTypeIfPriority(AsAnimType(d), true, noop));
+            setSprite(frames.SetAnimationTypeIfPriority(AsAnimType(d), true, WaitingUtils.NoOp));
         }
 
         private LRUD? Opposite(LRUD? d) {
@@ -92,30 +103,30 @@ public class FrameAnimDisplayController : SpriteDisplayController {
             bool flipX = false;
             bool flipY = false;
             if        (d == LRUD.LEFT) {
-                if (LRRelation == BehaviorEntity.DirectionRelation.None) d = null;
-                if (LRRelation == BehaviorEntity.DirectionRelation.LDCopiesRU) d = LRUD.RIGHT;
-                if (LRRelation == BehaviorEntity.DirectionRelation.LDFlipsRU) {
+                if (LRRelation == DirectionRelation.None) d = null;
+                if (LRRelation == DirectionRelation.LDCopiesRU) d = LRUD.RIGHT;
+                if (LRRelation == DirectionRelation.LDFlipsRU) {
                     d = LRUD.RIGHT;
                     flipX = true;
                 }
             } else if (d == LRUD.RIGHT) {
-                if (LRRelation == BehaviorEntity.DirectionRelation.None) d = null;
-                if (LRRelation == BehaviorEntity.DirectionRelation.RUCopiesLD) d = LRUD.LEFT;
-                if (LRRelation == BehaviorEntity.DirectionRelation.RUFlipsLD) {
+                if (LRRelation == DirectionRelation.None) d = null;
+                if (LRRelation == DirectionRelation.RUCopiesLD) d = LRUD.LEFT;
+                if (LRRelation == DirectionRelation.RUFlipsLD) {
                     d = LRUD.LEFT;
                     flipX = true;
                 }
             } else if (d == LRUD.UP) {
-                if (UDRelation == BehaviorEntity.DirectionRelation.None) d = null;
-                if (UDRelation == BehaviorEntity.DirectionRelation.RUCopiesLD) d = LRUD.DOWN;
-                if (UDRelation == BehaviorEntity.DirectionRelation.RUFlipsLD) {
+                if (UDRelation == DirectionRelation.None) d = null;
+                if (UDRelation == DirectionRelation.RUCopiesLD) d = LRUD.DOWN;
+                if (UDRelation == DirectionRelation.RUFlipsLD) {
                     d = LRUD.DOWN;
                     flipY = true;
                 }
             } else if (d == LRUD.DOWN) {
-                if (UDRelation == BehaviorEntity.DirectionRelation.None) d = null;
-                if (UDRelation == BehaviorEntity.DirectionRelation.LDCopiesRU) d = LRUD.UP;
-                if (UDRelation == BehaviorEntity.DirectionRelation.LDFlipsRU) {
+                if (UDRelation == DirectionRelation.None) d = null;
+                if (UDRelation == DirectionRelation.LDCopiesRU) d = LRUD.UP;
+                if (UDRelation == DirectionRelation.LDFlipsRU) {
                     d = LRUD.UP;
                     flipY = true;
                 }
@@ -154,17 +165,20 @@ public class FrameAnimDisplayController : SpriteDisplayController {
         public void Animate(AnimationType typ, bool loop, Action? done) {
             setSprite(frames.SetAnimationTypeIfPriority(typ, loop, done));
         }
+
+        public bool HasAnimation(AnimationType typ) =>
+            frames.FramesForAnim(typ).Length > 0;
     }
 
     public Animation animate;
     
-    public override void LinkAndReset(BehaviorEntity parent) {
-        base.LinkAndReset(parent);
+    public override void OnLinkOrResetValues(bool isLink) {
+        base.OnLinkOrResetValues(isLink);
         animate.Initialize(SetSprite, SetFlip);
     }
-    public override void UpdateRender(bool isFirstFrame) {
+    public override void OnRender(bool isFirstFrame, Vector2 lastDesiredDelta) {
         animate.Update(ETime.FRAME_TIME);
-        base.UpdateRender(isFirstFrame);
+        base.OnRender(isFirstFrame, lastDesiredDelta);
     }
 
     public override void FaceInDirection(Vector2 delta) {
@@ -174,6 +188,13 @@ public class FrameAnimDisplayController : SpriteDisplayController {
 
     public override void Animate(AnimationType typ, bool loop, Action? done) {
         animate.Animate(typ, loop, done);
+    }
+
+    public override void Culled(bool allowFinalize, Action done) {
+        if (animate.HasAnimation(AnimationType.Death))
+            Animate(AnimationType.Death, false, () => base.Culled(allowFinalize, done));
+        else
+            base.Culled(allowFinalize, done);
     }
 }
 }

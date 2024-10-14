@@ -52,6 +52,7 @@ SpriteRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -99,6 +100,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525999232b6d49759c202483542758b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Beh>k__BackingField: {fileID: 0}
   rotationMethod:
     type: 0
     InVelocityDirection:
@@ -141,6 +143,7 @@ GameObject:
   - component: {fileID: 8458476390099603848}
   - component: {fileID: 8881511984905530695}
   - component: {fileID: 8770508131429639453}
+  - component: {fileID: 6179055893006348658}
   m_Layer: 16
   m_Name: BulletBlocker
   m_TagString: Untagged
@@ -178,11 +181,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   behaviorScript: {fileID: 0}
   ID: 
-  deathEffect: {fileID: 0}
   cullableRadius:
     cullable: 1
     cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}
-  displayer: {fileID: 4982437419189374220}
 --- !u!114 &8881511984905530695
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -243,3 +244,18 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 3.9, y: 0.56}
   m_EdgeRadius: 0
+--- !u!114 &6179055893006348658
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8107101900318358508}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9bd6d08a6f547c787ab9c1f954a37ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  beh: {fileID: 8458476390099603848}
+  cullable: 1
+  cullRadius: {fileID: 11400000, guid: fd7e3b4d29f6b494eb277b8d8a62bd0d, type: 2}

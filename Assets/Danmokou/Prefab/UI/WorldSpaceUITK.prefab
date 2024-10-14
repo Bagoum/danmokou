@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 8323993470664808351}
   - component: {fileID: 1072541606648907790}
   - component: {fileID: 5362779406241764553}
-  m_Layer: 16
+  m_Layer: 8
   m_Name: WorldSpaceUITK
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -122,3 +122,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cea4542bc94ee5e4486ab8783678b204, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sortingLayerName: UI
+  sortingOrder: 0

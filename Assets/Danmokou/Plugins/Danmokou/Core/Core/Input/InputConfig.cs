@@ -128,7 +128,7 @@ public class InputConfig {
         new(confirm, new KBMKeyInputBinding(KeyCode.Z), new KBMKeyInputBinding(KeyCode.Return));
     
     //mouse button 0, 1, 2 = left, right, middle click
-    //don't listen to mouse left click for confirm-- left clicks need to be reported by the targeted element
+    //don't listen to mouse left/right click for confirm-- they need to be reported by the targeted element
     //(left click cannot be rebound)
     public RebindableInputBinding Back { get; } =
         new(back, new KBMKeyInputBinding(KeyCode.X), null
@@ -200,12 +200,12 @@ public class InputConfig {
         //B
         new(back, new AnyControllerInputBinding.Key(KeyCode.JoystickButton1), null);
     public RebindableInputBinding CContextMenu { get; } =
-        //Select
-        new(contextmenu, new AnyControllerInputBinding.Key(KeyCode.JoystickButton6), null);
+        //X
+        new(contextmenu, new AnyControllerInputBinding.Key(KeyCode.JoystickButton2), null);
 
     public RebindableInputBinding CPause { get; } =
         //Start
-        new RebindableInputBinding(pause, new AnyControllerInputBinding.Key(KeyCode.JoystickButton7), null);
+        new(pause, new AnyControllerInputBinding.Key(KeyCode.JoystickButton7), null);
     
     public RebindableInputBinding CSkipDialogue { get; } =
         new(skip, null, null);

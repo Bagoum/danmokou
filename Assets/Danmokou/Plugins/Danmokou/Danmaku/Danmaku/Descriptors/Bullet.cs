@@ -4,6 +4,7 @@ using System.Linq;
 using BagoumLib;
 using BagoumLib.Functional;
 using Danmokou.Behavior;
+using Danmokou.Behavior.Display;
 using UnityEngine;
 using Danmokou.DMath;
 using Danmokou.Core;
@@ -33,6 +34,8 @@ public class Bullet : BehaviorEntity {
     private BPY? hueShift;
     [Tooltip("This will be instantiated once per recoloring, and used for SM material editing.")]
     public Material material = null!;
+
+    protected bool Displayer(out DisplayController d) => TryDependent<DisplayController>(out d);
     
     protected bool collisionActive = false;
 
@@ -45,12 +48,11 @@ public class Bullet : BehaviorEntity {
 
     protected void SetMaterial(Material newMat) {
         material = newMat;
-        if (displayer != null) displayer.SetMaterial(material);
+        if (Displayer(out var d)) d.SetMaterial(material);
     }
     public int renderPriority;
     private static short rendererIndex = short.MinValue;
     private static readonly HashSet<Bullet> allBullets = new();
-
 
     public float fadeInTime;
     public float cycleSpeed;
@@ -62,12 +64,6 @@ public class Bullet : BehaviorEntity {
 
     protected override void Awake() {
         base.Awake();
-        int sortOrder = rendererIndex++; //By default, this wraps around, which may cause momentary strange behavior if Bullet.ResetIndex is not called every several levels or so.
-        if (displayer != null) displayer.SetSortingOrder(sortOrder);
-        var mr = GetComponent<MeshRenderer>();
-        if (mr != null) {
-            mr.sortingOrder = sortOrder;
-        }
         var ci = GetComponent<GenericColliderInfo>();
         icollider = (ci == null) ? null : ci.AsCollider;
     }
@@ -78,8 +74,8 @@ public class Bullet : BehaviorEntity {
     /// Reset is used to put a bullet in a start-of-life state, eg. when pooling. It is also called in Awake (in BEH).
     /// It is called BEFORE initialize (Awake is called synchronously by Instantiate)
     /// </summary>
-    protected override void ResetValues() {
-        base.ResetValues();
+    protected override void ResetValues(bool isFirst) {
+        base.ResetValues(isFirst);
         collisionActive = collisionInfo.CollisionActiveOnInit;
         allBullets.Add(this);
     }
@@ -121,7 +117,7 @@ public class Bullet : BehaviorEntity {
         if (icollider == null) return;
         bool ShouldDestroyAfterCollision() {
             IsColliding = true;
-            myStyle.IterateCollideControls(this);
+            Style.IterateCollideControls(this);
             if (collisionInfo.destructible) {
                 InvokeCull();
                 return true;
@@ -156,11 +152,10 @@ public class Bullet : BehaviorEntity {
         }
     }
 
-    public override void InvokeCull() {
-        if (dying) return;
+    protected override void CullHook(bool allowFinalize) {
         collisionActive = false;
         allBullets.Remove(this);
-        base.InvokeCull();
+        base.CullHook(allowFinalize);
     }
 
     public static void OrphanAll() {
@@ -174,9 +169,19 @@ public class Bullet : BehaviorEntity {
         }
     }
 
-    protected override void UpdateDisplayerRender(bool isFirstFrame) {
-        base.UpdateDisplayerRender(isFirstFrame);
-        displayer!.SetHueShift(hueShift?.Invoke(bpi) ?? 0f);
+    protected override void UpdateRendering(bool isFirstFrame) {
+        var hasDisplay = Displayer(out var d);
+        if (isFirstFrame) {
+            int sortOrder = rendererIndex++; //By default, this wraps around, which may cause momentary strange behavior if Bullet.ResetIndex is not called every several levels or so.
+            if (hasDisplay) 
+                d.SetSortingOrder(sortOrder);
+            var mr = GetComponent<MeshRenderer>();
+            if (mr != null)
+                mr.sortingOrder = sortOrder;
+        }
+        if (hasDisplay)
+            d.SetHueShift(hueShift?.Invoke(bpi) ?? 0f);
+        base.UpdateRendering(isFirstFrame);
     }
 
 
