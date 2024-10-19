@@ -107,8 +107,8 @@ public record WorldTrackingXML : FixedXMLObject, IRegularUpdater {
 
     private void UpdatePositions() {
         WorldPos = worldPos();
-        ScreenPoint = TargetCam.ToScreenPoint(WorldPos);
-        var l = UIBuilderRenderer.ScreenpointToXML(ScreenPoint);
+        ScreenPoint = TargetCam.WorldToScreen(WorldPos);
+        var l = UIBuilderRenderer.ScreenToXML(ScreenPoint);
         Left.PublishIfNotSame(l.x);
         Top.PublishIfNotSame(l.y);
         var _size = worldSize?.Invoke();

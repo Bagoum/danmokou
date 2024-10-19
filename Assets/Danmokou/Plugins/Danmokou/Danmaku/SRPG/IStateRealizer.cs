@@ -7,7 +7,7 @@ using BagoumLib.Cancellation;
 using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
-using Danmokou.SRPG.Actions;
+using Danmokou.SRPG.Diffs;
 using Danmokou.SRPG.Nodes;
 using UnityEngine;
 
@@ -28,9 +28,9 @@ public interface IStateRealizer {
     void SetUnitLocation(Unit u, Node? from, Node? to);
     
     /// <summary>
-    /// Animate a provided <see cref="IUnitAction"/>.
+    /// Animate a provided <see cref="IGameDiff"/>.
     /// </summary>
-    Task? Animate(IUnitAction action, ICancellee cT) => action switch {
+    Task? Animate(IGameDiff diff, ICancellee cT) => diff switch {
         MoveUnit mu => Animate(mu, cT),
         GameState.StartGame sg => Animate(sg, cT),
         GameState.SwitchFactionTurn st => Animate(st, cT),

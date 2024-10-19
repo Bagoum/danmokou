@@ -39,7 +39,7 @@ public class UnitDisplay : CoroutineRegularUpdater, IUnitDisplay {
         Listen(status, s => {
             mat.SetOrUnsetKeyword(s is UnitStatus.NotMyTurn, "FT_GRAYSCALE");
             color.Push(unit.Status switch {
-                UnitStatus.CanMove => Color.white,
+                UnitStatus.CanMove or UnitStatus.MustAct => Color.white,
                 UnitStatus.Exhausted or UnitStatus.NotMyTurn => new Color(0.7f, 0.7f, 0.7f),
                 _ => throw new ArgumentOutOfRangeException()
             });

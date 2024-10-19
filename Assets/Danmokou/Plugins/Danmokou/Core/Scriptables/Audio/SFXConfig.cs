@@ -1,4 +1,5 @@
 ﻿using Danmokou.Core;
+using Danmokou.Services;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -39,5 +40,8 @@ public class SFXConfig : ScriptableObject {
         /// </summary>
         PLAYER_FIRE_HIT = 1
     }
+
+    [ContextMenu("Play (in-game only)")]
+    public void Play() => ISFXService.SFXService.Request(this);
 }
 }

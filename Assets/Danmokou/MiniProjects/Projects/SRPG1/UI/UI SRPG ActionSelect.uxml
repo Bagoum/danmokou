@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
+    <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/SRPG1/UI/srpg%20css.uss?fileID=7433441132597879392&amp;guid=3ac66db6bd7dbfd40a9aab168cf2d9ea&amp;type=3#srpg css" />
+    <ui:VisualElement class="node actionsel">
+        <ui:VisualElement name="Selector" class="pointer prefix" />
+        <ui:VisualElement name="Checkmark" class="checkmark prefix" />
+        <ui:VisualElement name="Body" class="body" style="justify-content: center; align-items: center;">
+            <ui:Label text="Attack" name="Label" class="text coretext" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

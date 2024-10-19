@@ -79,7 +79,7 @@ public record UIGroupHierarchy(UIGroup Group, UIGroupHierarchy? Parent) : IEnume
         if (target is null)
             return false;
         for (var x = from; x != target; x = x.Parent) {
-            if (!x.Group.NavigationCanLeaveGroup)
+            if (!x!.Group.NavigationCanLeaveGroup)
                 return false;
         }
         return true;
@@ -97,7 +97,7 @@ public enum GroupVisibility: int {
 
 public record GroupVisibilityControl(UIGroup Group) {
     public GroupVisibility ParentVisibleInTree { get; private set; } = GroupVisibility.TreeVisible;
-    protected GroupVisibility LocalVisible { get; set; } = GroupVisibility.TreeVisible;
+    private GroupVisibility LocalVisible { get; set; } = GroupVisibility.TreeVisible;
     public GroupVisibility VisibleInTree {
         get {
             if (ParentVisibleInTree is GroupVisibility.TreeHidden)
@@ -146,6 +146,12 @@ public record GroupVisibilityControl(UIGroup Group) {
         return tasks!.All();
     }
 
+    public Task? ManualUpdateLocalVisibility(GroupVisibility visibility, bool notifyRender = true) {
+        var prevVisInTree = VisibleInTree;
+        LocalVisible = visibility;
+        return UpdatedVisibility(prevVisInTree, notifyRender);
+    }
+
     public void ApplyToChildren() {
         foreach (var c in Group.Children)
             c.Visibility.ParentVisibilityUpdated(VisibleInTree, false);
@@ -161,28 +167,20 @@ public record GroupVisibilityControl(UIGroup Group) {
         }
 
         public override Task? OnEnterGroup() {
-            var prevVisInTree = VisibleInTree;
-            LocalVisible = GroupVisibility.TreeVisible;
-            return UpdatedVisibility(prevVisInTree);
+            return ManualUpdateLocalVisibility(GroupVisibility.TreeVisible);
         }
         public override Task? OnLeaveGroup() {
-            var prevVisInTree = VisibleInTree;
-            LocalVisible = GroupVisibility.TreeHidden;
-            return UpdatedVisibility(prevVisInTree);
+            return ManualUpdateLocalVisibility(GroupVisibility.TreeHidden);
         }
 
         public override Task? OnReturnFromChild() {
             if (!useLocalHiding) return null;
-            var prevVisInTree = VisibleInTree;
-            LocalVisible = GroupVisibility.TreeVisible;
-            return UpdatedVisibility(prevVisInTree);
+            return ManualUpdateLocalVisibility(GroupVisibility.TreeVisible);
         }
 
         public override Task? OnDescendToChild(PopupUIGroup.Type? popupType) {
             if (!useLocalHiding || popupType != null) return null;
-            var prevVisInTree = VisibleInTree;
-            LocalVisible = GroupVisibility.TreeVisibleLocalHidden;
-            return UpdatedVisibility(prevVisInTree);
+            return ManualUpdateLocalVisibility(GroupVisibility.TreeVisibleLocalHidden);
         }
 
         public override string ToString() => base.ToString();
@@ -223,7 +221,9 @@ public abstract class UIGroup {
         Visibility = new GroupVisibilityControl.UpdateOnLeaveHide(this, useLocalHiding:true);
         return this;
     }
-    
+
+    public float? OverlayAlphaOverride { get; set; }
+    public bool GoBackWhenMouseLeavesNode { get; set; } = false;
     public bool AllowWraparoundMovement { get; set; } = true;
     /// <summary>
     /// Whether or not user focus can leave this group via mouse/keyboard control. (True by default, except for popups.)
@@ -282,8 +282,7 @@ public abstract class UIGroup {
     }
 
     public UIGroup WithNodeMod(Action<UINode> mod) {
-        foreach (var n in Nodes)
-            mod(n);
+        Nodes.WithNodeMod(mod);
         return this;
     }
     private bool _interactable = true;
@@ -457,6 +456,7 @@ public abstract class UIGroup {
     public void AddNodeDynamic(IUIView view) => AddNodeDynamic(new UINode(view));
 
     /// <summary>
+    /// WARNING -- USE TryDelegateNavigationToEnclosure INSTEAD!
     /// When an group A has a navigation command that moves out of the bounds of A, this function is called on A.Parent to determine how to handle it.
     /// <br/>Eg. Pressing up on the second node in a column group navigates to the first; this function is not called.
     /// <br/>Eg. Pressing up on the first node in a column group calls this function. If the enclosing group
@@ -464,15 +464,14 @@ public abstract class UIGroup {
     /// <br/>Eg. Pressing left on any node in a column group calls this function. If the enclosing group is also
     ///  a column group, it returns ReturnToGroupCaller.
     /// </summary>
-    public abstract UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req);
+    protected abstract UIResult? _NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req);
 
     /// <summary>
-    /// If permitted by <see cref="NavigationCanLeaveGroup"/>, delegate navigation to the parent group by calling <see cref="Parent"/>.<see cref="NavigateOutOfEnclosed"/>.
+    /// If permitted by <see cref="NavigationCanLeaveGroup"/>, delegate navigation to the parent group by calling <see cref="Parent"/>.<see cref="_NavigateOutOfEnclosed"/>.
     /// </summary>
-    protected bool TryDelegateNavigationToEnclosure(UINode current, UICommand req, out UIResult res) {
-        res = default!;
-        return NavigationCanLeaveGroup &&
-               Parent != null && Parent.NavigateOutOfEnclosed(this, current, req).Try(out res);
+    protected UIResult? TryDelegateNavigationToEnclosure(UINode current, UICommand req) {
+        if (!NavigationCanLeaveGroup) return null;
+        return Parent?._NavigateOutOfEnclosed(this, current, req);
     }
 
     protected UIResult NavigateToPreviousNode(UINode node, UICommand req) {
@@ -480,7 +479,7 @@ public abstract class UIGroup {
         var ii = bInd - 1;
         for (; ii != bInd; --ii) {
             if (ii == -1) {
-                if (TryDelegateNavigationToEnclosure(node, req, out var res))
+                if (TryDelegateNavigationToEnclosure(node, req) is {} res)
                     return res;
                 if (!AllowWraparoundMovement)
                     return NoOp;
@@ -497,7 +496,7 @@ public abstract class UIGroup {
         var ii = bInd + 1;
         for (; ii != bInd; ++ii) {
             if (ii == Nodes.Count) {
-                if (TryDelegateNavigationToEnclosure(node, req, out var res))
+                if (TryDelegateNavigationToEnclosure(node, req) is {} res)
                     return res;
                 if (!AllowWraparoundMovement)
                     return NoOp;
@@ -512,7 +511,7 @@ public abstract class UIGroup {
     protected UIResult? GoToShowHideGroupIfExists(UINode node, UICommand dir) {
         if (node.ShowHideGroup == null || !node.IsEnabled) return null;
         if (node.ShowHideGroup.MaybeEntryNode is {} en) return en;
-        if (UIFreeformGroup.FindClosest(node.WorldLocation, dir, node.ShowHideGroup.NodesAndDependentNodes,
+        if (UIFreeformGroup.FindClosest(node.XMLLocation, dir, node.ShowHideGroup.NodesAndDependentNodes,
                    CompositeUIGroup._angleLimits, x => x != node) is { } n)
             return n;
         return null;
@@ -521,7 +520,7 @@ public abstract class UIGroup {
     protected UIResult? GoToShowHideGroupFromBelowIfExists(UINode node, UICommand dir) {
         if (node.ShowHideGroup == null || !node.IsEnabled) return null;
         if (node.ShowHideGroup.MaybeEntryNode is {}) return node.ShowHideGroup.EntryNodeFromBottom;
-        if (UIFreeformGroup.FindClosest(node.WorldLocation, dir, node.ShowHideGroup.NodesAndDependentNodes,
+        if (UIFreeformGroup.FindClosest(node.XMLLocation, dir, node.ShowHideGroup.NodesAndDependentNodes,
             CompositeUIGroup._angleLimits, x => x != node) is { } n)
             return n;
         return null;
@@ -530,7 +529,7 @@ public abstract class UIGroup {
     protected UIResult? GoToExitOrLeaveScreen(UINode current, UICommand req) {
         if (ExitNode != null && ExitNode != current)
             return new GoToNode(ExitNode);
-        if (Parent?.NavigateOutOfEnclosed(this, current, req) is { } res)
+        if (TryDelegateNavigationToEnclosure(current, req) is { } res)
             return res;
         if (Screen.AllowsPlayerExit) {
             if (Controller.ScreenCall.Count > 0)
@@ -597,6 +596,7 @@ public abstract class UIGroup {
     /// </summary>
     public void Destroy() {
         if (Destroyed) return;
+        Destroyed = true;
         Screen.Groups.Remove(this);
         if (Render is UIRenderConstructed uirc && Render.AllSourcesDescendFrom(this)) {
             uirc.Destroy();
@@ -610,7 +610,6 @@ public abstract class UIGroup {
         if (this is CompositeUIGroup cuig)
             foreach (var g in cuig.Components.ToList())
                 g.Destroy();
-        Destroyed = true;
     }
 
     /// <summary>
@@ -638,14 +637,14 @@ public class UIColumn : UIGroup {
     public UIColumn(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?> nodes) : base(container, render,
         nodes) { }
 
-    public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) => req switch {
+    protected override UIResult? _NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) => req switch {
         UICommand.Left => new ReturnToGroupCaller(),
         UICommand.Back => new ReturnToGroupCaller(),
         _ => null
     };
     public override UIResult Navigate(UINode node, UICommand req) => req switch {
-        UICommand.Left => Parent?.NavigateOutOfEnclosed(this, node, req) ?? NoOp,
-        UICommand.Right => GoToShowHideGroupIfExists(node, req) ?? Parent?.NavigateOutOfEnclosed(this, node, req) ?? NoOp,
+        UICommand.Left => TryDelegateNavigationToEnclosure(node, req) ?? NoOp,
+        UICommand.Right => GoToShowHideGroupIfExists(node, req) ?? TryDelegateNavigationToEnclosure(node, req) ?? NoOp,
         UICommand.Up => NavigateToPreviousNode(node, req),
         UICommand.Down => NavigateToNextNode(node, req),
         UICommand.Confirm => GoToShowHideGroupIfExists(node, req) ?? NoOp,
@@ -667,7 +666,7 @@ public class UIRow : UIGroup {
     public UIRow(UIScreen container, UIRenderSpace? render, IEnumerable<UINode?> nodes) : base(container, render,
         nodes) { }
 
-    public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) => req switch {
+    protected override UIResult? _NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) => req switch {
         UICommand.Up => new ReturnToGroupCaller(),
         UICommand.Down => new ReturnToGroupCaller(),
         UICommand.Back => new ReturnToGroupCaller(),
@@ -675,9 +674,9 @@ public class UIRow : UIGroup {
     };
     public override UIResult Navigate(UINode node, UICommand req) => req switch {
         UICommand.Up => (ShowHideUpwards ? GoToShowHideGroupFromBelowIfExists(node, req) : null) ?? 
-                        Parent?.NavigateOutOfEnclosed(this, node, req) ?? NoOp,
+                        TryDelegateNavigationToEnclosure(node, req) ?? NoOp,
         UICommand.Down => (ShowHideDownwards ? GoToShowHideGroupIfExists(node, req) : null) 
-                          ?? Parent?.NavigateOutOfEnclosed(this, node, req) ?? NoOp,
+                          ?? TryDelegateNavigationToEnclosure(node, req) ?? NoOp,
         UICommand.Left => NavigateToPreviousNode(node, req),
         UICommand.Right => NavigateToNextNode(node, req),
         UICommand.Confirm => GoToShowHideGroupIfExists(node, req) ?? NoOp,
@@ -705,7 +704,6 @@ public class PopupUIGroup : CompositeUIGroup {
 
     public bool AllowDefaultCtxMenu { get; set; } = false;
     public bool EasyExit { get; set; }
-    public float? OverlayAlphaOverride { get; set; }
 
     /// <summary>
     /// Create a popup with a row of action buttons at the bottom.
@@ -758,15 +756,18 @@ public class PopupUIGroup : CompositeUIGroup {
             (!requireBoundedLocation || source.HTML.worldBound.Contains(loc)))
             ctxMenuPos = loc;
         render.HTML.ConfigureAbsolute(XMLUtils.Pivot.TopLeft).WithAbsolutePosition(ctxMenuPos);
-        //If this is created as a show/hide group, then additionally go back from the show/hide creator ('parent').
-        Func<FuncNode, UIResult> cmd;
-        if (source.Controller.NextNodeInGroupCall is { } parent && 
-            (parent.ShowHideGroup == source.Group || 
-             parent.ShowHideGroup is CompositeUIGroup cug && cug.Components.Contains(source.Group)))
-            cmd = fn => UIButton.GoBackTwiceCommand<FuncNode>(source)(fn).Then(UIResult.LazyGoBackFrom(parent));
-        else
-            cmd = UIButton.GoBackTwiceCommand<FuncNode>(source);
-        var back = allowBackout ? new FuncNode(LocalizedStrings.Generic.generic_back, cmd) : null;
+        FuncNode? back = null;
+        if (allowBackout) {
+            //If this is created as a show/hide group, then additionally go back from the show/hide creator ('parent').
+            Func<FuncNode, UIResult> cmd;
+            if (source.Controller.NextNodeInGroupCall is { } parent && 
+                (parent.ShowHideGroup == source.Group || 
+                 parent.ShowHideGroup is CompositeUIGroup cug && cug.Components.Contains(source.Group)))
+                cmd = fn => UIButton.GoBackTwiceCommand<FuncNode>(source)(fn).Then(UIResult.LazyGoBackFrom(parent));
+            else
+                cmd = UIButton.GoBackTwiceCommand<FuncNode>(source);
+            back = new FuncNode(LocalizedStrings.Generic.generic_back, cmd);
+        }
         //var close = new FuncNode(LocalizedStrings.Generic.generic_close, UIButton.GoBackCommand<FuncNode>(source));
         //NB: you can press X *once* to leave an options menu.
         // If you add a ExitNodeOverride to the UIColumn, then you'll need to press it twice (as with standard popups)
@@ -802,10 +803,7 @@ public class PopupUIGroup : CompositeUIGroup {
     }
 
     private static UIRenderSpace MakeRenderer(UIRenderAbsoluteTerritory at, VisualTreeAsset prefab, Action<UIRenderConstructed, VisualElement>? builder = null) {
-        var render = new UIRenderConstructed(at, prefab, builder) {
-            AnimateOutWithParent = true
-        }.WithPopupAnim();
-        return render;
+        return new UIRenderConstructed(at, prefab, builder).WithPopupAnim();
     }
     
     public PopupUIGroup(Type typ, UIRenderSpace r, LString? header, UINode source, UIGroup body) :
@@ -829,7 +827,7 @@ public class PopupUIGroup : CompositeUIGroup {
         });
     }
 
-    public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) => req switch {
+    protected override UIResult? _NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) => req switch {
         UICommand.Back => EasyExit ? Source.ReturnToGroup : NoOp,
         _ => null
     };
@@ -876,9 +874,10 @@ public abstract class CompositeUIGroup : UIGroup {
         g.Parent = this;
     }
 
-    public void AddGroupDynamic(UIGroup g) {
+    public UIGroup AddGroupDynamic(UIGroup g) {
         AddGroup(g);
         Controller.Redraw();
+        return g;
     }
 
     public void RemoveGroup(UIGroup g) {
@@ -894,7 +893,7 @@ public abstract class CompositeUIGroup : UIGroup {
         _ => NavigateAmongComposite(node, req) ?? NoOp
     };
     
-    public override UIResult? NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) =>
+    protected override UIResult? _NavigateOutOfEnclosed(UIGroup enclosed, UINode current, UICommand req) =>
         req switch {
             UICommand.Up or UICommand.Down or UICommand.Left or UICommand.Right => NavigateAmongComposite(current, req),
             UICommand.Back => GoToExitOrLeaveScreen(current, req),
@@ -916,11 +915,11 @@ public abstract class CompositeUIGroup : UIGroup {
     }
     
     protected virtual UIResult? NavigateAmongComposite(UINode current, UICommand dir) {
-        var from = current.WorldLocation;
+        var from = current.XMLLocation;
         if (UIFreeformGroup.FindClosest(from, dir, NodesAndDependentNodes, _angleLimits, n => n != current) 
                 is {} result) 
             return FinalizeTransition(current, result);
-        if (TryDelegateNavigationToEnclosure(current, dir, out var res))
+        if (TryDelegateNavigationToEnclosure(current, dir) is {} res)
             return res;
         if (!AllowWraparoundMovement)
             return null;

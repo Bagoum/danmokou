@@ -328,8 +328,7 @@ public class PJ24CraftingUXML : UIController {
                         Options = new() { DelayScreenFadeInRatio = 2.5f },
                         OnPostTransition = () => {
                             _ = exec.RunCraftedItemIntuition(result)
-                                .ContinueWithSync(() => OperateOnResult(
-                                    new UIResult.ReturnToScreenCaller(3), UITransitionOptions.Default));
+                                .ContinueWithSync(() => OperateOnResultAnim(new UIResult.ReturnToScreenCaller(3)));
                             //let the crafted intuition to start first, then trigger data-based dialogues
                             exec.UpdateDataV(_ => { });
                         }

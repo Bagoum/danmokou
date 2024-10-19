@@ -2,9 +2,9 @@
     <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
     <ui:VisualElement class="node">
         <ui:VisualElement name="Selector" class="pointer prefix" />
-        <ui:VisualElement name="Checkmark" class="checkmark prefix" style="background-image: url(&quot;project://database/Assets/Danmokou/Kenney/crosshairs/crosshair101.jpg?fileID=2800000&amp;guid=e87eab26bf9fcc44ca414dee1edb792b&amp;type=3#crosshair101&quot;); margin-right: -10px; margin-left: -30px;" />
+        <ui:VisualElement name="Checkmark" class="checkmark prefix" />
         <ui:VisualElement name="Body" class="body">
-            <ui:Label text="Example Text例文です" name="Label" class="text coretext" style="height: 100%; border-bottom-color: rgb(128, 128, 128); -unity-font-style: normal;" />
+            <ui:Label text="Example Text例文です" name="Label" class="text coretext" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

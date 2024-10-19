@@ -22,10 +22,13 @@ public class UnselectorFixedXML : IFixedXMLObject {
 /// </summary>
 public class UIFreeformGroup : CompositeUIGroup, IFreeformContainer {
     private readonly UINode? unselector;
-    public bool HasUnselector => unselector != null;
+    public UIFreeformGroup(UIRenderSpace container, IEnumerable<UINode> nodes) : base(container, Array.Empty<UIGroup>(), nodes) {
+        GoBackWhenMouseLeavesNode = false;
+    }
     public UIFreeformGroup(UIRenderSpace container, UINode? unselector = null) : base(container, Array.Empty<UIGroup>(), new[] { unselector }) {
         this.unselector = unselector;
         ExitNodeOverride = unselector;
+        GoBackWhenMouseLeavesNode = unselector != null;
     }
 
     private static readonly float[] _angleLimits2 = { 37, 65, 89 };
@@ -43,18 +46,18 @@ public class UIFreeformGroup : CompositeUIGroup, IFreeformContainer {
             if (current == unselector) {
                 //Return the node farthest in the pressed direction
                 return dir switch {
-                    UICommand.Down => targets.MaxBy(n => n.WorldLocation.y),
-                    UICommand.Up => targets.MaxBy(n => -n.WorldLocation.y),
-                    UICommand.Left => targets.MaxBy(n => -n.WorldLocation.x),
-                    UICommand.Right => targets.MaxBy(n => n.WorldLocation.x),
+                    UICommand.Down => targets.MaxBy(n => n.XMLLocation.y),
+                    UICommand.Up => targets.MaxBy(n => -n.XMLLocation.y),
+                    UICommand.Left => targets.MaxBy(n => -n.XMLLocation.x),
+                    UICommand.Right => targets.MaxBy(n => n.XMLLocation.x),
                     _ => throw new Exception()
                 };
             }
-            if (FindClosest(current.WorldLocation, dir, targets, _angleLimits2, n => n != current) 
+            if (FindClosest(current.XMLLocation, dir, targets, _angleLimits2, n => n != current) 
              is {} result) 
                 return FinalizeTransition(current, result);
         }
-        if (TryDelegateNavigationToEnclosure(current, dir, out var res))
+        if (TryDelegateNavigationToEnclosure(current, dir) is {} res)
             return res;
         //no wraparound permitted for now
         return null;

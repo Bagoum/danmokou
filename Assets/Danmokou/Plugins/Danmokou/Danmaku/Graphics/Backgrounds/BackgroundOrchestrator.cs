@@ -101,8 +101,8 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         if (FromBG == null || !FromBG.IsDrawing) 
             return;
         var sco = !GameManagement.Instance.InstanceActiveGuardInScene ? Vector2.zero :
-            cmr.CamInfo.ToScreenPoint(LocationHelpers.PlayableBounds.center + LocationHelpers.PlayableScreenCenter)
-            - cmr.CamInfo.ToScreenPoint(LocationHelpers.PlayableScreenCenter);
+            cmr.CamInfo.WorldToScreen(LocationHelpers.PlayableBounds.center + LocationHelpers.PlayableScreenCenter)
+            - cmr.CamInfo.WorldToScreen(LocationHelpers.PlayableScreenCenter);
         mat.SetVector(screenCenterOffset, new Vector4(sco.x, sco.y, 0, 0));
         mat.SetTexture(PropConsts.fromTex, FromBG.capturer.Captured);
         if (ToBG != null) 
@@ -110,7 +110,7 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         mat.SetFloat(PropConsts.time, mixTime);
         mat.SetFloat(distortTime, Time);
         if (distorter.Value is { } val) {
-            var dc = val.cam.ToScreenPoint(val.tr.position);
+            var dc = val.cam.WorldToScreen(val.tr.position);
             mat.SetVector(distortCenter, new Vector4(dc.x, dc.y, 0, 0));
         }
     }

@@ -92,13 +92,25 @@ public static class XMLUtils {
     public static VisualElement SetPadding(this VisualElement root, float padding) =>
         root.SetPadding(padding, padding, padding, padding);
 
+    public static T WithNodeMod<T>(this T lis, Action<UINode> mod) where T : IReadOnlyList<UINode?> {
+        for (int ii = 0; ii < lis.Count; ++ii)
+            if (lis[ii] is {} n)
+                mod(n);
+        return lis;
+    }
+
     public static Vector2 InvertY(this Vector2 v) => new(v.x, -v.y);
     
     public static class Pivot {
         public static Vector2 TopLeft { get; } = new(0, 1);
         public static Vector2 Top { get; } = new(0.5f, 1);
         public static Vector2 TopRight { get; } = new(1, 1);
+        public static Vector2 Left { get; } = new(0, 0.5f);
         public static Vector2 Center { get; } = new(0.5f, 0.5f);
+        public static Vector2 Right { get; } = new(1, 0.5f);
+        public static Vector2 BotLeft { get; } = new(0, 0);
+        public static Vector2 Bottom { get; } = new(0.5f, 0);
+        public static Vector2 BotRight { get; } = new(1, 0);
     }
     
 
@@ -123,6 +135,9 @@ public static class XMLUtils {
         ve.style.top = leftTop.y;
         return ve;
     }
+
+    public static VisualElement ConfigureAndPositionAbsolute(this VisualElement ve, Vector2 pivot, Vector2 leftTop) =>
+        ve.ConfigureAbsolute(pivot).WithAbsolutePosition(leftTop);
 
     public static VisualElement WithAbsolutePositionCentered(this VisualElement ve) {
         ve.style.left = ve.style.top = 50f.Percent();
@@ -172,6 +187,12 @@ public static class XMLUtils {
 
     public static VisualElement SetWidthHeight(this VisualElement n, Vector2 wh) =>
         n.SetWidth(wh.x).SetHeight(wh.y);
+
+    public static VisualElement UnsetSize(this VisualElement n) {
+        n.style.width = new StyleLength(StyleKeyword.None);
+        n.style.height = new StyleLength(StyleKeyword.None);
+        return n;
+    }
 
     public static VisualElement UnboundSize(this VisualElement n) {
         n.style.maxWidth = new StyleLength(StyleKeyword.None);

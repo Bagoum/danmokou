@@ -614,6 +614,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputFallthrough: 1
+  mainMenuVTA: {fileID: 9197481963319205126, guid: 327007108c0adcc4492a0966abe87654,
+    type: 3}
 --- !u!1 &438011018
 GameObject:
   m_ObjectHideFlags: 0
@@ -4075,7 +4077,7 @@ PrefabInstance:
         type: 3}
       propertyPath: references
       value: 
-      objectReference: {fileID: 11400000, guid: 8eb3d68e67fddac44b3d03623fe155b2,
+      objectReference: {fileID: 11400000, guid: e9d0a0c3f23a9c84090fb87f17ca6e3e,
         type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4273,7 +4275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd594754dd526c14d88942cd645fad0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  saveSlot: 4
+  saveSlot: 1
 --- !u!4 &1044200807
 Transform:
   m_ObjectHideFlags: 0
@@ -4898,6 +4900,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputFallthrough: 0
+  mainMenuVTA: {fileID: 0}
 --- !u!1001 &1540605963
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5347,7 +5350,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1647104558
 Transform:
   m_ObjectHideFlags: 0
@@ -5398,7 +5401,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1647104557}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2255523ffec39b7438ad7c54d9bd8651, type: 3}
   m_Name: 
@@ -5597,6 +5600,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputFallthrough: 0
+  mainMenuVTA: {fileID: 0}
 --- !u!4 &1824094803 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7454327925426001177, guid: 09389baa1b2e87b409a027c189ce98ff,
@@ -5636,7 +5640,6 @@ MonoBehaviour:
     type: 3}
   turnChanger: {fileID: 1491014347183764479, guid: bde55142bb3936542917df2a5d1ab36a,
     type: 3}
-  itemVTA: {fileID: 9197481963319205126, guid: cae2d64c9d743614a9d1c76f7b9467d8, type: 3}
   arrowStraight: {fileID: 21300000, guid: 8ee1a3f4645b0e34a96282145f4706c1, type: 3}
   arrowEnd: {fileID: 21300000, guid: 19c9209871a6db84da16f7ba80cd7866, type: 3}
   arrowCurve: {fileID: 21300000, guid: 1a1470cd0b771564cb9b2533584b155b, type: 3}
@@ -5808,6 +5811,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 525531012026355746, guid: bde55142bb3936542917df2a5d1ab36a,
+        type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 1249278342191654448, guid: bde55142bb3936542917df2a5d1ab36a,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -5867,6 +5875,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7638982390798469104, guid: bde55142bb3936542917df2a5d1ab36a,
+        type: 3}
+      propertyPath: m_renderer
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 8318355769697276799, guid: bde55142bb3936542917df2a5d1ab36a,
+        type: 3}
+      propertyPath: m_Mesh
+      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

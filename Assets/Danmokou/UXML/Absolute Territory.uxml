@@ -1,3 +1,3 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <ui:VisualElement name="AbsoluteContainer" style="height: 2160px; padding-left: 0; padding-right: 0; align-items: center; justify-content: center; position: absolute; width: 3840px; background-color: rgba(1, 1, 1, 0.27);" />
+    <ui:VisualElement name="AbsoluteContainer" style="height: 100%; padding-left: 0; padding-right: 0; align-items: center; justify-content: center; position: absolute; width: 100%; background-color: rgba(1, 1, 1, 0.27);" />
 </ui:UXML>

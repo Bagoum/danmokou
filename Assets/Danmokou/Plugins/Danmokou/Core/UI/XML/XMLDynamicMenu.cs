@@ -30,6 +30,7 @@ public class XMLDynamicMenu : UIController, IFreeformContainer {
                                   || LastOperationFrame == ETime.FrameNumber);
 
     public bool inputFallthrough = false;
+    public VisualTreeAsset? mainMenuVTA;
 
 
     protected override void BindListeners() {
@@ -42,6 +43,7 @@ public class XMLDynamicMenu : UIController, IFreeformContainer {
     private void Awake() {
         Unselect = EmptyNode.MakeUnselector(DefaultUnselectorNav);
         MainScreen = new UIScreen(this, null, UIScreen.Display.Unlined) {
+            Prefab = mainMenuVTA,
             Builder = (s, ve) => {
                 //Allow clicks to fallthrough if they don't hit any nodes on this menu
                 s.HTML.pickingMode = PickingMode.Ignore;

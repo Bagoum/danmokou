@@ -49,9 +49,9 @@ public interface IUIView {
     
     /// <summary>
     /// Attach this view to a VisualElement and register it for updates.
-    /// <br/>Called during UI instantiation, before <see cref="OnBuilt"/>.
+    /// <br/>Called during UI instantiation, before OnBult.
     /// All views attached to a VE receive <see cref="Bind"/>,
-    /// and then if the VE is part of a UINode, all of them receive <see cref="OnBuilt"/>.
+    /// and then all of them receive <see cref="OnBuilt(UINode)"/>/<see cref="OnBuilt(UIRenderSpace)"/>.
     /// </summary>
     void Bind(MVVMManager mvvm, VisualElement ve);
 
@@ -66,7 +66,12 @@ public interface IUIView {
     /// <br/>If this view is free-floating and not attached to a node, this method will not be called.
     /// </summary>
     void OnBuilt(UINode node);
-    
+
+    /// <summary>
+    /// Called when the render space using this view was built.
+    /// <br/>If this view is attached to a node, this method will not be called.
+    /// </summary>
+    void OnBuilt(UIRenderSpace render);
 
     /// <summary>
     /// Called when the display language or other global display setting changes.
@@ -119,6 +124,7 @@ public abstract class UIView : IUIView {
     public virtual Func<VisualElement, VisualElement>? Builder => null;
 
     public UINode Node { get; private set; } = null!;
+    public UIRenderSpace RS { get; private set; } = null!;
     public VisualElement HTML { get; private set; } = null!;
     public BindingUpdateTrigger UpdateTrigger { get; protected set; } = BindingUpdateTrigger.OnSourceChanged;
     public IUIViewModel ViewModel { get; }
@@ -141,6 +147,10 @@ public abstract class UIView : IUIView {
 
     public virtual void OnBuilt(UINode node) {
         Node = node;
+    }
+    
+    public virtual void OnBuilt(UIRenderSpace render) {
+        RS = render;
     }
 
     public virtual void UpdateHTML() { }

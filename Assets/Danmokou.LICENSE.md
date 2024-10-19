@@ -48,6 +48,7 @@ The project incorporates code or references packages from the following projects
 - [TonyViT/CurvedTextMeshPro](https://github.com/TonyViT/CurvedTextMeshPro) ([MIT](https://github.com/TonyViT/CurvedTextMeshPro/blob/96767f3394b71043da4ae8f42de114bb37f738b5/LICENSE))
 - [liortal53/MissingReferencesUnity](https://github.com/liortal53/MissingReferencesUnity) ([Apache 2.0](https://github.com/liortal53/MissingReferencesUnity/blob/25449e5bcfe0ba917ff730f870e234cc147a19ba/LICENSE))
 - [MikePopoloski/StringFormatter](https://github.com/MikePopoloski/StringFormatter) ([MIT](https://github.com/MikePopoloski/StringFormatter/blob/master/LICENSE))
+- [AlexeyPerov/Unity-Dependencies-Hunter](https://github.com/AlexeyPerov/Unity-Dependencies-Hunter) ([MIT](https://github.com/AlexeyPerov/Unity-Dependencies-Hunter/blob/master/LICENSE))
 - [Hash Without Sine](https://www.shadertoy.com/view/4djSRW) (MIT)
 - [taisei-project/taisei](https://github.com/taisei-project/taisei) ([MIT-ish](https://github.com/taisei-project/taisei/blob/master/COPYING))
   - This project also incorporates some non-code resources from Taisei Project, listed below under "Non-Code Resources".

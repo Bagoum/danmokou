@@ -1,0 +1,77 @@
+.node.actionsel {
+    align-items: center;
+    margin: 0;
+}
+
+.node.actionsel .prefix {
+    height: 80%;
+}
+
+.node.actionsel > .body {
+    background-image: url("project://database/Assets/Danmokou/Kenney/uipanels/panel-015.png?fileID=21300000&guid=785abe060ee442a458353de0122fae44&type=3#panel-015");
+    padding: 18px 32px 22px;
+    -unity-background-image-tint-color: var(--neutral-bg);
+    background-color: var(--main-dark1-80);
+    border-bottom-width: 0;
+    flex-grow: 1;
+}
+
+.node.actionsel.node-focus > .body {
+    -unity-background-image-tint-color: var(--main-pure);
+    background-image: url("project://database/Assets/Danmokou/Kenney/uipanels/panel-001.png?fileID=21300000&guid=4bc8fb07783a9fc418c88057636bbb15&type=3#panel-001");
+    background-color: var(--liner);
+}
+
+.node.actionsel .text {
+    -unity-text-align: middle-center;
+    font-size: 60px;
+}
+
+.characterBlock {
+    width: 570px;
+    height: 1000px;
+    background-image: url("project://database/Assets/SZYU/Sprites/util/1u-square.jpg?fileID=2800000&guid=d12639885f66bc0409fd0dd22e006cac&type=3#1u-square");
+    -unity-background-image-tint-color: var(--main-dark2-90);
+}
+
+.charBlockCont {
+    flex-grow: 1;
+    padding-top: 12px;
+    padding-right: 12px;
+    padding-bottom: 12px;
+    padding-left: 12px;
+    background-image: url("project://database/Assets/Danmokou/Kenney/uipanels/panel-031.png?fileID=21300000&guid=4c752db5c8d8f974bbe34d1eaf9cba16&type=3#panel-031");
+    -unity-background-image-tint-color: var(--neutral-bg);
+}
+
+.characterBlock .charBlockTitle {
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/JosefinSans-Regular.ttf?fileID=12800000&guid=db290d229ae73c04095f7cdbf77214b4&type=3#JosefinSans-Regular");
+    color: var(--accent-text);
+    -unity-text-align: middle-center;
+    font-size: 75px;
+    padding-top: 14px;
+    padding-bottom: 6px;
+    background-image: url("project://database/Assets/Danmokou/Kenney/uipanels/panel-001.png?fileID=21300000&guid=4bc8fb07783a9fc418c88057636bbb15&type=3#panel-001");
+    -unity-background-image-tint-color: var(--main-pure-70);
+}
+
+.statBlockRow {
+    flex-direction: row;
+    justify-content: flex-start;
+    margin: 4px 0px;
+}
+.statBlockRow > * {
+    flex-grow: 1;
+}
+.statBlockRow .statline {
+    -unity-font-definition: url("project://database/Assets/SZYU/Fonts/LinBiolinum_R_G.ttf?fileID=12800000&guid=a10920f256006494a820e4ac8d9123c6&type=3#LinBiolinum_R_G");
+    font-size: 65px;
+    color: rgb(255, 255, 255);
+    padding: 4px 20px;
+    margin: 0px 4px;
+    -unity-text-align: middle-center;
+    background-color: var(--main-dark2-90);
+    border-width: 4px;
+    border-color: var(--liner-dark);
+    border-radius: 16px;
+}

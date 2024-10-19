@@ -66,9 +66,20 @@ public class UINode {
     }
     
     /// <summary>
-    /// Get the CSS world rect of this object's center. Note that this is in pixels with the top left as (0, 0).
+    /// Get the CSS rect of this object. This is in pixels with the top left as (0, 0).
     /// </summary>
-    public Rect WorldLocation => HTML.worldBound;
+    public Rect XMLLocation => HTML.worldBound;
+    
+    /// <summary>
+    /// Get the panel rect of this object. This is in 0->1 coordinates with the bottom left as (0, 0).
+    /// </summary>
+    public Rect PanelLocation {
+        get {
+            var r1 = XMLLocation;
+            var dims = Controller.UIRoot.worldBound.size;
+            return new Rect(r1.xMin/dims.x, 1-r1.yMax/dims.y, r1.width/dims.x, r1.height/dims.y);
+        }
+    }
     public IStyle Style => HTML.style;
     
     /// <summary>
@@ -324,12 +335,12 @@ public class UINode {
     
     public static UINode SimpleTTNode(LString text) =>
         new UINode(text) { Prefab = XMLUtils.Prefabs.PureTextNode }.WithCSS(XMLUtils.highVisClass);
-    
 
+
+    private bool isInElement;
+    private IDisposable? cursorToken;
     protected virtual void RegisterEvents() {
-        bool isInElement = false;
         bool startedClickHere = false;
-        IDisposable? cursorToken = null;
         //It's more mouse-friendly to use BodyHTML when possible so empty space on rows doesn't draw events
         var evtBinder = BodyOrNodeHTML;
         evtBinder.RegisterCallback<PointerEnterEvent>(evt => {
@@ -341,17 +352,18 @@ public class UINode {
             //don't fire pointer enter events if the renderer is animating out
             //NB: UIController doesn't allow this command to cross screens, so any persistent screens are show-only
             if (AllowInteraction && Render.ShouldBeVisibleInTree) {
-                cursorToken?.Dispose();
-                cursorToken = CursorManager.AddButton();
-                Controller.QueueInput(new UIPointerCommand.Goto(this));
+                if (Controller.Current == this) {
+                    cursorToken?.Dispose();
+                    cursorToken = CursorManager.AddButton();
+                } else
+                    Controller.QueueInput(new UIPointerCommand.Goto(this));
                 evt.StopPropagation();
             }
             isInElement = true;
         });
         evtBinder.RegisterCallback<PointerLeaveEvent>(evt => {
-            //Logs.Log($"Leave {Description()}");
-            //For freeform groups ONLY, moving the cursor off a node should deselect it.
-            if (AllowInteraction && Group is UIFreeformGroup { HasUnselector: true } && Controller.Current == this)
+            //Logs.Log($"Leave {HTML.worldBound}");
+            if (AllowInteraction && Group.GoBackWhenMouseLeavesNode && Controller.Current == this)
                 Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Back, this) { Silent = true });
             cursorToken?.Dispose();
             isInElement = false;
@@ -549,11 +561,16 @@ public class UINode {
         if (CacheOnEnter) Controller.TentativeCache(this);
         _ = ShowHideGroup?.Visibility.OnEnterGroup();
         RemakeTooltip(cs);
+        if (isInElement) {
+            cursorToken?.Dispose();
+            cursorToken = CursorManager.AddButton();
+        }
         foreach (var view in Views)
             view.OnEnter(this, cs, animate);
     }
 
-    public virtual void Leave(bool animate, ICursorState cs, PopupUIGroup.Type? popupType) {   
+    public virtual void Leave(bool animate, ICursorState cs, PopupUIGroup.Type? popupType) {  
+        cursorToken?.Dispose();
         if (popupType is null)
             CloseDependencies(animate);
         foreach (var view in Views)

@@ -26,7 +26,7 @@ public class LocalXMLTesting : CoroutineRegularUpdater {
     public bool[] visible = new bool[4];
 
     public override void FirstFrame() {
-        var xmlLoc = UIBuilderRenderer.UICamInfo.ToXMLPos((Vector2)transform.position + Offset);
+        var xmlLoc = UIBuilderRenderer.UICamInfo.WorldToXML((Vector2)transform.position + Offset);
         XML = new(xmlLoc.x, xmlLoc.y, null, null);
         var menu = ServiceLocator.Find<XMLDynamicMenu>();
         //var node = new UINode("hello world") { Prefab = XMLUtils.Prefabs.PureTextNode };

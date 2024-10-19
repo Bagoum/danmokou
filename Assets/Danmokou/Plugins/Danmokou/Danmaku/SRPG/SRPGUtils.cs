@@ -25,9 +25,10 @@ public static class SRPGUtils {
     public static Dictionary<string, ISRPGNodeMatchable> KeyToNodeType => _keyToNodeType ??= 
         NodeTypes.Where(nt => nt.Key != null).ToDictionary(nt => nt.Key!);
 
-    public static Node MakeNode(IReadOnlyList<ISRPGNodeMatcher> matchers, Tilemap[] tilemaps,
-        Vector3Int loc) {
+    public static Node MakeNode(IReadOnlyList<ISRPGNodeMatcher> matchers, Tilemap[] tilemaps, 
+        Vector3Int tilemapMin, Vector2Int index) {
         ISRPGNodeType? typ = null;
+        var loc = tilemapMin + (Vector3Int)index;
         foreach (var tm in tilemaps) {
             if (tm.GetTile(loc) is not { } tile)
                 continue;
@@ -44,9 +45,31 @@ public static class SRPGUtils {
         }
         //cellToWorld gets bottom-left position
         var cellBotLeft = tilemaps[0].CellToWorld(loc);
-        return new Node(typ ?? new Empty(), loc, 
+        return new Node(typ ?? new Empty(), index, 
             cellBotLeft + 0.5f * tilemaps[0].cellSize,
             cellBotLeft + tilemaps[0].tileAnchor.PtMul(tilemaps[0].cellSize));
+    }
+
+    /// <summary>
+    /// Get all the points that are at a grid distance of `dist` from the origin.
+    /// <br/>eg. for 2, returns (-2,0),(-1,1),(0,2),(1,1),(2,0),(1,-1),(0,-2),(-1,-1).
+    /// </summary>
+    public static void PointsAtGridDistance(int dist, List<Vector2Int> ret) {
+        for (int x = 0; x < dist; ++x) {
+            var y = dist - x;
+            ret.Add(new(x, y));
+            ret.Add(new(-y, x));
+            ret.Add(new(-x, -y));
+            ret.Add(new(y, -x));
+        }
+    }
+
+    /// <summary>
+    /// Get all the points that are at a grid distance of between `minDist` and `maxDist` (inclusive) from the origin.
+    /// </summary>
+    public static void PointsAtGridRange(int minDist, int maxDist, List<Vector2Int> ret) {
+        for (int dist = minDist; dist <= maxDist; ++dist)
+            PointsAtGridDistance(dist, ret);
     }
 
     /// <summary>
@@ -114,5 +137,33 @@ public static class SRPGUtils {
         }
         return (costs, prev);
     }
+
+    public static string Abbrev(this Stat s) => s switch {
+        Stat.MaxHP => "HP",
+        Stat.CurrHP => "HP",
+        Stat.Attack => "Atk",
+        Stat.Defense => "Def",
+        Stat.Speed => "Spd",
+        Stat.Move => "Mov",
+        _ => throw new ArgumentOutOfRangeException(nameof(s), s, null)
+    };
+    
+    public static Stat FromAbbrev(this string s) => s switch {
+        "HP" => Stat.MaxHP,
+        "Atk" => Stat.Attack,
+        "Def" => Stat.Defense,
+        "Spd" => Stat.Speed,
+        "Mov" => Stat.Move,
+        _ => throw new ArgumentOutOfRangeException(nameof(s), s, null)
+    };
+
+    public static readonly Stat[] AllStats = {
+        Stat.MaxHP,
+        Stat.CurrHP,
+        Stat.Attack,
+        Stat.Defense,
+        Stat.Speed,
+        Stat.Move,
+    };
 }
 }

@@ -109,6 +109,9 @@ public class RenderablePane {
                 if (t.AsWorldUI is { } coll) {
                     //Screen coordinates of the event
                     var screenLoc = new Vector2(evLoc.x / baseRes.w, evLoc.y / baseRes.h);
+                    //Don't allow selection outside of camera viewport
+                    if (!coll.cam.ScreenPointIsInViewport(screenLoc))
+                        return new(float.NaN, float.NaN);
                     var ray = coll.cam.ScreenPointToRay(screenLoc);
                     if (Physics.Raycast(ray, out var hit, 100f, coll.layerMask, QueryTriggerInteraction.Collide)) {
                         Debug.DrawRay(ray.origin, ray.direction * hit.distance, Color.magenta);
@@ -225,7 +228,7 @@ public class UIBuilderRenderer : RegularUpdater {
     /// Convert a screen point ((0,0) bottom left, (1,1) top right)
     /// to an XML position ((0,0) top left, (3840,2160) bottom right).
     /// </summary>
-    public static Vector2 ScreenpointToXML(Vector2 screenPoint) => 
+    public static Vector2 ScreenToXML(Vector2 screenPoint) => 
         new(UIBuilderRenderer.UIResolution.w * screenPoint.x,
             UIBuilderRenderer.UIResolution.h * (1 - screenPoint.y));
 

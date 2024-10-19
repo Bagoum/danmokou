@@ -45,28 +45,26 @@ public class CameraInfo {
         new(worldDim.x / ScreenWidth * targetResolution.w, worldDim.y / ScreenHeight * targetResolution.h);
 
     public CRect ToScreenRect(CRect worldRect, float worldZ) =>
-        new(ToScreenPoint(new(worldRect.MinX, worldRect.MinY, worldZ)),
-            ToScreenPoint(new(worldRect.MaxX, worldRect.MaxY, worldZ)), worldRect.angle);
+        new(WorldToScreen(new(worldRect.MinX, worldRect.MinY, worldZ)),
+            WorldToScreen(new(worldRect.MaxX, worldRect.MaxY, worldZ)), worldRect.angle);
     
     /// <summary>
     /// Relative to this camera, convert world dimensions into screen dimensions in XML coordinates.
     /// </summary>
     public Vector2 ToXMLDims(Vector3 worldPos, Vector3 worldDims) =>
-        (ToXMLPos(worldPos + worldDims / 2f) - ToXMLPos(worldPos - worldDims / 2f)).InvertY();
+        (WorldToXML(worldPos + worldDims / 2f) - WorldToXML(worldPos - worldDims / 2f)).InvertY();
 
     /// <summary>
     /// Relative to this camera, convert a world position into a screen position in XML coordinates.
     /// </summary>
-    public Vector2 ToXMLPos(Vector3 worldPos) => 
-        UIBuilderRenderer.ScreenpointToXML(ToScreenPoint(worldPos));
+    public Vector2 WorldToXML(Vector3 worldPos) => 
+        UIBuilderRenderer.ScreenToXML(WorldToScreen(worldPos));
 
     /// <summary>
     /// Relative to this camera, convert a world position into a screen position in UV coordinates.
     /// </summary>
-    public Vector2 ToScreenPoint(Vector3 worldPos) {
-        var viewpoint = Camera.WorldToViewportPoint(worldPos);
-        var viewrect = Camera.rect;
-        return viewrect.min + (Vector2)viewpoint.MulBy(viewrect.size);
+    public Vector2 WorldToScreen(Vector3 worldPos) {
+        return ViewportToScreen(Camera.WorldToViewportPoint(worldPos));
     }
 
     /// <summary>
@@ -88,6 +86,16 @@ public class CameraInfo {
     public Vector2 ScreenToViewport(Vector2 screenPos) {
         var r = Camera.rect;
         return (screenPos - r.min).PtDiv(r.size);
+    }
+
+    public bool ScreenPointIsInViewport(Vector2 screenPos) {
+        var viewpos = ScreenToViewport(screenPos);
+        return viewpos.x is >= 0 and <= 1 && viewpos.y is >= 0 and <= 1;
+    }
+    
+    public Vector2 ViewportToScreen(Vector2 viewportPos) {
+        var viewrect = Camera.rect;
+        return viewrect.min + viewportPos.PtMul(viewrect.size);
     }
 
     public Ray ScreenPointToRay(Vector2 screenPos) => Camera.ViewportPointToRay(ScreenToViewport(screenPos));

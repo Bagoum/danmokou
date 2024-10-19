@@ -28,6 +28,7 @@
 
 :root {
     --main-pure: rgb(108, 21, 121);
+    --main-pure-70: rgba(108, 21, 121, 0.7);
     --main-dark1-80: rgba(74, 16, 84, 0.8);
     --main-dark2-90: rgba(33, 4, 39, 0.9);
     --highlighter-70: rgba(92, 22, 106, 0.7);
@@ -39,6 +40,7 @@
 
 .theme-purple {
     --main-pure: rgb(108, 21, 121);
+    --main-pure-70: rgba(108, 21, 121, 0.7);
     --main-dark1-80: rgba(74, 16, 84, 0.8);
     --main-dark2-90: rgba(33, 4, 39, 0.9);
     --highlighter-70: rgba(92, 22, 106, 0.7);
@@ -50,6 +52,7 @@
 
 .theme-purple * {
     --main-pure: rgb(108, 21, 121);
+    --main-pure-70: rgba(108, 21, 121, 0.7);
     --main-dark1-80: rgba(74, 16, 84, 0.8);
     --main-dark2-90: rgba(33, 4, 39, 0.9);
     --highlighter-70: rgba(92, 22, 106, 0.7);
@@ -61,6 +64,7 @@
 
 .theme-blue {
     --main-pure: rgb(28, 62, 147);
+    --main-pure-70: rgba(28, 62, 147, .7);
     --main-dark1-80: rgba(22, 35, 84, 0.8);
     --main-dark2-90: rgba(16, 16, 48, 0.9);
     --highlighter-70: rgba(68, 88, 189, 0.7);
@@ -72,6 +76,7 @@
 
 .theme-blue * {
     --main-pure: rgb(28, 62, 147);
+    --main-pure-70: rgba(28, 62, 147, .7);
     --main-dark1-80: rgba(22, 35, 84, 0.8);
     --main-dark2-90: rgba(16, 16, 48, 0.9);
     --highlighter-70: rgba(68, 88, 189, 0.7);
@@ -294,7 +299,9 @@
 }
 
 .checkmark {
-    background-image: url("project://database/Assets/Danmokou/Sprites/UI/boss-star.png?fileID=21300000&guid=1cece61e3610eb84084c3dc5246ee605&type=3#boss-star");
+    background-image: url("project://database/Assets/Danmokou/Kenney/crosshairs/crosshair101.jpg?fileID=2800000&guid=e87eab26bf9fcc44ca414dee1edb792b&type=3#crosshair101");
+    margin-right: -10px;
+    margin-left: -30px;
     display: none;
 }
 
@@ -312,7 +319,7 @@
 
 .node > .body {
     transition-property: border-color;
-    transition-duration: 0.1s;
+    transition-duration: 0.04s;
     border-bottom-width: 6px;
     border-color: var(--accent-pure-0);
     flex-direction: row;
@@ -749,12 +756,30 @@
     margin-bottom: 4px;
 }
 
-#MarginContainer {
+.uiScreen #MarginContainer {
     margin-left: 480px;
     margin-right: 480px;
+    flex-grow: 1;
 }
 
 .uiScreen.pauseThin #MarginContainer {
     margin-left: 750px;
     margin-right: 1700px;
+}
+
+.uiScreen #MarginContainer #HeaderRow {
+    flex-direction: row;
+}
+
+.uiScreen #ControlsHelper {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    height: 110px;
+    padding: 0 480px 10px;
+    font-size: 72px;
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Signika-Regular%20SDF.asset?fileID=11400000&guid=a59d94292a6917d4da3cf1a2f7ed675f&type=2#Signika-Regular SDF");
+    -unity-text-align: middle-left;
+    color: rgb(159, 159, 159);
 }

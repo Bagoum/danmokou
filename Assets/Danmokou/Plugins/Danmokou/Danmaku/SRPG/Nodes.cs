@@ -81,15 +81,15 @@ public record Forested(ISRPGNodeType Base) : ISRPGNodeType {
 
 public class Node {
     public ISRPGNodeType Type { get; }
-    public Vector3Int TilemapLoc { get; }
+    public Vector2Int Index { get; }
     public Vector3 CellAnchor { get; }
     public Vector3 CellCenter { get; }
     public Graph<Edge, Node> Graph { get; set; } = null!;
     public Unit? Unit { get; set; }
     
-    public Node(ISRPGNodeType type, Vector3Int tilemapLoc, Vector3 cellCenter, Vector3 cellAnchor) {
+    public Node(ISRPGNodeType type, Vector2Int index, Vector3 cellCenter, Vector3 cellAnchor) {
         Type = type;
-        this.TilemapLoc = tilemapLoc;
+        this.Index = index;
         this.CellCenter = cellCenter;
         this.CellAnchor = cellAnchor;
     }
@@ -103,7 +103,7 @@ public class Node {
             edges.Add((e.To, e.Cost(u)));
     }
 
-    public override string ToString() => $"{Type.Description}<{TilemapLoc.x},{TilemapLoc.y}>";
+    public override string ToString() => $"{Type.Description}<{Index.x},{Index.y}>";
 }
 
 }

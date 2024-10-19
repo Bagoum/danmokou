@@ -60,7 +60,7 @@ public class TMPLinkHandler : MonoBehaviour, IPointerClickHandler, IPointerMoveH
             if (quickTooltips.Remove(lid, out var eqtt))
                 eqtt.Close();
             if (tt != null) {
-                tt.Render.HTML.WithAbsolutePosition(UIBuilderRenderer.UICamInfo.ToXMLPos((tl + tr) / 2.0f));
+                tt.Render.HTML.WithAbsolutePosition(UIBuilderRenderer.UICamInfo.WorldToXML((tl + tr) / 2.0f));
                 stickyTooltips[lid] = tt;
             }
         }
@@ -90,7 +90,7 @@ public class TMPLinkHandler : MonoBehaviour, IPointerClickHandler, IPointerMoveH
                 return;
             }
             if (tt != null) {
-                tt.Render.HTML.WithAbsolutePosition(UIBuilderRenderer.UICamInfo.ToXMLPos((tl + tr) / 2.0f));
+                tt.Render.HTML.WithAbsolutePosition(UIBuilderRenderer.UICamInfo.WorldToXML((tl + tr) / 2.0f));
                 quickTooltips[lid] = tt;
             }
         }

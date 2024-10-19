@@ -147,6 +147,11 @@ public static class M {
     public static Vector3 PtMul(this Vector3 a, Vector3 b) => new(a.x * b.x, a.y * b.y, a.z * b.z);
     public static Vector2 PtDiv(this Vector2 a, Vector2 b) => new(a.x / b.x, a.y / b.y);
     public static Vector3 PtDiv(this Vector3 a, Vector3 b) => new(a.x / b.x, a.y / b.y, a.z / b.z);
+    public static int Sum(this Vector2Int vec) => vec.x + vec.y;
+    public static Vector3Int Abs(this Vector2Int vec) => new(Math.Abs(vec.x), Math.Abs(vec.y));
+    public static int Sum(this Vector3Int vec) => vec.x + vec.y + vec.z;
+    public static Vector3Int Abs(this Vector3Int vec) => new(Math.Abs(vec.x), Math.Abs(vec.y), Math.Abs(vec.z));
+    
     public static Vector2 ConvertBasis(Vector2 source, Vector2 basis1) => RotateVector(source, basis1.x, -basis1.y);
     public static Vector2 DeconvertBasis(Vector2 source, Vector2 basis1) => RotateVector(source, basis1.x, basis1.y);
 
@@ -336,9 +341,8 @@ public static class M {
         Vector3 c) =>
         controller < high ? Lerp(lowest, low, controller, a, b) : Lerp(high, highest, controller, b, c);
     
-    public static Vector3 MulBy(this Vector3 x, Vector3 m) => new Vector3(x.x * m.x, x.y * m.y, x.z * m.z);
     public static Bounds MulBy(this Bounds b, Vector3 m) {
-        return new Bounds(b.center.MulBy(m), b.size.MulBy(m));
+        return new Bounds(b.center.PtMul(m), b.size.PtMul(m));
     }
 
     public static double BlockRound(double block, double value) => Math.Round(value / block) * block;
@@ -389,6 +393,9 @@ public static class M {
     public static Rect RectFromCenter(Vector2 center, Vector2 wh) {
         return new Rect(center - wh / 2f, wh);
     }
+
+    public static Vector2 XMaxYMin(this Rect r) => new(r.xMax, r.yMin);
+    public static Vector2 XMinYMax(this Rect r) => new(r.xMin, r.yMax);
 }
 
 public readonly struct Hurtbox {
@@ -501,6 +508,16 @@ public readonly struct WorldQuad {
         BaseRect = baseRect;
         Z = z;
         Rotation = rotation;
+    }
+
+    /// <summary>
+    /// Find the world location of an item located at a given position in <see cref="BaseRect"/>.
+    /// </summary>
+    /// <param name="xy">The position of the item in 0->1 coordinates ((0,0) at bottom left).</param>
+    public Vector3 LocationAtRectCoords(Vector2 xy) {
+        var hd = HalfDims;
+        var offset = new Vector2(M.Lerp(-hd.x, hd.x, xy.x), M.Lerp(-hd.y, hd.y, xy.y));
+        return Center + Rotation * offset;
     }
 }
 

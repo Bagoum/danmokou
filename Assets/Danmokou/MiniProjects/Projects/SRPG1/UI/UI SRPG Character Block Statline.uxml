@@ -1,0 +1,5 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/SRPG1/UI/srpg%20css.uss?fileID=7433441132597879392&amp;guid=3ac66db6bd7dbfd40a9aab168cf2d9ea&amp;type=3#srpg css" />
+    <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
+    <engine:Label text="ATK 42" name="Label" class="statline" />
+</engine:UXML>

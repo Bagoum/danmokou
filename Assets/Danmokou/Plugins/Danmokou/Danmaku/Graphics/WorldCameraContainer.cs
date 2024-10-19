@@ -46,7 +46,7 @@ public class WorldCameraContainer : CoroutineRegularUpdater {
     /// </summary>
     public void TrackTarget(Vector3 objPos, CameraInfo cam, CRect restrict) {
         lastTrack = (cam, restrict);
-        var objSPos = cam.ToScreenPoint(objPos);
+        var objSPos = cam.WorldToScreen(objPos);
         if (CollisionMath.PointInRect(objSPos, restrict))
             return;
         //Return the world delta that an object would have to move for it to be at the given screen position.

@@ -95,9 +95,9 @@ public class PlayScreenPostprocessing : CoroutineRegularUpdater, IPlayScreenShad
         //Cut off the rendering just outside of the play area in order to avoid artifacting
         if (GameManagement.Instance.InstanceActiveGuardInScene) {
             var bounds = LocationHelpers.PlayableBounds;
-            var screenCenter = UIBuilderRenderer.UICamInfo.ToScreenPoint(Vector2.zero);
+            var screenCenter = UIBuilderRenderer.UICamInfo.WorldToScreen(Vector2.zero);
             var screenHalfDim = -screenCenter +
-                                UIBuilderRenderer.UICamInfo.ToScreenPoint(new Vector2(bounds.right + 0.5f,
+                                UIBuilderRenderer.UICamInfo.WorldToScreen(new Vector2(bounds.right + 0.5f,
                                     bounds.top + 0.5f));
             seijaMaterial.SetVector(screenRect, new(screenCenter.x, screenCenter.y, screenHalfDim.x, screenHalfDim.y));
         }
@@ -191,7 +191,7 @@ public class PlayScreenPostprocessing : CoroutineRegularUpdater, IPlayScreenShad
             //radius is in screen Y units, center is in screen units
             seijaMaterial.SetFloat(pix.pixelize ? "_PixelizeRO" : "_PixelizeRI", 
                 MainCamera.MCamInfo.RescaleDims(new(0, pix.radius(pi)), (1,1)).y);
-            var center = MainCamera.MCamInfo.ToScreenPoint(pix.center(pi));
+            var center = MainCamera.MCamInfo.WorldToScreen(pix.center(pi));
             seijaMaterial.SetVector("_PixelizeCenter", new(center.x, center.y, 0, 0));
             yield return null;
         }

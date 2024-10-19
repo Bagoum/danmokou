@@ -2,13 +2,13 @@
     <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
     <ui:VisualElement picking-mode="Ignore" class="uiScreen">
         <ui:VisualElement name="TopLine" class="uiScreenLiner" />
-        <ui:VisualElement name="MarginContainer" picking-mode="Ignore" style="flex-grow: 1;">
-            <ui:VisualElement name="HeaderRow" style="flex-direction: row;">
+        <ui:VisualElement name="MarginContainer" picking-mode="Ignore">
+            <ui:VisualElement name="HeaderRow">
                 <ui:Label text="&lt;cspace=18&gt;REPLAYS&lt;/cspace&gt;" display-tooltip-when-elided="true" name="Header" class="header" />
             </ui:VisualElement>
             <ui:VisualElement name="Container" picking-mode="Ignore" />
         </ui:VisualElement>
         <ui:VisualElement name="BottomLine" class="uiScreenLiner" />
-        <ui:Label name="ControlsHelper" text="Confirm: Z or Return      Back: X or Right Click" style="position: absolute; bottom: 0; right: 0; left: 0; height: 110px; padding-left: 480px; padding-right: 480px; padding-top: 0; padding-bottom: 10px; font-size: 72px; -unity-font-definition: url(&apos;project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/Signika-Regular%20SDF.asset?fileID=11400000&amp;guid=a59d94292a6917d4da3cf1a2f7ed675f&amp;type=2#Signika-Regular SDF&apos;); -unity-text-align: middle-left; color: rgb(159, 159, 159);" />
+        <ui:Label name="ControlsHelper" text="Confirm: Z or Return      Back: X or Right Click" class="controlsHelperCl" />
     </ui:VisualElement>
 </ui:UXML>

@@ -29,6 +29,8 @@ public abstract class UIRenderSpace {
                 LocalUpdateVisibility(true);
                 foreach (var v in Views)
                     v.Bind(Screen.Controller.MVVM, _html);
+                foreach (var v in Views)
+                    v.OnBuilt(this);
             }
             return _html;
         }
@@ -37,7 +39,6 @@ public abstract class UIRenderSpace {
     public UIRenderSpace? Parent { get; }
     public LazyEvented<bool> IsHTMLVisible { get; }
     protected virtual bool ShouldBeLocalVisible => !VisibleWhenSourcesVisible || HasVisibleSource;
-    private bool? ShouldBeVisibleOverride { get; set; }
     public bool ShouldBeVisibleInTree => ShouldBeLocalVisible && (Parent?.ShouldBeVisibleInTree ?? true);
     
     /// <summary>
@@ -54,8 +55,9 @@ public abstract class UIRenderSpace {
     /// <summary>
     /// By default, render spaces will not animate out if a parent space is already rendering out.
     /// <br/>If this is set to true, then such animations will be allowed.
+    /// <br/>False by default, except if this is a child of <see cref="UIRenderAbsoluteTerritory"/>.
     /// </summary>
-    public bool AnimateOutWithParent { get; set; } = false;
+    public bool AnimateOutWithParent { get; set; }
 
     private bool _useTreeForHTMLVisibility = false;
 
@@ -121,6 +123,7 @@ public abstract class UIRenderSpace {
     public UIRenderSpace(UIScreen screen, UIRenderSpace? parent) {
         this.Screen = screen;
         this.Parent = parent;
+        AnimateOutWithParent = parent is UIRenderAbsoluteTerritory;
         IsHTMLVisible = new(() => _useTreeForHTMLVisibility ? ShouldBeVisibleInTree : ShouldBeLocalVisible);
         Screen.Renderers.Add(this);
     }
@@ -210,8 +213,10 @@ public abstract class UIRenderSpace {
     /// </summary>
     public UIRenderSpace WithView(IUIView view) {
         Views.Add(view);
-        if (_html is not null)
+        if (_html is not null) {
             view.Bind(Controller.MVVM, HTML);
+            view.OnBuilt(this);
+        }
         else if (Screen.Built)
             _ = HTML;
         return this;
@@ -239,6 +244,12 @@ public abstract class UIRenderSpace {
     
     public static readonly Func<UIRenderSpace, ICancellee, Task> PopupNotVisibleAnim =
         (rs, cT) => rs.MakeTask(rs.HTML.transform.ScaleTo(new Vector3(1, 0.01f, 1), .12f, Easers.EIOSine, cT: cT));
+    
+    public static readonly Func<UIRenderSpace, ICancellee, Task> FastPopupVisibleAnim =
+        (rs, cT) => rs.MakeTask(rs.HTML.transform.ScaleTo(new Vector3(1, 1, 1), .1f, Easers.EOutSine, cT: cT));
+    
+    public static readonly Func<UIRenderSpace, ICancellee, Task> FastPopupNotVisibleAnim =
+        (rs, cT) => rs.MakeTask(rs.HTML.transform.ScaleTo(new Vector3(1, 0.01f, 1), .06f, Easers.EIOSine, cT: cT));
 
     public UIRenderSpace WithTooltipAnim() {
         IsVisibleAnimation = TooltipVisibleAnim;
@@ -249,6 +260,12 @@ public abstract class UIRenderSpace {
     public UIRenderSpace WithPopupAnim() {
         IsVisibleAnimation = PopupVisibleAnim;
         IsNotVisibleAnimation = PopupNotVisibleAnim;
+        return this;
+    }
+    
+    public UIRenderSpace WithFastPopupAnim() {
+        IsVisibleAnimation = FastPopupVisibleAnim;
+        IsNotVisibleAnimation = FastPopupNotVisibleAnim;
         return this;
     }
 
@@ -343,13 +360,13 @@ public class UIRenderAbsoluteTerritory : UIRenderSpace {
     protected override VisualElement _FirstLoadHTML() => absTerr;
     /// <summary>
     /// Alpha of the darkened overlay when fully visible.
-    /// Can be overriden by <see cref="PopupUIGroup.OverlayAlphaOverride"/>.
+    /// Can be overriden by <see cref="UIGroup.OverlayAlphaOverride"/>.
     /// </summary>
     public float Alpha { get; set; } = 0.6f;
     private float GetTargetAlpha() {
         float? a = null;
         foreach (var s in Sources)
-            if (s is PopupUIGroup { OverlayAlphaOverride: { } f })
+            if (s.OverlayAlphaOverride is {} f)
                 a = Math.Max(a ?? f, f);
         return a ?? Alpha;
     }

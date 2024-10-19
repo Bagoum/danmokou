@@ -88,7 +88,7 @@ Material:
     - _B: 16
     - _BX: 8
     - _BY: 8
-    - _Bias: 0.1
+    - _Bias: 0.16
     - _BlendTo: 10
     - _BumpScale: 1
     - _Cutoff: 0.5
@@ -96,7 +96,7 @@ Material:
     - _DimLT: 0.6666667
     - _DistortT: 0
     - _DstBlend: 0
-    - _F: 0
+    - _F: 0.514
     - _FMult: 1
     - _FireMagnitude: 0.1
     - _GlossMapScale: 1

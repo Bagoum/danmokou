@@ -64,7 +64,7 @@ public class LocalXMLTetrisExample : CoroutineRegularUpdater {
         BlockTypes = new[] {
             pbS, pbZ, pbJ, pbL, pbT, pbI, pbO
         };
-        BlocksGrp = new UIFreeformGroup(Menu.MainScreen, null) { Interactable = false };
+        BlocksGrp = new UIFreeformGroup(Menu.MainScreen) { Interactable = false };
         Menu.FreeformGroup.AddGroupDynamic(BlocksGrp);
         
         var dim = 120f;
@@ -358,9 +358,9 @@ public class LocalXMLTetrisExample : CoroutineRegularUpdater {
             var b = VM.Block;
             var slot = VM.Src.SlotAt(b.Position);
             HTML.WithAbsolutePosition(
-                slot.WorldLocation.center
+                slot.XMLLocation.center
                 + b.RotationCenterPosition
-                    .PtMul(new(slot.WorldLocation.width, -slot.WorldLocation.height))
+                    .PtMul(new(slot.XMLLocation.width, -slot.XMLLocation.height))
             );
         }
 

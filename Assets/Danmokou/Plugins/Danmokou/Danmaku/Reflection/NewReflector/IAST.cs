@@ -203,6 +203,10 @@ public interface IAST : ITypeTree, IDebugAST {
             } else if (npo.Tree is AST.Array ar) {
                 sb.Append($"Typechecking failed for this array.\nAll elements of an array must have the same type, " +
                           $"but the parameters were inferred to have the following types:\n\t{setsDisplay(ar.Params)}");
+            } else if (npo.Tree is AST.Conditional cond) {
+                sb.Append($"Typechecking failed for this conditional.\nThe condition (param 1) must have type bool " +
+                          $"and the blocks (param 2/3) must have the same type, but they were inferred to have " +
+                          $"the following types:\n\t{setsDisplay(cond.Params)}");
             } else if (npo.Tree is AST.PartialMethodCall pm) {
                 pos = pm.MethodPosition;
                 var plural = pm.Overloads.Count != 1 ? "s" : "";

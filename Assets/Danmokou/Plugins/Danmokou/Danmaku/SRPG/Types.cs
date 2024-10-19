@@ -1,22 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Culture;
 using BagoumLib.DataStructures;
-using Danmokou.SRPG.Actions;
+using Danmokou.SRPG.Diffs;
 using Danmokou.SRPG.Nodes;
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace Danmokou.SRPG {
 
-public record Faction(LString Name) {
+public class Faction {
+    public LString Name { get; }
+    public Color Color { get; }
     public GameState State { get; set; } = null!;
     public bool FlipSprite { get; init; } = false;
+    
+    public Faction(LString Name, Color Color) {
+        this.Name = Name;
+        this.Color = Color;
+    }
 
-    public override string ToString() => $"Faction {Name}";
+    public override string ToString() => Name;
 }
 
 public enum UnitStatus {
@@ -35,22 +44,26 @@ public enum UnitStatus {
     /// <summary>
     /// The unit has moved and now must act.
     /// </summary>
-    //MustAct //TODO setup MustAct
+    MustAct
 }
 
 public class Unit {
     public Faction Team { get; }
+    [JsonIgnore] public GameState State => Team.State;
     public string Key { get; }
-    public LString Name { get; }
-    public int Move { get; }
+    public StatBlock Stats { get; }
+    public LString Name { get; init; }
     public Node? Location { get; private set; }
     public UnitStatus Status { get; private set; } = UnitStatus.NotMyTurn;
+    public IUnitSkill[] Skills { get; }
+    [JsonIgnore] public IEnumerable<IUnitSkill> AttackSkills => Skills.Where(s => s.Type is UnitSkillType.Attack);
     
-    public Unit(Faction team, string key, int move, LString? name = null) {
+    public Unit(Faction team, string key, StatBlock stats, params IUnitSkill[] skills) {
         this.Team = team;
         this.Key = key;
-        this.Name = name ?? key;
-        this.Move = move;
+        this.Stats = stats;
+        this.Skills = skills;
+        this.Name = key;
     }
 
     public void AssertIsAt(Node target) {
@@ -70,33 +83,63 @@ public class Unit {
         Location = target;
         if (Location != null)
             Location.Unit = this;
-        Team.State.ActiveRealizer?.SetUnitLocation(this, prevLoc, target);
+        State.ActiveRealizer?.SetUnitLocation(this, prevLoc, target);
     }
 
     public override string ToString() => $"{Name} ({Team})";
 }
 
 public class GameState {
+    public Node[,] Map { get; }
+    public int Height { get; }
+    public int Width { get; }
     public Graph<Edge, Node> Graph { get; }
     public HashSet<Unit> Units { get; } = new();
-    private List<IUnitAction> Actions { get; } = new();
-    public IUnitAction? MostRecentAction => Actions.Count > 0 ? Actions[^1] : null;
+    private List<IGameDiff> Actions { get; } = new();
+    public IGameDiff? MostRecentAction => Actions.Count > 0 ? Actions[^1] : null;
+    public int NActions => Actions.Count;
     private readonly Stack<int> checkpoints = new();
     public bool IsSimulating => checkpoints.Count > 0;
     public Faction? ActingFaction { get; private set; }
     public Faction[] TurnOrder { get; }
     private IStateRealizer Realizer { get; }
     public IStateRealizer? ActiveRealizer => IsSimulating ? null : Realizer;
-    
-    public GameState(IStateRealizer realizer, IEnumerable<Node> nodes, IEnumerable<Edge> edges, params Faction[] turnOrder) {
+    private int animCt = 0;
+    public bool IsAnimating => animCt > 0;
+    public Unit? MustActUnit {
+        get {
+            foreach (var u in Units)
+                if (u.Status == UnitStatus.MustAct)
+                    return u;
+            return null;
+        }
+    }
+
+    public GameState(IStateRealizer realizer, Node[,] nodes, IEnumerable<Edge> edges, params Faction[] turnOrder) {
         Realizer = realizer;
-        Graph = new(nodes, edges);
+        this.Map = nodes;
+        Height = Map.GetLength(0);
+        Width = Map.GetLength(1);
+        Graph = new(nodes.Cast<Node>(), edges);
         foreach (var n in Graph.Nodes)
             n.Graph = Graph;
         TurnOrder = turnOrder;
         foreach (var f in TurnOrder)
             f.State = this;
     }
+
+    /// <summary>
+    /// Get the node at the given index in the map if the index is in bounds. If it is out of bounds, return null.
+    /// </summary>
+    public Node? TryNodeAt(Vector2Int index) => 
+        index.x >= 0 && index.x < Width && index.y >= 0 && index.y < Height ?
+            NodeAt(index) :
+            null;
+    
+    /// <summary>
+    /// Get the node at the given index in the map.
+    /// </summary>
+    public Node NodeAt(Vector2Int index) => Map[index.y, index.x];
 
     private bool ShouldAutoEndFactionTurn() {
         if (ActingFaction is null || IsSimulating) return false;
@@ -106,34 +149,83 @@ public class GameState {
         return true;
     }
 
-    private void AutoEndFactionTurnFast() {
+    private void AutoEndFactionTurnFast(IGameDiff cause) {
         var idx = TurnOrder.IndexOf(ActingFaction!);
-        AddActionFast(new SwitchFactionTurn(ActingFaction!, TurnOrder.ModIndex(idx + 1)));
+        AddActionFast(new SwitchFactionTurn(ActingFaction!, TurnOrder.ModIndex(idx + 1)) { CausedBy = cause });
     }
-    private async Task AutoEndFactionTurn(ICancellee cT) {
+    private async Task AutoEndFactionTurn(IGameDiff cause, ICancellee cT) {
         var idx = TurnOrder.IndexOf(ActingFaction!);
-        await AddAction(new SwitchFactionTurn(ActingFaction!, TurnOrder.ModIndex(idx + 1)), cT);
+        await AddAction(new SwitchFactionTurn(ActingFaction!, TurnOrder.ModIndex(idx + 1)) { CausedBy = cause }, cT);
     }
 
-    public void AddActionFast(IUnitAction action) {
-        Actions.Add(action);
-        action.Apply(this);
+    //For animating actions, Apply is not called until after the animation is finished
+    // (in order to maximally preserve existing state during the animation, eg. for Exhaustion during actions)
+    //As such, it would cause problems if you added another action while a previous one was animating.
+    private void AnimatingGuard([CallerMemberName] string? caller = null) {
+        if (IsAnimating)
+            throw new Exception($"Operation {caller} cannot be executed during animation");
+    }
+    
+    private void MustActUnitGuard(IGameDiff diff) {
+        if (diff?.CausedBy is null && MustActUnit is { } u && (diff is not IUnitSkillDiff ua || ua.Unit != u))
+            throw new Exception($"The unit {u} must act next; uncaused action {diff} cannot be executed");
+    }
+
+    public void AddActionFast(IGameDiff diff) {
+        AnimatingGuard();
+        MustActUnitGuard(diff);
+        Actions.Add(diff);
+        if (diff.Apply(this) is { } caused) {
+            foreach (var nxt in caused) {
+                nxt.CausedBy = diff;
+                AddActionFast(nxt);
+            }
+            ListCache<IGameDiff>.Consign(caused);
+        }
+        foreach (var u in Units) 
+        foreach (var eff in u.Stats.Mods)
+            if (eff.ProcessCausation(diff) is { } nxt) {
+                nxt.CausedBy = diff;
+                AddActionFast(nxt);
+            }
         if (ShouldAutoEndFactionTurn())
-            AutoEndFactionTurnFast();
+            AutoEndFactionTurnFast(diff);
     }
 
-    public async Task<Completion> AddAction(IUnitAction action, ICancellee cT) {
+    public async Task<Completion> AddAction(IGameDiff diff, ICancellee cT) {
+        AnimatingGuard();
+        MustActUnitGuard(diff);
         if (IsSimulating || cT.IsSoftCancelled()) {
-            AddActionFast(action);
+            AddActionFast(diff);
             return Completion.SoftSkip;
         } else {
-            Actions.Add(action);
-            if (Realizer.Animate(action, cT) is { IsCompletedSuccessfully: false } t)
-                await t;
-            cT.ThrowIfHardCancelled();
-            action.Apply(this);
+            try {
+                ++animCt;
+                if (Realizer.Animate(diff, cT) is { IsCompletedSuccessfully: false } t)
+                    await t;
+                cT.ThrowIfHardCancelled();
+            } finally {
+                --animCt;
+            }
+            Actions.Add(diff);
+            //Caused effects native to the action, eg. an attack that applies a stat debuff
+            if (diff.Apply(this) is { } caused) {
+                foreach (var nxt in caused) {
+                    nxt.CausedBy = diff;
+                    await AddAction(nxt, cT);
+                }
+                ListCache<IGameDiff>.Consign(caused);
+            }
+            //Caused effects by interactions, eg. a stat debuff with 1 turn duration
+            // is deleted due to SwitchFactionTurn action
+            foreach (var u in Units) 
+            foreach (var eff in u.Stats.Mods)
+                if (eff.ProcessCausation(diff) is { } nxt) {
+                    nxt.CausedBy = diff;
+                    await AddAction(nxt, cT);
+                }
             if (ShouldAutoEndFactionTurn())
-                await AutoEndFactionTurn(cT);
+                await AutoEndFactionTurn(diff, cT);
             return cT.ToCompletion();
         }
     }
@@ -148,9 +240,15 @@ public class GameState {
     }
 
     public bool Undo() {
+        AnimatingGuard();
         if (IsSimulating) throw new Exception("Cannot undo operation while simulating");
         if (Actions.Count == 0 || Actions[^1] is StartGame) return false;
-        Actions.Pop().Unapply(this);
+        IGameDiff nxt;
+        do {
+            (nxt = Actions.Pop()).Unapply(this);
+            //Caused actions must be unapplied with their causing action
+            //For simplicity, undo unit post-move actions with the move action (otherwise UI is difficult to handle)
+        } while (nxt.CausedBy is not null || nxt is IUnitSkillDiff);
         return true;
     }
 
@@ -168,28 +266,32 @@ public class GameState {
         ActingFaction = nxt;
     }
 
-    public record StartGame(Faction FirstFaction) : IUnitAction {
-        void IUnitAction.Apply(GameState gs) {
+    public record StartGame(Faction FirstFaction) : IGameDiff {
+        public IGameDiff? CausedBy { get; set; }
+        List<IGameDiff>? IGameDiff.Apply(GameState gs) {
             if (gs.ActingFaction != null)
                 throw new Exception("Cannot start game; game is already started");
             gs.UpdateFaction(FirstFaction, false);
+            return null;
         }
 
-        void IUnitAction.Unapply(GameState gs) {
+        void IGameDiff.Unapply(GameState gs) {
             if (gs.ActingFaction != null)
                 throw new Exception("Cannot unstart game; game has not yet been started");
             gs.UpdateFaction(null, true);
         }
     }
     
-    public record SwitchFactionTurn(Faction From, Faction To) : IUnitAction {
-        void IUnitAction.Apply(GameState gs) {
+    public record SwitchFactionTurn(Faction From, Faction To) : IGameDiff {
+        public IGameDiff? CausedBy { get; set; }
+        List<IGameDiff>? IGameDiff.Apply(GameState gs) {
             if (gs.ActingFaction != From)
                 throw new Exception($"The current faction must be {From}, but is {gs.ActingFaction}");
             gs.UpdateFaction(To, false);
+            return null;
         }
 
-        void IUnitAction.Unapply(GameState gs) {
+        void IGameDiff.Unapply(GameState gs) {
             if (gs.ActingFaction != To)
                 throw new Exception($"The current faction must be {To}, but is {gs.ActingFaction}");
             gs.UpdateFaction(From, true);

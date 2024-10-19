@@ -1,0 +1,26 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <engine:Template name="UI SRPG Character Block Statline" src="project://database/Assets/Danmokou/MiniProjects/Projects/SRPG1/UI/UI%20SRPG%20Character%20Block%20Statline.uxml?fileID=9197481963319205126&amp;guid=b70f9ced91ed27d48b063abc808869fd&amp;type=3#UI SRPG Character Block Statline" />
+    <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/SRPG1/UI/srpg%20css.uss?fileID=7433441132597879392&amp;guid=3ac66db6bd7dbfd40a9aab168cf2d9ea&amp;type=3#srpg css" />
+    <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
+    <engine:VisualElement name="CharBlock" class="characterBlock">
+        <engine:Label text="Character Name" name="CharName" class="charBlockTitle" style="-unity-font-definition: url(&quot;project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/JosefinSans-Regular%20SDF.asset?fileID=11400000&amp;guid=8d3d7663b30e7b74f864f92f0a7ad0b6&amp;type=2#JosefinSans-Regular SDF&quot;);" />
+        <engine:VisualElement name="CharBlockCont" class="charBlockCont">
+            <engine:VisualElement name="CharBG" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/SiMP/Cutins/dairi/kaguya.png?fileID=2800000&amp;guid=b461219bffd51b347bce969fd86764e5&amp;type=3#kaguya&quot;); -unity-background-scale-mode: scale-and-crop; justify-content: space-between;">
+                <engine:VisualElement style="flex-grow: 0;" />
+                <engine:VisualElement name="StatBlock" style="flex-grow: 0;">
+                    <engine:VisualElement name="StatRow" class="statBlockRow" style="flex-grow: 1;">
+                        <engine:Instance template="UI SRPG Character Block Statline" name="HP" />
+                    </engine:VisualElement>
+                    <engine:VisualElement name="StatRow" class="statBlockRow" style="flex-grow: 1;">
+                        <engine:Instance template="UI SRPG Character Block Statline" name="Mov" />
+                        <engine:Instance template="UI SRPG Character Block Statline" name="Spd" />
+                    </engine:VisualElement>
+                    <engine:VisualElement name="StatRow" class="statBlockRow" style="flex-grow: 1;">
+                        <engine:Instance template="UI SRPG Character Block Statline" name="Atk" />
+                        <engine:Instance template="UI SRPG Character Block Statline" name="Def" />
+                    </engine:VisualElement>
+                </engine:VisualElement>
+            </engine:VisualElement>
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

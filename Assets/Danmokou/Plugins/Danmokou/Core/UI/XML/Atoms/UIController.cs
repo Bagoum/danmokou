@@ -45,7 +45,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// The TemplateContainer instantiated from <see cref="UIDocument"/>.<see cref="UIDocument.sourceAsset"/>.
     /// Each UI pane can have multiple UIDocuments, each with their own <see cref="UIRoot"/>.
     /// </summary>
-    protected VisualElement UIRoot { get; private set; } = null!;
+    public VisualElement UIRoot { get; private set; } = null!;
     
     /// <summary>
     /// The container for all UI screens on this menu. Normally, direct/only child of <see cref="UIRoot"/>.
@@ -174,7 +174,7 @@ public abstract class UIController : CoroutineRegularUpdater {
             if (Current is { UseDefaultContextMenu: true } curr && ev.button is 1)
                 uiOperations.Enqueue(() => 
                     Current != curr ? Task.CompletedTask : 
-                        _OperateOnResult(PopupUIGroup.CreateContextMenu(curr, null, true, false), UITransitionOptions.Default));
+                        OperateOnResultAnim(PopupUIGroup.CreateContextMenu(curr, null, true, false)));
         });
         UIContainer = UIRoot.Q("UIContainer");
         UISettings = uid.panelSettings;
@@ -202,9 +202,10 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
     }
     
-    public void QueueInput(UIPointerCommand cmd) {
+    public void QueueInput(UIPointerCommand cmd, bool overrideIfExists = true) {
         //We allow move-to-node commands to be queued while the menu is animating
         if (!OperationsEnabled && cmd is not UIPointerCommand.Goto) return;
+        if (!overrideIfExists && QueuedInput is not null) return;
         QueuedInput = cmd;
         UIEventQueued.OnNext(default);
     }
@@ -216,13 +217,13 @@ public abstract class UIController : CoroutineRegularUpdater {
         foreach (var inst in ReturnTo) {
             switch (inst) {
                 case CacheInstruction.ToGroup toGroup:
-                    await OperateOnResult(new UIResult.GoToNode(
+                    await OperateOnResultFast(new UIResult.GoToNode(
                         toGroup.ScreenIndex == null ? 
                             Current.Group.Screen.Groups[toGroup.GroupIndex].EntryNode :
-                            Screens[toGroup.ScreenIndex.Value]!.Groups[toGroup.GroupIndex].EntryNode), null);
+                            Screens[toGroup.ScreenIndex.Value]!.Groups[toGroup.GroupIndex].EntryNode));
                     break;
                 case CacheInstruction.ToGroupNode toGroupNode:
-                    await OperateOnResult(new UIResult.GoToNode(Current.Group.Nodes[toGroupNode.NodeIndex]), null);
+                    await OperateOnResultFast(new UIResult.GoToNode(Current.Group.Nodes[toGroupNode.NodeIndex]));
                     break;
                 case CacheInstruction.ToOption toOption:
                     if (Current is IBaseLROptionNode opt) {
@@ -277,7 +278,7 @@ public abstract class UIController : CoroutineRegularUpdater {
         foreach (var g in Current.Screen.Groups) {
             var fallback = dependentGroups.Contains(g) ? UINodeSelection.GroupFocused : UINodeSelection.Default;
             foreach (var n in g.Nodes)
-                n.UpdateSelection(states.TryGetValue(n, out var s) ? s : fallback);
+                n.UpdateSelection(states.GetValueOrDefault(n, fallback));
         }
         RunDroppableRIEnumerator(scrollToCurrent());
         Profiler.EndSample();
@@ -514,6 +515,11 @@ public abstract class UIController : CoroutineRegularUpdater {
         uiOperations.Enqueue(() => _OperateOnResult(result, opts).Pipe(tcs));
         return tcs.Task;
     }
+
+    public Task OperateOnResultAnim(UIResult? result) => OperateOnResult(result, UITransitionOptions.Default);
+
+    public Task OperateOnResultFast(UIResult? result) => OperateOnResult(result, UITransitionOptions.DontAnimate);
+    
     public override void RegularUpdate() {
         base.RegularUpdate();
         if (ETime.FirstUpdateForScreen && Current != null) {
@@ -587,18 +593,18 @@ public abstract class UIController : CoroutineRegularUpdater {
     #region Transition
 
     public void GoToNth(int grpIndex, int nodeIndex) =>
-        OperateOnResult(new UIResult.GoToNode(MainScreen.Groups[grpIndex].Nodes[nodeIndex]), null);
+        OperateOnResultFast(new UIResult.GoToNode(MainScreen.Groups[grpIndex].Nodes[nodeIndex]));
     
     [ContextMenu("Open menu")]
     protected Task Open() {
         if (MenuActive) return Task.CompletedTask;
         UIRoot.style.opacity = 1;
         if (StartingNode != null)
-            return OperateOnResult(new UIResult.GoToNode(StartingNode), null);
+            return OperateOnResultFast(new UIResult.GoToNode(StartingNode));
         else {
             foreach (var g in Screens.First(x => x != null)!.Groups) 
                 if (g.MaybeEntryNode is {} en) 
-                    return OperateOnResult(new UIResult.GoToNode(en), null);
+                    return OperateOnResultFast(new UIResult.GoToNode(en));
             throw new Exception($"Couldn't open menu {gameObject.name}");
         }
     }
@@ -607,7 +613,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     protected async Task Close() {
         if (!MenuActive) return;
         UIRoot.style.opacity = 0;
-        await OperateOnResult(new UIResult.CloseMenuFast(), null);
+        await OperateOnResultFast(new UIResult.CloseMenuFast());
         OnClosed();
     }
     
@@ -847,7 +853,10 @@ public abstract class UIController : CoroutineRegularUpdater {
     public bool MoveCursorAwayFromNode(UINode n) {
         if (n == Current) {
             if (!n.Destroyed) n.Leave(false, CursorState.Value, null);
-            Current = n.Group.ExitNode;
+            if (n.Group.Destroyed)
+                Current = null;
+            else
+                Current = n.Group.ExitNode;
             Redraw();
             return true;
         } else

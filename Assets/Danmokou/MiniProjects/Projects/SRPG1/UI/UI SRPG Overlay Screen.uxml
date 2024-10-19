@@ -1,0 +1,10 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <engine:Template name="UI SRPG Character Block" src="project://database/Assets/Danmokou/MiniProjects/Projects/SRPG1/UI/UI%20SRPG%20Character%20Block.uxml?fileID=9197481963319205126&amp;guid=758f3ee73b47b1947b4afae93dd0fd2f&amp;type=3#UI SRPG Character Block" />
+    <Style src="project://database/Assets/Danmokou/MiniProjects/Projects/SRPG1/UI/srpg%20css.uss?fileID=7433441132597879392&amp;guid=3ac66db6bd7dbfd40a9aab168cf2d9ea&amp;type=3#srpg css" />
+    <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
+    <engine:VisualElement name="Overlay" class="uiScreen">
+        <engine:Instance template="UI SRPG Character Block" name="CharBlockLeft" style="position: absolute; bottom: 208px;" />
+        <engine:Instance template="UI SRPG Character Block" name="CharBlockRight" style="position: absolute; right: 0; bottom: 210px;" />
+        <engine:Label text="HELLO WORLD" name="Label" style="position: absolute; bottom: 0; right: 0; left: 0; -unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/LinBiolinum_R_G.ttf?fileID=12800000&amp;guid=a10920f256006494a820e4ac8d9123c6&amp;type=3#LinBiolinum_R_G&quot;); font-size: 60px; -unity-text-align: upper-center;" />
+    </engine:VisualElement>
+</engine:UXML>
