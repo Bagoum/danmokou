@@ -207,7 +207,6 @@ public static class SaveData {
                     AllowInputLinearization = false,
                     LegacyRenderer = true,
                     UnfocusedHitbox = false,
-                    Vsync = 1,
 #endif
                 };
 #if WEBGL

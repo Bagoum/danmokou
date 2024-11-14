@@ -1,6 +1,5 @@
 pattern { } {
 phase 0 {
-	type(non, "Aimed Bullets")
 	roott(1, 0, 0)
 } {
 	paction 0 {

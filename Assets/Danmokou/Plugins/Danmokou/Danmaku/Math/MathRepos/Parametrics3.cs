@@ -8,10 +8,11 @@ using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
+using Scriptor;
 using Ex = System.Linq.Expressions.Expression;
-using static Danmokou.Expressions.ExMHelpers;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
-using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector3>>;
+using static Scriptor.Expressions.ExMHelpers;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
+using ExTP3 = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector3>>;
 
 namespace Danmokou.DMath.Functions {
 /// <summary>

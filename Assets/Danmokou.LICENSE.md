@@ -57,7 +57,6 @@ This project consumes the following projects as DLLs under Assets/Danmokou/Plugi
 
 - [protobuf-net*](https://www.nuget.org/packages/protobuf-net) ([Apache 2.0](https://github.com/protobuf-net/protobuf-net/blob/22957abce76ba37f6401f5961aa5d8ace419afad/Licence.txt))
 - [MathNet*](https://www.nuget.org/packages/MathNet.Numerics) ([MIT](https://github.com/mathnet/mathnet-numerics/blob/4b13ff4a5e7014997075df34a84d61f10bdd27b3/LICENSE.md))
-- [LanguageServer.Contracts](https://github.com/Bagoum/LanguageServer.NET) ([MIT](https://github.com/Bagoum/LanguageServer.NET/blob/1b27be88bff80f85cc3511fbd71b825437b85c59/LICENSE.md))
 - [CommunityToolkit.HighPerformance](https://www.nuget.org/packages/CommunityToolkit.HighPerformance) ([MIT](https://github.com/CommunityToolkit/dotnet/blob/main/License.md))
 
 The directory Assets/TextMeshPro contains default imports from the TextMeshPro plugin for Unity. TextMeshPro is licensed under the [Unity Companion License](https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0/license/LICENSE.html). 

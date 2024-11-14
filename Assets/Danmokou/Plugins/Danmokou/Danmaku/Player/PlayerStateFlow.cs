@@ -60,7 +60,7 @@ public partial class PlayerController {
         }
     }
     private IEnumerator StateWitchTime(PlayerState.WitchTime st) {
-        GameManagement.Instance.LastMeterStartFrame = ETime.FrameNumber;
+        Instance.LastMeterStartFrame = ETime.FrameNumber;
         speedLines.Play();
         using var t = ETime.Slowdown.AddConst(WitchTimeSlowdown);
         using var _mt = st.MeterToken;
@@ -111,7 +111,7 @@ public partial class PlayerController {
         }
     }
     
-    private IEnumerator ShowMeterDisplay(float? maxTime, ICancellee cT, float fadeInOver=0) {
+    public IEnumerator ShowMeterDisplay(float? maxTime, ICancellee cT, float fadeInOver=0) {
         meterDisplayOpacity.Push(1);
         for (float t = 0; t < (maxTime ?? float.PositiveInfinity) && !cT.Cancelled; t += ETime.FRAME_TIME) {
             float meterDisplayRatio = fadeInOver <= 0 ? 1 : Easers.EOutSine(Mathf.Clamp01(t / fadeInOver));

@@ -4,9 +4,13 @@ using System.Linq;
 using System.Reflection;
 using BagoumLib;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
+using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Scriptor.Compile;
+using Scriptor.Reflection;
 using UnityEngine;
 
 namespace Danmokou.Reflection {
@@ -42,10 +46,13 @@ public static class AoTHelper_CG {{
         List<string> funcs = new();
         var typePrinter = new CSharpTypePrinter { PrintTypeNamespace = _ => true };
         void AddConstructedMethod(MethodInfo mi, Type[] typArgs) {
+            var typeDecl = typePrinter.Print(mi.DeclaringType!);
+            if (!mi.IsStatic)
+                typeDecl = $"default({typeDecl})";
             var type_prms = string.Join(", ", typArgs.Select(typePrinter.Print));
             var args = string.Join(", ", mi.GetParameters()
                 .Select(p => p.ParameterType == typeof(string) ? "\"\"" : "default"));
-            funcs.Add($"{typePrinter.Print(mi.DeclaringType!)}.{mi.Name}<{type_prms}>({args});");
+            funcs.Add($"{typeDecl}.{mi.Name}<{type_prms}>({args});");
         }
         foreach (var (gmib, ts) in GenericMethodSignature.specializeCache
                      .Select(kv => (Mi: kv.Key.Item2.Member, kv.Key.Item1))

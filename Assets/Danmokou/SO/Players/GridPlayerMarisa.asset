@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e371a047fd0478dab0e1a132d71003c, type: 3}
+  m_Name: GridPlayerMarisa
+  m_EditorClassIdentifier: 
+  movementHandler: {fileID: 11400000, guid: 290c2e566dd90ad47b448fe432dd6522, type: 2}
+  freeSpeed: 3
+  focusAllowed: 0
+  focusSlowdown: 0.44
+  hurtboxRadius: 0.45
+  grazeboxRadius: 0.9
+  itemCollectRadius: 0.2
+  itemAttractRadius: 1.2
+  key: grid-marisa
+  shortTitle:
+    useReference: 0
+    reference: players.sagume
+    hardcoded:
+      en: Marisa
+      jp: 
+  prefab: {fileID: 2884352696324497640, guid: 29eedc547a81e9944bee1b3b2d32b915, type: 3}
+  shots2:
+  - ordinal: A
+    shot: {fileID: 11400000, guid: 9b809459ea3c04943a34159db41a660f, type: 2}
+  supports:
+  - ordinal: None
+    ability: {fileID: 11400000, guid: 229e243b674c46642952faa5cee4a80b, type: 2}
+  uiColor: {r: 0.8301887, g: 0.6717808, b: 0.31327876, a: 1}
+  shotDisplay: {fileID: 8782343778102116289, guid: 6e88a4f8d7640724aa8035984379fa2a,
+    type: 3}

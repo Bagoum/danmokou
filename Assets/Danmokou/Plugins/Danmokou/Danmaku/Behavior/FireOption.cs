@@ -15,7 +15,11 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace Danmokou.Behavior {
-public class FireOption : BehaviorEntity {
+public interface IPlayerShotElement {
+    void Initialize(PlayerController playr);
+}
+
+public class FireOption : BehaviorEntity, IPlayerShotElement {
     private SpriteRenderer sr = null!; //Using this instead of DisplayController for now
     [ReflectInto(typeof(TP3))] [TextArea(3, 8)] public string offsetFree = null!;
     [ReflectInto(typeof(TP3))] [TextArea(3, 8)] public string offsetFocus = null!;

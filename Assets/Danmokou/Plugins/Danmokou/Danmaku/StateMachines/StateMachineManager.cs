@@ -6,12 +6,12 @@ using System.Text;
 using System.Threading.Tasks;
 using Danmokou.Core;
 using Danmokou.Expressions;
-using Danmokou.Reflection2;
 using Danmokou.Scenes;
 using Danmokou.Services;
 using JetBrains.Annotations;
+using Scriptor.Analysis;
+using Scriptor.Compile;
 using UnityEngine;
-using Helpers = Danmokou.Reflection2.Helpers;
 
 namespace Danmokou.SM {
 
@@ -147,7 +147,7 @@ public static class StateMachineManager  {
             importStack.Push(name);
             try {
                 using var _ = BakeCodeGenerator.OpenContext(CookingContext.KeyType.SM_IMPORT, txt.text);
-                lsm.ScriptEF = Helpers.ParseAndCompileErased(txt.text);
+                lsm.ScriptEF = CompileHelpers.ParseAndCompileErased(txt.text);
             } catch (Exception e) {
                 Logs.DMKLogs.Error(e, $"Failed to parse import from text file `{name}`.");
                 throw;

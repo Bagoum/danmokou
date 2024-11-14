@@ -21,6 +21,7 @@ public class AggregateInputSource : IInputHandlerInputSource, IInputSource {
     private DMCompactingArray<IInputSource> Sources { get; } = new(8);
     public MainInputSource MainSource { get; }
     private static readonly Dictionary<KeyCode, IInputHandler> KeyTriggers = new();
+    private static readonly Dictionary<KeyCode, IInputHandler> KeyHolds = new();
 
     public readonly IInputHandler ReplayDebugSave = InputHandler.Trigger(
         new SimultaneousInputBinding(InputManager.Ctrl, InputManager.Shift, new KBMKeyInputBinding(KeyCode.R))
@@ -66,6 +67,11 @@ public class AggregateInputSource : IInputHandlerInputSource, IInputSource {
     public IInputHandler GetKeyTrigger(KeyCode key) {
         if (!KeyTriggers.TryGetValue(key, out var v))
             AddHandler(v = KeyTriggers[key] = InputHandler.Trigger(new KBMKeyInputBinding(key)));
+        return v;
+    }
+    public IInputHandler GetKeyHold(KeyCode key) {
+        if (!KeyHolds.TryGetValue(key, out var v))
+            AddHandler(v = KeyHolds[key] = InputHandler.Hold(new KBMKeyInputBinding(key)));
         return v;
     }
 

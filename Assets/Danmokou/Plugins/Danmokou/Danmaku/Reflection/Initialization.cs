@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using BagoumLib;
 using BagoumLib.DataStructures;
+using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -18,9 +19,13 @@ using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.GameInstance;
 using Danmokou.Graphics;
-using Danmokou.Reflection2;
+using Danmokou.Scenes;
 using Danmokou.Scriptables;
 using Danmokou.SM;
+using Scriptor;
+using Scriptor.Analysis;
+using Scriptor.Expressions;
+using Scriptor.Reflection;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
@@ -28,17 +33,17 @@ namespace Danmokou.Reflection {
 public static class RHelper {
     public static bool REFLECT_IN_EDITOR = false;
 }
-public static partial class Reflector {
-    /*private static readonly Assembly[] ReflectableAssemblies = {
-        typeof(CoreAssemblyMarker).Assembly,
-        typeof(DanmakuAssemblyMarker).Assembly
-    };*/
 
+public static partial class Reflector {
     static Reflector() {
 #if UNITY_EDITOR
         if (!Application.isPlaying && !RHelper.REFLECT_IN_EDITOR) return;
 #endif
         SimplifiedExprPrinter.Default.InjectSimplifier(t => t.IsTExOrTExFuncType(out var inner) ? inner : null);
+        TEx.SpecialTypeHandler = TExHelpers.Generate;
+        //We have to hide subtypes of StateMachine since the unifier can't generally handle subtypes
+        MethodSignature.HideReturnType(typeof(StateMachine));
+        SceneIntermediary.SceneUnloaded.Subscribe(_ => EnvFrame.ClearCache.OnNext(default));
         
         AllowFuncification<TEx<float>>();
         AllowFuncification<TEx<bool>>(); //This will also allow stuff like (if + true false), which will error if you actually use it
@@ -50,15 +55,6 @@ public static partial class Reflector {
         foreach (var type in ReflectorUtils.ReflectableAssemblyTypes) {
             if (type.GetCustomAttribute<ReflectAttribute>(false) is { } ra)
                 ReflectionData.RecordPublic(type, ra.returnType);
-        }
-
-        foreach (var type in new[] {
-                     typeof(Enumerable), typeof(ObservableExtensions),
-                     typeof(BagoumLib.Extensions), typeof(ArrayExtensions), typeof(IEnumExtensions),
-                     typeof(ListExtensions), typeof(DictExtensions), typeof(BagoumLib.DictExtensions),
-                     typeof(NullableExtensions), typeof(EventExtensions)
-                 }) {
-            ReflectionData.RecordExtensionMethodsInClass(type);
         }
 
         InitializeEnumResolvers();
@@ -121,8 +117,6 @@ public static partial class Reflector {
     private static readonly Dictionary<Type, Dictionary<string, PostAggregate>> postAggregators =
         new();
 
-    public static readonly Dictionary<string, List<(Type, object)>> bdsl2EnumResolvers = new();
-
     private static void InitializeEnumResolvers() {
         void CEnum<E>((char first, E value)[] values) {
             Type e = typeof(E);
@@ -143,7 +137,7 @@ public static partial class Reflector {
         void SEnum<E>(bool copyToBDSL2Enum, (string first, E value)[] values) {
             Type e = typeof(E);
             if (copyToBDSL2Enum)
-                BDSL2Enum(values);
+                GlobalScope.Singleton.ConfigureEnum(values);
             SimpleFunctionResolver[e] = s => {
                 for (int ii = 0; ii < values.Length; ++ii) {
                     if (s.StartsWith(values[ii].first)) return values[ii].value!;
@@ -157,12 +151,6 @@ public static partial class Reflector {
                 throw new NotImplementedException($"Enum {e.Name}.{s} does not exist. The valid values are:\n\t{sb}");
             };
         }
-        void BDSL2Enum<E>((string first, E value)[] values) {
-            Type e = typeof(E);
-            foreach (var (first, value) in values) {
-                bdsl2EnumResolvers.AddToList(first, (e, value!));
-            }
-        }
         CEnum(new[] {
             ('l', LR.LEFT),
             ('r', LR.RIGHT)
@@ -174,7 +162,7 @@ public static partial class Reflector {
             ('m', Parametrization.MOD),
             ('i', Parametrization.INVMOD),
         });
-        BDSL2Enum(new[] {
+        GlobalScope.Singleton.ConfigureEnum(new[] {
             ("this", Parametrization.THIS),
             ("defer", Parametrization.DEFER),
             ("add", Parametrization.ADDITIVE),
@@ -187,7 +175,7 @@ public static partial class Reflector {
             ('v', Facing.VELOCITY),
             ('r', Facing.ROTATOR)
         });
-        BDSL2Enum(new[] {
+        GlobalScope.Singleton.ConfigureEnum(new[] {
             ("original", Facing.ORIGINAL),
             ("derot", Facing.DEROT),
             ("velocity", Facing.VELOCITY),
@@ -222,7 +210,7 @@ public static partial class Reflector {
             ("bt", SAAngle.TANGENT_BANK),
             ("o", SAAngle.ORIGINAL)
         });
-        BDSL2Enum(new[] {
+        GlobalScope.Singleton.ConfigureEnum(new[] {
             ("bankoriginal", SAAngle.ORIGINAL_BANK),
             ("bankrelative", SAAngle.REL_ORIGIN_BANK),
             ("banktangent", SAAngle.TANGENT_BANK),
@@ -236,7 +224,7 @@ public static partial class Reflector {
             ("a", RV2ControlMethod.ANG),
             ("ra", RV2ControlMethod.RANG)
         });
-        BDSL2Enum(new[] {
+        GlobalScope.Singleton.ConfigureEnum(new[] {
             ("nx", RV2ControlMethod.NX),
             ("ny", RV2ControlMethod.NY),
             ("rx", RV2ControlMethod.RX),
@@ -269,7 +257,7 @@ public static partial class Reflector {
             ('n', Events.RuntimeEventType.Normal),
             ('_', Events.RuntimeEventType.Normal)
         });
-        BDSL2Enum(new[] {
+        GlobalScope.Singleton.ConfigureEnum(new[] {
             ("trigger", Events.RuntimeEventType.Trigger),
             ("normal", Events.RuntimeEventType.Normal),
         });

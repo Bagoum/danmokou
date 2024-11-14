@@ -9,16 +9,15 @@ using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.GameInstance;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
 using Danmokou.SM;
 using Danmokou.SM.Parsing;
 using Mizuhashi;
 using NUnit.Framework;
+using Scriptor.Compile;
+using Scriptor.Definition;
 using UnityEngine;
-using UnityEngine.Profiling;
-using static NUnit.Framework.Assert;
 using static Danmokou.Testing.TAssert;
-using static Danmokou.Reflection2.Lexer;
+using static Scriptor.Definition.Lexer;
 
 namespace Danmokou.Testing {
 
@@ -40,8 +39,8 @@ public static class BDSL2LexingTests {
     [Test]
     public static void TestTypeIdents() {
         var ts = MakeFromSequence((id, "List"), (op, "<"), (null, " "), (op, ">"));
-        ts[1] = ts[1].WithFlags(TokenFlags.PostcededByWhitespace);
-        ts[2] = ts[2].WithFlags(TokenFlags.PrecededByWhitespace);
+        ts[1] = ts[1].WithFlags(Lexer.TokenFlags.PostcededByWhitespace);
+        ts[2] = ts[2].WithFlags(Lexer.TokenFlags.PrecededByWhitespace);
         ListEq(Lexer.Lex("List< >"), ts);
         ListEq(Lexer.Lex("List<List<int, Node<float>>>"), MakeFromSequence((TokenType.TypeIdentifier, "List<List<int, Node<float>>>")));
         ListEq(Lexer.Lex("List<List<int, Node<float>>"), MakeFromSequence(
@@ -68,8 +67,8 @@ public static class BDSL2LexingTests {
     }
     
     
-    private static List<Token> MakeFromSequence(params (TokenType? type, string token)[] fragments) {
-        var result = new List<Token>();
+    private static List<Lexer.Token> MakeFromSequence(params (TokenType? type, string token)[] fragments) {
+        var result = new List<Lexer.Token>();
         var pos = new Position("", 0);
         foreach (var (type, token) in fragments) {
             if (type is { } t)

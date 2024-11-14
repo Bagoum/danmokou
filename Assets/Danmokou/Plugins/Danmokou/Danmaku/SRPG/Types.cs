@@ -7,6 +7,8 @@ using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Culture;
 using BagoumLib.DataStructures;
+using BagoumLib.Tasks;
+using Danmokou.Core;
 using Danmokou.SRPG.Diffs;
 using Danmokou.SRPG.Nodes;
 using Newtonsoft.Json;
@@ -28,67 +30,6 @@ public class Faction {
     public override string ToString() => Name;
 }
 
-public enum UnitStatus {
-    /// <summary>
-    /// The unit cannot act because the current turn belongs to a different faction.
-    /// </summary>
-    NotMyTurn,
-    /// <summary>
-    /// The unit cannot act because its turn has been cancelled or it has already acted on this faction turn.
-    /// </summary>
-    Exhausted,
-    /// <summary>
-    /// The unit can move and act.
-    /// </summary>
-    CanMove,
-    /// <summary>
-    /// The unit has moved and now must act.
-    /// </summary>
-    MustAct
-}
-
-public class Unit {
-    public Faction Team { get; }
-    [JsonIgnore] public GameState State => Team.State;
-    public string Key { get; }
-    public StatBlock Stats { get; }
-    public LString Name { get; init; }
-    public Node? Location { get; private set; }
-    public UnitStatus Status { get; private set; } = UnitStatus.NotMyTurn;
-    public IUnitSkill[] Skills { get; }
-    [JsonIgnore] public IEnumerable<IUnitSkill> AttackSkills => Skills.Where(s => s.Type is UnitSkillType.Attack);
-    
-    public Unit(Faction team, string key, StatBlock stats, params IUnitSkill[] skills) {
-        this.Team = team;
-        this.Key = key;
-        this.Stats = stats;
-        this.Skills = skills;
-        this.Name = key;
-    }
-
-    public void AssertIsAt(Node target) {
-        if (Location != target || target?.Unit != this)
-            throw new Exception($"Unit {this} is not at location {target}");
-    }
-    public void UpdateStatus(UnitStatus? req, UnitStatus nxt) {
-        if (req != null && Status != req)
-            throw new Exception($"Unit {this} must have status {req}, but is currently {Status}");
-        Status = nxt;
-    }
-
-    public void SetLocationTo(Node? target) {
-        if (Location != null)
-            Location.Unit = null;
-        var prevLoc = Location;
-        Location = target;
-        if (Location != null)
-            Location.Unit = this;
-        State.ActiveRealizer?.SetUnitLocation(this, prevLoc, target);
-    }
-
-    public override string ToString() => $"{Name} ({Team})";
-}
-
 public class GameState {
     public Node[,] Map { get; }
     public int Height { get; }
@@ -100,8 +41,10 @@ public class GameState {
     public int NActions => Actions.Count;
     private readonly Stack<int> checkpoints = new();
     public bool IsSimulating => checkpoints.Count > 0;
-    public Faction? ActingFaction { get; private set; }
+    public Faction ActingFaction => TurnOrder[ActingFactionIdx];
+    public int ActingFactionIdx { get; private set; }
     public Faction[] TurnOrder { get; }
+    public int TurnNumber { get; private set; }
     private IStateRealizer Realizer { get; }
     public IStateRealizer? ActiveRealizer => IsSimulating ? null : Realizer;
     private int animCt = 0;
@@ -141,21 +84,20 @@ public class GameState {
     /// </summary>
     public Node NodeAt(Vector2Int index) => Map[index.y, index.x];
 
-    private bool ShouldAutoEndFactionTurn() {
-        if (ActingFaction is null || IsSimulating) return false;
+    public void CheckForTurnEnd(IGameDiff causer, List<IGameDiff> caused) {
+        if (IsSimulating) return;
         foreach (var u in Units)
             if (u.Team == ActingFaction && u.Status is not UnitStatus.Exhausted)
-                return false;
-        return true;
+                return;
+        caused.Add(MakeFactionTurnSwitch(causer));
     }
 
-    private void AutoEndFactionTurnFast(IGameDiff cause) {
-        var idx = TurnOrder.IndexOf(ActingFaction!);
-        AddActionFast(new SwitchFactionTurn(ActingFaction!, TurnOrder.ModIndex(idx + 1)) { CausedBy = cause });
-    }
-    private async Task AutoEndFactionTurn(IGameDiff cause, ICancellee cT) {
-        var idx = TurnOrder.IndexOf(ActingFaction!);
-        await AddAction(new SwitchFactionTurn(ActingFaction!, TurnOrder.ModIndex(idx + 1)) { CausedBy = cause }, cT);
+    private SwitchFactionTurn MakeFactionTurnSwitch(IGameDiff cause) {
+        if (ActingFactionIdx == TurnOrder.Length - 1) {
+            return new(ActingFactionIdx, 0, TurnNumber + 1) { CausedBy = cause };
+        } else {
+            return new(ActingFactionIdx, ActingFactionIdx+1, TurnNumber) { CausedBy = cause };
+        }
     }
 
     //For animating actions, Apply is not called until after the animation is finished
@@ -171,61 +113,73 @@ public class GameState {
             throw new Exception($"The unit {u} must act next; uncaused action {diff} cannot be executed");
     }
 
-    public void AddActionFast(IGameDiff diff) {
-        AnimatingGuard();
-        MustActUnitGuard(diff);
-        Actions.Add(diff);
-        if (diff.Apply(this) is { } caused) {
-            foreach (var nxt in caused) {
-                nxt.CausedBy = diff;
-                AddActionFast(nxt);
-            }
-            ListCache<IGameDiff>.Consign(caused);
-        }
-        foreach (var u in Units) 
-        foreach (var eff in u.Stats.Mods)
-            if (eff.ProcessCausation(diff) is { } nxt) {
-                nxt.CausedBy = diff;
-                AddActionFast(nxt);
-            }
-        if (ShouldAutoEndFactionTurn())
-            AutoEndFactionTurnFast(diff);
+    public void AddDiffFast(IGameDiff diff) {
+        var caused = ListCache<IGameDiff>.Get();
+        _AddDiffFast(diff, caused);
+        ListCache<IGameDiff>.Consign(caused);
     }
 
-    public async Task<Completion> AddAction(IGameDiff diff, ICancellee cT) {
+    private void _AddDiffFast(IGameDiff diff, List<IGameDiff> caused) {
+        AnimatingGuard();
+        MustActUnitGuard(diff);
+        Logs.Log($"Quickadding diff: {diff}");
+        var startIdx = caused.Count;
+        Actions.Add(diff);
+        diff.PreApply(this, caused);
+        diff.Apply(this, caused);
+        foreach (var u in Units) 
+        foreach (var eff in u.Stats.Mods)
+            eff.ProcessCausation(diff, caused);
+        var endIdx = caused.Count;
+        for (int ii = startIdx; ii < endIdx; ++ii) {
+            var nxt = caused[ii];
+            nxt.CausedBy = diff;
+            _AddDiffFast(nxt, caused);
+        }
+        caused.RemoveRange(startIdx, endIdx - startIdx);
+    }
+
+    public async Task<Completion> AddDiff(IGameDiff diff, ICancellee cT) {
+        var caused = ListCache<IGameDiff>.Get();
+        try {
+            return await _AddDiff(diff, cT, caused);
+        } finally {
+            ListCache<IGameDiff>.Consign(caused);
+        }
+    }
+
+    private async Task<Completion> _AddDiff(IGameDiff diff, ICancellee cT, List<IGameDiff> caused) {
         AnimatingGuard();
         MustActUnitGuard(diff);
         if (IsSimulating || cT.IsSoftCancelled()) {
-            AddActionFast(diff);
+            _AddDiffFast(diff, caused);
             return Completion.SoftSkip;
         } else {
+            Logs.Log($"Animating diff: {diff}");
+            var startIdx = caused.Count;
+            diff.PreApply(this, caused);
             try {
                 ++animCt;
-                if (Realizer.Animate(diff, cT) is { IsCompletedSuccessfully: false } t)
+                if (Realizer.Animate(diff, cT, new(caused, startIdx)) is { IsCompletedSuccessfully: false } t)
                     await t;
-                cT.ThrowIfHardCancelled();
+            } catch (OperationCanceledException) {
+                //ignore cancellations within animation step unless cT is hard-cancelled (below)
             } finally {
                 --animCt;
             }
+            cT.ThrowIfHardCancelled();
             Actions.Add(diff);
-            //Caused effects native to the action, eg. an attack that applies a stat debuff
-            if (diff.Apply(this) is { } caused) {
-                foreach (var nxt in caused) {
-                    nxt.CausedBy = diff;
-                    await AddAction(nxt, cT);
-                }
-                ListCache<IGameDiff>.Consign(caused);
-            }
-            //Caused effects by interactions, eg. a stat debuff with 1 turn duration
-            // is deleted due to SwitchFactionTurn action
+            diff.Apply(this, caused);
             foreach (var u in Units) 
             foreach (var eff in u.Stats.Mods)
-                if (eff.ProcessCausation(diff) is { } nxt) {
-                    nxt.CausedBy = diff;
-                    await AddAction(nxt, cT);
-                }
-            if (ShouldAutoEndFactionTurn())
-                await AutoEndFactionTurn(diff, cT);
+                eff.ProcessCausation(diff, caused);
+            var endIdx = caused.Count;
+            for (int ii = startIdx; ii < endIdx; ++ii) {
+                var nxt = caused[ii];
+                nxt.CausedBy = diff;
+                await _AddDiff(nxt, cT, caused);
+            }
+            caused.RemoveRange(startIdx, endIdx - startIdx);
             return cT.ToCompletion();
         }
     }
@@ -252,49 +206,46 @@ public class GameState {
         return true;
     }
 
-    private void UpdateFaction(Faction? nxt, bool isRevert) {
+    private void UpdateFaction(int nxt, bool isRevert, bool isFirst) {
         //At the end of a faction turn, all units from that faction must be in Exhausted state
         // (to ensure revertability)
         //TODO ensure that all non-exhausted units are given an Exhaust action if the turn is manually ended
         var (currReqState, nxtReqState) = (UnitStatus.Exhausted, UnitStatus.CanMove);
         if (isRevert)
             (currReqState, nxtReqState) = (nxtReqState, currReqState);
+        var nxtFac = TurnOrder[nxt];
         foreach (var u in Units)
             u.UpdateStatus(
-                u.Team == ActingFaction ? currReqState : UnitStatus.NotMyTurn, 
-                u.Team == nxt ? nxtReqState : UnitStatus.NotMyTurn);
-        ActingFaction = nxt;
+                isFirst ? null : (u.Team == ActingFaction ? currReqState : UnitStatus.NotMyTurn), 
+                u.Team == nxtFac ? nxtReqState : UnitStatus.NotMyTurn);
+        ActingFactionIdx = nxt;
     }
 
-    public record StartGame(Faction FirstFaction) : IGameDiff {
+    public record StartGame(int FirstFactionIdx) : IGameDiff {
         public IGameDiff? CausedBy { get; set; }
-        List<IGameDiff>? IGameDiff.Apply(GameState gs) {
-            if (gs.ActingFaction != null)
-                throw new Exception("Cannot start game; game is already started");
-            gs.UpdateFaction(FirstFaction, false);
-            return null;
+        void IGameDiff.Apply(GameState gs, List<IGameDiff> caused) {
+            gs.TurnNumber = 1;
+            gs.UpdateFaction(FirstFactionIdx, false, true);
         }
 
         void IGameDiff.Unapply(GameState gs) {
-            if (gs.ActingFaction != null)
-                throw new Exception("Cannot unstart game; game has not yet been started");
-            gs.UpdateFaction(null, true);
+            throw new Exception("Cannot undo start game diff");
         }
     }
     
-    public record SwitchFactionTurn(Faction From, Faction To) : IGameDiff {
+    public record SwitchFactionTurn(int FromIdx, int NextIdx, int TurnNo) : IGameDiff {
         public IGameDiff? CausedBy { get; set; }
-        List<IGameDiff>? IGameDiff.Apply(GameState gs) {
-            if (gs.ActingFaction != From)
-                throw new Exception($"The current faction must be {From}, but is {gs.ActingFaction}");
-            gs.UpdateFaction(To, false);
-            return null;
+        void IGameDiff.Apply(GameState gs, List<IGameDiff> caused) {
+            if (gs.ActingFactionIdx != FromIdx)
+                throw new Exception($"The current faction must be {gs.TurnOrder[FromIdx]}, but is {gs.ActingFaction}");
+            gs.TurnNumber = TurnNo;
+            gs.UpdateFaction(NextIdx, false, false);
         }
 
         void IGameDiff.Unapply(GameState gs) {
-            if (gs.ActingFaction != To)
-                throw new Exception($"The current faction must be {To}, but is {gs.ActingFaction}");
-            gs.UpdateFaction(From, true);
+            if (gs.ActingFactionIdx != NextIdx)
+                throw new Exception($"The current faction must be {gs.TurnOrder[NextIdx]}, but is {gs.ActingFaction}");
+            gs.UpdateFaction(FromIdx, true, false);
         }
     }
 }

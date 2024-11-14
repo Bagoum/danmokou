@@ -1,8 +1,11 @@
 ﻿using System;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Expressions;
+using Scriptor;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
-using static Danmokou.Expressions.ExMHelpers;
+using static Scriptor.Expressions.ExMHelpers;
 
 namespace Danmokou.DMath.Functions {
 /// <summary>

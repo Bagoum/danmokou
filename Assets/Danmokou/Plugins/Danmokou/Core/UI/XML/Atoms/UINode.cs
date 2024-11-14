@@ -53,7 +53,28 @@ public enum UINodeSelection {
     /// </summary>
     Default = 0
 }
+
+/// <summary>
+/// Informational flags that may be applied to a UINode.
+/// </summary>
+[Flags]
+public enum UINodeFlag {
+    None = 0,
+    /// <summary>
+    /// If the menu enables input fallthrough, then the menu can allow input to fall through to lower menus
+    ///  while this node is current.
+    /// </summary>
+    AllowsInputFallthrough = 1 << 0,
+    /// <summary>
+    /// If the pointer enters this node, but control cannot traverse to this node, then call
+    ///  <see cref="UINode.Enter"/> anyways. Likewise, if the pointer leaves this node when it is not current,
+    ///  then call <see cref="UINode.Leave"/> anyways.
+    /// </summary>
+    SendEnterLeaveOnPointerEv = 1 << 1,
+}
+
 public class UINode {
+    public UINodeFlag Flags { get; set; }
     public LString DescriptionOrEmpty => RootView.VM.Description ?? LString.Empty;
     private UIGroup _group = null!;
     public UIGroup Group {
@@ -351,20 +372,29 @@ public class UINode {
         #endif
             //don't fire pointer enter events if the renderer is animating out
             //NB: UIController doesn't allow this command to cross screens, so any persistent screens are show-only
-            if (AllowInteraction && Render.ShouldBeVisibleInTree) {
+            if (AllowInteraction && Render.ShouldBeTreeVisible) {
                 if (Controller.Current == this) {
                     cursorToken?.Dispose();
                     cursorToken = CursorManager.AddButton();
-                } else
-                    Controller.QueueInput(new UIPointerCommand.Goto(this));
+                } else {
+                    var gotoMe = new UIPointerCommand.Goto(this);
+                    if (gotoMe.CanTraverse)
+                        Controller.QueueInput(gotoMe);
+                    else if (Flags.HasFlag(UINodeFlag.SendEnterLeaveOnPointerEv))
+                        Enter(true, Controller.CursorState.BaseValue);
+                }
                 evt.StopPropagation();
             }
             isInElement = true;
         });
         evtBinder.RegisterCallback<PointerLeaveEvent>(evt => {
             //Logs.Log($"Leave {HTML.worldBound}");
-            if (AllowInteraction && Group.GoBackWhenMouseLeavesNode && Controller.Current == this)
-                Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Back, this) { Silent = true });
+            //for freeform groups with unselector, we should issue a Back event when mouse defocuses a node
+            if (AllowInteraction && Group.GoBackWhenMouseLeavesNode)
+                if (Controller.Current == this)
+                    Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Back, this) { Silent = true });
+                else if (Flags.HasFlag(UINodeFlag.SendEnterLeaveOnPointerEv))
+                    Leave(true, Controller.CursorState.BaseValue, null);
             cursorToken?.Dispose();
             isInElement = false;
             startedClickHere = false;
@@ -641,13 +671,16 @@ public class EmptyNode : UINode {
     public ICObservable<float> CreateCenterOffsetChildY(ICObservable<float> childY) =>
         Source!.CreateCenterOffsetChildY(childY);
     
-    public static EmptyNode MakeUnselector(Func<UINode, ICursorState, UICommand, UIResult?>? unselectNav) =>
-        new(new FixedXMLView(new(new UnselectorFixedXML(), (n, cs, req) => {
-                    if (unselectNav?.Invoke(n, cs, req) is { } res)
-                        return res;
-                    return req == UICommand.Confirm ? UIGroup.SilentNoOp : null;
-                }
-            )));
+    public static EmptyNode MakeUnselector(Func<UINode, ICursorState, UICommand, UIResult?>? unselectNav) {
+        var n = new EmptyNode(new FixedXMLView(new(new UnselectorFixedXML(), (n, cs, req) => {
+                if (unselectNav?.Invoke(n, cs, req) is { } res)
+                    return res;
+                return req == UICommand.Confirm ? UIGroup.SilentNoOp : null;
+            }
+        )));
+        n.Flags |= UINodeFlag.AllowsInputFallthrough;
+        return n;
+    }
 }
 
 public class PassthroughNode : UINode {

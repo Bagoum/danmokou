@@ -2,6 +2,7 @@
 using Danmokou.Danmaku;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Scriptor;
 using Ex = System.Linq.Expressions.Expression;
 
 namespace Danmokou.Reflection {

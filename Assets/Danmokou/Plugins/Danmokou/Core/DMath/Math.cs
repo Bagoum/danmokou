@@ -3,13 +3,15 @@ using System.Runtime.CompilerServices;
 using BagoumLib.Mathematics;
 using UnityEngine;
 using Danmokou.Core;
+using Scriptor.Compile;
+using Scriptor.Math;
 using Ex = System.Linq.Expressions.Expression;
 using static BagoumLib.Mathematics.BMath;
 
 namespace Danmokou.DMath {
 public static class M {
     public const float MAG_ERR = 1e-10f;
-    public const int IntFloatMax = int.MaxValue / 2;
+    public const int IntFloatMax = BMath.IntFloatMax;
 
     /// <summary>
     /// Returns the number with the smaller magnitude.
@@ -143,14 +145,50 @@ public static class M {
         return new Vector2(cos_rot * x - sin_rot * y, sin_rot * x + cos_rot * y);
     }
 
+    /// <summary>
+    /// Return the closest vector among (1,0),(0,1),(-1,0),(0,-1).
+    /// </summary>
+    public static Vector2Int NearestAxis(this Vector2 xy) {
+        if (Math.Abs(xy.x) > Math.Abs(xy.y))
+            return xy.x > 0 ? Vector2Int.right : Vector2Int.left;
+        else
+            return xy.y > 0 ? Vector2Int.up : Vector2Int.down;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 PtMul(this Vector2 a, Vector2 b) => new(a.x * b.x, a.y * b.y);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3 PtMul(this Vector3 a, Vector3 b) => new(a.x * b.x, a.y * b.y, a.z * b.z);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 PtDiv(this Vector2 a, Vector2 b) => new(a.x / b.x, a.y / b.y);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3 PtDiv(this Vector3 a, Vector3 b) => new(a.x / b.x, a.y / b.y, a.z / b.z);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Sum(this Vector2Int vec) => vec.x + vec.y;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3Int Abs(this Vector2Int vec) => new(Math.Abs(vec.x), Math.Abs(vec.y));
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Sum(this Vector3Int vec) => vec.x + vec.y + vec.z;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3Int Abs(this Vector3Int vec) => new(Math.Abs(vec.x), Math.Abs(vec.y), Math.Abs(vec.z));
+
+    /// <summary>
+    /// Rotate `vec` counterclockwise.
+    /// <br/>`rotDeg` must be a multiple of 90 (eg. -90, 0, 180, 450).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector2Int Rotate(this in Vector2Int vec, int rotDeg) {
+        var rot = BMath.Mod(360, rotDeg);
+        if (rot == 0)
+            return vec;
+        if (rot == 90)
+            return new(-vec.y, vec.x);
+        if (rot == 180)
+            return new(-vec.x, -vec.y);
+        if (rot == 270)
+            return new(vec.y, -vec.x);
+        throw new Exception($"Rotation must be a multiple of 90, not {rotDeg}");
+    }
     
     public static Vector2 ConvertBasis(Vector2 source, Vector2 basis1) => RotateVector(source, basis1.x, -basis1.y);
     public static Vector2 DeconvertBasis(Vector2 source, Vector2 basis1) => RotateVector(source, basis1.x, basis1.y);
@@ -394,6 +432,13 @@ public static class M {
         return new Rect(center - wh / 2f, wh);
     }
 
+    /// <summary>
+    /// Get the position at the provided x and y ratios between the min and max positions of this rect.
+    /// </summary>
+    public static Vector2 LocationAtCoords(this Rect r, float x, float y) {
+        return new(BMath.LerpU(r.xMin, r.xMax, x), BMath.LerpU(r.yMin, r.yMax, y));
+    }
+
     public static Vector2 XMaxYMin(this Rect r) => new(r.xMax, r.yMin);
     public static Vector2 XMinYMax(this Rect r) => new(r.xMin, r.yMax);
 }
@@ -521,217 +566,17 @@ public readonly struct WorldQuad {
     }
 }
 
-/// <summary>
-/// A position description composed of a nonrotational offset
-/// and a rotational offset.
-/// </summary>
-public struct V2RV2 {
-    /// <summary>
-    /// X-component of nonrotational offset
-    /// </summary>
-    public float nx;
-    /// <summary>
-    /// Y-component of nonrotational offset
-    /// </summary>
-    public float ny;
-    /// <summary>
-    /// X-component of rotational offset
-    /// </summary>
-    public float rx;
-    /// <summary>
-    /// Y-component of rotational offset
-    /// </summary>
-    public float ry;
-    /// <summary>
-    /// Rotation (degrees) of rotational offset
-    /// </summary>
-    public float angle;
-    public Vector2 NV => new Vector2(nx, ny);
-    public Vector2 RV => new Vector2(rx, ry);
-    
-    public Vector2 TrueLocation => new Vector2(nx, ny) + M.RotateVectorDeg(rx, ry, angle);
-    public static V2RV2 Zero => V2RV2.NRot(0, 0);
-
-    public V2RV2(float nx, float ny, float rx, float ry, float angle_deg) {
-        this.nx = nx;
-        this.ny = ny;
-        this.rx = rx;
-        this.ry = ry;
-        this.angle = angle_deg;
-    }
-    public V2RV2(Vector2 nxy, Vector2 rxy, float angle_deg) {
-        this.nx = nxy.x;
-        this.ny = nxy.y;
-        this.rx = rxy.x;
-        this.ry = rxy.y;
-        this.angle = angle_deg;
-    }
-
-    public static V2RV2 NRot(float nx, float ny) => new V2RV2(nx, ny, 0, 0, 0);
-    public static V2RV2 NRotAngled(float nx, float ny, float angle) => new V2RV2(nx, ny, 0, 0, angle);
-    public static V2RV2 NRotAngled(Vector2 nv2, float angle) => new V2RV2(nv2.x, nv2.y, 0, 0, angle);
-    public static V2RV2 Rot(float rx, float ry, float angle=0f) => new V2RV2(0,0,rx,ry,angle);
-    public static V2RV2 Rot(Vector2 rot) => new V2RV2(0,0,rot.x,rot.y,0f);
-    public static V2RV2 RX(float rx, float angle=0f) => new V2RV2(0,0,rx,0,angle);
-    public static V2RV2 RY(float ry, float angle=0f) => new V2RV2(0,0,0,ry,angle);
-    public static V2RV2 Angle(float angle) => new V2RV2(0, 0, 0, 0, angle);
-
-
-    public V2RV2 Bank(float? new_angle_deg=null) {
-        var tl = TrueLocation;
-        return new V2RV2(tl.x, tl.y, 0, 0, new_angle_deg ?? angle);
-    }
-
-    public V2RV2 BankOffset(float angle_offset_deg) => Bank(angle + angle_offset_deg);
-
-    public V2RV2 RotateAll(float by_deg) {
-        var newnxy = M.RotateVectorDeg(nx, ny, by_deg);
-        return new V2RV2(newnxy.x, newnxy.y, rx, ry, angle + by_deg);
-    }
-    
-    public V2RV2 WithOffset(float onx, float ony) => new V2RV2(nx + onx, ny + ony, rx, ry, angle);
-    public V2RV2 WithOffset(Vector2 nv2) => WithOffset(nv2.x, nv2.y);
-    
-    public V2RV2 ForceAngle(float new_ang) => new V2RV2(nx, ny, rx, ry, new_ang);
-    
-    public static V2RV2 operator +(V2RV2 a, V2RV2 b) {
-        return new V2RV2(a.nx + b.nx, a.ny + b.ny, a.rx + b.rx, a.ry + b.ry, a.angle + b.angle);
-    }
-    public static V2RV2 operator -(V2RV2 a, V2RV2 b) {
-        return new V2RV2(a.nx - b.nx, a.ny - b.ny, a.rx - b.rx, a.ry - b.ry, a.angle - b.angle);
-    }
-    public static V2RV2 operator *(float f, V2RV2 a) {
-        return new V2RV2(f*a.nx, f*a.ny, f*a.rx, f*a.ry, f*a.angle);
-    }
-    public static V2RV2 operator /(V2RV2 a, float f) {
-        return new V2RV2(a.nx/f, a.ny/f, a.rx/f, a.ry/f, a.angle/f);
-    }
-    public static V2RV2 operator +(V2RV2 a, float ang_deg) {
-        return new V2RV2(a.nx, a.ny, a.rx, a.ry, a.angle + ang_deg);
-    }
-    public static V2RV2 operator +(V2RV2 a, Vector2 nv) {
-        return new V2RV2(a.nx + nv.x, a.ny + nv.y, a.rx, a.ry, a.angle);
-    }
-    public static V2RV2 operator +(V2RV2 a, Vector3 rva) {
-        return new V2RV2(a.nx, a.ny, a.rx + rva.x, a.ry + rva.y, a.angle + rva.z);
-    }
-    public override string ToString() {
-        return $"<{(decimal) nx},{(decimal) ny}:{(decimal) rx},{(decimal) ry}:{(decimal) angle}>";
-    }
-}
-
 public static class Parser {
     public const char SM_REF_KEY_C = '&';
     public const string SM_REF_KEY = "&";
-    private const char decpt = '.';
-    private const char zero = '0';
-
-    public static float Float(string s) {
-        if (TryFloat(s, out float f)) return f;
-        throw new InvalidCastException($"Cannot convert \"{s}\" to float.");
-    }
-    public static bool TryFloat(string s, out float f) {
-        return TryFloat(s, 0, s.Length, out f);
-    }
-
-    public static float? MaybeFloat(string s) => TryFloat(s, out var f) ? f : (float?)null;
-    public static float Float(string s, int from, int to) {
-        if (TryFloat(s, from, to, out float f)) return f;
-        throw new InvalidCastException($"Cannot convert \"{s}\" to float.");
-    }
-
-    private const char CPI = 'π';
-    private const char CPHI = 'p';
-    private const char CINVPHI = 'h';
-    private const char CFRAME = 'f';
-    private const char CFPS = 's';
-    private const char C360H = 'c';
-    /// <summary>
-    /// Supported shortcuts:
-    /// <para>Up to two +- signs at the front</para>
-    /// <para>Multiplier suffixes: p=phi, h=1/phi, f=1/120 (frame time), s=120 (fps)</para>
-    /// <para>Effect suffixes: c = return 360h/x</para>
-    /// </summary>
-    /// <param name="s">String to parse</param>
-    /// <param name="from">Starting index</param>
-    /// <param name="to">Ending index (exclusive)</param>
-    /// <param name="f">(out) Parsed float value</param>
-    /// <returns></returns>
-    public static bool TryFloat(string s, int from, int to, out float f) {
-        f = 0f;
-        if (to == from) return true;
-        if (to == from + 1 && s[from] == '_') {
-            f = M.IntFloatMax;
-            return true;
-        }
-        float dec_mult = 0.1f;
-        float multiplier = 1f;
-        bool foundDecimal = false;
-        int ii = from;
-        char first = s[from];
-        int slen = s.Length;
-        bool c360inv = false;
-        //Allow --, +-, -+, ++ at front; these are parsed as signs.
-        if (first == '-') {
-            ++ii;
-            if (ii >= slen) return false;
-            if (s[ii] == '-') { 
-                ++ii;
-            } else {
-                if (s[ii] == '+') ++ii;
-                multiplier *= -1;
-            }
-        } else if (first == '+') {
-            ++ii;
-            if (ii >= slen) return false;
-            if (s[ii] == '+') {
-                ++ii;
-            } else if (s[ii] == '-') {
-                ++ii;
-                multiplier *= -1;
-            }
-        }
-        for (; ii < to; ++ii) {
-            char c = s[ii];
-            if (c == decpt) {
-                foundDecimal = true;
-            } else {
-                int val = c - zero;
-                if (val < 0 || val > 9) {
-                    if (c == CPHI) {
-                        multiplier *= PHI;
-                    } else if (c == CINVPHI) {
-                        multiplier *= IPHI;
-                    } else if (c == CFRAME) {
-                        multiplier *= ETime.FRAME_TIME;
-                    } else if (c == CFPS) {
-                        multiplier *= ETime.ENGINEFPS_F;
-                    } else if (c == CPI) {
-                        multiplier *= PI;
-                    } else if (c == C360H) {
-                        c360inv = true;
-                    } else return false;
-                } else if (foundDecimal) {
-                    f += dec_mult * val;
-                    dec_mult *= 0.1f;
-                } else {
-                    f *= 10f;
-                    f += val;
-                }
-            }
-        }
-        f *= multiplier;
-        if (c360inv) f = 360f * IPHI / f;
-        return true;
-    }
 
     public static CCircle ParseCircle(string s) {
         //<x;y;r>
         string[] parts = s.Split(';');
         return new CCircle(
-            Float(parts[0].Substring(1)),
-            Float(parts[1]),
-            Float(parts[2].Substring(0, parts[2].Length - 1))
+            SimpleParser.Float(parts[0], 1, parts[0].Length),
+            SimpleParser.Float(parts[1]),
+            SimpleParser.Float(parts[2], 0, parts[2].Length - 1)
         );
     }
 
@@ -741,59 +586,23 @@ public static class Parser {
         int comma = parts[0].IndexOf(";");
         int comma2 = parts[1].IndexOf(";");
         return new CRect(
-            Parser.Float(parts[0].Substring(1, comma - 1)),
-            Parser.Float(parts[0].Substring(comma + 1, parts[0].Length - comma - 1)),
-            Parser.Float(parts[1].Substring(0, comma2)),
-            Parser.Float(parts[1].Substring(comma2 + 1, parts[1].Length - comma2 - 1)),
-            Parser.Float(parts[2].Substring(0, parts[2].Length - 1))
+            SimpleParser.Float(parts[0], 1, comma),
+            SimpleParser.Float(parts[0], comma + 1, parts[0].Length),
+            SimpleParser.Float(parts[1], 0, comma2),
+            SimpleParser.Float(parts[1], comma2 + 1, parts[1].Length),
+            SimpleParser.Float(parts[2], 0, parts[2].Length - 1)
         );
     }
 
     private static float NextFloat(string s, ref int from, ref int ii, char until) {
         while (++ii < s.Length) {
             if (s[ii] == until) {
-                var f = Float(s, from, ii);
+                var f = SimpleParser.Float(s, from, ii);
                 from = ii + 1;
                 return f;
             }
         }
         throw new Exception("Couldn't find enough float values in the string.");
-    }
-    public static V2RV2 ParseV2RV2(string s) {
-        // Format: <float;float:float;float:float> (nx,ny,rx,ry,angle)
-        // OR the RV2 format (rx,ry,angle).
-        if (s == "<>") return V2RV2.Zero;
-        if (s.CountOf(':') == 0) return V2RV2.Angle(Float(s, 1, s.Length - 1));
-        if (s.CountOf(':') == 1) return ParseShortV2RV2(s);
-        int ii = 0;
-        int from = 1;
-        var nx = NextFloat(s, ref from, ref ii, ';');
-        var ny = NextFloat(s, ref from, ref ii, ':');
-        var rx = NextFloat(s, ref from, ref ii, ';');
-        var ry = NextFloat(s, ref from, ref ii, ':');
-        return new V2RV2(nx, ny, rx, ry, Float(s, from, s.Length - 1));
-    }
-
-    private static V2RV2 ParseShortV2RV2(string s) {
-        // Format: <float;float:float> ; args are rx,ry,angle resp.
-        int ii = 0;
-        int from = 1;
-        float x = 0;
-        while (++ii < s.Length) {
-            if (s[ii] == ';') {
-                x = Float(s, from, ii);
-                from = ii + 1;
-                break;
-            }
-        }
-        while (++ii < s.Length) {
-            if (s[ii] == ':') {
-                float y = Float(s, from, ii);
-                from = ii + 1;
-                return V2RV2.Rot(x, y, Float(s, from, s.Length - 1));
-            }
-        }
-        throw new FormatException("Bad V2RV2 formatting: " + s);
     }
     
 }

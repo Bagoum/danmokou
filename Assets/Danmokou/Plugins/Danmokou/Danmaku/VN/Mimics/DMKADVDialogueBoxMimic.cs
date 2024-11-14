@@ -10,7 +10,8 @@ using SuzunoyaUnity;
 using SuzunoyaUnity.UI;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UI;
+using UnityEngine.UIElements;
+using Image = UnityEngine.UI.Image;
 
 namespace Danmokou.VN.Mimics {
 public class DMKADVDialogueBoxMimic : ADVDialogueBoxMimic {
@@ -20,8 +21,8 @@ public class DMKADVDialogueBoxMimic : ADVDialogueBoxMimic {
 
     public override void Initialize(ADVDialogueBox db) {
         base.Initialize(db);
-        LinkHandler = GetComponentInChildren<TMPLinkHandler>();
         
+        LinkHandler = GetComponentInChildren<TMPLinkHandler>();
         if (LinkHandler != null)
             Listen(db.Active, active => {
                 if (!active)
@@ -47,7 +48,7 @@ public class DMKADVDialogueBoxMimic : ADVDialogueBoxMimic {
             if (b is DMKDialogueBoxButton d)
                 d.Bind(this, db);
     }
-    
+
     public virtual void FullSkip() {
         if (bound.Container.SkippingMode == null)
             InputManager.InCodeInput.mDialogueSkipAll.SetActive();

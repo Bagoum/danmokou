@@ -7,6 +7,8 @@ using Danmokou.Expressions;
 using Danmokou.Reflection;
 using Danmokou.Scriptables;
 using Danmokou.Services;
+using Scriptor;
+using Scriptor.Expressions;
 using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.Danmaku.Options.SBOption;
 
@@ -15,7 +17,7 @@ namespace Danmokou.Danmaku.Options {
 /// Properties that modify the behavior of simple bullets.
 /// </summary>
 [Reflect]
-public class SBOption {
+public record SBOption {
     /// <summary>
     /// Give the bullet a custom scale.
     /// </summary>
@@ -37,28 +39,25 @@ public class SBOption {
     /// </summary>
     /// <param name="bossDmg">Damage against boss enemies</param>
     /// <param name="stageDmg">Damage against stage enemies</param>
-    /// <param name="effStrategy">On-hit effect</param>
-    public static SBOption Player(int bossDmg, int stageDmg, string effStrategy) =>
-        new PlayerProp((bossDmg, stageDmg, effStrategy));
+    /// <param name="onHit">On-hit effect</param>
+    public static SBOption Player(int bossDmg, int stageDmg, string onHit) =>
+        new PlayerProp(bossDmg, stageDmg, onHit);
+
+    /// <summary>
+    /// Add an on-hit effect to the bullet. (For player bullets, use <see cref="Player"/> instead.)
+    /// </summary>
+    public static SBOption OnHit(string onHit) => new OnHitProp(onHit);
 
     #region impl
-    public class ValueProp<T> : SBOption {
-        public readonly T value;
-        protected ValueProp(T value) => this.value = value;
-    }
-    
-    public class ScaleProp : ValueProp<BPY> {
-        public ScaleProp(BPY f) : base(f) { }
-    }
-    
-    public class DirProp : ValueProp<SBV2> {
-        public DirProp(SBV2 f) : base(f) { }
-    }
 
-    public class PlayerProp : ValueProp<(int bossDmg, int stageDmg, string effStrat)> {
-        public PlayerProp((int, int, string) data): base(data) { }
-    }
-    
+    public record ScaleProp(BPY F) : SBOption;
+
+    public record DirProp(SBV2 F) : SBOption;
+
+    public record PlayerProp(int BossDmg, int StageDmg, string OnHitEff) : SBOption;
+
+    public record OnHitProp(string OnHitEff) : SBOption;
+
     #endregion
 }
 
@@ -70,14 +69,17 @@ public class SBOptions {
     // the GCXU.ShareTypeAndCompile call in AtomicPAtterns
     public readonly BPY? scale = null;
     public readonly SBV2? direction = null;
-    public readonly (int boss, int stage, EffectStrategy effStrat)? player = null;
+    public readonly (int boss, int stage)? player = null;
+    public readonly EffectStrategy? onHit = null;
 
     public SBOptions(IEnumerable<SBOption> props) {
         foreach (var prop in props.Unroll()) {
-            if (prop is ScaleProp sp) scale = sp.value;
-            else if (prop is DirProp dp) direction = dp.value;
+            if (prop is ScaleProp sp) scale = sp.F;
+            else if (prop is DirProp dp) direction = dp.F;
+            else if (prop is OnHitProp ohp) onHit = ResourceManager.GetEffect(ohp.OnHitEff);
             else if (prop is PlayerProp pp) {
-                player = (pp.value.bossDmg, pp.value.stageDmg, ResourceManager.GetEffect(pp.value.effStrat));
+                player = (pp.BossDmg, pp.StageDmg);
+                onHit = ResourceManager.GetEffect(pp.OnHitEff);
             } else throw new Exception($"Simple Bullet option {prop.GetType()} not handled.");
         }
     }

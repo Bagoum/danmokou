@@ -1,10 +1,11 @@
 ﻿using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
+using Scriptor;
 using Ex = System.Linq.Expressions.Expression;
-using static Danmokou.Expressions.ExMHelpers;
-using tfloat = Danmokou.Expressions.TEx<float>;
-using tbool = Danmokou.Expressions.TEx<bool>;
+using static Scriptor.Expressions.ExMHelpers;
+using tfloat = Scriptor.Expressions.TEx<float>;
+using tbool = Scriptor.Expressions.TEx<bool>;
 using static Danmokou.Services.GameManagement;
 
 namespace Danmokou.DMath.Functions {

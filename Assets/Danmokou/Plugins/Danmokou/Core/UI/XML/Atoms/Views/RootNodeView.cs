@@ -50,7 +50,7 @@ public class RootNodeViewModel : UIViewModel, IUIViewModel {
     public override long GetViewHash() {
         Profiler.BeginSample("RootNodeView hash computation");
         var hc = (long)Node.Selection << 3;
-        if (Node.Render.ShouldBeVisibleInTree)
+        if (Node.Render.ShouldBeTreeVisible)
             hc += 1;
         
         if (NodeIsEnabledHash is { } efn)
@@ -101,12 +101,12 @@ public class RootNodeView : UIView<RootNodeViewModel>, IUIView {
 
     void IUIView.OnEnter(UINode node, ICursorState cs, bool animate) {
         if (!animate || !EnterAnimation.Try(out var anim)) return;
-        _ = anim(node, Cancellable.Replace(ref enterLeaveAnim))?.ContinueWithSync();
+        anim(node, Cancellable.Replace(ref enterLeaveAnim))?.ContinueWithSync(null, false);
     }
 
     void IUIView.OnLeave(UINode node, ICursorState cs, bool animate, PopupUIGroup.Type? popupType) {
         if (!animate || !LeaveAnimation.Try(out var anim)) return;
-        _ = anim(node, Cancellable.Replace(ref enterLeaveAnim))?.ContinueWithSync();
+        anim(node, Cancellable.Replace(ref enterLeaveAnim))?.ContinueWithSync(null, false);
     }
 
 
@@ -118,12 +118,11 @@ public class RootNodeView : UIView<RootNodeViewModel>, IUIView {
         HTML.EnableInClassList("node-disabled", !Node.IsEnabled);
         //If the render target is going invisible, then don't update visibility
         // (important for tooltip scale-out and other animation effects)
-        if (IsFirstRender() || Node.Render.ShouldBeVisibleInTree) {
+        if (IsFirstRender() || Node.Render.ShouldBeTreeVisible) {
             var vis = Node.IsVisible;
             HTML.EnableInClassList("node-invisible", !vis);
-            if (vis && IsFirstVisibleRender()) {
-                _ = OnFirstRenderAnimation?.Invoke(Node, Cancellable.Null).ContinueWithSync();
-            }
+            if (vis && IsFirstVisibleRender())
+                OnFirstRenderAnimation?.Invoke(Node, Cancellable.Null).ContinueWithSync(null, false);
         }
     }
 

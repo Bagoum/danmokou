@@ -16,10 +16,11 @@ using Danmokou.Reflection;
 using Danmokou.Services;
 using JetBrains.Annotations;
 using Danmokou.SM;
+using Scriptor;
 using UnityEngine;
 using static Danmokou.Danmaku.BulletManager;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
 
 namespace Danmokou.Behavior {
 
@@ -69,30 +70,28 @@ public partial class BehaviorEntity {
     /// <summary>
     /// Structure similar to SimpleBulletCollection, but does not contain its component objects.
     /// </summary>
-    public class BEHStyleMetadata {
+    public class StyleMetadata {
         public readonly string? style;
         public readonly DeferredFramesRecoloring? recolor;
         public FrameAnimBullet.Recolor RecolorOrThrow => (recolor ??
             throw new Exception($"Couldn't resolve BEHStyleMetadata recolor for {style}")).GetOrLoadRecolor();
-        public bool IsPlayer { get; private set; } = false;
+        public bool IsPlayer { get; private init; } = false;
         public bool Active { get; private set; } = false;
+        private StyleMetadata? Original { get; init; }
+        public bool IsCopy => Original != null;
 
         public DisturbedEvented<bool,bool> CameraCullable { get; } = new OverrideEvented<bool>(true);
 
-        public BEHStyleMetadata(string? style, DeferredFramesRecoloring? dfc) {
+        public StyleMetadata(string? style, DeferredFramesRecoloring? dfc) {
             this.style = style;
             this.recolor = dfc;
         }
-        
-        private void SetPlayer() {
-            IsPlayer = true;
-        }
 
-        public BEHStyleMetadata MakePlayerCopy(string newPool) {
-            var bsm = new BEHStyleMetadata(newPool, recolor?.MakePlayerCopy());
-            bsm.SetPlayer();
-            return bsm;
-        }
+        public StyleMetadata MakeCopy(string newPool, bool isPlayer) =>
+            new(newPool, recolor?.MakeCopy(isPlayer)) {
+                Original = this,
+                IsPlayer = isPlayer
+            };
 
         public void Reset() {
             
@@ -101,13 +100,18 @@ public partial class BehaviorEntity {
         public void Activate() {
             if (!Active) {
                 activePools.Add(this);
-                Logs.Log($"Activating beh pool {style}", level: LogLevel.DEBUG1);
+                Logs.Log1("Activating beh pool {0}", style ?? "<N/A>", level: LogLevel.DEBUG1);
                 Active = true;
             }
         }
 
         public void Deactivate() {
             Active = false;
+        }
+
+        public void Destroy() {
+            Logs.Log1("Destroying beh pool {0}", style ?? "<N/A>", level: LogLevel.DEBUG1);
+            recolor?.Destroy();
         }
 
         public void AddBulletControlEOF(BEHControl pc) => 
@@ -163,15 +167,15 @@ public partial class BehaviorEntity {
         }
     }
     
-    private static readonly BEHStyleMetadata defaultMeta = new(null, null);
+    private static readonly StyleMetadata defaultMeta = new(null, null);
     
     /// <summary>
     /// Pool definitions for bullet styles that are active. Pools are deactivated on each scene and activated when used.
     /// </summary>
-    private static readonly List<BEHStyleMetadata> activePools = new(16);
+    private static readonly List<StyleMetadata> activePools = new(16);
 
-    public static BEHStyleMetadata GetPool(string key) {
-        if (BulletManager.CheckComplexPool(key, out var pool)) return pool;
+    public static StyleMetadata GetPool(string key) {
+        if (BulletManager.CheckOrCopyComplexPool(key, out var pool)) return pool;
         throw new Exception($"No BEH style by name {key}");
     }
     public static void DeInitializePools() {
@@ -181,12 +185,13 @@ public partial class BehaviorEntity {
         }
         activePools.Clear();
     }
+    
     private static readonly HashSet<string> ignoreCullStyles = new();
 
     //set by initialize > updatestyleinfo
-    public BEHStyleMetadata Style { get; private set; } = defaultMeta;
+    public StyleMetadata Style { get; private set; } = defaultMeta;
 
-    protected virtual void UpdateStyle(BEHStyleMetadata newStyle) {
+    protected virtual void UpdateStyle(StyleMetadata newStyle) {
         Style = newStyle;
         foreach (var cmp in dependentComponents)
             cmp.StyleChanged(newStyle);
@@ -205,7 +210,7 @@ public partial class BehaviorEntity {
         /// <param name="time">Time to set</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl Time(float time, Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) b.SetTime(time);
@@ -218,7 +223,7 @@ public partial class BehaviorEntity {
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl Restyle(string target, Pred cond) {
             var style = GetPool(target);
             FrameAnimBullet.Recolor r = style.recolor?.GetOrLoadRecolor() ?? 
@@ -237,7 +242,7 @@ public partial class BehaviorEntity {
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl Softcull(string? target, Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) {
@@ -253,7 +258,7 @@ public partial class BehaviorEntity {
         /// <param name="target">New style</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl SpawnOn(string target, Pred cond) => new((b, cT) => {
             if (cond(b.rBPI)) b.SpawnSimple(target);
         }, BulletControl.P_RUN);
@@ -263,7 +268,7 @@ public partial class BehaviorEntity {
         /// </summary>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl Cull(Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) b.InvokeCull();
@@ -275,7 +280,7 @@ public partial class BehaviorEntity {
         /// </summary>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl Poof(Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) b.CullMe(true);
@@ -288,7 +293,7 @@ public partial class BehaviorEntity {
         /// </summary>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl FlipX(Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) b.FlipVelX();
@@ -301,7 +306,7 @@ public partial class BehaviorEntity {
         /// </summary>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl FlipY(Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) b.FlipVelY();
@@ -315,7 +320,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipx>")]
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl FlipXGT(BPY wall, Pred cond) {
             return new((b, cT) => {
                 var bpi = b.rBPI;
@@ -333,7 +338,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipx<")]
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl FlipXLT(BPY wall, Pred cond) {
             return new((b, cT) => {
                 var bpi = b.rBPI;
@@ -351,7 +356,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipy>")]
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl FlipYGT(BPY wall, Pred cond) {
             return new((b, cT) => {
                 var bpi = b.rBPI;
@@ -369,7 +374,7 @@ public partial class BehaviorEntity {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipy<")]
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl FlipYLT(BPY wall, Pred cond) {
             return new((b, cT) => {
                 var bpi = b.rBPI;
@@ -386,7 +391,7 @@ public partial class BehaviorEntity {
         /// <param name="by">Delta position</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl DX(float by, Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) {
@@ -401,7 +406,7 @@ public partial class BehaviorEntity {
         /// <param name="by">Delta position</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl DY(float by, Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) {
@@ -415,7 +420,7 @@ public partial class BehaviorEntity {
         /// <param name="by">Delta time</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl DT(float by, Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) {
@@ -429,7 +434,7 @@ public partial class BehaviorEntity {
         /// <param name="sfx">Sound effect</param>
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl SFX(string sfx, Pred cond) {
             return new((b, cT) => {
                 if (cond(b.rBPI)) ISFXService.SFXService.Request(sfx);
@@ -439,7 +444,7 @@ public partial class BehaviorEntity {
         /// <summary>
         /// Freeze an object. It will still collide but it will not move.
         /// </summary>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl Freeze(Pred cond) => new((b, cT) => {
             if (cond(b.rBPI)) b.nextUpdateAllowed = false;
         }, BulletControl.P_TIMECONTROL);
@@ -473,7 +478,7 @@ public partial class BehaviorEntity {
         /// Run some code on bullets that pass the condition.
         /// </summary>
         [BDSL2Only] //NB: ErasedParametric cannot be reflected by BDSL1
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl Exec(ErasedParametric code, Pred cond) {
             return new cBEHControl((b, cT) => {
                 if (cond(b.rBPI))
@@ -484,7 +489,7 @@ public partial class BehaviorEntity {
         /// <summary>
         /// Batch several commands together under one predicate.
         /// </summary>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl Batch(Pred cond, cBEHControl[] over) {
             var priority = over.Max(o => o.priority);
             var funcs = over.Select(o => o.action).ToArray();
@@ -499,7 +504,7 @@ public partial class BehaviorEntity {
         /// <summary>
         /// If the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl SM(Pred cond, StateMachine target) => new((b, cT) => {
             if (cond(b.rBPI)) {
                 var exec = b.GetINode("f-pool-triggered", null);
@@ -512,7 +517,7 @@ public partial class BehaviorEntity {
         /// <summary>
         /// When the bullet collides, if the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl OnCollide(Pred cond, StateMachine target) => new((b, cT) => {
             if (cond(b.rBPI)) {
                 var exec = b.GetINode("f-collide-triggered", null);
@@ -525,7 +530,7 @@ public partial class BehaviorEntity {
         /// When the entity is destroyed, if the condition is true, spawn an iNode at the position and run an SM on it.
         /// <br/>This only works on enemies and other destructible entities.
         /// </summary>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cBEHControl OnDestroy(Pred cond, StateMachine target) => new((b, cT) => {
             if (cond(b.rBPI)) {
                 var exec = b.GetINode("f-destroy-triggered", null);
@@ -608,7 +613,7 @@ public partial class BehaviorEntity {
     public static void Autocull(SoftcullProperties props, string[]? cullPools = null) {
         void CullPool(string? poolStr) {
             if (poolStr == null) return;
-            if (!BulletManager.CheckComplexPool(poolStr, out var pool) || pool.IsPlayer) 
+            if (!BulletManager.CheckOrCopyComplexPool(poolStr, out var pool) || pool.IsPlayer) 
                 return;
             if (!BulletManager.PortColorFormat(poolStr, props, out string? target)) 
                 return;

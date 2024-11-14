@@ -179,14 +179,11 @@ public enum InstanceMode {
     /// A player may still exist (eg. shot demo) and make use of InstanceData, but many features may be disabled.
     /// </summary>
     NULL,
-#if UNITY_EDITOR || ALLOW_RELOAD
     /// <summary>
-    /// Used when there is no real instance, but there is still full gameplay (primarily debugging situations with reload).
-    /// Using local reset by pressing R will set the mode to DEBUG.
-    /// As the default mode is NULL, you may need to press R once in debugging situations to get full functionality.
+    /// Used when there is no real instance, but there is still full gameplay.
+    /// <br/>Used for editor testing and single-scene exports.
     /// </summary>
     DEBUG,
-#endif
     /// <summary>
     /// Playing through a full campaign (eg. 6 sequential stages). Note that EX stages are distinct campaigns.
     /// </summary>
@@ -303,9 +300,7 @@ public static class EnumHelpers2 {
 
     public static LString Describe(this InstanceMode m) => m switch {
         InstanceMode.NULL => "Null",
-    #if UNITY_EDITOR || ALLOW_RELOAD
         InstanceMode.DEBUG => "Debug",
-    #endif
         InstanceMode.CAMPAIGN => LocalizedStrings.UI.practice_m_campaign,
         InstanceMode.STAGE_PRACTICE => LocalizedStrings.UI.practice_m_stage,
         InstanceMode.BOSS_PRACTICE => LocalizedStrings.UI.practice_m_boss,

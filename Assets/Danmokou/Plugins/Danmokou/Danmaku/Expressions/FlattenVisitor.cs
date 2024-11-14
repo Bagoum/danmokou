@@ -10,6 +10,7 @@ using BagoumLib;
 using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.DMath;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
 using PEx = System.Linq.Expressions.ParameterExpression;
 // ReSharper disable CompareOfFloatsByEqualityOperator
@@ -153,18 +154,6 @@ class FlattenVisitor : ExpressionVisitor {
         (typeof(float), typeof(double)),
         (typeof(int), typeof(double))
     };
-
-    public static Ex? TryFlattenConversion(Ex body, Type toTyp) {
-        //Nested compile causes issues with baking
-#if !EXBAKE_SAVE && !EXBAKE_LOAD
-        //Null typecasts don't work correctly with nullable types (including nullable struct type)
-        //Object boxing doesn't always work with value types
-        if (body.TryAsAnyConst(out var obj) && obj != null && toTyp != typeof(object) && !toTyp.Name.StartsWith("Nullable")) {
-            return ExC(Ex.Lambda(Ex.Convert(ExC(obj), toTyp)).Compile().DynamicInvoke());
-        }
-#endif
-        return null;
-    }
     
     protected override Expression VisitUnary(UnaryExpression node) {
         var o = AssignTypes.Contains(node.NodeType) ? node.Operand : Visit(node.Operand);
@@ -173,7 +162,7 @@ class FlattenVisitor : ExpressionVisitor {
             new DeactivateConstantVisitor(ConstValPrmsMap).Visit(o);
         }
         if (node.NodeType == ExpressionType.Convert) {
-            if (TryFlattenConversion(o, node.Type) is { } ex)
+            if (ExHelpers.TryFlattenConversion(o, node.Type) is { } ex)
                 return ex;
             if (o is UnaryExpression { NodeType: ExpressionType.Convert } ue) {
                 if (node.Type == ue.Type || allowedDoubleCasts.Contains((node.Type, ue.Type)))
@@ -203,7 +192,7 @@ class FlattenVisitor : ExpressionVisitor {
             isAllConst &= visited[ii].TryAsAnyConst(out newArgs[ii]);
         }
         return isAllConst ?
-            (Expression) Ex.Constant(node.Constructor.Invoke(newArgs)) :
+            Ex.Constant(node.Constructor.Invoke(newArgs)) :
             Ex.New(node.Constructor, visited);
     }
 
@@ -229,17 +218,17 @@ class FlattenVisitor : ExpressionVisitor {
                 //DMK math functions take float, but the converted versions take double, so we need to convert
                 var v = Visit(visited[0].Cast<double>());
                 if (node.Method.Name == "Sin")
-                    return ExMHelpers.dLookupSinRad(v);
+                    return DMKExMHelpers.dLookupSinRad(v);
                 if (node.Method.Name == "Cos")
-                    return ExMHelpers.dLookupCosRad(v);
+                    return DMKExMHelpers.dLookupCosRad(v);
                 if (node.Method.Name == "CosSin")
-                    return ExMHelpers.dLookupCosSinRad(v);
+                    return DMKExMHelpers.dLookupCosSinRad(v);
                 if (node.Method.Name == "SinDeg")
-                    return ExMHelpers.dLookupSinDeg(v);
+                    return DMKExMHelpers.dLookupSinDeg(v);
                 if (node.Method.Name == "CosDeg")
-                    return ExMHelpers.dLookupCosDeg(v);
+                    return DMKExMHelpers.dLookupCosDeg(v);
                 if (node.Method.Name == "CosSinDeg")
-                    return ExMHelpers.dLookupCosSinDeg(v);
+                    return DMKExMHelpers.dLookupCosSinDeg(v);
             }
         }else if (node.Method.DeclaringType == systemMathType) {
             if (node.Method.Name == "Pow" && visited[1].TryAsConst(out double d)) {

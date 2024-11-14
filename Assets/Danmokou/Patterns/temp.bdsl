@@ -1,11 +1,10 @@
+
 pattern {
 	boss("simp.mima")
 } {
     phase 30 {
-        type(non, "hello wlrd")
-        hp(1000)
     } {
-    
+		shiftphaseto 2
     }
 
     phase 1000 {
@@ -54,10 +53,15 @@ pattern {
         hp(10000),
         root(-2,-3)
     } {
-        paction 0 {
-            sync "tfairy" <-1.2;1:> gsr2 14 <0.5;:> {
+        print b{
+            var x::int = 5;
+            var y::float = 6;
+            x * y;
+        }
+        paction 0.1 {
+            sync "tfairy" <-1.2;1:> gsr2 5 <0.5;:> {
 
-            } gsr2 14 <0;0.5:> {
+            } gsr2 5 <0;0.5:> {
 
             } summon(none, stall, { hp 500 })
         }

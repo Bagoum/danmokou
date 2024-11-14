@@ -31,10 +31,10 @@ public interface IBehaviorEntityDependent {
     /// <summary>
     /// Called when the entity's style changes.
     /// </summary>
-    void StyleChanged(BehaviorEntity.BEHStyleMetadata style) { }
+    void StyleChanged(BehaviorEntity.StyleMetadata style) { }
 
     /// <summary>
-    /// Called when the behavior entity is culled.
+    /// Called when the entity is destroyed.
     /// </summary>
     void Culled(bool allowFinalize, Action done);
 }

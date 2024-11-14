@@ -1,4 +1,5 @@
 ﻿using System;
+using Danmokou.Behavior.Display;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Pooling;
@@ -28,9 +29,17 @@ public struct ItemDrops {
 }
 
 public static class DropHelpers {
+    public static readonly IGradient Azure = DropLabel.MakeGradient(
+        new Color32(100, 150, 255, 255), new Color32(80, 110, 255, 255));
+    public static readonly IGradient Cyan = DropLabel.MakeGradient(
+        new Color32(20, 220, 255, 255), new Color32(10, 170, 255, 255));
+    public static readonly IGradient Green = DropLabel.MakeGradient(
+        new Color32(0, 235, 162, 255), new Color32(0, 172, 70, 255));
+    public static readonly IGradient Red = DropLabel.MakeGradient(
+        new Color32(255, 10, 138, 255), new Color32(240, 0, 52, 255));
     private const float LABEL_RAD = 0.67f;
-    public static void DropDropLabel(Vector2 baseLoc, IGradient color, string text, float speed=0.4f, float ttl=0.7f, float multiplier=1f) {
-        var req = new LabelRequestContext(baseLoc, LABEL_RAD, speed, RNG.GetFloatOffFrame(40, 140), ttl, color, text, multiplier);
+    public static void DropDropLabel(Vector2 baseLoc, IGradient color, string text, float ttl, float speed=0.4f, float size=1f) {
+        var req = new LabelRequestContext(baseLoc, LABEL_RAD, speed, RNG.GetFloatOffFrame(40, 140), ttl, color, text, size);
         ItemPooler.RequestLabel(req);
     }
     public static void DropOne(ItemType type, Vector2 baseLoc) =>

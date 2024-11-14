@@ -2,16 +2,18 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
 using JetBrains.Annotations;
+using Scriptor;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
 using UnityEngine;
 using static Danmokou.Expressions.ExUtils;
-using static Danmokou.Expressions.ExMHelpers;
+using static Scriptor.Expressions.ExMHelpers;
 using static Danmokou.DMath.Functions.ExM;
 
 
@@ -68,8 +70,6 @@ public class TExPI : TEx<ParametricInfo> {
 
     public TExPI Rehash() => new(rehash.InstanceOf(this));
     public TExPI CopyWithT(Ex newT) => new(copyWithT.InstanceOf(this, newT));
-
-    public new static TExPI Box(Ex ex) => new(ex);
 
     public Ex FlipSimpleY(Ex wall) => flipSimple.InstanceOf(this, Ex.Constant(true), wall);
 

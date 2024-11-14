@@ -5,15 +5,17 @@ using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Scriptor;
+using Scriptor.Expressions;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
-using static Danmokou.Expressions.ExMHelpers;
-using tfloat = Danmokou.Expressions.TEx<float>;
-using tbool = Danmokou.Expressions.TEx<bool>;
-using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
-using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
-using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
+using static Scriptor.Expressions.ExMHelpers;
+using static Scriptor.Math.ExMOperators;
+using tfloat = Scriptor.Expressions.TEx<float>;
+using tv2 = Scriptor.Expressions.TEx<UnityEngine.Vector2>;
+using tv3 = Scriptor.Expressions.TEx<UnityEngine.Vector3>;
+using trv2 = Scriptor.Expressions.TEx<BagoumLib.Mathematics.V2RV2>;
 
 namespace Danmokou.DMath.Functions {
 public static partial class ExM {
@@ -39,11 +41,6 @@ public static partial class ExM {
     public static tfloat Twau() => twau;
     
     /// <summary>
-    /// Add two vectypes.
-    /// </summary>
-    [Alias("+")] [WarnOnStrict] [Operator] [BDSL2Operator]
-    public static TEx<T> Add<T>(TEx<T> x, TEx<T> y) => x.Add(y);
-    /// <summary>
     /// Add to the nonrotational components of an RV2.
     /// </summary>
     public static trv2 AddNV(trv2 rv2, tv2 nv) => Ex.Add(rv2, nv);
@@ -65,26 +62,6 @@ public static partial class ExM {
     public static trv2 AddRV(trv2 rv2, tv2 rv) => Ex.Add(rv2, Ex.Convert(rv, typeof(Vector3)));
 
     /// <summary>
-    /// Subtract two vectypes.
-    /// </summary>
-    [Alias("-")] [WarnOnStrict] [Operator] [BDSL2Operator]
-    public static TEx<T> Sub<T>(TEx<T> x, TEx<T> y) => x.Sub(y);
-    /// <summary>
-    /// Multiply a vectype by a number.
-    /// </summary>
-    [Alias("*")] [WarnOnStrict] [Operator] [BDSL2Operator]
-    public static TEx<T> Mul<T>(tfloat x, TEx<T> y) => x.Mul(y);
-    
-    /// <summary>
-    /// Multiply a vectype by a number.
-    /// </summary>
-    [BDSL2Operator]
-    public static TEx<T> MulRev<T>(TEx<T> y, tfloat x) => x.Mul(y);
-    
-    [BDSL2Operator]
-    public static TEx<int> MulInt(TEx<int> x, TEx<int> y) => x.Mul(y);
-
-    /// <summary>
     /// Convert a number from degrees to radians.
     /// </summary>
     /// <param name="x"></param>
@@ -98,12 +75,6 @@ public static partial class ExM {
     /// <returns></returns>
     public static tfloat RadDeg(tfloat x) => x.Mul(radDeg);
     
-    /// <summary>
-    /// Divide a vectype by a number. Alias: / x y
-    /// </summary>
-    /// <returns></returns>
-    [Alias("/")] [WarnOnStrict] [Operator] [BDSL2Operator]
-    public static TEx<T> Div<T>(TEx<T> x, tfloat y) => x.Div(y);
     /// <summary>
     /// Divide two numbers in reverse order (the same as / y x). 
     /// </summary>
@@ -155,20 +126,6 @@ public static partial class ExM {
     /// </summary>
     public static tfloat Neg(tfloat x) => EN1.Mul(x);
     
-    /// <summary>
-    /// Returns -x.
-    /// </summary>
-    [BDSL2Operator]
-    public static TEx<T> Negate<T>(TEx<T> x) {
-        if ((Ex)x is ConstantExpression ce) {
-            return ce.Value switch {
-                float f => ExC(-f),
-                int i => ExC(-i),
-                _ => Ex.Negate(x)
-            };
-        }
-        return Ex.Negate(x);
-    }
 
     /// <summary>
     /// Returns -1 if x lt 0 and 1 otherwise. (Note: Sign(0) = 1)
@@ -226,7 +183,7 @@ public static partial class ExM {
     /// <summary>
     /// Normalize a vector2.
     /// </summary>
-    public static tv2 Norm(tv2 v2) => TEx.ResolveV2AsXY(v2, (x, y) => {
+    public static tv2 Norm(tv2 v2) => TExHelpers.ResolveV2AsXY(v2, (x, y) => {
         var mag = VFloat("mag");
         return Ex.Block(new[] {mag},
             mag.Is(Mag2(x, y)),
@@ -238,7 +195,7 @@ public static partial class ExM {
     /// <summary>
     /// Normalize a vector3.
     /// </summary>
-    public static tv3 Norm3(tv3 v3) => TEx.ResolveV3(v3, xyz => {
+    public static tv3 Norm3(tv3 v3) => TExHelpers.ResolveV3(v3, xyz => {
         var mag = VFloat("mag");
         return Ex.Block(new[] {mag},
             mag.Is(v3Mag(xyz)),
@@ -252,47 +209,12 @@ public static partial class ExM {
     /// <summary>
     /// Get the square magnitude of a vector2.
     /// </summary>
-    public static tfloat SqrMag(tv2 v2) => TEx.ResolveV2AsXY(v2, (x, y) => SqrMag2(x, y), singleUse: true);
+    public static tfloat SqrMag(tv2 v2) => TExHelpers.ResolveV2AsXY(v2, (x, y) => SqrMag2(x, y), singleUse: true);
     
     /// <summary>
     /// Get the square magnitude of a vector3.
     /// </summary>
-    public static tfloat v3SqrMag(tv3 v3) => TEx.ResolveV3(v3, xyz => SqrMag3(xyz.x, xyz.y, xyz.z));
-    
-    private static readonly ExFunction _Pow = ExFunction.Wrap<double>(typeof(Math), "Pow", 2);
-
-    /// <summary>
-    /// Returns (bas)^(exp).
-    /// </summary>
-    [Alias("^")] [WarnOnStrict] [Operator] [BDSL2Operator]
-    public static TEx<T> Pow<T>(TEx<T> bas, TEx<T> exp) => OfDTD<T>(_Pow, bas, exp);
-    /// <summary>
-    /// Returns one function raised to the power of the other, subtracted by the first function. (Alias: ^- bas exp)
-    /// Useful for getting polynomial curves that start at zero, eg. ^- t 1.1
-    /// </summary>
-    /// <returns></returns>
-    [Alias("^-")] [Operator] [BDSL2Operator]
-    public static tfloat PowSub(tfloat bas, tfloat exp) {
-        var val = VFloat();
-        return Ex.Block(new[] {val},
-            Ex.Assign(val, bas),
-            Pow(val, exp).Sub(val)
-        );
-    }
-
-    /// <summary>
-    /// Returns one number raised to the power of the other.
-    /// If bas is negative, then returns - (-bas)^exp. This allows fractional powers on negatives.
-    /// (Alias: ^^ bas exp)
-    /// </summary>
-    /// <param name="bas">Base</param>
-    /// <param name="exp">Exponent</param>
-    /// <returns></returns>
-    [Alias("^^")] [Operator] [BDSL2Operator]
-    public static tfloat NPow(tfloat bas, tfloat exp) => TEx.Resolve(bas, x =>
-        Ex.Condition(Ex.LessThan(x, E0),
-            Ex.Negate(Pow(Ex.Negate(x), exp)),
-            Pow(x, exp)));
+    public static tfloat v3SqrMag(tv3 v3) => TExHelpers.ResolveV3(v3, xyz => SqrMag3(xyz.x, xyz.y, xyz.z));
 
     private static readonly ExFunction _Round = ExFunction.Wrap<double>(typeof(Math), "Round");
     private static readonly ExFunction _Floor = ExFunction.Wrap<double>(typeof(Math), "Floor");
@@ -579,7 +501,7 @@ public static partial class ExM {
     /// <summary>
     /// Return the angle in radians whose tangent is v2.y/v2.x.
     /// </summary>
-    public static tfloat ATanR(tv2 f) => TEx.ResolveV2AsXY(f, (x, y) => _AtanYX.Of(y, x), singleUse: true);
+    public static tfloat ATanR(tv2 f) => TExHelpers.ResolveV2AsXY(f, (x, y) => _AtanYX.Of(y, x), singleUse: true);
     /// <summary>
     /// Return the angle in degrees whose tangent is y/x.
     /// </summary>
@@ -589,12 +511,6 @@ public static partial class ExM {
     /// </summary>
     public static tfloat ATan(tv2 f) => ATanR(f).Mul(radDeg);
     #endregion
-
-    /// <summary>
-    /// Array indexing operator arr[index].
-    /// </summary>
-    [BDSL2Operator]
-    public static TEx<T> ArrayIndex<T>(TEx<T[]> arr, TEx<int> index) => arr.ex.Index(index);
     
     private static readonly ExFunction modIndex = 
         ExFunction.WrapAny(typeof(BagoumLib.ArrayExtensions), nameof(BagoumLib.ArrayExtensions.ModIndex));
@@ -605,6 +521,5 @@ public static partial class ExM {
     /// </summary>
     public static TEx<T> MIndex<T>(TEx<T[]> arr, TEx<float> index) =>
         Ex.Call(null, modIndex.Mi.MakeGenericMethod(typeof(T)), arr, index.ex.Cast<int>());
-
 }
 }

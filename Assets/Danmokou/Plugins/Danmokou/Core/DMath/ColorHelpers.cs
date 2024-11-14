@@ -38,8 +38,8 @@ public static class ColorHelpers {
         c.a *= a;
         return c;
     }
-    public static Color V4C(Vector4 v4) => new Color(v4.x, v4.y, v4.z, v4.w);
-    public static Vector4 CV4(Color c) => new Vector4(c.r, c.g, c.b, c.a);
+    public static Color V4C(this Vector4 v4) => new Color(v4.x, v4.y, v4.z, v4.w);
+    public static Vector4 CV4(this Color c) => new Vector4(c.r, c.g, c.b, c.a);
     
     public static readonly GradientAlphaKey[] fullAlphaKeys = {
         new GradientAlphaKey(1, 0),

@@ -1,6 +1,5 @@
 pattern { } {
 phase 0 {
-	type(non, "Polar Movement")
 	roott(1, 0, 1.5)
 } {
 	paction 0 {

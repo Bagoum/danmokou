@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using BagoumLib;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -16,16 +17,17 @@ using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Player;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.SM;
 using JetBrains.Annotations;
+using Scriptor.Analysis;
+using Scriptor.Compile;
+using Scriptor.Expressions;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Profiling;
 using Ex = System.Linq.Expressions.Expression;
-using Helpers = Danmokou.Reflection2.Helpers;
 
 // ReSharper disable HeuristicUnreachableCode
 #pragma warning disable 162
@@ -63,6 +65,10 @@ public static class BakeCodeGenerator {
                 return $"new ReflectEx.Hoist<{TypePrinter.Print(typ.GetGenericArguments()[0])}>({Print(h.Name)})";
             if (obj is IUncompiledCode uc)
                 return $"new UncompiledCode<{TypePrinter.Print(typ.GetGenericArguments()[0])}>({Print(uc.Code)})";
+            if (obj is BEHPointer behp)
+                return $"BehaviorEntity.GetPointerForID(\"{behp.id}\")";
+            if (obj is ETime.Timer { name: { } name })
+                return $"ETime.Timer.GetTimer(\"{name}\")";
             if (obj is Delegate del && del.Method.IsStatic) {
                 //Cases in-engine where we directly provide (Func<float,float>)Easers.EIOSine as an argument
                 return $"(({TypePrinter.Print(typ)}){TypePrinter.Print(del.Method.DeclaringType!)}.{del.Method.Name})";
@@ -82,62 +88,40 @@ public static class BakeCodeGenerator {
 #endif
 
 
-
-#if EXBAKE_SAVE
-    /// <summary>
-    /// Returns a function that hoists objects such as timers and updates the object-mapping dict accordingly.
-    /// </summary>
-    private static Func<Dictionary<object, Expression>, object, Ex> GeneralConstHandling(CookingContext baker, TExArgCtx tac) {
-        return (dct, obj) => {
-            if (obj is ETime.Timer t) {
-                var key_name = tac.Ctx.NameWithSuffix("timer");
-                tac.Ctx.HoistedVariables.Add(FormattableString.Invariant(
-                    $"var {key_name} = ETime.Timer.GetTimer(\"{t.name}\");"));
-                return dct[obj] = Ex.Variable(typeof(ETime.Timer), key_name);
-            } else if (obj is BEHPointer ptr) {
-                var key_name = tac.Ctx.NameWithSuffix("behptr");
-                tac.Ctx.HoistedVariables.Add(FormattableString.Invariant(
-                    $"var {key_name} = BehaviorEntity.GetPointerForID(\"{ptr.id}\");"));
-                return dct[obj] = Ex.Variable(typeof(BEHPointer), key_name);
-            } else
-                return Ex.Constant(obj);
-        };
-    }
-    
-#endif
     public static D BakeAndCompile<D>(this TEx ex, TExArgCtx tac, params ParameterExpression[] prms) {
 #if EXBAKE_LOAD
+        var loader = tac.Ctx.BakeTracker as ExBakeTracker.Load ??
+                    throw new Exception("The expression baking tracker does not support saving!");
         return (Cook.CurrentServe ?? throw new Exception("Tried to load an expression with no active serve"))
-            .Next<D>(tac.Ctx.ProxyArguments.ToArray());
+            .Next<D>(loader.ProxyArguments.ToArray());
 #endif
         var f = FlattenVisitor.Flatten(ex, true, true);
 #if UNITY_EDITOR
-        /*if (typeof(D) == typeof(VTP)) {
+        /*if (typeof(D) == typeof(Pred)) {
             Debug.Log($"Ex:{typeof(D).SimpRName()} " +
                       $"{new ExpressionPrinter { ObjectPrinter = new DMKObjectPrinter { FallbackToToString = true } }.LinearizePrint(ex)}");
         }*/
 #endif
         var result = Ex.Lambda<D>(f, prms).Compile();
 #if EXBAKE_SAVE
+        var saver = tac.Ctx.BakeTracker as ExBakeTracker.Save ??
+                    throw new Exception("The expression baking tracker does not support saving!");
         var sb = new StringBuilder();
         //TODO possibly remove replaceExVisitor and handle all constant stuff via the printer helper
-        var constReplaced = new ReplaceExVisitor(
-            tac.Ctx.HoistedReplacements,
-            tac.Ctx.HoistedConstants,
-            GeneralConstHandling(Cook, tac)).Visit(ex);
-        var flattened = FlattenVisitor.Flatten(constReplaced, true, false, 
-            obj => Cook.FindByValue(obj) is null);
+        foreach (var (key, sfn) in saver.RecursiveFunctions)
+            //give an explicit name to recursive functions so they can be referenced before they are compiled
+            saver.HoistedReplacements[key] = Ex.Variable(sfn.FuncType!,
+                CookingContext.FileContext.GeneratedFunc.ScriptFnReference(sfn));
+        
+        var constReplaced = new ReplaceExVisitor(saver.HoistedReplacements).Visit(ex);
+        var flattened = FlattenVisitor.Flatten(constReplaced, true, false, obj => Cook.FindByValue(obj) is null);
         //handle the ExMHelpers.LookupTable references and others introduced by flattening
-        var constReplaced2 = new ReplaceExVisitor(
-            tac.Ctx.HoistedReplacements,
-            tac.Ctx.HoistedConstants,
-            GeneralConstHandling(Cook, tac)).Visit(flattened);
+        var constReplaced2 = new ReplaceExVisitor(saver.HoistedReplacements).Visit(flattened);
         var linearized = new LinearizeVisitor().Visit(constReplaced2);
         //As the replaced EXs contain references to nonexistent variables, we don't want to actually compile it
         var rex = Ex.Lambda<D>(linearized, prms);
-        foreach (var hoistVar in tac.Ctx.HoistedVariables) {
+        foreach (var hoistVar in saver.HoistedVariables)
             sb.AppendLine(hoistVar);
-        }
         sb.Append("return ");
         var constToStr = new Dictionary<object, string>();
         var printer = new ExpressionPrinter() {ObjectPrinter = new DMKObjectPrinter() {ObjectLookup = obj => {
@@ -147,15 +131,20 @@ public static class BakeCodeGenerator {
                     return s;
                 return null;
             }}};
-        foreach (var (cobj, rep) in tac.Ctx.HoistedConstants)
+        foreach (var (cobj, rep) in saver.HoistedConstants)
             constToStr[cobj] = printer.Print(rep);
-        foreach (var (obj, repl) in tac.Ctx.HoistedReplacements)
+        foreach (var (obj, repl) in saver.HoistedReplacements)
             if (obj is ConstantExpression { Value: not null } cex)
                 constToStr[cex.Value] = printer.Print(repl);
-        sb.Append(printer.Print(rex));
+        try {
+            sb.Append(printer.Print(rex));
+        } catch (Exception e) {
+            Logs.LogException(e);
+            sb.Append("default!");
+        }
         sb.AppendLine(";");
         (Cook.CurrentBake ?? throw new Exception("An expression was compiled with no active bake"))
-            .Add<D>(tac, sb.ToString(), tac.Ctx.ProxyTypes.ToArray(), result);
+            .Add<D>(tac, sb.ToString(), saver.ProxyTypes.ToArray(), result);
 #endif
         return result;
     }
@@ -165,7 +154,6 @@ public static class BakeCodeGenerator {
         //These calls ensure that static reflections are correctly initialized
         _ = new Challenge.WithinC(0);
         _ = new Challenge.WithoutC(0);
-        
         
         var typFieldsCache = new Dictionary<Type, List<(MemberInfo, ReflectIntoAttribute)>>();
         void LoadReflected(UnityEngine.Object go) {
@@ -231,7 +219,7 @@ public static class BakeCodeGenerator {
                     StateMachine.CreateFromDump(textAsset.text, out _);
                 } catch (Exception e1) {
                     try {
-                        Helpers.ParseAndCompileErased(textAsset.text);
+                        CompileHelpers.ParseAndCompileErased(textAsset.text);
                     } catch (Exception e2) {
                         Logs.UnityError($"Failed to parse {path}:\n" + Exceptions.PrintNestedException(
                             new AggregateException(e1, e2)));

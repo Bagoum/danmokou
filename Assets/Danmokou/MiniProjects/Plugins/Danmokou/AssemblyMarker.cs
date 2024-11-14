@@ -1,4 +1,5 @@
 ﻿using Danmokou.Core;
+using Scriptor;
 using UnityEngine.Scripting;
 
 [assembly: Preserve]

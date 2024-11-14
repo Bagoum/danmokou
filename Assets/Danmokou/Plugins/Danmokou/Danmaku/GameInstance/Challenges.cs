@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Culture;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;
@@ -19,6 +20,7 @@ using Danmokou.Services;
 using JetBrains.Annotations;
 using Danmokou.SM;
 using Danmokou.UI;
+using Scriptor;
 using UnityEngine;
 
 

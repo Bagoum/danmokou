@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 
 namespace Danmokou.Core.DInput {
-public class InCodeInputSource : IInputHandlerInputSource, IInputSource {
+public class InCodeInputSource : IInputHandlerInputSource {
     public List<IInputHandler> Handlers { get; } = new();
     public bool AnyKeyPressedThisFrame { get; private set; }
     bool IInputHandlerInputSource.AnyKeyPressedThisFrame {

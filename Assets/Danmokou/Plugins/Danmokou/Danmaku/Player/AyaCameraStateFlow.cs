@@ -126,6 +126,7 @@ public partial class AyaCamera {
         TakePicture_Delete(scale);
         StateFlow.GoToNextWithDefault(new State.Reload(success));
     }
+    
     private IEnumerator UpdateReload(bool shotHit) {
         viewfinder.gameObject.layer = lowCameraLayer;
         float t = shotHit ? 1.2f : 0.4f;

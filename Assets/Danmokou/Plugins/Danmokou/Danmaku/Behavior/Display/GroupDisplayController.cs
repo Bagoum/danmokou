@@ -31,7 +31,7 @@ public class GroupDisplayController : DisplayController, IMultiDisplayController
         recvSprite.SetMaterial(mat);
     }
 
-    public override void StyleChanged(BehaviorEntity.BEHStyleMetadata style) {
+    public override void StyleChanged(BehaviorEntity.StyleMetadata style) {
         for (int ii = 0; ii < all.Length; ++ii) all[ii].StyleChanged(style);
     }
 

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Danmokou.Core;
+using Scriptor;
 using static Danmokou.Reflection.Reflector;
 using static Danmokou.SM.ParsingProperty;
 

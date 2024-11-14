@@ -13,6 +13,7 @@ using Danmokou.UI;
 using SuzunoyaUnity.Rendering;
 using UnityEngine;
 using UnityEngine.Profiling;
+using Object = UnityEngine.Object;
 using PropConsts = Danmokou.Graphics.PropConsts;
 
 namespace Danmokou.Services {
@@ -171,6 +172,10 @@ public class DMKMainCamera : MainCamera, IScreenshotter {
         if (ctr != null && ctr.Render is {} render) {
             UnityEngine.Graphics.Blit(render.mainTex, RenderTo, render.mat);
         }
+    }
+
+    private void OnDestroy() {
+        Object.Destroy(ayaMaterial);
     }
 }
 }

@@ -154,7 +154,8 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         allEnemies[enemyIndex = enemyIndexCtr++] = this;
         tokens.Add(orderedEnemies.Add(this));
         HP = maxHP;
-        queuedDamage = 0;
+        hitCDs.Clear();
+        queuedDamage = queuedPhotoDamage = 0;
         _vulnerable = Vulnerability.VULNERABLE;
         receivesBulletCollisions = false;
         receivedDamageMult = 0;
@@ -225,6 +226,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         }
         if (healthbarSprite != null) healthbarSprite.enabled = false;
         allEnemies.Remove(enemyIndex);
+        hitCDs.Clear();
         DisableUpdates();
         done();
     }
@@ -339,13 +341,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
             spellCircle!.SetPropertyBlock(scPB);
             //if (spellCircleText != null) spellCircleText.SetRadius(lastSpellCircleRad + SpellCircleTextRadOffset);
         }
-        for (int ii = 0; ii < hitCooldowns.Keys.Count; ++ii) {
-            if (hitCooldowns.Keys.GetMarkerIfExistsAt(ii, out var dm)) {
-                if (--hitCooldowns[dm.Value] <= 0)
-                    dm.MarkForDeletion();
-            }
-        }
-        hitCooldowns.Keys.Compact();
+        hitCDs.ProcessFrame();
     }
 
     public override void RegularUpdateCollision() {
@@ -361,7 +357,7 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         PollDamage();
         PollPhotoDamage();
         if (--dmgLabelBuffer == 0 && labelAccDmg > 0) {
-            DropHelpers.DropDropLabel(Location, dmgGrad, $"{labelAccDmg:n0}");
+            DropHelpers.DropDropLabel(Location, DropHelpers.Red, $"{labelAccDmg:n0}", 0.7f);
             labelAccDmg = 0;
         }
         if (healthbarSprite != null) {
@@ -438,24 +434,24 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     public bool ReceivesBulletCollisions(string? style) =>
         receivesBulletCollisions && (style is null || VulnerableStyles?.Matches(style) is not false);
     
-    public bool TakeHit(in PlayerBullet pb, in Vector2 location, in uint bpiId) {
+    public bool TakeHit(EffectStrategy? onHit, in PlayerBullet pb, in Vector2 location, in uint bpiId) {
         if ((pb.data.bossDmg > 0 || pb.data.stageDmg > 0)
-            && (pb.data.destructible || TryHitIndestructible(bpiId, pb.data.cdFrames))) {
+            && (pb.data.destructible || hitCDs.TryAdd(bpiId, pb.data.cdFrames))) {
             QueuePlayerDamage(pb.data.bossDmg, pb.data.stageDmg, pb.firer);
-            ProcOnHit(pb.data.effect, location);
+            ProcOnHit(onHit, location);
             return true;
         } else
             return false;
     }
     
-    bool ICircularPlayerSimpleBulletCollisionReceiver.TakeHit(in PlayerBullet pb, in ParametricInfo bpi) =>
-        TakeHit(in pb, bpi.loc, in bpi.id);
+    bool ICircularPlayerSimpleBulletCollisionReceiver.TakeHit(EffectStrategy? onHit, in PlayerBullet pb, in ParametricInfo bpi) =>
+        TakeHit(onHit, in pb, bpi.loc, in bpi.id);
     void ICircularPlayerPatherCollisionReceiver.TakeHit(CurvedTileRenderPather pather, Vector2 collLoc,
-        PlayerBullet plb) => TakeHit(plb, collLoc, pather.BPI.id);
+        PlayerBullet plb) => TakeHit(pather.Pather.OnHit, plb, collLoc, pather.BPI.id);
     void ICircularPlayerLaserCollisionReceiver.TakeHit(CurvedTileRenderLaser laser, Vector2 collLoc,
-        PlayerBullet plb) => TakeHit(plb, collLoc, laser.BPI.id);
+        PlayerBullet plb) => TakeHit(laser.Laser.OnHit, plb, collLoc, laser.BPI.id);
     void ICircularPlayerBulletCollisionReceiver.TakeHit(Bullet bullet, Vector2 collLoc,
-        PlayerBullet plb) => TakeHit(plb, collLoc, bullet.rBPI.id);
+        PlayerBullet plb) => TakeHit(bullet.OnHit, plb, collLoc, bullet.rBPI.id);
     
 
     private const float SHOTGUN_DIST_MAX = 1f;
@@ -466,14 +462,15 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     private float SHOTGUN_MIN => takesBossDamage ? SHOTGUN_DIST_MIN_BOSS : SHOTGUN_DIST_MIN;
     private const float SHOTGUN_MULTIPLIER = 1.25f;
 
+    private readonly HitCooldowns hitCDs = new();
     private double queuedDamage = 0;
     private int queuedPhotoDamage = 0;
 
     //The reason we queue damage is to avoid calling eg. SM clear effects while in the middle of other entities' update loops.
-    public void QueuePlayerDamage(int bossDmg, int stageDmg, PlayerController firer) => 
+    public void QueuePlayerDamage(int bossDmg, int stageDmg, PlayerController? firer) => 
         QueuePlayerDamage(takesBossDamage ? bossDmg : stageDmg, firer);
 
-    private double QueuePlayerDamage(double dmg, PlayerController firer, bool bypassDamageMult = false, bool addToLabel = true) {
+    private double QueuePlayerDamage(double dmg, PlayerController? firer, bool bypassDamageMult = false, bool addToLabel = true) {
         if (!Vulnerable(bypassDamageMult).TakesDamage()) return 0;
         if (!bypassDamageMult)
             dmg *= receivedDamageMult;
@@ -485,15 +482,18 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
                 AddDmgToLabel(divertedDmg);
             return divertedDmg;
         }
-        float dstToFirer = (firer.Location - Beh.rBPI.LocV2).magnitude;
-        float shotgun = (SHOTGUN_MIN - dstToFirer) / (SHOTGUN_MIN - SHOTGUN_MAX);
-        double multiplier = GameManagement.Instance.PlayerDamageMultiplier *
-                            M.Lerp(0, 1, shotgun, 1, SHOTGUN_MULTIPLIER);
+        double multiplier = 1;
+        if (firer != null) {
+            float dstToFirer = (firer.Location - Beh.rBPI.LocV2).magnitude;
+            float shotgun = (SHOTGUN_MIN - dstToFirer) / (SHOTGUN_MIN - SHOTGUN_MAX);
+            Counter.DoShotgun(shotgun);
+            multiplier = GameManagement.Instance.PlayerDamageMultiplier *
+                                M.Lerp(0, 1, shotgun, 1, SHOTGUN_MULTIPLIER);
+        }
         dmg *= multiplier * GameManagement.Difficulty.playerDamageMod;
         queuedDamage += dmg;
         if (addToLabel)
             AddDmgToLabel(queuedDamage);
-        Counter.DoShotgun(shotgun);
         return queuedDamage;
     }
 
@@ -530,10 +530,6 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
     private int dmgLabelBuffer = -1;
     private const int DMG_LABEL_BUFFER = 30;
     
-    private static readonly IGradient dmgGrad = ColorHelpers.FromKeys(new[] {
-        new GradientColorKey(new Color32(255, 10, 138, 255), 0.1f), 
-        new GradientColorKey(new Color32(240, 0, 52, 255), 0.8f), 
-    }, DropLabel.defaultAlpha);
 
     private void PollPhotoDamage() {
         if (queuedPhotoDamage < 1) return;
@@ -591,16 +587,10 @@ public class Enemy : RegularUpdater, IBehaviorEntityDependent,
         }
     }
 
-    //Note that we should not use a dictionary from ID to frame number, since hit cooldowns freeze with the enemy
-    private readonly DictionaryWithKeys<uint, int> hitCooldowns = new();
-    public bool TryHitIndestructible(uint id, int cooldownFrames) {
-        if (hitCooldowns.Data.ContainsKey(id))
-            return false;
-        hitCooldowns[id] = cooldownFrames;
-        return true;
+    public void ProcOnHit(EffectStrategy? effect, Vector2 hitLoc) {
+        if (effect != null)
+            effect.Proc(hitLoc, Beh.Location, collisionRadius);
     }
-
-    public void ProcOnHit(EffectStrategy effect, Vector2 hitLoc) => effect.Proc(hitLoc, Beh.Location, collisionRadius);
 
     private bool ViewfinderHits(CRect viewfinder) => 
         Vulnerable().TakesDamage() && ayaCameraRadius != null && 

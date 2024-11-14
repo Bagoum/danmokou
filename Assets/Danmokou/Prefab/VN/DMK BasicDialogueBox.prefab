@@ -134,7 +134,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.8117647, g: 0.54509807, b: 0, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -209,7 +209,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 2100000, guid: a72b55802dd58274d8b81afd700ce03b, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -406,7 +406,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -632,10 +632,12 @@ MonoBehaviour:
   pauseButton: {fileID: 5958977165054330067}
   autoplayButton: {fileID: 6051577456208764453}
   skipButton: {fileID: 1367835850857553346}
+  fixedTextColor: 0
   charLoadTime: 0.1
   charScaleInTime: 0.1
   charScaleInFrom: 1.24
   scrollWaitTime: 0.2
+  useDialogueBoxOpacitySetting: 1
   background: {fileID: 8236975217106531522}
 --- !u!1 &8236975217751179112
 GameObject:

@@ -6,6 +6,7 @@ using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Services;
 using Danmokou.VN;
+using Scriptor;
 using Suzunoya;
 using Suzunoya.ControlFlow;
 using UnityEngine;

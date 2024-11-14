@@ -21,12 +21,12 @@ public class UnselectorFixedXML : IFixedXMLObject {
 /// <br/>Used with <see cref="XMLDynamicMenu"/>.
 /// </summary>
 public class UIFreeformGroup : CompositeUIGroup, IFreeformContainer {
-    private readonly UINode? unselector;
+    public UINode? Unselector { get; }
     public UIFreeformGroup(UIRenderSpace container, IEnumerable<UINode> nodes) : base(container, Array.Empty<UIGroup>(), nodes) {
         GoBackWhenMouseLeavesNode = false;
     }
     public UIFreeformGroup(UIRenderSpace container, UINode? unselector = null) : base(container, Array.Empty<UIGroup>(), new[] { unselector }) {
-        this.unselector = unselector;
+        this.Unselector = unselector;
         ExitNodeOverride = unselector;
         GoBackWhenMouseLeavesNode = unselector != null;
     }
@@ -35,15 +35,15 @@ public class UIFreeformGroup : CompositeUIGroup, IFreeformContainer {
 
     public override UIResult Navigate(UINode node, UICommand req) {
         var resp = base.Navigate(node, req);
-        if (node == unselector && resp == NoOp)
+        if (node == Unselector && resp == NoOp)
             return SilentNoOp;
         return resp;
     }
 
     protected override UIResult? NavigateAmongComposite(UINode current, UICommand dir) {
-        var targets = NodesAndDependentNodes.Where(n => n.AllowKBInteraction && n != unselector).ToList();
+        var targets = NodesAndDependentNodes.Where(n => n.AllowKBInteraction && n != Unselector).ToList();
         if (targets.Count > 0) {
-            if (current == unselector) {
+            if (current == Unselector) {
                 //Return the node farthest in the pressed direction
                 return dir switch {
                     UICommand.Down => targets.MaxBy(n => n.XMLLocation.y),

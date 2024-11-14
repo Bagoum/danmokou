@@ -15,8 +15,10 @@ using Danmokou.DataHoist;
 using Danmokou.DMath;
 using Danmokou.Player;
 using Danmokou.Pooling;
+using Danmokou.Reflection;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
+using Scriptor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -129,7 +131,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         } else if (idxH - idx < ToNearestIndexCutoff) {
             ang = M.Atan(centers[Math.Min(centers.Length - 1, idxH + 1)] - locL);
         } else ang = M.Lerp(M.Atan(loc - locL), M.Atan(locH - loc), idx - idxL);
-        return V2RV2.NRotAngled(loc, ang * BMath.radDeg).RotateAll(simpleEulerRotation.z);
+        return V2RV2.NRotAngled(loc.x, loc.y, ang * BMath.radDeg).RotateAll(simpleEulerRotation.z);
     }
 
     /// <summary>
@@ -559,9 +561,10 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 
     private class LaserMetadata {
         // ReSharper disable once NotAccessedField.Local
-        public readonly BehaviorEntity.BEHStyleMetadata? metadata;
+        public readonly BehaviorEntity.StyleMetadata? metadata;
+        public bool IsCopy => metadata?.IsCopy is true;
 
-        public LaserMetadata(BehaviorEntity.BEHStyleMetadata? bsm) {
+        public LaserMetadata(BehaviorEntity.StyleMetadata? bsm) {
             this.metadata = bsm;
         }
         public void ResetPoolMetadata() { }
@@ -605,10 +608,9 @@ public class CurvedTileRenderLaser : CurvedTileRender {
     private static readonly List<LaserMetadata> activePoolsList = new(16);
     private LaserMetadata myStyle = null!;
     
-    public static void DeInitializePools() {
-        foreach (var x in activePoolsList) {
+    public static void DestroyPools() {
+        foreach (var x in activePoolsList)
             x.Reset();
-        }
         activePools.Clear();
         activePoolsList.Clear();
     }
@@ -634,7 +636,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipx>")]
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cLaserControl FlipXGT(float wall, Pred cond) {
             return new((b, cT) => {
                 if (b.bpi.loc.x > wall && cond(b.bpi)) {
@@ -652,7 +654,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipx<")]
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cLaserControl FlipXLT(float wall, Pred cond) {
             return new((b, cT) => {
                 if (b.bpi.loc.x < wall && cond(b.bpi)) {
@@ -670,7 +672,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipy>")]
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cLaserControl FlipYGT(float wall, Pred cond) {
             return new((b, cT) => {
                 if (b.bpi.loc.y > wall && cond(b.bpi)) {
@@ -688,7 +690,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <param name="cond">Filter condition</param>
         /// <returns></returns>
         [Alias("flipy<")]
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cLaserControl FlipYLT(float wall, Pred cond) {
             return new((b, cT) => {
                 if (b.bpi.loc.y < wall && cond(b.bpi)) {
@@ -702,7 +704,7 @@ public class CurvedTileRenderLaser : CurvedTileRender {
         /// <summary>
         /// If the condition is true, spawn an iNode at the position and run an SM on it.
         /// </summary>
-        [CreatesInternalScope(AutoVarMethod.None, true)]
+        [CreatesInternalScope((int)AutoVarMethod.None, true)]
         public static cLaserControl SM(LPred cond, SM.StateMachine sm) => new((b, cT) => {
             if (cond(b.bpi, b.lifetime)) {
                 var mov = new Movement(b.bpi.loc, V2RV2.Angle(b.Laser.OriginalAngle));

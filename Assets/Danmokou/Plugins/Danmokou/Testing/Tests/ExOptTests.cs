@@ -5,7 +5,7 @@ using UnityEngine;
 using NUnit.Framework;
 using Ex = System.Linq.Expressions.Expression;
 using Danmokou.Expressions;
-using static Danmokou.Expressions.ExMHelpers;
+using static Scriptor.Expressions.ExMHelpers;
 using static NUnit.Framework.Assert;
 
 namespace Danmokou.Testing {

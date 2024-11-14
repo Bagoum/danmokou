@@ -130,6 +130,12 @@ float3 hueShift(float3 color, float hue) {
 float einsine(float x){
     return 1 - cos(HPI * x);
 }
+float eoutsine(float x){
+    return sin(HPI * x);
+}
+float eiosine(float x){
+    return 0.5 - 0.5 * cos(PI * x);
+}
 float ratio(float a, float b, float x) {
     return clamp((x - a) / (b - a), 0, 1);
 }
@@ -156,4 +162,7 @@ float4 opaque(float4 c) {
 
 float grayscale(float4 c) {
     return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+}
+float3 palette(float t, float3 a, float3 b, float3 c, float3 d){
+    return a + b*cos(TAU*(c*t+d));
 }

@@ -48,6 +48,7 @@ public static class FormattingExtensions {
 }
 
 public static class NumExtensions {
+    public static string AsDelta(this int x) => (x < 0) ? $"{x:N0}" : $"+{x:N0}";
 
     public static char ToABC(this int x) => (char) ('A' + x);
 

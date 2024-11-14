@@ -21,7 +21,7 @@ public class Pather : FrameAnimBullet {
     }
 
     private void Initialize(bool isNew, in Movement mov, ParametricInfo pi, float maxRemember,
-        BPY remember, BEHStyleMetadata style, ref RealizedBehOptions options) {
+        BPY remember, StyleMetadata style, ref RealizedBehOptions options) {
         ctr.SetYScale(options.scale); //Needs to be done before Colorize sets first frame
         //Order is critical so rBPI override points to initialized data on SM start
         // As a result we also need to assign ctx.bullet early so ctr.initialize can read it
@@ -63,8 +63,9 @@ public class Pather : FrameAnimBullet {
         base.CullHook(allowFinalize);
     }
 
-    public static void Request(BEHStyleMetadata style, in Movement mov, ParametricInfo pi, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
-        Pather created = (Pather) BEHPooler.RequestUninitialized(style.RecolorOrThrow.prefab, out bool isNew);
+    public static void Request(StyleMetadata style, in Movement mov, ParametricInfo pi, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
+        var created = BEHPooler.RequestUninitialized(style.RecolorOrThrow.prefab, out bool isNew)
+            as Pather ?? throw new Exception($"The object {style.style} is not a pather!");
         created.Initialize(isNew, in mov, pi, maxRemember, remember, style, ref opts);
     }
 

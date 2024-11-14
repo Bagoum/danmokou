@@ -100,10 +100,7 @@ public class GameManagement : CoroutineRegularUpdater {
     private static InstanceFeatures DefaultFeatures => 
         References.gameDefinition is IDanmakuGameDef g ?
             g.MakeFeatures(defaultDifficulty, 
-#if UNITY_EDITOR
-                Main.OpenAsDebugMode ? InstanceMode.DEBUG : 
-#endif
-                    InstanceMode.NULL, null) :
+                Main.OpenAsDebugMode ? InstanceMode.DEBUG : InstanceMode.NULL, null) :
             InstanceFeatures.InactiveFeatures;
 
     private void Awake() {
@@ -113,16 +110,11 @@ public class GameManagement : CoroutineRegularUpdater {
         }
         Main = this;
         DontDestroyOnLoad(this);
+        _ = new DMKLanguageServiceProvider();
         NewInstance(
-#if UNITY_EDITOR || ALLOW_RELOAD
-            OpenAsDebugMode ? InstanceMode.DEBUG : 
-#endif
-                InstanceMode.NULL, 
-#if UNITY_EDITOR || ALLOW_RELOAD
-            OpenAsDebugMode ? DefaultFeatures :
-#endif
-        InstanceFeatures.InactiveFeatures
-            );
+            OpenAsDebugMode ? InstanceMode.DEBUG : InstanceMode.NULL, 
+            OpenAsDebugMode ? DefaultFeatures : InstanceFeatures.InactiveFeatures
+        );
 
         Logs.Log($"Danmokou {EngineVersion}, {References.gameDefinition.Key} {References.gameDefinition.Version}, exec {ExecutionNumber}");
         gameObject.AddComponent<SceneIntermediary>().defaultTransition = References.defaultTransition;
@@ -180,9 +172,8 @@ public class GameManagement : CoroutineRegularUpdater {
         //PICustomData.ClearNames();
         ReflWrap.ClearWrappers();
         StateMachineManager.ClearCachedSMs();
-        BulletManager.ClearPoolControls();
         BulletManager.ClearAllBullets();
-        BulletManager.DestroyCopiedPools();
+        BulletManager.OrphanAll();
         GC.Collect();
         //Ordered last so cancellations from HardCancel will occur under old data
         NewInstance(InstanceMode.DEBUG, DefaultFeatures);

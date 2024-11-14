@@ -5,6 +5,7 @@ using Danmokou.Core;
 using Danmokou.Services;
 using Danmokou.UI;
 using Danmokou.VN;
+using Scriptor;
 using Suzunoya;
 using Suzunoya.ControlFlow;
 using Suzunoya.Entities;

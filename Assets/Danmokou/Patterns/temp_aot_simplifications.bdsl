@@ -1,0 +1,55 @@
+function gcd(a, b)::int {
+    if (b == 0) {
+        return a
+    } else if (b > a) {
+        return gcd(b, a)
+    } else {
+        return gcd(b, a % b)
+    }
+}
+
+pattern {
+} {
+    phase 30 {
+    } {
+		shiftphaseto 1
+    }
+
+    phase 1000 {
+        root(0, 2)
+    } {
+        gtr {
+
+        } {
+            async "amulet-red/w" <> gcrepeat {
+				times inf
+				wait 120
+				p this
+			} guideempty2 p { ("eloc", code(loc)), ("edir", code(dir)) }
+				rvelocity(lerp(1, 2, t, px(2), py(-2))) {
+					gsrepeat {
+						bindArrow
+						times(11)
+					} simple(
+						dtpoffset("eloc", "edir", p, pxy(
+								0.6 + -0.2 * aixd,
+								0.1 * aiyd)),
+						{ dir2(load("edir", p)) })
+				}
+
+            saction 0 {
+                exec b{ 
+                    hvar xx = 0.4;
+                    namedtimer("mt1").Restart(); 
+                }
+                wait(1 + xx)
+                print("myident011112")
+                print(namedtimer("mt1").Seconds)
+                print(hpratio fromid "yukari")
+                print(gcd(42, 154))
+            }
+        }
+    }
+
+
+}

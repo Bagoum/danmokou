@@ -2,9 +2,11 @@
 using System.Diagnostics.CodeAnalysis;
 using Danmokou.Core;
 using Danmokou.Expressions;
+using Scriptor;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
 
 namespace Danmokou.DMath.Functions {
 
@@ -23,7 +25,7 @@ public static class FXYRepo {
     /// <param name="f">Target function</param>
     /// <returns></returns>
     public static ExBPY EaseF([LookupMethod] Func<TExArgCtx, TEx<Func<float, float>>> smoother, float maxTime, ExBPY f) 
-    => ExMHelpers.Ease(smoother, maxTime, f, x => x.FloatVal, (x, y) => x.MakeCopyForType<float>(y));
+    => DMKExMHelpers.Ease(smoother, maxTime, f, x => x.FloatVal, (x, y) => x.MakeCopyForType<float>(y));
 
     
     /// <summary>
@@ -34,13 +36,13 @@ public static class FXYRepo {
     /// <param name="fd">Target function</param>
     /// <returns></returns>
     public static ExBPY EaseFD(string smoother, float maxTime, ExBPY fd) 
-        => ExMHelpers.EaseD(smoother, maxTime, fd, x => x.FloatVal, (x, y) => x.MakeCopyForType<float>(y));
+        => DMKExMHelpers.EaseD(smoother, maxTime, fd, x => x.FloatVal, (x, y) => x.MakeCopyForType<float>(y));
 
     /// <summary>
     /// See <see cref="BPYRepo.SoftmaxShift"/>.
     /// </summary>
     public static ExBPY SoftmaxShift(ExBPY sharpness, ExBPY pivot, ExBPY f1, ExBPY f2) =>
-        ExMHelpers.SoftmaxShift<TEx<float>>(sharpness, pivot, f1, f2, "x");
+        DMKExMHelpers.SoftmaxShift<TEx<float>>(sharpness, pivot, f1, f2, "x");
 
 }
 

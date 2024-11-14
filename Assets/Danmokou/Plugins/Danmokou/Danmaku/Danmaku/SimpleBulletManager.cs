@@ -24,10 +24,10 @@ using Danmokou.Expressions;
 using Danmokou.Graphics;
 using Danmokou.Pooling;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
 using Danmokou.Services;
 using Danmokou.SM;
 using JetBrains.Annotations;
+using Scriptor.Analysis;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
@@ -186,17 +186,17 @@ public partial class BulletManager {
             Normal,
             
             /// <summary>
-            /// Bullets created to represent trivial items when normal bullets are cleared via bombs or photos. These home to the player and add points when they collide with the player.
+            /// Bullets created to represent trivial items when normal bullets are cleared via bombs or photos. These home to the player and add points when they collide with the player. Special collision handling (does not do damage).
             /// </summary>
             BulletClearFlake,
             
             /// <summary>
-            /// Bullets such as cwheel representing animations played when a normal bullet is destroyed.
+            /// Bullets such as cwheel representing animations played when a normal bullet is destroyed. No collision.
             /// </summary>
             Softcull,
             
             /// <summary>
-            /// Afterimages resulting when a normal bullet is destroyed.
+            /// Afterimages resulting when a normal bullet is destroyed. No collision.
             /// </summary>
             Culled
         }
@@ -218,7 +218,7 @@ public partial class BulletManager {
         /// <summary>
         /// Copied pools (including player pools) have this set
         /// </summary>
-        private SimpleBulletCollection? original;
+        public SimpleBulletCollection? Original { get; private set; }
         private CulledBulletCollection? culled;
         protected readonly DMCompactingArray<BulletControl> controls = new(4);
         private readonly DMCompactingArray<BulletControl> onCollideControls = new(2);
@@ -248,10 +248,10 @@ public partial class BulletManager {
         public virtual (TP4 black, TP4 white)? Recolor => BC.Recolor.Value;
         public bool SubjectToAutocull =>
             !IsPlayer && MetaType == CollectionType.Normal;
-        public bool IsCopy => original != null;
+        public bool IsCopy => Original != null;
         //Player bullets need their own culled pools to handle the opacity multiplier
         public CulledBulletCollection Culled => 
-            (IsPlayer ? null : original)?.Culled ?? (culled ??= new CulledBulletCollection(this));
+            (IsPlayer ? null : Original?.Culled) ?? (culled ??= new CulledBulletCollection(this));
         
         public SimpleBulletCollection(List<SimpleBulletCollection> target, BulletInCode bc) : base(1, 128) {
             this.BC = bc;
@@ -262,8 +262,9 @@ public partial class BulletManager {
         }
 
         public void SetOriginal(SimpleBulletCollection orig) {
-            original = orig;
+            Original = orig;
         }
+        
         public void SetPlayer() {
             //bc.SetPlayer should not be called twice
             if (!IsPlayer) {
@@ -285,21 +286,28 @@ public partial class BulletManager {
                     CreateBuckets();
                     frameBucket = new(1);
                 }
-                Logs.Log($"Activating pool {Style}", level: LogLevel.DEBUG1);
+                Logs.Log1("Activating pool {0}", Style, level: LogLevel.DEBUG1);
                 Active = true;
             }
         }
-        public void Deactivate() {
+        
+        public void _Deactivate() {
             Active = false;
             temp_last = 0;
             buckets = null;
+        }
+
+        public void Destroy() {
+            BC.Destroy();
+            culled?.Destroy();
+            Logs.Log1("Destroying pool {0}", Style, level: LogLevel.DEBUG1);
         }
         
         #region Copiers
 
         public BulletInCode CopyBC(string newPool) => BC.Copy(newPool);
-        public SimpleBulletCollection CopySimplePool(List<SimpleBulletCollection> target, string newPool) => new(target, BC.Copy(newPool));
-        public SimpleBulletCollection CopyPool(List<SimpleBulletCollection> target, string newPool) => GetCollection(target, BC.Copy(newPool));
+        public SimpleBulletCollection CopyPool(List<SimpleBulletCollection> target, string newPool) 
+            => GetCollection(target, BC.Copy(newPool));
         
         #endregion
 

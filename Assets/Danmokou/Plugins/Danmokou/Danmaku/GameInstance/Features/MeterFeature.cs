@@ -22,9 +22,10 @@ public interface IMeterFeature : IInstanceFeature {
 
     //Gems are the meter restore item
     bool AllowGemDrops { get; }
+    void AddMeter(double delta);
     void AddGems(int delta);
-    IDisposable? TryStartMeter();
-    bool TryUseMeterFrame();
+    IDisposable? TryStartMeter(double? amount = null);
+    bool TryUseMeterFrame(double? perSecond = null);
 
     bool TryConsumeMeterDiscrete(double amount);
     
@@ -37,7 +38,7 @@ public class MeterFeature : BaseInstanceFeature, IMeterFeature {
     public const double meterUseThreshold = 0.42;
     public const double meterUseInstantCost = 0.042;
     public Event<Unit> MeterBecameUsable { get; }= new();
-    public double MeterUseThreshold => meterUseThreshold;
+    public double MeterUseThreshold { get; }
     public double MeterForSwap => M.Lerp(0, 3, Inst.Difficulty.Counter, 0.08, 0.16);
 
     public Lerpifier<float> VisibleMeter { get; }
@@ -45,13 +46,14 @@ public class MeterFeature : BaseInstanceFeature, IMeterFeature {
     public double Meter { get; private set; }
 
     public bool AllowGemDrops => true;
-    public bool EnoughMeterToUse => Meter >= meterUseThreshold;
+    public bool EnoughMeterToUse => Meter >= Math.Max(MeterUseThreshold, meterUseInstantCost);
     private double MeterBoostGraze => 0.006 / Inst.Difficulty.ValueRelLunatic;
     public int MeterFrames { get; private set; }
     private DMCompactingArray<Unit> consumers = new();
 
-    public MeterFeature(InstanceData inst) {
+    public MeterFeature(InstanceData inst, MeterFeatureCreator creator) {
         Inst = inst;
+        MeterUseThreshold = creator.MeterUseThreshold ?? meterUseThreshold;
         ResetMeter();
         VisibleMeter = new Lerpifier<float>((a, b, t) => M.Lerp(a, b, Easers.CEOutPow(t, 3f)), 
             () => (float)Meter, 0.2f);
@@ -76,15 +78,15 @@ public class MeterFeature : BaseInstanceFeature, IMeterFeature {
             f.OnItemGem(delta);
     }
     
-    public IDisposable? TryStartMeter() {
+    public IDisposable? TryStartMeter(double? amount) {
         if (EnoughMeterToUse) {
-            Meter -= meterUseInstantCost;
+            Meter -= amount ?? meterUseInstantCost;
             return consumers.Add(default);
         } else return null;
     }
 
-    public bool TryUseMeterFrame() {
-        var consume = meterUseRate * Inst.Difficulty.meterUsageMultiplier * ETime.FRAME_TIME;
+    public bool TryUseMeterFrame(double? perSecond) {
+        var consume = (perSecond ?? meterUseRate) * Inst.Difficulty.meterUsageMultiplier * ETime.FRAME_TIME;
         if (Meter >= consume) {
             Meter -= consume;
             return true;
@@ -130,12 +132,14 @@ public class MeterFeature : BaseInstanceFeature, IMeterFeature {
         public int MeterFrames => 0;
         public bool AllowGemDrops => false;
 
+        public void AddMeter(double delta) => 
+            throw new Exception("Meter restore is disabled!");
         public void AddGems(int delta) => 
             throw new Exception("Meter restore gems are disabled!");
 
-        public IDisposable? TryStartMeter() => null;
+        public IDisposable? TryStartMeter(double? amount) => null;
 
-        public bool TryUseMeterFrame() => false;
+        public bool TryUseMeterFrame(double? perSecond) => false;
 
         public bool TryConsumeMeterDiscrete(double amount) => amount <= 0;
 
@@ -145,7 +149,8 @@ public class MeterFeature : BaseInstanceFeature, IMeterFeature {
 }
 
 public class MeterFeatureCreator : IFeatureCreator<IMeterFeature> {
-    public IMeterFeature Create(InstanceData instance) => new MeterFeature(instance);
+    public double? MeterUseThreshold { get; init; }
+    public IMeterFeature Create(InstanceData instance) => new MeterFeature(instance, this);
 }
 public class DisabledMeterFeatureCreator : IFeatureCreator<IMeterFeature> {
     public IMeterFeature Create(InstanceData instance) => new MeterFeature.Disabled();

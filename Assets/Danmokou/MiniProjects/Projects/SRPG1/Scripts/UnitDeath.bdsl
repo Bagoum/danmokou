@@ -1,0 +1,4 @@
+//vscode:theme1::Vector4
+//vscode:theme2::Vector4
+
+dbossexplode (lerp 0 1 t theme1 theme2) theme1

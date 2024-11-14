@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku.Descriptors;
 using Danmokou.DMath;
+using Danmokou.Scriptables;
 using Danmokou.Services;
 using JetBrains.Annotations;
 using Danmokou.SM;
+using Scriptor;
 using UnityEngine;
 using static Danmokou.Danmaku.Options.BehOption;
 
@@ -99,9 +102,13 @@ public record BehOption {
     /// Mark a Bullet as fired by the player, and allow it to check collision against enemies.
     /// <br/>Note: Currently only supported for pathers/lasers, and not for generic complex bullets.
     /// </summary>
-    public static BehOption Player(int cdFrames, int bossDmg, int stageDmg, string effect) =>
-        new PlayerBulletProp(new PlayerBulletCfg(cdFrames, false, bossDmg, stageDmg, ResourceManager.GetEffect(effect)));
-
+    public static BehOption Player(int cdFrames, int bossDmg, int stageDmg, string onHit) =>
+        new PlayerBulletProp(new PlayerBulletCfg(cdFrames, false, bossDmg, stageDmg), ResourceManager.GetEffect(onHit));
+    /// <summary>
+    /// Add an on-hit effect to the bullet. (For player bullets, use <see cref="Player"/> instead.)
+    /// </summary>
+    public static BehOption OnHit(string onHit) => new OnHitProp(ResourceManager.GetEffect(onHit));
+    
     /// <summary>
     /// Set the ID of the object.
     /// </summary>
@@ -135,48 +142,29 @@ public record BehOption {
         public ValueProp(T value) => this.value = value;
     }
 
-    public record ItemsProp : ValueProp<ItemDrops> {
-        public ItemsProp(ItemDrops i) : base(i) { }
-    }
+    public record ItemsProp(ItemDrops items) : BehOption;
 
     public record SmoothProp : BehOption {}
-    public record SMProp: ValueProp<StateMachine> {
-        public SMProp(StateMachine sm) : base(sm) { } 
-    }
 
-    public record ScaleProp : ValueProp<GCXF<float>> {
-        public ScaleProp(GCXF<float> f) : base(f) { }
-    }
-    public record HPProp : ValueProp<GCXF<float>> {
-        public HPProp(GCXF<float> f) : base(f) { }
-    }
+    public record SMProp(StateMachine sm) : BehOption;
+
+    public record ScaleProp(GCXF<float> f) : BehOption;
+    
+    public record HPProp(GCXF<float> f) : BehOption;
 
     public record DamageProp(GCXF<float> damage) : BehOption;
 
-    public record LayerProp : ValueProp<Layer> {
-        public LayerProp(Layer l) : base(l) { }
-    }
-    public record HueShiftProp : ValueProp<BPY> {
-        public HueShiftProp(BPY f) : base(f) { }
-    }
-    public record TintProp : ValueProp<TP4> {
-        public TintProp(TP4 f) : base(f) { }
-    }
-    public record RotateProp : ValueProp<BPY> {
-        public RotateProp(BPY f) : base(f) { }
-    }
-    public record RecolorProp : BehOption {
-        public readonly TP4 black;
-        public readonly TP4 white;
+    public record LayerProp(Layer layer) : BehOption;
+    
+    public record HueShiftProp(BPY f) : BehOption;
+    
+    public record TintProp(TP4 f) : BehOption;
+    
+    public record RotateProp(BPY f) : BehOption;
+    
+    public record RecolorProp(TP4 black, TP4 white) : BehOption;
 
-        public RecolorProp(TP4 b, TP4 w) {
-            black = b;
-            white = w;
-        }
-    }
-    public record DeleteProp : ValueProp<Pred> {
-        public DeleteProp(Pred f) : base(f) { }
-    }
+    public record DeleteProp(Pred f) : BehOption;
 
     public record VulnProp : ValueProp<StyleSelector> {
         public VulnProp(StyleSelector value) : base(value) { }
@@ -185,14 +173,12 @@ public record BehOption {
     public record ReceivedDamageProp : ValueProp<BPY> {
         public ReceivedDamageProp(BPY value) : base(value) { }
     }
-    
-    public record PlayerBulletProp : ValueProp<PlayerBulletCfg> {
-        public PlayerBulletProp(PlayerBulletCfg cfg) : base(cfg) { }
-    }
 
-    public record NameProp : ValueProp<string> {
-        public NameProp(string name) : base(name) { }
-    }
+    public record PlayerBulletProp(PlayerBulletCfg cfg, EffectStrategy onHit) : BehOption;
+
+    public record OnHitProp(EffectStrategy onHit) : BehOption;
+
+    public record NameProp(string name) : BehOption;
 
     public record NoGrazeFlag : BehOption;
 
@@ -214,6 +200,7 @@ public readonly struct RealizedBehOptions {
     public readonly TP4? tint;
     public readonly Pred? delete;
     public readonly PlayerBullet? playerBullet;
+    public readonly EffectStrategy? onHit;
     public readonly bool grazeAllowed;
     public readonly StyleSelector? vulnerable;
     public readonly BPY? receivedDamage;
@@ -234,6 +221,7 @@ public readonly struct RealizedBehOptions {
         } else recolor = null;
         delete = opts.delete;
         playerBullet = opts.playerBullet?.Realize(fctx.PlayerController);
+        onHit = opts.onHit;
         grazeAllowed = opts.grazeAllowed;
         vulnerable = opts.vulnerable;
         receivedDamage = opts.receivedDamage;
@@ -253,6 +241,7 @@ public readonly struct RealizedBehOptions {
         rotator = null; //not enabled on lasers
         this.delete = rlo.delete;
         playerBullet = rlo.playerBullet;
+        onHit = rlo.onHit;
         grazeAllowed = rlo.grazeAllowed;
         vulnerable = null;
         receivedDamage = null;
@@ -278,6 +267,7 @@ public class BehOptions {
     public readonly BPY? rotator;
     public readonly (TP4 black, TP4 white)? recolor;
     public readonly PlayerBulletCfg? playerBullet;
+    public readonly EffectStrategy? onHit;
     public readonly StyleSelector? vulnerable;
     public readonly BPY? receivedDamage;
     public readonly bool grazeAllowed = true;
@@ -289,21 +279,22 @@ public class BehOptions {
     public BehOptions(IEnumerable<BehOption> props) {
         foreach (var p in props.Unroll()) {
             if (p is SmoothProp) smooth = true;
-            else if (p is SMProp smp) sm = smp.value;
-            else if (p is ScaleProp sp) scale = sp.value;
-            else if (p is HPProp hpp) hp = hpp.value;
+            else if (p is SMProp smp) sm = smp.sm;
+            else if (p is ScaleProp sp) scale = sp.f;
+            else if (p is HPProp hpp) hp = hpp.f;
             else if (p is DamageProp dpp) damage = dpp.damage;
-            else if (p is LayerProp lp) layer = lp.value.Int();
-            else if (p is ItemsProp ip) drops = ip.value;
-            else if (p is HueShiftProp hsp) hueShift = hsp.value;
-            else if (p is RotateProp rotp) rotator = rotp.value;
+            else if (p is LayerProp lp) layer = lp.layer.Int();
+            else if (p is ItemsProp ip) drops = ip.items;
+            else if (p is HueShiftProp hsp) hueShift = hsp.f;
+            else if (p is RotateProp rotp) rotator = rotp.f;
             else if (p is RecolorProp rcp) recolor = (rcp.black, rcp.white);
-            else if (p is TintProp tp) tint = tp.value;
-            else if (p is DeleteProp dp) delete = dp.value;
+            else if (p is TintProp tp) tint = tp.f;
+            else if (p is DeleteProp dp) delete = dp.f;
             else if (p is VulnProp vn) vulnerable = vn.value;
             else if (p is ReceivedDamageProp rdp) receivedDamage = rdp.value;
-            else if (p is PlayerBulletProp pbp) playerBullet = pbp.value;
-            else if (p is NameProp np) id = np.value;
+            else if (p is PlayerBulletProp pbp) (playerBullet, onHit) = (pbp.cfg, pbp.onHit);
+            else if (p is OnHitProp ohp) onHit = ohp.onHit;
+            else if (p is NameProp np) id = np.name;
             else if (p is NoGrazeFlag) grazeAllowed = false;
             else throw new Exception($"Bullet property {p.GetType()} not handled.");
         }

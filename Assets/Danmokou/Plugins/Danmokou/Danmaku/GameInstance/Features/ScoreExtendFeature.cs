@@ -49,9 +49,16 @@ public class ScoreExtendFeature : BaseInstanceFeature, IScoreExtendFeature {
             Inst.BasicF.LifeExtend(ExtendType.SCORE);
         }
     }
+
+    public class Disabled : BaseInstanceFeature, IScoreExtendFeature {
+        public ICObservable<long?> NextScoreLife { get; } = new Evented<long?>(null);
+    }
 }
 
 public class ScoreExtendFeatureCreator : IFeatureCreator<IScoreExtendFeature> {
     public IScoreExtendFeature Create(InstanceData instance) => new ScoreExtendFeature(instance);
+}
+public class DisabledScoreExtendFeatureCreator : IFeatureCreator<IScoreExtendFeature> {
+    public IScoreExtendFeature Create(InstanceData instance) => new ScoreExtendFeature.Disabled();
 }
 }

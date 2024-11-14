@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib.Cancellation;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
@@ -9,15 +10,16 @@ using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
 using JetBrains.Annotations;
+using Scriptor;
 using UnityEngine;
 using static Danmokou.DMath.Functions.ExM;
 using GCP = Danmokou.Danmaku.Options.GenCtxProperty;
-using static Danmokou.Expressions.ExMHelpers;
+using static Scriptor.Expressions.ExMHelpers;
 using static Danmokou.Reflection.Reflector;
 using static Danmokou.Reflection.Compilers;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
-using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
+using ExBPRV2 = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<BagoumLib.Mathematics.V2RV2>>;
 
 namespace Danmokou.Danmaku.Patterns {
 /// <summary>
@@ -294,7 +296,7 @@ public static partial class SyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GSR")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static SyncPattern GSRepeat(GenCtxProperties<SyncPattern> props, SyncPattern[] target) {
         return new(sbh => {
             SPExecutionTracker exec = new SPExecutionTracker(props, sbh, out bool isClipped);
@@ -320,7 +322,7 @@ public static partial class SyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GSR2")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static SyncPattern GSRepeat2(GCXF<float> times, GCXF<V2RV2> rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GSRepeat(new GenCtxProperties<SyncPattern>(props.Append(GenCtxProperty.Sync(times, rpp))), target);
     
@@ -334,7 +336,7 @@ public static partial class SyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GSRf")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static SyncPattern GSRepeatFRV2(GCXF<float> times, GCXF<V2RV2> frv2, GenCtxProperty[] props, SyncPattern[] target) =>
         GSRepeat(new GenCtxProperties<SyncPattern>(props.Append(GenCtxProperty.Times(times)).Append(GenCtxProperty.FRV2(frv2))), target);
     
@@ -348,7 +350,7 @@ public static partial class SyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GSR2c")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static SyncPattern GSRepeat2c(GCXF<float> times, GenCtxProperty[] props, SyncPattern[] target) =>
         GSRepeat(new GenCtxProperties<SyncPattern>(props.Append(GenCtxProperty.TimesCircle(times))), target);
     
@@ -356,7 +358,7 @@ public static partial class SyncPatterns {
     /// Like GSRepeat, but has specific handling for the TIMES and rpp properties, where both are mutated by the difficulty.
     /// </summary>
     [Alias("GSR2dr")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static SyncPattern GSRepeat2dr(ExBPY difficulty, ExBPY times, ExBPRV2 rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GSRepeat(new GenCtxProperties<SyncPattern>(props.Append(GenCtxProperty.SyncDR(difficulty, times, rpp))), target);
 

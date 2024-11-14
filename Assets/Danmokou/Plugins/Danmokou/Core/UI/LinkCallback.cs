@@ -17,8 +17,7 @@ public static class LinkCallback {
         for (int ii = 0; ii < pairs.Length; ++ii) {
             var (linkId, ttText) = pairs[ii];
             if (linkId == id) {
-                return (true, ServiceLocator.Find<XMLDynamicMenu>().MakeTooltip(UINode.SimpleTTGroup(ttText),
-                    (_, ve) => ve.AddToClassList("tooltip-above")));
+                return (true, ServiceLocator.Find<XMLDynamicMenu>().MakeTooltip(UINode.SimpleTTGroup(ttText), XMLUtils.Pivot.Bottom));
             }
         }
         return (false, null);

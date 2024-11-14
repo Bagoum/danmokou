@@ -98,18 +98,18 @@ public readonly struct LabelRequestContext {
     public readonly float timeToLive;
     public readonly IGradient color;
     public readonly string text;
-    private readonly float multiplier;
+    private readonly float size;
 
-    public float Scale(float timeRatio) => 0.7f + (multiplier - 0.7f) * (float)Math.Sin(Math.PI * (0.25 + 0.75 * timeRatio));
+    public float Scale(float timeRatio) => 0.7f + (size - 0.7f) * (float)Math.Sin(Math.PI * (0.25 + 0.75 * timeRatio));
 
     public LabelRequestContext(Vector2 root, float radius, float speed, float angle, float timeToLive, IGradient color,
-        string text, float multiplier) {
+        string text, float size) {
         this.root = root;
         this.radius = radius;
         this.speed = speed;
         this.angle = angle;
-        this.timeToLive = timeToLive * multiplier;
-        this.multiplier = multiplier;
+        this.timeToLive = timeToLive;
+        this.size = size;
         this.color = color;
         this.text = text;
     }
@@ -130,7 +130,8 @@ public static class ItemPooler {
         return l;
     }
 
-    public static Item RequestLife(ItemRequestContext ctx) => Request(items.lifeItem, ctx);
+    public static Item? RequestLife(ItemRequestContext ctx) =>
+        GameManagement.Instance.LifeItemF.AllowLifeItemDrops ? Request(items.lifeItem, ctx) : null;
     public static Item RequestValue(ItemRequestContext ctx) => Request(items.valueItem, ctx);
     public static Item RequestSmallValue(ItemRequestContext ctx) => Request(items.smallValueItem, ctx);
     public static Item? RequestPointPP(ItemRequestContext ctx) => 

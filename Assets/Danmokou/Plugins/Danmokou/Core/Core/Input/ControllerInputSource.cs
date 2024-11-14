@@ -59,7 +59,7 @@ public class ControllerRebindingProxy : IPurposefulInputBinding {
     }
 
 }
-public class ControllerInputSource : IKeyedInputSource, IPrimaryInputSource {
+public class ControllerInputSource : IPrimaryInputSource {
     public List<IInputHandler> Handlers { get; } = new();
     public bool AnyKeyPressedThisFrame { get; private set; }
     public int Priority => -1;
@@ -97,7 +97,7 @@ public class ControllerInputSource : IKeyedInputSource, IPrimaryInputSource {
         uiBack = InputHandler.Trigger(Proxy(i.CBack), back);
         uiContextMenu = InputHandler.Trigger(Proxy(i.CContextMenu), back);
 
-        ((IKeyedInputSource)this).AddUpdaters();
+        ((IDescriptiveInputSource)this).AddUpdaters();
     }
 
     public IInputHandler arrowLeft { get; }

@@ -110,25 +110,22 @@ public class XMLMainMenuCampaign : XMLMainMenu {
         Func<TeamConfig, bool> shotContinuation = null!;
         var campaignToShotScreenMap = new Dictionary<CampaignConfig, UIScreen>();
 
-        var vm = new AxisViewModel {
+        var axisVM = new AxisViewModel {
             BaseLoc = new(-2.9f, 0),
             Axis = new Vector2(1.4f, -2.6f).normalized * 0.7f,
         };
-        AxisView View() => new(vm);
-        UINode? MakeDifficultyNode(FixedDifficulty? fd) =>
-            SpriteForDFC(fd) == null ? null : new UINode(View(), new DFCView(new(this, fd)));
-            
         DifficultyScreen = new UIScreen(this, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => ve.CenterElements(),
         }.WithOnEnterStart(() => { if (difficultyCommentator != null) difficultyCommentator.Appear(); })
             .WithOnExitStart(() => { if (difficultyCommentator != null) difficultyCommentator.Disappear(); });
         
         DifficultyScreen.SetFirst(new UIColumn(new UIRenderConstructed(DifficultyScreen, new(x => x.AddVE(null))),
-            CustomAndVisibleDifficulties.Select(MakeDifficultyNode).ToArray()) {
+            CustomAndVisibleDifficulties.Select(fd => SpriteForDFC(fd) == null ? null : 
+                new UINode(new AxisView(axisVM), new DFCView(new(this, fd)))).ToArray()) {
             EntryIndexOverride = () => 2
         });
-        
         CustomDifficultyScreen = this.CustomDifficultyScreen(x => dfcContinuation(x));
+        
         CampaignShotScreen = campaignToShotScreenMap[MainCampaign.campaign] = this.CreatePlayerScreen(MainCampaign, shotSetup, demoPlayerSetup, shotDisplayContainer, x => shotContinuation(x));
         CampaignShotScreen.SceneObjects = ShotScreenObjects;
         if (ExtraCampaign != null) {
@@ -190,11 +187,10 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             //new TransferNode(main_musicroom, MusicRoomScreen)
             //        {EnabledIf = () => MusicRoomScreen.Groups[0].Nodes.Count > 0}
             new TransferNode(main_options, OptionsScreen),
-            new TransferNode(main_licenses, LicenseScreen),
+            new TransferNode(main_licenses, LicenseScreen)
         #if !WEBGL
-            new FuncNode(main_quit, Application.Quit),
+            , new FuncNode(main_quit, Application.Quit)
         #endif
-            new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
         }.Select(x => x.WithCSS(large1Class, centerText))) {
             ExitIndexOverride = -2
         });

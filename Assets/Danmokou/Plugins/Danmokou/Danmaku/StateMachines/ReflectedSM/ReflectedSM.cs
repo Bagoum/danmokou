@@ -26,25 +26,23 @@ using Danmokou.Expressions;
 using Danmokou.Graphics;
 using Danmokou.Player;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
 using Danmokou.Services;
 using Danmokou.UI;
 using Danmokou.VN;
 using JetBrains.Annotations;
+using Scriptor;
+using Scriptor.Compile;
+using Scriptor.Expressions;
+using Scriptor.Reflection;
 using Suzunoya.Data;
 using SuzunoyaUnity;
 using UnityEngine;
-using static Danmokou.DMath.Functions.BPYRepo;
 using static Danmokou.DMath.Functions.ExM;
-using static Danmokou.Reflection.CompilerHelpers;
 using static Danmokou.Reflection.Compilers;
 using static Danmokou.Danmaku.Patterns.AtomicPatterns;
 using Object = UnityEngine.Object;
-using tfloat = Danmokou.Expressions.TEx<float>;
-using static Danmokou.DMath.Functions.ExMConditionals;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
 using static BagoumLib.Tasks.WaitingUtils;
 using static Danmokou.Core.RUWaitingUtils;
 
@@ -52,12 +50,12 @@ namespace Danmokou.SM {
 /// <summary>
 /// All public functions in this repository can be used as LASM state machines.
 /// </summary>
-[Reflect]
+[Reflect] [Constable(false)]
 public static class SMReflection {
     private static readonly StateMachine noop = NoOp();
     private static readonly ReflWrap<Func<float, float, float, ParametricInfo, float>> CrosshairOpacity =
         ReflWrap.FromFunc("SMReflection.CrosshairOpacity", () =>
-            Reflection2.Helpers.ParseAndCompileDelegate<Func<float, float, float, ParametricInfo, float>>(@"
+            CompileHelpers.ParseAndCompileDelegate<Func<float, float, float, ParametricInfo, float>>(@"
 t > fadein ?
     (t > homesec ?
         c(einsine((t - homesec) / sticksec)) :
@@ -148,8 +146,11 @@ t > fadein ?
         var sp = Sync("powerup1", _ => V2RV2.Zero, PowerAura(paOpts));
         var ev = EventLASM.BossExplode();
         return new(smh => {
-            sp.Start(smh);
-            return ev(smh);
+            var smh2 = new SMHandoff(smh, smh.Context.ExternalCT ?? smh.cT);
+            sp.Start(smh2);
+            return ev(smh2).ContinueWithSync(() => {
+                smh2.Dispose();
+            });
         });
     }
 
@@ -473,16 +474,21 @@ t > fadein ?
     /// <br/>For simple bullets, also instantiate the bullet for a few frames to trigger a shader compile.
     /// </summary>
     public static ReflectableLASM LoadSBTextures(StyleSelector styles) => new(async smh => {
-        var pools = BulletManager.LoadTextures(styles).ToList();
+        //can't preload recolorizable textures, since they require the recolor pool control to work properly
+        var pools = BulletManager.StylesForSelector(styles).Where(p => !p.BC.Recolorizable).ToList();
         using var pinv = ServiceLocator.FindAll<PlayerController>().SelectDisposable(x => x.HitInvuln.AddConst(true));
+        var colHeight = 20;
+        var cols = Mathf.Ceil(pools.Count / (float)colHeight);
         using var disp = new JointDisposable(null, pools.Select((p, i) => {
             BulletManager.RequestNullSimple(p.Style, 
-                    new(-2f, -4 + 8f*i/pools.Count), Vector2.right);
+                // ReSharper disable once PossibleLossOfFraction
+                new(M.Lerp(-2, 2, (i / colHeight)/cols), M.Lerp(-4, 4, (i % colHeight)/(colHeight-1f))), 
+                    Vector2.right);
             return p.BC.AllowCameraCull.AddConst(false);
         }).ToArray());
         await RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, () => ETime.LastUpdateForScreen);
         smh.cT.ThrowIfCancelled();
-        await RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, 0.03f, false);
+        await RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, 1.03f, false);
         foreach (var p in pools)
             p.Reset();
     });

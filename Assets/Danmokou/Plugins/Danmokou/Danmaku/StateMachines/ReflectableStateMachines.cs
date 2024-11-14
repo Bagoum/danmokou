@@ -15,8 +15,8 @@ using Danmokou.DMath.Functions;
 using Danmokou.GameInstance;
 using Danmokou.Player;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
 using Danmokou.Services;
+using Scriptor;
 using static Danmokou.Danmaku.BulletManager;
 using static Danmokou.Core.Extensions;
 
@@ -109,10 +109,12 @@ public class EventLASM : ReflectableLASM {
         () => Compilers.FXY(b => ExMLerps.EQuad0m10(BossExplodeWait, BossExplodeShake, AtomicBPYRepo.T()(b))));
 
     public static EventTask BossExplode() => smh => {
-        UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode")).GetComponent<ExplodeEffect>().Initialize(BossExplodeWait, smh.Exec.rBPI.loc);
-        ServiceLocator.FindOrNull<IRaiko>()?.Shake(BossExplodeShake, ShakeMag, 2, smh.cT, null);
+        var useCT = smh.Context.ExternalCT ?? smh.cT;
+        UnityEngine.Object.Instantiate(ResourceManager.GetSummonable("bossexplode"))
+            .GetComponent<ExplodeEffect>().Initialize(BossExplodeWait, smh.Exec.rBPI.loc, useCT, WaitingUtils.GetAwaiter(out var t));
+        ServiceLocator.FindOrNull<IRaiko>()?.Shake(BossExplodeShake, ShakeMag, 2, useCT, null);
         ISFXService.SFXService.RequestSFXEvent(ISFXService.SFXEventType.BossExplode);
-        return RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, BossExplodeWait, false);
+        return t;
     };
 
 }

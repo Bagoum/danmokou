@@ -57,7 +57,7 @@ public class LevelController : BehaviorEntity {
         using var _ = GameManagement.Instance.SetStageCheckpointCancel(req.Stage, checkpointCancel.SetResult);
         var checkpointTask = checkpointCancel.Task;
         var smTask = RunBehaviorSM(SMRunner.RunRoot(req.Stage.StateMachine, req.cT),
-            new SMContext { LoadCheckpoint = fromCheckpoint });
+            new SMContext { LoadCheckpoint = fromCheckpoint, ExternalCT = req.cT });
         await Task.WhenAny(checkpointCancel.Task, smTask);
         if (checkpointTask.IsCompletedSuccessfully)
             return new InstanceStepCompletion.RestartCheckpoint(checkpointTask.Result);
@@ -90,9 +90,8 @@ public class LevelController : BehaviorEntity {
         RegisterService(this, new ServiceLocator.ServiceOptions { Unique = true });
     }
 
-    protected override void OnDisable() {
+    private void OnDestroy() {
         DefaultSuicideStyle = null;
-        base.OnDisable();
     }
 }
 }

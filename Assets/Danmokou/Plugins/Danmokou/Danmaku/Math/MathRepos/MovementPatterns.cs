@@ -10,7 +10,7 @@ using UnityEngine;
 using RV2r = Danmokou.DMath.Functions.BPRV2Repo;
 using R = Danmokou.Reflection.Reflector;
 using static Danmokou.DMath.Functions.ExM;
-using static Danmokou.Expressions.ExMHelpers;
+using static Scriptor.Expressions.ExMHelpers;
 using static Danmokou.DMath.Functions.VTPRepo;
 using static Danmokou.DMath.Functions.Parametrics;
 using static Danmokou.DMath.Functions.ExMPred;
@@ -21,11 +21,14 @@ using static Danmokou.DMath.Functions.ExMConversions;
 using static Danmokou.Reflection.Compilers;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
-using ExVTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.Expressions.VTPExpr>>;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
-using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector3>>;
+using Scriptor;
+using Scriptor.Expressions;
+using Scriptor.Math;
+using ExVTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<Danmokou.Expressions.VTPExpr>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExPred = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<bool>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
+using ExTP3 = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector3>>;
 
 namespace Danmokou.DMath.Functions {
 
@@ -36,8 +39,8 @@ public static partial class Parametrics {
     public static ExTP goDown() => goY(_ => ExC(-6f));
     public static ExTP goLeft() => goX(_ => ExC(-5f));
     public static ExTP goRight() => goX(_ => ExC(5f));
-    public static ExTP goSide(ExBPY y) => PXY(b => Mul(ExC(5f), Sign(X()(b))), y);
-    public static ExTP goOtherSide(ExBPY y) => PXY(b => Mul(ExC(-5f), Sign(X()(b))), y);
+    public static ExTP goSide(ExBPY y) => PXY(b => ExMOperators.Mul(ExC(5f), Sign(X()(b))), y);
+    public static ExTP goOtherSide(ExBPY y) => PXY(b => ExMOperators.Mul(ExC(-5f), Sign(X()(b))), y);
 
 }
 [Reflect] [Atomic]
@@ -63,7 +66,7 @@ public static class MovementPatterns {
     private static ExVTP SetupTime(ExBPY time, ExVTP inner, bool reqDeriv = false) =>
         LetFloats(reqDeriv ? new[] {
             ("t", time),
-            ("dt", b => ((Ex)time(b)).Derivate(b.t, E1))
+            ("dt", b => ((Ex)time(b)).Derivate(b.t(), E1))
         } : new[] {
             ("t", time)
         }, inner);
@@ -86,21 +89,21 @@ public static class MovementPatterns {
     public static RootedVTP DipUp1(ExBPY xmul, ExBPY time) => new(b => xmul(b).Mul(LeftMinus1), b => 1.5f, 
         SetupTime(time, NROffset(PXY(
                 b => xmul(b).Mul(t(b)),
-                b => Pow(t(b), 1.4f).Sub(t(b).Mul(2.1f))
+                b => ExMOperators.Pow(t(b), 1.4f).Sub(t(b).Mul(2.1f))
             ))));
     
     [ExpressionBoundary]
     public static RootedVTP DipUp2(ExBPY xmul, ExBPY time) => new(b => xmul(b).Mul(LeftMinus1), b => 0.5f, 
         SetupTime(time, NROffset(PXY(
             b => xmul(b).Mul(t(b)),
-            b => If<float>(Gt(t(b), 4), 0.4f, 0.02f).Mul(Pow<float>(t(b).Add(-4f), 2f))
+            b => If<float>(ExMOperators.Gt(t(b), 4), 0.4f, 0.02f).Mul(ExMOperators.Pow<float>(t(b).Add(-4f), 2f))
         ))));
     
     [ExpressionBoundary]
     public static RootedVTP DipUp3(ExBPY xmul, ExBPY time) => new(b => xmul(b).Mul(LeftMinus1), b => 0.5f, 
         SetupTime(time, NROffset(PXY(
-            b_ => xmul(b_).Mul(LogSumShift<TExPI>(_ => -1, _ => 2f, b => t(b).Mul(3f), b => t(b).Mul(0.2f), "&t")(b_)),
-            b_ => LogSumShift<TExPI>(_ => 2, _ => 1.9f, _ => 0, b => t(b).Mul(2.7f), "&t")(b_)
+            b_ => xmul(b_).Mul(DMKExMHelpers.LogSumShift<TExPI>(_ => -1, _ => 2f, b => t(b).Mul(3f), b => t(b).Mul(0.2f), "&t")(b_)),
+            b_ => DMKExMHelpers.LogSumShift<TExPI>(_ => 2, _ => 1.9f, _ => 0, b => t(b).Mul(2.7f), "&t")(b_)
         ))));
 
     [ExpressionBoundary]
@@ -140,7 +143,7 @@ public static class MovementPatterns {
     [ExpressionBoundary]
     public static RootedVTP CircDown(ExBPY xmul, ExBPY time) => Setup(b => xmul(b).Mul(-0.2f), 3.8f, time,
         NROffset(PXY(b => xmul(b).Mul(-2.8f).Mul(Sin(t(b).Add(1.4f))),
-            b => If<float>(Gt(t(b), 5), t(b).Mul(2), Cos(t(b).Add(1.2f)).Mul(2.4f)))));
+            b => If<float>(ExMOperators.Gt(t(b), 5), t(b).Mul(2), Cos(t(b).Add(1.2f)).Mul(2.4f)))));
     //"nroffset pxy(-2.8 * sin(1.4 + {T}), ({T} > 5 ? 2 * t : 2.4 * cos(1.2 + {T})))"
 
     [ExpressionBoundary]

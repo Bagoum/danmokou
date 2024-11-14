@@ -1,4 +1,5 @@
-﻿using Danmokou.DMath;
+﻿using BagoumLib.Mathematics;
+using Danmokou.DMath;
 
 namespace Danmokou.Behavior.Display {
 public class RectDrawer : ShapeDrawer {

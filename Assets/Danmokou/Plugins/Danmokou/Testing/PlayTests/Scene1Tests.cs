@@ -3,6 +3,7 @@ using System.Collections;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Culture;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Services;
@@ -344,15 +345,15 @@ public static class Scene1 {
             var blue = BM.TPool("strip-blue/w");
             TestHarness.Check(0, () => {
                 AreEqual(1, red.Count);
-                SBPos(ref red[0], V2RV2.RX(1).TrueLocation);
+                SBPos(ref red[0], V2RV2.RX(1).TrueLocation());
                 AreEqual(1, blue.Count);
-                SBPos(ref blue[0], V2RV2.RX(1, 180).TrueLocation);
+                SBPos(ref blue[0], V2RV2.RX(1, 180).TrueLocation());
             });
             TestHarness.Check(1, () => {
                 AreEqual(2, red.Count);
-                SBPos(ref red[1], V2RV2.RX(1, 10).TrueLocation);
+                SBPos(ref red[1], V2RV2.RX(1, 10).TrueLocation());
                 AreEqual(2, blue.Count);
-                SBPos(ref blue[1], V2RV2.RX(1, 190).TrueLocation);
+                SBPos(ref blue[1], V2RV2.RX(1, 190).TrueLocation());
             });
             TestHarness.Check(2, () => {
                 AreEqual(2, red.Count);
@@ -360,15 +361,15 @@ public static class Scene1 {
             });
             TestHarness.Check(3, () => {
                 AreEqual(3, red.Count);
-                SBPos(ref red[2], V2RV2.RX(1).TrueLocation);
+                SBPos(ref red[2], V2RV2.RX(1).TrueLocation());
                 AreEqual(3, blue.Count);
-                SBPos(ref blue[2], V2RV2.RX(1, 180).TrueLocation);
+                SBPos(ref blue[2], V2RV2.RX(1, 180).TrueLocation());
             });
             TestHarness.Check(4, () => {
                 AreEqual(4, red.Count);
-                SBPos(ref red[3], V2RV2.RX(1, 10).TrueLocation);
+                SBPos(ref red[3], V2RV2.RX(1, 10).TrueLocation());
                 AreEqual(4, blue.Count);
-                SBPos(ref blue[3], V2RV2.RX(1, 190).TrueLocation);
+                SBPos(ref blue[3], V2RV2.RX(1, 190).TrueLocation());
             });
             TestHarness.Check(5, () => {
                 AreEqual(4, red.Count);
@@ -376,15 +377,15 @@ public static class Scene1 {
             });
             TestHarness.Check(6, () => {
                 AreEqual(5, red.Count);
-                SBPos(ref red[4], V2RV2.RX(1).TrueLocation);
+                SBPos(ref red[4], V2RV2.RX(1).TrueLocation());
                 AreEqual(5, blue.Count);
-                SBPos(ref blue[4], V2RV2.RX(1, 180).TrueLocation);
+                SBPos(ref blue[4], V2RV2.RX(1, 180).TrueLocation());
             });
             TestHarness.Check(7, () => {
                 AreEqual(6, red.Count);
-                SBPos(ref red[5], V2RV2.RX(1, 10).TrueLocation);
+                SBPos(ref red[5], V2RV2.RX(1, 10).TrueLocation());
                 AreEqual(6, blue.Count);
-                SBPos(ref blue[5], V2RV2.RX(1, 190).TrueLocation);
+                SBPos(ref blue[5], V2RV2.RX(1, 190).TrueLocation());
             });
         });
         while (TestHarness.Running) yield return null;
@@ -463,10 +464,10 @@ public static class Scene1 {
                 for (int ii = 0; ii < 4; ++ii) {
                     var sloc = (baseLoc + V2RV2.RX(2, 45 + ii * 90)).Bank();
                     var eloc = (sloc + V2RV2.RX(0.2f, 32)).Bank() + V2RV2.RY(1f + frame);
-                    SBPos(ref e[ii], eloc.TrueLocation);
+                    SBPos(ref e[ii], eloc.TrueLocation());
                     //90 is the direction of the empty bullet (from rotate @ mydir over the movement py + 1 t)
                     var rloc = eloc.BankOffset(90) + V2RV2.RX(1, 80);
-                    SBPos(ref red[ii], rloc.TrueLocation);
+                    SBPos(ref red[ii], rloc.TrueLocation());
                 }
             });
         });
@@ -484,10 +485,10 @@ public static class Scene1 {
                 for (int ii = 0; ii < 4; ++ii) {
                     var sloc = (baseLoc + V2RV2.RX(2, 45 + ii * 90)).Bank();
                     var eloc = (sloc + V2RV2.RX(0.2f, 32)).Bank() + V2RV2.RY(1f + frame);
-                    SBPos(ref e[ii], eloc.TrueLocation);
+                    SBPos(ref e[ii], eloc.TrueLocation());
                     //90 is the direction of the empty bullet (from rotate @ mydir over the movement py + 1 t)
                     var rloc = eloc.BankOffset(90) + V2RV2.RX(1, 80);
-                    SBPos(ref red[ii], rloc.TrueLocation);
+                    SBPos(ref red[ii], rloc.TrueLocation());
                 }
             });
         });
@@ -524,9 +525,9 @@ public static class Scene1 {
                 SBPos(ref bo[0], (boloc.Bank() + V2RV2.RY(0)).Bank() + V2RV2.RX(frame, 30));
                 SBPos(ref bo[1], (boloc.Bank() + V2RV2.RY(1)).Bank() + V2RV2.RX(frame, 30));
                 var rp = (brloc.Bank() + V2RV2.RY(0)).Bank(30);
-                SBPos(ref br[0], rp + V2RV2.RX(frame, (rp.TrueLocation-baseLocv2).ToDeg()));
+                SBPos(ref br[0], rp + V2RV2.RX(frame, (rp.TrueLocation()-baseLocv2).ToDeg()));
                 rp = (brloc.Bank() + V2RV2.RY(1)).Bank(30);
-                SBPos(ref br[1], rp + V2RV2.RX(frame, (rp.TrueLocation-baseLocv2).ToDeg()));
+                SBPos(ref br[1], rp + V2RV2.RX(frame, (rp.TrueLocation()-baseLocv2).ToDeg()));
                 //In this case the tangent is 90 degrees from the firing direction (summonalong eq = py t)
                 SBPos(ref bt[0], (btloc.Bank() + V2RV2.RY(0)).BankOffset(30) + V2RV2.RX(frame, 90));
                 SBPos(ref bt[1], (btloc.Bank() + V2RV2.RY(1)).BankOffset(30) + V2RV2.RX(frame, 90));

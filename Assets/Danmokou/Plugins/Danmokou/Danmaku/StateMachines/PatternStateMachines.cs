@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Expressions;
 using BagoumLib.Functional;
 using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
@@ -15,12 +16,15 @@ using Danmokou.DMath;
 using Danmokou.GameInstance;
 using Danmokou.Graphics.Backgrounds;
 using Danmokou.Player;
-using Danmokou.Reflection2;
+using Danmokou.Reflection;
 using Danmokou.Scenes;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using Danmokou.UI;
 using JetBrains.Annotations;
+using Scriptor;
+using Scriptor.Analysis;
+using Scriptor.Reflection;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -33,7 +37,7 @@ public class PatternSM : SequentialSM, EnvFrameAttacher {
     public PatternProperties Props { get; }
     public PhaseSM[] Phases { get; }
     public EnvFrame? EnvFrame { get; set; }
-
+    
     public PatternSM(PatternProperties props, [BDSL1ImplicitChildren] StateMachine[] states) : base(states) {
         this.Props = props;
         Phases = states.Select(x => (x as PhaseSM)!).ToArray();
@@ -400,7 +404,7 @@ public class PhaseSM : SequentialSM {
         var pc = new PhaseCompletion(ctx, completedBy, smh.Exec, start_campaign, Timeout(ctx.Boss));
         if (pc.StandardCardFinish) {
             if (ctx.Boss != null) {
-                BulletManager.RequestPowerAura("powerup1", 0, 0, smh.GCX, new RealizedPowerAuraOptions(
+                BulletManager.RequestPowerAura("powerup1", 0, 0, new RealizedPowerAuraOptions(
                     new PowerAuraOptions(new[] {
                         PowerAuraOption.Color(_ => ColorHelpers.CV4(ctx.Boss.colors.powerAuraColor)),
                         PowerAuraOption.Time(_ => 1f),
@@ -515,7 +519,7 @@ public abstract class LineActionSM : StateMachine {
 /// <summary>
 /// Synchronization events for use in SMs.
 /// </summary>
-[Reflect]
+[Reflect] [Constable(false)]
 public static class Synchronization {
 
     /*
@@ -532,8 +536,12 @@ public static class Synchronization {
     /// Wait for some number of seconds.
     /// </summary>
     [Fallthrough(1)]
-    public static Synchronizer Time(GCXF<float> time) => smh => RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, time(smh.GCX), false);
+    public static Synchronizer Time(GCXF<float> time) => smh => 
+        RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, time(smh.GCX), false);
 
+    public static readonly IMethodSignature timeMeth = 
+        MethodSignature.Get(typeof(Synchronization).GetMethod(nameof(Time))!);
+    
     /// <summary>
     /// Wait for the synchronization event, and then wait some number of seconds.
     /// </summary>

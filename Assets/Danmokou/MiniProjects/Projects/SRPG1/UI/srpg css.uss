@@ -27,6 +27,52 @@
     font-size: 60px;
 }
 
+.nodeInfoOverlay {
+    width: 680px;
+    height: 220px;
+    position: absolute;
+    top: 20px;
+    right: 600px;
+    background-image: url("project://database/Assets/Danmokou/Kenney/uipanels/panel-009.png?fileID=21300000&guid=0e962c4751fa760478108d2f98ffd3b5&type=3#panel-009");
+    -unity-background-image-tint-color: var(--neutral-bg);
+    padding: 24px 24px 26px;
+    justify-content: center;
+}
+
+.nodeInfoOverlay > #NodeInfoTitle {
+    height: 50%;
+    color: rgb(255, 255, 255);
+    font-size: 70px;
+    -unity-font-definition: url("project://database/Assets/SZYU/Fonts/Unity%20SDF/LinBiolinum_R_G%20SDF.asset?fileID=11400000&guid=7139a17b7319bb84494b6e01f410b0a2&type=2#LinBiolinum_R_G SDF");
+    -unity-text-align: upper-center;
+}
+
+.nodeInfoOverlay > #NodeInfoData {
+    height: 50%;
+    padding-top: 4px;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    color: white;
+    font-size: 50px;
+    -unity-text-align: middle-center;
+    -unity-font-definition: url("project://database/Assets/Danmokou/Fonts/Unity%20SDF%20Assets/NovaSquare-Regular%20SDF.asset?fileID=11400000&guid=a6ec488a76fadbf4083ef2a0ad8cf899&type=2#NovaSquare-Regular SDF");
+}
+
+.nodeInfoOverlay > #NodeInfoData > Label {
+    min-width: 45px;
+    margin-right: 4px;
+}
+
+.nodeInfoIcon {
+    background-image: url("project://database/Assets/Danmokou/Kenney/GameIcons/pawn_counterclockwise.png?fileID=2800000&guid=0114eadd88e82cc49abd171a2d6c7087&type=3#pawn_counterclockwise");
+    width: 60px;
+    -unity-background-scale-mode: scale-and-crop;
+    height: 70px;
+    margin-left: 5px;
+    margin-right: -4px;
+}
+
 .characterBlock {
     width: 570px;
     height: 1000px;
@@ -58,17 +104,19 @@
 .statBlockRow {
     flex-direction: row;
     justify-content: flex-start;
-    margin: 4px 0px;
+    margin: 4px 0;
 }
+
 .statBlockRow > * {
     flex-grow: 1;
 }
+
 .statBlockRow .statline {
     -unity-font-definition: url("project://database/Assets/SZYU/Fonts/LinBiolinum_R_G.ttf?fileID=12800000&guid=a10920f256006494a820e4ac8d9123c6&type=3#LinBiolinum_R_G");
     font-size: 65px;
     color: rgb(255, 255, 255);
     padding: 4px 20px;
-    margin: 0px 4px;
+    margin: 0 4px;
     -unity-text-align: middle-center;
     background-color: var(--main-dark2-90);
     border-width: 4px;

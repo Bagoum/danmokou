@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9f572882a9b466fbeb478f3fd14b31b, type: 3}
+  m_Name: GridMovement
+  m_EditorClassIdentifier: 
+  center: {x: -3.6, y: -0.5}
+  unit: {x: 2.1, y: 2.1}
+  min: {x: -1, y: -1}
+  max: {x: 1, y: 1}
+  movTime: 0.15
+  onMove: {fileID: 11400000, guid: be38752eb0f3b7447ad82e532ce1d2b0, type: 2}

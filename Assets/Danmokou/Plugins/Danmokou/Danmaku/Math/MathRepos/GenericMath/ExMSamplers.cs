@@ -4,14 +4,11 @@ using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.DataHoist;
 using Danmokou.Expressions;
+using Scriptor;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
-using tfloat = Danmokou.Expressions.TEx<float>;
-using tbool = Danmokou.Expressions.TEx<bool>;
-using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
-using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
-using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExPred = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<bool>>;
 
 namespace Danmokou.DMath.Functions {
 /// <summary>
@@ -29,7 +26,7 @@ public static class ExMSamplers {
     /// <returns></returns>
     [Alias("ss")]
     public static Func<TExArgCtx, TEx<T>> StopSampling<T>(ExBPY time, Func<TExArgCtx, TEx<T>> p) =>
-        SampleIf(tac => Ex.LessThan(tac.t, time(tac)), p);
+        SampleIf(tac => Ex.LessThan(tac.t(), time(tac)), p);
 
     /// <summary>
     /// If the condition is true, evaluate the invokee. Otherwise, return the last returned evaluation.

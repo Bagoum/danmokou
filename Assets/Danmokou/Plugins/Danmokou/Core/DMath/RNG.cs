@@ -73,16 +73,23 @@ public static class RNG {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int GetInt(in int low, in int high) => GetInt(low, high, rand);
+    public static int GetInt(int low, int high) {
+        RNGGuard();
+        return GetInt(low, high, rand);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetIntOffFrame(in int low, in int high) => GetInt(low, high, offFrame);
-
+    
+    private static readonly ExFunction getInt =
+        ExFunction.Wrap(typeof(RNG), nameof(GetInt), new[] {typeof(int), typeof(int)});
+    public static Expression GetInt(Expression low, Expression high) => getInt.Of(low, high);
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float GetFloat(in float low, in float high, in Random r) {
         return low + (high - low) * (float) r.NextDouble();
     }
 
-    [UsedImplicitly]
     public static float GetFloat(float low, float high) {
         RNGGuard();
         return GetFloat(low, high, rand);

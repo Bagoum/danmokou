@@ -31,3 +31,5 @@ MonoBehaviour:
     type: 3}
   <ActionNodeVTA>k__BackingField: {fileID: 9197481963319205126, guid: 59f4ff2159e2d53418ce560e3128b522,
     type: 3}
+  <UnitDeathScript>k__BackingField: {fileID: 2811297602134710623, guid: 28b01ade2d50d1f49b5627bd6aa49e77,
+    type: 3}

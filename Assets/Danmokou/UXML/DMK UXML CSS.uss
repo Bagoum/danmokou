@@ -1,11 +1,3 @@
-:root {
-    --accent-text: rgb(238, 170, 24);
-    --accent-pure: rgb(207, 139, 0);
-    --accent-pure-60: rgba(207, 139, 0, 0.6);
-    --accent-pure-0: rgba(207, 139, 0, 0);
-    --accent-dark1: rgb(147, 92, 29);
-}
-
 .theme-goldaccent {
     --accent-text: rgb(238, 170, 24);
     --accent-pure: rgb(207, 139, 0);
@@ -14,28 +6,24 @@
     --accent-dark1: rgb(147, 92, 29);
 }
 
-.theme-goldaccent * {
+.theme-goldaccent :root {
     --accent-text: rgb(238, 170, 24);
     --accent-pure: rgb(207, 139, 0);
-    --accent-pure-60: rgb(207, 139, 0);
+    --accent-pure-60: rgba(207, 139, 0, 0.6);
+    --accent-pure-0: rgba(207, 139, 0, 0);
+    --accent-dark1: rgb(147, 92, 29);
+}
+
+:root {
+    --accent-text: rgb(238, 170, 24);
+    --accent-pure: rgb(207, 139, 0);
+    --accent-pure-60: rgba(207, 139, 0, 0.6);
     --accent-pure-0: rgba(207, 139, 0, 0);
     --accent-dark1: rgb(147, 92, 29);
 }
 
 .theme-goldaccent .node-disabled {
     --accent-pure: rgb(129, 128, 106);
-}
-
-:root {
-    --main-pure: rgb(108, 21, 121);
-    --main-pure-70: rgba(108, 21, 121, 0.7);
-    --main-dark1-80: rgba(74, 16, 84, 0.8);
-    --main-dark2-90: rgba(33, 4, 39, 0.9);
-    --highlighter-70: rgba(92, 22, 106, 0.7);
-    --neutral-bg: rgb(55, 30, 63);
-    --liner: rgb(184, 116, 201);
-    --liner-dark: rgb(108, 68, 125);
-    --gray: rgb(95, 85, 95);
 }
 
 .theme-purple {
@@ -50,7 +38,19 @@
     --gray: rgb(95, 85, 95);
 }
 
-.theme-purple * {
+.theme-purple :root {
+    --main-pure: rgb(108, 21, 121);
+    --main-pure-70: rgba(108, 21, 121, 0.7);
+    --main-dark1-80: rgba(74, 16, 84, 0.8);
+    --main-dark2-90: rgba(33, 4, 39, 0.9);
+    --highlighter-70: rgba(92, 22, 106, 0.7);
+    --neutral-bg: rgb(55, 30, 63);
+    --liner: rgb(184, 116, 201);
+    --liner-dark: rgb(108, 68, 125);
+    --gray: rgb(95, 85, 95);
+}
+
+:root {
     --main-pure: rgb(108, 21, 121);
     --main-pure-70: rgba(108, 21, 121, 0.7);
     --main-dark1-80: rgba(74, 16, 84, 0.8);
@@ -63,27 +63,51 @@
 }
 
 .theme-blue {
-    --main-pure: rgb(28, 62, 147);
-    --main-pure-70: rgba(28, 62, 147, .7);
-    --main-dark1-80: rgba(22, 35, 84, 0.8);
-    --main-dark2-90: rgba(16, 16, 48, 0.9);
+    --main-pure: rgb(44, 83, 176);
+    --main-pure-70: rgba(44, 83, 176, 0.7);
+    --main-dark1-80: rgba(31, 47, 107, 0.8);
+    --main-dark2-90: rgba(22, 22, 61, 0.9);
     --highlighter-70: rgba(68, 88, 189, 0.7);
-    --neutral-bg: rgb(43, 53, 96);
+    --neutral-bg: rgb(32, 39, 70);
     --liner: rgb(91, 167, 234);
     --liner-dark: rgb(65, 121, 171);
     --gray: rgb(82, 83, 99);
 }
 
-.theme-blue * {
-    --main-pure: rgb(28, 62, 147);
-    --main-pure-70: rgba(28, 62, 147, .7);
-    --main-dark1-80: rgba(22, 35, 84, 0.8);
-    --main-dark2-90: rgba(16, 16, 48, 0.9);
+.theme-blue :root {
+    --main-pure: rgb(44, 83, 176);
+    --main-pure-70: rgba(44, 83, 176, 0.7);
+    --main-dark1-80: rgba(31, 47, 107, 0.8);
+    --main-dark2-90: rgba(22, 22, 61, 0.9);
     --highlighter-70: rgba(68, 88, 189, 0.7);
-    --neutral-bg: rgb(43, 53, 96);
+    --neutral-bg: rgb(32, 39, 70);
     --liner: rgb(91, 167, 234);
     --liner-dark: rgb(65, 121, 171);
     --gray: rgb(82, 83, 99);
+}
+
+.theme-red {
+    --main-pure: rgb(138, 23, 58);
+    --main-pure-70: rgba(138, 23, 58, 0.7);
+    --main-dark1-80: rgba(73, 17, 32, 0.8);
+    --main-dark2-90: rgba(40, 13, 22, 0.9);
+    --highlighter-70: rgba(159, 52, 84, 0.7);
+    --neutral-bg: rgb(70, 31, 40);
+    --liner: rgb(210, 99, 153);
+    --liner-dark: rgb(171, 65, 84);
+    --gray: rgb(99, 82, 87);
+}
+
+.theme-red :root {
+    --main-pure: rgb(138, 23, 58);
+    --main-pure-70: rgba(138, 23, 58, 0.7);
+    --main-dark1-80: rgba(73, 17, 32, 0.8);
+    --main-dark2-90: rgba(40, 13, 22, 0.9);
+    --highlighter-70: rgba(159, 52, 84, 0.7);
+    --neutral-bg: rgb(70, 31, 40);
+    --liner: rgb(210, 99, 153);
+    --liner-dark: rgb(171, 65, 84);
+    --gray: rgb(99, 82, 87);
 }
 
 .unity-label {
@@ -495,6 +519,7 @@
     border-bottom-right-radius: 40px;
     border-top-right-radius: 40px;
     border-top-left-radius: 40px;
+    border-bottom-left-radius: 40px;
     border-left-width: 5px;
     border-right-width: 5px;
     border-top-width: 5px;
@@ -509,8 +534,26 @@
     z-index: 100;
 }
 
+.tooltip-bg {
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom: 0;
+}
+
+.tooltip-panel1 {
+    border-radius: 0;
+}
+
+.tooltip-panel1 > .tooltip-bg {
+    background-image: url("project://database/Assets/Danmokou/Kenney/uipanels/panel-001.png?fileID=21300000&guid=4bc8fb07783a9fc418c88057636bbb15&type=3#panel-001");
+    background-color: var(--main-dark2-90);
+    -unity-background-image-tint-color: var(--main-dark1-80);
+}
+
 .tooltip .node {
-    font-size: 60px;
+    font-size: 55px;
 }
 
 .tooltip .node > .body {
@@ -518,20 +561,20 @@
     padding-right: 7px;
 }
 
-.tooltip.tooltip-above {
-    translate: -50% -100%;
-    left: 50%;
-    top: 0;
-    transform-origin: center bottom;
-    border-bottom-left-radius: 40px;
+.tooltip.pivot-botleft {
+    border-bottom-left-radius: 0;
 }
 
-.tooltip.tooltip-below {
-    translate: -50% 0;
-    left: 50%;
-    top: 100%;
-    transform-origin: center top;
-    border-bottom-left-radius: 40px;
+.tooltip.pivot-topleft {
+    border-top-left-radius: 0;
+}
+
+.tooltip.pivot-botright {
+    border-bottom-right-radius: 0;
+}
+
+.tooltip.pivot-topright {
+    border-top-right-radius: 0;
 }
 
 .tooltip.tooltip-dropdown {

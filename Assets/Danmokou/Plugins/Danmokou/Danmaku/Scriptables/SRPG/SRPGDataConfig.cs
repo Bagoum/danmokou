@@ -19,9 +19,9 @@ public class SRPGDataConfig : ScriptableObject, ISRPGDataConfig {
     [field: SerializeField] 
     public DataPrefab[] UnitDisplays { get; set; } = null!;
 
-    [field: SerializeField]
-    public VisualTreeAsset TileVTA { get; set; } = null!;
-    [field: SerializeField]
-    public VisualTreeAsset ActionNodeVTA { get; set; } = null!;
+    [field: SerializeField] public VisualTreeAsset TileVTA { get; set; } = null!;
+    [field: SerializeField] public VisualTreeAsset ActionNodeVTA { get; set; } = null!;
+
+    [field: SerializeField] public TextAsset UnitDeathScript { get; set; } = null!;
 }
 }

@@ -11,13 +11,16 @@ using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
-using Danmokou.Reflection2;
 using Danmokou.SM;
 using Danmokou.SM.Parsing;
 using JetBrains.Annotations;
 using Mizuhashi;
+using Scriptor;
+using Scriptor.Analysis;
+using Scriptor.Compile;
+using Scriptor.Expressions;
+using Scriptor.Reflection;
 using UnityEngine.Profiling;
-using Helpers = Danmokou.Reflection2.Helpers;
 using Parser = Danmokou.DMath.Parser;
 
 namespace Danmokou.Reflection {
@@ -94,6 +97,18 @@ public static partial class Reflector {
         public bool Parenthesized { get; set; }
         public ReflectionException? Error { get; set; }
     }
+    
+    
+    /// <summary>
+    /// Number of parameters that must be parsed by reflection.
+    /// </summary>
+    private static int ExplicitParameterCount(IMethodSignature sig, int start = 0, int? end = null) {
+        var ct = 0;
+        for (int ii = start; ii < (end ?? sig.Params.Length); ++ii)
+            if (sig.FeaturesAt(ii)?.NonExplicit is not true)
+                ++ct;
+        return ct;
+    }
 
     /// <summary>
     /// Fill the argument array `asts` by parsing elements from q according to type information in prms.
@@ -105,7 +120,7 @@ public static partial class Reflector {
     /// <param name="q">Queue from which to parse elements.</param>
     /// <returns>Filled array of ASTs, range covered by the ASTs, and an exception that should enclose the caller if nonnull.</returns>
     public static ASTArrayFill FillASTArray(IAST[] asts, int starti, int endi, InvokedMethod sig, IParseQueue q) {
-        int nargs = (sig.Mi as MethodSignature)!.ExplicitParameterCount(starti, endi);
+        int nargs = ExplicitParameterCount(sig.Mi, starti, endi);
         var prms = sig.Mi.Params;
         if (nargs == 0) {
             if (!(q is ParenParseQueue) && !q.Empty) {
@@ -196,7 +211,7 @@ public static partial class Reflector {
     /// <br/>May throw an exception if parsing fails.
     /// </summary>
     public static object? Into(this string argstring, Type t) {
-        return intoMeth.Specialize(t).Invoke(null, argstring);
+        return intoMeth.Specialize(t).Invoke(argstring);
     }
     
     /// <summary>
@@ -207,7 +222,7 @@ public static partial class Reflector {
         using var _ = BakeCodeGenerator.OpenContext(CookingContext.KeyType.INTO, argstring);
         try {
             Profiler.BeginSample("Generic Into AST (BDSL2) Parsing/Compilation");
-            var (val, ef) = Reflection2.Helpers.ParseAndCompileValue<T>(argstring);
+            var (val, ef) = CompileHelpers.ParseAndCompileValue<T>(argstring);
             Profiler.EndSample();
             return val;
         } catch (Exception e) {
@@ -218,7 +233,7 @@ public static partial class Reflector {
     public static Func<TExArgCtx, TEx<T>> IntoDelayed<T>(this string argstring) {
         var bake = BakeCodeGenerator.OpenContext(CookingContext.KeyType.INTO, argstring);
         try {
-            var (ast, gs) = Helpers.ParseAnnotate(ref argstring);
+            var (ast, gs) = CompileHelpers.ParseAnnotate(ref argstring);
             var typechecked = ast.Typecheck(gs, typeof(T), out _);
             var verified = typechecked.Finalize();
             return tac => {
@@ -268,10 +283,10 @@ public static partial class Reflector {
                 throw exc;
             //In-code scopes can get called arbitrarily
             var rootScope = LexicalScope.NewTopLevelDynamicScope();
-            using var __ = new LexicalScope.ParsingScope(rootScope);
+            using var __ = new ParsingScope(rootScope);
             ast.AttachLexicalScope(rootScope);
             if (rootScope.FinalizeVariableTypes(Unifier.Empty).TryR(out var err))
-                throw Reflection2.IAST.EnrichError(err);
+                throw Scriptor.Compile.IAST.EnrichError(err);
             Profiler.BeginSample("AST realization");
             return (T)ast.EvaluateObject()!;
         } catch (Exception e) {
@@ -506,11 +521,29 @@ public static partial class Reflector {
         if (TryGetSignature(member.Item, rt) is { } sig) {
             q.Advance();
             var fill = FillASTArray(sig, q);
-            return AST.Failure.MaybeEnclose(
-                sig.ToAST(member.Position.Merge(fill.ArgRange ?? member.Position), member.Position, fill.ASTs, fill.Parenthesized), fill.Error);
+            return AST.Failure.MaybeEnclose(InvokedMethodToAST(
+                sig, 
+                member.Position.Merge(fill.ArgRange ?? member.Position), 
+                member.Position, fill.ASTs, fill.Parenthesized), fill.Error);
         }
         return null;
     }
+    
+    private static IAST InvokedMethodToAST(InvokedMethod inv, PositionRange pos, PositionRange callPos, IAST[] arguments, bool parenthesized) {
+        if (inv is LiftedInvokedMethod) {
+            var ityp = inv.GetType();
+            if (ityp.IsGenericType) {
+                return (IAST)liftedInvokedMethodToAST.Specialize(ityp.GetGenericArguments())
+                    .Invoke(inv, pos, callPos, arguments, parenthesized)!;
+            }
+        }
+        return new AST.MethodInvoke(pos, callPos, inv, arguments) { Parenthesized = parenthesized };
+    }
+
+    public static IAST LiftedInvokedMethodToAST<T,R>(LiftedInvokedMethod<T, R> inv, PositionRange pos, PositionRange callPos, IAST[] arguments, bool parenthesized) =>
+        new AST.FuncedMethodInvoke<T, R>(pos, callPos, inv, arguments) { Parenthesized = parenthesized };
+    private static readonly GenericMethodSignature liftedInvokedMethodToAST = (GenericMethodSignature)
+        MethodSignature.Get(typeof(Reflector).GetMethod(nameof(LiftedInvokedMethodToAST))!);
 
     #endregion
 }

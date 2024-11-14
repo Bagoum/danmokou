@@ -30,7 +30,8 @@ public class Bullet : BehaviorEntity {
     [Header("Bullet Config")] 
     private ICollider? icollider;
     //for player bullets
-    public PlayerBullet? Player { get; private set; } = null;
+    public PlayerBullet? Player { get; private set; }
+    public EffectStrategy? OnHit { get; private set; }
     private BPY? hueShift;
     [Tooltip("This will be instantiated once per recoloring, and used for SM material editing.")]
     public Material material = null!;
@@ -52,7 +53,6 @@ public class Bullet : BehaviorEntity {
     }
     public int renderPriority;
     private static short rendererIndex = short.MinValue;
-    private static readonly HashSet<Bullet> allBullets = new();
 
     public float fadeInTime;
     public float cycleSpeed;
@@ -77,12 +77,12 @@ public class Bullet : BehaviorEntity {
     protected override void ResetValues(bool isFirst) {
         base.ResetValues(isFirst);
         collisionActive = collisionInfo.CollisionActiveOnInit;
-        allBullets.Add(this);
     }
 
-    public virtual void Initialize(BEHStyleMetadata? style, RealizedBehOptions options, BehaviorEntity? parent, in Movement mov, ParametricInfo pi, out int layer) {
+    public virtual void Initialize(StyleMetadata? style, RealizedBehOptions options, BehaviorEntity? parent, in Movement mov, ParametricInfo pi, out int layer) {
         pi.ctx.bullet = this;
-        Player = options.playerBullet;
+        Player = pi.ctx.playerBullet = options.playerBullet;
+        OnHit = pi.ctx.onHit = options.onHit;
         base.Initialize(style, in mov, pi, options.smr, parent, options: options);
         gameObject.layer = layer = options.layer ?? DefaultLayer;
         hueShift = options.hueShift;
@@ -154,19 +154,13 @@ public class Bullet : BehaviorEntity {
 
     protected override void CullHook(bool allowFinalize) {
         collisionActive = false;
-        allBullets.Remove(this);
         base.CullHook(allowFinalize);
     }
 
-    public static void OrphanAll() {
-        allBullets.Clear();
-    }
-
     public static void ClearAll() {
-        foreach (var b in allBullets.ToArray()) b.InvokeCull();
-        if (allBullets.Count != 0) {
-            throw new Exception("Some bullets remain after clear: " + allBullets.Count);
-        }
+        foreach (var b in GameObject.FindObjectsByType<Bullet>(FindObjectsSortMode.None))
+            if (b.Enabled)
+                b.InvokeCull();
     }
 
     protected override void UpdateRendering(bool isFirstFrame) {
@@ -183,11 +177,9 @@ public class Bullet : BehaviorEntity {
             d.SetHueShift(hueShift?.Invoke(bpi) ?? 0f);
         base.UpdateRendering(isFirstFrame);
     }
-
-
-#if UNITY_EDITOR
-    public static int NumBullets => allBullets.Count;
     
+#if UNITY_EDITOR
+    public static int NumBullets => GameObject.FindObjectsByType<Bullet>(FindObjectsSortMode.None).Length;
 #endif
 }
 }

@@ -17,7 +17,7 @@ using TMPro;
 using UnityEngine;
 
 namespace Danmokou.Player {
-public partial class AyaCamera : BehaviorEntity {
+public partial class AyaCamera : BehaviorEntity, IPlayerShotElement {
 
     public enum Orientation {
         HORIZONTAL = 0,
@@ -29,7 +29,7 @@ public partial class AyaCamera : BehaviorEntity {
         ? Orientation.VERTICAL
         : Orientation.HORIZONTAL;
 
-    public AyaCameraStateFlow StateFlow { get; private set; } = null!;
+    private AyaCameraStateFlow StateFlow { get; set; } = null!;
     public static Orientation CameraOrientation { get; private set; } = Orientation.HORIZONTAL;
     private float CameraOrientationAngleOffset => (CameraOrientation == Orientation.HORIZONTAL) ? 0f : 90f;
 

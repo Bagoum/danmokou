@@ -1,0 +1,58 @@
+import phref at "./ph_ref.bdsl" as r
+
+function power1() {
+    return sync("powerup1", <>, poweraura { 
+        boss1
+            lerp 0 1 t black red
+            blue
+    })
+}
+
+pattern { 
+    boss "fb.tokiko"
+    bgm {
+        (2, "fb.stage")
+    } } {
+phase 0 {} {
+	paction 0 {
+		shiftphaseto 1
+    }
+}		
+
+//1
+phase 0 { 
+    type(non, "hello world") 
+    hp(40)
+    root(3.6,-0.5)
+
+} {
+    paction 0 {
+        gtr {
+            wait 240
+            times inf
+        } {
+            movetarget(1, $(eoutquad), r.RandEnemyGrid())
+        }
+        gtr {
+            wait 180
+            times inf
+        } {
+            power1()
+            //r.VLaser("gdlaser-red/w")
+            //r.HLaser("gdlaser-red/w")
+            r.H2Laser("gdlaser-blue/")
+            r.V2Laser("gdlaser-blue/")
+        }
+
+        async "triangle-red/w" <> gcr2 120 inf <5h> {
+            sfx "x-fire-burst-1"
+        } gsr2c 20 {
+            preloop b{
+                hvar vel = polartoxy(3, rv2.angle)
+                hvar reflected = false;
+            }
+        } s nrvelocity(vel)
+    }
+}
+
+}

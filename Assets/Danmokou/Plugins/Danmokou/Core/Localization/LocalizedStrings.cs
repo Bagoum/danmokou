@@ -26,6 +26,7 @@ public static partial class LocalizedStrings {
     
     public static bool IsLocalizedStringReference(string key) =>
         key.Length > 0 && key[0] == ':';
+    
     private static string Sanitize(string reference_key) {
         if (IsLocalizedStringReference(reference_key)) reference_key = reference_key.Substring(1);
         return reference_key;

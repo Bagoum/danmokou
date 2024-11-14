@@ -82,6 +82,7 @@ public partial class PlayerController : BehaviorEntity,
     public float baseFocusOverlayOpacity = 0.5f;
     public SpriteRenderer[] focusOverlay = null!;
     public float hitInvuln = 6;
+    public bool deleteBulletsOnDeath = true;
     
     [Header("Traditional respawn handler")]
     public float RespawnFreezeTime = 0.1f;
@@ -97,6 +98,8 @@ public partial class PlayerController : BehaviorEntity,
     public DisturbedAnd BombsEnabled { get; } = new();
     public static DisturbedAnd AllControlEnabled { get; } = new();
     public static OverrideEvented<StyleSelector?> CollisionsForPool { get; } = new(null);
+    public OverrideEvented<Func<PlayerController, BulletCollisionType, ParametricInfo, bool>?> CollisionChecker { get; } = new(null);
+    public OverrideEvented<Func<PlayerController, BulletCollisionType, ParametricInfo, int?>?> GrazeChecker { get; } = new(null);
 
     private ushort shotItr = 0;
     [UsedImplicitly]
@@ -211,8 +214,8 @@ public partial class PlayerController : BehaviorEntity,
     
     #region Colors
 
-    private readonly PushLerper<Color> meterDisplay = new(0.4f, Color.Lerp);
-    private readonly PushLerper<Color> meterDisplayInner = new(0.4f, Color.Lerp);
+    public readonly PushLerper<Color> meterDisplay = new(0.4f, Color.Lerp);
+    public readonly PushLerper<Color> meterDisplayInner = new(0.4f, Color.Lerp);
     private readonly PushLerper<Color> meterDisplayShadow = new(0.4f, Color.Lerp);
     private readonly PushLerper<float> meterDisplayOpacity = new(0.1f);
     
@@ -314,9 +317,12 @@ public partial class PlayerController : BehaviorEntity,
         if (Team.Ship != Ship) {
             bool fromNull = Ship == null;
             Ship = Team.Ship;
+            if (movementHandler != null!)
+                movementHandler.Cleanup();
             movementHandler = Ship.movementHandler == null ? 
                 new PlayerMovement.Standard() : 
                 Ship.movementHandler.Value;
+            movementHandler.Setup();
             Hurtbox = new(Hurtbox.location, Ship.hurtboxRadius, Ship.grazeboxRadius);
             unityCollider.radius = Ship.hurtboxRadius;
             sb.Append($"Set ship to {Ship.key}\n");
@@ -342,10 +348,8 @@ public partial class PlayerController : BehaviorEntity,
             spawnedShot = realized.playerChild ? 
                 GameObject.Instantiate(realized.prefab, tr) : 
                 GameObject.Instantiate(realized.prefab);
-            foreach (var fo in spawnedShot.GetComponentsInChildren<FireOption>())
+            foreach (var fo in spawnedShot.GetComponentsInChildren<IPlayerShotElement>())
                 fo.Initialize(this);
-            spawnedCamera = spawnedShot.GetComponent<AyaCamera>();
-            if (spawnedCamera != null) spawnedCamera.Initialize(this);
         }
         Logs.Log($"Updated player team:\n{sb}");
         _UpdateTeamColors();
@@ -490,8 +494,10 @@ public partial class PlayerController : BehaviorEntity,
         
         
         if (--scoreLabelBuffer == 0 && labelAccScore > 0) {
-            DropHelpers.DropDropLabel(Location, scoreLabelBonus ? scoreGrad_bonus : scoreGrad, $"{labelAccScore:n0}", 
-                multiplier: Mathf.Max(1, (float)Math.Log(labelAccScore / 100.0, 100)));
+            var baseTTL = 0.9f;
+            var mult = Mathf.Max(1, (float)Math.Log(labelAccScore / 100.0, 100));
+            DropHelpers.DropDropLabel(Location, scoreLabelBonus ? DropHelpers.Cyan : DropHelpers.Azure, $"{labelAccScore:n0}", 
+                baseTTL * mult, size: mult);
             labelAccScore = 0;
             scoreLabelBonus = false;
         }
@@ -534,37 +540,49 @@ public partial class PlayerController : BehaviorEntity,
     /// </summary>
     public void TakeHit(int damage = 1) => collisions = collisions.WithDamage(damage);
     
-    /// <inheritdoc/>
-    public bool TakeHit(BulletManager.SimpleBulletCollection.CollectionType meta, 
-        CollisionResult coll, int damage, in ParametricInfo bulletBPI, ushort grazeEveryFrames) {
+    
+    public bool TakeHit(BulletCollisionType typ, CollisionResult coll, int damage, in ParametricInfo bulletBPI, ushort grazeEveryFrames, Vector2? collLoc = null) {
+        var at = collLoc ?? bulletBPI.LocV2;
         if (coll.collide) {
-            if (meta == BulletManager.SimpleBulletCollection.CollectionType.BulletClearFlake)
-                ++pickedUpFlakes;
-            else
-                collisions = collisions.WithDamage(damage);
+            if (CollisionChecker.Value?.Invoke(this, typ, bulletBPI) is false)
+                return false;
+            collisions = collisions.WithDamage(damage);
+            if (bulletBPI.ctx.onHit != null)
+                bulletBPI.ctx.onHit.Proc(at, Location, Hurtbox.radius);
             return true;
-        } else if (coll.graze && meta != BulletManager.SimpleBulletCollection.CollectionType.BulletClearFlake &&
-                   TryGrazeBullet(bulletBPI.id, grazeEveryFrames)) {
-            collisions = collisions.WithGraze(1);
+        } else if (coll.graze) {
+            collisions = collisions.WithGraze(GrazeChecker.Value?.Invoke(this, typ, bulletBPI) ?? 
+                                              TryGrazeBullet(bulletBPI.id, grazeEveryFrames));
             return false;
         } else
             return false;
     }
+    
+    bool ICircularGrazableEnemySimpleBulletCollisionReceiver.TakeHit(BulletManager.SimpleBulletCollection sbc, 
+        CollisionResult coll, int damage, in ParametricInfo bulletBPI) {
+        if (sbc.MetaType == BulletManager.SimpleBulletCollection.CollectionType.BulletClearFlake) {
+            if (coll.collide)
+                ++pickedUpFlakes;
+            return coll.collide;
+        } else if (sbc.MetaType == BulletManager.SimpleBulletCollection.CollectionType.Normal)
+            return TakeHit(BulletCollisionType.SimpleBullet, coll, damage, bulletBPI, sbc.BC.grazeEveryFrames);
+        else {
+            Logs.Log($"A enemy bullet / player collision occurred with unsupported type {sbc.MetaType}.", level: LogLevel.ERROR);
+            return false;
+        }
+    }
 
     void ICircularGrazableEnemyPatherCollisionReceiver.TakeHit(CurvedTileRenderPather pather, Vector2 collLoc,
         CollisionResult collision) => 
-        TakeHit(BulletManager.SimpleBulletCollection.CollectionType.Normal, 
-            collision, pather.Pather.Damage, in pather.BPI, pather.Pather.collisionInfo.grazeEveryFrames);
+        TakeHit(BulletCollisionType.Pather, collision, pather.Pather.Damage, in pather.BPI, pather.Pather.collisionInfo.grazeEveryFrames, collLoc);
     
     void ICircularGrazableEnemyLaserCollisionReceiver.TakeHit(CurvedTileRenderLaser laser, Vector2 collLoc,
         CollisionResult collision) => 
-        TakeHit(BulletManager.SimpleBulletCollection.CollectionType.Normal, 
-            collision, laser.Laser.Damage, in laser.BPI, laser.Laser.collisionInfo.grazeEveryFrames);
+        TakeHit(BulletCollisionType.Laser, collision, laser.Laser.Damage, in laser.BPI, laser.Laser.collisionInfo.grazeEveryFrames, collLoc);
     
     void ICircularGrazableEnemyBulletCollisionReceiver.TakeHit(Bullet bullet, Vector2 collLoc,
         CollisionResult collision) => 
-        TakeHit(BulletManager.SimpleBulletCollection.CollectionType.Normal, 
-            collision, bullet.Damage, in bullet.rBPI, bullet.collisionInfo.grazeEveryFrames);
+        TakeHit(BulletCollisionType.SimpleBullet, collision, bullet.Damage, in bullet.rBPI, bullet.collisionInfo.grazeEveryFrames, collLoc);
     
     #endregion
 
@@ -626,6 +644,7 @@ public partial class PlayerController : BehaviorEntity,
     
     protected override void OnDisable() {
         StateFlow.SetNext(new PlayerState.NULL());
+        movementHandler.Cleanup();
         base.OnDisable();
     }
 
@@ -633,11 +652,11 @@ public partial class PlayerController : BehaviorEntity,
     
     //Note that we should not use a dictionary from ID to frame number, since graze cooldowns freeze with the player
     private readonly DictionaryWithKeys<uint, int> grazeCooldowns = new();
-    public bool TryGrazeBullet(uint id, int cooldownFrames) {
+    public int TryGrazeBullet(uint id, int cooldownFrames) {
         if (grazeCooldowns.Data.ContainsKey(id))
-            return false;
+            return 0;
         grazeCooldowns[id] = cooldownFrames;
-        return true;
+        return 1;
     }
     
     public void AddGraze(int graze) {
@@ -664,10 +683,11 @@ public partial class PlayerController : BehaviorEntity,
     }
     
     private void _DoLoseLives(int livesLost, bool forceTraditionalRespawn) {
-        BulletManager.AutodeleteCircleOverTime(new(Location, 1.35f, 0f, 12f, null));
-        BulletManager.RequestPowerAura("powerup1", 0, 0, GenCtx.Empty, new RealizedPowerAuraOptions(
+        if (deleteBulletsOnDeath)
+            BulletManager.AutodeleteCircleOverTime(new(Location, 1.35f, 0f, 12f, null));
+        BulletManager.RequestPowerAura("powerup1", 0, 0, new RealizedPowerAuraOptions(
             new PowerAuraOptions(new[] {
-                PowerAuraOption.Color(_ => ColorHelpers.CV4(SpawnedShip.meterDisplay)),
+                PowerAuraOption.Color(_ => SpawnedShip.meterDisplay.CV4()),
                 PowerAuraOption.Time(_ => 1.5f),
                 PowerAuraOption.Iterations(_ => -1f),
                 PowerAuraOption.Scale(_ => 5f),
@@ -688,9 +708,9 @@ public partial class PlayerController : BehaviorEntity,
     private IEnumerator WaitDeathbomb(int livesLost, int frames, bool forceTraditionalRespawn) {
         SpawnedShip.OnPreHitEffect.Proc(bpi.loc, bpi.loc, 1f);
         using var gcx = GenCtx.New(this);
-        BulletManager.RequestPowerAura("powerup1", 0, 0, gcx, new RealizedPowerAuraOptions(
+        BulletManager.RequestPowerAura("powerup1", 0, 0, new RealizedPowerAuraOptions(
             new PowerAuraOptions(new[] {
-                PowerAuraOption.Color(_ => ColorHelpers.CV4(SpawnedShip.meterDisplay.WithA(1.5f))),
+                PowerAuraOption.Color(_ => SpawnedShip.meterDisplay.WithA(1.5f).CV4()),
                 PowerAuraOption.InitialTime(_ => 0.7f * frames / 120f), 
                 PowerAuraOption.Time(_ => 1.7f * frames / 120f),
                 PowerAuraOption.Iterations(_ => 0.8f),

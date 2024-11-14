@@ -7,6 +7,7 @@ namespace Danmokou.GameInstance {
 /// A feature for handling life items and extends from life items.
 /// </summary>
 public interface ILifeItemFeature : IInstanceFeature {
+    public bool AllowLifeItemDrops => true;
     public Evented<int> LifeItems { get; }
     public void AddLifeItems(int delta);
     public int NextLifeItems { get; }
@@ -53,10 +54,33 @@ public class LifeItemFeature : BaseInstanceFeature, ILifeItemFeature {
         nextItemLifeIndex = 0;
         LifeItems.Value = 0;
     }
+
+    public class Disabled : BaseInstanceFeature, ILifeItemFeature {
+        bool ILifeItemFeature.AllowLifeItemDrops => false;
+        public Evented<int> LifeItems { get; } = new(0);
+        private InstanceData Inst { get; }
+        private int nextItemLifeIndex;
+
+        public Disabled(InstanceData inst) {
+            Inst = inst;
+        }
+        
+        public void AddLifeItems(int delta) {
+            LifeItems.Value += delta;
+            foreach (var f in Inst.Features)
+                f.OnItemLife(delta);
+        }
+
+        public int NextLifeItems => 9001;
+    }
 }
 
 public class LifeItemExtendFeatureCreator : IFeatureCreator<ILifeItemFeature> {
     public ILifeItemFeature Create(InstanceData instance) => new LifeItemFeature(instance);
+}
+
+public class DisabledLifeItemExtendFeatureCreator : IFeatureCreator<ILifeItemFeature> {
+    public ILifeItemFeature Create(InstanceData instance) => new LifeItemFeature.Disabled(instance);
 }
 
 }

@@ -34,7 +34,7 @@ public interface IInputHandlerInputSource : IInputSource {
 /// <summary>
 /// An input source that exposes self-describing <see cref="IInputHandler"/>s for its keys.
 /// </summary>
-public interface IDescriptiveInputSource : IInputSource {
+public interface IDescriptiveInputSource : IInputHandlerInputSource {
     IInputHandler arrowLeft { get; }
     bool? IInputSource.UILeft => arrowLeft.Active;
     IInputHandler arrowRight { get; }
@@ -74,13 +74,7 @@ public interface IDescriptiveInputSource : IInputSource {
     bool? IInputSource.DialogueSkipAll => dialogueSkipAll?.Active;
     IInputHandler? leftClick { get; }
     bool? IInputSource.LeftClick => leftClick?.Active;
-}
-
-/// <summary>
-/// An <see cref="IDescriptiveInputSource"/> whose input values are directly derived from
-///  the corresponding IInputHandlers.
-/// </summary>
-public interface IKeyedInputSource : IDescriptiveInputSource, IInputHandlerInputSource {
+    
     void AddUpdaters() {
         Handlers.AddRange(new[] {
                 arrowLeft, arrowRight, arrowUp, arrowDown,

@@ -82,14 +82,16 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
     protected bool flipY;
 
     protected float time => Beh.rBPI.t;
+    private float bopTimeOffset = 0;
     protected Transform tr { get; private set; } = null!;
     protected MaterialPropertyBlock pb { get; private set; } = null!;
     protected ParametricInfo BPI => Beh.rBPI;
-
+    
     public RFloat yPosBopPeriod = null!;
     public RFloat yPosBopAmplitude = null!;
     public RFloat yScaleBopPeriod = null!;
     public RFloat yScaleBopAmplitude = null!;
+    public bool randomizeBopTime = true;
 
     [ReflectInto(typeof(BPY))]
     public RString rotator = null!;
@@ -101,6 +103,8 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
     protected virtual void Awake() {
         if (Beh != null && container is null)
             Beh.LinkDependentUpdater(this);
+        if (randomizeBopTime)
+            bopTimeOffset = RNG.GetFloatOffFrame(0, Math.Max(yScaleBopPeriod, yPosBopPeriod));
     }
 
     public void IsPartOf(IMultiDisplayController controller) {
@@ -119,13 +123,13 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
             rotatorF = rotator.Get().IntoIfNotNull<BPY>();
         }
         pb = new();
-        flipX = flipY = false;
         SetTransform();
         Show();
     }
 
     public virtual void Culled(bool allowFinalize, Action done) {
-        tr.localScale = initialScale;
+        flipX = flipY = false;
+        tr.localScale = lastScale = initialScale;
         Hide();
         done();
     }
@@ -135,7 +139,7 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
     public virtual void Show() { }
     public virtual void Hide() { }
 
-    public virtual void StyleChanged(BehaviorEntity.BEHStyleMetadata style) { }
+    public virtual void StyleChanged(BehaviorEntity.StyleMetadata style) { }
 
     public virtual void SetSortingOrder(int x) { }
 
@@ -174,11 +178,11 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
         scale.y *= flipY ? -1 : 1;
         scale *= lastScalerValue;
         if (yPosBopPeriod > 0 && yPosBopAmplitude > 0) {
-            float yOffset = yPosBopAmplitude * M.Sin(BMath.TAU * time / yPosBopPeriod);
+            float yOffset = yPosBopAmplitude * M.Sin(BMath.TAU * (time+bopTimeOffset) / yPosBopPeriod);
             tr.localPosition = new Vector3(0, yOffset);
         }
         if (yScaleBopPeriod > 0 && yScaleBopAmplitude > 0) {
-            scale.y *= 1 + yScaleBopAmplitude * M.Sin(BMath.TAU * time / yScaleBopPeriod);
+            scale.y *= 1 + yScaleBopAmplitude * M.Sin(BMath.TAU * (time+bopTimeOffset) / yScaleBopPeriod);
         }
         if (rotatorF != null) {
             tr.localEulerAngles = new Vector3(0, 0, rotatorF(Beh.rBPI));
@@ -202,7 +206,7 @@ public abstract class DisplayController : MonoBehaviour, IBehaviorEntityDependen
         }
     }
 
-    protected void SetFlip(bool flipx, bool flipy) {
+    public void SetFlip(bool flipx, bool flipy) {
         flipX = flipx;
         flipY = flipy;
     }

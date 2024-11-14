@@ -27,12 +27,6 @@ public partial class PlayerController {
     
     private const float FreeFocusLerpTime = 0.2f;
     
-    private static readonly IGradient scoreGrad = DropLabel.MakeGradient(
-        new Color32(100, 150, 255, 255), new Color32(80, 110, 255, 255));
-    private static readonly IGradient scoreGrad_bonus = DropLabel.MakeGradient(
-        new Color32(20, 220, 255, 255), new Color32(10, 170, 255, 255));
-    private static readonly IGradient pivGrad = DropLabel.MakeGradient(
-        new Color32(0, 235, 162, 255), new Color32(0, 172, 70, 255));
     private const int ITEM_LABEL_BUFFER = 4;
     
     private static bool StateAllowsInput(PlayerState s) =>

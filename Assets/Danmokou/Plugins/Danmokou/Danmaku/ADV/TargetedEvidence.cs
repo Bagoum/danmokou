@@ -26,8 +26,7 @@ public record EvidenceTargetProxy<E, T>(ADVEvidenceRequest<(E, T)> Request) wher
     public UIResult Present(T t) {
         var ev = NextEvidence;
         NextEvidence = null;
-        var _ = Request.PresentAnyLevel((ev ?? throw new Exception("Target selected without evidence"), t))
-            .ContinueWithSync();
+        Request.PresentAnyLevel((ev ?? throw new Exception("Target selected without evidence"), t)).Log();
         return new UIResult.ReturnToScreenCaller(2);
     }
 

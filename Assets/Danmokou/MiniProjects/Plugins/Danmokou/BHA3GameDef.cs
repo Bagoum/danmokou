@@ -5,7 +5,7 @@ using Danmokou.Danmaku;
 using Danmokou.GameInstance;
 using UnityEngine;
 
-namespace Miniprojects {
+namespace MiniProjects {
 [CreateAssetMenu(menuName = "Data/GameDef/BHA3")]
 public class BHA3GameDef : CampaignDanmakuGameDef {
     public override InstanceFeatures MakeFeatures(DifficultySettings d, InstanceMode m, long? highScore) => new() {

@@ -1,0 +1,317 @@
+import phref at "./ph_ref.bdsl" as r
+
+function power1() {
+    return sync("powerup1", <>, poweraura { 
+        boss1
+            lerp 0 1 t blue green
+            blue
+    })
+}
+
+var factor = dl^0.3;
+
+
+pattern { 
+    boss "ph.mima"
+    bgm {
+        (2, "ph.mima")
+    } 
+} {
+phase 0 {} {
+	paction 0 {
+		shiftphaseto 4
+    }
+}		
+
+//1
+phase 0 { dialogue, silent } {
+    saction 0 {
+        executevn $(plastichakkerodialogue2) "d2"
+        shiftphase
+    }
+}
+
+//2
+phase 48 { 
+    type(spell, "Spell 1") 
+    hp(42)
+    root(3.6, -0.5)
+} {
+    paction 0 {
+        gtr {
+            waitchild
+            wait(120)
+            times inf
+            preloop b{ 
+                hvar loop = i; 
+                hvar lane = r.RandAxis();
+            }
+            p this
+            sequential
+        } {
+            power1()
+            movetarget(1.6, $(eoutsine), r.EnemyGrid(pxy(r.RandAxis(), lane)))
+            sync "gdlaser-yellow/w" <-8;:180> gsr {
+            } laser none 1 2 { dsfx, length 30 }
+            async "" <> gir2 0 3 <> {
+                p add
+                color { "blue", "green", "teal" }
+            } gir {
+                clip(p2 - 1 == lane)
+                root(pxy(8, r.GridY(p2 - 1)))
+            } gcr2 120 2 <> {
+                sfx "x-metal"
+                p add
+            } guideempty2 p { ("eloc", code(loc)) }
+                nrvelocity(lerpt(0.3, 0.6, 3, 1) * px(-3.4 + 0.3 * p2)) {
+                    gsr {
+                        colorr "scircle-*/w"
+                        preloop b{
+                            hvar vel = pxy(0,0)
+                            hvar reflected = false
+                        }
+                    } s switch(reflected, nrvelocity(vel), nroffset(load "eloc" p))
+                    gsr2 4 <> {
+                        colorr "star-*/"
+                        start b{
+                            hvar rotSpeed = rand(40, 70) * pm1(pi)
+                        }
+                        preloop b{
+                            hvar cind = i
+                            hvar vel = pxy(0,0)
+                            hvar reflected = false
+                        }
+                    } simple switch(reflected, nrvelocity(vel), 
+                    offset 
+                        rx(1.2, rotSpeed * t + 90 * cind)
+                        load "eloc" p) { dir starrotb2, scale 2 }
+                }
+            wait 2
+            power1()
+            movetarget(1.6, $(eoutsine), r.EnemyGrid(zero))
+            r.V2Laser("gdlaser-teal/")
+            ~ move(4, nroffset(py(sine(4, 2.3, 4*eiosine(t/4)))))
+            async "lstar-*/" <> gcr {
+                colorf({"blue","green","teal"}, randi(0, 3) as float)
+                wait 4
+                times inf
+                fortime(4s)
+                frv2(angle(180 + 40 * sin(0.24 * i + 12)))
+                sfxif("x-fire-star-1", i % 4 == 0)
+            } gsr {
+                preloop b{
+                    hvar vel = rx(4 * factor, rv2.angle)
+                    hvar reflected = false
+                }
+            } simple nrvelocity(lerpt(0.3, 0.6, 1.7, 1) * vel) { dir starrotb1 }
+        }
+    }
+}
+
+
+//3
+phase 48 { 
+    type(spell, "Spell 2") 
+    hp(38)
+    root(3.6, -0.5)
+} {
+    saction 0 {
+        exec b{
+            hvar isAccel = 1.;
+        }
+        sync "lstar-teal/" <> gsr2 2 <> {
+            bindUD
+            p this
+        } guideempty2 p { ("eloc", code(loc))}
+             rvelocity(rx(lerpt(0.4, 1.2, 5, 0), 45 * ud)) {
+                simple nroffset load("eloc", p) {
+                    dir2(rotate(240f * ud * (isAccel), dir))
+                    scale(1.4)
+                }
+             color "inode" summons nroffset load("eloc", p)
+                paction 0 {
+                    async "gdlaser-blue/" <> gcr {
+                        delay 1s
+                        times inf
+                        whiletrue(isAccel == 1)
+                        wait(280 / factor)
+                    } gsr {
+                        target ang Lplayer
+                    } laser(none, 1, 0.2, { dsfx, length(20) } )
+                    async "gdlaser-blue/w" <> gcr {
+                        times inf
+                        whiletrue(isAccel == 2)
+                        wait(180 / factor)
+                    } gsr {
+                        target ang Lplayer
+                    } laser(none, 1, 0.2, { dsfx, length(20), s 2 } )
+                }
+            }
+        gtr {
+            times inf
+            waitchild
+            sequential
+        } {
+            exec b{
+                isAccel = 1
+            }
+            power1()
+            gtr {
+                times 4
+                wait 300
+                sequential
+                start b{
+                    hvar gind = r.RandCoord()
+                }
+                preloop b{
+                    var nxt = r.RandCoord();
+                    while(nxt == gind) {
+                        nxt = r.RandCoord()
+                    }
+                    gind = nxt;
+                }
+            } {
+                movetarget(i == 0 ? 1.6 : 0.7, $(eoutsine), r.EnemyGrid(gind))
+                sync "gdcircle-green*" <> gsr2 3 <> {
+                    p this
+                    color { "/w", "/", "/b" }
+                    sfx "x-fire-burst-1"
+                } gsr2 5 <18> {
+                    center
+                    target ang Lplayer
+                    preloop b{
+                        hvar vel = polartoxy(lerp(0, 2, p, 4, 2.4) * factor, rv2.angle + rand(-8, 8))
+                        hvar reflected = false
+                    }
+                } s nrvelocity(vel)
+            }
+            wait 1
+            power1()
+            movetarget(1.6, $(eoutsine), r.EnemyGrid(zero))
+            exec b{
+                isAccel = 2
+            }
+            r.V2Laser("gdlaser-blue/b", 1)
+            async "star-*/" <> gcr2 80 4 <4p> {
+
+            } gsr2c 28 {
+                color({"blue", "teal", "green", "pink"})
+                sfx "x-fire-star-3"
+                preloop b{
+                    hvar vel::Vector2 = zero
+                    hvar reflected = false
+                }
+            } simple switch(reflected, nrvelocity(vel), polar(factor * lssht(-3, 0.6, 6 * t, 2 * t), brand(4, 8) * brandpm1() * t)) { dir starrotb3, scale(1.5) }
+            wait 1
+            exec b{
+                isAccel = 0
+            }
+            wait 1
+        }
+    }
+}
+
+//4
+phase 48 {
+    type(spell, "Spell 3")
+    hp(52)
+    root(3.6, -0.5)
+} {
+    sync "lstar-teal/" <> gsr2 2 <> {
+        bindUD
+        p this
+    } guideempty2 p { ("eloc", code(loc))}
+         rvelocity(rx(lerpt(0.4, 1.2, 5, 0), 45 * ud)) {
+            simple nroffset load("eloc", p) {
+                dir2(rotate(240f * ud, dir))
+                scale(1.4)
+            }
+         color "inode" summons nroffset load("eloc", p)
+            async "" <> gcr {
+                delay(150 + 240 * p)
+                wait 480
+                times inf
+                sfx "x-boom"
+                color {"blue", "teal", "green", "yellow", "orange", "red" }
+                p add
+            } gsr {
+                target ang Lplayer
+                preloop b{
+                    rv2.angle += rand(8, 14) * pm1(p + p1)
+                }
+            } guideempty2 p { ("eloc2", code(loc)) }
+                rvelocity(px(2.4 * sqrt(factor))) {
+                    gsr2 15 <> {
+                        colorr "star-*/"
+                        start b{
+                            hvar sides = 5.0;
+                            hvar sideLen = twau / sides;
+                        }
+                        preloop b{
+                            hvar baseAng = i * twau / times;
+                            rv2.angle = raddeg(sideLen * smoothloop($(eiosine), baseAng / sideLen))
+                            hvar vel::Vector2 = zero
+                            hvar reflected = false
+                        }
+                    } simple switch(reflected, nrvelocity(vel), offset 
+                        rx(reg2star(lerpt(0.2, 1.2, 0.2, 1.8), sides, angle), srand(0, 360, p) + t * srand(15, 23, p) * pm1(p1 + p))
+                        load("eloc2", p)) { dir(starrot2 * pm1(p)) }
+                }
+            }
+
+    gtr {
+        times inf
+        wait 240
+        sequential
+        waitchild
+        start b{
+            hvar gind = r.RandCoord()
+        }
+        preloop b{
+            hvar loop = i
+            var nxt = r.RandCoord();
+            while(nxt == gind) {
+                nxt = r.RandCoord()
+            }
+            gind = nxt;
+        }
+    } {
+        cond(loop == 0, noop, 
+            ~ async "scircle-green/b" <> gcr2 60 3 <10p> {
+                sfx("x-fire-burst-1")
+            } gsr2c 12 {
+                target ang Lplayer
+                preloop b{
+                    hvar vel::Vector2 = zero
+                    hvar reflected = false
+                }
+            } s switch(reflected, nrvelocity(vel), rvelocity(px(lerpt(0.2, 0.6, 6, 2)))))
+        ~ movetarget(4, $(eoutsine), r.EnemyGrid(gind))
+        wait 2.4
+        power1()
+        wait 1.6
+        r.H2Laser("gdlaser-green/b", gind.y)
+        r.V2Laser("gdlaser-green/b", gind.x)
+        async "flasharrow-black/w" <1;:90> gcr2 (2/factor) 120 <0.005;:6> {
+            fortime(2s)
+            sfxif("x-fire-small-1", i % 5 == 0)
+            preloop b{
+                hvar vel::Vector2 = zero
+                hvar reflected = false
+            }
+        } s switch(reflected, nrvelocity(vel), tpnrot rx(lerpt(0.4, 0.7, loop == 0 ? 5 : 7, 3.2), 14 * i))
+    }
+}
+
+phase 0 {
+ dialogue
+} {
+	saction 0 {
+		dbossexplode lerp(0, 1, t, blue, green) blue
+		position 0 20
+        wait 2
+		shiftphase
+    }
+}
+
+}

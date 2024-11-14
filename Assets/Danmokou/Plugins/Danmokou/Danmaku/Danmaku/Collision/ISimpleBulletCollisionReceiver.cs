@@ -5,9 +5,18 @@ using BagoumLib.DataStructures;
 using CommunityToolkit.HighPerformance;
 using Danmokou.Danmaku.Descriptors;
 using Danmokou.DMath;
+using Danmokou.Scriptables;
 using UnityEngine;
 
 namespace Danmokou.Danmaku {
+
+public enum BulletCollisionType {
+    SimpleBullet,
+    Pather,
+    Laser,
+    BEHBullet
+}
+
 /// <summary>
 /// An entity that can receive collisions from simple bullets, such as players (which receive collisions from enemy bullets) or enemies (which receive collisions from player bullets).
 /// <br/>Do not implement directly. Use <see cref="IPlayerSimpleBulletCollisionReceiver"/>, <see cref="IEnemySimpleBulletCollisionReceiver"/>, or one of their child interfaces.
@@ -88,10 +97,11 @@ public interface ICircularPlayerSimpleBulletCollisionReceiver : IPlayerSimpleBul
     /// <summary>
     /// Receive a hit from a player bullet.
     /// </summary>
+    /// <param name="onHit">The effect to trigger at the hit location.</param>
     /// <param name="plb">Player bullet configuration.</param>
     /// <param name="bpi">Bullet information.</param>
     /// <returns>True iff the hit occured (may return false if the bullet is configured to do no damage or is on cooldown)</returns>
-    bool TakeHit(in PlayerBullet plb, in ParametricInfo bpi);
+    bool TakeHit(EffectStrategy? onHit, in PlayerBullet plb, in ParametricInfo bpi);
     
     void ISimpleBulletCollisionReceiver.ProcessSimple(BulletManager.SimpleBulletCollection sbc) {
         throw new NotImplementedException("Assumed that player bullet x enemy collisions must be bucketed");
@@ -111,7 +121,7 @@ public interface ICircularPlayerSimpleBulletCollisionReceiver : IPlayerSimpleBul
                 ref var sbn = ref data[index];
                 if (sbCollider.CheckCollision(in sbn.bpi.loc.x, in sbn.bpi.loc.y, in sbn.direction, in sbn.scale, in loc.x, in loc.y, in rad)
                     && sbn.bpi.ctx.playerBullet.Try(out var plb)
-                    && TakeHit(plb, in sbn.bpi)) {
+                    && TakeHit(sbn.bpi.ctx.onHit, plb, in sbn.bpi)) {
                     sbc.RunCollisionControls(index);
                     if (plb.data.destructible) {
                         sbc.MakeCulledCopy(index);
@@ -133,20 +143,19 @@ public interface ICircularGrazableEnemySimpleBulletCollisionReceiver : IEnemySim
     /// The collision information of the collidee.
     /// </summary>
     Hurtbox Hurtbox { get; }
-
+    Vector2 IApproximatelyCircularSimpleBulletCollisionReceiver.Location => Hurtbox.location;
     float IApproximatelyCircularSimpleBulletCollisionReceiver.MaxCollisionRadius => Hurtbox.grazeRadius;
 
     /// <summary>
     /// Process a collision event with an NPC bullet.
     /// </summary>
-    /// <param name="meta">Type of the bullet collection.</param>
+    /// <param name="sbc">Collection of the colliding bullet.</param>
     /// <param name="coll">Collision result.</param>
     /// <param name="damage">Damage dealt by this collision.</param>
     /// <param name="bulletBPI">Bullet information.</param>
-    /// <param name="grazeEveryFrames">The number of frames between successive graze events on this bullet.</param>
     /// <returns>Whether or not a hit was taken (ie. a collision occurred).</returns>
-    bool TakeHit(BulletManager.SimpleBulletCollection.CollectionType meta,
-        CollisionResult coll, int damage, in ParametricInfo bulletBPI, ushort grazeEveryFrames);
+    bool TakeHit(BulletManager.SimpleBulletCollection sbc,
+        CollisionResult coll, int damage, in ParametricInfo bulletBPI);
     
     void ISimpleBulletCollisionReceiver.ProcessSimple(BulletManager.SimpleBulletCollection sbc) {
         if (!ReceivesBulletCollisions(sbc.Style) || !CollidesWithPool(sbc)) return;
@@ -156,7 +165,6 @@ public interface ICircularGrazableEnemySimpleBulletCollisionReceiver : IEnemySim
         var dmg = sbc.BC.Damage.Value;
         var allowGraze = sbc.BC.AllowGraze.Value;
         var destroy = sbc.BC.Destructible.Value;
-        var meta = sbc.MetaType;
         var cc = sbc.BC.cc;
         var cType = cc.colliderType;
         for (int ii = 0; ii < sbc.Count; ++ii) {
@@ -181,7 +189,7 @@ public interface ICircularGrazableEnemySimpleBulletCollisionReceiver : IEnemySim
                 if (cr.graze && !allowGraze)
                     cr = cr.NoGraze();
                 if ((cr.graze || cr.collide)
-                    && TakeHit(meta, cr, dmg, in sb.bpi, sbc.BC.grazeEveryFrames)) {
+                    && TakeHit(sbc, cr, dmg, in sb.bpi)) {
                     sbc.RunCollisionControls(ii);
                     if (destroy) {
                         sbc.MakeCulledCopy(ii);
@@ -228,7 +236,7 @@ public interface ICircularGrazableEnemySimpleBulletCollisionReceiver : IEnemySim
                 if (cr.graze && !allowGraze)
                     cr = cr.NoGraze();
                 if ((cr.graze || cr.collide) 
-                    && TakeHit(meta, cr, dmg, in sb.bpi, sbc.BC.grazeEveryFrames)) {
+                    && TakeHit(sbc, cr, dmg, in sb.bpi)) {
                     sbc.RunCollisionControls(index);
                     if (destroy) {
                         sbc.MakeCulledCopy(index);

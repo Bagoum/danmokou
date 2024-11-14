@@ -1,14 +1,17 @@
 ﻿using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Expressions;
+using Scriptor;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
-using static Danmokou.Expressions.ExMHelpers;
-using tfloat = Danmokou.Expressions.TEx<float>;
-using tbool = Danmokou.Expressions.TEx<bool>;
-using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
-using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
-using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
+using static Scriptor.Expressions.ExMHelpers;
+using tfloat = Scriptor.Expressions.TEx<float>;
+using tbool = Scriptor.Expressions.TEx<bool>;
+using tv2 = Scriptor.Expressions.TEx<UnityEngine.Vector2>;
+using tv3 = Scriptor.Expressions.TEx<UnityEngine.Vector3>;
+using trv2 = Scriptor.Expressions.TEx<BagoumLib.Mathematics.V2RV2>;
 
 namespace Danmokou.DMath.Functions {
 /// <summary>
@@ -22,7 +25,7 @@ public static partial class ExMRV2 {
     /// <param name="nrot">Nonrotational component</param>
     /// <param name="rot">Rotational component (x,y,angle)</param>
     /// <returns></returns>
-    public static trv2 V2V3(tv2 nrot, tv3 rot) => TEx.Resolve(rot, _r => TEx.ResolveV2AsXY(nrot, (nrx, nry) => {
+    public static trv2 V2V3(tv2 nrot, tv3 rot) => TEx.Resolve(rot, _r => TExHelpers.ResolveV2AsXY(nrot, (nrx, nry) => {
         var r = new TExV3(_r);
         return VRV2(nrx, nry, r.x, r.y, r.z);
     }, singleUse: true));
@@ -34,8 +37,8 @@ public static partial class ExMRV2 {
     /// <param name="rot">Rotational x,y</param>
     /// <param name="angle">Rotational angle (degrees)</param>
     /// <returns></returns>
-    public static trv2 V2V2F(tv2 nrot, tv2 rot, tfloat angle) => TEx.ResolveV2AsXY(nrot, (nrx, nry) => 
-        TEx.ResolveV2AsXY(rot, (rx, ry) => VRV2(nrx, nry, rx, ry, angle), singleUse: true), 
+    public static trv2 V2V2F(tv2 nrot, tv2 rot, tfloat angle) => TExHelpers.ResolveV2AsXY(nrot, (nrx, nry) => 
+        TExHelpers.ResolveV2AsXY(rot, (rx, ry) => VRV2(nrx, nry, rx, ry, angle), singleUse: true), 
         singleUse: true);
     
     /// <summary>

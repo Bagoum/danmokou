@@ -4,19 +4,15 @@ using BagoumLib.Expressions;
 using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Expressions;
+using Scriptor;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
-using static Danmokou.Expressions.ExMHelpers;
-using tfloat = Danmokou.Expressions.TEx<float>;
-using tbool = Danmokou.Expressions.TEx<bool>;
-using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
-using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
-using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
+using static Scriptor.Expressions.ExMHelpers;
+using tfloat = Scriptor.Expressions.TEx<float>;
 using static Danmokou.DMath.Functions.ExM;
-using static Danmokou.DMath.Functions.ExMConditionals;
-using static Danmokou.DMath.Functions.ExMConversions;
+using static Scriptor.Math.ExMOperators;
 using static Danmokou.DMath.Functions.ExMMod;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
 
 namespace Danmokou.DMath.Functions {
 /// <summary>

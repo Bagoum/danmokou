@@ -8,6 +8,7 @@ using BagoumLib;
 using BagoumLib.Culture;
 using BagoumLib.Expressions;
 using BagoumLib.Functional;
+using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using BagoumLib.Tasks;
 using BagoumLib.Unification;
@@ -18,16 +19,31 @@ using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
-using Danmokou.Reflection2;
 using Danmokou.SM;
 using JetBrains.Annotations;
 using LanguageServer.VsCode.Contracts;
 using Mizuhashi;
+using Scriptor;
+using Scriptor.Analysis;
+using Scriptor.Compile;
+using Scriptor.Expressions;
+using Scriptor.Reflection;
 using UnityEngine;
 using static Danmokou.Reflection.Reflector;
 using Parser = Danmokou.DMath.Parser;
 
 namespace Danmokou.Reflection {
+
+public class ParsingScope : IDisposable {
+    private static readonly Stack<LexicalScope> OpenLexicalScopes = new ();
+    public static LexicalScope Current =>
+        OpenLexicalScopes.Count > 0 ? OpenLexicalScopes.Peek() : GlobalScope.Singleton;
+    public ParsingScope(LexicalScope Scope) {
+        OpenLexicalScopes.Push(Scope);
+    }
+    public void Dispose() => OpenLexicalScopes.Pop();
+}
+
 /// <summary>
 /// A lightweight set of instructions for compiling an object
 ///  from 'code'.
@@ -252,10 +268,10 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         public override void AttachLexicalScope(LexicalScope scope) {
             if (BaseMethod.Mi.GetAttribute<CreatesInternalScopeAttribute>() is { } cis) {
                 LocalScope = scope = cis.dynamic ? new DynamicLexicalScope(scope) : LexicalScope.Derive(scope);
-                scope.AutoDeclareVariables(MethodPosition, cis.type);
+                ServiceLocator.Find<ILangCustomizer>().Declare(scope, MethodPosition, cis.type);
                 scope.Type = LexicalScopeType.MethodScope;
             } else if (BaseMethod.Mi.GetAttribute<ExtendsInternalScopeAttribute>() is { } eis) {
-                scope.AutoDeclareExtendedVariables(MethodPosition, eis.type, 
+                ServiceLocator.Find<ILangCustomizer>().Extend(scope, MethodPosition, eis.type, 
                     //bindItr support- BDSL1 only
                     (Params.Try(0) as Preconstructed<object>)?.Value as string);
             } else if (BaseMethod.Mi.GetAttribute<ExpressionBoundaryAttribute>() is { }) {
@@ -278,7 +294,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
         }
 
         public override IEnumerable<SemanticToken> ToSemanticTokens() =>
-            Params.SelectMany(p => p.ToSemanticTokens()).Prepend(SemanticToken.FromMethod(BaseMethod.Mi, MethodPosition));
+            Params.SelectMany(p => p.ToSemanticTokens()).Prepend(SemanticTokenHelpers.FromMethod(BaseMethod.Mi, MethodPosition));
 
         public override IEnumerable<PrintToken> DebugPrint() => DebugPrintMethod(BaseMethod);
 
@@ -321,15 +337,15 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             var prms = new object?[Params.Length];
             using var _ = LocalScope == null ?
                 null :
-                new LexicalScope.ParsingScope(LocalScope);
+                new ParsingScope(LocalScope);
             for (int ii = 0; ii < prms.Length; ++ii) {
                 prms[ii] = Params[ii].EvaluateObject();
             }
             if (LocalScope != null)
                 for (int ii = 0; ii < prms.Length; ++ii)
-                    prms[ii] = Reflection2.AST.MethodCall.AttachScope(prms[ii], LocalScope);
+                    prms[ii] = DMKLanguageServiceProvider.AttachScope(prms[ii], LocalScope);
             try {
-                return Method.Mi.Invoke(null, prms);
+                return Method.Mi.Invoke(prms);
             } catch (Exception e) {
                 throw new ReflectionException(Position, $"Failed to execute method {Method.Name}.", e);
             }
@@ -361,7 +377,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
             var fprms = new object?[Params.Length];
             for (int ii = 0; ii < fprms.Length; ++ii)
                 fprms[ii] = Params[ii].EvaluateObject();
-            return Method.TypedFMi.InvokeMiFunced(null, fprms);
+            return Method.TypedFMi.InvokeMiFunced(fprms);
         }
     }
 
@@ -448,7 +464,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
                 FuncAllTypes.Select(TypeDesignation.FromType).ToArray());
             //Look for methods returning type R
 
-            var methods = DMKScope.Singleton.FindStaticMethodDeclaration(methodName)?
+            var methods = GlobalScope.Singleton.StaticMethodDeclaration(methodName)?
                 .Where(m => m.SharedType.Unify(typeDesig, Unifier.Empty).IsLeft)
                 .ToList();
             if (methods == null || methods.Count == 0)
@@ -478,7 +494,7 @@ public abstract record AST(PositionRange Position, params IAST[] Params) : IAST 
 
         public override IEnumerable<SemanticToken> ToSemanticTokens() =>
             new[] {
-                SemanticToken.FromMethod(Method, Position, SemanticTokenTypes.Function)
+                SemanticTokenHelpers.FromMethod(Method, Position, SemanticTokenTypes.Function)
             };
     }
 

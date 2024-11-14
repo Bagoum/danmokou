@@ -81,7 +81,7 @@ public class GhostOfThePastGameDef : ADVGameDef {
                             .Bind(new FlagView(new(() => ev.Enabled, ev.Description, 
                                 "I don't have any evidence to put here."))),
                         new UIButton("Present Evidence", UIButton.ButtonType.Confirm, _ => {
-                            var __ = evidenceRequest.Present(ev).ContinueWithSync();
+                            evidenceRequest.Present(ev).Log();
                             return new UIResult.ReturnToScreenCaller();
                         }) { VisibleIf = () => ev.Enabled && evidenceRequest.CanPresent })
                 }.Bind(new FlagView(new(() => ev.Enabled, ev.Title, "---")))

@@ -5,6 +5,19 @@
     <engine:VisualElement name="Overlay" class="uiScreen">
         <engine:Instance template="UI SRPG Character Block" name="CharBlockLeft" style="position: absolute; bottom: 208px;" />
         <engine:Instance template="UI SRPG Character Block" name="CharBlockRight" style="position: absolute; right: 0; bottom: 210px;" />
+        <engine:VisualElement name="NodeInfo" picking-mode="Ignore" class="nodeInfoOverlay" style="flex-grow: 1;">
+            <engine:Label text="Forest" name="NodeInfoTitle" picking-mode="Ignore" />
+            <engine:VisualElement name="NodeInfoData" picking-mode="Ignore" style="flex-grow: 1;">
+                <engine:VisualElement name="movIcon" picking-mode="Ignore" class="nodeInfoIcon" />
+                <engine:Label text="0.8" name="movText" picking-mode="Ignore" />
+                <engine:VisualElement name="healIcon" picking-mode="Ignore" class="nodeInfoIcon" style="background-image: url(&quot;project://database/Assets/Danmokou/Kenney/GameIcons/suit_hearts.png?fileID=2800000&amp;guid=72442e110ae898c4cb942fc7344476ab&amp;type=3#suit_hearts&quot;);" />
+                <engine:Label text="-" name="healText" picking-mode="Ignore" />
+                <engine:VisualElement name="atkIcon" picking-mode="Ignore" class="nodeInfoIcon" style="background-image: url(&quot;project://database/Assets/Danmokou/Kenney/GameIcons/sword.png?fileID=2800000&amp;guid=81c33f6794f84234a83af7ad9f8dfd39&amp;type=3#sword&quot;);" />
+                <engine:Label text="-" name="atkText" picking-mode="Ignore" />
+                <engine:VisualElement name="movIcon" picking-mode="Ignore" class="nodeInfoIcon" style="background-image: url(&quot;project://database/Assets/Danmokou/Kenney/GameIcons/shield.png?fileID=2800000&amp;guid=447c7c9c1b038a34c8401a5c5b388100&amp;type=3#shield&quot;);" />
+                <engine:Label text="1" name="defText" picking-mode="Ignore" />
+            </engine:VisualElement>
+        </engine:VisualElement>
         <engine:Label text="HELLO WORLD" name="Label" style="position: absolute; bottom: 0; right: 0; left: 0; -unity-font-definition: url(&quot;project://database/Assets/SZYU/Fonts/LinBiolinum_R_G.ttf?fileID=12800000&amp;guid=a10920f256006494a820e4ac8d9123c6&amp;type=3#LinBiolinum_R_G&quot;); font-size: 60px; -unity-text-align: upper-center;" />
     </engine:VisualElement>
 </engine:UXML>

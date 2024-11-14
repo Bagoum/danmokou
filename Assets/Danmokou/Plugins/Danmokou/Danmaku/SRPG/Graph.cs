@@ -15,7 +15,7 @@ public interface IEdge<V> {
 
 public record Edge(Node From, Node To) : IEdge<Node> {
     public int Direction { get; init; } = 0;
-    public int Cost(Unit u) => From.ExitCost(u) + To.EntryCost(u);
+    public float Cost(Unit u) => From.ExitCost(u) + To.EntryCost(u);
 }
 
 

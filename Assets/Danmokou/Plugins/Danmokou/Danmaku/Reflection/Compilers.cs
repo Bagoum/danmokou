@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Expressions;
@@ -14,64 +15,28 @@ using Danmokou.DataHoist;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
-using Danmokou.Reflection2;
+using Danmokou.SM;
 using JetBrains.Annotations;
+using Scriptor;
+using Scriptor.Analysis;
+using Scriptor.Expressions;
+using Scriptor.Reflection;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
-using PEx = System.Linq.Expressions.ParameterExpression;
 using static Danmokou.Reflection.Aliases;
 using static Danmokou.Reflection.CompilerHelpers;
+using static Scriptor.Expressions.ExHelpers;
 
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
-using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector3>>;
-using ExTP4 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector4>>;
-using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
-using ExVTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.Expressions.VTPExpr>>;
-using ExSBCF = System.Func<Danmokou.Expressions.TExSBCUpdater, Danmokou.Expressions.TEx<BagoumLib.Cancellation.ICancellee>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExPred = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<bool>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
+using ExTP3 = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector3>>;
+using ExTP4 = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector4>>;
+using ExBPRV2 = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<BagoumLib.Mathematics.V2RV2>>;
+using ExVTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<Danmokou.Expressions.VTPExpr>>;
+using ExSBCF = System.Func<Danmokou.Expressions.TExSBCUpdater, Scriptor.Expressions.TEx<BagoumLib.Cancellation.ICancellee>, Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx>;
 
 namespace Danmokou.Reflection {
-
-public interface IDelegateArg {
-    public TExArgCtx.Arg MakeTExArg(int index);
-    public ImplicitArgDecl MakeImplicitArgDecl();
-    public string Name { get; }
-    /// <summary>
-    /// Type of function argument, on the level of typeof(float).
-    /// </summary>
-    public Type Type { get; }
-}
-
-public readonly struct DelegateArg : IDelegateArg {
-    public string Name { get; }
-    public Type Type { get; }
-    private readonly bool isRef;
-    private readonly bool priority;
-    public DelegateArg(string name, Type t, bool isRef=false, bool priority=false) {
-        this.Name = name;
-        this.Type = t;
-        this.isRef = isRef;
-        this.priority = priority;
-    }
-    public TExArgCtx.Arg MakeTExArg(int index) => TExArgCtx.Arg.MakeAny(Type, Name ?? $"$_arg{index+1}", priority, isRef);
-    public ImplicitArgDecl MakeImplicitArgDecl() => new ImplicitArgDecl(default, Type, Name!);
-}
-public readonly struct DelegateArg<T> : IDelegateArg {
-
-    public string Name { get; }
-    public Type Type => typeof(T);
-    private readonly bool isRef;
-    private readonly bool priority;
-    public DelegateArg(string name, bool isRef=false, bool priority=false) {
-        this.Name = name;
-        this.isRef = isRef;
-        this.priority = priority;
-    }
-    public TExArgCtx.Arg MakeTExArg(int index) => TExArgCtx.Arg.Make<T>(Name ?? $"$_arg{index+1}", priority, isRef);
-    public ImplicitArgDecl MakeImplicitArgDecl() => new ImplicitArgDecl<T>(default, Name!);
-}
-
 /// <summary>
 /// A layer of indirection placed after expression construction but before compilation.
 /// </summary>
@@ -96,12 +61,13 @@ public readonly struct ReadyToCompileExpr<D> where D : Delegate {
 
     public D Compile() => 
         fixedResult ?? expression.BakeAndCompile<D>(argBag,
-        arguments.Select(a => (Expression)a.expr as ParameterExpression ?? null).FilterNone().ToArray());
+        arguments.Select(a => (Ex)a.expr as ParameterExpression).FilterNone().ToArray());
 
     //public static implicit operator D(ReadyToCompileExpr<D> expr) => expr.Compile();
 }
 
 public static class CompilerHelpers {
+    private static TExArgCtx.Arg MakeBPI() => MakeArg<ParametricInfo>("bpi", true);
     
     #region RawCompilers
 
@@ -118,26 +84,26 @@ public static class CompilerHelpers {
         }
         if (!hasEFArg) {
             if (bpiArg != null)
-                args = args.Append(TExArgCtx.Arg.MakeFromTEx("ef", new TExPI(bpiArg).EnvFrame, false)).ToArray();
+                args = args.Append(TExArgCtx.Arg.FromTEx("ef", new TExPI(bpiArg).EnvFrame, false)).ToArray();
             else if (gcxArg != null)
-                args = args.Append(TExArgCtx.Arg.MakeFromTEx("ef", new TExGCX(gcxArg).EnvFrame, false)).ToArray();
+                args = args.Append(TExArgCtx.Arg.FromTEx("ef", new TExGCX(gcxArg).EnvFrame, false)).ToArray();
         }
         if (bpiArg is null && gcxArg != null)
-            args = args.Append(TExArgCtx.Arg.MakeFromTEx("gcx_bpi", new TExPI(new TExGCX(gcxArg).bpi), true)).ToArray();
+            args = args.Append(TExArgCtx.Arg.FromTEx("gcx_bpi", new TExPI(new TExGCX(gcxArg).bpi), true)).ToArray();
         var tac = new TExArgCtx(args);
         return new(exConstructor(tac), tac, args);
     }
 
     public static ReadyToCompileExpr<D> PrepareDelegateBPI<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate {
-        return PrepareDelegate<D>(exConstructor, args.Prepend(TExArgCtx.Arg.MakeBPI).ToArray());
+        return PrepareDelegate<D>(exConstructor, args.Prepend(MakeBPI()).ToArray());
     }
     public static ReadyToCompileExpr<D> PrepareDelegateBPI<D>(Func<TExArgCtx, TEx> exConstructor) where D : Delegate {
-        return PrepareDelegate<D>(exConstructor, TExArgCtx.Arg.MakeBPI);
+        return PrepareDelegate<D>(exConstructor, MakeBPI());
     }
 
     public static ReadyToCompileExpr<D> PrepareDelegateRSB<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate {
-        var arg_sb = TExArgCtx.Arg.Make<BulletManager.SimpleBullet>("sb", true, isRef: true);
-        var arg_bpi = TExArgCtx.Arg.MakeFromTEx("sb_bpi", ((TExSB)arg_sb.expr).bpi, true);
+        var arg_sb = MakeArg<BulletManager.SimpleBullet>("sb", true, isRef: true);
+        var arg_bpi = TExArgCtx.Arg.FromTEx("sb_bpi", ((TExSB)arg_sb.expr).bpi, true);
         return PrepareDelegate<D>(exConstructor, args.Prepend(arg_bpi).Prepend(arg_sb).ToArray());
     }
 
@@ -146,13 +112,6 @@ public static class CompilerHelpers {
 
     public static ReadyToCompileExpr<D> PrepareDelegate<D>(Func<TExArgCtx, TEx> func, params IDelegateArg[] args) where D : Delegate =>
         PrepareDelegate<D>(func, args.Select((a, i) => a.MakeTExArg(i)).ToArray());
-
-
-    public static D CompileDelegate<D>(Func<TExArgCtx, TEx> func, params IDelegateArg[] args) where D : Delegate =>
-        PrepareDelegate<D>(func, args).Compile();
-
-    public static readonly GenericMethodSignature CompileDelegateMeth = (GenericMethodSignature)
-        MethodSignature.Get(typeof(CompilerHelpers).GetMethod(nameof(CompileDelegate))!);
 
     #endregion
 
@@ -215,13 +174,13 @@ public static class Compilers {
     [ExpressionBoundary]
     [Constable]
     public static FXY FXY(ExBPY ex) => PrepareDelegate<FXY>(ex, 
-        TExArgCtx.Arg.Make<float>("x", true)).Compile();
+        MakeArg<float>("x", true)).Compile();
     
     [Fallthrough]
     [ExpressionBoundary]
     [Constable]
     public static Easer Easer(ExBPY ex) => PrepareDelegate<Easer>(ex, 
-        TExArgCtx.Arg.Make<float>("x", true)).Compile();
+        MakeArg<float>("x", true)).Compile();
 
     [Fallthrough]
     [ExpressionBoundary]

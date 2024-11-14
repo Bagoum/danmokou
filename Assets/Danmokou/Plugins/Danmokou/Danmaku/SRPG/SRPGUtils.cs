@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
+using BagoumLib.Culture;
 using BagoumLib.DataStructures;
 using BagoumLib.Functional;
 using BagoumLib.Reflection;
@@ -13,21 +14,22 @@ using UnityEngine.Tilemaps;
 
 namespace Danmokou.SRPG {
 public static class SRPGUtils {
-    private static ISRPGNodeMatchable[]? _nodeTypes;
-    public static ISRPGNodeMatchable[] NodeTypes => _nodeTypes ??= new ISRPGNodeMatchable[] {
+    private static INodeMatchable[]? _nodeTypes;
+    public static INodeMatchable[] NodeTypes => _nodeTypes ??= new INodeMatchable[] {
         new Empty(),
         new Grass(),
         new Road(),
         new Water(),
         new Forested.Maker(),
     };
-    private static Dictionary<string, ISRPGNodeMatchable>? _keyToNodeType;
-    public static Dictionary<string, ISRPGNodeMatchable> KeyToNodeType => _keyToNodeType ??= 
+    private static Dictionary<string, INodeMatchable>? _keyToNodeType;
+    public static Dictionary<string, INodeMatchable> KeyToNodeType => _keyToNodeType ??= 
         NodeTypes.Where(nt => nt.Key != null).ToDictionary(nt => nt.Key!);
+    private static readonly Dictionary<(INodeType, INodeModifier), INodeType> modCache = new();
 
     public static Node MakeNode(IReadOnlyList<ISRPGNodeMatcher> matchers, Tilemap[] tilemaps, 
         Vector3Int tilemapMin, Vector2Int index) {
-        ISRPGNodeType? typ = null;
+        INodeType? typ = null;
         var loc = tilemapMin + (Vector3Int)index;
         foreach (var tm in tilemaps) {
             if (tm.GetTile(loc) is not { } tile)
@@ -35,11 +37,13 @@ public static class SRPGUtils {
             var matcher = ISRPGNodeMatcher.Match(tile, matchers) ??
                           throw new Exception($"No matched tile for {tile}");
             var tileCons = SRPGUtils.KeyToNodeType[matcher.Key];
-            if (tileCons is ISRPGNodeModifier modder) {
+            if (tileCons is INodeModifier modder) {
                 if (typ is null)
                     throw new Exception($"Cannot use tile modder {modder} with no base tile");
-                typ = modder.Modify(typ);
-            } else if (tileCons is ISRPGNodeType rawTyp)
+                typ = modCache.TryGetValue((typ, modder), out var nxt) ?
+                    nxt :
+                    modCache[(typ, modder)] = modder.Modify(typ);
+            } else if (tileCons is INodeType rawTyp)
                 typ = rawTyp; //overwrite if already exists
             else throw new Exception($"No handling for tile constructor type {tileCons.GetType().RName()}");
         }
@@ -145,6 +149,16 @@ public static class SRPGUtils {
         Stat.Defense => "Def",
         Stat.Speed => "Spd",
         Stat.Move => "Mov",
+        _ => throw new ArgumentOutOfRangeException(nameof(s), s, null)
+    };
+
+    public static LString Name(this Stat s) => s switch {
+        Stat.MaxHP => "Max HP",
+        Stat.CurrHP => "Current HP",
+        Stat.Attack => "Attack",
+        Stat.Defense => "Defense",
+        Stat.Speed => "Speed",
+        Stat.Move => "Movement",
         _ => throw new ArgumentOutOfRangeException(nameof(s), s, null)
     };
     

@@ -1,0 +1,80 @@
+
+var abc = 5.;
+
+function RandAxis() {
+    return randi(-1,2);
+}
+function RandCoord() {
+    return new Vector2(RandAxis(), RandAxis());
+}
+function PlayerGridX(x) {
+    return -3.6 + 2.1 * x;
+}
+function EnemyGridX(x) {
+    return 3.6 + 2.1 * x;
+}
+function GridY(y) {
+    return -0.5 + 2.1 * y;
+}
+
+function PlayerGrid(xy::Vector2) {
+    return new Vector2(PlayerGridX(xy.x), GridY(xy.y));
+}
+
+function EnemyGrid(xy::Vector2) {
+    return new Vector2(EnemyGridX(xy.x), GridY(xy.y));
+}
+
+function RandPlayerGrid() {
+    return PlayerGrid(RandCoord());
+}
+
+function RandEnemyGrid() {
+    return EnemyGrid(RandCoord());
+}
+
+macro HLaser(style, axis = r.RandAxis()) {
+    sync style <-8;:;:> gsr {
+        root(r.PlayerGrid(py(axis)))
+    } laser(none, 1.5, 0.5, { dsfx, length(20) })
+}
+
+macro VLaser(style, axis = r.RandAxis()) {
+    sync style <;8:;:-90> gsr {
+        root(r.PlayerGrid(px(axis)))
+    } laser(none, 1.5, 0.5, { dsfx, length(20) })
+}
+
+macro H2Laser(style, naxis = r.RandAxis()) {
+    gtr {
+        start b{
+            hvar skip = naxis;
+        }
+        preloop b{
+            hvar axis = i - 1;
+        }
+        wait 0
+        times 3
+    } gtr {
+        clip(axis == skip)
+    } sync style <-8;:;:> gsr {
+        root(r.PlayerGrid(py(axis)))
+    } laser(none, 1.5, 2, { dsfx, length(20), s(3) })
+}
+
+macro V2Laser(style, naxis = r.RandAxis()) {
+    gtr {
+        start b{
+            hvar skip = naxis;
+        }
+        preloop b{
+            hvar axis = i - 1;
+        }
+        wait 0
+        times 3
+    } gtr {
+        clip(axis == skip)
+    } sync style <;8:;:-90> gsr {
+        root(r.PlayerGrid(px(axis)))
+    } laser(none, 1.5, 2, { dsfx, length(20), s(3) })
+}

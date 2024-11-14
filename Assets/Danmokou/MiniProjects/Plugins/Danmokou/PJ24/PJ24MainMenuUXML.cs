@@ -60,13 +60,11 @@ public class PJ24MainMenuUXML : XMLMainMenu {
             new TransferNode(main_options, OptionsScreen)
                 { Prefab = mainMenuNodeVTA },
             new TransferNode(main_licenses, LicenseScreen)
-                { Prefab = mainMenuNodeVTA },
-#if !WEBGL
-            new FuncNode(main_quit, Application.Quit)
-                { Prefab = mainMenuNodeVTA },
-#endif
-            new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
                 { Prefab = mainMenuNodeVTA }
+#if !WEBGL
+            , new FuncNode(main_quit, Application.Quit)
+                { Prefab = mainMenuNodeVTA }
+#endif
         ) {
             ExitIndexOverride = -2
         };

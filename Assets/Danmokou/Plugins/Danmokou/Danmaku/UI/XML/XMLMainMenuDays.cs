@@ -125,11 +125,10 @@ public class XMLMainMenuDays : XMLMainMenu {
             new TransferNode(main_replays, ReplayScreen) {
                 EnabledIf = () => (SaveData.p.ReplayData.Count > 0)
             },
-            new TransferNode(main_options, OptionsScreen),
+            new TransferNode(main_options, OptionsScreen)
 #if !WEBGL
-            new FuncNode(main_quit, Application.Quit),
+            , new FuncNode(main_quit, Application.Quit)
 #endif
-            new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
         ).WithNodeMod(n => n.WithCSS(large1Class));
 
         bool doAnim = ReturnTo == null;

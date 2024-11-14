@@ -61,6 +61,8 @@ public class RenderablePane {
     }
 
     public void RemakeTexture((int w, int h) res) {
+        //can occur during shutdown
+        if (MainCamera.RenderTo == null) return;
         var resMult = 1f;
         var baseRes = res;
         if (Target.Value?.ResolutionMult is { } rm) {

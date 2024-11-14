@@ -192,7 +192,7 @@ pattern({ mixer {
 				loadsbtextures({{ "lcircle-black/w", "amulet-red/", "sakura-green/", "fireball-orange/", "dcircle-black/w", "flasharrow-black*", "dot-black*", "triangle-*/", "gem-pink/", "star-*/", "lstar-*", "dcircle-*/b", "lcircle-black/" }})
 				loadbehtextures({{"lightning-black/w", "lightning-*/", "gdlaser-black/w", "gdlaser-*/b", "gdlaser-*/" }})
 				//from shot
-				loadsbtextures({{ "amuletdd-red", " amuletdd-blue", " needle-orange" }})
+				loadsbtextures({{ "amuletdd-red", "amuletdd-blue", "needle-orange" }})
 				loadsbtextures({{"blast-red", "blast-purple", "needle2-purple" }})
 			}
 			shiftphaseto 3

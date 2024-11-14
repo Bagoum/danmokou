@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using BagoumLib.Cancellation;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DMath.Functions;
@@ -64,7 +65,7 @@ public struct Movement {
         vtp = path;
         flipX = 1;
         flipY = 1;
-        this.rootPos = parentLoc + localLoc.TrueLocation;
+        this.rootPos = parentLoc + localLoc.TrueLocation();
     }
 
     public Movement(VTP vtp, Vector2 rootPos, float ang) : this(vtp, rootPos, M.CosDeg(ang), M.SinDeg(ang), 1, 1) { }
@@ -236,7 +237,7 @@ public struct LaserMovement {
         flipX = 1;
         flipY = 1;
         tflipX = tflipY = 1;
-        this.rootPos = parentLoc + localLoc.TrueLocation;
+        this.rootPos = parentLoc + localLoc.TrueLocation();
         rotation = null;
         isSimple = false;
         simpleDir = Vector2.zero;

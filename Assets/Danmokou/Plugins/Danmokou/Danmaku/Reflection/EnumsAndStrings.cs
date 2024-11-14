@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using BagoumLib.Mathematics;
 using CommunityToolkit.HighPerformance.Buffers;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Scriptor.Expressions;
 using UnityEngine;
 using UnityEngine.Profiling;
 

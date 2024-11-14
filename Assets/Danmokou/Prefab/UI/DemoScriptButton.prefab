@@ -67,8 +67,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Button
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 223c9916a7673ad489f8f14fb1b9ce2f, type: 2}
-  m_sharedMaterial: {fileID: 7476151727331210162, guid: 223c9916a7673ad489f8f14fb1b9ce2f,
+  m_fontAsset: {fileID: 11400000, guid: 81a6a3e3e85946940ae6540cfa63a13d, type: 2}
+  m_sharedMaterial: {fileID: -4739309916065742781, guid: 81a6a3e3e85946940ae6540cfa63a13d,
     type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -93,17 +93,17 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 0.3
-  m_fontSizeBase: 0.3
+  m_fontSize: 0.28
+  m_fontSizeBase: 0.28
   m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 0.22
+  m_fontSizeMax: 0.28
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
-  m_characterSpacing: 0
+  m_characterSpacing: -4
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -149,7 +149,7 @@ GameObject:
   - component: {fileID: 8951506086647236508}
   - component: {fileID: 8951506086647236579}
   - component: {fileID: 8951506086647236578}
-  - component: {fileID: 8951506086647236509}
+  - component: {fileID: -5297597607977270315}
   m_Layer: 5
   m_Name: DemoScriptButton
   m_TagString: Untagged
@@ -259,8 +259,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 8951506086647236509}
-        m_TargetAssemblyTypeName: DemoScriptButton, Self.Danmaku
+      - m_Target: {fileID: -5297597607977270315}
+        m_TargetAssemblyTypeName: Danmokou.UI.DemoScriptButton, Danmokou.Danmaku
         m_MethodName: SetMe
         m_Mode: 1
         m_Arguments:
@@ -271,7 +271,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &8951506086647236509
+--- !u!114 &-5297597607977270315
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 339e020cf5814549b2be221fbc29ca3b, type: 3}
+  m_Name: PH Game Def
+  m_EditorClassIdentifier: 
+  m_key: PH
+  m_version:
+    major: 1
+    minor: 0
+    patch: 1
+  m_tutorial: {fileID: 0}
+  m_miniTutorial: {fileID: 0}
+  m_replaySaveMenu: {fileID: 0}
+  m_bounds:
+    left: -8
+    right: 8
+    top: 4
+    bot: -4.5
+    center: {x: 0, y: 0}
+  m_playerMovementBounds:
+    left: -8
+    right: 8
+    top: 4
+    bot: -4
+    center: {x: 0, y: 0}
+  m_endcard: {fileID: 0}
+  m_campaign: {fileID: 11400000, guid: 942fd8c990999dc45aad7494ffd4a50c, type: 2}
+  m_extraCampaign: {fileID: 0}

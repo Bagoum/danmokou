@@ -223,6 +223,10 @@ public class BackgroundOrchestrator : CoroutineRegularUpdater, IBackgroundOrches
         base.OnDisable();
     }
 
+    private void OnDestroy() {
+        UnityEngine.Object.Destroy(mat);
+    }
+
     private void OnRenderImage(RenderTexture source, RenderTexture destination) {
         UnityEngine.Graphics.Blit(source, destination, mat);
     }

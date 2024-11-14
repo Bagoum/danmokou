@@ -4,17 +4,21 @@ using System.Linq.Expressions;
 using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
+using Scriptor;
+using Scriptor.Expressions;
+using Scriptor.Math;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.DMath.Functions.VTPConstructors;
 using static Danmokou.DMath.Functions.ExMConversions;
 using static Danmokou.Reflection.Aliases;
-using ExVTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.Expressions.VTPExpr>>;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
-using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector3>>;
+using static Scriptor.Expressions.ExMHelpers;
+using ExVTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<Danmokou.Expressions.VTPExpr>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExPred = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<bool>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
+using ExTP3 = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector3>>;
 
 
 namespace Danmokou.DMath.Functions {
@@ -32,10 +36,10 @@ public delegate TEx<VTPExpr> CoordsToDelta(ITexMovement vel, TEx<float> dt, TExV
 /// </summary>
 public static class VTPConstructors {
     public static V2ToCoords CartesianRot(ExTP erv) => (c, s, bpi, fxy) => 
-        TEx.ResolveV2AsXY(erv(bpi), (x, y) => 
+        TExHelpers.ResolveV2AsXY(erv(bpi), (x, y) => 
             fxy(Ex.Subtract(Ex.Multiply(c, x), Ex.Multiply(s, y)),
                 Ex.Add(Ex.Multiply(s, x), Ex.Multiply(c, y)),
-                ExMHelpers.E0));
+                E0));
 
     public static CoordF CartesianRot(TP rv) => delegate(float c, float s, ParametricInfo bpi, ref Vector3 vec) {
         var v2 = rv(bpi);
@@ -45,7 +49,7 @@ public static class VTPConstructors {
     };
 
     public static V2ToCoords CartesianNRot(ExTP enrv) => (c, s, bpi, fxy) => 
-        TEx.ResolveV2AsXY(enrv(bpi), (x, y) => fxy(x, y, ExMHelpers.E0), singleUse: true);
+        TExHelpers.ResolveV2AsXY(enrv(bpi), (x, y) => fxy(x, y, E0), singleUse: true);
 
     // ReSharper disable once RedundantAssignment
     public static CoordF CartesianNRot(TP tpnrv) => delegate(float c, float s, ParametricInfo bpi, ref Vector3 vec) {
@@ -61,8 +65,7 @@ public static class VTPConstructors {
             Ex.Assign(v2, erv(bpi)),
             fxy(nrv.x.Add(Ex.Subtract(Ex.Multiply(c, v2.x), Ex.Multiply(s, v2.y))),
                 nrv.y.Add(Ex.Add(Ex.Multiply(s, v2.x), Ex.Multiply(c, v2.y))),
-                ExMHelpers.E0),
-            Expression.Empty()
+                E0)
         );
     }
 
@@ -75,8 +78,7 @@ public static class VTPConstructors {
             Ex.Assign(rv, erv(bpi)),
             fxy(nrv.x.Add(Ex.Subtract(Ex.Multiply(c, rv.x), Ex.Multiply(s, rv.y))),
                 nrv.y.Add(Ex.Add(Ex.Multiply(s, rv.x), Ex.Multiply(c, rv.y))),
-                nrv.z.Add(rv.z)),
-            Expression.Empty()
+                nrv.z.Add(rv.z))
         );
     }
 
@@ -95,8 +97,7 @@ public static class VTPConstructors {
             Ex.Assign(vr, r(bpi)),
             fxy(Ex.Subtract(Ex.Multiply(c, lookup.x), Ex.Multiply(s, lookup.y)).Mul(vr),
                 Ex.Add(Ex.Multiply(s, lookup.x), Ex.Multiply(c, lookup.y)).Mul(vr),
-                ExMHelpers.E0),
-            Expression.Empty()
+                E0)
         );
     }
 
@@ -108,8 +109,7 @@ public static class VTPConstructors {
             Ex.Assign(lookup, ExM.CosSinDeg(rt.y)),
             fxy(Ex.Subtract(Ex.Multiply(c, lookup.x), Ex.Multiply(s, lookup.y)).Mul(rt.x),
                 Ex.Add(Ex.Multiply(s, lookup.x), Ex.Multiply(c, lookup.y)).Mul(rt.x),
-                ExMHelpers.E0),
-            Expression.Empty()
+                E0)
         );
     }
 
@@ -169,15 +169,15 @@ public static class VTPControllers {
 
     public static ExVTP Offset(V2ToCoords cf) => tac => InLetCtx(tac, cf, (vel, dt, delta, x, y, z) =>
             Ex.Block(
-                delta.x.Is(vel.flipX.Mul(x).Add(vel.rootX).Sub(tac.locx)),
-                delta.y.Is(vel.flipY.Mul(y).Add(vel.rootY).Sub(tac.locy))
+                delta.x.Is(vel.flipX.Mul(x).Add(vel.rootX).Sub(tac.locx())),
+                delta.y.Is(vel.flipY.Mul(y).Add(vel.rootY).Sub(tac.locy()))
             ));
 
     public static ExVTP Offset3D(V2ToCoords cf) => tac => InLetCtx(tac, cf, (vel, dt, delta, x, y, z) =>
             Ex.Block(
-                delta.x.Is(vel.flipX.Mul(x).Add(vel.rootX).Sub(tac.locx)),
-                delta.y.Is(vel.flipY.Mul(y).Add(vel.rootY).Sub(tac.locy)),
-                delta.z.Is(z.Sub(tac.locz))
+                delta.x.Is(vel.flipX.Mul(x).Add(vel.rootX).Sub(tac.locx())),
+                delta.y.Is(vel.flipY.Mul(y).Add(vel.rootY).Sub(tac.locy())),
+                delta.z.Is(z.Sub(tac.locz()))
             ));
 
     public static VTP Offset(CoordF coordF) =>
@@ -226,7 +226,7 @@ public static class VTPRepo {
     /// </summary>
     /// <param name="rv">Rotational velocity parametric</param>
     /// <returns></returns>
-    [Alias("tprot")]
+    [Alias("tprot")] [Alias("rvel")]
     public static ExVTP RVelocity(ExTP rv) => VTPControllers.Velocity(CartesianRot(rv));
 
     /// <summary>
@@ -234,7 +234,7 @@ public static class VTPRepo {
     /// </summary>
     /// <param name="nrv">Nonrotational velocity parametric</param>
     /// <returns></returns>
-    [Alias("tpnrot")]
+    [Alias("tpnrot")] [Alias("nrvel")]
     public static ExVTP NRVelocity(ExTP nrv) => VTPControllers.Velocity(CartesianNRot(nrv));
 
     /// <summary>
@@ -289,7 +289,7 @@ public static class VTPRepo {
 
     /// <summary>
     /// Offset function for dependent (empty-guided) fires.
-    /// Reduces to `offset (* RADIUS (@ HOISTDIR p)) (@ HOISTLOC p)`
+    /// Reduces to `offset (RADIUS * (@ HOISTDIR p)) (@ HOISTLOC p)`
     /// </summary>
     /// <param name="hoistLoc">Location of empty guider</param>
     /// <param name="hoistDir">Direction of empty guider</param>
@@ -298,7 +298,7 @@ public static class VTPRepo {
     /// <returns></returns>
     public static ExVTP DOffset(ReflectEx.Hoist<Vector2> hoistLoc, ReflectEx.Hoist<Vector2> hoistDir,
         ExBPY indexer, ExBPY radius) => Offset(
-        bpi => Mul(radius(bpi), RetrieveHoisted(hoistDir, indexer)(bpi)),
+        bpi => ExMOperators.Mul(radius(bpi), RetrieveHoisted(hoistDir, indexer)(bpi)),
         RetrieveHoisted(hoistLoc, indexer)
     );
 

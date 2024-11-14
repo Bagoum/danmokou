@@ -6,6 +6,7 @@ using System.Reactive;
 using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku.Descriptors;
@@ -16,17 +17,19 @@ using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.Pooling;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
 using Danmokou.Services;
 using Danmokou.SM;
 using JetBrains.Annotations;
 using NUnit;
+using Scriptor;
+using Scriptor.Analysis;
+using Scriptor.Expressions;
 using UnityEngine;
 using GCP = Danmokou.Danmaku.Options.GenCtxProperty;
 using static Danmokou.Reflection.Compilers;
 
 namespace Danmokou.Danmaku.Patterns {
-public record SyncPattern(SyncPatterner Exec, EnvFrame? EnvFrame = null) : EnvFrameAttacher {
+public record SyncPattern(SyncPatterner Exec, EnvFrame? EnvFrame = null) : EnvFrameAttacher, IFlattenDocSymbolArray {
     private SyncPatterner Exec { get; } = Exec;
     public EnvFrame? EnvFrame { get; set; } = EnvFrame;
 
@@ -45,7 +48,7 @@ public record SyncPattern(SyncPatterner Exec, EnvFrame? EnvFrame = null) : EnvFr
 }
 public delegate void SyncPatterner(SyncHandoff sbh);
 
-public record AsyncPattern(AsyncPatterner Exec, EnvFrame? EnvFrame = null) : EnvFrameAttacher {
+public record AsyncPattern(AsyncPatterner Exec, EnvFrame? EnvFrame = null) : EnvFrameAttacher, IFlattenDocSymbolArray {
     private AsyncPatterner Exec { get; } = Exec;
     public EnvFrame? EnvFrame { get; set; } = EnvFrame;
     
@@ -118,8 +121,8 @@ public struct CommonHandoff : IDisposable {
     /// Mirror the contained GCX (ie. copy the GCX, and mirror the internal envframe).
     /// </summary>
     /// <returns></returns>
-    public readonly CommonHandoff Mirror() {
-        return new CommonHandoff(cT, bc, gcx.Mirror(), rv2Override);
+    public readonly CommonHandoff Mirror(ICancellee? newCT = null) {
+        return new CommonHandoff(newCT ?? cT, bc, gcx.Mirror(), rv2Override);
     }
 
     public readonly void Dispose() {
@@ -253,26 +256,26 @@ public static partial class AtomicPatterns {
     #region Items
 
     public static SyncPattern LifeItem() => new(sbh =>
-        ItemPooler.RequestLife(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
+        ItemPooler.RequestLife(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation())));
     
     public static SyncPattern ValueItem() =>new(sbh =>
-        ItemPooler.RequestValue(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
+        ItemPooler.RequestValue(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation())));
     
     public static SyncPattern SmallValueItem() => new(sbh => 
-        ItemPooler.RequestSmallValue(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
+        ItemPooler.RequestSmallValue(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation())));
     
     public static SyncPattern PointPPItem() => new(sbh => 
-        ItemPooler.RequestPointPP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
+        ItemPooler.RequestPointPP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation())));
     
     public static SyncPattern GemItem() => new(sbh => 
-        ItemPooler.RequestGem(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
+        ItemPooler.RequestGem(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation())));
     
     [Alias("1UpItem")]
     public static SyncPattern OneUpItem() => new(sbh => 
-        ItemPooler.Request1UP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
+        ItemPooler.Request1UP(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation())));
     
     public static SyncPattern PowerupShiftItem() => new(sbh => 
-        ItemPooler.RequestPowerupShift(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation)));
+        ItemPooler.RequestPowerupShift(new ItemRequestContext(sbh.bc.ParentOffset, sbh.RV2.TrueLocation())));
     
     #endregion
     
@@ -385,13 +388,13 @@ public static partial class AtomicPatterns {
         SummonR(new RootedVTP(0, 0, VTPRepo.Null()), sm, options);
 
     private static BPRV2 DrawerLoc(SyncHandoff sbh, BPRV2 locScaleAngle, TP? offset = null) {
-        var summonLoc = sbh.bc.FacedRV2(sbh.RV2) + ((offset == null) ? sbh.bc.ParentOffset : Vector2.zero);
+        var summonLoc = sbh.bc.FacedRV2(sbh.RV2).AddToNXY((offset == null) ? sbh.bc.ParentOffset : Vector2.zero);
         return bpi => {
-            var offsetLoc = summonLoc + (offset?.Invoke(bpi) ?? Vector2.zero);
+            var offsetLoc = summonLoc.AddToNXY(offset?.Invoke(bpi) ?? Vector2.zero);
             var lsa = locScaleAngle(bpi);
-            return new V2RV2(
-                (offsetLoc + new Vector3(lsa.nx, lsa.ny, 0)).TrueLocation, //locScaleAng offset is rotational
-                lsa.RV,
+            return MathHelpers.V2RV2FromVectors(
+                offsetLoc.AddToRot(new(lsa.nx, lsa.ny, 0)).TrueLocation(), //locScaleAng offset is rotational
+                lsa.RV(),
                 lsa.angle + summonLoc.angle
             );
         };
@@ -505,7 +508,7 @@ public struct LoopControl<T> {
         if (props.forceRoot != null) {
             Vector2 newRoot = props.forceRoot(ch.gcx);
             if (props.forceRootAdjust)
-                ch.gcx.RV2 += ch.bc.ParentOffset - newRoot;
+                ch.gcx.RV2 = ch.gcx.RV2.AddToNXY(ch.bc.ParentOffset - newRoot);
             ch.bc.Root(newRoot);
         } else if (props.laserIndexer != null) {
             var l = (ch.gcx.exec as Laser) ??
@@ -623,11 +626,13 @@ public struct LoopControl<T> {
                 StyleSelector.MergeStyles(ncolor, parent_style) :
                 StyleSelector.MergeStyles(parent_style, ncolor);
         if (props.sah != null) {
-            GCX.RV2 = GCX.BaseRV2 + V2RV2.Rot(props.sah.Locate(GCX));
+            var location = props.sah.Locate(GCX);
+            GCX.RV2 = GCX.BaseRV2 + V2RV2.Rot(location.x, location.y);
             var simp_gcx = GCX.Copy(null);
             simp_gcx.FinishIteration(props.postloop, V2RV2.Zero);
             simp_gcx.UpdateRules(props.preloop);
-            GCX.RV2 = props.sah.Angle(GCX, GCX.RV2, GCX.BaseRV2 + V2RV2.Rot(props.sah.Locate(simp_gcx)));
+            var nextLocation = props.sah.Locate(simp_gcx);
+            GCX.RV2 = props.sah.Angle(GCX, GCX.RV2, GCX.BaseRV2 + V2RV2.Rot(nextLocation.x, nextLocation.y));
             simp_gcx.Dispose();
         } else if (props.frv2 != null) {
             GCX.RV2 = GCX.BaseRV2 + props.frv2(GCX);

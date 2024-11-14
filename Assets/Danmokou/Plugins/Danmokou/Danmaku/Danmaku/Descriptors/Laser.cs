@@ -1,4 +1,5 @@
 ﻿using System;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku.Options;
@@ -30,7 +31,7 @@ public class Laser : FrameAnimBullet {
         ctr = new CurvedTileRenderLaser(config, gameObject);
         base.Awake();
     }
-    private void Initialize(bool isNew, BehaviorEntity? parent, in Movement movement, ParametricInfo pi, float cold, float hot, BEHStyleMetadata style, ref RealizedLaserOptions options) {
+    private void Initialize(bool isNew, BehaviorEntity? parent, in Movement movement, ParametricInfo pi, float cold, float hot, StyleMetadata style, ref RealizedLaserOptions options) {
         pi.ctx.laserController = ctr;
         ctr.SetYScale(options.yScale * defaultWidthMultiplier); //Needs to be done before Colorize sets first frame
         base.Initialize(style, options.AsBEH, parent, in movement, pi, out _); // Call after Awake/Reset
@@ -80,14 +81,14 @@ public class Laser : FrameAnimBullet {
         base.CullHook(allowFinalize);
     }
 
-    public static void Request(BEHStyleMetadata style, BehaviorEntity? parent, in Movement vel, ParametricInfo pi, 
+    public static void Request(StyleMetadata style, BehaviorEntity? parent, in Movement vel, ParametricInfo pi, 
         float cold, float hot, ref RealizedLaserOptions options) {
-        Laser created = BEHPooler.RequestUninitialized(style.RecolorOrThrow.prefab, out bool isNew)
+        var created = BEHPooler.RequestUninitialized(style.RecolorOrThrow.prefab, out bool isNew)
             as Laser ?? throw new Exception($"The object {style.style} is not a laser!");
         created.Initialize(isNew, parent, in vel, pi, cold, hot, style, ref options);
     }
     
-    protected override void UpdateStyle(BEHStyleMetadata newStyle) {
+    protected override void UpdateStyle(StyleMetadata newStyle) {
         base.UpdateStyle(newStyle);
         ctr.UpdateLaserStyle(newStyle.style);
     }

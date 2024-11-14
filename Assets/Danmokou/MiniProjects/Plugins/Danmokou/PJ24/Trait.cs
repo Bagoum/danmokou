@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using BagoumLib;
 using BagoumLib.Reflection;
 using Newtonsoft.Json;
 

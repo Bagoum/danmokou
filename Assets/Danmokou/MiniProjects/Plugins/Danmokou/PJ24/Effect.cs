@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using BagoumLib;
+using Newtonsoft.Json;
 
 namespace MiniProjects.PJ24 {
 /// <summary>

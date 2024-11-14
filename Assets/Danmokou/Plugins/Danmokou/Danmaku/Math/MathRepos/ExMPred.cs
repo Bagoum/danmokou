@@ -1,13 +1,12 @@
 ﻿using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
+using Scriptor;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
-using static Danmokou.Expressions.ExMHelpers;
-using tfloat = Danmokou.Expressions.TEx<float>;
-using tbool = Danmokou.Expressions.TEx<bool>;
-using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
-using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
-using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
+using static Scriptor.Expressions.ExMHelpers;
+using tfloat = Scriptor.Expressions.TEx<float>;
+using tbool = Scriptor.Expressions.TEx<bool>;
 using static Danmokou.DMath.Functions.ExMMod;
 
 namespace Danmokou.DMath.Functions {
@@ -16,7 +15,6 @@ namespace Danmokou.DMath.Functions {
 /// </summary>
 [Reflect]
 public static partial class ExMPred {
-
     /// <summary>
     /// Return true.
     /// </summary>
@@ -30,85 +28,6 @@ public static partial class ExMPred {
     [Alias("once")] [Atomic]
     public static tbool False()  => Ex.Constant(false);
 
-    /// <summary>
-    /// Return true iff the argument is false.
-    /// </summary>
-    [BDSL2Operator]
-    public static tbool Not(tbool pred) => Ex.Not(pred);
-    /// <summary>
-    /// Return true iff both arguments are true.
-    /// </summary>
-    /// <param name="pr1">First predicate</param>
-    /// <param name="pr2">Second predicate</param>
-    /// <returns></returns>
-    [Alias("&")] [WarnOnStrict] [Operator] [BDSL2Operator]
-    public static tbool And(tbool pr1, tbool pr2) {
-        return Ex.AndAlso(pr1, pr2);
-    }
-    /// <summary>
-    /// Return true iff one or more arguments are true.
-    /// </summary>
-    /// <param name="pr1">First predicate</param>
-    /// <param name="pr2">Second predicate</param>
-    /// <returns></returns>
-    [Alias("|")] [WarnOnStrict] [Operator] [BDSL2Operator]
-    public static tbool Or(tbool pr1, tbool pr2) {
-        return Ex.OrElse(pr1, pr2);
-    }
-    
-    /// <summary>
-    /// Return true iff the first argument is equal to the second.
-    /// </summary>
-    [Alias("=")] [Operator] [BDSL2Operator] [BDSL1AutoSpecialize(0, typeof(float))]
-    public static tbool Eq<T>(TEx<T> b1, TEx<T> b2) => Ex.Equal(b1, b2);
-    
-    /// <summary>
-    /// Return true iff the first argument is not equal to the second.
-    /// </summary>
-    [Alias("=/=")] [Operator] [BDSL2Operator] [BDSL1AutoSpecialize(0, typeof(float))]
-    public static tbool Neq<T>(TEx<T> b1, TEx<T> b2) => Ex.NotEqual(b1, b2);
-
-
-    /// <summary>
-    /// Return true iff the first argument is greater than the second.
-    /// </summary>
-    /// <param name="b1">First BPY function</param>
-    /// <param name="b2">Second BPY function</param>
-    /// <returns></returns>
-    [Alias(">")] [Operator] [BDSL2Operator] [RestrictTypes(0, typeof(float), typeof(int))] [BDSL1AutoSpecialize(0, typeof(float))]
-    public static tbool Gt<T>(TEx<T> b1, TEx<T> b2) {
-        return Ex.GreaterThan(b1, b2);
-    }
-    /// <summary>
-    /// Return true iff the first argument is greater than or equal to the second.
-    /// </summary>
-    /// <param name="b1">First BPY function</param>
-    /// <param name="b2">Second BPY function</param>
-    /// <returns></returns>
-    [Alias(">=")] [Operator] [BDSL2Operator] [RestrictTypes(0, typeof(float), typeof(int))] [BDSL1AutoSpecialize(0, typeof(float))]
-    public static tbool Geq<T>(TEx<T> b1, TEx<T> b2)  {
-        return Ex.GreaterThanOrEqual(b1, b2);
-    }
-    /// <summary>
-    /// Return true iff the first argument is less than the second.
-    /// </summary>
-    /// <param name="b1">First BPY function</param>
-    /// <param name="b2">Second BPY function</param>
-    /// <returns></returns>
-    [Alias("<")] [Operator] [BDSL2Operator] [RestrictTypes(0, typeof(float), typeof(int))] [BDSL1AutoSpecialize(0, typeof(float))]
-    public static tbool Lt<T>(TEx<T> b1, TEx<T> b2) {
-        return Ex.LessThan(b1, b2);
-    }
-    /// <summary>
-    /// Return true iff the first argument is less than or equal to the second.
-    /// </summary>
-    /// <param name="b1">First BPY function</param>
-    /// <param name="b2">Second BPY function</param>
-    /// <returns></returns>
-    [Alias("<=")] [Operator] [BDSL2Operator] [RestrictTypes(0, typeof(float), typeof(int))] [BDSL1AutoSpecialize(0, typeof(float))]
-    public static tbool Leq<T>(TEx<T> b1, TEx<T> b2) {
-        return Ex.LessThanOrEqual(b1, b2);
-    }
     /// <summary>
     /// Return true iff the first argument is strictly between the second and third.
     /// </summary>
@@ -137,6 +56,5 @@ public static partial class ExMPred {
     /// Returns true if the number is odd.
     /// </summary>
     public static tbool Odd(tfloat b) => E1.Eq(z1Mod(b));
-
 }
 }

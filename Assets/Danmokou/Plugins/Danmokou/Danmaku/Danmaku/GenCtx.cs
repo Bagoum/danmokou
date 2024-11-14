@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using BagoumLib;
 using BagoumLib.Functional;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Player;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
 using Danmokou.Scenes;
 using Danmokou.Services;
 using JetBrains.Annotations;
+using Scriptor.Analysis;
 using UnityEngine;
 
 namespace Danmokou.Danmaku {
@@ -30,7 +31,7 @@ public class GenCtx : IDisposable {
     public EnvFrame EnvFrame { get; private set; } = EnvFrame.Empty;
     public LexicalScope Scope => EnvFrame.Scope;
     public bool AutovarsAreInherited { get; private set; } = false;
-    public AutoVars? AutoVars => Scope.AutoVars;
+    public IAutoVars? AutoVars => Scope.AutoVars;
     public bool HasGCXVars => AutoVars is AutoVars.GenCtx;
     public AutoVars.GenCtx GCXVars => 
         Scope.NearestAutoVars as AutoVars.GenCtx ?? throw new Exception("GXR autovars not provided");

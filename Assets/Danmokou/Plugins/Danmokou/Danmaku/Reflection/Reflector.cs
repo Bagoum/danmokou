@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using BagoumLib;
 using BagoumLib.Culture;
+using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -16,24 +17,17 @@ using Danmokou.Expressions;
 using Danmokou.SM;
 using Danmokou.SM.Parsing;
 using JetBrains.Annotations;
-using Ex = System.Linq.Expressions.Expression;
+using Scriptor;
+using Scriptor.Compile;
+using Scriptor.Definition;
+using Scriptor.Expressions;
+using Scriptor.Math;
+using Scriptor.Reflection;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
-using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector3>>;
-using ExTP4 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector4>>;
-using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
-using ExVTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.Expressions.VTPExpr>>;
-using ExSBCF = System.Func<Danmokou.Expressions.TExSBCUpdater, Danmokou.Expressions.TEx<BagoumLib.Cancellation.ICancellee>, Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx>;
 
 namespace Danmokou.Reflection {
 public static partial class Reflector {
-    [PublicAPI]
-    //Used by language server to avoid failure on lstring parsing
-    public static bool SOFT_FAIL_ON_UNMATCHED_LSTRING = false;
-
     private static IAST<StateMachine?> ReflectSM(IParseQueue q) {
         var (method, pos) = q.ScanUnit(out _);
         if (method == "file") {
@@ -66,10 +60,10 @@ public static partial class Reflector {
     /// </summary>
     private static readonly Dictionary<Type, Func<string, object?>> SimpleFunctionResolver =
         new() {
-            {typeof(float), arg => Parser.Float(arg)},
-            {typeof(V2RV2), arg => Parser.ParseV2RV2(arg)},
-            {typeof(CRect), arg => Parser.ParseRect(arg)},
-            {typeof(CCircle), arg => Parser.ParseCircle(arg)},
+            {typeof(float), arg => SimpleParser.Float(arg)},
+            {typeof(V2RV2), arg => SimpleParser.ParseV2RV2(arg)},
+            {typeof(CRect), arg => DMath.Parser.ParseRect(arg)},
+            {typeof(CCircle), arg => DMath.Parser.ParseCircle(arg)},
             {typeof(ETime.Timer), ETime.Timer.GetTimer},
         };
 
@@ -125,7 +119,7 @@ public static partial class Reflector {
             if (LocalizedStrings.IsLocalizedStringReference(str)) {
                 if (LocalizedStrings.TryFindReference(str) is { } ls)
                     return new AST.Preconstructed<LString>(pos, ls);
-                else if (SOFT_FAIL_ON_UNMATCHED_LSTRING)
+                else if (LangParser.SoftFailOnUnmatchedLString)
                     return new AST.Preconstructed<LString>(pos,
                         $"Unresolved LocalizedString {str}") {
                         Diagnostics = new ReflectDiagnostic[] {
@@ -237,10 +231,6 @@ public static partial class Reflector {
         var (_, close) = q.NextUnit(out _); // }
         return new AST.SequenceArray(open.Merge(close), eleType, tempList.ToArray());
     }
-
-
-    [UsedImplicitly]
-    public static object[] TupleToArr2<T1, T2>((T1, T2) tup) => new object[] {tup.Item1!, tup.Item2!};
 }
 }
 

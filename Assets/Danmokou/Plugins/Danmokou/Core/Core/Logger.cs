@@ -60,6 +60,9 @@ public static class Logs {
     
     public static void Log(string msg, bool? stackTrace = null, LogLevel level = LogLevel.INFO) =>
         DMKLogs.Log(msg, level, stackTrace);
+    
+    public static void Log1(string fmt, object arg1, bool? stackTrace = null, LogLevel level = LogLevel.INFO) =>
+        DMKLogs.Log(fmt, arg1, level, stackTrace);
 
     public static void LogException(Exception e) => 
         DMKLogs.Error(e);
@@ -127,16 +130,13 @@ public static class LogUtils {
             }
             sb.Append(')');
 #if UNITY_EDITOR
-            sb.AppendFormat(" (at {0})\n", ToFileLink(frame.GetFileName(), frame.GetFileLineNumber()));
+            sb.AppendFormat(" (at {0})\n", Logging.ToFileLink(frame.GetFileName(), frame.GetFileLineNumber()));
 #else
             sb.AppendFormat(" (at {0}:{1})\n", frame.GetFileName(), frame.GetFileLineNumber());
 #endif
         }
         return sb.ToString();
     }
-
-    public static string ToFileLink(string? filename, int line, string? content = null) =>
-        $"<a href=\"{filename}\" line=\"{line}\">{content ?? $"{filename}:{line}"}</a>";
 }
 
 

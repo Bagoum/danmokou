@@ -2,12 +2,16 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
 using Danmokou.Services;
+using Scriptor.Compile;
+using Scriptor.Expressions;
+using Scriptor.Reflection;
 using UnityEngine;
 using static Danmokou.Reflection.CompilerHelpers;
 using Ex = System.Linq.Expressions.Expression;
@@ -73,11 +77,11 @@ public class TestLinuxReflection : MonoBehaviour {
         Debug.Log("as xyrv2 raw: " + new TEx<V2RV2>(ex_angrv2)
 	        .BakeAndCompile<Func<float, float, V2RV2>>(null!, x, y)(2, 9));
 
-        Debug.Log("as xy: " + Danmokou.Reflection2.Helpers.ParseAndCompileDelegate<Func<float, float, float>>(selS,
+        Debug.Log("as xy: " + CompileHelpers.ParseAndCompileDelegate<Func<float, float, float>>(selS,
 	        new DelegateArg<float>("x"),
 	        new DelegateArg<float>("y")
         )(2, 9));
-        Debug.Log("as xyrv2: " + Danmokou.Reflection2.Helpers.ParseAndCompileDelegate<Func<float, float, V2RV2>>(angS,
+        Debug.Log("as xyrv2: " + CompileHelpers.ParseAndCompileDelegate<Func<float, float, V2RV2>>(angS,
 	        new DelegateArg<float>("x"),
 	        new DelegateArg<float>("y")
         )(2, 9));

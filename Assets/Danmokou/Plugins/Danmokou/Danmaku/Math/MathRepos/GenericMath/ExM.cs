@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using BagoumLib;
 using BagoumLib.Events;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using Danmokou.Behavior;
 using Danmokou.Core;
@@ -17,19 +18,23 @@ using Danmokou.Graphics;
 using Danmokou.Player;
 using Danmokou.Reflection;
 using Danmokou.Services;
+using Scriptor;
+using Scriptor.Analysis;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
-using static Danmokou.Expressions.ExMHelpers;
-using tfloat = Danmokou.Expressions.TEx<float>;
-using tbool = Danmokou.Expressions.TEx<bool>;
-using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
-using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
-using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
+using static Scriptor.Expressions.ExMHelpers;
+using static Scriptor.Math.ExMOperators;
+using tfloat = Scriptor.Expressions.TEx<float>;
+using tbool = Scriptor.Expressions.TEx<bool>;
+using tv2 = Scriptor.Expressions.TEx<UnityEngine.Vector2>;
+using tv3 = Scriptor.Expressions.TEx<UnityEngine.Vector3>;
+using trv2 = Scriptor.Expressions.TEx<BagoumLib.Mathematics.V2RV2>;
 using static Danmokou.DMath.Functions.ExMMod;
 
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExPred = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<bool>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
 
 namespace Danmokou.DMath.Functions {
 /// <summary>
@@ -89,6 +94,20 @@ public static partial class ExM {
     [Alias("load0")]
     public static Func<TExArgCtx, TEx<T>> RetrieveHoisted0<T>(ReflectEx.Hoist<T> hoist) => 
         tac => hoist.Retrieve(E0, tac);
+
+    /// <summary>
+    /// Reading a value from a specific EnvFrame.
+    /// </summary>
+    [BDSL2Only]
+    public static Func<TExArgCtx, TEx<T>> ReadEF<T>(TEx<EnvFrame> ef, string varName) => tac =>
+        LexicalScope.DynamicVariableLookup(tac, ef, varName, typeof(T));
+    
+    /// <summary>
+    /// Write a value to a specific EnvFrame.
+    /// </summary>
+    [BDSL2Only]
+    public static Func<TExArgCtx, TEx<T>> WriteEF<T>(TEx<EnvFrame> ef, string varName, TEx<T> value) => tac =>
+        LexicalScope.DynamicVariableLookup(tac, ef, varName, typeof(T), opOnValue: x => x.Is(value));
 
     /// <summary>
     /// Assign local variables that can be repeatedly used without reexecution via the ReferenceLet (rflet) function.
@@ -269,6 +288,15 @@ public static partial class ExM {
     public static tfloat Rand(tfloat from, tfloat to) => RNG.GetFloat(from, to);
 
     /// <summary>
+    /// Returns a random integer in the range [from, to).
+    /// This will return a random number every time it is called. It is unseeded. Do not use for movement functions.
+    /// </summary>
+    /// <param name="from">Minimum</param>
+    /// <param name="to">Maximum</param>
+    /// <returns></returns>
+    public static TEx<int> Randi(TEx<int> from, TEx<int> to) => RNG.GetInt(from, to);
+
+    /// <summary>
     /// Randomly returns either -1 or 1.
     /// </summary>
     public static tfloat Randpm1() => Ex.Condition(Rand(EN1, E1).GT0(), E1, EN1);
@@ -322,7 +350,8 @@ public static partial class ExM {
     
     #region Aggregators
     /// <summary>
-    /// Calculate the softmax of several values ( (Sum xe^ax) / (Sum e^ax) )
+    /// Calculate the softmax of several values ( (Sum xe^ax) / (Sum e^ax) ),
+    /// which is slightly smaller than the largest number (larger than the smallest if sharpness is negative).
     /// </summary>
     /// <param name="sharpness">The higher the absolute value of this, the more quickly the result will converge.
     /// Set negative for softmin.</param>
@@ -345,7 +374,8 @@ public static partial class ExM {
     });
     
     /// <summary>
-    /// Calculate the logsum of several values ( (ln Sum e^ax) / a ), which is approximately equal to the largest number (smallest if sharpness is negative).
+    /// Calculate the logsum of several values ( (ln Sum e^ax) / a ),
+    /// which is slightly larger than the largest number (smaller than the smallest if sharpness is negative).
     /// </summary>
     /// <param name="sharpness">The higher the absolute value of this, the more quickly the result will converge.</param>
     /// <param name="against">Values</param>
@@ -521,12 +551,12 @@ public static partial class ExM {
     /// <summary>
     /// Find the angle of fire such that a ray fired from the source bouncing off the wall X=W would hit the target.
     /// </summary>
-    public static tfloat BounceX(tfloat w, tv2 source, tv2 target) => TEx.ResolveV2(source, target,
+    public static tfloat BounceX(tfloat w, tv2 source, tv2 target) => TExHelpers.ResolveV2(source, target,
         (s, t) => ATan2(t.y.Sub(s.y), w.Mul(E2).Sub(s.x).Sub(t.x)));
     /// <summary>
     /// Find the angle of fire such that a ray fired from the source bouncing off the wall Y=W would hit the target.
     /// </summary>
-    public static tfloat BounceY(tfloat w, tv2 source, tv2 target) => TEx.ResolveV2(source, target,
+    public static tfloat BounceY(tfloat w, tv2 source, tv2 target) => TExHelpers.ResolveV2(source, target,
         (s, t) => ATan2(w.Mul(E2).Sub(s.y).Sub(t.y), t.x.Sub(s.x)));
     
     #endregion
@@ -701,7 +731,7 @@ public static partial class ExM {
     /// return the child, otherwise return zero.
     /// </summary>
     public static Func<TExArgCtx, TEx<T>> IfPowerGTP<T>(Func<TExArgCtx, TEx<T>> inner) =>
-        b => Ex.Condition(PowerF().GT(b.findex), inner(b), ExC(default(T)!));
+        b => Ex.Condition(PowerF().GT(b.findex()), inner(b), ExC(default(T)!));
     
 
     /// <summary>
@@ -715,7 +745,7 @@ public static partial class ExM {
     /// <returns></returns>
     public static Func<TExArgCtx, TEx<T>> Mine<T>() => tac => {
         var t = typeof(T);
-        var fctx = tac.FCTX;
+        var fctx = tac.FCTX();
         if (t == typeof(Bullet)) {
             return fctx.Field(nameof(PIData.Bullet));
         }else if (t == typeof(CurvedTileRenderLaser)) {

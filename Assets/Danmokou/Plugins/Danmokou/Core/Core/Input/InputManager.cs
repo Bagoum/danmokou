@@ -112,7 +112,7 @@ public static class InputManager {
      * In IInputSource, as `Type? Ctrl => null`
      * In NullInputSource, as `Type? Ctrl => (default)`
      * In IDescriptiveInputSource, as `IInputHandler ctrl { get; }` and `Type? IInputSource.Ctrl => ctrl.Logic`
-     * In IKeyedInputSource, in the Handlers.AddRange call
+     *      and the Handlers.AddRange call
      * In ControllerInputSource and KBMInputSource, as `public IInputHandler fly { get; }` with logic
      * As RebindableInputBindings in InputConfig
      * If the control is stored in replays, then in the InputExtractor defined in the relevant GameDef.
@@ -148,6 +148,7 @@ public static class InputManager {
     public static bool IsLeftClick => PlayerInput.LeftClick ?? false;
 
     public static IInputHandler GetKeyTrigger(KeyCode key) => PlayerInput.GetKeyTrigger(key);
+    public static IInputHandler GetKeyHold(KeyCode key) => PlayerInput.GetKeyHold(key);
     
     //Called by GameManagement
     public static void OncePerUnityFrameToggleControls() {

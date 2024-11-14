@@ -21,12 +21,14 @@ public class XMLDynamicMenu : UIController, IFreeformContainer {
     protected override UIScreen?[] Screens => dynamicScreens.Prepend(MainScreen).ToArray();
     
     public UINode Unselect { get; private set; } = null!;
+    public UIResult GoToUnselect => new UIResult.GoToNode(Unselect);
     private readonly List<UIScreen> dynamicScreens = new();
 
     public OverrideEvented<Func<UINode, ICursorState, UICommand, UIResult?>?> HandleDefaultUnselectNav { get; } = new(null);
     public UIFreeformGroup FreeformGroup { get; private set; } = null!;
     public override bool CanConsumeInput =>
-        base.CanConsumeInput && (!inputFallthrough || QueuedInput != null || Current != Unselect 
+        base.CanConsumeInput && (!inputFallthrough || QueuedInput != null 
+                                  || Current?.Flags.HasFlag(UINodeFlag.AllowsInputFallthrough) is false
                                   || LastOperationFrame == ETime.FrameNumber);
 
     public bool inputFallthrough = false;

@@ -5,10 +5,16 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
+    path: Assets/Danmokou/MiniProjects/Projects/PlasticHakkero/PH MainMenu.unity
+    guid: 6d9a317f91ee1674e959db47edadce16
+  - enabled: 0
+    path: Assets/Danmokou/MiniProjects/Projects/PlasticHakkero/PH Level 1.unity
+    guid: f0f969cea09c92d488577c28a01945f5
+  - enabled: 0
     path: Assets/Danmokou/MiniProjects/Projects/PJ24/PJ24 MainMenu VN.unity
     guid: 8a3addd773f8d08488e28b561c2822e5
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/MiniProjects/Projects/PJ24/PJ24 MiniprojectLevel VN.unity
     guid: c126706c82b6201489db2fec2357c044
   - enabled: 0
@@ -27,7 +33,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/PlumWine/PlumWine.MainMenu VN.unity
     guid: 690bcd289d9bccd4f9e3219246aa7ee7
-  - enabled: 1
+  - enabled: 0
     path: Assets/SiMP/Scenes/SiMP.MainMenu.unity
     guid: 6b2d775f9661bd44da76415034461224
   - enabled: 0
@@ -39,7 +45,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Danmokou/MiniProjects/Projects/THJam13/THJ13 Level.unity
     guid: b1c73dafd54d71d4485949d0958807c9
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/MiniProjects/Projects/ReimuTheBoomer/WP MainMenu VN.unity
     guid: 5504889f1c92e2f4b85b1da709eed33c
   - enabled: 0
@@ -48,25 +54,25 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Danmokou/MiniProjects/Projects/BlessedRain/MP.BR.MainMenu VN.unity
     guid: 2d354a1c6c0a414468e9fd189bbcd348
-  - enabled: 1
+  - enabled: 0
     path: Assets/BRuH/BRuH.MainMenu.unity
     guid: 6000a27509ee77e46a0be12e6ec5cb24
   - enabled: 0
     path: Assets/LuA/LuA.MainMenu.unity
     guid: f624112b2f76c62478ebd6d443131775
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/MiniProjects/Scenes/MiniprojectLevel VN.unity
     guid: bbf652916aa38874a9909ebe7e057289
   - enabled: 0
     path: Assets/Danmokou/MiniProjects/Scenes/MiniprojectLevel.unity
     guid: 2a1f4e4cd49e99341855fa916af2cc1f
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/Scenes/Generic/BaseLevel.unity
     guid: ae6a841f7dfdad94ebafea1fd3b04298
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/Scenes/Generic/Endcard.unity
     guid: 11ae27903229549408c4ec8fb832802e
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/Scenes/Generic/ReplaySave.unity
     guid: 6ef108d406e850541ab9eae35c53288a
   - enabled: 0
@@ -93,7 +99,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/SiMP/Scenes/SiMP.StageExtra.unity
     guid: 20d3967e96a90074bafb766ea2992624
-  - enabled: 1
+  - enabled: 0
     path: Assets/BRuH/BRuH.SceneLevel.unity
     guid: f9e387d84dd4a8b4da399f433aa3f559
   - enabled: 0
@@ -114,5 +120,11 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Danmokou/Scenes/Testing/test_linux_refl.unity
     guid: 07783312448403e4bbf9827cda71fbeb
+  - enabled: 0
+    path: Assets/Danmokou/Scenes/BasicSceneOPENME.unity
+    guid: 6628cbbd7f32f2a44a83c549a362dbd5
+  - enabled: 1
+    path: Assets/Danmokou/MiniProjects/Projects/WebDemo/WebDemoScene.unity
+    guid: 5769fb45e32e66a4e96443f9e6dc4a1f
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

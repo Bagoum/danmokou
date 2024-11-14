@@ -7,11 +7,14 @@ using Danmokou.Core;
 using Danmokou.Danmaku.Options;
 using Danmokou.DataHoist;
 using Danmokou.Expressions;
+using Scriptor;
+using Scriptor.Expressions;
 using static Danmokou.DMath.Functions.ExM;
-using tfloat = Danmokou.Expressions.TEx<float>;
-using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
+using static Scriptor.Math.ExMOperators;
+using tfloat = Scriptor.Expressions.TEx<float>;
+using tv2 = Scriptor.Expressions.TEx<UnityEngine.Vector2>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
 
 
 namespace Danmokou.DMath.Functions {
@@ -21,7 +24,7 @@ public static partial class ExMPred {
     /// </summary>
     /// <param name="loc"></param>
     /// <returns></returns>
-    public static TEx<bool> OnScreen(TEx<Vector2> loc) => TEx.ResolveV2AsXY(loc, (x, y) =>
+    public static TEx<bool> OnScreen(TEx<Vector2> loc) => TExHelpers.ResolveV2AsXY(loc, (x, y) =>
             x.GT(LocationHelpers.left)
             .And(x.LT(LocationHelpers.right))
             .And(y.GT(LocationHelpers.bot))
@@ -31,7 +34,7 @@ public static partial class ExMPred {
     /// Return true if the location is within BY units (square expansion) of the edge of the playing field.
     /// </summary>
     public static TEx<bool> OnScreenBy(TEx<float> by, TEx<Vector2> loc) => 
-        TEx.ResolveF(by, f => TEx.ResolveV2AsXY(loc, (x, y) =>
+        TEx.ResolveF(by, f => TExHelpers.ResolveV2AsXY(loc, (x, y) =>
             x.GT(LocationHelpers.left.Sub(f))
             .And(x.LT(LocationHelpers.right.Add(f)))
             .And(y.GT(LocationHelpers.bot.Sub(f)))
@@ -146,7 +149,7 @@ public static partial class BPYRepo {
     /// <summary>
     /// Returns Atan(loc - this.Loc) in degrees.
     /// </summary>
-    public static ExBPY AngleTo(ExTP loc) => bpi => ATan(Sub(loc(bpi), bpi.LocV2));
+    public static ExBPY AngleTo(ExTP loc) => bpi => ATan(Sub(loc(bpi), bpi.LocV2()));
     
     /// <summary>
     /// Returns the x-position of the left/right wall that the location is closer to.
@@ -177,7 +180,7 @@ public static partial class Parametrics {
     public static ExTP LNearestEnemyDefault(ExTP deflt) => b => {
         var loc = new TExV2();
         return Ex.Block(new ParameterExpression[] { loc },
-            Ex.IfThen(Ex.Not(Enemy.findNearest.Of(b.LocV3, loc)),
+            Ex.IfThen(Ex.Not(Enemy.findNearest.Of(b.LocV3(), loc)),
                 loc.Is(deflt(b))
             ),
             loc
@@ -206,7 +209,7 @@ public static partial class Parametrics {
                 b.DynamicGet<int>(key).Cast<int?>(),
                 Ex.Constant(null).Cast<int?>())
             ),
-            Ex.IfThenElse(Enemy.findNearestSave.Of(b.LocV3, eid_in, eid, loc),
+            Ex.IfThenElse(Enemy.findNearestSave.Of(b.LocV3(), eid_in, eid, loc),
                 b.DynamicSet<int>(key, eid),
                 loc.Is(deflt(b))
             ),

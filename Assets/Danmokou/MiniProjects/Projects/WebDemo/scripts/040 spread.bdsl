@@ -1,6 +1,5 @@
 pattern { } {
 phase 0 {
-	type(non, "Spread")
 	roott(1, 0, 1)
 } {
 	paction 0 {
@@ -14,10 +13,11 @@ phase 0 {
 				wait(10)
 				spread(<40>)
 				preloop b{
-					hvar loop = i;
+					hvar loop = i
 				}
-				sfxf({ "x-fire-burst-1", "x-fire-burst-2", 
-						"x-fire-star-1" }, pi)
+				sfxfif(
+					{ "x-fire-burst-1", "x-fire-burst-2" }, 
+					pi, i % 4 == 0)
 			}, s(rvelocity(px(2 + 0.3 * loop)))
 		)))
 	}

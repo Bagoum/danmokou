@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using BagoumLib;
+using BagoumLib.Mathematics;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
 using NUnit.Framework;
@@ -116,7 +117,7 @@ public static class TAssert {
     public static void SBPos(ref BulletManager.SimpleBullet sb, Vector3 loc, string msg = "") =>
         VecEq(loc, sb.bpi.loc, msg);
     public static void SBPos(ref BulletManager.SimpleBullet sb, V2RV2 loc, string msg = "") =>
-        VecEq(loc.TrueLocation, sb.bpi.LocV2, msg);
+        VecEq(loc.TrueLocation(), sb.bpi.LocV2, msg);
 
     public static void PoolEq(BulletManager.SimpleBulletCollection sbc1,
         BulletManager.SimpleBulletCollection sbc2) {

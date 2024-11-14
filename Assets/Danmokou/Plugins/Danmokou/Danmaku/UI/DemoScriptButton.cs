@@ -1,16 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Danmokou.Core;
 using TMPro;
 using UnityEngine;
 
 namespace Danmokou.UI {
-#if UNITY_EDITOR || ALLOW_RELOAD
 public class DemoScriptButton : MonoBehaviour {
-    private TextAsset script = null!;
+    private NamedTextAsset script = default!;
     private DemoScriptManager manager = null!;
     public TextMeshProUGUI text = null!;
 
-    public void Initialize(TextAsset file, DemoScriptManager parent, string label) {
+    public void Initialize(NamedTextAsset file, DemoScriptManager parent, string label) {
         script = file;
         manager = parent;
         text.text = label;
@@ -20,5 +20,4 @@ public class DemoScriptButton : MonoBehaviour {
         manager.RequestScript(script);
     }
 }
-#endif
 }

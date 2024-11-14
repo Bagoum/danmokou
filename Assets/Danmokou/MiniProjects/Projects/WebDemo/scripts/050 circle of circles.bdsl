@@ -1,6 +1,5 @@
 pattern { } {
 phase 0 {
-	type(non, "Circle of Circles")
 	roott(1, 0, 1)
 } {
 	paction 0 {

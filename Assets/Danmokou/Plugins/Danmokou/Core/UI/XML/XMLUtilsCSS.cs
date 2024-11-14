@@ -7,6 +7,7 @@ using BagoumLib.Events;
 using BagoumLib.Reflection;
 using BagoumLib.Tasks;
 using Danmokou.Core;
+using Danmokou.DMath;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using UnityEngine;
@@ -111,8 +112,46 @@ public static class XMLUtils {
         public static Vector2 BotLeft { get; } = new(0, 0);
         public static Vector2 Bottom { get; } = new(0.5f, 0);
         public static Vector2 BotRight { get; } = new(1, 0);
+
+        public static IReadOnlyDictionary<Vector2, string> PivotToClass { get; }
+        public static IReadOnlyDictionary<string, Vector2> ClassToPivot { get; }
+
+        static Pivot() {
+            (Vector2 pivot, string cls)[] names = new[] {
+                (TopLeft, "topleft"),
+                (Top, "top"),
+                (TopRight, "topright"),
+                (Left, "left"),
+                (Center, "center"),
+                (Right, "right"),
+                (BotLeft, "botleft"),
+                (Bottom, "bottom"),
+                (BotRight, "botright")
+            };
+            PivotToClass = names.ToDictionary(n => n.pivot, n => n.cls);
+            ClassToPivot = names.ToDictionary(n => n.cls, n => n.pivot);
+        }
     }
-    
+
+    private const string pivotClsPrefix = "pivot-";
+    private const string anchorClsPrefix = "anchor-";
+
+    private static VisualElement AddPivotBasedClass(this VisualElement ve, string prefix, Vector2 pivot) {
+        foreach (var cls in ve.GetClasses().ToArray())
+            if (cls.StartsWith(prefix))
+                ve.RemoveFromClassList(cls);
+        ve.AddToClassList(prefix + Pivot.PivotToClass[pivot]);
+        return ve.ConfigureAbsolute(pivot);
+    }
+    public static VisualElement AddPivotClass(this VisualElement ve, Vector2 pivot) =>
+        ve.AddPivotBasedClass(pivotClsPrefix, pivot);
+    public static VisualElement AddAnchorClass(this VisualElement ve, Vector2 pivot) =>
+        ve.AddPivotBasedClass(anchorClsPrefix, pivot);
+
+    public static Vector2? ParsePivotClass(string prefix, string cls) {
+        if (!cls.StartsWith(prefix)) return null;
+        return Pivot.ClassToPivot.TryGetValue(cls[prefix.Length..], out var res) ? res : null; 
+    }
 
     /// <param name="p">Pivot with (0,0) as bottom left and (1,1) as top right.</param>
     private static Translate ToTranslation(Vector2 p) =>
@@ -261,13 +300,15 @@ public static class XMLUtils {
     ///  depends on the CSS classes of the tooltip.
     /// </summary>
     public static Vector2 DetermineTooltipAbsolutePosition(this VisualElement node, VisualElement tooltip) {
-        var nr = node.worldBound;
-        if (tooltip.ClassListContains("tooltip-above")) {
-            return new(nr.center.x, nr.yMin);
-        } else if (tooltip.ClassListContains("tooltip-below")) {
-            return new(nr.center.x, nr.yMax);
-        } else
-            return new Vector2(nr.xMax, nr.yMin); //by default, tooltip is above-right
+        var anchor = Pivot.TopRight;
+        foreach (var cls in tooltip.GetClasses()) {
+            if (ParsePivotClass(anchorClsPrefix, cls) is {} anc) {
+                anchor = anc;
+                break;
+            } else if (ParsePivotClass(pivotClsPrefix, cls) is { } pivot)
+                anchor = Vector2.one - pivot;
+        }
+        return node.worldBound.LocationAtCoords(anchor.x, 1 - anchor.y);
     }
 
     /// <summary>
@@ -280,8 +321,8 @@ public static class XMLUtils {
     /// <summary>
     /// Instantiate a UIGroup and RenderSpace representing a tooltip, and make it show on the screen under a provided node.
     /// </summary>
-    public static TooltipProxy<T> MakeTooltip<T>(this UINode n, Func<UIRenderSpace, T> ttGroup, Action<UIRenderConstructed, VisualElement>? builder = null, bool animateEntry = true) where T : UIGroup {
-        var tt = MakeTooltipInner(n.Screen, ttGroup, builder, animateEntry);
+    public static TooltipProxy<T> MakeTooltip<T>(this UINode n, Func<UIRenderSpace, T> ttGroup, Vector2? pivot = null, Action<UIRenderConstructed, VisualElement>? builder = null, bool animateEntry = true) where T : UIGroup {
+        var tt = MakeTooltipInner(n.Screen, ttGroup, pivot, builder, animateEntry);
         tt.TT.Parent = n.Group;
         tt.Track(n);
         return tt;
@@ -290,24 +331,25 @@ public static class XMLUtils {
     /// <summary>
     /// Instantiate a UIGroup and RenderSpace representing a tooltip. The location must be manually set.
     /// </summary>
-    public static TooltipProxy<T> MakeTooltip<T>(this XMLDynamicMenu menu, Func<UIRenderSpace, T> ttGroup,
+    public static TooltipProxy<T> MakeTooltip<T>(this XMLDynamicMenu menu, Func<UIRenderSpace, T> ttGroup, Vector2? pivot = null,
         Action<UIRenderConstructed, VisualElement>? builder = null, bool animateEntry = true) where T : UIGroup {
-        var tt = MakeTooltipInner(menu.MainScreen, ttGroup, builder, animateEntry);
+        var tt = MakeTooltipInner(menu.MainScreen, ttGroup, pivot, builder, animateEntry);
         tt.TT.Parent = menu.FreeformGroup;
         return tt;
     }
 
-    private static TooltipProxy<T> MakeTooltipInner<T>(UIScreen s, Func<UIRenderSpace, T> ttGroup,
+    private static TooltipProxy<T> MakeTooltipInner<T>(UIScreen s, Func<UIRenderSpace, T> ttGroup, Vector2? pivot,
         Action<UIRenderConstructed, VisualElement>? builder = null, bool animateEntry = true) where T : UIGroup {
         var tt = ttGroup(s.TooltipRender(builder));
         tt.Visibility = new GroupVisibilityControl.UpdateOnLeaveHide(tt);
         tt.Interactable = false;
         tt.DestroyOnLeave = true;
+        tt.Render.HTML.AddPivotClass(pivot ?? Pivot.BotLeft);
         //can't put this in render.OnBuilt since it needs to run after the tooltip group HTML is constructed
         tt.Render.HTML.SetRecursivePickingMode(PickingMode.Ignore);
         if (!animateEntry)
             tt.Render.IsFirstRender = true;
-        _ = tt.EnterGroup()?.ContinueWithSync();
+        tt.EnterGroup()?.Log();
         return new TooltipProxy<T>(tt);
     }
 

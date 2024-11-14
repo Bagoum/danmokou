@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Danmokou.Core;
 using Danmokou.VN;
+using Scriptor;
 using Suzunoya;
 using Suzunoya.ControlFlow;
 using SuzunoyaUnity.Rendering;

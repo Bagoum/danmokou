@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.Functional;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
@@ -10,17 +11,19 @@ using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using BagoumLib.Reflection;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
 using Danmokou.SM;
 using JetBrains.Annotations;
+using Scriptor;
+using Scriptor.Analysis;
+using Scriptor.Expressions;
 using UnityEngine;
 using UnityEngine.XR;
 using static Danmokou.Danmaku.Options.GenCtxProperty;
 using static Danmokou.Reflection.Compilers;
 using static Danmokou.Danmaku.Options.GenCtxUtils;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
-using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
+using ExBPRV2 = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<BagoumLib.Mathematics.V2RV2>>;
 
 namespace Danmokou.Danmaku.Options {
 
@@ -473,33 +476,33 @@ public record GenCtxProperty {
     /// Bind the values axd, ayd, aixd, aiyd in the GCX preloop section.
     /// </summary>
     /// <returns></returns>
-    [ExtendsInternalScope(AutoVarExtend.BindArrow)]
+    [ExtendsInternalScope((int)AutoVarExtend.BindArrow)]
     public static GenCtxProperty BindArrow() => new BindArrowTag();
     
     /// <summary>
     /// Bind the values lr, rl in the GCX preloop section.
     /// </summary>
     /// <returns></returns>
-    [ExtendsInternalScope(AutoVarExtend.BindLR)]
+    [ExtendsInternalScope((int)AutoVarExtend.BindLR)]
     public static GenCtxProperty BindLR() => new BindLRTag();
     
     /// <summary>
     /// Bind the values ud, du in the GCX preloop section.
     /// </summary>
     /// <returns></returns>
-    [ExtendsInternalScope(AutoVarExtend.BindUD)]
+    [ExtendsInternalScope((int)AutoVarExtend.BindUD)]
     public static GenCtxProperty BindUD() => new BindUDTag();
     
     /// <summary>
     /// Bind the value angle to the RV2 angle in the GCX preloop section.
     /// </summary>
-    [ExtendsInternalScope(AutoVarExtend.BindAngle)]
+    [ExtendsInternalScope((int)AutoVarExtend.BindAngle)]
     public static GenCtxProperty BindAngle() => new BindAngleTag();
     
     /// <summary>
     /// Bind a value corresponding to the loop number in the GCX preloop section.
     /// </summary>
-    [BDSL1Only] [ExtendsInternalScope(AutoVarExtend.BindItr)]
+    [BDSL1Only] [ExtendsInternalScope((int)AutoVarExtend.BindItr)]
     public static GenCtxProperty BindItr(string value) => new BindItrTag(value);
 
 

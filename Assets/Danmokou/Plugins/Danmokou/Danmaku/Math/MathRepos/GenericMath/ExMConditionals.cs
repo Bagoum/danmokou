@@ -1,12 +1,14 @@
 ﻿using Danmokou.Core;
 using Danmokou.Expressions;
+using Scriptor;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
-using static Danmokou.Expressions.ExMHelpers;
-using tfloat = Danmokou.Expressions.TEx<float>;
-using tbool = Danmokou.Expressions.TEx<bool>;
-using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
-using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
-using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
+using static Scriptor.Expressions.ExMHelpers;
+using tfloat = Scriptor.Expressions.TEx<float>;
+using tbool = Scriptor.Expressions.TEx<bool>;
+using tv2 = Scriptor.Expressions.TEx<UnityEngine.Vector2>;
+using tv3 = Scriptor.Expressions.TEx<UnityEngine.Vector3>;
+using trv2 = Scriptor.Expressions.TEx<BagoumLib.Mathematics.V2RV2>;
 
 namespace Danmokou.DMath.Functions {
 /// <summary>

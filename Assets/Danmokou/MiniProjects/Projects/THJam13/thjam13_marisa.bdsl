@@ -30,7 +30,7 @@ var sm = pattern({
 				}
 			@ other
 				diverthp(fromid(me))
-			shiftphaseto 3
+			shiftphaseto 2
 		}
 	}
 

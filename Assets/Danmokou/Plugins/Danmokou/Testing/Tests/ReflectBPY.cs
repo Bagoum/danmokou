@@ -55,16 +55,16 @@ namespace Danmokou.Testing {
                 TestTPoints(e01, otherPts);
                 TestTPoints(e01, new[] { (0f, 0f), (0.5f, 0.5f), (1f, 1f)});
             }
-            BPY s = BPY(x => ExMEasers.EIOSine(x.t));
+            BPY s = BPY(x => ExMEasers.EIOSine(x.t()));
             TestE01(s, new []{ (0.1f, 0.02447f) });
-            s = BPY(x => SmoothLoop(ExC((Func<float,float>)Easers.EIOSine), x.t));
+            s = BPY(x => SmoothLoop(ExC((Func<float,float>)Easers.EIOSine), x.t()));
             TestE01(s, new []{ (1.1f, 1.02447f) });
             TestE01(s, new []{ (3.1f, 3.02447f) });
         }
 
         [Test]
         public static void TSwitchH() {
-            BPY sh = BPY(SwitchH<float>(T(), _ => 2f, bpi => bpi.t, bpi => bpi.t.Mul(2f)));
+            BPY sh = BPY(SwitchH<float>(T(), _ => 2f, bpi => bpi.t(), bpi => bpi.t().Mul(2f)));
             var pi = new ParametricInfo();
             AreEqual(sh(pi.CopyWithT(1.9f)), 1.9f, err);
             AreEqual(sh(pi.CopyWithT(2.01f)), 0.02f, err);
@@ -90,13 +90,13 @@ namespace Danmokou.Testing {
         public static void TShiftLogsum() {
             BPY eq1 = x => 5 * x.t;
             BPY eq2 = x => 2 * x.t;
-            BPY shifter = BPY(LogsumShiftT(_=>-1f, _=>10f, bpi => bpi.t.Mul(5f), bpi => bpi.t.Mul(2f)));
+            BPY shifter = BPY(LogsumShiftT(_=>-1f, _=>10f, bpi => bpi.t().Mul(5f), bpi => bpi.t().Mul(2f)));
             var pi = new ParametricInfo();
             Assert.AreEqual(shiftlogsum(-1f, 10f, eq1, eq2, pi.CopyWithT(10.2f)), shifter(pi.CopyWithT(10.2f)), err);
             Assert.AreEqual(shiftlogsum(-1f, 10f, eq1, eq2, pi.CopyWithT(20.2f)), shifter(pi.CopyWithT(20.2f)), err);
             eq1 = x => 200 * x.t;
             eq2 = x => 4 * x.t;
-            var exs = LogsumShiftT(_=>-0.1f, _=>1f, bpi => bpi.t.Mul(200f), bpi => bpi.t.Mul(4f));
+            var exs = LogsumShiftT(_=>-0.1f, _=>1f, bpi => bpi.t().Mul(200f), bpi => bpi.t().Mul(4f));
             shifter = BPY(exs);
             for (float ii = 0; ii < 2; ii += 0.05f) {
                 AreEqual(shiftlogsum(-0.1f, 1f, eq1, eq2, pi.CopyWithT(ii)), shifter(pi.CopyWithT(ii)), 0.0001f, $"shifter at {ii}");

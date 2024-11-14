@@ -1,6 +1,5 @@
 pattern { } {
 phase 0 {
-	type(non, "Border of Wave and Particle")
 	roott(1, 0, 2)
 } {
 	paction 0 {

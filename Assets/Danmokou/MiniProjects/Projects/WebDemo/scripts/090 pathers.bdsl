@@ -1,6 +1,5 @@
 pattern { } {
 phase 0 {
-	type(non, "Pathers")
 	roott(1, 0, 2.4)
 } {
 	paction 0 {
@@ -17,7 +16,6 @@ phase 0 {
 		center
 		color({ "red", "pink", "purple", "blue", 
 				"teal", "green", "yellow", "orange" })
-		bindAngle
 	} pather(1, 0.4, nrvelocity(
 			lerp3(0.0, 0.6, 0.9, 1.1, t, 9, 3, 8) *
 			truerotatelerprate(320, rx(1, angle),

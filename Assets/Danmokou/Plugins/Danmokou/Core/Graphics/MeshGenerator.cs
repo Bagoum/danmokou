@@ -14,6 +14,7 @@ public static class MeshGenerator {
         }
 
         public RenderInfo Copy() => new(Object.Instantiate(Material), Mesh, Sprite);
+        public void Destroy() => Object.Destroy(Material);
 
         public static Mesh FromSprite(Sprite s, float scale = 1f) {
             Vector2[] orig_verts = s.vertices;

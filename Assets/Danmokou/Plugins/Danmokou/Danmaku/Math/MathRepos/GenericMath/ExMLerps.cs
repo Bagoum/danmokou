@@ -6,21 +6,23 @@ using BagoumLib.Unification;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
+using Scriptor;
+using Scriptor.Compile;
+using Scriptor.Expressions;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
-using static Danmokou.Expressions.ExMHelpers;
-using tfloat = Danmokou.Expressions.TEx<float>;
-using tbool = Danmokou.Expressions.TEx<bool>;
-using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
-using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
-using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
+using static Scriptor.Expressions.ExMHelpers;
+using tfloat = Scriptor.Expressions.TEx<float>;
+using tbool = Scriptor.Expressions.TEx<bool>;
+using tv2 = Scriptor.Expressions.TEx<UnityEngine.Vector2>;
+using tv3 = Scriptor.Expressions.TEx<UnityEngine.Vector3>;
+using trv2 = Scriptor.Expressions.TEx<BagoumLib.Mathematics.V2RV2>;
 using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.DMath.Functions.ExMConditionals;
 using static Danmokou.DMath.Functions.ExMConversions;
 using static Danmokou.DMath.Functions.ExMMod;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
 using static Danmokou.Reflection.Compilers;
 
 namespace Danmokou.DMath.Functions {
@@ -261,7 +263,7 @@ public static class ExMLerps {
     /// <returns></returns>
     public static Func<TExArgCtx, TEx<T>> EaseD<T>(string smoother, float maxTime, 
         Func<TExArgCtx, TEx<T>> f) =>
-        ExMHelpers.EaseD(smoother, maxTime, f, bpi => bpi.t, (bpi, t) => bpi.CopyWithT(t));
+        DMKExMHelpers.EaseD(smoother, maxTime, f, bpi => bpi.t(), (bpi, t) => bpi.CopyWithT(t));
 
     /// <summary>
     /// Apply a ease function on top of a target function that uses time as a controller.
@@ -272,7 +274,7 @@ public static class ExMLerps {
     /// <returns></returns>
     public static Func<TExArgCtx, TEx<T>> Ease<T>([LookupMethod] Func<TExArgCtx, TEx<Func<float, float>>> smoother, float maxTime, 
         Func<TExArgCtx, TEx<T>> f) 
-        => ExMHelpers.Ease(smoother, maxTime, f, bpi => bpi.t, (bpi, t) => bpi.CopyWithT(t));
+        => DMKExMHelpers.Ease(smoother, maxTime, f, bpi => bpi.t(), (bpi, t) => bpi.CopyWithT(t));
 
 
     public static tv2 RotateLerp(tfloat zeroBound, tfloat oneBound, tfloat controller, tv2 source, tv2 target) =>

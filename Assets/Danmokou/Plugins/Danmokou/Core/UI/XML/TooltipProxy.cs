@@ -63,7 +63,7 @@ public class TooltipProxy : IRegularUpdater {
     public void Close() {
         tokens.DisposeAll();
         if (!TT.Destroyed)
-            _ = TT.LeaveGroup().ContinueWithSync();
+            TT.LeaveGroup().Log();
     }
 }
 

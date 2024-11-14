@@ -1,7 +1,9 @@
 ﻿using System;
 using Danmokou.Core;
 using Danmokou.Expressions;
-using Danmokou.Reflection2;
+using Scriptor;
+using Scriptor.Compile;
+using Scriptor.Expressions;
 
 namespace Danmokou.DMath.Functions {
 [Reflect]

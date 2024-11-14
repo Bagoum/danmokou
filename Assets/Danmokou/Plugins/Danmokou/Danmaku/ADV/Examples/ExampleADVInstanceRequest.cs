@@ -31,7 +31,7 @@ public class ExampleADVInstanceRequest : IADVInstanceRequest {
     }
 
     public bool Run() {
-        _ = _Run().ContinueWithSync();
+        _Run().Log();
         return true;
     }
 

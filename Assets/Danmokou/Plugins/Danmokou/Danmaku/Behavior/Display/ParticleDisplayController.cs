@@ -26,7 +26,7 @@ public class ParticleDisplayController : DisplayController {
         base.OnLinkOrResetValues(isLink);
     }
 
-    public override void StyleChanged(BehaviorEntity.BEHStyleMetadata style) {
+    public override void StyleChanged(BehaviorEntity.StyleMetadata style) {
         LoadDefaults(); //This may be called before Awake through BEH.Awake
         var m = particles.main;
         if (style.recolor?.palette != null && colorFromPalette >= 0) {

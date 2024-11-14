@@ -1,6 +1,5 @@
 ﻿using System;
 using BagoumLib.Reflection;
-using Danmokou.Reflection2;
 using JetBrains.Annotations;
 
 namespace Danmokou.Expressions {

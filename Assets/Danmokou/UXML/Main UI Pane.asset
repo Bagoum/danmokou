@@ -27,7 +27,7 @@ MonoBehaviour:
   m_ReferenceResolution: {x: 3840, y: 2160}
   m_ScreenMatchMode: 0
   m_Match: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 99
   m_TargetDisplay: 0
   m_BindingLogLevel: 0
   m_ClearDepthStencil: 0

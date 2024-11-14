@@ -1,0 +1,17 @@
+
+pattern { } {
+phase 0 {} {
+	paction 0 {
+		shiftphaseto 1
+    }
+}		
+
+//1
+phase 0 { endboss } {
+	saction 0 {
+		boss "ph.reimu"
+		shiftphase
+    }
+}
+
+}

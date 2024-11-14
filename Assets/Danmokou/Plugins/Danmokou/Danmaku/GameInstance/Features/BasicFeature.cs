@@ -16,6 +16,7 @@ public interface IBasicFeature : IInstanceFeature {
     int ContinuesUsed { get; }
     int HitsTaken { get; }
     int LastTookHitFrame { get; }
+    int StartLives { get; }
 
     bool ContinuesAllowed => Continues + ContinuesUsed > 0;
     bool ContinuesRemaining => Continues > 0;
@@ -53,12 +54,12 @@ public class BasicFeature : BaseInstanceFeature, IBasicFeature {
     public int HitsTaken { get; private set; }
     public int LastTookHitFrame { get; private set; }
     
-    private readonly int startLives;
+    public int StartLives { get; }
     private readonly int startBombs;
 
     public BasicFeature(InstanceData inst, BasicFeatureCreator c) {
         Inst = inst;
-        Lives = new(this.startLives = inst.Difficulty.startingLives ?? c.StartLives ?? (inst.mode.OneLife() ? 1 : 7));
+        Lives = new(this.StartLives = inst.Difficulty.startingLives ?? c.StartLives ?? (inst.mode.OneLife() ? 1 : 7));
         Bombs = new(this.startBombs = c.StartBombs ?? (inst.mode.OneLife() ? 0 : 3));
         Continues = c.Continues ?? (inst.mode.OneLife() ? 0 : 42);
     }
@@ -66,7 +67,7 @@ public class BasicFeature : BaseInstanceFeature, IBasicFeature {
 
     public void OnContinueOrCheckpoint() {
         Inst.CardHistory.Clear();//Partial game is saved when lives=0. Don't double on captures.
-        Lives.Value = startLives;
+        Lives.Value = StartLives;
         Bombs.Value = startBombs;
     }
 

@@ -31,7 +31,7 @@ namespace Danmokou.ADV {
 public abstract class DMKExecutingADV<I, D> : BaseExecutingADV<I, D>, IRegularUpdater where I : ADVIdealizedState where D : ADVData {
     public new DMKVNState VN { get; }
     /// <summary>
-    /// Same as <see cref="VN"/> but easier to type
+    /// Same as <see cref="VN"/>
     /// </summary>
     public DMKVNState vn => VN;
     protected readonly XMLDynamicMenu menu;
@@ -49,10 +49,11 @@ public abstract class DMKExecutingADV<I, D> : BaseExecutingADV<I, D>, IRegularUp
         tokens.Add(ETime.RegisterRegularUpdater(this));
         
         //Create common entities
-        Md = VN.Add(new ADVDialogueBox());
+        Md = new ADVDialogueBox();
         tokens.Add(Md.ComputedLocation.AddDisturbance(dialogueShowOffset));
         tokens.Add(Md.ComputedTint.AddDisturbance(dialogueShowAlpha));
         HideMD();
+        VN.Add(Md); //delay Add call so events are initialized as Active=false
         narrator = VN.Add(new Narrator());
         rg = (UnityRenderGroup)VN.DefaultRenderGroup;
         rgb = vn.Add(new UnityRenderGroup(1, true));

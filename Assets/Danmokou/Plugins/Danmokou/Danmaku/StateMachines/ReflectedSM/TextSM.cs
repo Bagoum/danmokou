@@ -6,6 +6,7 @@ using BagoumLib;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.VN;
+using Scriptor;
 using Suzunoya;
 using SuzunoyaUnity;
 using SuzunoyaUnity.Derived;

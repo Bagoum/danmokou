@@ -11,27 +11,28 @@ using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.GameInstance;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
 using Danmokou.SM;
 using Danmokou.SM.Parsing;
 using Mizuhashi;
 using NUnit.Framework;
+using Scriptor;
+using Scriptor.Analysis;
+using Scriptor.Compile;
+using Scriptor.Definition;
+using Scriptor.Reflection;
 using UnityEngine;
 using UnityEngine.Profiling;
 using static NUnit.Framework.Assert;
 using static Danmokou.Testing.TAssert;
-using static Danmokou.Reflection2.Lexer;
-using AST = Danmokou.Reflection2.AST;
-using Ex = System.Linq.Expressions.Expression;
-using Helpers = Danmokou.Reflection2.Helpers;
-using IAST = Danmokou.Reflection2.IAST;
+using AST = Scriptor.Compile.AST;
+using IAST = Scriptor.Compile.IAST;
 
 namespace Danmokou.Testing {
 
 public static class BDSL2ParsingTests {
     private static (IAST, LexicalScope) MakeAST(ref string source, IDelegateArg[] args) {
         var tokens = Lexer.Lex(ref source, out _);
-        var res = Reflection2.Parser.Parse(source, tokens, out var stream);
+        var res = LangParser.Parse(source, tokens, out var stream);
         if (res.IsRight)
             Assert.Fail(stream.ShowAllFailures(res.Right));
         var gs = LexicalScope.NewTopLevelScope();
@@ -115,11 +116,11 @@ x++ + block {
     public static void Add1() {
         var source = @"x += 1";
         var args = new IDelegateArg[] { new DelegateArg<float>("x") };
-        var f = Helpers.ParseAndCompileDelegate<Func<float, float>>(source, args);
+        var f = CompileHelpers.ParseAndCompileDelegate<Func<float, float>>(source, args);
         Assert.AreEqual(f(12.4f), 13.4f);
         var x = 20.1f;
         var rargs = new IDelegateArg[] { new DelegateArg<float>("x", isRef: true) };
-        var rf = Helpers.ParseAndCompileDelegate<RefFunc>(source, rargs);
+        var rf = CompileHelpers.ParseAndCompileDelegate<RefFunc>(source, rargs);
         Assert.AreEqual(rf(ref x), 21.1f);
         Assert.AreEqual(x, 21.1f);
     }

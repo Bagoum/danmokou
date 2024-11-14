@@ -158,6 +158,11 @@ public partial class BulletManager : RegularUpdater {
             return w;
         }
 
+        public void Destroy() {
+            if (riLoaded)
+                ri.Destroy();
+        }
+
         public void UseExitFade() {
             DeferredTextureConstruction.SetMaterialFade(GetOrLoadRI(), FadeOut);
         }
@@ -191,14 +196,14 @@ public partial class BulletManager : RegularUpdater {
     /// <summary>
     /// Complex bullets (lasers, pathers). Active pools are stored on BehaviorEntity.activePools.
     /// </summary>
-    private static readonly Dictionary<string, BehaviorEntity.BEHStyleMetadata> behPools = new();
-    public static IEnumerable<BehaviorEntity.BEHStyleMetadata> BEHPools => behPools.Values;
+    private static readonly Dictionary<string, BehaviorEntity.StyleMetadata> behPools = new();
+    public static IEnumerable<BehaviorEntity.StyleMetadata> BEHPools => behPools.Values;
 
-    private static void AddComplexStyle(BehaviorEntity.BEHStyleMetadata bsm) {
+    private static void AddComplexStyle(BehaviorEntity.StyleMetadata bsm) {
         behPools[bsm.style ?? throw new Exception("Complex BEHMetadata must have non-null style values")] = bsm;
     }
-    private static void AddComplexStyle(DeferredFramesRecoloring dfr) {
-        AddComplexStyle(new BehaviorEntity.BEHStyleMetadata(dfr.Style, dfr));
+    private static void AddComplexStyle(string style, DeferredFramesRecoloring dfr) {
+        AddComplexStyle(new BehaviorEntity.StyleMetadata(style, dfr));
     }
 
     /// <summary>
@@ -209,11 +214,13 @@ public partial class BulletManager : RegularUpdater {
 
     public static IEnumerable<SimpleBulletCollection> StylesForSelector(StyleSelector sel) =>
         simpleBulletPools.Values.Where(x => sel.Matches(x.Style));
+    
     private static void AddSimpleStyle(SimpleBulletCollection sbc) {
         simpleBulletPools[sbc.Style] = sbc;
     }
 
     private static void DestroySimpleStyle(string key) {
+        simpleBulletPools[key].Destroy();
         simpleBulletPools.Remove(key);
     }
 
@@ -283,8 +290,8 @@ public partial class BulletManager : RegularUpdater {
             }
         }
         public MeshGenerator.RenderInfo CreateDeferredTexture() {
-            Sprite sprite = SpriteInvoke();
-            MeshGenerator.RenderInfo ri = MeshGenerator.RenderInfo.FromSprite(baseMat, 
+            var sprite = SpriteInvoke();
+            var ri = MeshGenerator.RenderInfo.FromSprite(baseMat, 
                 isFrameAnim ? sbes.frameAnimInfo.sprite0 : sprite);
             ri.Material.renderQueue = RenderQueue;
             sbes.displacement.SetOnMaterial(ri.Material);
@@ -423,7 +430,7 @@ public partial class BulletManager : RegularUpdater {
                     colors.AssertValidity();
                     if (!colors.Any && fa.gradients.Length == 0) {
                         //No recoloring. Untested
-                        AddComplexStyle(new DeferredFramesRecoloring(x.prefab, fa, 0, "", x.Name, null, false));
+                        AddComplexStyle(x.Name, new DeferredFramesRecoloring(x.prefab, fa, 0, "", null, false));
                         continue; 
                     }
                     Func<Sprite, Sprite> ColorizeSprite(Palette p, GradientModifier gt) => s => throwaway_gm.Recolor(p.Gradient, gt, fa.renderMode, s);
@@ -432,8 +439,8 @@ public partial class BulletManager : RegularUpdater {
                         void CreateF(string suffix, int offset, GradientModifier mod) {
                             var variant = $"{p.colorName}{suffix}";
                             var style = $"{x.Name}-{variant}";
-                            AddComplexStyle(new DeferredFramesRecoloring(x.prefab, fa, ii + offset * nPalettes, 
-                                variant, style, ColorizeSprite(p, mod), p.recolorizable, p));
+                            AddComplexStyle(style, new DeferredFramesRecoloring(x.prefab, fa, ii + offset * nPalettes, 
+                                variant, ColorizeSprite(p, mod), p.recolorizable, p));
                         }
                         if (colors.DarkMod.HasValue) 
                             CreateF(SUFF_DARK, 0, colors.DarkMod.Value);
@@ -454,8 +461,8 @@ public partial class BulletManager : RegularUpdater {
                                 void Create2F(string suffix, int offset, Func<Sprite, Sprite> recolorer) {
                                     var variant = $"{r.Name};{b.Name}{suffix}";
                                     var style = $"{x.Name}-{variant}";
-                                    AddComplexStyle(new DeferredFramesRecoloring(x.prefab, fa, ii + offset * nPalettes, 
-                                        variant, style, recolorer, p.recolorizable, p));
+                                    AddComplexStyle(style, new DeferredFramesRecoloring(x.prefab, fa, 
+                                        ii + offset * nPalettes, variant, recolorer, p.recolorizable, p));
                                 }
                                 if (colors.DarkMod.Try(out var d))
                                     Create2F(SUFF_DARK, 0, s => 
@@ -473,8 +480,8 @@ public partial class BulletManager : RegularUpdater {
                     int extras_offset = 3 * nPalettes;
                     foreach (var color in fa.gradients) {
                         string style = $"{x.Name}-{color.name}";
-                        AddComplexStyle(new DeferredFramesRecoloring(x.prefab, fa, extras_offset++, color.name, 
-                            style, s => color.gradient.Recolor(s, fa.renderMode), false));
+                        AddComplexStyle(style, new DeferredFramesRecoloring(x.prefab, fa, extras_offset++, color.name, 
+                            s => color.gradient.Recolor(s, fa.renderMode), false));
                     }
                     
                 }
@@ -487,7 +494,6 @@ public partial class BulletManager : RegularUpdater {
     public class DeferredFramesRecoloring {
         private static readonly Dictionary<FrameRecolorConfig, Sprite> frameCache = new();
         private FrameAnimBullet.Recolor recolor;
-        public string Style => recolor.style;
         private bool loaded;
 
         private readonly Func<Sprite, Sprite>? creator;
@@ -498,26 +504,29 @@ public partial class BulletManager : RegularUpdater {
         private readonly bool player;
         public readonly Palette? palette;
 
-        public DeferredFramesRecoloring MakePlayerCopy() => new(recolor.prefab, b, 
-            renderPriorityOffset + FAB_PLAYER_RENDER_OFFSET, paletteVariant, $"{PLAYERPREFIX}{recolor.style}", creator, recolorizable,  palette, true);
+        /// <summary>
+        /// Creates a copy of this recoloring info.
+        /// </summary>
+        /// <param name="isPlayer">If true, adds rendering modifiers for player bullets (lowered render priority and opacity).</param>
+        public DeferredFramesRecoloring MakeCopy(bool isPlayer) => new(recolor.prefab, b, 
+            renderPriorityOffset, paletteVariant, creator, recolorizable, palette, isPlayer);
         
         public DeferredFramesRecoloring(GameObject prefab, Bullet b, int renderPriorityOffset, string paletteVariant, 
-            string style, Func<Sprite, Sprite>? creator, bool recolorizable, 
+            Func<Sprite, Sprite>? creator, bool recolorizable, 
             Palette? palette = null, bool player=false) {
             this.b = b;
-            this.renderPriorityOffset = renderPriorityOffset;
+            this.renderPriorityOffset = renderPriorityOffset + (player ? FAB_PLAYER_RENDER_OFFSET : 0);
             this.paletteVariant = paletteVariant;
             this.creator = creator;
             this.recolorizable = recolorizable;
             this.palette = palette;
             this.player = player;
             if (creator == null) { //Don't recolor
-                //Pass style in as a parameter instead of trying to access recolor.style, which is not yet set
-                recolor = new FrameAnimBullet.Recolor(null, prefab, NewMaterial(style), style);
+                recolor = new FrameAnimBullet.Recolor(null, prefab, NewMaterial());
                 loaded = true;
             } else {
                 //the material will still be reinstantiated in GetOrLoadRecolor
-                recolor = new FrameAnimBullet.Recolor(null, prefab, b.material, style);
+                recolor = new FrameAnimBullet.Recolor(null, prefab, b.material);
             }
         }
 
@@ -535,14 +544,14 @@ public partial class BulletManager : RegularUpdater {
                     if (frameCache.ContainsKey(frc)) sprites[si].s = frameCache[frc];
                     else sprites[si].s = frameCache[frc] = creator!(frames[si].s);
                 }
-                recolor = new FrameAnimBullet.Recolor(sprites, recolor.prefab, NewMaterial(recolor.style), recolor.style);
+                recolor = new FrameAnimBullet.Recolor(sprites, recolor.prefab, NewMaterial());
                 loaded = true;
                 Profiler.EndSample();
             }
             return recolor;
         }
 
-        private Material NewMaterial(string style) {
+        private Material NewMaterial() {
             var m = Instantiate(b.material);
             if (b.fadeInTime > 0f) {
                 PropConsts.fadeInKW.Enable(m);
@@ -559,7 +568,12 @@ public partial class BulletManager : RegularUpdater {
             m.renderQueue += b.renderPriority + renderPriorityOffset;
             return m;
         }
-        
+
+        public void Destroy() {
+            if (loaded)
+                UnityEngine.Object.Destroy(recolor.material);
+        }
+
 
         private readonly struct FrameRecolorConfig : IEquatable<FrameRecolorConfig> {
             private readonly string sprite_name;
@@ -593,7 +607,7 @@ public partial class BulletManager : RegularUpdater {
         ColorScheme.LoadPalettes(basicGradientPalettes);
         RecolorTextures();
         foreach (var style in ResourceManager.AllSummonableNames) {
-            AddComplexStyle(new BehaviorEntity.BEHStyleMetadata(style, null));
+            AddComplexStyle(new BehaviorEntity.StyleMetadata(style, null));
         }
 
         SceneIntermediary.SceneUnloaded.Subscribe(_ => OrphanAll()); //also clears pool controls

@@ -1,31 +1,21 @@
-﻿using System.Linq;
-using BagoumLib.Expressions;
-using Danmokou.Core;
-using GCP = Danmokou.Danmaku.Options.GenCtxProperty;
+﻿using BagoumLib.Mathematics;
 using Danmokou.Danmaku.Options;
-using Danmokou.DataHoist;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
-using JetBrains.Annotations;
+using Scriptor;
 using UnityEngine;
-using SP = Danmokou.Danmaku.Patterns.SyncPatterns;
 using TPr = Danmokou.DMath.Functions.Parametrics;
-using RV2r = Danmokou.DMath.Functions.BPRV2Repo;
-using R = Danmokou.Reflection.Reflector;
 using static Danmokou.Reflection.Reflector;
 using static Danmokou.Reflection.Compilers;
 using static Danmokou.DMath.Functions.ExM;
-using static Danmokou.Expressions.ExMHelpers;
-using static Danmokou.DMath.Functions.ExMMod;
+using static Scriptor.Math.ExMOperators;
 using static Danmokou.Danmaku.Patterns.PatternUtils;
-using static Danmokou.Danmaku.Options.GenCtxProperty;
-using static Danmokou.DMath.Functions.AtomicBPYRepo;
 using static Danmokou.Danmaku.Patterns.AtomicPatterns;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
-using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
+using ExBPRV2 = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<BagoumLib.Mathematics.V2RV2>>;
 
 namespace Danmokou.Danmaku.Patterns {
 public static class PatternUtils {

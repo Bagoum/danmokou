@@ -376,7 +376,7 @@ var x = 5.0
 imp.aFn(x) + imp.aConstFn(imp.ms.Length);
 ```
 
-Import statements must occur at the top of a script. In the import statement `import A as B as C`, `A` is the name of the import set in GameReferences (used by Unity to locate the import), `at B` is the relative filepath of the import from the current script (used by VSCode to locate the import), and `as C` is an optional alias for the import. `at B` is technically also optional, but the VSCode extension will not work without it.
+Import statements must occur at the top of a script. In the import statement `import A at B as C`, `A` is the name of the import set in GameReferences (used by Unity to locate the import), `at B` is the relative filepath of the import from the current script (used by VSCode to locate the import), and `as C` is an optional alias for the import. `at B` is technically also optional, but the VSCode extension will not work without it.
 
 When importing a script, all variables and functions (including constant variables and functions) declared in the top-level scope are visible. Non-constant variables can be modified (eg. we could write `imp.mn = 0` above, since `mn` is a non-constant float variable declared in the top-level scope of "Example BDSL2 Import.bdsl"). In the current implementation, these modifications are shared across all importers.
 
@@ -417,7 +417,7 @@ Atomic expressions are the simplest type of expression. The types of atomic expr
 
 - Arrays
 
-  - Arrays are written in the format `{ a, b, c }`. If the elements are on separate lines with the same indentation, then the commas can be removed. The below examples are all valid.
+  - Arrays are written in the format `{ a, b, c }`. If the elements are on separate lines with the same indentation, then the commas can be removed. Arrays are automatically typed based on their elements, but a type declaration can be provided to force implicit casts. The below examples are all valid.
 
     ```C#
     var arr0 = { 
@@ -430,6 +430,10 @@ Atomic expressions are the simplest type of expression. The types of atomic expr
         300.0
     }
     var arr2 = { 100.0, 200.0, 300.0 }
+    
+    //Would normally be typed as int[],
+    // but type declaration forces each element to cast to float
+    var arr3 = { 100., 200., 300., }::float[]
     ```
 
 - Parenthesized expressions (ie. a tuple of one element)
@@ -571,4 +575,71 @@ The valid types of statements are as follows:
 - A continue/break statement (within a loop).
 
 If/else blocks and for/while loops are handled the same as in C#. Likewise, continue and break statements within loops are handled the same as in C#. The other types of statements are discussed in their own sections above.
+
+## Compiling a Script
+
+Scripts are not immediately compiled into values. Instead, they are compiled into delegates (via `Danmokou.Reflection2.ParseAndCompileDelegate`) that can return values when executed. For example, if we use the script `1` and the target type `float` in BDSL2LanguageHelper, it will compile this script into a `ScriptFn<float>`, which is almost the same as the type `Func<float>`. 
+
+We also have the flexibility to provide arguments to the delegate. For example, we could create a script `a + b` with type `Func<int,int,int>`, where `a` and `b` are the two arguments to the delegate. (This would be the same as writing `Func<int,int,int> fn1 = (a, b) => a + b;`)
+
+```c#
+var fn1 = Helpers.ParseAndCompileDelegate<Func<int, int, int>>("a + b", 
+        new DelegateArg<int>("a"),
+        new DelegateArg<int>("b"));
+Debug.Log(fn1(120, 1004)); //prints 1124
+```
+
+If we want, we can also get the environment frame from the script execution. Since C# does not support ref-type arguments in Func/Action, we must instead create a custom delegate type with an `out EnvFrame` argument. Then, we can use `Helpers.OutEnvFrameArg` when providing the `DelegateArg` list.
+
+```C#
+private delegate int MyDelegateType(int a, int b, out EnvFrame ef);
+...
+var fn2 = Helpers.ParseAndCompileDelegate<MyDelegateType>("a + b", 
+       new DelegateArg<int>("a"),
+       new DelegateArg<int>("b"),
+       Helpers.OutEnvFrameArg);
+Debug.Log(fn2(120, 1004, out var ef)); //prints 1124
+```
+
+This environment frame is what is used internally to support cross-script imports. It can also be inspected for debug information via `BDSL2LanguageHelper.DebugRootEF`. For example:
+
+```C#
+var fn2 = Helpers.ParseAndCompileDelegate<MyDelegateType>(@"
+var c = a * 2;
+function incrementC():: void {
+    c++;
+}
+incrementC();
+b + c;", 
+	new DelegateArg<int>("a"),
+	new DelegateArg<int>("b"),
+	Helpers.OutEnvFrameArg);
+Debug.Log(fn2(120, 1004, out var ef)); //prints 1245
+var sb = new StringBuilder();
+BDSL2LanguageHelper.DebugRootEf(sb, ef);
+Debug.Log(sb.ToString());
+```
+
+The final debug prints the following info to console:
+
+```
+Variables:
+	a<int>: 120
+	b<int>: 1004
+	c<int>: 241
+Functions:
+	void incrementC()
+```
+
+The above example scripts are provided in `BDSL2LanguageHelper.ExampleCustomDelegateCompilation`.
+
+Note that the VSCode extension is unable to identify when a script will be compiled with arguments. If we put these argument-dependent scripts in VSCode, we would get exceptions. To resolve this, we can add comments at the top of the script in the format `//vscode:ARGNAME::ARGTYPE` so the extension knows that we intend to provide those variables as arguments.
+
+Without comments:
+
+![Code_lUWqk6d2Dn](../../images/Code_lUWqk6d2Dn.jpg)
+
+With comments:
+
+![Code_lUWqk6d2Dn](../../images/Code_oLbozPKh3T.jpg)
 

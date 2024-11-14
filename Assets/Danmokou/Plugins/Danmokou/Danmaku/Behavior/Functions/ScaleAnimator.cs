@@ -58,18 +58,15 @@ public class ScaleAnimator : TimeBoundAnimator {
         AssignScale(startScale);
         FXY e1 = ease1.Into<FXY>();
         FXY e2 = ease2.Into<FXY>();
-        for (float t = 0; t < time1; t += ETime.FRAME_TIME) {
-            if (cT.Cancelled) break;
+        for (float t = 0; t < time1 && !cT.Cancelled; t += ETime.FRAME_TIME) {
             yield return null;
             AssignScale(startScale + (midScale - startScale) * e1(t / time1));
         }
         AssignScale(midScale);
-        for (float t = 0; t < holdtime; t += ETime.FRAME_TIME) {
-            if (cT.Cancelled) break;
+        for (float t = 0; t < holdtime && !cT.Cancelled; t += ETime.FRAME_TIME) {
             yield return null;
         }
-        for (float t = 0; t < time2; t += ETime.FRAME_TIME) {
-            if (cT.Cancelled) break;
+        for (float t = 0; t < time2 && !cT.Cancelled; t += ETime.FRAME_TIME) {
             yield return null;
             AssignScale(midScale + (endScale - midScale) * e2(t / time2));
         }

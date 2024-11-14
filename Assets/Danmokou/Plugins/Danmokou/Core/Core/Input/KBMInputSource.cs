@@ -6,7 +6,7 @@ using static Danmokou.Core.LocalizedStrings.Controls;
 
 namespace Danmokou.Core.DInput {
 
-public class KBMInputSource : IKeyedInputSource, IPrimaryInputSource {
+public class KBMInputSource : IPrimaryInputSource {
     public List<IInputHandler> Handlers { get; } = new();
     public bool AnyKeyPressedThisFrame { get; private set; }
     public int Priority => 1; //less priority because keyboard input may be shadowing controller input
@@ -18,7 +18,7 @@ public class KBMInputSource : IKeyedInputSource, IPrimaryInputSource {
     public MainInputSource Container { get; set; } = null!;
 
     public KBMInputSource() {
-        ((IKeyedInputSource)this).AddUpdaters();
+        ((IDescriptiveInputSource)this).AddUpdaters();
     }
 
     public IInputHandler arrowLeft { get; } = InputHandler.TriggerRefire(i.Left, left);

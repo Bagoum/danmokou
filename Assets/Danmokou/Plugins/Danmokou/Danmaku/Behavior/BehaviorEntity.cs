@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Functional;
+using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using BagoumLib.Tasks;
 using JetBrains.Annotations;
@@ -111,6 +112,13 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         RegisterID();
         UpdateStyle(defaultMeta);
     }
+
+    public void UpdateID(string newID) {
+        if (newID == ID) return;
+        UnregisterID();
+        ID = newID;
+        RegisterID();
+    }
     
     protected override void BindListeners() {
         base.BindListeners();
@@ -157,7 +165,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     /// <param name="parent">Transform parent of this BEH. Use sparingly</param>
     /// <param name="behName"></param>
     /// <param name="options"></param>
-    public void Initialize(BEHStyleMetadata? style, in Movement mov, ParametricInfo pi, SMRunner? smr,
+    public void Initialize(StyleMetadata? style, in Movement mov, ParametricInfo pi, SMRunner? smr,
         BehaviorEntity? parent=null, string behName="", RealizedBehOptions? options=null) {
         if (parent != null) TakeParent(parent);
         bpi = pi;
@@ -385,6 +393,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         phaseController.SetDesiredNext(0);
         var cT = new Cancellable();
         var joint = sm.MakeNested(cT);
+        (context ??= new()).ExternalCT = sm.cT;
         using var smh = new SMHandoff(this, sm, joint, context);
         behaviorToken.Add(cT);
         try {
@@ -421,7 +430,7 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
         if (smr is not {} sm || sm.cT.Cancelled) return;
         var cT = new Cancellable();
         var joint = sm.MakeNested(cT);
-        using var smh = new SMHandoff(this, sm, joint);
+        using var smh = new SMHandoff(this, sm, joint, new SMContext() { ExternalCT = sm.cT });
         behaviorToken.Add(cT);
         try {
             await sm.sm.Start(smh);
@@ -461,9 +470,11 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
     }
 
     /// <summary>
-    /// Destroy this BehaviorEntity. If `allowFinalize` is true, produce death effects.
+    /// Cull this BehaviorEntity. If `keepAlive` is false, then repool or destroy it.
     /// </summary>
-    public void CullMe(bool allowFinalize) {
+    /// <param name="allowFinalize">Whether or not to run finalize SMs and produce death effects.</param>
+    /// <param name="keepAlive">Whether or not to keep this object alive or send it back for repooling.</param>
+    public void CullMe(bool allowFinalize, bool keepAlive = false) {
         if (Dying) return;
         Dying = true;
         allowFinalize &= !SceneIntermediary.LOADING;
@@ -483,24 +494,28 @@ public partial class BehaviorEntity : Pooled<BehaviorEntity>, ITransformHandler 
 
         void FinalizeCull() {
             bpi.Dispose();
-            if (isPooled)
-                PooledDone();
-            else
-                Destroy(gameObject);
+            if (!keepAlive)
+                base.RepoolOrDestroy();
         }
     }
-    
+
     protected virtual void CullHook(bool allowFinalize) { }
 
-    [ContextMenu("Destroy Direct")]
-    public void InvokeCull() => CullMe(false);
+    
+    protected override void RepoolOrDestroy() {
+        CullMe(false, keepAlive: false);
+    }
 
-    protected override void ExternalDestroy() => CullMe(false);
+    [ContextMenu("Destroy Direct")]
+    public void InvokeCull() => CullMe(false, keepAlive: false);
 
     protected override void OnDisable() {
-        ExternalDestroy();
+        CullMe(false, keepAlive: true);
         base.OnDisable();
     }
+
+    //NB: Object.Destroy is not run immediately, so running it "again" within OnDestroy is safe
+    private void OnDestroy() => InvokeCull();
 
     [ContextMenu("Phase Shift")]
     public void ShiftPhase() {

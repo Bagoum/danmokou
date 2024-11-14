@@ -1,0 +1,29 @@
+pattern { } {
+phase 0 {
+	roott(1, 0, 0)
+} {
+	poolcontrol "circle-*" allowdelete false
+	collide sbonsb("circle-red/", "keine-blue/w", _, t > 0.1, {
+		exec(b{ &localt = t; }, _)
+		restyleeffect("circle-purple/", null, _)
+	}::cBulletControl[], { })
+	collide sbonsb("circle-purple/", "keine-blue/w", t - &localt > 0.1, _, {
+		exec(b{ &localt = t; }, _)
+		restyleeffect("circle-green/", null, _)
+	}::cBulletControl[], { })
+	collide sbonsb("circle-green/", "keine-blue/w", t - &localt > 0.1, _, {
+		restyleeffect("circle-blue/", null, _)
+	}::cBulletControl[], { })
+	
+	sync "circle-red/" <;1:> gsr2 40 <-0.2;:> {
+		center
+	} gsr2 40 <;0.2:> {
+		center
+		start b{ hvar localt = 0.0; }
+	} s none
+	sync "keine-blue/w" <;-2:;:> gsr2 3 <-0.6;:30> {
+		center
+	} simple tprot(circle(2, 4, t) + 
+			py(lerpt(0, 2, -0.4, 0.8))) { scale 0.6 }
+}
+}

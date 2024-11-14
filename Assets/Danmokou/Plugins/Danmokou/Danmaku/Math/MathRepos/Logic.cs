@@ -5,13 +5,15 @@ using Danmokou.Core;
 using Danmokou.DataHoist;
 using Danmokou.DMath;
 using Danmokou.Expressions;
+using Scriptor;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
 using static Danmokou.DMath.Functions.ExM;
-using static Danmokou.Expressions.ExMHelpers;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExPred = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<bool>>;
-using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector3>>;
+using static Scriptor.Expressions.ExMHelpers;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExPred = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<bool>>;
+using ExTP3 = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector3>>;
 
 namespace Danmokou.DMath.Functions {
 
@@ -63,7 +65,7 @@ public static partial class PredicateLogic {
     /// <returns></returns>
     public static ExPred RelCirc(Func<TExArgCtx, TEx<BehaviorEntity>> beh, ExTP3 circ) {
         return bpi => CollisionMath.pointInCircle.Of(
-            Ex.Subtract(bpi.LocV2, LBEH(beh(bpi))),
+            Ex.Subtract(bpi.LocV2(), LBEH(beh(bpi))),
             Ex.Convert(circ(bpi), typeof(CCircle))
         );
     }
@@ -75,7 +77,7 @@ public static partial class PredicateLogic {
     /// <returns></returns>
     public static ExPred Circ(ExTP3 circ) {
         return bpi => CollisionMath.pointInCircle.Of(
-            bpi.LocV2, Ex.Convert(circ(bpi), typeof(CCircle))
+            bpi.LocV2(), Ex.Convert(circ(bpi), typeof(CCircle))
         );
     }
     /// <summary>
@@ -86,7 +88,7 @@ public static partial class PredicateLogic {
     /// <returns></returns>
     public static ExPred RelRect(Func<TExArgCtx, TEx<BehaviorEntity>> beh, CRect rect) {
         return bpi => CollisionMath.pointInRect.Of(
-            Ex.Subtract(bpi.LocV2, LBEH(beh(bpi))),
+            Ex.Subtract(bpi.LocV2(), LBEH(beh(bpi))),
             ExC(rect)
         );
     }
@@ -97,7 +99,7 @@ public static partial class PredicateLogic {
     /// <returns></returns>
     public static ExPred Rect(CRect rect) {
         return bpi => CollisionMath.pointInRect.Of(
-            bpi.LocV2, ExC(rect)
+            bpi.LocV2(), ExC(rect)
         );
     }
 

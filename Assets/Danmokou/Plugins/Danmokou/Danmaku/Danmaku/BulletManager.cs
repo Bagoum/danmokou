@@ -21,50 +21,49 @@ namespace Danmokou.Danmaku {
 public partial class BulletManager {
     public const string EMPTY = "empty";
 
-    public static void CopyPool(string newPool, string from) {
-        var src = simpleBulletPools[from];
+    public static SimpleBulletCollection CopyPool(string newPool, string from, bool isPlayer) {
+        var src = simpleBulletPools.GetValueOrDefault(from) ??
+                  throw new Exception($"Simple bullet style {from} does not exist; cannot make a copy of it");
         var p = src.MetaType == SimpleBulletCollection.CollectionType.Empty ?
             new EmptySBC(src.CopyBC(newPool)) :
-            src.CopyPool(activeNpc, newPool);
+            src.CopyPool(isPlayer ? activePlayer : activeNpc, newPool);
         p.SetOriginal(src);
+        if (isPlayer)
+            p.SetPlayer();
         AddSimpleStyle(p);
         p.Activate();
+        return p;
+    }
+
+    public static BehaviorEntity.StyleMetadata CopyComplexPool(string newPool, string from, bool isPlayer) {
+        var src = behPools.GetValueOrDefault(from) ??
+            throw new Exception($"Complex bullet style {from} does not exist, cannot make a copy of it");
+        var p = src.MakeCopy(newPool, isPlayer);
+        AddComplexStyle(p);
+        p.Activate();
+        return p;
     }
 
     private static readonly Dictionary<string, string> playerPoolCopyCache = new();
 
-    public static string GetOrMakePlayerCopy(string pool) {
-        CheckOrCopyPool(pool, out _);
+    private const string PLAYERPREFIX = "p-";
+
+    public static string GetOrMakePlayerCopy(string basePool) {
+        CheckOrCopyPool(basePool, out _);
         //lmao i hate garbage
-        if (!playerPoolCopyCache.TryGetValue(pool, out var playerPool)) {
-            playerPool = playerPoolCopyCache[pool] = $"{PLAYERPREFIX}{pool}";
-        }
-        if (!simpleBulletPools.TryGetValue(playerPool, out var p)) {
-            if (!simpleBulletPools.TryGetValue(pool, out var src))
-                throw new Exception($"{pool} does not exist, cannot make a player variant of it");
-            p = src.MetaType == SimpleBulletCollection.CollectionType.Empty ?
-                new EmptySBC(src.CopyBC(playerPool)) :
-                src.CopySimplePool(activePlayer, playerPool);
-            p.SetOriginal(src);
-            p.SetPlayer();
-            AddSimpleStyle(p);
-        }
-        if (!p.Active) p.Activate();
+        if (!playerPoolCopyCache.TryGetValue(basePool, out var playerPool))
+            playerPool = playerPoolCopyCache[basePool] = $"{PLAYERPREFIX}{basePool}";
+        if (!simpleBulletPools.ContainsKey(playerPool))
+            CopyPool(playerPool, basePool, true);
         return playerPool;
     }
 
-    private const string PLAYERPREFIX = "p-";
-
-    public static string GetOrMakeComplexPlayerCopy(string pool) {
-        if (!playerPoolCopyCache.TryGetValue(pool, out var playerPool)) {
-            playerPool = playerPoolCopyCache[pool] = $"{PLAYERPREFIX}{pool}";
-        }
-        if (!behPools.TryGetValue(playerPool, out var p)) {
-            if (!behPools.TryGetValue(pool, out var po))
-                throw new Exception($"{pool} does not exist, cannot make a player variant of it");
-            p = po.MakePlayerCopy(playerPool);
-            AddComplexStyle(p);
-        }
+    public static string GetOrMakeComplexPlayerCopy(string basePool) {
+        CheckOrCopyComplexPool(basePool, out _);
+        if (!playerPoolCopyCache.TryGetValue(basePool, out var playerPool))
+            playerPool = playerPoolCopyCache[basePool] = $"{PLAYERPREFIX}{basePool}";
+        if (!behPools.ContainsKey(playerPool)) 
+            CopyComplexPool(playerPool, basePool, true);
         return playerPool;
     }
 
@@ -78,28 +77,30 @@ public partial class BulletManager {
 
     private static bool CheckOrCopyPool(string pool, out SimpleBulletCollection sbc) {
         if (simpleBulletPools.TryGetValue(pool, out sbc)) {
-            if (!sbc.Active) sbc.Activate();
+            sbc.Activate();
             return true;
-        } else if (IsPlayerPoolString(pool)) {
-            return CheckOrCopyPool(GetOrMakePlayerCopy(pool.Substring(PLAYERPREFIX.Length)), out sbc);
-        }
+        } else if (IsPlayerPoolString(pool))
+            return CheckOrCopyPool(GetOrMakePlayerCopy(pool[PLAYERPREFIX.Length..]), out sbc);
         int splitAt = pool.IndexOf('.');
         if (splitAt == -1) return false;
-        string basePool = pool.Substring(0, splitAt);
+        string basePool = pool[..splitAt];
         if (!simpleBulletPools.ContainsKey(basePool)) return false;
-        CopyPool(pool, basePool);
-        sbc = simpleBulletPools[pool];
+        sbc = CopyPool(pool, basePool, false);
         return true;
     }
 
-    //No copy functionality
-    public static bool CheckComplexPool(string pool, out BehaviorEntity.BEHStyleMetadata bsm) {
+    public static bool CheckOrCopyComplexPool(string pool, out BehaviorEntity.StyleMetadata bsm) {
         if (behPools.TryGetValue(pool, out bsm)) {
-            if (!bsm.Active) bsm.Activate();
+            bsm.Activate();
             return true;
-        } else if (IsPlayerPoolString(pool)) {
-            return CheckComplexPool(GetOrMakeComplexPlayerCopy(pool.Substring(PLAYERPREFIX.Length)), out bsm);
-        } else return false;
+        } else if (IsPlayerPoolString(pool))
+            return CheckOrCopyComplexPool(GetOrMakeComplexPlayerCopy(pool[PLAYERPREFIX.Length..]), out bsm);
+        int splitAt = pool.IndexOf('.');
+        if (splitAt == -1) return false;
+        string basePool = pool[..splitAt];
+        if (!behPools.ContainsKey(basePool)) return false;
+        bsm = CopyComplexPool(pool, basePool, false);
+        return true;
     }
 
     public static void AssertControls(string pool, IReadOnlyList<BulletControl> controls) =>
@@ -193,46 +194,42 @@ public partial class BulletManager {
         spamContainer.position = Vector3.zero;
     }
 
+    /// <summary>
+    /// Clear pool controls, reset all simple bullet pools, and destroy copied pools.
+    /// </summary>
     public static void OrphanAll() {
-        ClearPoolControls();
+        //clear pool controls
+        foreach (var pool in simpleBulletPools.Values)
+            pool.ClearControls();
+        BehaviorEntity.ClearPoolControls();
+        CurvedTileRenderLaser.ClearPoolControls();
+        
+        //reset all pools
         foreach (var pool in simpleBulletPools.Values) {
             pool.Reset();
-            pool.Deactivate();
+            pool._Deactivate();
         }
-        DestroyCopiedPools();
-        activeNpc.Clear();
-        activePlayer.Clear();
+        BehaviorEntity.DeInitializePools(); //clears activeBEH list
+        CurvedTileRenderLaser.DestroyPools(); //laser pools are just wrappers around BEHStyle, so we destroy them
+        
+        //destroy copied pools and clear activeSBC lists
+        foreach (var activeList in new[]{activeEmpty, activeNpc, activePlayer}) {
+            foreach (var sbc in activeList) { 
+                if (sbc.IsCopy) {
+                    sbc.Destroy(); //also deletes culled pool 
+                    simpleBulletPools.Remove(sbc.Style);
+                }
+            }
+            activeList.Clear();
+        }
         activeCulled.Clear();
-        Bullet.OrphanAll();
-        BehaviorEntity.DeInitializePools();
-        CurvedTileRenderLaser.DeInitializePools();
-    }
-
-    public static void DestroyCopiedPools() {
-        //Some empty pools and npc pools are copied
-        var newEmpty = new List<SimpleBulletCollection>();
-        foreach (var sbc in activeEmpty)
-            if (sbc.IsCopy)
-                DestroySimpleStyle(sbc.Style);
-            else
-                newEmpty.Add(sbc);
-        activeEmpty.Clear();
-        activeEmpty.AddRange(newEmpty);
-
-        var newNpc = new List<SimpleBulletCollection>();
-        foreach (var sbc in activeNpc)
-            if (sbc.IsCopy)
-                DestroySimpleStyle(sbc.Style);
-            else
-                newNpc.Add(sbc);
-        activeNpc.Clear();
-        activeNpc.AddRange(newNpc);
-
-        //All player pools are copied
-        foreach (var sbc in activePlayer) 
-            DestroySimpleStyle(sbc.Style);
-        activePlayer.Clear();
-        //Don't delete culled pools since they are linked from the base pools
+        
+        foreach (var (key, style) in behPools.ToArray()) {
+            if (style.IsCopy) {
+                style.Destroy();
+                behPools.Remove(key);
+            }
+        }
     }
 
     public static void ClearEmptyBullets(bool clearPlayer) {
@@ -244,21 +241,7 @@ public partial class BulletManager {
     public static void ClearAllBullets() {
         foreach (var pool in simpleBulletPools.Values)
             pool.Reset();
-        ClearNonSimpleBullets();
-    }
-
-    public static void ClearNonSimpleBullets() {
         Bullet.ClearAll();
-    }
-
-    /// <summary>
-    /// Only call this for hard endings (like scene clear). Phase tokens should handle phase deletion.
-    /// </summary>
-    public static void ClearPoolControls() {
-        foreach (var pool in simpleBulletPools.Values)
-            pool.ClearControls();
-        BehaviorEntity.ClearPoolControls();
-        CurvedTileRenderLaser.ClearPoolControls();
     }
 
     private void OnDestroy() {

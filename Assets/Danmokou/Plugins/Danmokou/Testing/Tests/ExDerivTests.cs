@@ -3,11 +3,12 @@ using System.Linq.Expressions;
 using BagoumLib.Expressions;
 using NUnit.Framework;
 using Ex = System.Linq.Expressions.Expression;
-using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
-using static Danmokou.Expressions.ExMHelpers;
+using Scriptor.Expressions;
+using static Scriptor.Expressions.ExMHelpers;
 using static NUnit.Framework.Assert;
 using static Danmokou.DMath.Functions.ExM;
+using static Scriptor.Math.ExMOperators;
 
 namespace Danmokou.Testing {
 

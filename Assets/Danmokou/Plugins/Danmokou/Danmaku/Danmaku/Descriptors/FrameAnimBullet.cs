@@ -22,13 +22,11 @@ public class FrameAnimBullet : ColorizableBullet {
         public readonly BulletAnimSprite[]? sprites;
         public readonly GameObject prefab;
         public readonly Material material;
-        public readonly string style;
 
-        public Recolor(BulletAnimSprite[]? sprites, GameObject prefab, Material mat, string style) {
+        public Recolor(BulletAnimSprite[]? sprites, GameObject prefab, Material mat) {
             this.sprites = sprites;
             this.prefab = prefab;
             this.material = mat;
-            this.style = style;
         }
     }
     public BulletAnimSprite[] frames = null!;

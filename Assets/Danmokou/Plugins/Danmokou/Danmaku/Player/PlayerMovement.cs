@@ -1,9 +1,13 @@
 ﻿using System;
+using BagoumLib;
+using BagoumLib.Functional;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior.Display;
 using Danmokou.Core;
 using Danmokou.Core.DInput;
 using Danmokou.DMath;
 using Danmokou.Scriptables;
+using Danmokou.Services;
 using UnityEngine;
 
 namespace Danmokou.Player {
@@ -82,6 +86,79 @@ public abstract partial record PlayerMovement {
 
         public override void UpdateMovementNotAllowed(PlayerController player, ShipConfig ship, float dT) {
             timeToNextJump -= dT;
+        }
+    }
+
+    public record Grid(Vector2 Center, Vector2 Unit, Vector2Int MinCoord, Vector2Int MaxCoord, float MovTime, SFXConfig? onMove) : PlayerMovement {
+        private (Vector2Int to, float elapsed)? currMov;
+        private Vector2Int currCoord = Vector2Int.zero;
+        private Vector2Int? inputBuffer = null;
+
+        private Vector2 CoordToWorld(Vector2Int coord) => Center + Unit.PtMul(coord);
+
+        private bool IsInBounds(Vector2Int coord) =>
+            coord.x >= MinCoord.x && coord.x <= MaxCoord.x && coord.y >= MinCoord.y && coord.y <= MaxCoord.y;
+
+        private Vector2Int GetMov(PlayerController p) {
+            if (!p.AllowPlayerInput) goto end;
+            if (InputManager.GetKeyTrigger(KeyCode.D).Active)
+                return Vector2Int.right;
+            if (InputManager.GetKeyTrigger(KeyCode.W).Active)
+                return Vector2Int.up;
+            if (InputManager.GetKeyTrigger(KeyCode.A).Active)
+                return Vector2Int.left;
+            if (InputManager.GetKeyTrigger(KeyCode.S).Active)
+                return Vector2Int.down;
+            end: ;
+            return Vector2Int.zero;
+        }
+
+        public override void Setup() {
+            base.Setup();
+            UpdateGridDisplay(currCoord);
+        }
+
+        private void UpdateGridDisplay(Vector2Int nxt) =>
+            ServiceLocator.MaybeFind<PlayerMovementGridDisplay>().ValueOrNull()?.SelectEntry(nxt);
+
+        public override Vector2 UpdateNextDesiredDelta(PlayerController player, ShipConfig ship, float dT, out bool didInput) {
+            didInput = false;
+            var mov = GetMov(player);
+            if (mov == Vector2Int.zero) {
+                if (inputBuffer is { } buffer) {
+                    mov = buffer;
+                    inputBuffer = null;
+                } else
+                    goto update;
+            } else
+                didInput = true;
+            var nxt = currCoord + mov;
+            if (!IsInBounds(nxt)) {
+                //TODO: failure sfx if no currMov
+                goto update;
+            }
+            if (currMov is null) {
+                ISFXService.SFXService.Request(onMove);
+                UpdateGridDisplay(nxt);
+                currMov = (nxt, 0f);
+            } else {
+                inputBuffer = mov;
+            }
+            update: ;
+            if (currMov is not null) {
+                var (to, elapsed) = currMov.Value;
+                elapsed += dT;
+                if (elapsed >= MovTime) {
+                    currMov = null;
+                    currCoord = to;
+                    return CoordToWorld(to) - (Vector2)player.tr.position;
+                }
+                currMov = (to, elapsed);
+                var nxtWorldLoc = Vector2.Lerp(CoordToWorld(currCoord), CoordToWorld(to),
+                    Easers.EOutQuad(elapsed / MovTime));
+                return nxtWorldLoc - (Vector2)player.tr.position;
+            }
+            return Vector2.zero;
         }
     }
 }

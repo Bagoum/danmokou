@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Events;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Core.DInput;

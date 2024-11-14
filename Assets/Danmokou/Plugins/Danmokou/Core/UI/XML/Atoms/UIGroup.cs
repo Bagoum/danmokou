@@ -141,7 +141,7 @@ public record GroupVisibilityControl(UIGroup Group) {
         var tasks = new List<Task>();
         tasks.AddNonNull(task0);
         foreach (var c in Group.Children)
-            if (c.Visibility.ParentVisibilityUpdated(VisibleInTree, notifyRender) is { } task1)
+            if (c.Visibility.ParentVisibilityUpdated(VisibleInTree, notifyRender) is { IsCompletedSuccessfully:false } task1)
                 tasks.Add(task1);
         return tasks!.All();
     }
@@ -255,7 +255,8 @@ public abstract class UIGroup {
             _parent?.Children.Remove(this);
             _parent = value;
             _parent?.Children.Add(this);
-            _ = Visibility.ParentVisibilityUpdated(_parent?.Visibility.VisibleInTree, false);
+            if (!Destroyed)
+                Visibility.ParentVisibilityUpdated(_parent?.Visibility.VisibleInTree, false)?.Log();
         }
     }
 
@@ -430,7 +431,7 @@ public abstract class UIGroup {
         this.nodes = nodes?.FilterNone().ToList() ?? new();
         foreach (var n in this.nodes)
             n.Group = this;
-        _ = Render.AddSource(this).ContinueWithSync();
+        Render.AddSource(this).Log();
         Screen.AddGroup(this);
     }
 
@@ -553,7 +554,7 @@ public abstract class UIGroup {
         //don't await visibility animations (eg. popup scale-in) during enter group;
         // this allows the user to navigate the new group while the animation is still playing,
         // which is marginally more responsive.
-        _ = Visibility.OnEnterGroup()?.ContinueWithSync();
+        Visibility.OnEnterGroup()?.Log();
         return OnEnter?.Invoke(this);
     }
 
@@ -601,7 +602,7 @@ public abstract class UIGroup {
         if (Render is UIRenderConstructed uirc && Render.AllSourcesDescendFrom(this)) {
             uirc.Destroy();
         } else {
-            _ = Render.RemoveSource(this).ContinueWithSync();
+            Render.RemoveSource(this).Log();
         }
         ClearNodes();
         if (Parent is CompositeUIGroup cig)

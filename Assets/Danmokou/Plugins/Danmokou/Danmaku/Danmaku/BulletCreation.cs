@@ -1,5 +1,6 @@
 ﻿using System;
 using BagoumLib;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Behavior.Display;
 using Danmokou.Core;
@@ -69,10 +70,11 @@ public struct DelegatedCreator {
     }
     public void Simple(SyncHandoff sbh, SBOptions options, VTP path, uint? id) {
         var (mov, pi) = PathHandlers(sbh, path, id);
+        pi.ctx.onHit = options.onHit;
         if (options.player.Try(out var bse)) {
             //TODO add cdframes to sb Player cmd
             var bc = BulletManager.GetMaybeCopyPool(style).BC;
-            pi.ctx.playerBullet = new PlayerBullet(new PlayerBulletCfg(bc.againstEnemyCooldown, bc.Destructible, bse.boss, bse.stage, bse.effStrat), pi.ctx.PlayerController);
+            pi.ctx.playerBullet = new PlayerBullet(new PlayerBulletCfg(bc.againstEnemyCooldown, bc.Destructible, bse.boss, bse.stage), pi.ctx.PlayerController);
         } else
             pi.ctx.playerBullet = null;
         BulletManager.RequestSimple(style, options.scale, options.direction, in mov, pi);
@@ -120,9 +122,9 @@ public struct DelegatedCreator {
         var _style = style;
         var index = sbh.index;
         Action SummonWithRealized(RealizedPowerAuraOptions rap) => () =>
-            BulletManager.RequestPowerAura(_style, index, bpiid, sbh.GCX, rap);
+            BulletManager.RequestPowerAura(_style, index, bpiid, rap);
         
-        BulletManager.RequestPowerAura(style, sbh.index, bpiid, sbh.GCX,
+        BulletManager.RequestPowerAura(style, sbh.index, bpiid,
             new RealizedPowerAuraOptions(options, sbh.GCX, ParentOffset, sbh.ch.cT, SummonWithRealized));
     }
     public void SummonDarkness(SyncHandoff sbh, string behid, TP loc, BPY radius, TP4 color, SMRunner sm, uint bpiid) {
@@ -144,7 +146,7 @@ public struct DelegatedCreator {
     /// <param name="offset"></param>
     /// <returns></returns>
     public Vector2 ToRawPosition(V2RV2 offset) {
-        return ParentOffset + FacedRV2(offset).TrueLocation;
+        return ParentOffset + FacedRV2(offset).TrueLocation();
     }
 }
 
@@ -172,27 +174,27 @@ public partial class BulletManager {
 
     public static void RequestComplex(string style, in Movement mov, ParametricInfo pi, ref RealizedBehOptions opts) {
         CheckSentry();
-        if (CheckComplexPool(style, out var bsm)) {
+        if (CheckOrCopyComplexPool(style, out var bsm)) {
             var bullet = (Bullet) BEHPooler.RequestUninitialized(bsm.RecolorOrThrow.prefab, out _);
             bullet.Initialize(bsm, opts, null, in mov, pi, out _);
         } else throw new Exception("Could not find complex bullet style: " + style);
     }
     public static void RequestPather(string style, in Movement mov, ParametricInfo pi, float maxRemember, BPY remember, ref RealizedBehOptions opts) {
         CheckSentry();
-        if (CheckComplexPool(style, out var bsm)) {
+        if (CheckOrCopyComplexPool(style, out var bsm)) {
             Pather.Request(bsm, in mov, pi, maxRemember, remember, ref opts);
         } else throw new Exception("Pather must be an faBulletStyle: " + style);
     }
     public static void RequestLaser(BehaviorEntity? parent, string style, in Movement mov, ParametricInfo pi, float cold, float hot, ref RealizedLaserOptions options) {
         CheckSentry();
-        if (CheckComplexPool(style, out var bsm)) {
+        if (CheckOrCopyComplexPool(style, out var bsm)) {
             Laser.Request(bsm, parent, in mov, pi, cold, hot, ref options);
         } else throw new Exception("Laser must be an faBulletStyle: " + style);
     }
     
     public static BehaviorEntity RequestSummon(bool pooled, string prefabName, in Movement mov, ParametricInfo pi, string behName, BehaviorEntity? parent, SMRunner? sm, RealizedBehOptions? opts) {
         CheckSentry();
-        if (CheckComplexPool(prefabName, out var bsm)) {
+        if (CheckOrCopyComplexPool(prefabName, out var bsm)) {
             BehaviorEntity beh = pooled ?
                 BEHPooler.RequestUninitialized(ResourceManager.GetSummonable(prefabName), out _) :
                 GameObject.Instantiate(ResourceManager.GetSummonable(prefabName)).GetComponent<BehaviorEntity>();
@@ -223,9 +225,9 @@ public partial class BulletManager {
         return dark;
     }
 
-    public static PowerAura RequestPowerAura(string style, int firingIndex, uint bpiid, GenCtx firer, in RealizedPowerAuraOptions opts) {
+    public static PowerAura RequestPowerAura(string style, int firingIndex, uint bpiid, in RealizedPowerAuraOptions opts) {
         Movement mov = new Movement(opts.offset, 0f);
-        var pw = RequestSummon(true, style, mov, new ParametricInfo(in mov, firingIndex, bpiid, firer:firer), "_", opts.parent,
+        var pw = RequestSummon(true, style, mov, new ParametricInfo(opts.gcxData, opts.offset, firingIndex, bpiid), "_", opts.parent,
             new SMRunner(), null).GetComponent<PowerAura>();
         pw.Initialize(in opts);
         return pw;

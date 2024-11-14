@@ -8,18 +8,19 @@ using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
+using Scriptor;
+using Scriptor.Compile;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
-using tfloat = Danmokou.Expressions.TEx<float>;
-using static Danmokou.Expressions.ExMHelpers;
+using static Scriptor.Math.ExMOperators;
+using static Scriptor.Expressions.ExMHelpers;
 using static Danmokou.Expressions.ExUtils;
 using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.DMath.Functions.ExMLerps;
 using static Danmokou.DMath.Functions.ExMConversions;
-using static Danmokou.DMath.Functions.ExMMod;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
-using ExTP3 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector3>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
+using ExTP3 = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector3>>;
 
 namespace Danmokou.DMath.Functions {
 /// <summary>
@@ -38,14 +39,14 @@ public static partial class Parametrics {
     /// <summary>
     /// Return the global location of the entity.
     /// </summary>
-    public static ExTP Loc() => sb => sb.LocV2;
+    public static ExTP Loc() => sb => sb.LocV2();
 
     /// <summary>
     /// The starting position of a bullet.
     /// </summary>
     [Atomic]
     public static ExTP Root() => tac => ReflectEx.GetAliasFromStack(Aliases.MOV_ROOT_ALIAS, tac) ?? 
-                                        tac.MaybeSB?.movement.root ??
+                                        tac.MaybeSB()?.movement.root ??
                                         throw new Exception($"The function {nameof(Root)} only works in VTP/SB contexts.");
 
     #region ConstantVectors
@@ -80,6 +81,7 @@ public static partial class Parametrics {
 
     /// <summary>
     /// Returns a constant vector equal to the Cartesian coordinates for the polar coordinates (r,theta).
+    /// <br/>Equivalent to <see cref="ExMConversions.PolarToXY"/> with constants.
     /// </summary>
     /// <param name="r">Radius</param>
     /// <param name="theta">Theta, in degrees</param>
@@ -230,7 +232,7 @@ public static partial class Parametrics {
     public static ExTP VHome(ExBPY speed, ExTP location) {
         TExV2 l = new();
         return bpi => Ex.Block(new ParameterExpression[] {l},
-            Ex.Assign(l, location(bpi).Sub(bpi.LocV2)),
+            Ex.Assign(l, location(bpi).Sub(bpi.LocV2())),
             l.Mul(Ex.Divide(speed(bpi), Sqrt(Ex.Add(SqrMag(l), EPS))))
         );
     }
@@ -241,7 +243,7 @@ public static partial class Parametrics {
     /// <param name="time">Time in seconds</param>
     /// <param name="location">Target location</param>
     /// <returns></returns>
-    public static ExTP VHomeTime(ExBPY time, ExTP location) => bpi => location(bpi).Sub(bpi.LocV2).Div(time(bpi));
+    public static ExTP VHomeTime(ExBPY time, ExTP location) => bpi => location(bpi).Sub(bpi.LocV2()).Div(time(bpi));
     
     /// <summary>
     /// Short for `ss0 vhometime TIME LOCATION`.
@@ -261,7 +263,7 @@ public static partial class Parametrics {
     /// Short for `* smooth / t TIME ss0 - LOCATION loc`. Use with NROFFSET.
     /// </summary>
     public static ExTP EaseToTarget([LookupMethod] Func<TExArgCtx, TEx<Func<float,float>>> ease, ExBPY time, ExTP location) => bpi =>
-        ExM.Mul(PartialFn.Execute(ease(bpi), Clamp01(Div(new TEx<float>(bpi.t), time(bpi)))), ExMSamplers.SS0(x => Sub(location(x), x.LocV2))(bpi));
+        Mul(PartialFn.Execute(ease(bpi), Clamp01(Div(new TEx<float>(bpi.t()), time(bpi)))), ExMSamplers.SS0(x => Sub(location(x), x.LocV2()))(bpi));
         
     
     #endregion
@@ -313,7 +315,7 @@ public static partial class Parametrics {
     /// <param name="to">Target parametric</param>
     /// <returns></returns>
     public static ExTP RotateLerpPercent(ExBPY ratio, ExTP from, ExTP to) {
-        return bpi => ExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, false, false, ratio(bpi));
+        return bpi => DMKExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, false, false, ratio(bpi));
     }
 
     /// <summary>
@@ -327,7 +329,7 @@ public static partial class Parametrics {
     /// <param name="to">Target parametric</param>
     /// <returns></returns>
     public static ExTP RotateLerpRate(ExBPY rate, ExTP from, ExTP to) {
-        return bpi => ExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, true, false, rate(bpi));
+        return bpi => DMKExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, true, false, rate(bpi));
     }
     
     /// <summary>
@@ -344,7 +346,7 @@ public static partial class Parametrics {
     /// <param name="to">Target parametric</param>
     /// <returns></returns>
     public static ExTP TrueRotateLerpPercent(ExBPY ratio, ExTP from, ExTP to) {
-        return bpi => ExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, false, true, ratio(bpi));
+        return bpi => DMKExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, false, true, ratio(bpi));
     }
 
     /// <summary>
@@ -356,11 +358,11 @@ public static partial class Parametrics {
     /// <param name="to">Target parametric</param>
     /// <returns></returns>
     public static ExTP TrueRotateLerpRate(ExBPY rate, ExTP from, ExTP to) {
-        return bpi => ExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, true, true, rate(bpi));
+        return bpi => DMKExMHelpers.RotateLerp(to(bpi), from(bpi), bpi, true, true, rate(bpi));
     }
 
     public static ExTP LaserRotateLerp(ExBPY rate, ExTP from, ExTP to) =>
-        bpi => ExMHelpers.LaserRotateLerp(to(bpi), from(bpi), bpi, rate(bpi));
+        bpi => DMKExMHelpers.LaserRotateLerp(to(bpi), from(bpi), bpi, rate(bpi));
 
     #endregion
     
@@ -375,7 +377,7 @@ public static partial class Parametrics {
     /// <param name="to">Parametric to return after switch</param>
     /// <returns></returns>
     public static ExTP Switch(float at_time, ExTP from, ExTP to) {
-        return bpi => Ex.Condition(Ex.GreaterThan(bpi.t, ExC(at_time)), to(bpi), from(bpi));
+        return bpi => Ex.Condition(Ex.GreaterThan(bpi.t(), ExC(at_time)), to(bpi), from(bpi));
     }
 
 
@@ -391,7 +393,7 @@ public static partial class Parametrics {
     /// <param name="f1">Starting equation</param>
     /// <param name="f2">Equation after pivot</param>
     /// <returns></returns>
-    public static ExTP Pivot(ExBPY pivotVar, ExBPY pivot, ExTP f1, ExTP f2) => ExMHelpers.Pivot<TExPI, Vector2>(
+    public static ExTP Pivot(ExBPY pivotVar, ExBPY pivot, ExTP f1, ExTP f2) => DMKExMHelpers.Pivot<TExPI, Vector2>(
         pivot, f1, f2, pivotVar);
 
     #endregion
@@ -409,9 +411,9 @@ public static partial class Parametrics {
     public static ExTP LerpIn(float from_time, float end_time, ExTP p) {
         Ex etr = ExC(1f / (end_time - from_time));
         Ex ex_from = ExC(from_time);
-        return bpi => Ex.Condition(Ex.LessThan(bpi.t, ex_from), v20,
-            Ex.Multiply(p(bpi), Ex.Condition(Ex.GreaterThan(bpi.t, ExC(end_time)), E1,
-                Ex.Multiply(etr, Ex.Subtract(bpi.t, ex_from))
+        return bpi => Ex.Condition(Ex.LessThan(bpi.t(), ex_from), DMKExMHelpers.v20,
+            Ex.Multiply(p(bpi), Ex.Condition(Ex.GreaterThan(bpi.t(), ExC(end_time)), E1,
+                Ex.Multiply(etr, Ex.Subtract(bpi.t(), ex_from))
             ))
         );
     }
@@ -426,9 +428,9 @@ public static partial class Parametrics {
     public static ExTP LerpOut(float from_time, float end_time, ExTP p) {
         Ex etr = ExC(1f / (end_time - from_time));
         Ex ex_end = ExC(end_time);
-        return bpi => Ex.Condition(Ex.GreaterThan(bpi.t, ex_end), v20,
-            Ex.Multiply(p(bpi), Ex.Condition(Ex.LessThan(bpi.t, ExC(from_time)), E1,
-                Ex.Multiply(etr, Ex.Subtract(ex_end, bpi.t))
+        return bpi => Ex.Condition(Ex.GreaterThan(bpi.t(), ex_end), DMKExMHelpers.v20,
+            Ex.Multiply(p(bpi), Ex.Condition(Ex.LessThan(bpi.t(), ExC(from_time)), E1,
+                Ex.Multiply(etr, Ex.Subtract(ex_end, bpi.t()))
             ))
         );
     }

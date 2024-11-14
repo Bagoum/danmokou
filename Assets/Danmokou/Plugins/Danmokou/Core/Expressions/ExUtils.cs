@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using Danmokou.DMath;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -74,13 +75,6 @@ public static class ExUtils {
     public static Ex SubAssign(Ex into, Ex from) => Ex.Assign(into, Ex.Subtract(into, from));
 
     public static Ex MulAssign(Ex into, Ex from) => Ex.Assign(into, Ex.Multiply(into, from));
-
-}
-
-
-public enum ExMode {
-    Parameter,
-    RefParameter
 }
 
 /* Warnings for usage:

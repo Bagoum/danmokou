@@ -6,6 +6,7 @@ using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Expressions;
 using BagoumLib.Functional;
+using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using BagoumLib.Unification;
 using Danmokou.Behavior;
@@ -19,16 +20,18 @@ using Danmokou.DMath.Functions;
 using Danmokou.Graphics;
 using Danmokou.Player;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
 using Danmokou.Scenes;
 using Danmokou.Scriptables;
 using JetBrains.Annotations;
 using Mizuhashi;
+using Scriptor;
+using Scriptor.Analysis;
+using Scriptor.Expressions;
 using UnityEngine.Profiling;
 using Ex = System.Linq.Expressions.Expression;
-using ExVTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.Expressions.VTPExpr>>;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
+using ExVTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<Danmokou.Expressions.VTPExpr>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
 #pragma warning disable CS0162
 
 namespace Danmokou.DMath {
@@ -110,6 +113,7 @@ public class PIData {
     public CurvedTileRenderLaser Laser => 
         laserController ?? throw new Exception("PICustomData is not a laser.");
     public PlayerBullet? playerBullet;
+    public EffectStrategy? onHit;
 
     /// <summary>
     /// Copy this object's variables into another object of the same type.
@@ -175,7 +179,7 @@ public class PIData {
     ///  if it exists. If it doesn't exist, returns <see cref="deflt"/> or throws an exception.
     /// </summary>
     public static Ex GetIfDefined<T>(TExArgCtx tac, string name, Ex? deflt) {
-        return LexicalScope.VariableWithoutLexicalScope(tac, name, typeof(T), deflt);
+        return LexicalScope.DynamicVariableLookup(tac, tac.EnvFrame, name, typeof(T), deflt);
     }
 
 
@@ -185,12 +189,12 @@ public class PIData {
     /// otherwise uses the WriteT jumptable lookup.
     /// </summary>
     public static Ex SetValue(TExArgCtx tac, Type t, string name, Func<TExArgCtx, TEx> val) {
-        var decl = tac.Ctx.Scope.FindVariable(name) ?? throw new Exception($"Couldn't locate variable {name}");
-        return tac.Ctx.Scope.LocalOrParentVariable(tac, tac.EnvFrame, decl).Is(val(tac));
+        var decl = ParsingScope.Current.FindVariable(name) ?? throw new Exception($"Couldn't locate variable {name}");
+        return ParsingScope.Current.LocalOrParentVariable(tac, tac.EnvFrame, decl).Is(val(tac));
     }
 
     public static Ex SetValueDynamic(TExArgCtx tac, Type t, string name, Func<TExArgCtx, TEx> val) {
-        return LexicalScope.VariableWithoutLexicalScope(tac, name, t, opOnValue: l => l.Is(val(tac)));
+        return LexicalScope.DynamicVariableLookup(tac, tac.EnvFrame, name, t, opOnValue: l => l.Is(val(tac)));
     }
 
     
@@ -199,33 +203,33 @@ public class PIData {
     private static TEx Hoisted(TExArgCtx tac, Type typ, string name, Func<Expression, Expression> constructor) {
         var key = Ex.Constant(GetDynamicKey(typ, name));
         var ex = constructor(key);
-#if EXBAKE_SAVE
-        //Don't duplicate hoisted references
-        var key_name = "_hoisted" + name;
-        var key_assign = FormattableString.Invariant(
-            $"var {key_name} = PIData.GetDynamicKey(typeof({CSharpTypePrinter.Default.Print(typ)}), \"{name}\");");
-        if (!tac.Ctx.HoistedVariables.Contains(key_assign)) {
-            tac.Ctx.HoistedVariables.Add(key_assign);
-            tac.Ctx.HoistedReplacements[key] = Expression.Variable(typeof(int), key_name);
-        } else
-            tac.Ctx.HoistedReplacements[key] =
-                tac.Ctx.HoistedReplacements.Values.First(x => x is ParameterExpression pex && pex.Name == key_name);
-#endif
+        if (tac.Ctx.BakeTracker is ExBakeTracker.Save saver) {
+            //Don't duplicate hoisted references
+            var key_name = "_hoisted" + name;
+            var key_assign = FormattableString.Invariant(
+                $"var {key_name} = PIData.GetDynamicKey(typeof({CSharpTypePrinter.Default.Print(typ)}), \"{name}\");");
+            if (!saver.HoistedVariables.Contains(key_assign)) {
+                saver.HoistedVariables.Add(key_assign);
+                saver.HoistedReplacements[key] = Ex.Variable(typeof(int), key_name);
+            } else
+                saver.HoistedReplacements[key] =
+                    saver.HoistedReplacements.Values.First(x => x is ParameterExpression pex && pex.Name == key_name);
+        }
         return ex;
     }
     
     //Dynamic lookup methods, using dictionary instead of field references
     public static TEx ContainsDynamic(TExArgCtx tac, Type typ, string name) =>
-        Hoisted(tac, typ, name, key => GetDict(tac.BPI.FiringCtx, typ).DictContains(key));
+        Hoisted(tac, typ, name, key => GetDict(tac.BPI().FiringCtx, typ).DictContains(key));
 
     public static Expression ContainsDynamic<T>(TExArgCtx tac, string name) =>
         ContainsDynamic(tac, typeof(T), name);
     public static Expression GetValueDynamic<T>(TExArgCtx tac, string name, TEx<T>? deflt = null) =>
         Hoisted(tac, typeof(T), name, key => deflt != null ?
-            GetDict(tac.BPI.FiringCtx, typeof(T)).DictSafeGet(key, deflt) :
-            GetDict(tac.BPI.FiringCtx, typeof(T)).DictGet(key));
+            GetDict(tac.BPI().FiringCtx, typeof(T)).DictSafeGet(key, deflt) :
+            GetDict(tac.BPI().FiringCtx, typeof(T)).DictGet(key));
     public static Expression SetValueDynamic<T>(TExArgCtx tac, string name, Expression val) =>
-        Hoisted(tac, typeof(T), name, key => GetDict(tac.BPI.FiringCtx, typeof(T)).DictSet(key, val));
+        Hoisted(tac, typeof(T), name, key => GetDict(tac.BPI().FiringCtx, typeof(T)).DictSet(key, val));
     
     public static Expression GetDict(Expression fctx, Type typ) {
         if (typ == ExUtils.tfloat)
@@ -277,7 +281,7 @@ public class PIData {
     /// Only use this if you don't need to store any bound variables.
     /// </summary>
     public static PIData NewUnscoped(GenCtx? gcx = null) =>
-        New(gcx == null ? null : (DMKScope.Singleton, gcx));
+        New(gcx == null ? null : (GlobalScope.Singleton, gcx));
 
 }
 
@@ -303,14 +307,14 @@ public struct ParametricInfo {
     [UsedImplicitly]
     public Vector2 LocV2 => loc;
 
-    public ParametricInfo(in Movement mov, int findex = 0, uint? id = null, float t = 0, GenCtx? firer = null) : 
-        this(mov.rootPos, findex, id, t, firer) { }
+    public ParametricInfo(in Movement mov, int findex = 0, uint? id = null, float t = 0) : 
+        this(mov.rootPos, findex, id, t) { }
     public ParametricInfo(Vector3 position, int findex = 0, uint? id = null, float t = 0, GenCtx? firer = null) {
         loc = position;
         index = findex;
         this.id = id ?? RNG.GetUInt();
         this.t = t;
-        this.ctx = PIData.NewUnscoped(firer);
+        this.ctx = firer?.DeriveFCTX() ?? PIData.NewUnscoped(firer);
     }
     public ParametricInfo(PIData ctx, in Movement mov, int findex = 0, uint? id = null, float t = 0) : 
         this(ctx, mov.rootPos, findex, id, t) { }

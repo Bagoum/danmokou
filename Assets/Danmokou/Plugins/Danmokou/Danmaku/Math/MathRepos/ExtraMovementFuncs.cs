@@ -1,7 +1,8 @@
 ﻿using Danmokou.Core;
 using Danmokou.Reflection;
+using Scriptor;
 using Ex = System.Linq.Expressions.Expression;
-using P = System.Func<Danmokou.Expressions.ITexMovement, Danmokou.Expressions.TEx<float>, Danmokou.Expressions.TExPI, Danmokou.Expressions.TExV2, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
+using P = System.Func<Danmokou.Expressions.ITexMovement, Scriptor.Expressions.TEx<float>, Danmokou.Expressions.TExPI, Danmokou.Expressions.TExV2, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
 
 namespace Danmokou.DMath.Functions {
 [Reflect]

@@ -234,6 +234,52 @@ public class UIScreen : ITokenized {
     /// </summary>
     public UIFreeformGroup AddFreeformGroup(Func<UINode, ICursorState, UICommand, UIResult?>? unselectNav = null) =>
         new(this, EmptyNode.MakeUnselector(unselectNav));
+
+    /// <summary>
+    /// Make this UIScreen's HTML pickable. On a left click, will invoke the
+    ///  first freeform group on the screen's Unselector confirm.
+    /// <br/>NB: By default, UIScreen HTML is not pickable.
+    /// </summary>
+    public UIScreen SetPickable(PickingMode mode, bool useCallback = true) {
+        if (Built) {
+            HTML.pickingMode = mode;
+            if (useCallback)
+                SetPickableCallbacks();
+        } else if (Builder is null) {
+            Builder = (s, _) => {
+                s.HTML.pickingMode = mode;
+                if (useCallback)
+                    SetPickableCallbacks();
+            };
+            
+        } else {
+            var b = Builder;
+            Builder = (s, ve) => {
+                b(s, ve);
+                s.HTML.pickingMode = mode;
+                if (useCallback)
+                    SetPickableCallbacks();
+            };
+        }
+        return this;
+    }
+
+    private bool hasSetPickableCallbacks = false;
+    private void SetPickableCallbacks() {
+        if (hasSetPickableCallbacks) return;
+        var startedClickHere = true;
+        HTML.RegisterCallback<PointerLeaveEvent>(evt => startedClickHere = false);
+        HTML.RegisterCallback<PointerDownEvent>(evt => startedClickHere = true);
+        HTML.RegisterCallback<PointerUpEvent>(evt => {
+            if (startedClickHere && evt.button is 0) {
+                var unsel = Groups.SelectNotNull(g => (g as UIFreeformGroup)?.Unselector).First();
+                Controller.QueueInput(new UIPointerCommand.NormalCommand(UICommand.Confirm, unsel));
+            }
+            startedClickHere = false;
+            evt.StopPropagation();
+        });
+        hasSetPickableCallbacks = true;
+    }
     
     /// <summary>
     /// Create a <see cref="UIRenderExplicit"/> that queries for the HTML subtree named `name`.

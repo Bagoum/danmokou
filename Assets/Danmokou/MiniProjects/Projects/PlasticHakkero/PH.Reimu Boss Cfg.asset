@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9a92301f86b4dd690557658c7243e8b, type: 3}
+  m_Name: PH.Reimu Boss Cfg
+  m_EditorClassIdentifier: 
+  boss: {fileID: 6067799077495160482, guid: 68a917d37238b7b46995b0835c2ade82, type: 3}
+  localizationBaseKey: simp.boss.reimu
+  m_casualName:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  m_bossPracticeName:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  replayNameOverride:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  bottomTrackerNameOverride:
+    useReference: 1
+    reference: 
+    hardcoded:
+      en: 
+      jp: 
+  stateMachine: {fileID: 2811297602134710623, guid: 45db368edcd75e24c9eca187180bb6f7,
+    type: 3}
+  key: ph.reimu
+  colors: {fileID: 11400000, guid: b25c8f6870731d14b86cc87bcaf0878b, type: 2}
+  cardRotator: 
+  spellRotator: 
+  profile:
+    leftSidebar: {fileID: 0}
+    rightSidebar: {fileID: 0}
+  defaultNonBG: {fileID: 5180723301924424041, guid: 9634a3dafc6f67b4d91b51bf5e9dfda8,
+    type: 3}
+  defaultSpellBG: {fileID: 5180723301924424041, guid: 9634a3dafc6f67b4d91b51bf5e9dfda8,
+    type: 3}
+  defaultIntoSpellTransition: {fileID: 0}
+  defaultIntoNonTransition: {fileID: 0}
+  bossCutin: {fileID: 0}
+  spellCutins: []
+  practiceable: 0

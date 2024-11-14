@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Danmokou.Danmaku.Descriptors {
 public class ColorizableBullet : Bullet {
 
-    public override void Initialize(BEHStyleMetadata? style, RealizedBehOptions options,
+    public override void Initialize(StyleMetadata? style, RealizedBehOptions options,
         BehaviorEntity? parent, in Movement mov, ParametricInfo pi, out int layer) {
         if (style?.recolor != null) Colorize(style.recolor.GetOrLoadRecolor());
         base.Initialize(style, options, parent, in mov, pi, out layer);

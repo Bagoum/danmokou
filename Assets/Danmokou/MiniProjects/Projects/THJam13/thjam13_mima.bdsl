@@ -8,7 +8,7 @@ var w = mindex(mimac2, 4.5);
 
 function doSwitch(index::int)::StateMachine {
 	return exec b{
-		(mine<BehaviorEntity>().displayer as OneOfDisplayController).SelIndex = index
+		(mine<BehaviorEntity>().Dependent<DisplayController>() as OneOfDisplayController).SelIndex = index
 		if (index == 1) {
 			mine<Enemy>().ReceivedDamageMult = bpy(r.data().RetroMode01)
 			mine<Enemy>().HealthbarOpacityFunc = bpy(r.data().RetroMode01Smooth)

@@ -90,7 +90,7 @@ public class CampaignConfig : BaseCampaignConfig {
 
     public bool HasOneShotConfig(out TeamConfig team) {
         team = default;
-        if (fixedShot != null && fixedShot.Length > 0) {
+        if (fixedShot is {Length: > 0}) {
             team = new(0, Subshot.TYPE_D, 
                 fixedShot.Select(x => (x.ship, x.shot, x.ability as IAbilityCfg)).ToArray());
             return true;

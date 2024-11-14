@@ -24,9 +24,11 @@ public abstract record UIPointerCommand {
         public override bool ValidForCurrent(UINode current) => 
             Source == current || Source == null || Command == UICommand.Back;
     }
-    
-    
-    public record Goto(UINode Target) : UIPointerCommand;
+
+
+    public record Goto(UINode Target) : UIPointerCommand {
+        public bool CanTraverse => UIGroupHierarchy.CanTraverse(Target.Controller.Current, Target);
+    }
 }
 
 

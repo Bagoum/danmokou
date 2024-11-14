@@ -9,6 +9,7 @@ using Danmokou.Expressions;
 using Danmokou.Reflection;
 using Danmokou.Scriptables;
 using Danmokou.Services;
+using Scriptor;
 using UnityEngine;
 using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.Danmaku.Options.PowerAuraOption;
@@ -142,8 +143,11 @@ public readonly struct RealizedPowerAuraOptions {
 
     public readonly ICancellee cT;
     public readonly Action? continuation;
+    public readonly PIData gcxData;
 
     public RealizedPowerAuraOptions(PowerAuraOptions opts, GenCtx gcx, Vector2 unparentedOffset, ICancellee cT, Func<RealizedPowerAuraOptions, Action> next) {
+        gcxData = gcx.DeriveFCTX(); //derive this now to avoid requiring GCX to be in scope for
+                                    // PIData construction when continuation is executed
         scale = opts.scale?.Invoke(gcx);
         color = opts.color;
         initialTime = opts.initialTime?.Invoke(gcx) ?? 0f;

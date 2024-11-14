@@ -5,11 +5,14 @@ using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DMath;
+using Danmokou.Expressions;
 using Danmokou.SM;
 using JetBrains.Annotations;
+using Scriptor;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
 using static Danmokou.Danmaku.BulletManager;
 
 namespace Danmokou.Expressions {
@@ -68,14 +71,14 @@ public class TExSB : TEx<SimpleBullet> {
     public TExV2 accDelta => new(Ex.Property(ex, "AccDeltaV2"));
 
     public TExSB(Expression ex) : base(ex) {
-        bpi = TExPI.Box(Ex.Field(ex, "bpi"));
+        bpi = new(Ex.Field(ex, "bpi"));
         scale = Ex.Field(ex, "scale");
         direction = new TExV2(Ex.Field(ex, "direction"));
         movement = new TExMov(Ex.Field(ex, "movement"));
     }
 
     protected TExSB(ExMode m, string? name) : base(m, name) {
-        bpi = TExPI.Box(Ex.Field(ex, "bpi"));
+        bpi = new(Ex.Field(ex, "bpi"));
         scale = Ex.Field(ex, "scale");
         direction = new TExV2(Ex.Field(ex, "direction"));
         movement = new TExMov(Ex.Field(ex, "movement"));
@@ -133,12 +136,12 @@ public static class SBFRepo {
     /// Return the scale of the bullet.
     /// </summary>
     /// <returns></returns>
-    public static ExBPY Scale() => sb => sb.SB.scale;
+    public static ExBPY Scale() => sb => sb.SB().scale;
     /// <summary>
     /// Return the direction, in degrees, of the bullet.
     /// </summary>
     /// <returns></returns>
-    public static ExBPY Dir() => sb => ExM.ATan(sb.SB.direction);
+    public static ExBPY Dir() => sb => ExM.ATan(sb.SB().direction);
 }
 
 /// <summary>
@@ -149,16 +152,16 @@ public static class SBV2Repo {
     /// <summary>
     /// Return the direction of the bullet as a (cos, sin) vector.
     /// </summary>
-    public static ExTP Dir() => sb => sb.SB.direction;
+    public static ExTP Dir() => sb => sb.SB().direction;
 
     /// <summary>
     /// Return the delta movement of the bullet this frame.
     /// </summary>
-    public static ExTP AccDelta() => sb => sb.SB.accDelta;
+    public static ExTP AccDelta() => sb => sb.SB().accDelta;
     
     /// <summary>
     /// Return the delta movement of the bullet this frame, including the Z-axis.
     /// </summary>
-    public static ExTP AccDeltaV3() => sb => sb.SB.accDeltaV3;
+    public static ExTP AccDeltaV3() => sb => sb.SB().accDeltaV3;
 }
 }

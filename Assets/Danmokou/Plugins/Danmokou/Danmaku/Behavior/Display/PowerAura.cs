@@ -1,4 +1,5 @@
-﻿using BagoumLib;
+﻿using System;
+using BagoumLib;
 using Danmokou.Core;
 using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
@@ -25,7 +26,11 @@ public class PowerAura : SpriteDisplayController {
     }
 
     public override void OnRender(bool isFirstFrame, Vector2 lastDesiredDelta) {
-        sprite.color = ColorHelpers.V4C(options.color(Beh.rBPI));
+        try {
+            sprite.color = ColorHelpers.V4C(options.color(Beh.rBPI));
+        } catch (Exception e) {
+            int k = 5;
+        }
         base.OnRender(isFirstFrame, lastDesiredDelta);
         if (options.cT.Cancelled) {
             InvokeCull();

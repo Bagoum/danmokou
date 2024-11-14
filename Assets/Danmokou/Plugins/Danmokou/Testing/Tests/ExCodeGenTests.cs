@@ -15,7 +15,7 @@ using Danmokou.SM;
 using NUnit.Framework;
 using UnityEngine;
 using Ex = System.Linq.Expressions.Expression;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
+using ExTP = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<UnityEngine.Vector2>>;
 
 namespace Danmokou.Testing {
 

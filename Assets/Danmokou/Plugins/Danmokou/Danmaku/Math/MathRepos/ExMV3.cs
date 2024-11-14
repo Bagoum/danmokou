@@ -8,14 +8,14 @@ using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using JetBrains.Annotations;
+using Scriptor;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
-using static Danmokou.Expressions.ExMHelpers;
-using tfloat = Danmokou.Expressions.TEx<float>;
-using tbool = Danmokou.Expressions.TEx<bool>;
-using tv2 = Danmokou.Expressions.TEx<UnityEngine.Vector2>;
-using tv3 = Danmokou.Expressions.TEx<UnityEngine.Vector3>;
-using trv2 = Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>;
+using static Scriptor.Expressions.ExMHelpers;
+using tfloat = Scriptor.Expressions.TEx<float>;
+using tv2 = Scriptor.Expressions.TEx<UnityEngine.Vector2>;
+using tv3 = Scriptor.Expressions.TEx<UnityEngine.Vector3>;
 using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.DMath.Functions.ExMConversions;
 
@@ -28,7 +28,7 @@ public static partial class ExMV3 {
     /// <summary>
     /// Derive a Vector3 from an XY (Vector2) and a Z-component.
     /// </summary>
-    public static tv3 WithZ(tv2 xy, tfloat z) => TEx.ResolveV2AsXY(xy, (x, y) => ExUtils.V3(x, y, z), singleUse: true);
+    public static tv3 WithZ(tv2 xy, tfloat z) => TExHelpers.ResolveV2AsXY(xy, (x, y) => ExUtils.V3(x, y, z), singleUse: true);
     
     /// <summary>
     /// Derive a Vector3 from three floats.
@@ -87,7 +87,7 @@ public static partial class ExMV3 {
     /// <param name="rotateBy">Euler rotation, in degrees, xyz. Transformed to a quaternion.</param>
     /// <param name="target">Target Vector3</param>
     /// <returns></returns>
-    public static tv3 QRotate(tv3 rotateBy, tv3 target) => ExMHelpers.QRotate(QuaternionEuler(rotateBy), target);
+    public static tv3 QRotate(tv3 rotateBy, tv3 target) => DMKExMHelpers.QRotate(QuaternionEuler(rotateBy), target);
 
     /// <summary>
     /// Rotate a v3 by a direction vector.
@@ -95,7 +95,7 @@ public static partial class ExMV3 {
     /// <param name="rotateBy">Direction vector (Normalization not required)</param>
     /// <param name="target">Target v3</param>
     /// <returns></returns>
-    public static tv3 V3Rotate(tv3 rotateBy, tv3 target) => TEx.ResolveV2AsXY(ToSphere(rotateBy), (x, y) =>
+    public static tv3 V3Rotate(tv3 rotateBy, tv3 target) => TExHelpers.ResolveV2AsXY(ToSphere(rotateBy), (x, y) =>
         QRotate(PZ(x), QRotate(PY(y), target)), singleUse: true);
 
     /// <summary>
@@ -140,7 +140,7 @@ public static partial class ExMV3 {
     /// <param name="f">Function of input</param>
     /// <param name="tp">Parametric equation</param>
     /// <returns></returns>
-    public static tv3 MultiplyX(tfloat f, tv3 tp) => TEx.ResolveV3(tp, v => Ex.Block(
+    public static tv3 MultiplyX(tfloat f, tv3 tp) => TExHelpers.ResolveV3(tp, v => Ex.Block(
         MulAssign(v.x, f),
         v
     ));
@@ -150,7 +150,7 @@ public static partial class ExMV3 {
     /// <param name="f">Function of input</param>
     /// <param name="tp">Parametric equation</param>
     /// <returns></returns>
-    public static tv3 MultiplyY(tfloat f, tv3 tp) => TEx.ResolveV3(tp, v => Ex.Block(
+    public static tv3 MultiplyY(tfloat f, tv3 tp) => TExHelpers.ResolveV3(tp, v => Ex.Block(
         MulAssign(v.y, f),
         v
     ));
@@ -160,7 +160,7 @@ public static partial class ExMV3 {
     /// <param name="f">Function of input</param>
     /// <param name="tp">Parametric equation</param>
     /// <returns></returns>
-    public static tv3 MultiplyZ(tfloat f, tv3 tp)=> TEx.ResolveV3(tp, v => Ex.Block(
+    public static tv3 MultiplyZ(tfloat f, tv3 tp)=> TExHelpers.ResolveV3(tp, v => Ex.Block(
         MulAssign(v.z, f),
         v
     ));

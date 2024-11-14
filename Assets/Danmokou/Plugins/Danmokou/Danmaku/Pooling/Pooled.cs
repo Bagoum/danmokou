@@ -6,6 +6,7 @@ using Danmokou.Core;
 using Danmokou.Scenes;
 using JetBrains.Annotations;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Danmokou.Pooling {
 
@@ -15,9 +16,9 @@ public abstract class Pooled : CoroutineRegularUpdater {
     /// True iff the object has a parent other than the default pool container/null.
     /// </summary>
     public bool Parented { get; private set; }
-    protected Transform tr = null!;
+    public Transform tr { get; private set; } = null!;
     protected abstract Transform Container { get; }
-    private readonly List<Pooled> dependents = new();
+    private readonly List<Pooled> trchildren = new();
     private Pooled? parent;
 
     protected virtual void Awake() {
@@ -25,16 +26,20 @@ public abstract class Pooled : CoroutineRegularUpdater {
         Parented = tr.parent != null;
     }
 
+    private bool isFirstEnable = true;
     protected override void OnEnable() {
         base.OnEnable();
-        ResetValues(true);
+        //If an object receives awake/enable->disable->enable, then
+        // we usually want special enable handling only on the first awake/enable
+        ResetValues(isFirstEnable);
+        isFirstEnable = false;
     }
 
     public void TakeParent(Pooled par) {
         //false maintains the local transform. we want to maintain the local rotation/scale
         tr.SetParent((parent = par).tr, false);
         tr.localPosition = Vector3.zero;
-        parent.dependents.Add(this);
+        parent.trchildren.Add(this);
         Parented = true;
     }
 
@@ -67,20 +72,24 @@ public abstract class Pooled : CoroutineRegularUpdater {
                 //This case occurs when disabling due to scene end, which can occur naturally via eg. scene reload
                 //In which case we just don't do the parenting step
             }
-            parent.dependents.Remove(this);
+            parent.trchildren.Remove(this);
         }
         //This is the easiest way to ensure that no remaining display objects, like child SpriteRenders,
         //are visible after pooled return.
         tr.localPosition = new Vector3(50f, 50f, 0f);
-        if (dependents.Count > 0) {
-            foreach (var d in dependents.ToList()) {
-                d.ExternalDestroy();
-            }
+        if (trchildren.Count > 0) {
+            foreach (var d in trchildren.ToList())
+                d.RepoolOrDestroy();
         }
-        dependents.Clear();
+        trchildren.Clear();
     }
 
-    protected virtual void ExternalDestroy() => PooledDone();
+    protected virtual void RepoolOrDestroy() {
+        if (isPooled)
+            PooledDone();
+        else
+            Object.Destroy(this);
+    }
 }
 
 /// <summary>

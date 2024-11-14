@@ -1,0 +1,42 @@
+//vscode:targets::BehaviorEntity[]
+//vscode:targetLoc::Vector2
+
+saction 0 {
+    gtr {
+    } {
+        //delay(0.7, bulletcontrol(true, "needle-orange*", restyleeffect("arrow-blue/w", null, true))) 
+        sync "gdlaser-red/" <;:> gsrepeat {
+            target(ang, targetLoc)
+        } laser(none, 0.4, 0.8, { 
+            dsfx 
+            static(rvelocity(cx(1)))
+            onhit("oh1-red")
+        })
+
+        async "needle-orange.*" <;:> girepeat {
+            times(targets.Length as float)
+            preloop b{
+                hvar target = targets[i as int]
+            }
+            colorx(target.ID)
+        } gcrepeat {
+            times(inf)
+            fortime(1s)
+            wait 10
+            target(ang, lbeh(target))
+            sfx("x-fire-small-1")
+        } gsr2 3 <;0.6:> {
+            center
+        } gsr {
+            bank0(<>)
+            sltarget(rang, lbeh(target))
+        } simple(rvelocity(px(lerpt(0.1, 0.4, 2, 17))), {
+            onhit("oh1-red")
+        })
+        //pather(0.4, 0.4, rvelocity(px(14)), { onhit("oh1-red") })
+            
+    }
+    //pather(0.4, 0.4, rvelocity(px(14)), {  })
+    //
+    wait 0.2
+}

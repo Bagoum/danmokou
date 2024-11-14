@@ -6,12 +6,15 @@ using UnityEngine;
 using System.Linq.Expressions;
 using BagoumLib.Expressions;
 using Danmokou.DMath;
+using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using JetBrains.Annotations;
+using Scriptor.Expressions;
+using Scriptor.Math;
 using Ex = System.Linq.Expressions.Expression;
 using PEx = System.Linq.Expressions.ParameterExpression;
 using static Danmokou.DMath.Functions.ExM;
-using static Danmokou.Expressions.ExMHelpers;
+using static Scriptor.Expressions.ExMHelpers;
 // ReSharper disable CompareOfFloatsByEqualityOperator
 
 namespace Danmokou.Expressions {
@@ -98,9 +101,9 @@ class DerivativeVisitor : ExpressionVisitor {
                 var dz = Visit(z);
                 //special case for x^c
                 if (y == x && z.Flatten(false) is ConstantExpression {Value: float f})
-                    return z.Mul(Pow<float>(y, ExC(f - 1)));
+                    return z.Mul(ExMOperators.Pow<float>(y, ExC(f - 1)));
                 //d/dx (y^z) = d/dx (e^zln(y)) = y^z * d/dx (zln(y)) = y^z * (z'ln(y) + zy'/y)
-                return Pow<float>(y, z).Mul(dz.Mul(Ln(y)).Add(z.Mul(dy).Div(y)));
+                return ExMOperators.Pow<float>(y, z).Mul(dz.Mul(Ln(y)).Add(z.Mul(dy).Div(y)));
             }
             if (node.Method.Name == "Floor" || node.Method.Name == "Ceiling") return E0;
             if (node.Method.Name == "Min") return Ex.Condition(y.LT(args[1]), Visit(y), Visit(args[1]));

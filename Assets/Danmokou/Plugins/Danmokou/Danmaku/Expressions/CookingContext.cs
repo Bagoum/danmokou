@@ -9,8 +9,9 @@ using BagoumLib.Events;
 using BagoumLib.Expressions;
 using BagoumLib.Reflection;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
-using AST = Danmokou.Reflection2.AST;
+using Scriptor.Analysis;
+using Scriptor.Expressions;
+using AST = Scriptor.Compile.AST;
 
 namespace Danmokou.Expressions {
 /// <summary>
@@ -38,6 +39,9 @@ using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Culture;
 using BagoumLib.Mathematics;
+using Scriptor.Analysis;
+using Scriptor.Compile;
+using Scriptor.Expressions;
 using Danmokou.Behavior;
 using Danmokou.Behavior.Display;
 using Danmokou.Core;
@@ -51,7 +55,6 @@ using Danmokou.Graphics;
 using Danmokou.Graphics.Backgrounds;
 using Danmokou.Player;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
 using Danmokou.Services;
 using Danmokou.SM;
 using Danmokou.VN;
@@ -182,7 +185,7 @@ internal static partial class {clsName} {{
         /// </summary>
         SM,
         /// <summary>
-        /// SM.CreateFromDump
+        /// SMManager.LoadImport
         /// </summary>
         SM_IMPORT,
         /// <summary>
@@ -210,45 +213,63 @@ internal static partial class {clsName} {{
             KeyType.SM_IMPORT => "Imp",
             KeyType.INTO => "Into",
             _ => "Manual"
-        }, (long)key.GetHashCode() + (long)int.MaxValue);
+        }, key.GetHashCode() + (long)int.MaxValue);
 
         public abstract void Dispose();
 
         public class GeneratedFunc {
-            public readonly string fnName;
-            public string BakeName => $"{fnName}B";
+            public string FnName { get; private set; }
+            private static string BakeNameOfFn(string fnName) => fnName + "B";
+            public string BakeName => BakeNameOfFn(FnName);
             public readonly string fnBody;
             public readonly Type retType;
             public readonly (Type typ, string argName)[] argDefs;
             public readonly object? originalValue;
-            public AST.ScriptFunctionDef? SFDef { get; init; } = null;
+            public ScriptFnDecl? CompileAsScriptFn { get; private set; }
             public bool CompileAsField { get; init; } = false;
             public bool CompileAsBake { get; init; } = true;
             
             public GeneratedFunc(string fnName, string fnBody, Type retType, (Type, string)[] argDefs, object? originalValue) {
-                this.fnName = fnName;
+                this.FnName = fnName;
                 this.fnBody = fnBody;
                 this.retType = retType;
                 this.argDefs = argDefs;
                 this.originalValue = originalValue;
             }
 
+            public GeneratedFunc AsScriptFn(ScriptFnDecl? sfn) {
+                if (sfn != null) {
+                    FnName = ScriptFnCompiledName(sfn);
+                    CompileAsScriptFn = sfn;
+                }
+                return this;
+            }
+            
+            public static string ScriptFnCompiledName(ScriptFnDecl sfn) =>
+                $"SFN{sfn.Name}{sfn.GetHashCode() + (long)int.MaxValue}";
+            
+            //GetAsConstant, except for recursive functions when the function has not been compiled yet
+            public static string ScriptFnReference(ScriptFnDecl sfn) =>
+                $"{BakeNameOfFn(ScriptFnCompiledName(sfn))}.{nameof(BakedExpr<int>.Func)}";
+
             public string GetAsConstant() {
                 if (CompileAsBake)
                     return $"{BakeName}.{nameof(BakedExpr<int>.Func)}";
                 if (CompileAsField)
-                    return fnName;
-                return $"{fnName}()";
+                    return FnName;
+                return $"{FnName}()";
             }
 
             public string PrintSFNRetType(Baker b) => 
                 $"{nameof(BakedExpr<int>)}<{PrintRetType(b)}>";
+            
             public string PrintRetType(Baker b) => b.TypePrinter.Print(retType);
+            
             public string Print(Baker b) {
                 if (!CompileAsField && CompileAsBake) {
                     return $@"
 {PrintInner(b)}
-private static {PrintSFNRetType(b)} {BakeName} = new({fnName});";
+private static {PrintSFNRetType(b)} {BakeName} = new({FnName});";
                 }
                 return PrintInner(b);
             }
@@ -258,10 +279,10 @@ private static {PrintSFNRetType(b)} {BakeName} = new({fnName});";
                     if (!fnBody.StartsWith("return ") || argDefs.Length > 0)
                         throw new Exception($"Cannot compile {this} as a field");
                     return $@"
-private static {PrintRetType(b)} {fnName} =
+private static {PrintRetType(b)} {FnName} =
     {fnBody.Substring(7).Trim().Replace("\n", "\n\t")}";
                 } else return $@"
-private static {PrintRetType(b)} {fnName}(object[] args) {{
+private static {PrintRetType(b)} {FnName}(object[] args) {{
     {fnBody.Trim().Replace("\n", "\n\t")}
 }}";
             }
@@ -270,7 +291,7 @@ private static {PrintRetType(b)} {fnName}(object[] args) {{
                 var typ = CompileAsBake ? PrintSFNRetType(b) : 
                     "Func<" + string.Concat(argDefs.Select(ts => b.TypePrinter.Print(ts.typ) + ", ")) + PrintRetType(b) + ">";
                 var name = CompileAsBake ? BakeName :
-                    CompileAsField ? $"(() => {fnName})" : fnName;
+                    CompileAsField ? $"(() => {FnName})" : FnName;
                 return $"({typ}){name}";
             }
         }
@@ -286,7 +307,7 @@ private static {PrintRetType(b)} {fnName}(object[] args) {{
             public Baker(CookingContext parent, KeyType keyType, object key) : base(parent, keyType, key) { }
             public ExportedFile? Export() => (DoNotExport || GeneratedFunctions.Count == 0) ?
                 (ExportedFile?)null :
-                new ExportedFile(keyType, FileIdentifier, GeneratedFunctions.Where(gf =>gf.SFDef != null), 
+                new ExportedFile(keyType, FileIdentifier, GeneratedFunctions.Where(gf => gf.CompileAsScriptFn != null), 
                     ExportFuncDefs(), GeneratedFunctions.Select(f => f.PrintAsEntry(this)));
 
             private IEnumerable<string> ExportFuncDefs() => GeneratedFunctions.Select(f => f.Print(this));
@@ -297,8 +318,7 @@ private static {PrintRetType(b)} {fnName}(object[] args) {{
                 var name = MakeFuncName(FileIdentifier, GeneratedFunctions.Count);
                 var fn = new GeneratedFunc(name, fnBody, typeof(D), argDefs, origValue)
                     { CompileAsField = tac.Ctx.CompileToField, 
-                        CompileAsBake = !tac.Ctx.CompileToField,
-                        SFDef = tac.Ctx.ScriptFunctionDef };
+                        CompileAsBake = !tac.Ctx.CompileToField }.AsScriptFn(tac.Ctx.CompileAsScriptFn);
                 GeneratedFunctions.Add(fn);
             }
 
@@ -326,9 +346,8 @@ private static {PrintRetType(b)} {fnName}(object[] args) {{
                     throw new Exception($"Not enough baked expressions for file {FileIdentifier}");
                 }
                 var func = compiled[index++];
-                if (func is BakedExpr<D> bsfn) {
+                if (func is BakedExpr<D> bsfn)
                     return bsfn.Load(proxyArgs);
-                }
                 var invoker = func.GetType().GetMethod("Invoke")!;
                 var obj = invoker.Invoke(func, proxyArgs);
                 if (obj is D del) 

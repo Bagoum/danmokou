@@ -7,8 +7,9 @@ using Ex = System.Linq.Expressions.Expression;
 using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
+using Scriptor.Expressions;
 using static Danmokou.Expressions.ExUtils;
-using static Danmokou.Expressions.ExMHelpers;
+using static Scriptor.Expressions.ExMHelpers;
 using static NUnit.Framework.Assert;
 using static Danmokou.DMath.Functions.ExM;
 using static Danmokou.Testing.TAssert;
@@ -26,7 +27,7 @@ public static class EMath {
         [Test]
         public static void TestLookupSin() {
             var xv = VFloat();
-            var fsin = Ex.Lambda<FXY>(ExMHelpers.dLookupSinRad(xv.Cast<double>()), xv).Compile();
+            var fsin = Ex.Lambda<FXY>(DMKExMHelpers.dLookupSinRad(xv.Cast<double>()), xv).Compile();
             for (float x = -16.5f; x < 16.5f; x += 0.0001f) {
                 AreEqual(fsin(x), Mathf.Sin(x), 0.00001f);
             }
@@ -63,9 +64,9 @@ public static class EMath {
 
         [Test]
         public static void TestCylinder() {
-            var xz = TP3(bpi => XZrY(ExC(3f), ExC(2f), bpi.t, 5f));
-            var yz = TP3(bpi => YZrX(ExC(3f), ExC(2f), bpi.t, 5f));
-            var xy = TP3(bpi => XYrZ(ExC(3f), ExC(2f), bpi.t, 5f));
+            var xz = TP3(bpi => XZrY(ExC(3f), ExC(2f), bpi.t(), 5f));
+            var yz = TP3(bpi => YZrX(ExC(3f), ExC(2f), bpi.t(), 5f));
+            var xy = TP3(bpi => XYrZ(ExC(3f), ExC(2f), bpi.t(), 5f));
             var b = new ParametricInfo() { t = 1f };
             var c = 2f * Mathf.Cos(b.t * BMath.TAU / 3f);
             var s = 2f * Mathf.Sin(b.t * BMath.TAU / 3f);

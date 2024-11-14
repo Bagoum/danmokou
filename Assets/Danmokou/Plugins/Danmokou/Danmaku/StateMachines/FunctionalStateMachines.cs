@@ -6,13 +6,16 @@ using System.Net.Http;
 using System.Reactive;
 using System.Threading.Tasks;
 using BagoumLib.Cancellation;
+using BagoumLib.Mathematics;
 using BagoumLib.Tasks;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.Danmaku.Options;
 using Danmokou.Danmaku.Patterns;
 using Danmokou.DMath;
+using Danmokou.Reflection;
 using JetBrains.Annotations;
+using Scriptor;
 using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.SM {
@@ -26,7 +29,7 @@ public class GTRepeat2 : GTRepeat {
     /// <param name="rpp">Amount to increment rv2 between invocations</param>
     /// <param name="props">Other properties</param>
     /// <param name="target">Child StateMachines to run</param>
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public GTRepeat2(GCXF<float> wait, GCXF<float> times, GCXF<V2RV2> rpp, GenCtxProperty[] props, StateMachine[] target) :
         base(new GenCtxProperties<StateMachine>(props.Append(GenCtxProperty.Async(wait, times, rpp))), target) { }
 
@@ -170,7 +173,7 @@ public class GTRepeat : UniversalSM {
 
     private readonly GenCtxProperties<StateMachine> props;
     
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public GTRepeat(GenCtxProperties<StateMachine> props, StateMachine[] target) : base(target) {
         this.props = props;
     }

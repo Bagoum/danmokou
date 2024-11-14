@@ -1,4 +1,5 @@
-﻿﻿Shader "_Misc/FillBar MoF2" {
+﻿Shader "_Misc/FillBar MoF2" {
+	//Fills an empty texture from center outwards based on fill ratios.
 	Properties{
 		[PerRendererData] _MainTex("Texture", 2D) = "white" {}
 		_F("Fill Ratio", Range(0, 1)) = 0.7

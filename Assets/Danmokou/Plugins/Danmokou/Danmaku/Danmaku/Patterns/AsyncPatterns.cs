@@ -5,17 +5,19 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using BagoumLib;
 using BagoumLib.DataStructures;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku.Options;
 using Danmokou.DMath;
+using Danmokou.Reflection;
 using Danmokou.Services;
 using JetBrains.Annotations;
 using Danmokou.SM;
+using Scriptor;
 using GCP = Danmokou.Danmaku.Options.GenCtxProperty;
-using ExBPY = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<float>>;
-using ExTP = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<UnityEngine.Vector2>>;
-using ExBPRV2 = System.Func<Danmokou.Expressions.TExArgCtx, Danmokou.Expressions.TEx<Danmokou.DMath.V2RV2>>;
+using ExBPY = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<float>>;
+using ExBPRV2 = System.Func<Scriptor.Expressions.TExArgCtx, Scriptor.Expressions.TEx<BagoumLib.Mathematics.V2RV2>>;
 using static BagoumLib.Tasks.WaitingUtils;
 
 namespace Danmokou.Danmaku.Patterns {
@@ -211,7 +213,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GCR")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static AsyncPattern GCRepeat(GenCtxProperties<AsyncPattern> props, SyncPattern[] target) {
         IEnumerator Inner(AsyncHandoff abh) {
             APExecutionTracker tracker = new APExecutionTracker(props, abh, out bool isClipped);
@@ -251,7 +253,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GCR2")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static AsyncPattern GCRepeat2(GCXF<float> wait, GCXF<float> times, GCXF<V2RV2> rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.Async(wait, times, rpp))), target);
 
@@ -267,7 +269,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GCR2d")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static AsyncPattern GCRepeat2d(ExBPY difficulty, ExBPY wait, ExBPY times, GCXF<V2RV2> rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.AsyncD(difficulty, wait, times, rpp))), target);
     
@@ -276,12 +278,12 @@ public static partial class AsyncPatterns {
     /// where all three are adjusted for difficulty.
     /// </summary>
     [Alias("GCR2dr")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static AsyncPattern GCRepeat2dr(ExBPY difficulty, ExBPY wait, ExBPY times, ExBPRV2 rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.AsyncDR(difficulty, wait, times, rpp))), target);
 
     [Alias("GCRf")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static AsyncPattern GCRepeatFRV2(GCXF<float> wait, GCXF<float> times, GCXF<V2RV2> frv2, GenCtxProperty[] props, SyncPattern[] target) =>
         GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.WT(wait, times)).Append(GenCtxProperty.FRV2(frv2))), target);
     
@@ -295,7 +297,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child SyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GCR3")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static AsyncPattern GCRepeat3(GCXF<float> wait, GCXF<float> forTime, GCXF<V2RV2> rpp, GenCtxProperty[] props, SyncPattern[] target) =>
         GCRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.AsyncFor(wait, forTime, rpp))), target);
 
@@ -364,7 +366,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child AsyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GIR")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static AsyncPattern GIRepeat(GenCtxProperties<AsyncPattern> props, AsyncPattern[] target) {
         IEnumerator Inner(AsyncHandoff abh) {
             IPExecutionTracker tracker = new(props, abh, out bool isClipped);
@@ -403,7 +405,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child AsyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GIR2")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static AsyncPattern GIRepeat2(GCXF<float> wait, GCXF<float> times, GCXF<V2RV2> rpp, GenCtxProperty[] props, AsyncPattern[] target) =>
         GIRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.Async(wait, times, rpp))), target);
     
@@ -419,7 +421,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child AsyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GIR2d")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static AsyncPattern GIRepeat2d(ExBPY difficulty, ExBPY wait, ExBPY times, GCXF<V2RV2> rpp, GenCtxProperty[] props, AsyncPattern[] target) =>
         GIRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.AsyncD(difficulty, wait, times, rpp))), target);
     
@@ -433,7 +435,7 @@ public static partial class AsyncPatterns {
     /// <param name="target">Child AsyncPatterns to run</param>
     /// <returns></returns>
     [Alias("GIR3")]
-    [CreatesInternalScope(AutoVarMethod.GenCtx)]
+    [CreatesInternalScope((int)AutoVarMethod.GenCtx)]
     public static AsyncPattern GIRepeat3(GCXF<float> wait, GCXF<float> forTime, GCXF<V2RV2> rpp, GenCtxProperty[] props, AsyncPattern[] target) =>
         GIRepeat(new GenCtxProperties<AsyncPattern>(props.Append(GenCtxProperty.AsyncFor(wait, forTime, rpp))), target);
     private static AsyncPattern _AsGIR(AsyncPattern target, params GenCtxProperty[] props) =>

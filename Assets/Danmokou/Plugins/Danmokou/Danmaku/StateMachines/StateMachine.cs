@@ -8,6 +8,7 @@ using System.Reflection;
 using BagoumLib;
 using BagoumLib.Cancellation;
 using BagoumLib.Functional;
+using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using BagoumLib.Tasks;
 using BagoumLib.Unification;
@@ -20,22 +21,27 @@ using Danmokou.DMath;
 using Danmokou.Expressions;
 using Danmokou.GameInstance;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
 using Danmokou.Scriptables;
 using Danmokou.SM.Parsing;
 using Mizuhashi;
+using Scriptor;
+using Scriptor.Analysis;
+using Scriptor.Compile;
+using Scriptor.Math;
+using Scriptor.Reflection;
 using UnityEngine;
 using UnityEngine.Profiling;
-using static BagoumLib.Tasks.WaitingUtils;
 using AST = Danmokou.Reflection.AST;
-using Helpers = Danmokou.Reflection2.Helpers;
 using IAST = Danmokou.Reflection.IAST;
-using Parser = Danmokou.DMath.Parser;
 
 namespace Danmokou.SM {
 public class SMContext {
     public virtual List<IDisposable> PhaseObjects { get; } = new();
     public Checkpoint? LoadCheckpoint { get; init; }
+    /// <summary>
+    /// Cancellation token provided in <see cref="SMRunner"/>, unbounded by BEH-local cancellation.
+    /// </summary>
+    public ICancellee? ExternalCT { get; set; }
 
     public virtual void CleanupObjects() {
         PhaseObjects.DisposeAll();
@@ -49,6 +55,7 @@ public class PatternContext : SMContext {
         SM = sm;
         Props = sm.Props;
         LoadCheckpoint = parent.LoadCheckpoint;
+        ExternalCT = parent.ExternalCT;
     }
 }
 public class PhaseContext : SMContext {
@@ -71,6 +78,7 @@ public class PhaseContext : SMContext {
         Index = index;
         Props = props;
         LoadCheckpoint = pattern?.LoadCheckpoint;
+        ExternalCT = pattern?.ExternalCT;
     }
     
     public bool GetSpellCutin(out GameObject go) {
@@ -94,6 +102,7 @@ public class DerivedSMContext : SMContext {
 
     private DerivedSMContext(SMContext parent) {
         this.parent = parent;
+        ExternalCT = parent.ExternalCT;
     }
 
     public static DerivedSMContext DeriveFrom(SMContext parent) =>
@@ -142,13 +151,13 @@ public readonly struct SMHandoff : IDisposable {
     /// <summary>
     /// Create an SMHandoff for top-level execution with <see cref="SMRunner"/>.
     /// </summary>
-    public SMHandoff(BehaviorEntity exec, SMRunner smr, ICancellee? cT = null, SMContext? context = null) {
+    public SMHandoff(BehaviorEntity exec, SMRunner smr, ICancellee? cT, SMContext context) {
         var gcx = smr.NewGCX(exec);
         gcx.OverrideScope(exec, exec.rBPI.index);
         //TODO envframe should this be V2RV2.zero or null?
         this.ch = new CommonHandoff(cT ?? smr.cT, null, gcx, V2RV2.Zero);
         CanPrepend = false;
-        Context = context ?? new SMContext();
+        Context = context;
     }
 
     /// <summary>
@@ -156,7 +165,7 @@ public readonly struct SMHandoff : IDisposable {
     /// <br/>The common handoff is mirrored.
     /// </summary>
     public SMHandoff(SMHandoff parent, ICancellee newCT) {
-        this.ch = new CommonHandoff(newCT, parent.ch.bc, parent.ch.gcx.Mirror(), parent.ch.rv2Override);
+        this.ch = parent.ch.Mirror(newCT);
         CanPrepend = parent.CanPrepend;
         Context = DerivedSMContext.DeriveFrom(parent.Context);
     }
@@ -213,7 +222,7 @@ public readonly struct SMHandoff : IDisposable {
 
 // WARNING: StateMachines must NOT store any state. As in, you must be able to call the same SM twice concurrently,
 // and it should run twice without interfering.
-public abstract class StateMachine {
+public abstract class StateMachine : IFlattenDocSymbolArray {
     #region InitStuff
 
     public static readonly Dictionary<string, Type> SMInitMap = new(StringComparer.OrdinalIgnoreCase) {
@@ -329,9 +338,9 @@ public abstract class StateMachine {
             args.Select(x => (IAST)new AST.Preconstructed<object?>(default, x)).ToArray());
     }
 
-    private static Reflector.InvokedMethod GetSignature(PositionRange loc, string name, ref SMConstruction method, out Type myType) {
+    private static InvokedMethod GetSignature(PositionRange loc, string name, ref SMConstruction method, out Type myType) {
         if (!SMInitMap.TryGetValue(name, out myType)) {
-            Reflector.InvokedMethod? prms;
+            InvokedMethod? prms;
             if (method == SMConstruction.AS_TREFLECTABLE || method == SMConstruction.ANY) {
                 if ((prms = Reflector.TryGetSignature<TTaskPattern>(name)) != null) {
                     method = SMConstruction.AS_TREFLECTABLE;
@@ -350,9 +359,8 @@ public abstract class StateMachine {
              return Reflector.GetConstructorSignature(myType).Call(name);
         throw new ReflectionException(loc, $"{name} is not a StateMachine or applicable auto-reflectable.");
     }
-
     
-    private static IAST<StateMachine> Create(PositionRange loc, PositionRange callLoc, SMConstruction method, Reflector.InvokedMethod sig, IAST[] args, bool parenthesized = false) => method switch {
+    private static IAST<StateMachine> Create(PositionRange loc, PositionRange callLoc, SMConstruction method, InvokedMethod sig, IAST[] args, bool parenthesized = false) => method switch {
             SMConstruction.AS_REFLECTABLE =>
                 new AST.MethodInvoke<StateMachine>(loc, callLoc, sig, args) 
                     {Type = AST.MethodInvoke.InvokeType.SM, Parenthesized = parenthesized},
@@ -453,7 +461,7 @@ public abstract class StateMachine {
     
     private static bool IsChildCountMarker(string? s, out int ct) {
         if (s != null && s[0] == ':') {
-            if (Parser.TryFloat(s, 1, s.Length, out float f)) {
+            if (SimpleParser.TryFloat(s, 1, s.Length, out float f)) {
                 if (Math.Abs(f - Mathf.Floor(f)) < float.Epsilon) {
                     ct = Mathf.FloorToInt(f);
                     return true;
@@ -487,7 +495,7 @@ public abstract class StateMachine {
         using var _ = BakeCodeGenerator.OpenContext(CookingContext.KeyType.SM, dump);
         if (!dump.TrimStart().StartsWith("<#>")) {
             Profiler.BeginSample("SM AST (BDSL2) Parsing/Compilation");
-            var (sm, ef) = Helpers.ParseAndCompileValue<StateMachine>(dump);
+            var (sm, ef) = CompileHelpers.ParseAndCompileValue<StateMachine>(dump);
             Profiler.EndSample();
             scriptFrame = ef;
             return sm;
@@ -501,10 +509,10 @@ public abstract class StateMachine {
             if (p.Ctx.ParseEndFailure(p, ast) is { } exc)
                 throw exc;
             var rootScope = LexicalScope.NewTopLevelScope();
-            using var __ = new LexicalScope.ParsingScope(rootScope);
+            using var __ = new ParsingScope(rootScope);
             ast.AttachLexicalScope(rootScope);
             if (rootScope.FinalizeVariableTypes(Unifier.Empty).TryR(out var err))
-                throw Reflection2.IAST.EnrichError(err);
+                throw Scriptor.Compile.IAST.EnrichError(err);
             Profiler.BeginSample("SM AST realization");
             var result = ast.Evaluate();
             result = EnvFrameAttacher.AttachSM(result, scriptFrame = EnvFrame.Create(rootScope, null));
@@ -535,7 +543,7 @@ public abstract class StateMachine {
     }
     
     protected readonly StateMachine[] states;
-    public LexicalScope Scope { get; set; } = DMKScope.Singleton;
+    public LexicalScope Scope { get; set; } = GlobalScope.Singleton;
 
     public abstract Task Start(SMHandoff smh);
 }
@@ -624,7 +632,7 @@ public class NoBlockUSM : UniversalSM {
     public NoBlockUSM(StateMachine state) : base(state) { }
 
     public override Task Start(SMHandoff smh) {
-        _ = ExecuteBlocking(smh).ContinueWithSync();
+        ExecuteBlocking(smh).Log();
         return Task.CompletedTask;
     }
 

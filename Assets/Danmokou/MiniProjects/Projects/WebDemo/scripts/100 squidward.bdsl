@@ -1,6 +1,5 @@
 pattern { } {
 phase 0 {
-	type(non, "Squidward Dance")
 	roott(1, 0, 3)
 } {
 	paction 0 {

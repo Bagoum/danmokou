@@ -1,4 +1,5 @@
-﻿﻿Shader "_Misc/FillBar MoF" {
+﻿Shader "_Misc/FillBar MoF" {
+	//Fills a pre-existing texture from left to right based on fill ratios.
 	Properties{
 		[PerRendererData] _MainTex("Texture", 2D) = "white" {}
 		_F("Fill Ratio", Range(0, 1)) = 0.7

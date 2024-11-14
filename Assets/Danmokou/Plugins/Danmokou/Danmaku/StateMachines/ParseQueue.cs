@@ -13,6 +13,8 @@ using Danmokou.Reflection;
 using JetBrains.Annotations;
 using UnityEngine.Profiling;
 using Mizuhashi;
+using Scriptor;
+using Scriptor.Reflection;
 using static Danmokou.SM.Parsing.SMParser;
 
 namespace Danmokou.SM.Parsing {
@@ -35,7 +37,7 @@ public abstract class IParseQueue {
 
     public PositionRange PositionUpToCurrentObject => CurrentUnitIndex.Try(out var cu) ? PositionUpToObject(cu) : Position;
     public abstract Reflector.ReflCtx Ctx { get; }
-    public string AsFileLink(Reflector.InvokedMethod sig) => Ctx.AsFileLink(sig);
+    public string AsFileLink(InvokedMethod sig) => Ctx.AsFileLink(sig);
     public abstract IParseQueue NextChild();
 
     /// <summary>

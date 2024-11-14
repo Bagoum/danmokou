@@ -6,7 +6,8 @@
         "UnityEditor.TestRunner",
         "Danmokou.Core",
         "Danmokou.Danmaku",
-        "Danmokou.Testing"
+        "Danmokou.Testing",
+        "SuzunoyaUnity"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

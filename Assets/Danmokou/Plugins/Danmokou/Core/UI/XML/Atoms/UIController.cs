@@ -195,10 +195,10 @@ public abstract class UIController : CoroutineRegularUpdater {
         BackgroundOpacity.Push(0);
         tokens.Add(PlayerInputEnabled.AddDisturbance(OperationsEnabled));
         if (OpenOnInit) {
-            _ = ((Func<Task>)(async () => {
+            ((Func<Task>)(async () => {
                 await Open();
                 await DoReturn();
-            }))().ContinueWithSync();
+            }))().Log();
         }
     }
     
@@ -496,8 +496,8 @@ public abstract class UIController : CoroutineRegularUpdater {
         }
         //Logs.Log($"Left: {string.Join(",", LeftCalls.Select(x => x.ToString()))}, Entered: {string.Join(",", EntryCalls.Select(x => x.ToString()))}");
         //Logs.Log($"Left: {string.Join(",", leftGroups.Select(x => x.ToString()))}, Entered: {string.Join(",", entryGroups.Select(x => x.ToString()))}");
-        await TransitionToNode(next, opts, leftGroups, entryGroups, screenChanges)
-            .ContinueWithSync(result.OnPostTransition);
+        await TransitionToNode(next, opts, leftGroups, entryGroups, screenChanges);
+        result.OnPostTransition?.Invoke();
         if (closeMenuAfter)
             await CloseWithAnimation();
         LastOperationFrame = ETime.FrameNumber;
@@ -536,7 +536,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                 bool silence = false;
                 if (QueuedInput is UIPointerCommand.Goto mgt) {
                     if (!mgt.Target.Destroyed && mgt.Target.Screen == Current.Screen &&
-                        mgt.Target != Current && UIGroupHierarchy.CanTraverse(Current, mgt.Target)) {
+                        mgt.Target != Current && mgt.CanTraverse) {
                         result = CursorState.Value.PointerGoto(Current, mgt.Target);
                         if (result is UIResult.GoToNode { Target: {} target} && target != Current)
                             command = (Current.Group is UIColumn) == (target.Group == Current.Group) ?
@@ -578,7 +578,7 @@ public abstract class UIController : CoroutineRegularUpdater {
                     //Probably need to get this from the custom node handling? idk
                     ISFXService.SFXService.Request(prefabs.LeftRightSound);
                 if (result != null && result is not UIResult.StayOnNode)
-                    OperateOnResult(result, result.Options ?? UITransitionOptions.Default).ContinueWithSync();
+                    OperateOnResult(result, result.Options ?? UITransitionOptions.Default).Log();
                 break;
             } else
                 break;
@@ -613,7 +613,8 @@ public abstract class UIController : CoroutineRegularUpdater {
     protected async Task Close() {
         if (!MenuActive) return;
         UIRoot.style.opacity = 0;
-        await OperateOnResultFast(new UIResult.CloseMenuFast());
+        //if this is called within an enclosing CloseMenu, then OperateOnResult will hang
+        await _OperateOnResult(new UIResult.CloseMenuFast(), UITransitionOptions.DontAnimate);
         OnClosed();
     }
     
@@ -646,12 +647,12 @@ public abstract class UIController : CoroutineRegularUpdater {
 
     [ContextMenu("Animate open menu")]
     protected void OpenWithAnimationV() {
-        _ = OpenWithAnimation().ContinueWithSync();
+        OpenWithAnimation().Log();
     }
     
     [ContextMenu("Animate close menu")]
     protected void CloseWithAnimationV() {
-        _ = CloseWithAnimation().ContinueWithSync();
+        CloseWithAnimation().Log();
     }
 
     protected List<CacheInstruction> GetInstructionsToNode(UINode? c) {
@@ -851,7 +852,7 @@ public abstract class UIController : CoroutineRegularUpdater {
     /// </summary>
     /// <returns>True iff the cursor was moved (which also redraws the screen).</returns>
     public bool MoveCursorAwayFromNode(UINode n) {
-        if (n == Current) {
+        if (n == Current && OperationsEnabled) {
             if (!n.Destroyed) n.Leave(false, CursorState.Value, null);
             if (n.Group.Destroyed)
                 Current = null;

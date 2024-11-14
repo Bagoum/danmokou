@@ -55,11 +55,10 @@ public class XMLMainMenuVN01 : XMLMainMenu {
             },
             new TransferNode(main_load, LoadGameScreen),
             new TransferNode(main_options, OptionsScreen),
-            new TransferNode(main_licenses, LicenseScreen),
+            new TransferNode(main_licenses, LicenseScreen)
 #if !WEBGL
-            new FuncNode(main_quit, Application.Quit),
+            , new FuncNode(main_quit, Application.Quit)
 #endif
-            new OpenUrlNode(main_twitter, "https://twitter.com/rdbatz")
         }.Select(x => x.WithCSS(large1Class, centerText))) {
             ExitIndexOverride = -2
         };

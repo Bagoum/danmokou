@@ -1,0 +1,206 @@
+import phref at "./ph_ref.bdsl" as r
+
+function power1() {
+    return sync("powerup1", <>, poweraura { 
+        boss1
+            lerp 0 1 t red black
+            red
+    })
+}
+
+var factor = dl^0.3;
+
+pattern { 
+    boss "ph.reimu"
+    bgm {
+        (2, "ph.reimu")
+    } 
+} {
+phase 0 {} {
+	paction 0 {
+		shiftphaseto 1
+    }
+}		
+
+//1
+phase 0 { dialogue, silent } {
+    saction 0 {
+        executevn $(plastichakkerodialogue1) "d1"
+        shiftphase
+    }
+}
+
+//2
+phase 40 { 
+    type(spell, "Spell 1") 
+    hp(18)
+    root(3.6, -0.5)
+} {
+    paction 0 {
+        gtr {
+            waitchild
+            wait(lerp(0, 2, i, 220, 150 / factor))
+            times inf
+            preloop b{ hvar loop = i; }
+        } {
+            cond(loop > 0, saction 0 {
+                ~ power1()
+                movetarget(1.4, $(eoutquad), r.RandEnemyGrid())
+                _ 0.1 sync "gdlaser-red/" <-10;:> gsr {
+                    target ang Lplayer
+                } laser(none, lerp(1, 3, loop, 1.4, 0.6), 1, { dsfx, length(30) })
+            }, noop)
+            async "amulet-red/" <> gcr {
+                wait(80)
+                sfx("x-fire-burst-1")
+                times(3)
+            } gsr2c (22) {
+                target ang Lplayer
+                preloop b{
+                    hvar vel = polartoxy(3 * factor, rv2.angle)
+                    hvar reflected = false
+                }
+            } s nrvelocity(vel)
+        }
+    }
+}
+
+//3
+phase 40 {
+    type(spell, "Spell 2")
+    hp(28)
+    root(3.6, -0.5)
+} {
+    gtr {
+        waitchild
+        wait(180 / factor)
+        times inf
+        preloop b{ hvar loop = i; }
+        sequential
+    } {
+        ~ cond(loop > 0, saction 0 {
+            movetarget(1.4, $(eoutquad), r.RandEnemyGrid())
+        }, noop)
+        async "amulet-red*" <> gcr {
+            wait(80)
+            times(7)
+            rpp <5h>
+            sfx("x-fire-burst-1")
+            preloop b{ hvar ploop = i; }
+        } gsr2c (12) {
+        } gsr2 2 <> {
+            color { "/w", "/b" }
+            bindLR
+            preloop b{
+                hvar vel = pxy(0,0)
+                hvar reflected = false
+            }
+        } s(switch(reflected, nrvelocity(vel), polar(lerp(0, 6, ploop, 2.4, 3.6) * factor * t, 15 * t * lr)))
+        ~ async "needle-orange" <> gcr2 30 6 <> {
+            delay(20)
+            sfx("x-fire-keys-1")
+        } gsr2 5 <18> {
+            center
+            target ang Lplayer
+            preloop b{
+                hvar vel = polartoxy(4 * factor, rv2.angle + rand(-8, 8))
+                hvar reflected = false
+            }
+        } s nrvelocity(vel)
+        movetarget(1.4, $(eoutquad), r.EnemyGrid(pxy(1, pm1(loop))))
+        power1()
+        async "gdlaser-black/b" <-4;:180> gcr2 6 20 ry(pm1(loop)*0.22) {
+            center
+        } laser(none, 1.6, 2, {
+            dsfx
+            length(20)
+        })
+    }
+}
+
+//4
+phase 40 {
+    type(spell, "Spell 3")
+    hp(24)
+    root(3.6, -0.5)
+} {
+    saction 0 {
+        bulletcontrol(persist, "stelldecagon-*", batch(t > 5, {
+            sm(_, sync "needle-orange" angle(-90 * &ud) gsr {
+                sfx "x-fire-keys-1"
+                preloop b{
+                    hvar vel = polartoxy(3 * &factor, rv2.angle)
+                    hvar reflected = false
+                }
+            } s nrvelocity(lerpt(0, 1, 0.5, 1) * vel))
+            softcull(null, true)
+        }))
+        gtr {
+            wait 280
+            times inf
+            preloop b{ 
+                hvar loop = i; 
+                hvar col = r.RandAxis();
+            }
+            waitchild
+        } {
+            gtr {
+                sequential
+            } {
+                movetarget(1.1, $(eoutquad), r.EnemyGrid(pxy(col, pm1(loop))))
+                power1()
+                wait 1.6
+                ~ movetarget(1.4, $(eiosine), r.EnemyGrid(pxy(col, -pm1(loop))))
+                async "gdlaser-red/b" <-7;:> gcr2 120 3 <> {
+                } gsr {
+                    target ang Lplayer
+                } laser(none, 1, 0.1, { dsfx, length(25), hueshift(-60 * t) })
+            }
+
+            async "" <> gir2 60 3 <> {
+                root py(r.GridY(0))
+                preloop b{
+                    hvar lane = i - 1
+                    rv2.rx = r.PlayerGridX(lane)
+                }
+            } gir2 0 2 <;8.6:> {
+                center
+                bindUD
+            } {
+                gcr {
+                    color "stelldecagon-red/"
+                } simple none {
+                    scale(2)
+                    dir(200 * t * ud)
+                }
+                gir {
+                    color "amulet-black/"
+                    delay 120
+                    bank0 <>
+                } gcr2 80 4 <> {
+                    sltarget rang Lplayer
+                    sfx "x-fire-burst-1"
+                } gsr2c 4 {
+                    preloop b{
+                        hvar vel = polartoxy(4 * factor, rv2.angle)
+                        hvar reflected = false
+                    }
+                } s nrvelocity(lerpt(0, 1, 0.4, 1) * vel)
+
+            }
+        }
+    }
+}
+
+phase 0 {
+ dialogue
+} {
+	saction 0 {
+		dbossexplode lerp(0, 1, t, red, black) red
+		position 0 20
+        wait 2
+		shiftphase
+    }
+}
+
+}

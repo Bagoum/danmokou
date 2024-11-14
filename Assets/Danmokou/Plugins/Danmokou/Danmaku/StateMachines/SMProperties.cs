@@ -14,6 +14,7 @@ using Danmokou.GameInstance;
 using Danmokou.Scriptables;
 using Danmokou.Services;
 using JetBrains.Annotations;
+using Scriptor;
 using UnityEngine;
 using UnityEngine.Profiling;
 using static Danmokou.SM.PatternProperty;
@@ -392,7 +393,7 @@ public record SoftcullProperties {
     /// <summary>
     /// The target style to which bullets will be converted. If null, bullets will only fade out.
     /// </summary>
-    public string? autocullTarget { get; }
+    public string? autocullTarget { get; init; }
     private string autocullDefault { get; }
     
     /// <summary>
@@ -444,17 +445,23 @@ public class PhaseProperties {
     private readonly bool? cleanup = null;
     public bool Cleanup => cleanup ?? phaseType?.IsPattern() ?? false;
     public readonly bool endSound = true;
-    private readonly string? autocullBehTarget = "cwheel";
-
-    public SoftcullProperties SoftcullProps(BehaviorEntity exec) =>
-        new(exec.Location, 0.4f, 0.5f, 4f) {
-            //SendBWToColor = true //superfluous
-        };
     //TODO get a better BEH cull animation than cwheel
-    public SoftcullProperties SoftcullPropsBeh(BehaviorEntity exec) =>
+    private static readonly string? autocullBehTarget = "cwheel";
+
+    public static SoftcullProperties DefaultSoftcullProps(BehaviorEntity exec) =>
+        new(exec.Location, 0.4f, 0.5f, 4f);
+
+    public static SoftcullProperties DefaultBehSoftcullProps(BehaviorEntity exec) =>
         new(exec.Location, 0.4f, 0.5f, 4f, autocullBehTarget) {
             SendBWToColor = true
         };
+
+    public SoftcullProperties SoftcullProps(BehaviorEntity exec) =>
+        DefaultSoftcullProps(exec);
+
+    public SoftcullProperties SoftcullPropsBeh(BehaviorEntity exec) =>
+        DefaultBehSoftcullProps(exec);
+    
     public SoftcullProperties SoftcullPropsOverTime(BehaviorEntity exec, float advance) =>
         new(exec.Location, advance, 0.5f, 8f) {
             //SendBWToColor = true //superfluous

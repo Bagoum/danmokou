@@ -6,15 +6,16 @@ using System;
 using BagoumLib;
 using BagoumLib.DataStructures;
 using BagoumLib.Expressions;
+using BagoumLib.Mathematics;
 using BagoumLib.Reflection;
 using Danmokou.Core;
 using Danmokou.Danmaku;
 using Danmokou.DataHoist;
 using Danmokou.DMath;
-using Danmokou.DMath.Functions;
 using Danmokou.Reflection;
-using Danmokou.Reflection2;
-using JetBrains.Annotations;
+using Scriptor;
+using Scriptor.Analysis;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
 using static Danmokou.Expressions.ExUtils;
 using ParameterExpression = System.Linq.Expressions.ParameterExpression;
@@ -118,15 +119,15 @@ public static class ReflectEx {
             return ex;
         if (tac.MaybeGetByName<T>(alias).Try(out var prm))
             return prm;
-        //variables in EnvFrame
-        if (!isExplicit && deflt == null && tac.Ctx.Scope.TryGetLocalOrParentVariable(tac, typeof(T), alias, out var decl) is { } aex) {
+        //variables in EnvFrame (BDSL1)
+        if (!isExplicit && deflt == null && ParsingScope.Current.TryGetLocalOrParentVariable(tac, typeof(T), alias, out var decl) is { } aex) {
             return aex;
         }
         //In functions not scoped by the GCX (eg. bullet controls)
         //The reason for using the special marker is that we cannot give good errors if an incorrect value is entered
         //(good error handling would make lookup slower, and this is hotpath),
         //so we need to make opting into this completely explicit. 
-        if ((isExplicit || deflt != null) && tac.MaybeBPI != null) {
+        if ((isExplicit || deflt != null) && tac.MaybeBPI() != null) {
             try {
                 return PIData.GetIfDefined<T>(tac, alias, deflt is null ? null : (Ex)deflt);
             } catch (Exception) {
@@ -154,21 +155,23 @@ public static class ReflectEx {
     public readonly struct Hoist<T> : IHoist {
         public string Name { get; }
         private readonly SafeResizableArray<T> data;
+        private readonly ConstantExpression dataEx;
         public Hoist(string name) {
             data = PublicDataHoisting.Register<T>(this.Name = name);
+            dataEx = Ex.Constant(data);
         }
 
         public void Save(int index, T value) => data.SafeAssign(index, value);
         public T Retrieve(int index) => data.SafeGet(index);
 
         private void Bake(TExArgCtx tac) {
-#if EXBAKE_SAVE
-            var key_name = tac.Ctx.NameWithSuffix("pubHoist");
-            var key_assign = FormattableString.Invariant(
-                $"var {key_name} = PublicDataHoisting.Register<{typeof(T)}>(\"{Name}\");");
-            tac.Ctx.HoistedVariables.Add(key_assign);
-            tac.Ctx.HoistedConstants[data] = Ex.Variable(typeof(SafeResizableArray<T>), key_name);
-#endif
+            if (tac.Ctx.BakeTracker is ExBakeTracker.Save saver) {
+                var key_name = tac.Ctx.NameWithSuffix("pubHoist");
+                var key_assign = FormattableString.Invariant(
+                    $"var {key_name} = PublicDataHoisting.Register<{typeof(T)}>(\"{Name}\");");
+                saver.HoistedVariables.Add(key_assign);
+                saver.HoistedConstants[data] = Ex.Variable(typeof(SafeResizableArray<T>), key_name);
+            }
         }
 
         private static readonly ExFunction safeAssign =
@@ -177,7 +180,7 @@ public static class ReflectEx {
 
         public Ex Save(Ex index, Ex val, TExArgCtx tac) {
             Bake(tac);
-            return safeAssign.InstanceOf(Ex.Constant(data), Ex.Convert(index, tint), val);
+            return safeAssign.InstanceOf(dataEx, Ex.Convert(index, tint), val);
         }
 
         public Ex Retrieve(Ex index, TExArgCtx tac) {

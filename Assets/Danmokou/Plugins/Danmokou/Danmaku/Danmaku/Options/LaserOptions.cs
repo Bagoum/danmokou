@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Mathematics;
 using Danmokou.Core;
 using Danmokou.Danmaku.Descriptors;
 using Danmokou.DMath;
 using Danmokou.DMath.Functions;
+using Danmokou.Scriptables;
 using Danmokou.Services;
 using JetBrains.Annotations;
 using Danmokou.SM;
+using Scriptor;
 using UnityEngine;
 using static Danmokou.Danmaku.Options.LaserOption;
 
@@ -150,8 +153,20 @@ public record LaserOption {
     /// </summary>
     public static LaserOption NoGraze() => new NoGrazeFlag();
     
-    public static LaserOption Player(int cdFrames, int bossDmg, int stageDmg, string effect) =>
-        new PlayerBulletProp(new PlayerBulletCfg(cdFrames, false, bossDmg, stageDmg, ResourceManager.GetEffect(effect)));
+    /// <summary>
+    /// Mark the bullet as a player shot.
+    /// </summary>
+    /// <param name="cdFrames">Cooldown between successive hits</param>
+    /// <param name="bossDmg">Damage against boss enemies</param>
+    /// <param name="stageDmg">Damage against stage enemies</param>
+    /// <param name="onHit">On-hit effect</param>
+    public static LaserOption Player(int cdFrames, int bossDmg, int stageDmg, string onHit) =>
+        new PlayerBulletProp(new PlayerBulletCfg(cdFrames, false, bossDmg, stageDmg), ResourceManager.GetEffect(onHit));
+    
+    /// <summary>
+    /// Add an on-hit effect to the bullet. (For player bullets, use <see cref="Player"/> instead.)
+    /// </summary>
+    public static LaserOption OnHit(string onHit) => new OnHitProp(ResourceManager.GetEffect(onHit));
     
     #region impl
     public record CompositeProp : ValueProp<LaserOption[]>, IUnrollable<LaserOption> {
@@ -164,34 +179,18 @@ public record LaserOption {
         public ValueProp(T value) => this.value = value;
     }
 
-    public record LayerProp : ValueProp<Layer> {
-        public LayerProp(Layer l) : base(l) { }
-    }
-    public record EndpointProp : ValueProp<string> {
-        public EndpointProp(string f) : base(f) { }
-    }
-    public record SfxProp : LaserOption {
-        public readonly string? onFire;
-        public readonly string? onOn;
-        public SfxProp(string? onFire, string? onOn) {
-            this.onFire = onFire;
-            this.onOn = onOn;
-        }
-    }
-    public record LengthProp : ValueProp<(GCXF<float>, BPY?)> {
-        public LengthProp(GCXF<float> f, BPY? var = null) : base((f, var)) { }
-    }
+    public record LayerProp(Layer value) : LaserOption;
+    public record EndpointProp(string f) : LaserOption;
+    public record SfxProp(string? onFire, string? onOn): LaserOption;
 
-    public record StartProp : ValueProp<BPY> {
-        public StartProp(BPY f) : base(f) {}
-    }
+    public record LengthProp(GCXF<float> f, BPY? var = null) : LaserOption;
 
-    public record DeleteProp : ValueProp<Pred> {
-        public DeleteProp(Pred f) : base(f) { }
-    }
-    public record DeactivateProp : ValueProp<Pred> {
-        public DeactivateProp(Pred f) : base(f) { }
-    }
+    public record StartProp(BPY f) : LaserOption;
+
+    public record DeleteProp(Pred f) : LaserOption;
+
+    public record DeactivateProp(Pred f) : LaserOption;
+    
     public record RotateOffsetProp : ValueProp<GCXF<float>> {
         public RotateOffsetProp(GCXF<float> f) : base(f) { }
     }
@@ -242,9 +241,9 @@ public record LaserOption {
         public TintProp(TP4 v) : base(v) { }
     }
 
-    public record PlayerBulletProp : ValueProp<PlayerBulletCfg> {
-        public PlayerBulletProp(PlayerBulletCfg cfg) : base(cfg) { }
-    }
+    public record PlayerBulletProp(PlayerBulletCfg cfg, EffectStrategy onHit) : LaserOption;
+
+    public record OnHitProp(EffectStrategy onHit) : LaserOption;
 
     public record DamageProp(GCXF<float> damage) : LaserOption;
 
@@ -280,6 +279,7 @@ public readonly struct RealizedLaserOptions {
     public readonly bool nonpiercing;
     public readonly bool grazeAllowed;
     public readonly PlayerBullet? playerBullet;
+    public readonly EffectStrategy? onHit;
 
     public RealizedBehOptions AsBEH => new(this);
 
@@ -314,6 +314,7 @@ public readonly struct RealizedLaserOptions {
         nonpiercing = opts.nonpiercing;
         grazeAllowed = opts.grazeAllowed;
         playerBullet = opts.playerBullet?.Realize(fctx.PlayerController);
+        onHit = opts.onHit;
     }
 }
 
@@ -347,19 +348,20 @@ public class LaserOptions {
     public readonly bool nonpiercing;
     public readonly bool grazeAllowed = true;
     public readonly PlayerBulletCfg? playerBullet;
+    public readonly EffectStrategy? onHit;
 
     public LaserOptions(params LaserOption[] props) : this(props as IEnumerable<LaserOption>) { }
 
     public LaserOptions(IEnumerable<LaserOption> props) {
         foreach (var p in props.Unroll()) {
             if      (p is LengthProp l) 
-                length = l.value;
+                length = (l.f, l.var);
             else if (p is StartProp stp) 
-                start = stp.value;
+                start = stp.f;
             else if (p is DeleteProp dp) 
-                delete = dp.value;
+                delete = dp.f;
             else if (p is DeactivateProp dcp) 
-                deactivate = dcp.value;
+                deactivate = dcp.f;
             else if (p is RepeatProp r) 
                 repeat = r.value;
             else if (p is RotateOffsetProp roff) 
@@ -372,7 +374,7 @@ public class LaserOptions {
             } else if (p is BeforeDrawProp bd)
                 beforeDraw = bd.value;
             else if (p is EndpointProp ep) 
-                endpoint = ep.value;
+                endpoint = ep.f;
             else if (p is SfxProp hsp) {
                 firesfx = hsp.onFire;
                 hotsfx = hsp.onOn;
@@ -398,7 +400,9 @@ public class LaserOptions {
             else if (p is NoGrazeFlag)
                 grazeAllowed = false;
             else if (p is PlayerBulletProp pbp) 
-                playerBullet = pbp.value;
+                (playerBullet, onHit) = (pbp.cfg, pbp.onHit);
+            else if (p is OnHitProp ohp)
+                onHit = ohp.onHit;
             else throw new Exception($"Laser property {p.GetType()} not handled.");
         }
         if (length?.var != null || start != null) {

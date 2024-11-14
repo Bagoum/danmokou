@@ -5,14 +5,17 @@ using Danmokou.Danmaku;
 using Danmokou.DMath;
 using Danmokou.Reflection;
 using Danmokou.SM;
+using Scriptor.Compile;
+using Scriptor.Reflection;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace Danmokou.SRPG {
 public class TurnChangeCutin : MonoBehaviour {
     private static readonly ReflWrap<Func<float, float, StateMachine>> MoveFactionText = 
         ReflWrap.FromFunc("TurnChangeAnimator.MoveFactionText", () => 
-            Reflection2.Helpers.ParseAndCompileDelegate<Func<float, float, StateMachine>>(@"
+            CompileHelpers.ParseAndCompileDelegate<Func<float, float, StateMachine>>(@"
 var aspect = 9.0/16.0;
 var spd = 3.4;
 var offset = -3.4 * spd;
@@ -34,9 +37,10 @@ saction 0 {
     public void Initialize(TurnChangeRequest req, Faction f) {
         bgPanel.color = f.Color.WithA(goesUp ? 1 : 0.4f);
         factionName.text = f.Name;
-        
-        _ = beh.RunExternalSM(SMRunner.Cull(MoveFactionText.Value(
-            (req.NextOnLeft == (req.Next == f)) ? -1 : 1, goesUp ? 1 : -1), req.CT)).ContinueWithSync();
+        Profiler.BeginSample("Get Mover");
+        var mover = MoveFactionText.Value((req.NextOnLeft == (req.Next == f)) ? -1 : 1, goesUp ? 1 : -1);
+        Profiler.EndSample();
+        beh.RunExternalSM(SMRunner.Cull(mover, req.CT)).Log();
     }
 }
 }

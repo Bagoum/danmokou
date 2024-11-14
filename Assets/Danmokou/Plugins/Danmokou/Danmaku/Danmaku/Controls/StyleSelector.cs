@@ -61,7 +61,7 @@ public class StyleSelector {
         for (int ii = 0; ii < enumerated.Count; ++ii) {
             var typ = enumerated[ii];
             if (typ.IndexOf('*') == -1)
-                BulletManager.CheckComplexPool(typ, out _);
+                BulletManager.CheckOrCopyComplexPool(typ, out _);
         }
     }
 

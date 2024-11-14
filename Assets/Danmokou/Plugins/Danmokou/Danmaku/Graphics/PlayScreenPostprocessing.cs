@@ -206,6 +206,10 @@ public class PlayScreenPostprocessing : CoroutineRegularUpdater, IPlayScreenShad
         UnityEngine.Graphics.Blit(src, dest, seijaMaterial);
     }
 
+    private void OnDestroy() {
+        UnityEngine.Object.Destroy(seijaMaterial);
+    }
+
     [ContextMenu("YRot")]
     public void debugYRot() => _ = AddYRotation(60, 2f);
     

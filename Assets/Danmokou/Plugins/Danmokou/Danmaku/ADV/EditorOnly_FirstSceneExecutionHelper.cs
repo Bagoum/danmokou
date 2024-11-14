@@ -31,7 +31,7 @@ public class EditorOnly_FirstSceneExecutionHelper : CoroutineRegularUpdater {
                 SaveData.v.Saves.TryGetValue(saveSlot - 1, out var s) ?
                     s.GetData() :
                     throw new Exception($"Save slot {saveSlot} not found");
-            _ = new ADVInstanceRequest(advMan, adv, save).RunInScene().ContinueWithSync();
+            new ADVInstanceRequest(advMan, adv, save).RunInScene().Log();
         }
     }
 

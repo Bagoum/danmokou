@@ -7,6 +7,7 @@ using Danmokou.DMath;
 using Danmokou.DMath.Functions;
 using Danmokou.Expressions;
 using Danmokou.Reflection;
+using Scriptor.Math;
 using UnityEngine;
 using static Danmokou.Reflection.Compilers;
 using static NUnit.Framework.Assert;
@@ -53,7 +54,7 @@ namespace Danmokou.Testing {
         public static void ShiftSoftmax() {
             FXY eq1 = x => 5 * x;
             FXY eq2 = x => 2 * x;
-            FXY shifter = FXY(SoftmaxShift(x => -1f, x => 10f, x => Mul<float>(x.FloatVal, 5f), x => Mul<float>(x.FloatVal, 2f)));
+            FXY shifter = FXY(SoftmaxShift(x => -1f, x => 10f, x => ExMOperators.Mul<float>(x.FloatVal, 5f), x => ExMOperators.Mul<float>(x.FloatVal, 2f)));
             Assert.AreEqual(shiftsoftmax(-1f, 10f, eq1, eq2, 110f), 250f, 1f);
             Assert.AreEqual(shiftsoftmax(-1f, 10f, eq1, eq2, 10.2f), shifter(10.2f), err);
             Assert.AreEqual(shiftsoftmax(-1f, 10f, eq1, eq2, 9.3f), shifter(9.3f), err);

@@ -1,4 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/Danmokou/UXML/DMK%20UXML%20CSS.uss?fileID=7433441132597879392&amp;guid=908aa769b12ea7c44aae7ea3f797c582&amp;type=3#DMK UXML CSS" />
-    <ui:VisualElement picking-mode="Ignore" class="tooltip" />
+    <ui:VisualElement picking-mode="Ignore" class="tooltip">
+        <ui:VisualElement class="tooltip-bg" style="flex-grow: 1;" />
+    </ui:VisualElement>
 </ui:UXML>

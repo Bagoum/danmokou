@@ -4,9 +4,11 @@ using Danmokou.Danmaku;
 using Danmokou.Expressions;
 using Danmokou.GameInstance;
 using Danmokou.Services;
+using Scriptor;
+using Scriptor.Expressions;
 using Ex = System.Linq.Expressions.Expression;
-using static Danmokou.Expressions.ExMHelpers;
-using tfloat = Danmokou.Expressions.TEx<float>;
+using static Scriptor.Expressions.ExMHelpers;
+using tfloat = Scriptor.Expressions.TEx<float>;
 using static Danmokou.Services.GameManagement;
 
 namespace Danmokou.DMath.Functions {

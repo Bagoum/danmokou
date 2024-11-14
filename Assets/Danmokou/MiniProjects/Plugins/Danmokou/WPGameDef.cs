@@ -119,7 +119,7 @@ public class WPGameDef : ADVGameDef {
                                 targetEvReq.NextEvidence = ev;
                                 return new UIResult.GoToScreen(targetScreen);
                             } else {
-                                var __ = evidenceRequest.Present(ev).ContinueWithSync();
+                                evidenceRequest.Present(ev).Log();
                                 return new UIResult.ReturnToScreenCaller();
                             }
                         }) { VisibleIf = () => ev.Enabled && CanEvidence })
@@ -190,10 +190,10 @@ public class WPGameDef : ADVGameDef {
             );
             await sc.FadeTo(0, 0.5f, Easers.EInSine);
             await vn.Wait(0.5f);
-            _ = vn.Wait(0.3f).Then(
-                    obj.FadeTo(0, 1.4f).And(
-                        obj.MoveBy(V3(0, -2), 1.4f),
-                        obj.ScaleTo(V3(1), 1.4f))).Task.ContinueWithSync();
+            vn.Wait(0.3f).Then(
+                obj.FadeTo(0, 1.4f).And(
+                    obj.MoveBy(V3(0, -2), 1.4f),
+                    obj.ScaleTo(V3(1), 1.4f))).Task.Log();
             return new JointDisposable(null, bgm, obj, sc);
         }
         

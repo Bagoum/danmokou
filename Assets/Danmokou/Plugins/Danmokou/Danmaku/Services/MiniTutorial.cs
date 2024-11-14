@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using BagoumLib;
 using BagoumLib.Cancellation;
+using BagoumLib.Mathematics;
 using Danmokou.Behavior;
 using Danmokou.Core;
 using Danmokou.Danmaku;

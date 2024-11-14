@@ -36,8 +36,7 @@ public class MyInventorySwapCS : CustomCursorState, ICursorState {
         Tooltip = source.MakeTooltip(rs => new UIColumn(rs, new EmptyNode { OnBuilt = n => {
             n.HTML.style.backgroundImage = new(item.s);
             n.HTML.SetWidthHeight(new(140, 140));
-        } }), (_, ve) => {
-            ve.AddToClassList("tooltip-above");
+        } }), Pivot.Bottom, (_, ve) => {
             ve.SetPadding(10, 10, 10, 10);
         });
     }
