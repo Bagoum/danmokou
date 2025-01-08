@@ -117,6 +117,8 @@ public static class SRPGUtils {
     /// <param name="costLimit">Maximum cost for paths, beyond which nodes will be considered unreachable.</param>
     public static (Dictionary<V, double> costs, Dictionary<V, V> prev) Dijkstra<V>(V source,
         Action<V, List<(V nxt, double edgeCost)>> adjacency, double? costLimit) {
+        //NB: you could combine these into one Dict<V,(double cost, Maybe<V> prev)>, but it's more convenient
+        // from the consumer side to separate them and drop `source` from the `prev` dictionary.
         var costs = DictCache<V, double>.Get();
         var prev = DictCache<V, V>.Get();
         var fringe = new PriorityQueue<(Maybe<V> mfrom, V curr), double>();

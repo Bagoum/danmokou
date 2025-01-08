@@ -48,5 +48,6 @@ MonoBehaviour:
   importableScripts:
   - name: phref
     file: {fileID: 2811297602134710623, guid: 932e97eaf2c1c5940be8f9956e280c4f, type: 3}
-  scriptFolders: []
+  scriptFolders:
+  - Assets/Danmokou/MiniProjects/Projects/PlasticHakkero/scripts
   fastParsing: 0

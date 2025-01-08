@@ -22,7 +22,6 @@ namespace Danmokou.UI.XML {
 /// <summary>
 /// Class to manage the main menu UI for scene challenge-type games.
 /// </summary>
-[Preserve]
 public class XMLMainMenuDays : XMLMainMenu {
     private static List<CacheInstruction>? _returnTo;
     protected override List<CacheInstruction>? ReturnTo {

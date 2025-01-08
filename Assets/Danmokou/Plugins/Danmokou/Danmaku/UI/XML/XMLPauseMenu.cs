@@ -39,7 +39,6 @@ public interface IPauseMenu {
 /// <summary>
 /// Class to manage the pause menu UI. Links to an options screen and a VN save/load screen.
 /// </summary>
-[Preserve]
 public class XMLPauseMenu : PausedGameplayMenu, IPauseMenu {
     private UINode unpause = null!;
     private UIScreen OptionsScreen = null!;

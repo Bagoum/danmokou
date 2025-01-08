@@ -39,7 +39,7 @@ public static partial class LocalizedStrings {
 			{ ID = "generic.generic_default" };
 		
 		public static readonly LString generic_deleted = new LText("---Deleted---",
-			(Locales.JP, "ーー削除ーー"))
+			(Locales.JP, "ー削除済みー"))
 			{ ID = "generic.generic_deleted" };
 		
 		public static readonly LString generic_na = new LText("-",

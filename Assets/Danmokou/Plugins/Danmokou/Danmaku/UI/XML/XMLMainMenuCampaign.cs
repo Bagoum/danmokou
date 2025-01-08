@@ -42,7 +42,6 @@ public abstract class XMLMainMenu : UIController {
 /// <summary>
 /// Class to manage the main menu UI for campaign-type games.
 /// </summary>
-[Preserve]
 public class XMLMainMenuCampaign : XMLMainMenu {
     private static List<CacheInstruction>? _returnTo;
     protected override List<CacheInstruction>? ReturnTo {

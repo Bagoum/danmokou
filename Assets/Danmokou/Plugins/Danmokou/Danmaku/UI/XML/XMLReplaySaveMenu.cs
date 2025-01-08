@@ -16,7 +16,6 @@ namespace Danmokou.UI.XML {
 /// <summary>
 /// Class to manage the game results screen that allows saving replays.
 /// </summary>
-[Preserve]
 public class XMLReplaySaveMenu : UIController {
     public override void FirstFrame() {
         MainScreen = new UIScreen(this, "GAME RESULTS") { Builder = GameResultsScreenBuilder };

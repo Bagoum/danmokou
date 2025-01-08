@@ -177,7 +177,7 @@ public struct Movement {
         UpdateDeltaNoTime(ref sb.bpi, ref sb.accDelta, sb.movement.angle, sb.movement.cos_rot, sb.movement.sin_rot, in st.nextDT);
     }
 
-    private static readonly ExFunction updateDeltaNoTime = ExFunction.Wrap<Movement>("UpdateDeltaNoTime",
+    private static readonly ExFunction updateDeltaNoTime = ExFunction.Wrap<Movement>(nameof(UpdateDeltaNoTime),
         new[] {typeof(BulletManager.SimpleBulletCollection.VelocityUpdateState).MakeByRefType()});
     public Ex UpdateDeltaNoTime(Ex st) => updateDeltaNoTime.InstanceOf(Ex.Constant(this), st);
 

@@ -2,7 +2,6 @@
     <assembly fullname="System.Core">
         <type fullname="System.Linq.Expressions.Interpreter.LightLambda" preserve="all" />
     </assembly>
-	<assembly fullname="BagoumLib">
-		<type fullname="BagoumLib.Events.EventedSerializer" preserve="all" />
-	</assembly>
+	<assembly fullname="BagoumLib" preserve="all"/>
+	<assembly fullname="Scriptor" preserve="all"/>
 </linker> 

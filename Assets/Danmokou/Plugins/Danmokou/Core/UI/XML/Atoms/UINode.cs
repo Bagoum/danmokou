@@ -497,6 +497,7 @@ public class UINode {
         foreach (var view in Views)
             view.Unbind();
         Views.Clear();
+        cursorToken?.Dispose();
         Tokens.DisposeAll();
     }
 

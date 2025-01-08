@@ -13,7 +13,6 @@ namespace Danmokou.UI.XML {
 /// <summary>
 /// Class to manage the death menu UI.
 /// </summary>
-[Preserve]
 public class XMLDeathMenu : PausedGameplayMenu {
 
     public override void FirstFrame() {

@@ -24,7 +24,6 @@ namespace Danmokou.UI.XML {
 /// <summary>
 /// Class to display the dialogue log of an executing VN.
 /// </summary>
-[Preserve]
 public class XMLVNBacklogMenu : PausedGameplayMenu, IVNBacklog {
     public override bool CloseOnUnscopedBack => true;
     public static int BacklogCount { get; set; } = 120;

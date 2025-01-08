@@ -30,7 +30,6 @@ namespace MiniProjects {
 /// <summary>
 /// Class to manage the main menu UI for campaign-type games.
 /// </summary>
-[Preserve]
 public class XMLMainMenuCampaignPlasticHakkero : XMLMainMenu {
     private UIScreen DifficultyScreen = null!;
     private UIScreen OptionsScreen = null!;

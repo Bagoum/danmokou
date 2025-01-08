@@ -5,10 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
+  - enabled: 1
     path: Assets/Danmokou/MiniProjects/Projects/PlasticHakkero/PH MainMenu.unity
     guid: 6d9a317f91ee1674e959db47edadce16
-  - enabled: 0
+  - enabled: 1
     path: Assets/Danmokou/MiniProjects/Projects/PlasticHakkero/PH Level 1.unity
     guid: f0f969cea09c92d488577c28a01945f5
   - enabled: 0
@@ -123,7 +123,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Danmokou/Scenes/BasicSceneOPENME.unity
     guid: 6628cbbd7f32f2a44a83c549a362dbd5
-  - enabled: 1
+  - enabled: 0
     path: Assets/Danmokou/MiniProjects/Projects/WebDemo/WebDemoScene.unity
     guid: 5769fb45e32e66a4e96443f9e6dc4a1f
   m_configObjects: {}

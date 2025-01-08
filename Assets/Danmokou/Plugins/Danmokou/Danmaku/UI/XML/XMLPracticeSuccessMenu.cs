@@ -16,7 +16,6 @@ namespace Danmokou.UI.XML {
 /// <summary>
 /// Class to manage the success menu UI. This is invoked when a scene or boss practice is finished.
 /// </summary>
-[Preserve]
 public class XMLPracticeSuccessMenu : PausedGameplayMenu {
     private IDanmakuGameDef? game;
     public override void FirstFrame() {

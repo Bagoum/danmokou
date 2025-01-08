@@ -181,8 +181,7 @@ PrefabInstance:
         type: 3}
       propertyPath: wip_stage
       value: 
-      objectReference: {fileID: 11400000, guid: f4ca4b6b4bcf8c8419429e3a5358bc3c,
-        type: 2}
+      objectReference: {fileID: 0}
     - target: {fileID: 8605995698615359453, guid: ef140f64b9a721e488bd90801075a2aa,
         type: 3}
       propertyPath: m_RootOrder

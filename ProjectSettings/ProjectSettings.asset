@@ -739,8 +739,8 @@ PlayerSettings:
     Nintendo Switch: UNITY_POST_PROCESSING_STACK_V2
     PS4: UNITY_POST_PROCESSING_STACK_V2
     Stadia: UNITY_POST_PROCESSING_STACK_V2
-    Standalone: EXBAKE_SAVE
-    WebGL: WEBGL
+    Standalone: 
+    WebGL: WEBGL;EXBAKE_LOAD
     XboxOne: UNITY_POST_PROCESSING_STACK_V2
     tvOS: UNITY_POST_PROCESSING_STACK_V2
   additionalCompilerArguments: {}
