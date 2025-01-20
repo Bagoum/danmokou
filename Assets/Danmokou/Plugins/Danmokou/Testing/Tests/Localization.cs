@@ -6,7 +6,6 @@ using static Danmokou.Core.LocalizedStrings.TestContent1;
 
 namespace Danmokou.Testing {
 public static class LocalizationTests {
-
     [Test]
     public static void TestBasic() {
         var kasen = new LText("Kasen", (Locales.JP, "華扇"));

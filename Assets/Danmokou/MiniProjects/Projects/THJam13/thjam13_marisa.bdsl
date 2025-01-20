@@ -4,7 +4,6 @@ const var me = "thj13.marisa";
 const var other = "thj13.marisa-retro";
 const var modernc1 = { "blue", "pink", "yellow", "green" };
 
-
 var sm = pattern({
 		bosses({"thj13.marisa", other}, {(1, 0)})
 		setuifrom 2

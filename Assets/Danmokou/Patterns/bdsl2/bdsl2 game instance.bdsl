@@ -2,7 +2,6 @@
 var data = instance.CustomDataF as SiMPCustomDataFeature;
 
 function printGraze(graze::long)::void {
-	return;
 	Logs.Log(graze.ToString(), null, LogLevel.INFO);
 }
 (instance.Graze as IObservable<long>).Subscribe($(printGraze))

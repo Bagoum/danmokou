@@ -88,12 +88,13 @@ public class PlayScreenPostprocessing : CoroutineRegularUpdater, IPlayScreenShad
         SetLocation(0, 0);
         //Wait until after UICamera.targetTexture is set,
         // otherwise ToScreenPoint will be relative to the whole screen and not the 16x9 draw area.
-        RunDroppableRIEnumerator(RUWaitingUtils.WaitFor(0.1f, Cancellable.Null, UpdateBounds));
+        RunDroppableRIEnumerator(RUWaitingUtils.WaitFor(3 * ETime.FRAME_TIME, Cancellable.Null, UpdateBounds));
     }
 
     private void UpdateBounds() {
         //Cut off the rendering just outside of the play area in order to avoid artifacting
-        if (GameManagement.Instance.InstanceActiveGuardInScene) {
+        //Note that camera can be null if the scene is being destroyed
+        if (GameManagement.Instance.InstanceActiveGuardInScene && UIBuilderRenderer.UICamInfo.Camera != null) {
             var bounds = LocationHelpers.PlayableBounds;
             var screenCenter = UIBuilderRenderer.UICamInfo.WorldToScreen(Vector2.zero);
             var screenHalfDim = -screenCenter +

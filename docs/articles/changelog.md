@@ -10,7 +10,7 @@ To get the newest version from git, run:
 
 # v11.2.0 (2025/01/20)
 
-Please update your Unity version to **6000.0.34f1**.
+Please update your Unity version to **6000.0.34f1** for compatibility with this version. If you are using the BDSL VSCode extension, please update it to version **1.3.0**.
 
 This release includes code for [Asiram's Alchemy Atelier](https://bagoum.itch.io/asirams-alchemy-atelier), a Atelier-ish crafting game, in the MiniProjects/Projects/PJ24 folder. It makes use of the new UI features in this release. There is also some work-in-progress code for a FE-like SRPG engine in MiniProjects/Projects/SRPG1.
 
@@ -47,6 +47,7 @@ This version improves the UI handling first built out in 11.1.0.
 
 - Fixed a bug where the "Shatter" background transition effect would continue running indefinitely.
 - Fixed a bug where nonpiercing lasers would not recover their original length fast enough after a blockage moved out of range.
+- Fixed inaccuracies in rect/ellipse collision logic.
 
 # v11.1.0 (2024/04/17)
 

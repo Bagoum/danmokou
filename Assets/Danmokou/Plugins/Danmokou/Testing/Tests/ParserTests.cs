@@ -22,7 +22,6 @@ public static class ParserTests {
     }
     [Test]
     public static void CommasWork() {
-        //this one is difficult...
         AreEqual("addTest (x) 3".Into<FXY>()(2), 5);
         AreEqual("addTest x (3)".Into<FXY>()(2), 5);
         AreEqual("(addTest 8 mulTest(5, x))".Into<FXY>()(2), 18);
@@ -36,7 +35,9 @@ public static class ParserTests {
         AreEqual("addTest(x, mulTest x 2)".Into<FXY>()(2), 6);
         AreEqual("addTest(x, mulTest(x, 2))".Into<FXY>()(2), 6);
         AreEqual("addTest(x, mulTest((x), ((2))))".Into<FXY>()(2), 6);
-        AreEqual("var ff::Func<float,float> = $(mulTest, addTest 3 5); ff(x);".Into<FXY>()(2), 16);
+        //bit awkward but if we don't wrap in b{ } then the first line will be treated as normal code
+        // and only the second line will be compiled to FXY
+        AreEqual("b{ var ff::Func<float,float> = $(mulTest, addTest 3 5); ff(x); }".Into<FXY>()(2), 16);
     }
 
     [Test]
@@ -76,7 +77,7 @@ phase 0
         ThrowsRegex("The first parameter must be a Func", () => "addTest(x, (2)())".Into<FXY>());
         ThrowsRegex("Expected CloseParen", () => "modwithpause 5 (6 7) 8".Into<BPY>());
         ThrowsRegex("Expected CloseParen", () => "modwithpause(5, (6 7), 8)".Into<BPY>());
-        ThrowsRegex("Expected atom", () => "mod(3 *, 5)".Into<FXY>());
+        ThrowsRegex("Expected term", () => "mod(3 *, 5)".Into<FXY>());
     }
     
     private static Vector2 V2(float x, float y) => new Vector2(x, y);
@@ -88,10 +89,11 @@ phase 0
         GameManagement.NewInstance(InstanceMode.NULL, InstanceFeatures.InactiveFeatures);
         AreEqual("(-1 + x + 2 * y + 3)".Into<BPY>()(new ParametricInfo() { loc = new Vector2(5, 10)}), 27);
         "(5 / 24 * dl ^ 0.8)".Into<BPY>();
-        AreEqual(@"
+        AreEqual(@" b{
 var jt = 2
 var movet = 1.5
-movet + jt - 1.5".Into<FXY>()(65), 2f);
+movet + jt - 1.5
+}".Into<FXY>()(65), 2f);
     }
     [Test]
     public static void PostAggregation() {

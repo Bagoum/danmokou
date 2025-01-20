@@ -81,8 +81,10 @@ noop") as EFStateMachine)!.inner.TField<PhaseProperties>("props");
         AreEqual(false, props.HideTimeout);
     }
 
-    [Test]
-    public static void TestCountEnforcer() {
+    [UnityTest]
+    public static IEnumerator TestCountEnforcer() {
+        SceneManager.LoadScene(baseScenePath);
+        yield return null;
         var sm = StateMachine.CreateFromDump(@"<#> bdsl1
 paction 0
     noop

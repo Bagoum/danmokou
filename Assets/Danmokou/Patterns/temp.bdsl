@@ -1,22 +1,9 @@
-
 pattern {
-	boss("simp.mima")
+	//boss("simp.mima")
 } {
     phase 30 {
     } {
 		shiftphaseto 1
-    }
-
-    phase 1000 {
-        hp(1000)
-        root(0, 0)
-    } {
-        paction 0 {
-            sync "arrow-red/w" <> gsrepeat { 
-                times 4
-                circle 
-            } s polar(2 * t, 80 * t)
-        }
     }
 
     phase 1000 {

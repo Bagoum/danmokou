@@ -472,6 +472,7 @@ public static class Scene1 {
             });
         });
         while (TestHarness.Running) yield return null;
+        yield return null; //this test seems to sometimes interfere with succeeding tests without an extra yield
     }
     [UnityTest]
     public static IEnumerator TestAutoGuideEmpty() {

@@ -24,17 +24,13 @@ The source code is licensed under MIT. See the Danmokou.LICENSE file for details
 
 **Are there any examples?**
 
-For real game code, look in the directory [MiniProjects/Scripts](https://github.com/Bagoum/danmokou/tree/master/Assets/Danmokou/MiniProjects/Scripts), which contains boss scripts for recent short games I've made. You can also check out the [scripts from Spirits in Memetic Paradise](https://github.com/Bagoum/danmokou-simp/tree/master/Scripts) if you have that installed as a submodule.
+For real game code, see the MiniProjects directory. There are many small game scripts there, such as [the scripts](https://github.com/Bagoum/danmokou/tree/master/Assets/Danmokou/MiniProjects/Projects/THJam13) for this [Ikaruga-style jam game](https://bagoum.itch.io/kaimaroku) or [the scripts](https://github.com/Bagoum/danmokou/tree/master/Assets/Danmokou/MiniProjects/Projects/FlappyBird) for this [Flappy Bird-inspired jam game](https://bagoum.itch.io/super-flappy-bird). You can also check out the [scripts from Spirits in Memetic Paradise](https://github.com/Bagoum/danmokou-simp/tree/master/Scripts) if you have that installed as a submodule.
 
-Under the `Patterns` folder, everything in `examples` and `feature testing` should work. The scripts there are fairly simple, but don't have many comments.
-
-The files under `demo` are from old scripts. They may not work, as the engine has gone through a lot of changes since then. 
-
-The scripts under `Tests` are guaranteed to work, but they won't make any sense if you run them, so don't bother.
+Under the `Patterns` folder, everything in `examples` and `feature testing` should work. The scripts there are fairly simple, but don't have many comments. The scripts in `Patterns/bdsl2` are instructive for learning about the scripting language's features.
 
 **How difficult is it to port scripts from (DNH/LuaSTG/etc) to this engine?**
 
-You'd have to rewrite any scripts from scratch. The scripting language is highly opiniated. For example, there are no for loops (instead, there are repeater objects). 
+You'd have to rewrite any scripts from scratch. The scripting language is highly opiniated. For example, bullets are fired through repeater objects instead of for loops.
 
 **Can I submit PRs?**
 
@@ -67,4 +63,6 @@ Definitions for these tests are under `Assets/Plugins/Danmokou/Testing/Tests` an
 Most play-mode tests operate by running some state machine and checking the output game state. State machines used for testing are in the folder `Assets/Pattern/Tests`. 
 
 Scenes used for play-mode tests are in the folder `Assets/Scenes/Testing`.
+
+A significant amount of the engine's logic is in the [Suzunoya](https://github.com/Bagoum/suzunoya) repository, which is a pure C# project with a good amount of NUnit-based coverage.
 

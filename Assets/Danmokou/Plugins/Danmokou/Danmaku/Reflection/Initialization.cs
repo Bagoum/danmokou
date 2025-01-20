@@ -35,10 +35,13 @@ public static class RHelper {
 }
 
 public static partial class Reflector {
+    public static int STARTUP_PHASE { get; private set; } = 0;
     static Reflector() {
+        STARTUP_PHASE = 1;
 #if UNITY_EDITOR
         if (!Application.isPlaying && !RHelper.REFLECT_IN_EDITOR) return;
 #endif
+        STARTUP_PHASE = 2;
         SimplifiedExprPrinter.Default.InjectSimplifier(t => t.IsTExOrTExFuncType(out var inner) ? inner : null);
         TEx.SpecialTypeHandler = TExHelpers.Generate;
         //We have to hide subtypes of StateMachine since the unifier can't generally handle subtypes
@@ -98,6 +101,7 @@ public static partial class Reflector {
         CreatePostAggregates("PA_Pow", "^");
         CreatePostAggregates("PA_And", "&");
         CreatePostAggregates("PA_Or", "|");
+        STARTUP_PHASE = 3;
     }
 
     private readonly struct PostAggregate {

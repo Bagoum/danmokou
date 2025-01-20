@@ -65,7 +65,7 @@ namespace Danmokou.Testing {
         [Test]
         public static void TSwitchH() {
             BPY sh = BPY(SwitchH<float>(T(), _ => 2f, bpi => bpi.t(), bpi => bpi.t().Mul(2f)));
-            var pi = new ParametricInfo();
+            var pi = ParametricInfo.Zero;
             AreEqual(sh(pi.CopyWithT(1.9f)), 1.9f, err);
             AreEqual(sh(pi.CopyWithT(2.01f)), 0.02f, err);
             AreEqual(sh(pi.CopyWithT(2.2f)), 0.4f, err);
@@ -77,7 +77,7 @@ namespace Danmokou.Testing {
         [Test]
         public static void TLogsum() {
             BPY fsoftmax1 = "logsum 1 { code(t + 2), code(8) }".Into<BPY>();
-            var pi = new ParametricInfo();
+            var pi = ParametricInfo.Zero;
             Assert.AreEqual(logsum(1f, new[] {5f, 8f}), fsoftmax1(pi.CopyWithT(3f)), err);
             Assert.AreEqual(logsum(1f, new[] {9f, 8f}), fsoftmax1(pi.CopyWithT(7f)), err);
         }
@@ -91,7 +91,7 @@ namespace Danmokou.Testing {
             BPY eq1 = x => 5 * x.t;
             BPY eq2 = x => 2 * x.t;
             BPY shifter = BPY(LogsumShiftT(_=>-1f, _=>10f, bpi => bpi.t().Mul(5f), bpi => bpi.t().Mul(2f)));
-            var pi = new ParametricInfo();
+            var pi = ParametricInfo.Zero;
             Assert.AreEqual(shiftlogsum(-1f, 10f, eq1, eq2, pi.CopyWithT(10.2f)), shifter(pi.CopyWithT(10.2f)), err);
             Assert.AreEqual(shiftlogsum(-1f, 10f, eq1, eq2, pi.CopyWithT(20.2f)), shifter(pi.CopyWithT(20.2f)), err);
             eq1 = x => 200 * x.t;

@@ -152,7 +152,7 @@ Set the `Game Definition` field on `Tutorial Game References` to this new GameDe
 
 ![Unity_fCDylGDm7L](../images/Unity_fCDylGDm7L.png)
 
-Fill in anything you like for `Key`. Link `Replay Save Menu` and `Endcard` to the existing `ReplaySave/Endcard` scene configs. `Tutorial` optionally links to a tutorial accessible from the main menu, `Mini Tutorial` optionally links to a tutorial that automatically runs if the player hasn't finished the actual tutorial. The bounds fields already have default values based on the normal Touhou stage boundaries, so you don't need to change them.
+Fill in anything you like for `Key`. Link `Replay Save Menu` and `Endcard` to the existing `ReplaySave/Endcard` scene configs. `Tutorial` optionally links to a tutorial accessible from the main menu, and `Mini Tutorial` optionally links to a tutorial that automatically runs if the player hasn't finished the actual tutorial. The bounds fields already have default values based on the normal Touhou stage boundaries, so you don't need to change them.
 
 The Campaign GameDefinition doesn't itself contain the stages or endings; that's handled by `Campaign Config` and linked through the `Campaign/Extra Campaign` fields, which respectively handle the "main game" campaign and the "extra stage" campaign. Let's create a new campaign (right click > `Create > Data > Campaign Configuration`) and link it to the `Campaign` field on our new GameDefinition. Opening it should show the following fields:
 
@@ -174,7 +174,7 @@ This gives us a single-stage campaign. Extending this to a multi-stage campaign 
 
 - You do **not** need to add the stage script to the LevelController in `Example Stage 2`. The source of truth for the stage script is in the StageConfig.
 
-The built-in logic for adding endings is simple: after all stages are complete, the campaign looks through all the EndingConfigs in the `Endings` list on CampaignConfig in order, and the first one that "matches" is selected. If you open the `Example Ending` object, you'll see three fields: a key (used for identification), a state machine (which is what is executed in a new scene for the ending), and a predicate (which is used for matching). A predicate of "true" will always match. You could alternatively use a predicate like `is1cc` to check if the player is running a no-continue clear. The `Example Ending No-hit` object uses the predicate `isnohit` to check that the player is running a no-hit clear. Try adding both to the campaign config (make sure the no-hit one is first) and running through the campaign with and without a no-hit clear.
+The built-in logic for adding endings is simple: after all stages are complete, the campaign looks through all the EndingConfigs in the `Endings` list on CampaignConfig in order, and the first one that "matches" is selected. If you open the `Example Ending` object, you'll see three fields: a key (used for identification), a state machine (which is what is executed in a new scene for the ending), and a predicate (which is used for matching). A predicate of `true` will always match. You could alternatively use a predicate like `is1cc` to check if the player is running a no-continue clear. The `Example Ending No-hit` object uses the predicate `isnohit` to check that the player is running a no-hit clear. Try adding both to the campaign config (make sure the no-hit one is first) and running through the campaign with and without a no-hit clear.
 
 ## More Complex Stage/Ending Routing
 

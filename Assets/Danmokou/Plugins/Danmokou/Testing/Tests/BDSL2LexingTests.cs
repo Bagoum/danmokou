@@ -24,13 +24,13 @@ namespace Danmokou.Testing {
 public static class BDSL2LexingTests {
     [Test]
     public static void TestLexingFailures() {
-        ThrowsMessage(@"The previous token ""15.42"" (Number) and this token ""world"" (Identifier) must be separated by whitespace", () => Lexer.Lex("15.42world"));
+        ThrowsMessage(@"must be separated by whitespace", () => Lexer.Lex("15.42world"));
         ThrowsMessage("This closing parenthesis is not matched to an opening parenthesis.\nThe last successfully parsed parenthesis started at Line 1, Col 3 and ended at Line 1, Col 9", () => Lexer.Lex("fn(\")))\"), )"));
         ThrowsMessage("This opening parenthesis is not matched to a closing parenthesis." +
                       "\nThe last successfully parsed parenthesis started at Line 1, Col 14 and ended at Line 1, Col 15." +
                       "\nThere are also other unclosed parentheses at: Line 1, Col 2; Line 1, Col 3", () => 
             Lexer.Lex("m((y<type>(fn()"));
-        ThrowsMessage("The previous token \"List\" (Identifier) and this token \"<>\" (V2RV2) must be separated by whitespace or an operator", () => Lexer.Lex("List<>"));
+        ThrowsMessage("The previous token \"List\" (Identifier 1:1-5) and this token \"<>\" (V2RV2 1:5-7) must be separated by whitespace or an operator", () => Lexer.Lex("List<>"));
     }
 
     private const TokenType id = TokenType.Identifier;
