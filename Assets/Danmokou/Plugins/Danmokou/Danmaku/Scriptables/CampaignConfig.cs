@@ -40,6 +40,16 @@ public abstract class BaseCampaignConfig : ScriptableObject, ICampaignMeta {
     public string Key => key;
     public bool Replayable => replayable;
     public bool AllowDialogueSkip => allowDialogueSkip;
+    
+    public virtual bool HasOneShotConfig(out TeamConfig team) {
+        team = default;
+        if (players.Length != 1) return false;
+        if (players[0].shots2.Length != 1 || players[0].supports.Length != 1) return false;
+        if (players[0].shots2[0].shot.isMultiShot) return false;
+        team = new(0, Subshot.TYPE_D,
+            (players[0], players[0].shots2[0].shot, players[0].supports[0].ability));
+        return true;
+    }
 
     public abstract Task<InstanceRecord>? RunEntireCampaign(InstanceRequest req, SMAnalysis.AnalyzedCampaign c);
 
@@ -88,20 +98,13 @@ public class CampaignConfig : BaseCampaignConfig {
     public EndingConfig[] endings = null!;
     public FixedShotPart[] fixedShot = null!;
 
-    public bool HasOneShotConfig(out TeamConfig team) {
-        team = default;
+    public override bool HasOneShotConfig(out TeamConfig team) {
         if (fixedShot is {Length: > 0}) {
             team = new(0, Subshot.TYPE_D, 
                 fixedShot.Select(x => (x.ship, x.shot, x.ability as IAbilityCfg)).ToArray());
             return true;
         }
-        
-        if (players.Length != 1) return false;
-        if (players[0].shots2.Length != 1 || players[0].supports.Length != 1) return false;
-        if (players[0].shots2[0].shot.isMultiShot) return false;
-        team = new(0, Subshot.TYPE_D,
-            (players[0], players[0].shots2[0].shot, players[0].supports[0].ability));
-        return true;
+        return base.HasOneShotConfig(out team);
     }
 
     public bool TryGetEnding(out EndingConfig ed) {
@@ -143,7 +146,7 @@ public class CampaignConfig : BaseCampaignConfig {
         }
         if (TryGetEnding(out var ed)) {
             var blockRestart = req.CanRestartStage.AddConst(false);
-            await LoadStageSceneOrThrow(req, new EndcardStageConfig(ed.dialogueKey, c.Game.Endcard), null).Task;
+            await LoadStageSceneOrThrow(req, new EndcardStageConfig(ed.stateMachine, c.Game.Endcard), null).Task;
             blockRestart.Dispose();
             return FinishCampaign(req, ed.key);
         } else 

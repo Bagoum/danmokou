@@ -1,0 +1,55 @@
+pattern { 
+	boss("tutorial") 
+} {
+	phase 0 {} {
+		paction 0 {
+			shiftphaseto(1)
+		}
+	}
+		
+	phase 0 {
+		spellcutin(0)
+		type(non, "This is a nonspell")
+		hp(4000)
+		root(0, 1)
+	} {
+		paction 0 {
+			async "sakura-pink/w" <> gcrepeat {
+				wait(14)
+				times(inf)
+				frv2(angle(cosine(8p, 800, namedtimer("phaset").Seconds)))
+			} gsr2c 3 {
+			} s(rvelocity(cx(3)))
+		}
+	}
+			
+	phase 0 {
+		type(spell, "This is a spell")
+		hp(4000)
+		root(0, 2)
+	} {
+		paction 0 {
+			async "fireball-red/w" <> gcrepeat {
+				wait(10)
+				times(inf)
+				frv2(angle(cosine(9p, 800, namedtimer("phaset").Seconds)))
+			} gsr2c 5 {
+			} s(rvelocity(cx(5)))
+		}
+	}
+			
+	phase 0 {
+		type(non, "This is a nonspell")
+		hp(4000)
+		root(0, 1)
+	} {
+		paction 0 {
+			async "sakura-teal/w" <> gcrepeat {
+				wait(14)
+				times(inf)
+				frv2(angle(cosine(8p, 800, namedtimer("phaset").Seconds)))
+			} gsr2c 3 {
+			} s(rvelocity(cx(3)))
+		}
+	}
+}

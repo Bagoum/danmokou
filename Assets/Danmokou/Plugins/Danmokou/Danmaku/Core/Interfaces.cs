@@ -1,4 +1,5 @@
-﻿using Danmokou.Scriptables;
+﻿using System;
+using Danmokou.Scriptables;
 using Danmokou.SM;
 using UnityEngine;
 
@@ -10,8 +11,8 @@ public interface IStageConfig {
     string DefaultSuicideStyle { get; }
 }
 
-public record EndcardStageConfig(string dialogueKey, SceneConfig Scene) : IStageConfig {
-    public StateMachine StateMachine => SMReflection.Dialogue(dialogueKey);
+public record EndcardStageConfig(TextAsset stateMachine, SceneConfig Scene) : IStageConfig {
+    public StateMachine StateMachine => StateMachineManager.FFromText(stateMachine);
     public string DefaultSuicideStyle => "";
 }
 

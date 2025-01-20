@@ -128,7 +128,7 @@ public static class BakeCodeGenerator {
                 if (Cook.FindByValue(obj) is { } fn)
                     return $"{fn.GetAsConstant()}";
                 else if (constToStr.TryGetValue(obj, out var s))
-                    return s;
+                    return $"({s})"; //parenthesize for safety
                 return null;
             }}};
         foreach (var (cobj, rep) in saver.HoistedConstants)

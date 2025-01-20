@@ -164,7 +164,7 @@ public static class AtomicBPYRepo {
     /// <returns></returns>
     public static ExBPY BRandpm1() => bpi => Ex.Condition(bpi.id().GT(ExC(uint.MaxValue / (uint)2)), EN1, E1);
 
-    [Fallthrough(1)]
+    [Fallthrough]
     public static ExBPY Const(float x) => bpi => Ex.Constant(x);
     
     

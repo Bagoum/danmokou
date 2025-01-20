@@ -26,11 +26,7 @@ public class PowerAura : SpriteDisplayController {
     }
 
     public override void OnRender(bool isFirstFrame, Vector2 lastDesiredDelta) {
-        try {
-            sprite.color = ColorHelpers.V4C(options.color(Beh.rBPI));
-        } catch (Exception e) {
-            int k = 5;
-        }
+        sprite.color = ColorHelpers.V4C(options.color(Beh.rBPI));
         base.OnRender(isFirstFrame, lastDesiredDelta);
         if (options.cT.Cancelled) {
             InvokeCull();

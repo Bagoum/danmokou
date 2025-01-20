@@ -300,6 +300,10 @@ public struct ParametricInfo {
     public float t;
     /// <summary>Context containing additional bound variables</summary>
     public PIData ctx;
+    /// <summary>
+    /// Copy of <see cref="PIData"/>.<see cref="PIData.envFrame"/>
+    /// </summary>
+    public EnvFrame ef;
 
     /// <summary>
     /// Global location as a Vector2 (ignores Z-coordinate)
@@ -315,6 +319,7 @@ public struct ParametricInfo {
         this.id = id ?? RNG.GetUInt();
         this.t = t;
         this.ctx = firer?.DeriveFCTX() ?? PIData.NewUnscoped(firer);
+        this.ef = ctx.envFrame;
     }
     public ParametricInfo(PIData ctx, in Movement mov, int findex = 0, uint? id = null, float t = 0) : 
         this(ctx, mov.rootPos, findex, id, t) { }
@@ -324,6 +329,7 @@ public struct ParametricInfo {
         this.id = id ?? RNG.GetUInt();
         this.t = t;
         this.ctx = ctx;
+        this.ef = ctx.envFrame;
     }
 
     public ParametricInfo Rehash() => new(ctx, loc, index, RNG.Rehash(id), t);
@@ -339,8 +345,11 @@ public struct ParametricInfo {
     public void FlipSimple(bool y, float around) {
         if (y) {
             loc.y = 2 * around - loc.y;
+            //TODO flipX
+            //ef.Value<float>("flipY") *= -1;
         } else {
             loc.x = 2 * around - loc.x;
+            //ef.Value<float>("flipX") *= -1;
         }
     }
 
@@ -348,6 +357,8 @@ public struct ParametricInfo {
         ctx.Dispose();
         //Prevents double dispose
         ctx = PIData.Empty;
+        //ef is disposed by ctx
+        ef = EnvFrame.Empty;
     }
 }
 

@@ -535,7 +535,7 @@ public static class Synchronization {
     /// <summary>
     /// Wait for some number of seconds.
     /// </summary>
-    [Fallthrough(1)]
+    [Fallthrough]
     public static Synchronizer Time(GCXF<float> time) => smh => 
         RUWaitingUtils.WaitForUnchecked(smh.Exec, smh.cT, time(smh.GCX), false);
 

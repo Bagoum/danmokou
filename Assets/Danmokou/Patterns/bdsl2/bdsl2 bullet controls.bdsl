@@ -11,6 +11,12 @@ var sm = new PatternSM({ }, {
 	phase 0 { } {
 		paction 0 {
 			shiftphaseto 1
+			gtr {
+				wait(20)
+				times(4)
+				preloop b{ hvar myVar = "hello world"; }
+			} print(myVar)
+			
 		}
 	}
 	phase 30 { } {

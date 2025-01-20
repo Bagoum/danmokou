@@ -27,7 +27,7 @@ public static partial class Parametrics3 {
     /// </summary>
     /// <param name="tp">Parametric function to assign to x,y components</param>
     /// <returns></returns>
-    [Fallthrough(50)]
+    [Fallthrough]
     public static ExTP3 TP(ExTP tp) => bpi => ((Expression) tp(bpi)).Cast<Vector3>();
 
     public static ExTP3 Circ(CCircle c) => bpi => ExC((Vector3) c);

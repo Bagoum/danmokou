@@ -18,7 +18,7 @@ public class BPRV2Repo {
     /// </summary>
     /// <param name="rv2"></param>
     /// <returns></returns>
-    [Fallthrough(1)]
+    [Fallthrough]
     public static Func<TExArgCtx, TEx<V2RV2>> RV2(V2RV2 rv2) => bpi => ExC(rv2);
 }
 

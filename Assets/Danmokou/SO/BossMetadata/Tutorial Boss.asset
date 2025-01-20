@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9a92301f86b4dd690557658c7243e8b, type: 3}
   m_Name: Tutorial Boss
   m_EditorClassIdentifier: 
-  boss: {fileID: 6003014192476353498, guid: 0623db11f1c15fc409072cf3af7a2a95, type: 3}
+  boss: {fileID: 2839687353931545823, guid: 567949ea02f82894482d1922e940c492, type: 3}
   localizationBaseKey: boss.tutorial
-  m_bossPracticeName:
+  m_casualName:
     useReference: 1
     reference: 
     hardcoded:
       en: 
       jp: 
-  challengeNameOverride:
+  m_bossPracticeName:
     useReference: 1
     reference: 
     hardcoded:
@@ -38,7 +38,7 @@ MonoBehaviour:
     hardcoded:
       en: 
       jp: 
-  stateMachine: {fileID: 4900000, guid: 641d26273f4f7d64e964c82881c8fd15, type: 3}
+  stateMachine: {fileID: 0}
   key: tutorial
   colors: {fileID: 11400000, guid: 055010713f72168448f30c817e8838fe, type: 2}
   cardRotator: 
@@ -57,3 +57,4 @@ MonoBehaviour:
   bossCutin: {fileID: 0}
   spellCutins:
   - {fileID: 160725723660692450, guid: d7fe74c6c8b744d47a05ae188235337a, type: 3}
+  practiceable: 1

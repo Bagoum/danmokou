@@ -586,6 +586,12 @@ public static partial class ExM {
     /// Returns true if the instance has not continued.
     /// </summary>
     public static tbool Is1CC() => Ex.Not(inst.Field(nameof(InstanceData.Continued)));
+    
+    /// <summary>
+    /// Returns true if the player has not been hit.
+    /// </summary>
+    public static tbool IsNoHit() => inst.Field(nameof(InstanceData.BasicF)).Field(nameof(BasicFeature.HitsTaken))
+        .Eq(Ex.Constant(0));
 
     [DontReflect] public static Ex inst => Instance();
     public static TEx<InstanceData> Instance() => 
@@ -762,7 +768,7 @@ public static partial class ExM {
         throw new Exception($"FCTX has no handling for `Mine` constructor of type {t.RName()}");
     };
 
-    [Fallthrough(1)]
+    [Fallthrough]
     public static Func<TExArgCtx, TEx<BehaviorEntity>> FromID(string id) => tac =>
         Ex.Constant(BehaviorEntity.GetPointerForID(id)).Field(nameof(BEHPointer.Beh));
 

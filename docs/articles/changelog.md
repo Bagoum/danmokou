@@ -8,29 +8,13 @@ To get the newest version from git, run:
 
 `git submodule update` (if you have made modifications to the submodules, you will need to `pull --rebase` them individually)
 
-# Unreleased
+# v11.2.0 (2025/01/20)
 
-The following features are planned for future releases. 
+Please update your Unity version to **6000.0.34f1**.
 
-- [Backlog] UI improvements: custom cursors
-- [Backlog] Implementation of a TH18-like card engine
-- [Backlog] Procedural generation of stages and bullet patterns
+This release includes code for [Asiram's Alchemy Atelier](https://bagoum.itch.io/asirams-alchemy-atelier), a Atelier-ish crafting game, in the MiniProjects/Projects/PJ24 folder. It makes use of the new UI features in this release. There is also some work-in-progress code for a FE-like SRPG engine in MiniProjects/Projects/SRPG1.
 
-# v11.3.0 (2024/11/04)
-
-#### UI Changes
-
-- Added support for a custom cursor, configured by any "Cursor Manager" script (by default, there is one attached to the `UI (TH)` game object.) Mousing over a clickable UI node will switch to the button-based cursor. There is currently no support for the text-based cursor. Note that by default, cursor size is based on the computer running the program (ie. a computer will automatically scale the cursor to approximately the size of the computer's default cursor). You can disable this by using `UnityEngine.CursorMode.ForceSoftware` in `CursorManager.cs`, which will force the cursor to be the size of the cursor texture regardless of screen size.
-
-#### Rendering Changes
-
-- Cameras have been consolidated. DirectRender cameras have been removed (instanced rendering now renders as the lowest item in either LowCamera or HighCamera). 3DCamera has been removed (it was unused in the engine as is, though you can add any cameras as necessary). ShaderEffectCamera was removed, but its logic was moved to HighCamera as PlayScreenPostprocessing.cs. BackgroundCombiner was removed and its logic was consolidated into BackgroundOrchestrator. See [the doc on rendering](ResolutionRendering.md) for details on the current setup.
-- DownDistorter (the component that creates distortion effects around bosses) has been removed. Instead, boss distortion is performed by BackgroundOrchestrator (see `BackgroundOrchestrator.shader`) when it merges background textures. As before, only one distortion effect may be active at a time, though it is now feasible to add more by turning the distortion process into a vector or multi-pass.
-- Updated the rendering order for enemy effects. Previously, each enemy and its effects would render in spawn order. Now, all enemy spell circles will render beneath all enemy card circles, which will render beneath all enemy HP bars.
-- Optimized RenderTexture allocation. Instead of using 8 bytes for the depth/stencil buffer (format D32_SFloat_S8_UInt), DMK will attempt to use 4 bytes where possible (format D24_UNorm_S8_UInt), and 0 bytes for UI RenderTextures that do not require a depth buffer. Also, when not using world space UI (below), UI contents will be rendered directly to the main camera's RenderTexture instead of creating a separate RenderTexture. 
-- It is now possible to use world space UI with DMK's UITK handling. To do this, instantiate the Assets/Danmokou/Prefab/UI/WorldSpaceUITK prefab, assign its `gameObject.layer` accordingly, then call the `GetComponent<WorldSpaceUTIK>().Initialize` method with the rect in world space that the UI should occupy.
-
-# v11.2.0 (2024/08/04)
+There is a new tutorial on stages and campaigns under `Basic Tutorials` in the sidebar. Make sure to upgrade to v11.2.0 before reading it.
 
 #### UI Changes
 
@@ -42,12 +26,27 @@ This version improves the UI handling first built out in 11.1.0.
 - All the commonly-used UXML CSS files (`UINode.uss`, `UIScreen.uss`, `UINodeLRSwitch.css`, etc) have been combined into `DMK UXML CSS.uss`.
 - Added support for a floating visual cursor next to the current node. If your UINode HTML contains an element with the class `.cursor-target` (preferably an absolute-positioned empty block), then the UI backend will automatically create a `VisualCursorTargetView` that instantiates and moves a floating visual cursor to that element's location. The cursor will automatically disappear when moving to a node that doesn't have a `.cursor-target` element. This is currently used in the PJ24 project; see eg. `PJ24 Node.uxml`. The cursor is instantiated from the `Cursor` object in UXML references; by default this is a feather quill cursor. 
 - The default UITK font has been changed to Ubuntu (for normal text) and Josefina Sans (for title text). All usages of Odibee Sans in UITK have been replaced (though it's still used for some TextMeshPro Canvas UI stuff). This brings the UI handling closer to standard design trends. There is a file `UITK font usages` in `Assets/Danmokou/Fonts/Unity SDF Assets` which notes the standard usages for each of the UITK fonts.
+- Added support for a custom cursor, configured by any "Cursor Manager" script (by default, there is one attached to the `UI (TH)` game object.) Mousing over a clickable UI node will switch to the button-based cursor. There is currently no support for the text-based cursor. Note that by default, cursor size is based on the computer running the program (ie. a computer will automatically scale the cursor to approximately the size of the computer's default cursor). You can disable this by using `UnityEngine.CursorMode.ForceSoftware` in `CursorManager.cs`, which will force the cursor to be the size of the cursor texture regardless of screen size.
+
+#### Rendering Changes
+
+- Cameras have been consolidated. DirectRender cameras have been removed (instanced rendering now renders as the lowest item in either LowCamera or HighCamera). 3DCamera has been removed (it was unused in the engine as is, though you can add any cameras as necessary). ShaderEffectCamera has been removed, but its logic has been moved to HighCamera as PlayScreenPostprocessing.cs. BackgroundCombiner has been removed and its logic has been consolidated into BackgroundOrchestrator. See [the doc on rendering](ResolutionRendering.md) for details on the current setup.
+- DownDistorter (the component that creates distortion effects around bosses) has been removed. Instead, boss distortion is performed by BackgroundOrchestrator (see `BackgroundOrchestrator.shader`) when it merges background textures. As before, only one distortion effect may be active at a time, though it is now feasible to add more by turning the distortion process into a vector or multi-pass.
+- Updated the rendering order for enemy effects. Previously, each enemy and its effects would render in spawn order. Now, all enemy spell circles will render beneath all enemy card circles, which will render beneath all enemy HP bars.
+- Optimized RenderTexture allocation. Instead of using 8 bytes for the depth/stencil buffer (format D32_SFloat_S8_UInt), DMK will attempt to use 4 bytes where possible (format D24_UNorm_S8_UInt), and 0 bytes for UI RenderTextures that do not require a depth buffer. Also, when not using world space UI (below), UI contents will be rendered directly to the main camera's RenderTexture instead of creating a separate RenderTexture. 
+- It is now possible to use world space UI with DMK's UITK handling. To do this, instantiate the Assets/Danmokou/Prefab/UI/WorldSpaceUITK prefab, assign its `gameObject.layer` accordingly, then call the `GetComponent<WorldSpaceUTIK>().Initialize` method with the rect in world space that the UI should occupy.
+
+#### Improvements
+
+- Improved speed for variable access in bullet functions, particularly float variables.
+- Reduced implicit dependencies from the BehaviorEntity class outwards. Now, other components linked to BehaviorEntity (such as Enemy or DisplayController) implement IBehaviorEntityDependent and receive generic callbacks instead of specialized handling.
+- Improved parsing speed for the BDSL language parser.
+- Improved error messages for the BDSL language parser.
 
 #### Fixes
 
 - Fixed a bug where the "Shatter" background transition effect would continue running indefinitely.
-
-
+- Fixed a bug where nonpiercing lasers would not recover their original length fast enough after a blockage moved out of range.
 
 # v11.1.0 (2024/04/17)
 

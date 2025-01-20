@@ -79,7 +79,7 @@ public class GenericColliderInfo : MonoBehaviour {
                 CollisionMath.WeakCircleOnAABB(-rectHalfX, -rectHalfY, rectHalfX, rectHalfY,
                     hitbox.x - trp.x, hitbox.y - trp.y, hitbox.grazeRadius));
         } else if (colliderType == ColliderType.Circle) {
-            cr = CollisionMath.GrazeCircleOnCircle(hitbox, trp.x, trp.y, radius);
+            cr = CollisionMath.GrazeCircleOnCircle(hitbox, trp.x, trp.y, radius, 1);
         } else if (colliderType == ColliderType.Line) {
             float maxdist = Mathf.Max(point2.magnitude, point1.magnitude) + radius;
             cr = CollisionMath.GrazeCircleOnRotatedSegment(hitbox, trp.x, trp.y, radius,

@@ -247,6 +247,9 @@ t > fadein ?
             else
                 beh.phaseController.SetGoTo(1);
             Logs.Log($"Starting boss: {bossKey}");
+            if (bossCfg.stateMachine == null)
+                throw new Exception($"The boss `{bossKey}` has no StateMachine configured, so it cannot be run" +
+                                    $" with the `boss` command.");
             await beh.RunBehaviorSM(SMRunner.CullRoot(StateMachineManager.FromText(bossCfg.stateMachine)!, smh.cT));
             Logs.Log($"Finished boss: {bossKey}. The boss object has been destroyed.");
         });

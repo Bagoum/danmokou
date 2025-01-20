@@ -1,0 +1,28 @@
+const function updateSize(size::float) {
+    return size + 1f;
+}
+
+pattern { } {
+phase 0 {
+	roott(1, 0, 0)
+} {
+	paction 0 {
+		bulletcontrol persist "ellipse-green/w" exec(b{
+			&size = updateSize(&size)
+		}, t < 3)
+		async "*-*/w" <> gir2 0 2 <90> {
+			color { "ellipse", "triangle" }
+		} gcr2 24 inf <3> {
+			frv2(angle(sine(14p, 16, t)))
+			preloop b{
+				//Shared between green and red
+				hvar size = 1
+			}
+		} gsr2c 2 {
+			color { "green", "red" }
+		} simple rvelocity px(1.8 - 0.35 * size) {
+			scale(size)
+		}
+	}
+}
+}

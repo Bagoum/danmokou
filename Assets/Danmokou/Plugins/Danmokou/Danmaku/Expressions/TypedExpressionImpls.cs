@@ -36,11 +36,11 @@ public class TExPI : TEx<ParametricInfo> {
     /// </summary>
     public readonly UnaryExpression findex;
     public Ex FiringCtx => ex.Field(nameof(ParametricInfo.ctx));
-    public Ex EnvFrame => FiringCtx.Field(nameof(PIData.envFrame));
-    private static readonly ExFunction rehash = ExFunction.Wrap<ParametricInfo, int>("Rehash", 0);
-    private static readonly ExFunction copyWithT = ExFunction.Wrap<ParametricInfo, float>("CopyWithT", 1);
+    public Ex EnvFrame => ex.Field(nameof(ParametricInfo.ef));
+    private static readonly ExFunction rehash = ExFunction.Wrap<ParametricInfo, int>(nameof(ParametricInfo.Rehash), 0);
+    private static readonly ExFunction copyWithT = ExFunction.Wrap<ParametricInfo, float>(nameof(ParametricInfo.CopyWithT), 1);
     private static readonly ExFunction flipSimple =
-        ExFunction.Wrap<ParametricInfo>("FlipSimple", new[] {typeof(bool), tfloat});
+        ExFunction.Wrap<ParametricInfo>(nameof(ParametricInfo.FlipSimple), new[] {typeof(bool), tfloat});
 
     public TExPI() : this((string?)null) { }
     public TExPI(string? name) : this(ExMode.Parameter, name) { }

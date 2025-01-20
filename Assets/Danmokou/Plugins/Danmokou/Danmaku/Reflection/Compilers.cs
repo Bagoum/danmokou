@@ -74,22 +74,31 @@ public static class CompilerHelpers {
     public static ReadyToCompileExpr<D> PrepareDelegate<D>(Func<TExArgCtx, TEx> exConstructor, params TExArgCtx.Arg[] args) where D : Delegate {
         //Implicitly add an EnvFrame argument if ParametricInfo or GCX is present
         //Implicitly add a ParametricInfo argument if GCX is present
-        Ex? bpiArg = null;
-        Ex? gcxArg = null;
+        TExPI? bpiArg = null;
+        TExGCX? gcxArg = null;
+        TExSBCUpdater? sbcUpdArg = null;
+        var sbArg = false;
         var hasEFArg = false;
         for (int ii = 0; ii < args.Length; ++ii) {
-            bpiArg ??= args[ii].expr.type == typeof(ParametricInfo) ? (Ex)args[ii].expr : null;
-            gcxArg ??= args[ii].expr.type == typeof(GenCtx) ? (Ex)args[ii].expr : null;
+            bpiArg ??= args[ii].expr as TExPI;
+            gcxArg ??= args[ii].expr as TExGCX;
+            sbcUpdArg ??= args[ii].expr as TExSBCUpdater;
+            sbArg |= args[ii].expr is TExSB;
             hasEFArg |= args[ii].expr.type == typeof(EnvFrame);
+        }
+        if (!sbArg && sbcUpdArg != null) {
+            args = args.Append(TExArgCtx.Arg.FromTEx("sbcf_sbc_ref_sb", sbcUpdArg.sb, true)).ToArray();
         }
         if (!hasEFArg) {
             if (bpiArg != null)
-                args = args.Append(TExArgCtx.Arg.FromTEx("ef", new TExPI(bpiArg).EnvFrame, false)).ToArray();
+                args = args.Append(TExArgCtx.Arg.FromTEx("ef", bpiArg.EnvFrame, false)).ToArray();
             else if (gcxArg != null)
-                args = args.Append(TExArgCtx.Arg.FromTEx("ef", new TExGCX(gcxArg).EnvFrame, false)).ToArray();
+                args = args.Append(TExArgCtx.Arg.FromTEx("ef", gcxArg.EnvFrame, false)).ToArray();
         }
-        if (bpiArg is null && gcxArg != null)
-            args = args.Append(TExArgCtx.Arg.FromTEx("gcx_bpi", new TExPI(new TExGCX(gcxArg).bpi), true)).ToArray();
+        if (bpiArg is null) {
+            if (gcxArg != null)
+                args = args.Append(TExArgCtx.Arg.FromTEx("gcx_bpi", new TExPI(new TExGCX(gcxArg).bpi), true)).ToArray();
+        }
         var tac = new TExArgCtx(args);
         return new(exConstructor(tac), tac, args);
     }
@@ -218,7 +227,7 @@ public static class Compilers {
         PrepareDelegate<SBCF>(tac => {
                 var st = tac.GetByExprType<TExSBCUpdater>();
                 var ct = tac.GetByExprType<TEx<ICancellee>>();
-                return ex(st, ct, tac.AppendSB("sbcf_sbc_ref_sb", st.sb));
+                return ex(st, ct, tac);
             },
             new DelegateArg<BulletManager.SimpleBulletCollection.VelocityUpdateState>("sbcf_updater", true),
             new DelegateArg<ParametricInfo>("sbcf_bpi", true),

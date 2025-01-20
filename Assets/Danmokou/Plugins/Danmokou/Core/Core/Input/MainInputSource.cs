@@ -11,7 +11,6 @@ namespace Danmokou.Core.DInput {
 /// </summary>
 public interface IPrimaryInputSource : IDescriptiveInputSource {
     public MainInputSource Container { set; }
-    public bool AnyKeyPressedThisFrame { get; }
 
     /// <summary>
     /// The priority of this input source when multiple input sources are simultaneously active

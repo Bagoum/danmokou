@@ -59,7 +59,7 @@ public static class AoTHelper_CG {{
                      .Distinct()
                      .OrderBy(g => g.Mi.BaseMi.Name)) {
             if (gmib is TypeMember.Method gmi) {
-                AddConstructedMethod(gmi.Mi, ts.Data);
+                AddConstructedMethod(gmi.Mi, (Type[])ts.Data);
             } else
                 throw new Exception($"Can't bake {gmib.GetType()}");
         }

@@ -1,86 +1,70 @@
-<#> warnprefix
-pattern { }
-phase 0
-	paction 0
+pattern { } {
+phase 0 { } {
+	paction 0 {
         position 0 0
-		shift-phase-to 1
-		
+		shiftphaseto 1
+    }
+}
 
-
-##Basic stress tester (50k)
-<!> type non hello
-<!> hp 50000
-<!> photo 1
-phase 100
-    paction 0
-        #bullet-control persist circle-green/w restyle circle-blue/w (> &.var2 100)
-        async circle-*/w <0.8;0:0> gcr2 20 _ <0;0:.11386> {
-		} gsr2c 60 { 
+//Basic stress tester (50k)
+phase 100 { type non "hello", hp 50000, photo 1 } {
+    paction 0 {
+        //bullet-control persist circle-green/w restyle circle-blue/w (> &.var2 100)
+        async "circle-*/w" <0.8;0:0> gcr2 3 inf <0;0:.11386> {
+		} gsr2c 360 { 
             p this
-            color green
-		} simple rvelocity(norm(pxy(2 + t * 0.01, sine(4, 2, p + t)))) { 
+            color "green"
+            start b{ hvar spd = 2.0; }
+		} simple rvelocity(px(2)) { 
 			dir2 cx 1
 		}
+    }
+}
 
+}
 ///
 
-## Flip control tester
-<!> type non hello
-<!> hp 50000
-phase 0
-    paction 0
-		##bullet-control persist circle-green/w flipx> 3 < scale 0.5
-		##bullet-control persist circle-red/w flipx< -3 true
-		##bullet-control persist circle-*/w restyle circle-blue/w &(true, > &.var1 100)
+//Flip control tester
+phase 0 { type non "hello", hp 50000 } {
+    paction 0 {
+		bulletcontrol persist "circle-green/w" flipxgt 3 (scale < 0.5)
+		bulletcontrol persist "circle-red/w" flipxlt -3 _
+		//bullet-control persist circle-*/w restyle circle-blue/w &(true, > &.var1 100)
 		
-        async amulet-*/w <0.8;0:0> gir2 1 1 <> {
+        async "circle-*/w" <0.8;0:0> gir2 1 1 <> {
 			p this
-		} gcr2 1 _ <0;0:.2386> {
-			start {
-				var1 =f 0
+		} gcr2 1 inf <0;0:.2386> {
+			start b{
+				hvar var1 = 0.
 			}
 		} gsr2c 120 { 
-			colorf({ red green }, mod 2 t)
-		} simple rvelocity px(2) { }
-
-
-
-##Basic stress tester
-<!> type non hello
-<!> hp 50000
-phase 0
-    paction 0
-        async ellipse-green/w <0.6;0:0> gcr2 1 _ <0;0:11.386> {
-            start {
-                x =f 2
-                y =f 0
-                z =f 0
+			center
+			colorf({ "red", "green" }, mod 2 t)
+            start b{
+                hvar flipX = 1.0
+                hvar flipY = 1.0
             }
-		} gsr2c 120 { } s rvelocity px let {
-            f xx 4
-        } set({
-            f x 1
-            f y 2
-            f z 3
-        }, 2)
-
+		} simple rvelocity(px(2)) {
+		 }
+    }
+}
 phase 0
     paction 0
-		## pool-control circle-green/w sortz
-		##Note that the pattern will not be perfectly even since the gsr2c has a dominant element that appears on top of the rest.
+		// pool-control circle-green/w sortz
+		//Note that the pattern will not be perfectly even since the gsr2c has a dominant element that appears on top of the rest.
         async circle-*/w <0.8;0:0> gcr2 1 _ <0;0:.11386> {
 			p this
 		} gsr2c 240 { 
             color green
-			##colorf({ red green blue orange yellow purple }, t * 6 // &times)
+			//colorf({ red green blue orange yellow purple }, t * 6 // &times)
 		} simple rvelocity cx 2 { 
 			dir2 cx 1
 		}
-		##} gsr2c 24 { } simple offset3d(pxyz(2 * t, 0, sine(12, 1, t + 4h * mod(100, p))), zero) { 
-			##dir2 cx 1
-		##}
+		//} gsr2c 24 { } simple offset3d(pxyz(2 * t, 0, sine(12, 1, t + 4h * mod(100, p))), zero) { 
+			//dir2 cx 1
+		//}
 	
-##Laser stress tester (mlaser mesh updating)
+//Laser stress tester (mlaser mesh updating)
 phase 0
     paction 0.2
         position 2.5 3.5
@@ -89,88 +73,12 @@ phase 0
 					pxy 1
 						sine(6, 1, (t + 0.2 * &lt) * (1 + 0.01 * p))
 		}
-##Pather stress tester
+//Pather stress tester
 <!> type non hello
 <!> hp 500
 phase 0
 	paction 0
         async pather-blue/w <0.5;0:0> gcr2 2 _ <0;0:20p> {
 		} gsr2c 4 { p this } pather 1 1 tprot cx 3 { }
+
 ///
-##Basic stress tester using bound variables
-<!> type non hello
-<!> hp 50000
-phase 0
-    paction 0
-        async circle-green/w <0.8;0:0> gcr2 1 _ <0;0:11.386> {
-		} gsr2c 120 { start spd =f 2 } simple tprot px &spd { }
-##Laser stress tester (pooling -- set repeat to off)
-phase 0
-    paction .4
-        async laser-blue/ <0.4;0:0> gcr2 16 _ <0;0:2.93> { } gsr2c 100 { } laser null 0.6 0.4 { }
-///
-##GPU stress tester
-phase 0
-    paction 0
-        clear async-control
-		async-control persist circle-purple/w restyle circle-red/w > x 10
-        position 0 0
-        async scircle-purple/w <1;0:0> cre 4 _ <0;0:11.386> 
-            repeat 60 <0;0:4> s tprot cx 2
-///
-##Maximal stress tester
-phase 0
-    paction 0
-        position 0 0
-        async ellipse-green/w <0.5;0:0> cre 1 _ <0;0:11.386> 
-            repeat 150 <0;0:2> s tprot cx 2
-///
-##Basic stress tester with controls
-phase 0
-    paction 0
-        clear async-control
-		async-control persist circle-purple/w restyle circle-red/w > x 10
-        position 0 0
-        async circle-purple/w <0.5;0:0> cre 1 _ <0;0:11.386> 
-            repeat 90 <0;0:4> s tprot cx 2
-///
-##Basic stress tester-offset
-phase 0
-    paction 0
-        async sc-guanyin <0.5;0:0> cre 1 _ <0;0:11.386> 
-            repeat 90 <0;0:4> s roffset px * 2 t
-///
-##Slaser volume tester
-phase 0
-    paction 0.2
-        async laser16-blue/w <0;0:0> cre 1 250 <;:1> repeat 20 <;:0.05> laser null 1 200 { }
-///
-##Basic stress tester-polar
-phase 0
-    paction 0
-        async ellipse-green/w <0.5;0:0> cre 1 _ <0;0:11.386> 
-            repeat 90 <0;0:4> s 
-				polar * 2 t t
-///
-##Basic stress tester with public hoisting
-phase 0
-    paction 0
-		savef val2 0 2
-        async ellipse-green/w <0.5;0:0> cre 1 _ <0;0:11.386> 
-            repeat 90 <0;0:4> s tprot px @ val2 0
-///
-##Basic stress tester
-phase 0
-    paction 0
-        position 0 0
-        async ellipse-purple/ <0;0:0> cre 2 _ <0;0:5> 
-            repeat 40 <0;0:4> s tp-rot constant 2 0
-            ##repeat 40 <0;0:4> s tp-rot nest nest nest nest nest constant 2 0
-///
-##Polar stress tester
-phase 0
-    paction 0
-        async circle-purple/ <0;0:0> c-repeatevery 2 7200 <0;0:5> 
-            repeat 80 <0;0:4> polar
-				bpi- f-linear 0 2
-				bpi- f- 0

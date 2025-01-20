@@ -740,7 +740,7 @@ PlayerSettings:
     PS4: UNITY_POST_PROCESSING_STACK_V2
     Stadia: UNITY_POST_PROCESSING_STACK_V2
     Standalone: 
-    WebGL: WEBGL;EXBAKE_LOAD
+    WebGL: WEBGL;EXBAKE_SAVE
     XboxOne: UNITY_POST_PROCESSING_STACK_V2
     tvOS: UNITY_POST_PROCESSING_STACK_V2
   additionalCompilerArguments: {}
@@ -779,7 +779,7 @@ PlayerSettings:
     Android: 3
     Standalone: 3
     WebGL: 3
-  editorAssembliesCompatibilityLevel: 1
+  editorAssembliesCompatibilityLevel: 2
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
   metroPackageName: Template_2D

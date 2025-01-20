@@ -540,9 +540,15 @@ public struct LoopControl<T> {
         parent_style = ch.bc.style;
         if (props.facing != null) ch.bc.facing = props.facing.Value;
         times = (int)props.times(ch.gcx);
-        if (ch.gcx.AutoVars is AutoVars.GenCtx) {
+        if (ch.gcx.AutoVars is AutoVars.GenCtx gcxv) {
             ch.gcx.BaseRV2 = ch.gcx.RV2;
             ch.gcx.EnvFrame.Value<float>(ch.gcx.GCXVars.times) = times;
+            if (!ch.gcx.AutovarsAreInherited) {
+                if (gcxv.bindFlip is { } bflip) {
+                    ch.gcx.EnvFrame.Value<float>(bflip.x) = 1;
+                    ch.gcx.EnvFrame.Value<float>(bflip.y) = 1;
+                }
+            }
         }
         ch.gcx.UpdateRules(props.start);
         if (props.centered) ch.gcx.RV2 -= (times - 1f) / 2f * (props.PostloopRV2Incr(ch.gcx, times) ?? V2RV2.Zero);

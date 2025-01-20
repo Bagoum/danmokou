@@ -55,7 +55,7 @@ public static class ReflectEx {
     public static Ex Let<L>((string alias, Func<TExArgCtx, TEx<L>> content)[] aliases, Func<Ex> inner, TExArgCtx applier) {
         var stmts = new Ex[aliases.Length + 1];
         var vars = new ParameterExpression[aliases.Length];
-        var lets = new List<TExArgCtx.LocalLet>();
+        var lets = new List<IDisposable>();
         for (int ii = 0; ii < aliases.Length; ++ii) {
             Ex alias_value = aliases[ii].content(applier);
             lets.Add(applier.Let(aliases[ii].alias, vars[ii] = 
@@ -71,7 +71,7 @@ public static class ReflectEx {
     public static Ex LetAlias(IEnumerable<Alias> aliases, Func<Ex> inner, TExArgCtx applier) {
         var stmts = new List<Ex>();
         var vars = new List<ParameterExpression>();
-        var lets = new List<TExArgCtx.LocalLet>();
+        var lets = new List<IDisposable>();
         foreach (var a in aliases) {
             Ex alias_value = a.func(applier);
             if (a.DirectAssignment) {

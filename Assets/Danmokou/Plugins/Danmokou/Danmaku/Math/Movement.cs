@@ -138,7 +138,7 @@ public struct Movement {
             bpi.t = 0;
         } 
         float mag = accDelta.x * accDelta.x + accDelta.y * accDelta.y;
-        if (mag > M.MAG_ERR) return accDelta * 1f / (float) Math.Sqrt(mag);
+        if (mag > M.MAG_ERR) return accDelta * (1f / (float) Math.Sqrt(mag));
         else return DefaultDirection();
     }
 

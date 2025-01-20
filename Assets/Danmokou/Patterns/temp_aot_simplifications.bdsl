@@ -7,7 +7,6 @@ function gcd(a, b)::int {
         return gcd(b, a % b)
     }
 }
-
 pattern {
 } {
     phase 30 {

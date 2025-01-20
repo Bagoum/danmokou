@@ -329,7 +329,7 @@ public static partial class AsyncPatterns {
     /// </summary>
     /// <param name="target">Child SyncPattern to run unchanged</param>
     /// <returns></returns>
-    [Fallthrough(1)]
+    [Fallthrough]
     public static AsyncPattern COnce(SyncPattern target) {
         IEnumerator Inner(AsyncHandoff abh) {
             if (!abh.Cancelled) {

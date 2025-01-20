@@ -9,10 +9,11 @@ namespace Danmokou.Scriptables {
 [CreateAssetMenu(menuName = "Data/Ending Config")]
 public class EndingConfig : ScriptableObject {
     public string key = "";
-    public string dialogueKey = "";
+    public TextAsset stateMachine = null!;
     [ReflectInto(typeof(Pred))]
     public string predicate = "";
 
-    public bool Matches => predicate.Into<Pred>()(ParametricInfo.Zero);
+    public bool Matches => string.IsNullOrWhiteSpace(predicate) ||
+                           predicate.Into<Pred>()(ParametricInfo.Zero);
 }
 }

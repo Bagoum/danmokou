@@ -7,13 +7,12 @@ using Danmokou.Scriptables;
 using UnityEngine;
 
 namespace Danmokou {
-[CreateAssetMenu(menuName = "Data/GameDef/EmptyCampaign")]
-public class EmptyCampaignGameDef : CampaignDanmakuGameDef {
-    public int Lives = 1;
+[CreateAssetMenu(menuName = "Data/GameDef/BasicCampaign")]
+public class BasicCampaignGameDef : CampaignDanmakuGameDef {
     public override InstanceFeatures MakeFeatures(DifficultySettings difficulty, InstanceMode mode, long? highScore)
         => new() {
             Basic = new BasicFeatureCreator() {
-                StartLives = Lives
+                StartLives = (Campaign == null) ? 999999 : Campaign.StartLives
             }
         };
 }

@@ -66,6 +66,6 @@ public record SceneRequest(ISceneConfig scene, SceneRequest.Reason reason, Actio
         return this with { Transition = transition };
     }
 
-    public override string ToString() => $"{scene.SceneName} ({reason})";
+    public override string ToString() => $"{scene?.SceneName} ({reason})";
 }
 }

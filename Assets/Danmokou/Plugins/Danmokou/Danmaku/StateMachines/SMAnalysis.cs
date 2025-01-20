@@ -325,14 +325,14 @@ public static class SMAnalysis {
 
     public class AnalyzedCampaign {
         public ICampaignDanmakuGameDef Game { get; }
-        public readonly CampaignConfig campaign;
+        public readonly BaseCampaignConfig campaign;
         public readonly AnalyzedBoss[] bosses;
         public readonly AnalyzedStage[] stages;
         public readonly Dictionary<string, AnalyzedBoss> bossKeyMap = new();
         public IEnumerable<AnalyzedBoss> PracticeBosses => bosses.Where(s => s.boss.practiceable);
         public IEnumerable<AnalyzedStage> PracticeStages => stages.Where(s => s.stage.practiceable);
 
-        public AnalyzedCampaign(CampaignConfig campaign, ICampaignDanmakuGameDef game) {
+        public AnalyzedCampaign(BaseCampaignConfig campaign, ICampaignDanmakuGameDef game) {
             this.Game = game;
             bosses = (this.campaign = campaign).bosses.Length.Range().Select(i => new AnalyzedBoss(this, i)).ToArray();
             for (int ii = 0; ii < bosses.Length; ++ii) {

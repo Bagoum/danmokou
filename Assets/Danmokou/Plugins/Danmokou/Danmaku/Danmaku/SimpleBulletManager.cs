@@ -209,7 +209,6 @@ public partial class BulletManager {
         /// </summary>
         public bool IsPlayer { get; private set; } = false;
         public BulletInCode BC { get; }
-        protected readonly CollidableInfo ColliderGeneric;
         public readonly ICollider Collider;
         public readonly ApproximatedCircleCollider CircleCollider;
         protected virtual SimpleBulletFader Fade => BC.FadeIn;
@@ -255,9 +254,8 @@ public partial class BulletManager {
         
         public SimpleBulletCollection(List<SimpleBulletCollection> target, BulletInCode bc) : base(1, 128) {
             this.BC = bc;
-            ColliderGeneric = bc.cc;
-            Collider = ColliderGeneric.collider;
-            CircleCollider = ColliderGeneric.circleCollider;
+            Collider = bc.cc.collider;
+            CircleCollider = bc.cc.circleCollider;
             this.targetList = target;
         }
 
@@ -312,21 +310,12 @@ public partial class BulletManager {
         #endregion
 
         public MeshGenerator.RenderInfo GetOrLoadRI() => BC.GetOrLoadRI();
-        
-        /// <summary>
-        /// Test collision between a target and a bullet.
-        /// <br/>Note that you can also use <see cref="Collider"/>.<see cref="ICollider.CheckGrazeCollision"/>, which is marginally slower
-        ///  but may generally be more flexible.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public virtual CollisionResult CheckGrazeCollision(in Hurtbox hurtbox, in SimpleBullet sb) =>
-            CollisionMath.NoCollision;
 
         #region Operators
         
         //TODO: investigate if isNew is actually required; is it possible to always apply the initial controls?
         public virtual void Add(ref SimpleBullet sb, bool isNew) {
-            base.AddRef(ref sb);
+            base.AddRef(in sb);
             if (isNew) {
                 int numPcs = controls.Count;
                 var state = new VelocityUpdateState(this, 0, 0) { ii = count - 1 };
@@ -343,7 +332,7 @@ public partial class BulletManager {
             }
         }
         
-        public new void AddRef(ref SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
+        public new void AddRef(in SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
         public new void Add(SimpleBullet sb) => throw new Exception("Do not use SBC.Add");
         
         public virtual void MakeCulledCopy(int ii) {
@@ -1015,31 +1004,18 @@ public partial class BulletManager {
     }
     private class CircleSBC : SimpleBulletCollection {
         public CircleSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override CollisionResult CheckGrazeCollision(in Hurtbox hurtbox, in SimpleBullet sb) => 
-            CollisionMath.GrazeCircleOnCircle(in hurtbox, in sb.bpi.loc.x, in sb.bpi.loc.y, in ColliderGeneric.radius, in sb.scale);
     }
     private class RectSBC : SimpleBulletCollection {
         public RectSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override CollisionResult CheckGrazeCollision(in Hurtbox hurtbox, in SimpleBullet sb) => 
-            CollisionMath.GrazeCircleOnRect(in hurtbox, in sb.bpi.loc.x, in sb.bpi.loc.y, in ColliderGeneric.halfRect, in ColliderGeneric.maxDist2, in sb.scale, in sb.direction);
     }
     private class LineSBC : SimpleBulletCollection {
         public LineSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override CollisionResult CheckGrazeCollision(in Hurtbox hurtbox, in SimpleBullet sb) => 
-            CollisionMath.GrazeCircleOnRotatedSegment(in hurtbox, in sb.bpi.loc.x, in sb.bpi.loc.y, in ColliderGeneric.radius, in ColliderGeneric.linePt1, 
-                in ColliderGeneric.delta, in sb.scale, in ColliderGeneric.deltaMag2, in ColliderGeneric.maxDist2, in sb.direction);
     }
     
     public class NoCollSBC : SimpleBulletCollection {
         public NoCollSBC(List<SimpleBulletCollection> target, BulletInCode bc) : base(target, bc) {}
 
-        public override Maybe<FrameBucketing>? GetCollisionFormat() => default(Maybe<FrameBucketing>?);
+        public override Maybe<FrameBucketing>? GetCollisionFormat() => null;
     }
 
     //Called via Camera.onPreCull event

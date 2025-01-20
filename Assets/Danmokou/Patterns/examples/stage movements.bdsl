@@ -1,9 +1,8 @@
 <#> bdsl1
 pattern { }
-phase 0 #{
+phase 0
     paction 0
         shift-phase-to 2
-#}
 
 !{ move(rpath)
 async tfairy <> summonr
@@ -19,7 +18,7 @@ async arrow-red/w <0.5;:> gcr2 60 3 <> {
 } s tprot cx 3
 !}
 
-phase 0 #{
+phase 0 
 	paction 0
 		position -4.6 1
 		move _ :: {
@@ -28,8 +27,7 @@ phase 0 #{
 			logsumshift(&t, -1, 1.7, 3 * &t, 0),
 			logsumshift(&t, 2, 1.6, 0, 2.7 * &t)
 		))
-#}
-		
+	
 
 phasej 0 3
 	paction 0

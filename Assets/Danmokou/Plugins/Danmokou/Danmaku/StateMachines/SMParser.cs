@@ -401,7 +401,7 @@ public static class SMParser {
     private static readonly Parser<char, MacroArg> MacroPrmDecl =
         Macro.Prm.Pipe(
             Whitespace1.IgThen(
-                WrapPosition(WordsInBlock)).OptionalOrNull(),
+                WrapPosition(WordsInBlock)).OptN(),
             (key, dp) => dp.Try(out var d) ?
                 new MacroArg(key, new LocatedParseUnit(ParseUnit.Nest(d.val), d.position)) :
                 new MacroArg(key, null));//.Label("macro parameter");

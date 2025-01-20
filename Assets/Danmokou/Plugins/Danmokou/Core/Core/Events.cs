@@ -59,11 +59,11 @@ public static class Events {
     }
 
     public class RuntimeEvent<T> : RuntimeEvent {
-        public static RuntimeEvent<T> Null = new RuntimeEvent<T>("_", NullEvent<T>.Default);
+        public static RuntimeEvent<T> Null = new("_", NullEvent<T>.Default);
         public string EvName { get; }
-        public Event<T> Ev { get; }
+        public IBSubject<T> Ev { get; }
 
-        public RuntimeEvent(string evName, Event<T> ev) {
+        public RuntimeEvent(string evName, IBSubject<T> ev) {
             EvName = evName;
             Ev = ev;
             events.Add2(typeof(T), EvName, this);

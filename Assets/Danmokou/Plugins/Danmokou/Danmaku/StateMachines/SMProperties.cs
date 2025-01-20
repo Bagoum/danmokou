@@ -144,16 +144,19 @@ public class PhaseProperty {
     /// </summary>
     /// <returns></returns>
     public static PhaseProperty Dialogue() => new PhaseTypeProp(PhaseType.Dialogue);
+    
     /// <summary>
     /// Declare that this phase is a stage midboss phase.
     /// </summary>
     /// <returns></returns>
     public static PhaseProperty Midboss() => new PhaseTypeProp(PhaseType.StageMidboss);
+    
     /// <summary>
     /// Declare that this phase is a stage endboss phase.
     /// </summary>
     /// <returns></returns>
     public static PhaseProperty Endboss() => new PhaseTypeProp(PhaseType.StageEndboss);
+    
     /// <summary>
     /// Declare the type and name of this phase.
     /// </summary>

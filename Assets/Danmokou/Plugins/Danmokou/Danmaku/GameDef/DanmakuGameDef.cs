@@ -21,7 +21,7 @@ public interface IDanmakuGameDef : IGameDef {
     InstanceFeatures MakeFeatures(DifficultySettings difficulty, InstanceMode mode, long? highScore);
     SceneConfig ReplaySaveMenu { get; }
     
-    public static IEnumerable<ShipConfig> CampaignShots(CampaignConfig? c) =>
+    public static IEnumerable<ShipConfig> CampaignShots(BaseCampaignConfig? c) =>
         c == null ? Array.Empty<ShipConfig>() : c.players;
 
     public static IEnumerable<ShipConfig> CampaignShots(DayCampaignConfig? c) =>
@@ -43,9 +43,9 @@ public interface IDanmakuGameDef : IGameDef {
 /// </summary>
 public interface ICampaignDanmakuGameDef : IDanmakuGameDef {
     SceneConfig Endcard { get; }
-    CampaignConfig Campaign { get; }
-    CampaignConfig? ExCampaign { get; }
-    public IEnumerable<CampaignConfig> Campaigns => new[] {Campaign, ExCampaign}.FilterNone();
+    BaseCampaignConfig Campaign { get; }
+    BaseCampaignConfig? ExCampaign { get; }
+    public IEnumerable<BaseCampaignConfig> Campaigns => new[] {Campaign, ExCampaign}.FilterNone();
 }
 
 /// <summary>
@@ -90,11 +90,11 @@ public abstract class DanmakuGameDef : GameDef, IDanmakuGameDef {
 
 public abstract class CampaignDanmakuGameDef : DanmakuGameDef, ICampaignDanmakuGameDef {
     public SceneConfig m_endcard = null!;
-    public CampaignConfig m_campaign = null!;
-    public CampaignConfig? m_extraCampaign;
+    public BaseCampaignConfig m_campaign = null!;
+    public BaseCampaignConfig? m_extraCampaign;
     public SceneConfig Endcard => m_endcard;
-    public CampaignConfig Campaign => m_campaign;
-    public CampaignConfig? ExCampaign => m_extraCampaign;
+    public BaseCampaignConfig Campaign => m_campaign;
+    public BaseCampaignConfig? ExCampaign => m_extraCampaign;
     public override IEnumerable<ShipConfig> AllShips => 
         IDanmakuGameDef.CampaignShots(Campaign).Concat(
             IDanmakuGameDef.CampaignShots(ExCampaign));

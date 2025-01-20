@@ -88,7 +88,7 @@ public abstract class Pooled : CoroutineRegularUpdater {
         if (isPooled)
             PooledDone();
         else
-            Object.Destroy(this);
+            Object.Destroy(gameObject);
     }
 }
 

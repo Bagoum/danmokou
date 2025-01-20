@@ -35,7 +35,7 @@ public record GenCtxProperty {
     /// <summary>
     /// Dummy property that does nothing.
     /// </summary>
-    public static GenCtxProperty NoOp() => new CompositeProp();
+    public static GenCtxProperty NoOp() => new NoOpProp();
     /// <summary>
     /// Set the number of times a repeater will run. Resolved after start rules.
     /// </summary>
@@ -471,39 +471,43 @@ public record GenCtxProperty {
     /// evenly spread around the original angle.
     /// </summary>
     public static GenCtxProperty Center() => new CenterTag();
-    
+
     /// <summary>
     /// Bind the values axd, ayd, aixd, aiyd in the GCX preloop section.
     /// </summary>
-    /// <returns></returns>
     [ExtendsInternalScope((int)AutoVarExtend.BindArrow)]
-    public static GenCtxProperty BindArrow() => new BindArrowTag();
+    public static GenCtxProperty BindArrow() => new NoOpProp();
     
     /// <summary>
     /// Bind the values lr, rl in the GCX preloop section.
     /// </summary>
-    /// <returns></returns>
     [ExtendsInternalScope((int)AutoVarExtend.BindLR)]
-    public static GenCtxProperty BindLR() => new BindLRTag();
+    public static GenCtxProperty BindLR() => new NoOpProp();
     
     /// <summary>
     /// Bind the values ud, du in the GCX preloop section.
     /// </summary>
-    /// <returns></returns>
     [ExtendsInternalScope((int)AutoVarExtend.BindUD)]
-    public static GenCtxProperty BindUD() => new BindUDTag();
-    
+    public static GenCtxProperty BindUD() => new NoOpProp();
+   
     /// <summary>
     /// Bind the value angle to the RV2 angle in the GCX preloop section.
     /// </summary>
     [ExtendsInternalScope((int)AutoVarExtend.BindAngle)]
-    public static GenCtxProperty BindAngle() => new BindAngleTag();
+    public static GenCtxProperty BindAngle() => new NoOpProp();
     
+    /// <summary>
+    /// Bind the values flipX, flipY in the GCX start section.
+    /// <br/>Must be added to enable bullet flipping.
+    /// </summary>
+    [ExtendsInternalScope((int)AutoVarExtend.BindFlip)]
+    public static GenCtxProperty BindFlip() => new NoOpProp();
+   
     /// <summary>
     /// Bind a value corresponding to the loop number in the GCX preloop section.
     /// </summary>
     [BDSL1Only] [ExtendsInternalScope((int)AutoVarExtend.BindItr)]
-    public static GenCtxProperty BindItr(string value) => new BindItrTag(value);
+    public static GenCtxProperty BindItr(string value) => new NoOpProp();
 
 
     public record CompositeProp(params GenCtxProperty[] value) : ValueProp<GenCtxProperty[]>(value), IUnrollable<GenCtxProperty> {
@@ -517,6 +521,8 @@ public record GenCtxProperty {
     public abstract record PredProp(GCXF<bool> value) : ValueProp<GCXF<bool>>(value);
 
     public abstract record TPProp(GCXF<Vector2> value) : ValueProp<GCXF<Vector2>>(value);
+
+    public record NoOpProp : GenCtxProperty;
 
     public record TimesProp : ValueProp<GCXF<float>?> {
         public readonly int? max;
@@ -644,16 +650,6 @@ public record GenCtxProperty {
 
     public record CenterTag : GenCtxProperty;
 
-    public record BindArrowTag : GenCtxProperty;
-
-    public record BindLRTag : GenCtxProperty;
-
-    public record BindUDTag : GenCtxProperty;
-
-    public record BindAngleTag : GenCtxProperty;
-
-    public record BindItrTag(string value) : ValueProp<string>(value);
-
     public record ResetColorTag : GenCtxProperty;
 
     #endregion
@@ -726,11 +722,6 @@ public class GenCtxProperties<T> : GenCtxProperties {
     public readonly GCXF<ETime.Timer>? timer;
     public readonly bool resetTime;
     public readonly bool centered;
-    public readonly bool bindArrow;
-    public readonly bool bindLR;
-    public readonly bool bindUD;
-    public readonly bool bindAngle;
-    public readonly string? bindItr;
     public readonly GCXF<float>? laserIndexer;
     private readonly RV2IncrType? rv2IncrType = null;
     private readonly GCXF<V2RV2>? rv2Spread = null;
@@ -790,7 +781,8 @@ public class GenCtxProperties<T> : GenCtxProperties {
             allowWaitChild = true;
         } else throw new StaticException($"Cannot call GenCtxProperties with class {t.SimpRName()}");
         foreach (var prop in props.Unroll().OrderBy(x => x.Priority)) {
-            if (prop is TimesProp gt) {
+            if (prop is NoOpProp) {
+            } else if (prop is TimesProp gt) {
                 maxTimes = gt.max ?? maxTimes;
                 times = gt.value ?? times;
             } else if (prop is WaitProp wt && allowWait) wait = wt.value;
@@ -845,11 +837,6 @@ public class GenCtxProperties<T> : GenCtxProperties {
             else if (prop is OnLaserProp olp) {
                 laserIndexer = olp.value;
             } else if (prop is CenterTag) centered = true;
-            else if (prop is BindArrowTag) bindArrow = true;
-            else if (prop is BindLRTag) bindLR = true;
-            else if (prop is BindUDTag) bindUD = true;
-            else if (prop is BindAngleTag) bindAngle = true;
-            else if (prop is BindItrTag bit) bindItr = bit.value;
             else if (prop is ResetColorTag) resetColor = true;
             else if (prop is _LexicalScopeProp scope) {
                 Scope = scope.scope;

@@ -17,7 +17,8 @@ public enum AutoVarExtend: int {
     BindAngle,
     BindLR,
     BindUD,
-    BindArrow
+    BindArrow,
+    BindFlip,
 }
 
 
@@ -67,6 +68,10 @@ public static class AutoVarHelper {
                 gcxAV.bindArrow = (Declare<float>(s, p, "axd", "BindArrow axd"), Declare<float>(s, p, "ayd", "BindArrow ayd"), 
                     Declare<float>(s, p, "aixd", "BindArrow aixd"), Declare<float>(s, p, "aiyd", "BindArrow aiyd"));
                 break;
+            case AutoVarExtend.BindFlip:
+                gcxAV.bindFlip = (Declare<float>(s, p, "flipX", "X flip multiplier"),
+                    Declare<float>(s, p, "flipY", "Y flip multiplier"));
+                break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(ext), ext, null);
         }
@@ -92,6 +97,7 @@ public record AutoVars : IAutoVars {
         public (VarDecl lr, VarDecl rl)? bindLR;
         public (VarDecl ud, VarDecl du)? bindUD;
         public (VarDecl axd, VarDecl ayd, VarDecl aixd, VarDecl aiyd)? bindArrow;
+        public (VarDecl x, VarDecl y)? bindFlip;
     }
     
     public override string ToString() => "-Scope Autovars-";

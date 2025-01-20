@@ -312,6 +312,7 @@ public static partial class ExM {
     /// </summary>
     public static tfloat HighPass(tfloat by, tfloat x) => 
         TEx.Resolve(x, _x => Ex.Condition(Abs(_x).LT(by), E0, _x));
+    
     /// <summary>
     /// If x's absolute value is greater than by, then return 0 instead.
     /// </summary>

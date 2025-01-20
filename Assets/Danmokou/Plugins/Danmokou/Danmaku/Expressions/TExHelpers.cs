@@ -38,13 +38,6 @@ public static class TExHelpers {
         return tac.MakeCopyWith(bidx, TExArgCtx.Arg.FromTEx(tac.Args[bidx].name, new TExPI(bpi.CopyWithT(newT)), tac.Args[bidx].hasTypePriority));
     }
     
-    public static TExArgCtx AppendSB(this TExArgCtx tac, string name, TExSB ex, bool hasPriority=true) {
-        var nargs = tac.Args.Append(TExArgCtx.Arg.FromTEx(name, ex, hasPriority));
-        if (tac.MaybeGetByExprType<TExPI>(out _) == null) 
-            nargs = nargs.Append(TExArgCtx.Arg.FromTEx(name + "_bpi", ex.bpi, true));
-        return new TExArgCtx(tac, nargs.ToArray());
-    }
-    
     /// <summary>
     /// Feed the X,Y components of a V2 into a resolver.
     /// <br/>If the V2 is a `new Vector2` expression,

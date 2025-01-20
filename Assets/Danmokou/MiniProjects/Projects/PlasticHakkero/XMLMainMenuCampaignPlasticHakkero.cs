@@ -67,7 +67,7 @@ public class XMLMainMenuCampaignPlasticHakkero : XMLMainMenu {
             EntryIndexOverride = () => 2
         });
 
-        Func<UINode, ICursorState, UIResult> GetMetadata(CampaignConfig c, Func<SharedInstanceMetadata, bool> cont) => (_, _) => {
+        Func<UINode, ICursorState, UIResult> GetMetadata(BaseCampaignConfig c, Func<SharedInstanceMetadata, bool> cont) => (_, _) => {
             dfcContinuation = dfc => {
                 if (c.HasOneShotConfig(out var team)) {
                     cont(new SharedInstanceMetadata(team, dfc));

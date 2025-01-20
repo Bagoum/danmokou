@@ -5,6 +5,7 @@ using BagoumLib.Expressions;
 using Danmokou.Core;
 using Danmokou.Expressions;
 using Scriptor;
+using Scriptor.Analysis;
 using Scriptor.Expressions;
 using Scriptor.Math;
 using UnityEngine;
@@ -137,21 +138,24 @@ public static class VTPControllers {
         return coords(vel.cos, vel.sin, tac, (x, y, z) => next(vel, dt, delta, x, y, z));
     }
 
-    public static ExVTP Velocity(V2ToCoords cf) => tac => InLetCtx(tac, cf, (vel, dt, delta, x, y, z) =>
+    private static void FindFlipVars(TExArgCtx tac, out Ex? flipX, out Ex? flipY) {
+        flipX = null;
+        flipY = null;
+        if (!tac.Ctx.Scope.TryPeek(out var ls)) return;
+        if (ls.FindVariable("flipX") is { } fxDecl)
+            flipX = ls.LocalOrParentVariable(tac, tac.EnvFrame, fxDecl);
+        if (ls.FindVariable("flipY") is { } fyDecl)
+            flipY = ls.LocalOrParentVariable(tac, tac.EnvFrame, fyDecl);
+    }
+    
+    private static Ex MulN(Ex? a, Ex b) => a is null ? b : a.Mul(b);
+
+    public static ExVTP Velocity(V2ToCoords cf) => tac => InLetCtx(tac, cf, (vel, dt, delta, x, y, z) => 
+        //TODO flipX: remove vel.flipX and move it to the ef reference
             Ex.Block(
-                //TODO: automatically detect if flipX/Y are present on custom data,
-                // if they are, use FVelocity instead.
                 delta.x.Is(vel.flipX.Mul(x).Mul(dt)),
                 delta.y.Is(vel.flipY.Mul(y).Mul(dt))
             ));
-    
-    /*
-    public static ExVTP FVelocity(ExCoordF cf) => (vel, dt, bpi, delta) => InLetCtx(vel, bpi, tac =>
-        cf(vel.cos, vel.sin, tac, (x, y, z) =>
-            Ex.Block(
-                delta.x.Is(ReflectEx.ReferenceExpr<float>(FiringCtx.FLIPX, tac).Mul(x).Mul(dt)),
-                delta.y.Is(ReflectEx.ReferenceExpr<float>(FiringCtx.FLIPY, tac).Mul(y).Mul(dt))
-            )));*/
 
     public static ExVTP Velocity3D(V2ToCoords cf) => tac => InLetCtx(tac, cf, (vel, dt, delta, x, y, z) =>
             Ex.Block(
@@ -322,7 +326,6 @@ public static class VTPRepo {
     /// </summary>
     /// <param name="radius">Radius function</param>
     /// <param name="theta">Theta function (degrees)</param>
-    /// <returns></returns>
     public static ExVTP Polar(ExBPY radius, ExBPY theta) => VTPControllers.Offset(VTPConstructors.Polar(radius, theta));
 
     /// <summary>
@@ -408,5 +411,12 @@ public static class CSVTPRepo {
     /// <param name="nrp">Nonrotational offset parametric</param>
     /// <returns></returns>
     public static VTP Offset(TP rp, TP nrp) => VTPControllers.Offset(Cartesian(rp, nrp));
+    
+    /// <summary>
+    /// (C# code use) Movement with polar rotational offset.
+    /// </summary>
+    /// <param name="r">Radius function</param>
+    /// <param name="theta">Theta function (degrees)</param>
+    public static VTP Polar(BPY r, BPY theta) => VTPControllers.Offset(VTPConstructors.Polar(r, theta));
 }
 }

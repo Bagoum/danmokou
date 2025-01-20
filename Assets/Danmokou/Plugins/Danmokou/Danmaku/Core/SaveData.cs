@@ -136,7 +136,7 @@ public static class SaveData {
 #if UNITY_EDITOR && !EXBAKE_SAVE && !EXBAKE_LOAD
         //Change this to control whether or not bosses teleport to their new location at the beginning of a phase.
         //This only applies to the editor.
-        public static bool TeleportAtPhaseStart => true;
+        public static bool TeleportAtPhaseStart => false;
 #else
         //Don't change this! TeleportAtPhaseStart is a editor utility and should not be enabled in builds.
         public const bool TeleportAtPhaseStart = false;

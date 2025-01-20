@@ -104,10 +104,10 @@ Material:
     - _FaceColor: {r: 1, g: 1, b: 1, a: 1}
     - _GlowColor: {r: 0, g: 0.49056602, b: 0.14526299, a: 0.5}
     - _MaskCoord: {r: 0, g: 0, b: 32767, a: 32767}
-    - _OutlineColor: {r: 0.50980395, g: 0, b: 0.1254902, a: 1}
+    - _OutlineColor: {r: 0.6509434, g: 0, b: 0.046450462, a: 1}
     - _ReflectFaceColor: {r: 0, g: 0, b: 0, a: 1}
     - _ReflectOutlineColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
-    - _UnderlayColor: {r: 0.50980395, g: 0, b: 0.1254902, a: 1}
+    - _UnderlayColor: {r: 0.6509434, g: 0, b: 0.046450462, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

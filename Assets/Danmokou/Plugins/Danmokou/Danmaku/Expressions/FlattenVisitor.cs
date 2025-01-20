@@ -45,7 +45,7 @@ class FlattenVisitor : ExpressionVisitor {
     private static readonly HashSet<ExpressionType> AssignTypes = new() {
         ExpressionType.Assign, ExpressionType.AddAssign, ExpressionType.AndAssign, ExpressionType.AddAssignChecked,
         ExpressionType.DivideAssign, ExpressionType.ModuloAssign, ExpressionType.MultiplyAssign, ExpressionType.OrAssign,
-        ExpressionType.PowerAssign, ExpressionType.PowerAssign, ExpressionType.SubtractAssign, ExpressionType.SubtractAssignChecked,
+        ExpressionType.PowerAssign, ExpressionType.SubtractAssign, ExpressionType.SubtractAssignChecked,
         ExpressionType.LeftShiftAssign, ExpressionType.ExclusiveOrAssign, ExpressionType.MultiplyAssignChecked,
         ExpressionType.PostIncrementAssign, ExpressionType.PreIncrementAssign,
         ExpressionType.PostDecrementAssign, ExpressionType.PreDecrementAssign, ExpressionType.RightShiftAssign

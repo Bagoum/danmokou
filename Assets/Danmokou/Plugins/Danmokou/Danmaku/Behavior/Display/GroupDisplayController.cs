@@ -5,6 +5,7 @@ using Danmokou.Core;
 using Danmokou.DMath;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Danmokou.Behavior.Display {
 
@@ -13,6 +14,7 @@ public interface IMultiDisplayController {
 }
 
 public class GroupDisplayController : DisplayController, IMultiDisplayController {
+    public SortingGroup? sortGroup;
     public DisplayController recvSprite = null!;
     public DisplayController[] all = null!;
 
@@ -43,7 +45,12 @@ public class GroupDisplayController : DisplayController, IMultiDisplayController
     }
 
     public override void SetSortingOrder(int x) {
-        for (int ii = 0; ii < all.Length; ++ii) all[ii].SetSortingOrder(x);
+        if (sortGroup != null) {
+            sortGroup.sortingOrder = x;
+        } else {
+            for (int ii = 0; ii < all.Length; ++ii) 
+                all[ii].SetSortingOrder(x);
+        }
     }
 
     public override void SetProperty(int id, float val) => recvSprite.SetProperty(id, val);

@@ -90,25 +90,12 @@ public static class CollisionMath {
         var dy = c2y - c1Loc.y;
         return dx * dx + dy * dy < (c1r + c2r) * (c1r + c2r);
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CollisionResult GrazeCircleOnCircle(in Hurtbox h, in float x, in float y, in float r) {
-        var dx = x - h.x;
-        var dy = y - h.y;
-        var lrSum = r + h.grazeRadius;
-        var rSum = r + h.radius;
-        var d2 = dx * dx + dy * dy;
-        return new(d2 < rSum * rSum,  d2 < lrSum * lrSum);
-    }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CollisionResult GrazeCircleOnCircle(in Hurtbox h, in float x, in float y, in float r, in float scale) {
-        var dx = x - h.x;
-        var dy = y - h.y;
-        var lrSum = (r * scale) + h.grazeRadius;
-        var rSum = (r * scale) + h.radius;
-        var d2 = dx * dx + dy * dy;
-        return new(d2 < rSum * rSum,  d2 < lrSum * lrSum);
+        var d2 = (x - h.x) * (x - h.x) + (y - h.y) * (y - h.y);
+        return new(d2 < (r * scale + h.radius) * (r * scale + h.radius), 
+            d2 < (r * scale + h.grazeRadius) * (r * scale + h.grazeRadius));
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -425,20 +412,21 @@ public static class CollisionMath {
     //NOTE: it's also more efficient to compute scale stuff in here.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CollisionResult GrazeCircleOnRotatedSegment(in Hurtbox h, in float x, in float y, in float radius, in Vector2 node1, in Vector2 delta, in float scale, in float delta_mag2, in float max_dist2, in Vector2 direction) {
-        //First, we get src -> target and descale it, so we don't need any other scaling
-        var dx = (h.x - x) / scale;
-        var dy = (h.y - y) / scale;
+        //First, we get src -> target and descale it
+        var iscale = 1 / scale;
+        var dx = (h.x - x) * iscale;
+        var dy = (h.y - y) * iscale;
         
         //Early exit condition: ||src -> target||^2 > 2(max_dist^2 + Lrad^2) > (max_dist + Lrad)^2
-        if (dx * dx + dy * dy > 2f * (max_dist2 + h.grazeRadius2)) return NoCollision;
+        if (dx * dx + dy * dy > 2f * (max_dist2 + h.grazeRadius2 * iscale * iscale)) return NoCollision;
         
         //Derotate and subtract by node1:local to get the G vector (node1:world -> target)
         float _dx = direction.x * dx + direction.y * dy - node1.x;
         dy = direction.x * dy - direction.y * dx - node1.y;
         dx = _dx;
 
-        float radius2 = (radius + h.radius) * (radius + h.radius);
-        float lradius2 = (radius + h.grazeRadius) * (radius + h.grazeRadius);
+        float radius2 = (radius + h.radius * iscale) * (radius + h.radius * iscale);
+        float lradius2 = (radius + h.grazeRadius * iscale) * (radius + h.grazeRadius * iscale);
 
         //Dot product of A:(node1:world -> target) and B:(node1 -> node2)
         float dot = dx * delta.x + dy * delta.y;
@@ -463,20 +451,21 @@ public static class CollisionMath {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool CircleOnRotatedSegment(in float cx, in float cy, in float cRad, in float x, in float y, in float radius, 
         in Vector2 node1, in Vector2 delta, in float scale, in float delta_mag2, in float max_dist2, in float cos_rot, in float sin_rot) {
-        //First, we get src -> target and descale it, so we don't need any other scaling
-        var dx = (cx - x) / scale;
-        var dy = (cy - y) / scale;
+        //First, we get src -> target and descale it
+        var iscale = 1 / scale;
+        var dx = (cx - x) * iscale;
+        var dy = (cy - y) * iscale;
         
         //Early exit condition: ||src -> target||^2 > 2(max_dist^2 + Lrad^2)
         //The extra 2 is because 2(x^2+y^2) is an upper bound for (x+y)^2.
-        if (dx * dx + dy * dy > 2f * (max_dist2 + cRad * cRad)) return false;
+        if (dx * dx + dy * dy > 2f * (max_dist2 + cRad * cRad * iscale * iscale)) return false;
         
         //Derotate and subtract by node1:local to get the G vector (node1:world -> target)
         float _dx = cos_rot * dx + sin_rot * dy - node1.x;
         dy = cos_rot * dy - sin_rot * dx - node1.y;
         dx = _dx;
 
-        float radius2 = (radius + cRad) * (radius + cRad);
+        float radius2 = (radius + cRad * iscale) * (radius + cRad * iscale);
 
         //Dot product of A:(node1:world -> target) and B:(node1 -> node2)
         float dot = dx * delta.x + dy * delta.y;
@@ -638,10 +627,11 @@ public static class CollisionMath {
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CollisionResult GrazeCircleOnRect(in Hurtbox h, in float x, in float y, in Vector2 halfDim, in float diag2, in float scale, in Vector2 direction) {
-        var dx = (h.x - x) / scale;
-        var dy = (h.y - y) / scale;
+        var iscale = 1 / scale;
+        var dx = (h.x - x) * iscale;
+        var dy = (h.y - y) * iscale;
         //Early exit condition: ||src -> target||^2 > 2(diag^2 + Lrad^2) > (diag + Lrad)^2
-        if (dx * dx + dy * dy > 2f * (diag2 + h.grazeRadius2)) return NoCollision;
+        if (dx * dx + dy * dy > 2f * (diag2 + h.grazeRadius2 * iscale * iscale)) return NoCollision;
         //First DErotate the delta vector and get its absolutes. Note we use -sin_rot
         //Store delta vector in Rect for efficiency
         float _dx = direction.x * dx + direction.y * dy;
@@ -654,28 +644,29 @@ public static class CollisionMath {
         if (dy < halfDim.y) {
             //In "front" of the rectangle.
             return new CollisionResult(dx - halfDim.x < h.radius,
-                dx - halfDim.x < h.grazeRadius);
+                dx - halfDim.x < h.grazeRadius * iscale);
         }
         if (dx < halfDim.x) {
             // On "top" of the rectangle
             return new CollisionResult(dy - halfDim.y < h.radius,
-                dy - halfDim.y < h.grazeRadius);
+                dy - halfDim.y < h.grazeRadius * iscale);
         }
         //In front and on top.
         dx -= halfDim.x;
         dy -= halfDim.y;
         float dsqr = dx * dx + dy * dy;
-        return new CollisionResult(dsqr < h.radius2, dsqr < h.grazeRadius2);
+        return new CollisionResult(dsqr < h.radius2 * iscale * iscale, dsqr < h.grazeRadius2 * iscale * iscale);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool CircleOnRect(in float cx, in float cy, in float cRad, in float rectX, in float rectY, in float rectHalfWidth, in float rectHalfHeight, 
         in float diag2, in float scale, in float cos_rot, in float sin_rot) {
-        var dx = (cx - rectX) / scale;
-        var dy = (cy - rectY) / scale;
+        var iscale = 1f / scale;
+        var dx = (cx - rectX) * iscale;
+        var dy = (cy - rectY) * iscale;
         //Early exit condition: ||src -> target||^2 > 2*(diag^2 + Lrad^2)
         //The extra 2 is because 2(x^2+y^2) is an upper bound for (x+y)^2.
-        if (dx * dx + dy * dy > 2f * (diag2 + cRad * cRad)) return false;
+        if (dx * dx + dy * dy > 2f * (diag2 + cRad * cRad * iscale * iscale)) return false;
         //First DErotate the delta vector and get its absolutes. Note we use -sin_rot
         float _dx = cos_rot * dx + sin_rot * dy;
         dy = cos_rot * dy - sin_rot * dx;
@@ -687,16 +678,16 @@ public static class CollisionMath {
         //Then we are in one of three locations:
         if (dy < rectHalfHeight) {
             //In "front" of the rectangle.
-            return dx - rectHalfWidth < cRad;
+            return dx - rectHalfWidth < cRad * iscale;
         }
         if (dx < rectHalfWidth) {
             // On "top" of the rectangle
-            return dy - rectHalfHeight < cRad;
+            return dy - rectHalfHeight < cRad * iscale;
         }
         //In front and on top.
         dx -= rectHalfWidth;
         dy -= rectHalfHeight;
-        return dx * dx + dy * dy < cRad * cRad;
+        return dx * dx + dy * dy < cRad * cRad * iscale * iscale;
     }
     
     public const float skinWidth = 0.001f;

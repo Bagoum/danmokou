@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d7768018aff40589017a165e079b3c1, type: 3}
+  m_Name: Tutorial Game References
+  m_EditorClassIdentifier: 
+  gameDefinition: {fileID: 11400000, guid: a65e4aa1c72fcf648911c5e98d3340ea, type: 2}
+  mainMenu: {fileID: 11400000, guid: 3af193183a2b839499cd7f470ae97fae, type: 2}
+  defaultUIFrame: {fileID: 21300000, guid: fd60a7ae3ce4be640b9b311d9d70969e, type: 3}
+  unitScene: {fileID: 11400000, guid: f6d073d9562719741ac86ec620f65354, type: 2}
+  defaultTransition: {fileID: 11400000, guid: 517222e0dbe56264a8bcd878fc9e4e27, type: 2}
+  dialogue: []
+  bossMetadata:
+  - {fileID: 11400000, guid: 061f122427d8e1e418fbe6a8e4252d31, type: 2}
+  tracks: []
+  items: {fileID: 11400000, guid: 18e6de6e951f4114e8823af9e617bff7, type: 2}
+  prefabReferences: {fileID: 11400000, guid: 842bcc7c616103e4c9880c49f9735bb4, type: 2}
+  suzunoyaReferences: {fileID: 11400000, guid: a936563f4e58b294db033ff8ee6be6f8, type: 2}
+  advReferences: {fileID: 0}
+  uxmlDefaults: {fileID: 11400000, guid: b4213b3830762944fbcb9250a4b73463, type: 2}
+  SFX: []
+  summonables:
+  - {fileID: 11400000, guid: 38afc312ddb0ac242b8cfb301b1b4237, type: 2}
+  fileStateMachines: []
+  licenses: []
+  importableScripts:
+  - name: eximport
+    file: {fileID: 2811297602134710623, guid: 82939b9a7f7e71a4f95c84efc64721a5, type: 3}
+  scriptFolders: []
+  fastParsing: 0

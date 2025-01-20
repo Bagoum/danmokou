@@ -79,7 +79,7 @@ public static class SRPGUtils {
     /// <summary>
     /// Remove any cycles in the list of vertices `path` in-place, and return the same list.
     /// </summary>
-    public static List<V> PruneCycle<V>(List<V> path) {
+    public static List<V> PruneCycle<V>(List<V> path) where V: notnull {
         var indices = DictCache<V, int>.Get();
         for (int ii = 0; ii < path.Count; ++ii) {
             var v = path[ii];
@@ -116,7 +116,7 @@ public static class SRPGUtils {
     /// <param name="adjacency">Function to provide adjacent nodes from a given node. Edge costs must be nonnegative.</param>
     /// <param name="costLimit">Maximum cost for paths, beyond which nodes will be considered unreachable.</param>
     public static (Dictionary<V, double> costs, Dictionary<V, V> prev) Dijkstra<V>(V source,
-        Action<V, List<(V nxt, double edgeCost)>> adjacency, double? costLimit) {
+        Action<V, List<(V nxt, double edgeCost)>> adjacency, double? costLimit) where V: notnull {
         //NB: you could combine these into one Dict<V,(double cost, Maybe<V> prev)>, but it's more convenient
         // from the consumer side to separate them and drop `source` from the `prev` dictionary.
         var costs = DictCache<V, double>.Get();

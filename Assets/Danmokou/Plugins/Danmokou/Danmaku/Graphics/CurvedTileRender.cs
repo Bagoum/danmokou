@@ -87,9 +87,9 @@ public abstract class CurvedTileRender : TiledRender {
         int vw = texRptWidth + 1;
         if (intersectStatus == SelfIntersectionStatus.CHECK_THIS ||
             intersectStatus == SelfIntersectionStatus.CHECK_THIS_AND_NEXT) {
-            float last_mag = (float) Math.Sqrt(lastDelta.x * lastDelta.x + lastDelta.y * lastDelta.y);
-            float ldsx = lastDelta.x / last_mag;
-            float ldsy = lastDelta.y / last_mag;
+            float ilastmag = 1f / (float) Math.Sqrt(lastDelta.x * lastDelta.x + lastDelta.y * lastDelta.y);
+            float ldsx = lastDelta.x * ilastmag;
+            float ldsy = lastDelta.y * ilastmag;
             float eff_low_x = centers[target].x + ddf * ldsy - lastDelta.x * backstep;
             float eff_low_y = centers[target].y + ddf * -ldsx - lastDelta.y * backstep;
             int read_to = target - 1;

@@ -1,0 +1,16 @@
+// Go to https://dmk.bagoum.com/docs/articles/tstages.html for the tutorial. 
+pattern { 
+} {
+	phase 0 {} {
+		paction 0 {
+			shiftphaseto(1)
+		}
+	}
+
+	phase 8 { stage } {
+		async "triangle-*/w" <> gcr2 40 inf <18h> {
+			color { "red", "blue", "green" }
+		} gsr2c 20 {
+		} s rvelocity cx 2
+	}
+}

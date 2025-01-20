@@ -15,9 +15,6 @@ phase 0 {
 				preloop b{
 					hvar loop = i
 				}
-				sfxfif(
-					{ "x-fire-burst-1", "x-fire-burst-2" }, 
-					pi, i % 4 == 0)
 			}, s(rvelocity(px(2 + 0.3 * loop)))
 		)))
 	}

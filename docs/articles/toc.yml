@@ -60,6 +60,8 @@
       href: t09.md
     - name: 10 - Boss Configuration
       href: tbosses.md
+    - name: 11 - Stages and Campaigns
+      href: tstages.md
 - name: Suzunoya (Visual Novel Engine) Tutorials
   items:
     - name: Introduction

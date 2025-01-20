@@ -11,8 +11,8 @@ phase 0 {
 			times(8)
 			circle
 			sfx("x-fire-keys-1")
-			color({ "red", "pink", "purple", "blue", 
-					"teal", "green", "yellow", "orange" })
+			color({ "red", "orange", "yellow", "green", 
+					"teal", "blue", "purple", "pink" })
 			preloop b{
 				hvar loop = i
 				hvar parentAngle = rv2.angle

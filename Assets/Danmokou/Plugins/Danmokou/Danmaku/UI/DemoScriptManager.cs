@@ -17,6 +17,7 @@ using Scriptor.Compile;
 using TMPro;
 using UnityEngine;
 
+
 namespace Danmokou.UI {
 public class DemoScriptManager : MonoBehaviour {
     public TextMeshPro scriptDisplay = null!;

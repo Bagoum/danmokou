@@ -439,9 +439,8 @@ public class CurvedTileRenderLaser : CurvedTileRender {
 
         if (nonpiercing && maxCollisionLength < centers.Length && !Laser.IsColliding) {
             //Extend the nonpiercing laser and try again
-            maxCollisionLength = Mathf.RoundToInt(M.Clamp(
-                M.Lerp(maxCollisionLength, centers.Length, 0.02f), 
-                maxCollisionLength + 1, centers.Length));
+            maxCollisionLength = Mathf.RoundToInt(M.Clamp(maxCollisionLength + 1, centers.Length, 
+                M.Lerp(maxCollisionLength, centers.Length, 0.02f)));
             ProcessAllCollisions();
         }
         if (nonpiercing) {

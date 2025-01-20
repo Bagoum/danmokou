@@ -51,7 +51,7 @@ public static partial class XMLHelpers {
         return screen;
     }
     
-    public static UIScreen PlaymodeScreen(this UIController m, ICampaignDanmakuGameDef game, UIScreen bossPractice, UIScreen stagePractice, Dictionary<Mode, Sprite> sprites, PlayModeCommentator? commentator, Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, ICursorState, UIResult>> getMetadata, out bool onlyOneMode) {
+    public static UIScreen PlaymodeScreen(this UIController m, ICampaignDanmakuGameDef game, UIScreen bossPractice, UIScreen stagePractice, Dictionary<Mode, Sprite> sprites, PlayModeCommentator? commentator, Func<BaseCampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, ICursorState, UIResult>> getMetadata, out bool onlyOneMode) {
         var s = new UIScreen(m, null, UIScreen.Display.Unlined) {
             Builder = (s, ve) => ve.CenterElements()
         }.WithOnEnterStart(() => { if (commentator != null) commentator.Appear(); })
@@ -125,7 +125,7 @@ public static partial class XMLHelpers {
     }
     
     public static UIScreen StagePracticeScreen(this UIController m,
-        Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, ICursorState, UIResult>> getMetadata) {
+        Func<BaseCampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, ICursorState, UIResult>> getMetadata) {
         var s = new UIScreen(m, "STAGE PRACTICE") {Builder = (s, ve) => {
             s.Margin.SetLRMargin(720, 720);
             ve.AddColumn().style.width = 30f.Percent();
@@ -161,7 +161,7 @@ public static partial class XMLHelpers {
     }
 
     public static UIScreen BossPracticeScreen(this UIController m, VisualTreeAsset spellPracticeNodeV,
-        Func<CampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, ICursorState, UIResult>> getMetadata) {
+        Func<BaseCampaignConfig, Func<SharedInstanceMetadata, bool>, Func<UINode, ICursorState, UIResult>> getMetadata) {
         var cmpSpellHist = SaveData.r.GetCampaignSpellHistory();
         var prcSpellHist = SaveData.r.GetPracticeSpellHistory();
 

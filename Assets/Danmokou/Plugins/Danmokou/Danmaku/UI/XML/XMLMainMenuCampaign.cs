@@ -107,7 +107,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
     public override void FirstFrame() {
         var game = References.CampaignGameDef;
         Func<TeamConfig, bool> shotContinuation = null!;
-        var campaignToShotScreenMap = new Dictionary<CampaignConfig, UIScreen>();
+        var campaignToShotScreenMap = new Dictionary<BaseCampaignConfig, UIScreen>();
 
         var axisVM = new AxisViewModel {
             BaseLoc = new(-2.9f, 0),
@@ -133,7 +133,7 @@ public class XMLMainMenuCampaign : XMLMainMenu {
             ExtraShotScreen.SceneObjects = ShotScreenObjects;
         }
 
-        Func<UINode, ICursorState, UIResult> GetMetadata(CampaignConfig c, Func<SharedInstanceMetadata, bool> cont) => (_, _) => {
+        Func<UINode, ICursorState, UIResult> GetMetadata(BaseCampaignConfig c, Func<SharedInstanceMetadata, bool> cont) => (_, _) => {
             dfcContinuation = dfc => {
                 if (c.HasOneShotConfig(out var team)) {
                     cont(new SharedInstanceMetadata(team, dfc));

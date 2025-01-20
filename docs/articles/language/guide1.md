@@ -335,7 +335,7 @@ is EXACTLY THE SAME as the following script:
 5.0 + 4.0
 ```
 
-In most cases, it's better to use functions instead of macros, because functions offer better typechecking and code inspection without significant overhead. Also, recursive functions are supported in the engine, but recursive macros might blow up your computer. That said, there are some cases where it makes sense to use macros for certain types of StateMachine repeaters. See the `bdsl2 macro vs function.bdsl` script for am example of this.
+In most cases, it's better to use functions instead of macros, because functions offer better typechecking and code inspection without significant overhead. Also, recursive functions are supported in the engine, but recursive macros might blow up your computer. That said, there are some cases where it makes sense to use macros for certain types of StateMachine repeaters. See the `bdsl2 macro vs function.bdsl` script for an example of this.
 
 ## Comments
 
@@ -541,7 +541,7 @@ The list of tight operators are as follows, in order of descending priority:
 - Negation: `-x`
 - Boolean negation: `!x`
 
-Except for `!x`, tight operators must have no whitespace between the operator and the value.
+Tight operators must have no whitespace between the operator and the value.
 
 
 
